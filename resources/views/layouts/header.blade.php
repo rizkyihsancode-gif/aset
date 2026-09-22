@@ -2,10 +2,9 @@
 
     <div class="topbar-left">
 
-        <button class="mobile-menu" onclick="toggleSidebar()" type="button">
-
-            <i data-lucide="menu"></i>
-
+        {{-- SIDEBAR TOGGLE --}}
+        <button type="button" class="sidebar-toggle" onclick="toggleSidebar()" title="Buka / Tutup Sidebar">
+            <i data-lucide="panel-left"></i>
         </button>
 
 
@@ -24,23 +23,32 @@
     </div>
 
 
-
     <div class="topbar-right">
 
-        <button class="top-action" type="button">
-
+        <button type="button" class="top-action" title="Pencarian">
             <i data-lucide="search"></i>
-
         </button>
 
 
-        <button class="top-action" type="button">
-
+        <button type="button" class="top-action" title="Notifikasi">
             <i data-lucide="bell"></i>
 
             <span class="notification-dot"></span>
-
         </button>
+
+
+        <div class="header-user">
+
+            <div class="header-avatar">
+                A
+            </div>
+
+            <div class="header-user-info">
+                <strong>Administrator</strong>
+                <span>Super Admin</span>
+            </div>
+
+        </div>
 
     </div>
 

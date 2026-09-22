@@ -1,11 +1,12 @@
 <aside class="sidebar" id="sidebar">
 
-    {{-- BRAND --}}
+    {{-- =====================================================
+         BRAND
+    ====================================================== --}}
+
     <div class="brand">
 
-        <div class="brand-logo">
-            <i data-lucide="boxes"></i>
-        </div>
+        <img src="{{ asset('images/logo.png') }}" alt="Logo" width="45">
 
         <div>
 
@@ -14,16 +15,22 @@
             </div>
 
             <div class="brand-subtitle">
-                Perumdam Tirta Kencana
+                Perumda Tirta Kencana
             </div>
 
         </div>
+        {{-- <div class="flex items-center justify-center h-16">
+            <img src="{{ asset('images/logo_hr.png') }}" alt="Logo" width="300">
+        </div> --}}
 
     </div>
 
 
 
-    {{-- MENU --}}
+    {{-- =====================================================
+         MENU
+    ====================================================== --}}
+
     <nav class="sidebar-menu">
 
 
@@ -35,7 +42,7 @@
 
         <a href="{{ route('dashboard') }}"
             class="menu-item
-            {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                {{ request()->routeIs('dashboard') ? 'active' : '' }}">
 
             <span class="menu-icon">
                 <i data-lucide="layout-dashboard"></i>
@@ -56,10 +63,13 @@
 
 
 
-        {{-- MASTER DATA --}}
+        {{-- =================================================
+             MASTER DATA
+        ================================================== --}}
+
         <div class="menu-group" id="masterGroup">
 
-            <div class="menu-item menu-parent" onclick="toggleMenu('masterGroup')">
+            <button type="button" class="menu-item menu-parent" onclick="toggleMenu('masterGroup')">
 
                 <span class="menu-icon">
                     <i data-lucide="database"></i>
@@ -73,10 +83,11 @@
                     <i data-lucide="chevron-right"></i>
                 </span>
 
-            </div>
+            </button>
 
 
             <div class="submenu">
+
 
                 <a href="#" class="menu-item">
 
@@ -84,7 +95,9 @@
                         <i data-lucide="package"></i>
                     </span>
 
-                    Barang
+                    <span class="menu-text">
+                        Barang
+                    </span>
 
                 </a>
 
@@ -95,7 +108,9 @@
                         <i data-lucide="building"></i>
                     </span>
 
-                    Departemen
+                    <span class="menu-text">
+                        Departemen
+                    </span>
 
                 </a>
 
@@ -106,7 +121,9 @@
                         <i data-lucide="git-branch"></i>
                     </span>
 
-                    Divisi
+                    <span class="menu-text">
+                        Divisi
+                    </span>
 
                 </a>
 
@@ -117,7 +134,9 @@
                         <i data-lucide="door-open"></i>
                     </span>
 
-                    Ruangan
+                    <span class="menu-text">
+                        Ruangan
+                    </span>
 
                 </a>
 
@@ -128,7 +147,9 @@
                         <i data-lucide="users"></i>
                     </span>
 
-                    SDM Pendukung
+                    <span class="menu-text">
+                        SDM Pendukung
+                    </span>
 
                 </a>
 
@@ -139,7 +160,9 @@
                         <i data-lucide="map-pin"></i>
                     </span>
 
-                    Lokasi
+                    <span class="menu-text">
+                        Lokasi
+                    </span>
 
                 </a>
 
@@ -150,7 +173,9 @@
                         <i data-lucide="layers-3"></i>
                     </span>
 
-                    Bahan
+                    <span class="menu-text">
+                        Bahan
+                    </span>
 
                 </a>
 
@@ -161,9 +186,12 @@
                         <i data-lucide="barcode"></i>
                     </span>
 
-                    Kode Aktiva
+                    <span class="menu-text">
+                        Kode Aktiva
+                    </span>
 
                 </a>
+
 
             </div>
 
@@ -171,10 +199,13 @@
 
 
 
-        {{-- KIB --}}
+        {{-- =================================================
+             K.I.B
+        ================================================== --}}
+
         <div class="menu-group" id="kibGroup">
 
-            <div class="menu-item menu-parent" onclick="toggleMenu('kibGroup')">
+            <button type="button" class="menu-item menu-parent" onclick="toggleMenu('kibGroup')">
 
                 <span class="menu-icon">
                     <i data-lucide="library"></i>
@@ -188,38 +219,102 @@
                     <i data-lucide="chevron-right"></i>
                 </span>
 
-            </div>
+            </button>
 
 
             <div class="submenu">
 
-                <a href="#" class="menu-item">
-                    Tanah
-                </a>
 
                 <a href="#" class="menu-item">
-                    Peralatan & Mesin
+
+                    <span class="menu-icon">
+                        <i data-lucide="map"></i>
+                    </span>
+
+                    <span class="menu-text">
+                        Tanah
+                    </span>
+
                 </a>
 
-                <a href="#" class="menu-item">
-                    Gedung & Bangunan
-                </a>
 
                 <a href="#" class="menu-item">
-                    Jalan, Irigasi & Jaringan
+
+                    <span class="menu-icon">
+                        <i data-lucide="settings"></i>
+                    </span>
+
+                    <span class="menu-text">
+                        Peralatan & Mesin
+                    </span>
+
                 </a>
 
-                <a href="#" class="menu-item">
-                    Aset Tetap Lainnya
-                </a>
 
                 <a href="#" class="menu-item">
-                    Konstruksi
+
+                    <span class="menu-icon">
+                        <i data-lucide="building-2"></i>
+                    </span>
+
+                    <span class="menu-text">
+                        Gedung & Bangunan
+                    </span>
+
                 </a>
 
+
                 <a href="#" class="menu-item">
-                    K.I.R
+
+                    <span class="menu-icon">
+                        <i data-lucide="route"></i>
+                    </span>
+
+                    <span class="menu-text">
+                        Jalan, Irigasi & Jaringan
+                    </span>
+
                 </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <span class="menu-icon">
+                        <i data-lucide="package-open"></i>
+                    </span>
+
+                    <span class="menu-text">
+                        Aset Tetap Lainnya
+                    </span>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <span class="menu-icon">
+                        <i data-lucide="construction"></i>
+                    </span>
+
+                    <span class="menu-text">
+                        Konstruksi
+                    </span>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <span class="menu-icon">
+                        <i data-lucide="clipboard-list"></i>
+                    </span>
+
+                    <span class="menu-text">
+                        K.I.R
+                    </span>
+
+                </a>
+
 
             </div>
 
@@ -234,7 +329,9 @@
                 <i data-lucide="badge-dollar-sign"></i>
             </span>
 
-            Nilai Aset
+            <span class="menu-text">
+                Nilai Aset
+            </span>
 
         </a>
 
@@ -247,7 +344,9 @@
                 <i data-lucide="archive"></i>
             </span>
 
-            Arsip
+            <span class="menu-text">
+                Arsip
+            </span>
 
         </a>
 
@@ -255,7 +354,10 @@
 
 
 
-    {{-- FOOTER USER --}}
+    {{-- =====================================================
+         SIDEBAR FOOTER
+    ====================================================== --}}
+
     <div class="sidebar-footer">
 
         <div class="sidebar-user">
@@ -263,6 +365,7 @@
             <div class="sidebar-avatar">
                 A
             </div>
+
 
             <div class="sidebar-user-info">
 
@@ -277,7 +380,7 @@
             </div>
 
 
-            <a href="{{ route('login') }}" class="sidebar-logout">
+            <a href="{{ route('login') }}" class="sidebar-logout" title="Keluar">
 
                 <i data-lucide="log-out"></i>
 
