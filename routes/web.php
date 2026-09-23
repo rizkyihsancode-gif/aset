@@ -33,3 +33,23 @@ Route::get('/dashboard', function () {
 
     return view('main.dashboard');
 })->name('dashboard');
+
+
+// ------------------------------------------------
+// MASTER DATA ROUTES
+// ------------------------------------------------
+
+
+
+
+
+// ------------------------------------------------
+// DASHBOARD ROUTES
+// -------------------------------------------------
+Route::get('/nilai', function () {
+    return view('main.nilai');
+});
+
+Route::get('/arsip', function () {
+    return view('main.arsip');
+});
