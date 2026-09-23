@@ -323,7 +323,7 @@
 
 
         {{-- NILAI ASET --}}
-        <a link href="/nilai" class="menu-item" {{ request()->is('nilai') ? 'active' : '' }}>
+        <a href="{{ route('main.nilai') }}"class="menu-item{{ request()->routeIs('main.nilai') ? 'active' : '' }}">
 
             <span class="menu-icon">
                 <i data-lucide="badge-dollar-sign"></i>
@@ -337,8 +337,9 @@
 
 
 
+
         {{-- ARSIP --}}
-        <a link href="/arsip" class="menu-item" {{ request()->is('arsip') ? 'active' : '' }}>
+        <a href="{{ route('main.arsip') }}"class="menu-item{{ request()->routeIs('main.arsip') ? 'active' : '' }}">
 
             <span class="menu-icon">
                 <i data-lucide="archive"></i>
