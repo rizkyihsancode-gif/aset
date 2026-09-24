@@ -2,75 +2,98 @@
 
 @section('title', 'Arsip')
 
-@section('page-title', 'Arsip')
-
-@section('page-description', 'Pengelolaan dokumen dan arsip aset perusahaan')
-
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/pages/arsip.css') }}">
 @endpush
 
 
-
 @section('content')
 
-    <section class="content">
+    <section class="content arsip-page">
 
 
         {{-- ============================================================
-         HEADER
+         PAGE HEADER
     ============================================================= --}}
-        <div class="archive-header">
+        <div class="arsip-page-header">
 
-            <div>
+            <div class="arsip-heading">
 
-                <span class="archive-eyebrow">
+                <span class="arsip-eyebrow">
                     Document Management
                 </span>
 
-                <h2>
+                <h1>
                     Arsip Aset
-                </h2>
+                </h1>
 
                 <p>
-                    Kelola penyimpanan dokumen aset berdasarkan
-                    gedung, filling, rak, posisi penyimpanan,
-                    kondisi dan masa retensi arsip.
+                    Kelola dokumentasi aset, lokasi penyimpanan fisik,
+                    retensi, dan riwayat arsip perusahaan secara rapi
+                    dan terstruktur.
                 </p>
 
             </div>
 
 
-            <button type="button" class="archive-primary-button">
+            <div class="arsip-header-actions">
 
-                <i data-lucide="file-plus-2"></i>
 
-                Tambah Arsip
+                {{-- DATE --}}
+                <div class="arsip-date-card">
 
-            </button>
+                    <div class="arsip-date-icon">
+                        <i data-lucide="calendar-days"></i>
+                    </div>
+
+                    <div>
+
+                        <strong id="arsipCurrentDate">
+                            Kamis, 24 September 2026
+                        </strong>
+
+                        <span id="arsipCurrentTime">
+                            12:30 WIB
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                {{-- ADD --}}
+                <button type="button" class="arsip-add-button">
+
+                    <i data-lucide="plus"></i>
+
+                    <span>
+                        Tambah Arsip
+                    </span>
+
+                </button>
+
+            </div>
 
         </div>
 
 
 
         {{-- ============================================================
-         SUMMARY
+         KPI
     ============================================================= --}}
-        <div class="archive-summary-grid">
+        <div class="arsip-kpi-grid">
 
 
-            {{-- TOTAL --}}
-            <div class="archive-summary">
+            {{-- TOTAL ARSIP --}}
+            <div class="arsip-kpi-card">
 
-                <div class="archive-summary-icon blue">
-
-                    <i data-lucide="files"></i>
-
+                <div class="arsip-kpi-icon blue">
+                    <i data-lucide="file-text"></i>
                 </div>
 
 
-                <div>
+                <div class="arsip-kpi-content">
 
                     <span>
                         Total Arsip
@@ -80,9 +103,24 @@
                         4.825
                     </strong>
 
-                    <small>
-                        Dokumen tersimpan
+                    <small class="positive">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +8,2% dari tahun lalu
+
                     </small>
+
+                </div>
+
+
+                <div class="arsip-kpi-decoration line-blue">
+
+                    <svg viewBox="0 0 100 45">
+
+                        <polyline points="2,38 16,20 30,12 46,16 60,28 74,25 88,10 98,2" />
+
+                    </svg>
 
                 </div>
 
@@ -91,16 +129,14 @@
 
 
             {{-- GEDUNG --}}
-            <div class="archive-summary">
+            <div class="arsip-kpi-card">
 
-                <div class="archive-summary-icon purple">
-
+                <div class="arsip-kpi-icon blue">
                     <i data-lucide="building-2"></i>
-
                 </div>
 
 
-                <div>
+                <div class="arsip-kpi-content">
 
                     <span>
                         Gedung
@@ -110,9 +146,20 @@
                         12
                     </strong>
 
-                    <small>
-                        Lokasi penyimpanan
+                    <small class="positive">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +0% dari tahun lalu
+
                     </small>
+
+                </div>
+
+
+                <div class="arsip-kpi-watermark">
+
+                    <i data-lucide="building-2"></i>
 
                 </div>
 
@@ -120,17 +167,15 @@
 
 
 
-            {{-- FILLING --}}
-            <div class="archive-summary">
+            {{-- FILLING / RAK --}}
+            <div class="arsip-kpi-card">
 
-                <div class="archive-summary-icon orange">
-
+                <div class="arsip-kpi-icon purple">
                     <i data-lucide="archive"></i>
-
                 </div>
 
 
-                <div>
+                <div class="arsip-kpi-content">
 
                     <span>
                         Filling / Rak
@@ -140,9 +185,20 @@
                         48 / 126
                     </strong>
 
-                    <small>
-                        Media penyimpanan
+                    <small class="positive">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +3,1% dari tahun lalu
+
                     </small>
+
+                </div>
+
+
+                <div class="arsip-kpi-watermark purple">
+
+                    <i data-lucide="layout-grid"></i>
 
                 </div>
 
@@ -151,16 +207,14 @@
 
 
             {{-- RETENSI --}}
-            <div class="archive-summary">
+            <div class="arsip-kpi-card">
 
-                <div class="archive-summary-icon red">
-
-                    <i data-lucide="clock-alert"></i>
-
+                <div class="arsip-kpi-icon orange">
+                    <i data-lucide="clock-3"></i>
                 </div>
 
 
-                <div>
+                <div class="arsip-kpi-content">
 
                     <span>
                         Retensi Mendekati Akhir
@@ -170,157 +224,24 @@
                         18
                     </strong>
 
-                    <small>
-                        Memerlukan perhatian
+                    <small class="danger">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +5 dokumen dari bulan lalu
+
                     </small>
 
                 </div>
 
-            </div>
 
+                <div class="arsip-retention-bars">
 
-        </div>
-
-
-
-        {{-- ============================================================
-         LOKASI PENYIMPANAN
-    ============================================================= --}}
-        <div class="archive-location-card">
-
-
-            <div class="archive-location-title">
-
-                <div>
-
-                    <h3>
-                        Lokasi Penyimpanan
-                    </h3>
-
-                    <p>
-                        Navigasi struktur penyimpanan arsip fisik.
-                    </p>
+                    <span></span>
+                    <span></span>
+                    <span></span>
 
                 </div>
-
-            </div>
-
-
-
-            <div class="storage-flow">
-
-
-                {{-- GEDUNG --}}
-                <div class="storage-step active">
-
-                    <div class="storage-icon">
-
-                        <i data-lucide="building-2"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Gedung
-                        </span>
-
-                        <strong>
-                            Kantor Pusat
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <i class="storage-arrow" data-lucide="chevron-right"></i>
-
-
-
-                {{-- FILLING --}}
-                <div class="storage-step">
-
-                    <div class="storage-icon">
-
-                        <i data-lucide="cabinet"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Filling
-                        </span>
-
-                        <strong>
-                            Filling A
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <i class="storage-arrow" data-lucide="chevron-right"></i>
-
-
-
-                {{-- RAK --}}
-                <div class="storage-step">
-
-                    <div class="storage-icon">
-
-                        <i data-lucide="archive"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Rak
-                        </span>
-
-                        <strong>
-                            Rak 03
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <i class="storage-arrow" data-lucide="chevron-right"></i>
-
-
-
-                {{-- BARIS --}}
-                <div class="storage-step">
-
-                    <div class="storage-icon">
-
-                        <i data-lucide="rows-3"></i>
-
-                    </div>
-
-
-                    <div>
-
-                        <span>
-                            Baris
-                        </span>
-
-                        <strong>
-                            Baris 02
-                        </strong>
-
-                    </div>
-
-                </div>
-
 
             </div>
 
@@ -329,433 +250,991 @@
 
 
         {{-- ============================================================
-         MAIN GRID
+         WORKSPACE
     ============================================================= --}}
-        <div class="archive-main-grid">
+        <div class="arsip-workspace">
 
 
             {{-- ========================================================
-             LIST ARSIP
+             LEFT
         ========================================================= --}}
-            <div class="archive-card">
+            <div class="arsip-main-column">
 
 
-                <div class="archive-card-header">
+                {{-- ====================================================
+                 STORAGE LOCATION
+            ===================================================== --}}
+                <div class="arsip-card arsip-storage-card">
 
-                    <div>
+
+                    <div class="arsip-section-header">
+
+                        <div>
+
+                            <h3>
+                                Lokasi Penyimpanan
+                            </h3>
+
+                            <p>
+                                Struktur lokasi penyimpanan arsip fisik di perusahaan.
+                                Pilih lokasi untuk melihat daftar dokumen.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="arsip-storage-content">
+
+
+                        {{-- FLOW --}}
+                        <div class="storage-flow">
+
+
+                            <button type="button" class="storage-node active">
+
+                                <div class="storage-node-icon">
+                                    <i data-lucide="building-2"></i>
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Kantor Pusat
+                                    </strong>
+
+                                    <span>
+                                        Gedung
+                                    </span>
+
+                                </div>
+
+                            </button>
+
+
+                            <i class="storage-chevron" data-lucide="chevron-right"></i>
+
+
+
+                            <button type="button" class="storage-node">
+
+                                <div class="storage-node-icon">
+                                    <i data-lucide="archive"></i>
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Filling A
+                                    </strong>
+
+                                    <span>
+                                        Filling
+                                    </span>
+
+                                </div>
+
+                            </button>
+
+
+                            <i class="storage-chevron" data-lucide="chevron-right"></i>
+
+
+
+                            <button type="button" class="storage-node">
+
+                                <div class="storage-node-icon">
+                                    <i data-lucide="boxes"></i>
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Rak 03
+                                    </strong>
+
+                                    <span>
+                                        Rak
+                                    </span>
+
+                                </div>
+
+                            </button>
+
+
+                            <i class="storage-chevron" data-lucide="chevron-right"></i>
+
+
+
+                            <button type="button" class="storage-node">
+
+                                <div class="storage-node-icon">
+                                    <i data-lucide="grid-2x2"></i>
+                                </div>
+
+                                <div>
+
+                                    <strong>
+                                        Baris 02
+                                    </strong>
+
+                                    <span>
+                                        Baris
+                                    </span>
+
+                                </div>
+
+                            </button>
+
+                        </div>
+
+
+
+                        {{-- OTHER LOCATION --}}
+                        <div class="storage-other">
+
+                            <h4>
+                                Lokasi Lainnya
+                            </h4>
+
+
+                            <div class="storage-location-chips">
+
+                                <button type="button">
+
+                                    <i data-lucide="building-2"></i>
+
+                                    Kantor Pusat
+
+                                </button>
+
+
+                                <button type="button">
+
+                                    <i data-lucide="building-2"></i>
+
+                                    IPA Kota
+
+                                </button>
+
+
+                                <button type="button">
+
+                                    <i data-lucide="building-2"></i>
+
+                                    IPA Gunung Lipan
+
+                                </button>
+
+
+                                <button type="button">
+
+                                    <i data-lucide="building-2"></i>
+
+                                    Lab Kualitas Air
+
+                                </button>
+
+
+                                <button type="button">
+
+                                    <i data-lucide="building-2"></i>
+
+                                    Gudang
+
+                                </button>
+
+
+                                <button type="button">
+
+                                    <i data-lucide="building-2"></i>
+
+                                    Kantor Cabang
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                {{-- ====================================================
+                 FILTER
+            ===================================================== --}}
+                <div class="arsip-card arsip-filter-card">
+
+
+                    <div class="arsip-filter-title">
+
+                        <h3>
+                            Filter Dokumen Arsip
+                        </h3>
+
+                    </div>
+
+
+
+                    <div class="arsip-filter-grid">
+
+
+                        {{-- SEARCH --}}
+                        <div class="arsip-filter-group arsip-search-group">
+
+                            <label>
+                                Pencarian
+                            </label>
+
+
+                            <div class="arsip-search-input">
+
+                                <i data-lucide="search"></i>
+
+                                <input type="text" id="arsipSearch"
+                                    placeholder="Cari judul, register, atau kata kunci...">
+
+                            </div>
+
+                        </div>
+
+
+
+                        {{-- GEDUNG --}}
+                        <div class="arsip-filter-group">
+
+                            <label>
+                                Gedung
+                            </label>
+
+                            <select id="arsipGedung">
+
+                                <option value="">
+                                    Semua Gedung
+                                </option>
+
+                                <option>
+                                    Kantor Pusat
+                                </option>
+
+                                <option>
+                                    IPA Kota
+                                </option>
+
+                                <option>
+                                    IPA Gunung Lipan
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        {{-- FILLING --}}
+                        <div class="arsip-filter-group">
+
+                            <label>
+                                Filling
+                            </label>
+
+                            <select id="arsipFilling">
+
+                                <option value="">
+                                    Semua Filling
+                                </option>
+
+                                <option>
+                                    Filling A
+                                </option>
+
+                                <option>
+                                    Filling B
+                                </option>
+
+                                <option>
+                                    Filling C
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        {{-- RAK --}}
+                        <div class="arsip-filter-group">
+
+                            <label>
+                                Rak
+                            </label>
+
+                            <select id="arsipRak">
+
+                                <option value="">
+                                    Semua Rak
+                                </option>
+
+                                <option>
+                                    Rak 01
+                                </option>
+
+                                <option>
+                                    Rak 02
+                                </option>
+
+                                <option>
+                                    Rak 03
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        {{-- TAHUN --}}
+                        <div class="arsip-filter-group">
+
+                            <label>
+                                Tahun
+                            </label>
+
+                            <select id="arsipTahun">
+
+                                <option value="">
+                                    Semua Tahun
+                                </option>
+
+                                <option>
+                                    2026
+                                </option>
+
+                                <option>
+                                    2025
+                                </option>
+
+                                <option>
+                                    2024
+                                </option>
+
+                                <option>
+                                    2023
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        {{-- KONDISI --}}
+                        <div class="arsip-filter-group">
+
+                            <label>
+                                Kondisi
+                            </label>
+
+                            <select id="arsipKondisi">
+
+                                <option value="">
+                                    Semua Kondisi
+                                </option>
+
+                                <option>
+                                    Baik
+                                </option>
+
+                                <option>
+                                    Mendekati Retensi
+                                </option>
+
+                                <option>
+                                    Perlu Review
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        {{-- BUTTON --}}
+                        <div class="arsip-filter-actions">
+
+
+                            <button type="button" class="arsip-filter-button">
+
+                                <i data-lucide="list-filter"></i>
+
+                                Filter
+
+                            </button>
+
+
+                            <button type="button" class="arsip-reset-button" onclick="resetArsipFilter()">
+
+                                <i data-lucide="refresh-cw"></i>
+
+                                Reset
+
+                            </button>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                {{-- ====================================================
+                 TABLE
+            ===================================================== --}}
+                <div class="arsip-card arsip-table-card">
+
+
+                    <div class="arsip-table-header">
 
                         <h3>
                             Daftar Dokumen Arsip
                         </h3>
 
-                        <p>
-                            Dokumen yang tersimpan pada sistem arsip.
-                        </p>
 
-                    </div>
-
-
-                    <div class="archive-actions">
-
-                        <button type="button" class="archive-secondary-button">
+                        <button type="button" class="arsip-export-button">
 
                             <i data-lucide="download"></i>
 
-                            Export
+                            Ekspor
+
+                            <i data-lucide="chevron-down"></i>
 
                         </button>
 
                     </div>
 
-                </div>
+
+
+                    <div class="table-responsive">
+
+                        <table class="arsip-table">
+
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>No</th>
+
+                                    <th>Dokumen</th>
+
+                                    <th>Register</th>
+
+                                    <th>Penyimpanan</th>
+
+                                    <th>Tahun</th>
+
+                                    <th>Retensi</th>
+
+                                    <th>Kondisi</th>
+
+                                    <th class="action-column">
+                                        Aksi
+                                    </th>
+
+                                </tr>
+
+                            </thead>
 
 
 
-                {{-- TOOLBAR --}}
-                <div class="archive-toolbar">
+                            <tbody>
 
 
-                    <div class="archive-search">
+                                {{-- ROW 1 --}}
+                                <tr class="arsip-data-row selected" data-title="Sertifikat Tanah IPA Gunung Lipan"
+                                    data-code="AR-2023-001" data-register="REG-TNH-2020-045" data-vendor="BPN Kabupaten"
+                                    data-year="2020" data-value="Rp 12.500.000.000" data-status="Baik"
+                                    data-status-class="good" data-building="Kantor Pusat" data-filling="Filling A"
+                                    data-rack="Rak 03" data-row="Baris 02" data-retention="10 Tahun"
+                                    data-expiry="15 Mar 2030" data-remaining="4 tahun 3 bulan">
 
-                        <i data-lucide="search"></i>
+                                    <td>
+                                        1
+                                    </td>
+
+                                    <td>
+                                        <strong class="arsip-doc-title">
+                                            Sertifikat Tanah IPA Gunung Lipan
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        AR-2023-001
+                                    </td>
+
+                                    <td>
+                                        Kantor Pusat / Filling A / Rak 03 / Baris 02
+                                    </td>
+
+                                    <td>
+                                        2020
+                                    </td>
+
+                                    <td>
+                                        10 Tahun
+                                        <span class="table-sub">
+                                            2030
+                                        </span>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="arsip-status good">
+
+                                            <span></span>
+
+                                            Baik
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="arsip-row-actions">
+
+                                            <button type="button" class="view" title="Lihat"
+                                                onclick="selectArsipRow(this)">
+                                                <i data-lucide="eye"></i>
+                                            </button>
+
+                                            <button type="button" class="edit" title="Edit">
+                                                <i data-lucide="square-pen"></i>
+                                            </button>
+
+                                            <button type="button" class="download" title="Download">
+                                                <i data-lucide="download"></i>
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
 
 
-                        <input type="text" placeholder="Cari kode, judul, register...">
+
+                                {{-- ROW 2 --}}
+                                <tr class="arsip-data-row" data-title="BAST Pompa Distribusi" data-code="AR-2023-002"
+                                    data-register="REG-MSN-2022-018" data-vendor="PT Tirta Engineering" data-year="2022"
+                                    data-value="Rp 2.850.000.000" data-status="Mendekati Retensi"
+                                    data-status-class="warning" data-building="IPA Kota" data-filling="Filling B"
+                                    data-rack="Rak 01" data-row="Baris 01" data-retention="5 Tahun"
+                                    data-expiry="18 Jan 2027" data-remaining="4 bulan">
+
+                                    <td>2</td>
+
+                                    <td>
+                                        <strong class="arsip-doc-title">
+                                            BAST Pompa Distribusi
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        AR-2023-002
+                                    </td>
+
+                                    <td>
+                                        IPA Kota / Filling B / Rak 01 / Baris 01
+                                    </td>
+
+                                    <td>
+                                        2022
+                                    </td>
+
+                                    <td>
+                                        5 Tahun
+                                        <span class="table-sub">
+                                            2027
+                                        </span>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="arsip-status warning">
+
+                                            <span></span>
+
+                                            Mendekati Retensi
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="arsip-row-actions">
+
+                                            <button type="button" class="view" onclick="selectArsipRow(this)">
+                                                <i data-lucide="eye"></i>
+                                            </button>
+
+                                            <button type="button" class="edit">
+                                                <i data-lucide="square-pen"></i>
+                                            </button>
+
+                                            <button type="button" class="download">
+                                                <i data-lucide="download"></i>
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+
+
+                                {{-- ROW 3 --}}
+                                <tr class="arsip-data-row" data-title="Dokumen Pengadaan Kendaraan"
+                                    data-code="AR-2024-015" data-register="REG-KDR-2024-011"
+                                    data-vendor="PT Mitra Otomotif" data-year="2024" data-value="Rp 650.000.000"
+                                    data-status="Lengkap" data-status-class="good" data-building="Kantor Pusat"
+                                    data-filling="Filling A" data-rack="Rak 02" data-row="Baris 01"
+                                    data-retention="5 Tahun" data-expiry="22 Feb 2029" data-remaining="2 tahun 5 bulan">
+
+                                    <td>3</td>
+
+                                    <td>
+                                        <strong class="arsip-doc-title">
+                                            Dokumen Pengadaan Kendaraan
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        AR-2024-015
+                                    </td>
+
+                                    <td>
+                                        Kantor Pusat / Filling A / Rak 02 / Baris 01
+                                    </td>
+
+                                    <td>
+                                        2024
+                                    </td>
+
+                                    <td>
+                                        5 Tahun
+                                        <span class="table-sub">
+                                            2029
+                                        </span>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="arsip-status good">
+
+                                            <span></span>
+
+                                            Lengkap
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="arsip-row-actions">
+
+                                            <button type="button" class="view" onclick="selectArsipRow(this)">
+                                                <i data-lucide="eye"></i>
+                                            </button>
+
+                                            <button type="button" class="edit">
+                                                <i data-lucide="square-pen"></i>
+                                            </button>
+
+                                            <button type="button" class="download">
+                                                <i data-lucide="download"></i>
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+
+
+                                {{-- ROW 4 --}}
+                                <tr class="arsip-data-row" data-title="Gambar Teknis Gedung Kantor"
+                                    data-code="AR-2022-078" data-register="REG-GDG-2019-008"
+                                    data-vendor="Konsultan Perencana" data-year="2019" data-value="Rp 8.250.000.000"
+                                    data-status="Perlu Review" data-status-class="warning" data-building="Kantor Pusat"
+                                    data-filling="Filling C" data-rack="Rak 05" data-row="Baris 03"
+                                    data-retention="10 Tahun" data-expiry="12 Jul 2029"
+                                    data-remaining="2 tahun 10 bulan">
+
+                                    <td>4</td>
+
+                                    <td>
+                                        <strong class="arsip-doc-title">
+                                            Gambar Teknis Gedung Kantor
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        AR-2022-078
+                                    </td>
+
+                                    <td>
+                                        Kantor Pusat / Filling C / Rak 05 / Baris 03
+                                    </td>
+
+                                    <td>
+                                        2019
+                                    </td>
+
+                                    <td>
+                                        10 Tahun
+                                        <span class="table-sub">
+                                            2029
+                                        </span>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="arsip-status warning">
+
+                                            <span></span>
+
+                                            Perlu Review
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="arsip-row-actions">
+
+                                            <button type="button" class="view" onclick="selectArsipRow(this)">
+                                                <i data-lucide="eye"></i>
+                                            </button>
+
+                                            <button type="button" class="edit">
+                                                <i data-lucide="square-pen"></i>
+                                            </button>
+
+                                            <button type="button" class="download">
+                                                <i data-lucide="download"></i>
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+
+
+                                {{-- ROW 5 --}}
+                                <tr class="arsip-data-row" data-title="Berkas Mesin Pompa Intake" data-code="AR-2023-102"
+                                    data-register="REG-MSN-2021-043" data-vendor="PT Pompa Nusantara" data-year="2021"
+                                    data-value="Rp 3.175.000.000" data-status="Baik" data-status-class="good"
+                                    data-building="IPA Gunung Lipan" data-filling="Filling A" data-rack="Rak 01"
+                                    data-row="Baris 02" data-retention="10 Tahun" data-expiry="18 Mei 2031"
+                                    data-remaining="4 tahun 8 bulan">
+
+                                    <td>5</td>
+
+                                    <td>
+                                        <strong class="arsip-doc-title">
+                                            Berkas Mesin Pompa Intake
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        AR-2023-102
+                                    </td>
+
+                                    <td>
+                                        IPA Gunung Lipan / Filling A / Rak 01 / Baris 02
+                                    </td>
+
+                                    <td>
+                                        2021
+                                    </td>
+
+                                    <td>
+                                        10 Tahun
+                                        <span class="table-sub">
+                                            2031
+                                        </span>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="arsip-status good">
+
+                                            <span></span>
+
+                                            Baik
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="arsip-row-actions">
+
+                                            <button type="button" class="view" onclick="selectArsipRow(this)">
+                                                <i data-lucide="eye"></i>
+                                            </button>
+
+                                            <button type="button" class="edit">
+                                                <i data-lucide="square-pen"></i>
+                                            </button>
+
+                                            <button type="button" class="download">
+                                                <i data-lucide="download"></i>
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+
+                            </tbody>
+
+                        </table>
 
                     </div>
 
 
 
-                    <select class="archive-select">
+                    {{-- TABLE FOOTER --}}
+                    <div class="arsip-table-footer">
 
-                        <option>
-                            Semua Tahun
-                        </option>
 
-                        <option>
-                            2026
-                        </option>
+                        <div class="arsip-table-info">
 
-                        <option>
-                            2025
-                        </option>
+                            Menampilkan
 
-                        <option>
-                            2024
-                        </option>
+                            <strong>
+                                1 - 5
+                            </strong>
 
-                    </select>
+                            dari
 
+                            <strong>
+                                4.825
+                            </strong>
 
+                            dokumen
 
-                    <select class="archive-select">
+                        </div>
 
-                        <option>
-                            Semua Kondisi
-                        </option>
 
-                        <option>
-                            Baik
-                        </option>
 
-                        <option>
-                            Perlu Perhatian
-                        </option>
+                        <div class="arsip-pagination-area">
 
-                    </select>
 
+                            <select>
 
-                </div>
+                                <option>
+                                    10 per halaman
+                                </option>
 
+                                <option>
+                                    25 per halaman
+                                </option>
 
+                                <option>
+                                    50 per halaman
+                                </option>
 
-                {{-- TABLE --}}
-                <div class="table-responsive">
+                            </select>
 
-                    <table class="archive-table">
 
 
-                        <thead>
+                            <div class="arsip-pagination">
 
-                            <tr>
 
-                                <th>
-                                    Dokumen
-                                </th>
+                                <button disabled>
 
-                                <th>
-                                    Register
-                                </th>
+                                    <i data-lucide="chevrons-left"></i>
 
-                                <th>
-                                    Penyimpanan
-                                </th>
+                                </button>
 
-                                <th>
-                                    Tahun
-                                </th>
 
-                                <th>
-                                    Retensi
-                                </th>
+                                <button disabled>
 
-                                <th>
-                                    Kondisi
-                                </th>
+                                    <i data-lucide="chevron-left"></i>
 
-                                <th>
-                                    Aksi
-                                </th>
+                                </button>
 
-                            </tr>
 
-                        </thead>
+                                <button class="active">
+                                    1
+                                </button>
 
 
+                                <button>
+                                    2
+                                </button>
 
-                        <tbody>
 
+                                <button>
+                                    3
+                                </button>
 
-                            {{-- DATA 1 --}}
-                            <tr>
 
-                                <td>
+                                <button>
+                                    4
+                                </button>
 
-                                    <div class="document-cell">
 
-                                        <div class="document-icon pdf">
+                                <button>
+                                    5
+                                </button>
 
-                                            <i data-lucide="file-text"></i>
 
-                                        </div>
+                                <span>
+                                    ...
+                                </span>
 
 
-                                        <div>
+                                <button>
+                                    966
+                                </button>
 
-                                            <strong>
-                                                Sertifikat Tanah IPA Gunung Lipan
-                                            </strong>
 
-                                            <span>
-                                                ARS-TNH-2026-001
-                                            </span>
+                                <button>
 
-                                        </div>
+                                    <i data-lucide="chevron-right"></i>
 
-                                    </div>
+                                </button>
 
-                                </td>
 
+                            </div>
 
-                                <td>
-                                    REG-00125
-                                </td>
 
+                        </div>
 
-                                <td>
+                    </div>
 
-                                    <strong class="storage-main">
-                                        Filling A / Rak 03
-                                    </strong>
-
-                                    <span class="storage-sub">
-                                        Baris 02
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-                                    2026
-                                </td>
-
-
-                                <td>
-
-                                    <span class="retention-badge safe">
-                                        10 Tahun
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-
-                                    <span class="condition-badge good">
-                                        Baik
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-
-                                    <button type="button" class="document-more">
-
-                                        <i data-lucide="ellipsis"></i>
-
-                                    </button>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            {{-- DATA 2 --}}
-                            <tr>
-
-                                <td>
-
-                                    <div class="document-cell">
-
-                                        <div class="document-icon blue">
-
-                                            <i data-lucide="file-text"></i>
-
-                                        </div>
-
-
-                                        <div>
-
-                                            <strong>
-                                                BAST Pompa Distribusi
-                                            </strong>
-
-                                            <span>
-                                                ARS-MSN-2026-014
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-
-                                </td>
-
-
-                                <td>
-                                    REG-00124
-                                </td>
-
-
-                                <td>
-
-                                    <strong class="storage-main">
-                                        Filling B / Rak 07
-                                    </strong>
-
-                                    <span class="storage-sub">
-                                        Baris 01
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-                                    2026
-                                </td>
-
-
-                                <td>
-
-                                    <span class="retention-badge safe">
-                                        5 Tahun
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-
-                                    <span class="condition-badge good">
-                                        Baik
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-
-                                    <button type="button" class="document-more">
-
-                                        <i data-lucide="ellipsis"></i>
-
-                                    </button>
-
-                                </td>
-
-                            </tr>
-
-
-
-                            {{-- DATA 3 --}}
-                            <tr>
-
-                                <td>
-
-                                    <div class="document-cell">
-
-                                        <div class="document-icon orange">
-
-                                            <i data-lucide="file-text"></i>
-
-                                        </div>
-
-
-                                        <div>
-
-                                            <strong>
-                                                Dokumen Pengadaan Kendaraan
-                                            </strong>
-
-                                            <span>
-                                                ARS-KDR-2018-021
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-
-                                </td>
-
-
-                                <td>
-                                    REG-00087
-                                </td>
-
-
-                                <td>
-
-                                    <strong class="storage-main">
-                                        Filling C / Rak 11
-                                    </strong>
-
-                                    <span class="storage-sub">
-                                        Baris 04
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-                                    2018
-                                </td>
-
-
-                                <td>
-
-                                    <span class="retention-badge warning">
-                                        6 Bulan
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-
-                                    <span class="condition-badge warning">
-                                        Perlu Perhatian
-                                    </span>
-
-                                </td>
-
-
-                                <td>
-
-                                    <button type="button" class="document-more">
-
-                                        <i data-lucide="ellipsis"></i>
-
-                                    </button>
-
-                                </td>
-
-                            </tr>
-
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-
-
-                {{-- FOOTER TABLE --}}
-                <div class="archive-table-footer">
-
-                    <span>
-                        Menampilkan 3 dari 4.825 arsip
-                    </span>
-
-
-                    <a href="#">
-
-                        Lihat seluruh arsip
-
-                        <i data-lucide="arrow-right"></i>
-
-                    </a>
 
                 </div>
 
@@ -765,29 +1244,21 @@
 
 
             {{-- ========================================================
-             DETAIL
+             DETAIL PANEL
         ========================================================= --}}
-            <div class="archive-card archive-detail">
+            <aside class="arsip-card arsip-detail-card" id="arsipDetailCard">
 
 
-                <div class="archive-card-header">
+                <div class="arsip-detail-header">
 
-                    <div>
-
-                        <h3>
-                            Detail Arsip
-                        </h3>
-
-                        <p>
-                            Informasi dokumen terpilih.
-                        </p>
-
-                    </div>
+                    <h3>
+                        Detail Arsip
+                    </h3>
 
 
-                    <button type="button" class="document-more">
+                    <button type="button" class="arsip-detail-close" onclick="closeArsipDetail()" title="Tutup">
 
-                        <i data-lucide="ellipsis"></i>
+                        <i data-lucide="x"></i>
 
                     </button>
 
@@ -795,48 +1266,90 @@
 
 
 
-                <div class="archive-detail-body">
+                {{-- DOCUMENT --}}
+                <div class="arsip-detail-document">
+
+                    <div class="arsip-detail-file-icon">
+
+                        <i data-lucide="file-text"></i>
+
+                    </div>
 
 
-                    {{-- HEADER FILE --}}
-                    <div class="detail-document-head">
+                    <div class="arsip-detail-file-title">
 
-                        <div class="detail-file-icon">
+                        <strong id="detailTitle">
+                            Sertifikat Tanah IPA Gunung Lipan
+                        </strong>
 
-                            <i data-lucide="file-text"></i>
+                    </div>
+
+
+                    <span class="arsip-detail-status good" id="detailStatus">
+
+                        <span></span>
+
+                        Baik
+
+                    </span>
+
+                </div>
+
+
+
+                {{-- INFORMATION --}}
+                <div class="detail-section">
+
+
+                    <div class="detail-section-heading">
+
+                        <i data-lucide="info"></i>
+
+                        Informasi Dokumen
+
+                    </div>
+
+
+                    <div class="detail-data-list">
+
+
+                        <div>
+
+                            <span>
+                                Kode Arsip
+                            </span>
+
+                            <strong id="detailCode">
+                                AR-2023-001
+                            </strong>
 
                         </div>
 
 
                         <div>
 
-                            <span class="detail-code">
-                                ARS-TNH-2026-001
+                            <span>
+                                Judul Dokumen
                             </span>
 
-
-                            <h4>
+                            <strong id="detailDocumentTitle">
                                 Sertifikat Tanah IPA Gunung Lipan
-                            </h4>
-
-
-                            <span class="condition-badge good">
-                                Dokumen Baik
-                            </span>
+                            </strong>
 
                         </div>
 
-                    </div>
 
+                        <div>
 
+                            <span>
+                                Status Dokumen
+                            </span>
 
-                    {{-- INFORMASI --}}
-                    <div class="detail-section-title">
-                        Informasi Dokumen
-                    </div>
+                            <strong class="detail-inline-status good" id="detailInlineStatus">
+                                Baik
+                            </strong>
 
-
-                    <div class="detail-list">
+                        </div>
 
 
                         <div>
@@ -845,12 +1358,11 @@
                                 Nomor Register
                             </span>
 
-                            <strong>
-                                REG-00125
+                            <strong id="detailRegister">
+                                REG-TNH-2020-045
                             </strong>
 
                         </div>
-
 
 
                         <div>
@@ -859,12 +1371,11 @@
                                 Vendor / Sumber
                             </span>
 
-                            <strong>
-                                BPN Samarinda
+                            <strong id="detailVendor">
+                                BPN Kabupaten
                             </strong>
 
                         </div>
-
 
 
                         <div>
@@ -873,12 +1384,11 @@
                                 Tahun Dokumen
                             </span>
 
-                            <strong>
-                                2026
+                            <strong id="detailYear">
+                                2020
                             </strong>
 
                         </div>
-
 
 
                         <div>
@@ -887,8 +1397,8 @@
                                 Nilai Aset
                             </span>
 
-                            <strong>
-                                Rp 4.850.000.000
+                            <strong id="detailValue">
+                                Rp 12.500.000.000
                             </strong>
 
                         </div>
@@ -896,68 +1406,148 @@
 
                     </div>
 
+                </div>
 
 
-                    {{-- LOKASI --}}
-                    <div class="detail-section-title">
+
+                {{-- LOCATION --}}
+                <div class="detail-section">
+
+
+                    <div class="detail-section-heading">
+
+                        <i data-lucide="map-pin"></i>
+
                         Lokasi Penyimpanan
+
                     </div>
 
 
-                    <div class="detail-location">
+                    <div class="detail-location-list">
+
 
                         <div>
 
                             <i data-lucide="building-2"></i>
 
-                        </div>
+                            <span>
+                                Gedung
+                            </span>
 
-
-                        <p>
-
-                            <strong>
+                            <strong id="detailBuilding">
                                 Kantor Pusat
                             </strong>
 
-                            Filling A · Rak 03 · Baris 02
-
-                        </p>
-
-                    </div>
-
-
-
-                    {{-- RETENSI --}}
-                    <div class="detail-section-title">
-                        Retensi
-                    </div>
-
-
-                    <div class="retention-box">
+                        </div>
 
 
                         <div>
+
+                            <i data-lucide="archive"></i>
+
+                            <span>
+                                Filling
+                            </span>
+
+                            <strong id="detailFilling">
+                                Filling A
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <i data-lucide="boxes"></i>
+
+                            <span>
+                                Rak
+                            </span>
+
+                            <strong id="detailRack">
+                                Rak 03
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <i data-lucide="grid-2x2"></i>
+
+                            <span>
+                                Baris
+                            </span>
+
+                            <strong id="detailRow">
+                                Baris 02
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                {{-- RETENTION --}}
+                <div class="detail-section">
+
+
+                    <div class="detail-section-heading">
+
+                        <i data-lucide="clock-3"></i>
+
+                        Informasi Retensi
+
+                    </div>
+
+
+                    <div class="detail-retention-list">
+
+
+                        <div>
+
+                            <i data-lucide="clock-3"></i>
 
                             <span>
                                 Masa Retensi
                             </span>
 
-                            <strong>
+                            <strong id="detailRetention">
                                 10 Tahun
                             </strong>
 
                         </div>
 
 
+                        <div>
+
+                            <i data-lucide="calendar-clock"></i>
+
+                            <span>
+                                Tanggal Berakhir
+                            </span>
+
+                            <strong id="detailExpiry">
+                                15 Mar 2030
+                            </strong>
+
+                        </div>
+
 
                         <div>
 
+                            <i data-lucide="sparkles"></i>
+
                             <span>
-                                Berakhir
+                                Sisa Waktu
                             </span>
 
-                            <strong>
-                                September 2036
+                            <strong class="remaining" id="detailRemaining">
+                                4 tahun 3 bulan
                             </strong>
 
                         </div>
@@ -965,37 +1555,36 @@
 
                     </div>
 
-
-
-                    {{-- BUTTON --}}
-                    <div class="detail-buttons">
-
-
-                        <button type="button" class="detail-button primary">
-
-                            <i data-lucide="eye"></i>
-
-                            Lihat Dokumen
-
-                        </button>
+                </div>
 
 
 
-                        <button type="button" class="detail-button">
-
-                            <i data-lucide="download"></i>
-
-                            Download
-
-                        </button>
+                {{-- ACTION --}}
+                <div class="arsip-detail-actions">
 
 
-                    </div>
+                    <button type="button" class="detail-view-button">
+
+                        <i data-lucide="eye"></i>
+
+                        Lihat Dokumen
+
+                    </button>
+
+
+                    <button type="button" class="detail-download-button">
+
+                        <i data-lucide="download"></i>
+
+                        Download
+
+                    </button>
 
 
                 </div>
 
-            </div>
+
+            </aside>
 
 
         </div>
@@ -1004,3 +1593,9 @@
     </section>
 
 @endsection
+
+
+
+@push('scripts')
+    <script src="{{ asset('js/pages/arsip.js') }}"></script>
+@endpush

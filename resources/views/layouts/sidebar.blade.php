@@ -5,11 +5,15 @@
     ============================================================= --}}
     <div class="sidebar-brand">
 
-        <div class="sidebar-brand-logo">
+        {{-- <div class="sidebar-brand-logo">
 
             <i data-lucide="droplets"></i>
 
-        </div>
+        </div> --}}
+
+
+
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Perumdam Tirta Kencana" width="50">
 
 
         <div class="sidebar-brand-text">
@@ -357,9 +361,9 @@
         {{-- ========================================================
              NILAI ASET
         ========================================================= --}}
-        <a href="{{ route('nilai.index') }}"
+        <a href="{{ route('main.nilai') }}"
             class="sidebar-menu-item
-                {{ request()->routeIs('nilai.index') ? 'active' : '' }}">
+                {{ request()->routeIs('main.nilai') ? 'active' : '' }}">
 
             <span class="sidebar-menu-icon">
 
@@ -379,9 +383,9 @@
         {{-- ========================================================
              ARSIP
         ========================================================= --}}
-        <a href="{{ route('arsip.index') }}"
+        <a href="{{ route('main.arsip') }}"
             class="sidebar-menu-item
-                {{ request()->routeIs('arsip.index') ? 'active' : '' }}">
+                {{ request()->routeIs('main.arsip') ? 'active' : '' }}">
 
             <span class="sidebar-menu-icon">
 

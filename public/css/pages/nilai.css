@@ -1,165 +1,133 @@
 /* =========================================================
-   NILAI ASET
+   NILAI ASET PAGE
+   SISTEM ASET - PERUMDAM TIRTA KENCANA
 ========================================================= */
 
-.module-header {
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.nilai-page {
+    min-height: calc(100vh - 60px);
+
+    background:
+        linear-gradient(
+            180deg,
+            #f2f8ff 0%,
+            #f5f8fc 100%
+        );
+}
+
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.nilai-page-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
+
     gap: 25px;
 
     margin-bottom: 20px;
 }
 
-.module-eyebrow {
+
+.nilai-heading {
+    min-width: 0;
+}
+
+
+.nilai-eyebrow {
     display: block;
 
     margin-bottom: 5px;
 
-    color: var(--primary);
+    color: #0868d0;
 
-    font-size: 9px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 750;
 
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+
     text-transform: uppercase;
 }
 
-.module-header h2 {
+
+.nilai-heading h1 {
     margin: 0;
 
-    color: #172033;
+    color: #081d4d;
 
-    font-size: 23px;
-    font-weight: 700;
-}
+    font-size: 34px;
 
-.module-header p {
-    max-width: 620px;
+    font-weight: 780;
 
-    margin: 7px 0 0;
+    line-height: 1.05;
 
-    color: #8793a3;
-
-    font-size: 11px;
-    line-height: 1.6;
+    letter-spacing: -.7px;
 }
 
 
-/* =========================================================
-   BUTTON
-========================================================= */
+.nilai-heading p {
+    max-width: 760px;
 
-.btn-module-primary,
-.btn-module-secondary,
-.btn-filter-reset {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    margin: 8px 0 0;
 
-    gap: 7px;
+    color: #587197;
 
-    border-radius: 9px;
+    font-size: 13px;
 
-    font-size: 10.5px;
-    font-weight: 600;
-
-    transition: .18s;
-}
-
-.btn-module-primary {
-    min-height: 39px;
-
-    padding: 0 14px;
-
-    border: 0;
-
-    background: var(--primary);
-
-    color: #ffffff;
-
-    box-shadow:
-        0 6px 14px rgba(11, 99, 206, .16);
-}
-
-.btn-module-primary:hover {
-    background: var(--primary-dark);
-}
-
-.btn-module-primary svg,
-.btn-module-secondary svg,
-.btn-filter-reset svg {
-    width: 14px;
-    height: 14px;
-}
-
-.btn-module-secondary,
-.btn-filter-reset {
-    min-height: 35px;
-
-    padding: 0 11px;
-
-    border: 1px solid var(--border);
-
-    background: #ffffff;
-
-    color: #687486;
-}
-
-.btn-module-secondary:hover,
-.btn-filter-reset:hover {
-    color: var(--primary);
-
-    background: #f8fafc;
+    line-height: 1.5;
 }
 
 
 /* =========================================================
-   SUMMARY
+   HEADER ACTIONS
 ========================================================= */
 
-.summary-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: 14px;
-
-    margin-bottom: 16px;
-}
-
-.summary-card {
-    min-height: 100px;
-
+.nilai-header-actions {
     display: flex;
     align-items: center;
 
     gap: 13px;
 
-    padding: 17px;
-
-    border: 1px solid var(--border);
-
-    border-radius: 12px;
-
-    background: #ffffff;
-
-    transition:
-        transform .18s ease,
-        box-shadow .18s ease;
+    flex-shrink: 0;
 }
 
-.summary-card:hover {
-    transform: translateY(-2px);
+
+/* =========================================================
+   DATE CARD
+========================================================= */
+
+.nilai-date-card {
+    min-width: 205px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 12px 14px;
+
+    border: 1px solid #dae5f1;
+
+    border-radius: 10px;
+
+    background:
+        rgba(255, 255, 255, .92);
 
     box-shadow:
-        0 8px 22px rgba(33, 48, 70, .06);
+        0 5px 17px
+        rgba(24, 72, 117, .05);
 }
 
-.summary-icon {
-    width: 41px;
-    height: 41px;
+
+.nilai-date-icon {
+    width: 39px;
+    height: 39px;
 
     flex-shrink: 0;
 
@@ -167,191 +135,964 @@
     align-items: center;
     justify-content: center;
 
-    border-radius: 10px;
+    border-radius: 8px;
+
+    background: #eaf3ff;
+
+    color: #086ad3;
 }
 
-.summary-icon svg {
+
+.nilai-date-icon svg {
     width: 18px;
     height: 18px;
 }
 
-.summary-icon.blue {
-    color: #0b63ce;
 
-    background: #eaf3ff;
-}
-
-.summary-icon.green {
-    color: #16a34a;
-
-    background: #ecfdf3;
-}
-
-.summary-icon.purple {
-    color: #7c3aed;
-
-    background: #f3eeff;
-}
-
-.summary-icon.orange {
-    color: #d97706;
-
-    background: #fff7e6;
-}
-
-.summary-label {
+.nilai-date-card strong {
     display: block;
 
-    color: #8995a4;
+    color: #1d3357;
+
+    font-size: 10.5px;
+
+    font-weight: 650;
+}
+
+
+.nilai-date-card span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #778aa6;
 
     font-size: 9px;
-    font-weight: 600;
-}
-
-.summary-card strong {
-    display: block;
-
-    margin-top: 3px;
-
-    color: #263244;
-
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.summary-card small {
-    display: block;
-
-    margin-top: 3px;
-
-    color: #a0a9b6;
-
-    font-size: 8.5px;
-}
-
-.text-success-custom {
-    color: #16a34a !important;
 }
 
 
 /* =========================================================
-   MODULE CARD
+   ADD BUTTON
 ========================================================= */
 
-.module-card {
+.nilai-add-button {
+    height: 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    padding: 0 21px;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #1676df,
+            #0966ce
+        );
+
+    color: #ffffff;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    box-shadow:
+        0 8px 18px
+        rgba(8, 99, 203, .15);
+
+    cursor: pointer;
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+
+.nilai-add-button:hover {
+    transform:
+        translateY(-1px);
+
+    background:
+        linear-gradient(
+            90deg,
+            #126fd5,
+            #075ebe
+        );
+
+    box-shadow:
+        0 11px 22px
+        rgba(8, 99, 203, .22);
+}
+
+
+.nilai-add-button svg {
+    width: 19px;
+    height: 19px;
+}
+
+
+/* =========================================================
+   KPI GRID
+========================================================= */
+
+.nilai-kpi-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 15px;
+
     margin-bottom: 16px;
+}
+
+
+/* =========================================================
+   KPI CARD
+========================================================= */
+
+.nilai-kpi-card {
+    min-height: 116px;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
 
     overflow: hidden;
 
-    border: 1px solid var(--border);
+    padding: 17px;
+
+    border: 1px solid #dce6f1;
 
     border-radius: 12px;
 
-    background: #ffffff;
+    background:
+        rgba(255, 255, 255, .95);
+
+    box-shadow:
+        0 5px 18px
+        rgba(30, 70, 110, .035);
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease;
 }
 
-.module-card-header,
-.filter-top {
+
+.nilai-kpi-card:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 10px 24px
+        rgba(30, 70, 110, .07);
+}
+
+
+/* =========================================================
+   KPI ICON
+========================================================= */
+
+.nilai-kpi-icon {
+    width: 56px;
+    height: 56px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    color: #ffffff;
+}
+
+
+.nilai-kpi-icon svg {
+    width: 26px;
+    height: 26px;
+
+    stroke-width: 2;
+}
+
+
+.nilai-kpi-icon.blue {
+    background:
+        linear-gradient(
+            145deg,
+            #1780ef,
+            #0768d7
+        );
+}
+
+
+.nilai-kpi-icon.green {
+    background:
+        linear-gradient(
+            145deg,
+            #32c987,
+            #13ae6b
+        );
+}
+
+
+.nilai-kpi-icon.purple {
+    background:
+        linear-gradient(
+            145deg,
+            #9454ed,
+            #7835db
+        );
+}
+
+
+.nilai-kpi-icon.orange {
+    background:
+        linear-gradient(
+            145deg,
+            #ff9f23,
+            #f57800
+        );
+}
+
+
+/* =========================================================
+   KPI CONTENT
+========================================================= */
+
+.nilai-kpi-content {
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+.nilai-kpi-content > span {
+    display: block;
+
+    color: #17315a;
+
+    font-size: 11.5px;
+
+    font-weight: 620;
+}
+
+
+.nilai-kpi-content > strong {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #071b4c;
+
+    font-size: 27px;
+
+    line-height: 1;
+
+    font-weight: 780;
+
+    white-space: nowrap;
+}
+
+
+.nilai-kpi-content > small {
+    display: flex;
+    align-items: center;
+
+    gap: 3px;
+
+    margin-top: 9px;
+
+    color: #71829d;
+
+    font-size: 9.5px;
+
+    white-space: nowrap;
+}
+
+
+.nilai-kpi-content > small.positive {
+    color: #22a55a;
+}
+
+
+.nilai-kpi-content small svg {
+    width: 11px;
+    height: 11px;
+}
+
+
+/* =========================================================
+   KPI SPARKLINE
+========================================================= */
+
+.nilai-sparkline {
+    width: 72px;
+
+    align-self: stretch;
+
+    display: flex;
+    align-items: center;
+}
+
+
+.nilai-sparkline svg {
+    width: 100%;
+    height: 55px;
+
+    overflow: visible;
+}
+
+
+.nilai-sparkline polyline {
+    fill: none;
+
+    stroke-width: 2.6;
+
+    stroke-linecap: round;
+
+    stroke-linejoin: round;
+}
+
+
+.nilai-sparkline.blue polyline {
+    stroke: #3994fa;
+}
+
+
+.nilai-sparkline.green polyline {
+    stroke: #20b974;
+}
+
+
+.nilai-sparkline.purple polyline {
+    stroke: #9a62f4;
+}
+
+
+/* =========================================================
+   COMMON CARD
+========================================================= */
+
+.nilai-card {
+    overflow: hidden;
+
+    border: 1px solid #dfe8f1;
+
+    border-radius: 12px;
+
+    background:
+        rgba(255, 255, 255, .96);
+
+    box-shadow:
+        0 5px 18px
+        rgba(30, 70, 110, .03);
+}
+
+
+/* =========================================================
+   CHART GRID
+========================================================= */
+
+.nilai-chart-grid {
+    display: grid;
+
+    grid-template-columns:
+        1.34fr 1fr;
+
+    gap: 15px;
+
+    margin-bottom: 16px;
+}
+
+
+/* =========================================================
+   CARD HEADER
+========================================================= */
+
+.nilai-card-header {
+    min-height: 64px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    gap: 20px;
+    gap: 15px;
 
-    padding: 15px 17px;
-
-    border-bottom: 1px solid var(--border);
+    padding:
+        15px
+        18px
+        9px;
 }
 
-.module-card-header h3,
-.filter-top h3 {
+
+.nilai-card-header h3 {
     margin: 0;
 
-    color: #263244;
+    color: #10264d;
 
-    font-size: 12px;
+    font-size: 13px;
+
     font-weight: 700;
 }
 
-.module-card-header p,
-.filter-top p {
-    margin: 3px 0 0;
 
-    color: #9aa4b2;
+.nilai-card-header p {
+    margin: 4px 0 0;
+
+    color: #6f839f;
+
+    font-size: 9.5px;
+}
+
+
+/* =========================================================
+   PERIOD SELECT
+========================================================= */
+
+.nilai-period-select {
+    height: 35px;
+
+    padding:
+        0
+        30px
+        0
+        11px;
+
+    border: 1px solid #d7e2ee;
+
+    border-radius: 6px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: #365071;
+
+    font-size: 9.5px;
+
+    cursor: pointer;
+}
+
+
+.nilai-period-select:focus {
+    border-color: #3389ee;
+
+    box-shadow:
+        0 0 0 2px
+        rgba(51, 137, 238, .08);
+}
+
+
+/* =========================================================
+   TREND CHART
+========================================================= */
+
+.nilai-chart-body {
+    height: 265px;
+
+    padding:
+        6px
+        18px
+        17px;
+}
+
+
+/* =========================================================
+   DISTRIBUTION AREA
+========================================================= */
+
+.nilai-distribution-body {
+    min-height: 265px;
+
+    display: grid;
+
+    grid-template-columns:
+        210px 1fr;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding:
+        5px
+        18px
+        17px;
+}
+
+
+/* =========================================================
+   DONUT
+========================================================= */
+
+.nilai-donut-wrap {
+    width: 195px;
+    height: 195px;
+
+    position: relative;
+
+    margin: auto;
+}
+
+
+.nilai-donut-center {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    pointer-events: none;
+}
+
+
+.nilai-donut-center strong {
+    color: #112750;
+
+    font-size: 20px;
+
+    font-weight: 750;
+}
+
+
+.nilai-donut-center span {
+    margin-top: 3px;
+
+    color: #657c9c;
 
     font-size: 9px;
 }
 
 
 /* =========================================================
-   FILTER
+   CATEGORY LEGEND
 ========================================================= */
 
-.filter-card {
-    padding-bottom: 16px;
+.nilai-category-legend {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
 }
 
-.filter-grid {
+
+.nilai-category-legend > div {
     display: grid;
 
     grid-template-columns:
-        1.6fr repeat(3, 1fr);
+        10px
+        minmax(125px, 1fr)
+        auto
+        39px;
 
-    gap: 12px;
+    align-items: center;
 
-    padding: 15px 17px 0;
+    gap: 8px;
 }
 
-.filter-field label {
-    display: block;
 
-    margin-bottom: 6px;
+.nilai-category-legend p {
+    margin: 0;
 
-    color: #687486;
+    color: #284268;
 
     font-size: 9.5px;
+}
+
+
+.nilai-category-legend strong {
+    color: #10264e;
+
+    font-size: 9.5px;
+
+    white-space: nowrap;
+}
+
+
+.nilai-category-legend small {
+    color: #667d9c;
+
+    font-size: 9px;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   CATEGORY DOT
+========================================================= */
+
+.nilai-dot {
+    width: 9px;
+    height: 9px;
+
+    border-radius: 50%;
+}
+
+
+.nilai-dot.tanah {
+    background: #3389ee;
+}
+
+
+.nilai-dot.mesin {
+    background: #ffab27;
+}
+
+
+.nilai-dot.gedung {
+    background: #3ac088;
+}
+
+
+.nilai-dot.jalan {
+    background: #ef5860;
+}
+
+
+.nilai-dot.lainnya {
+    background: #9163e6;
+}
+
+
+.nilai-dot.konstruksi {
+    background: #62bfe4;
+}
+
+
+/* =========================================================
+   FILTER CARD
+========================================================= */
+
+.nilai-filter-card {
+    margin-bottom: 15px;
+
+    padding:
+        14px
+        16px
+        15px;
+}
+
+
+.nilai-filter-title h3 {
+    margin:
+        0
+        0
+        11px;
+
+    color: #10264d;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   FILTER GRID
+========================================================= */
+
+.nilai-filter-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(270px, 1.6fr)
+        minmax(140px, .82fr)
+        minmax(160px, .92fr)
+        minmax(170px, 1fr)
+        auto;
+
+    align-items: end;
+
+    gap: 12px;
+}
+
+
+/* =========================================================
+   FILTER GROUP
+========================================================= */
+
+.nilai-filter-group label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #344d70;
+
+    font-size: 10px;
+
     font-weight: 600;
 }
 
-.module-input {
-    min-height: 39px;
 
-    border-color: #e1e7ed;
+/* =========================================================
+   FILTER INPUT
+========================================================= */
 
-    border-radius: 8px;
+.nilai-filter-group select,
+.nilai-search-input input {
+    width: 100%;
+    height: 40px;
 
-    color: #475467;
+    border: 1px solid #d7e2ed;
+
+    border-radius: 7px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: #334f74;
 
     font-size: 10.5px;
+
+    transition:
+        border-color .16s ease,
+        box-shadow .16s ease;
 }
 
-.module-input:focus {
-    border-color: var(--primary);
+
+.nilai-filter-group select {
+    padding:
+        0
+        11px;
+
+    cursor: pointer;
+}
+
+
+.nilai-filter-group select:focus,
+.nilai-search-input input:focus {
+    border-color: #3389ee;
 
     box-shadow:
-        0 0 0 3px rgba(11, 99, 206, .08);
+        0 0 0 2px
+        rgba(51, 137, 238, .08);
 }
 
-.input-with-icon {
+
+/* =========================================================
+   SEARCH INPUT
+========================================================= */
+
+.nilai-search-input {
     position: relative;
 }
 
-.input-with-icon svg {
-    width: 14px;
-    height: 14px;
+
+.nilai-search-input svg {
+    width: 16px;
+    height: 16px;
 
     position: absolute;
 
     top: 50%;
-    left: 12px;
+    left: 13px;
 
-    transform: translateY(-50%);
+    transform:
+        translateY(-50%);
 
-    color: #9ba6b5;
+    color: #547091;
+
+    pointer-events: none;
 }
 
-.input-with-icon input {
-    padding-left: 35px;
+
+.nilai-search-input input {
+    padding:
+        0
+        12px
+        0
+        39px;
+}
+
+
+.nilai-search-input input::placeholder {
+    color: #90a0b7;
+}
+
+
+/* =========================================================
+   FILTER ACTIONS
+========================================================= */
+
+.nilai-filter-actions {
+    display: flex;
+
+    gap: 8px;
+}
+
+
+.nilai-filter-button,
+.nilai-reset-button {
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding:
+        0
+        16px;
+
+    border-radius: 7px;
+
+    font-size: 10px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        transform .16s ease,
+        background .16s ease;
+}
+
+
+.nilai-filter-button {
+    border: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            #2583ed,
+            #106bd2
+        );
+
+    color: #ffffff;
+}
+
+
+.nilai-filter-button:hover {
+    transform:
+        translateY(-1px);
+}
+
+
+.nilai-reset-button {
+    border: 0;
+
+    background: #e7f0fb;
+
+    color: #34567e;
+}
+
+
+.nilai-reset-button:hover {
+    background: #dceaf8;
+}
+
+
+.nilai-filter-button svg,
+.nilai-reset-button svg {
+    width: 14px;
+    height: 14px;
+}
+
+
+/* =========================================================
+   TABLE CARD
+========================================================= */
+
+.nilai-table-card {
+    margin-bottom: 10px;
+}
+
+
+/* =========================================================
+   TABLE HEADER
+========================================================= */
+
+.nilai-table-header {
+    min-height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding:
+        10px
+        16px;
+}
+
+
+.nilai-table-header h3 {
+    margin: 0;
+
+    color: #10264d;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   EXPORT BUTTON
+========================================================= */
+
+.nilai-export-button {
+    height: 33px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding:
+        0
+        11px;
+
+    border: 1px solid #d9e3ee;
+
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    color: #334f72;
+
+    font-size: 9px;
+
+    cursor: pointer;
+
+    transition:
+        background .16s ease,
+        border-color .16s ease;
+}
+
+
+.nilai-export-button:hover {
+    border-color: #b9cce0;
+
+    background: #f8fbff;
+}
+
+
+.nilai-export-button svg {
+    width: 12px;
+    height: 12px;
 }
 
 
@@ -359,7 +1100,7 @@
    TABLE
 ========================================================= */
 
-.modern-table {
+.nilai-table {
     width: 100%;
 
     border-collapse: collapse;
@@ -367,193 +1108,207 @@
     white-space: nowrap;
 }
 
-.modern-table thead th {
-    padding: 10px 13px;
 
-    border-bottom: 1px solid var(--border);
+/* HEADER */
 
-    background: #fafbfc;
+.nilai-table thead th {
+    height: 36px;
 
-    color: #8f9baa;
+    padding:
+        8px
+        10px;
 
-    font-size: 8px;
+    border:
+        1px solid
+        #dce6ef;
+
+    background:
+        linear-gradient(
+            180deg,
+            #e9f4ff,
+            #dfeefa
+        );
+
+    color: #17325a;
+
+    font-size: 9px;
+
     font-weight: 700;
 
-    letter-spacing: .35px;
-
-    text-transform: uppercase;
-}
-
-.modern-table tbody td {
-    padding: 12px 13px;
-
-    border-bottom: 1px solid #eff2f5;
-
-    color: #637083;
-
-    font-size: 9.5px;
+    text-align: left;
 
     vertical-align: middle;
 }
 
-.modern-table tbody tr {
-    transition: background .15s;
+
+/* BODY */
+
+.nilai-table tbody td {
+    height: 35px;
+
+    padding:
+        7px
+        10px;
+
+    border:
+        1px solid
+        #e4ebf2;
+
+    color: #354f73;
+
+    font-size: 9px;
+
+    vertical-align: middle;
 }
 
-.modern-table tbody tr:hover {
+
+.nilai-table tbody tr {
+    background: #ffffff;
+
+    transition:
+        background .14s ease;
+}
+
+
+.nilai-table tbody tr:nth-child(even) {
     background: #fbfdff;
 }
 
-.table-main-text {
-    color: #364152;
 
-    font-size: 9.5px;
-    font-weight: 600;
-}
-
-.table-sub-text {
-    display: block;
-
-    margin-top: 2px;
-
-    color: #a0aab7;
-
-    font-size: 8px;
+.nilai-table tbody tr:hover {
+    background: #f2f8ff;
 }
 
 
 /* =========================================================
-   ASSET CELL
+   TABLE ALIGNMENT
 ========================================================= */
 
-.asset-table-name {
-    display: flex;
-    align-items: center;
-
-    gap: 9px;
+.nilai-table .nilai-column {
+    text-align: right;
 }
 
-.asset-table-name strong {
-    display: block;
 
-    color: #303a49;
-
-    font-size: 9.5px;
+.nilai-table .status-column,
+.nilai-table .action-column {
+    text-align: center;
 }
 
-.asset-table-name span {
-    display: block;
 
-    margin-top: 2px;
+/* =========================================================
+   STATUS BADGES
+========================================================= */
 
-    color: #9ca7b5;
+.nilai-status {
+    min-width: 54px;
 
-    font-size: 8px;
-}
-
-.asset-table-icon {
-    width: 31px;
-    height: 31px;
-
-    flex-shrink: 0;
-
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    border-radius: 8px;
-
-    color: var(--primary);
-
-    background: var(--primary-light);
-}
-
-.asset-table-icon svg {
-    width: 14px;
-    height: 14px;
-}
-
-.money-value {
-    color: #263244;
-
-    font-size: 9.5px;
-    font-weight: 700;
-}
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-.status-pill {
-    display: inline-flex;
-    align-items: center;
-
-    padding: 4px 8px;
+    padding:
+        4px
+        9px;
 
     border-radius: 20px;
 
     font-size: 8px;
-    font-weight: 600;
+
+    font-weight: 650;
 }
 
-.status-pill.active {
-    color: #15803d;
 
-    background: #ecfdf3;
+.nilai-status.selesai {
+    background: #dff7e9;
+
+    color: #14844a;
+}
+
+
+.nilai-status.verifikasi {
+    background: #fff0d5;
+
+    color: #c47a00;
+}
+
+
+.nilai-status.aktif {
+    background: #def5e9;
+
+    color: #168353;
+}
+
+
+.nilai-status.draft {
+    background: #e8edf4;
+
+    color: #61718a;
 }
 
 
 /* =========================================================
-   ACTION
+   ROW ACTIONS
 ========================================================= */
 
-.table-actions {
+.nilai-row-actions {
     display: flex;
     align-items: center;
     justify-content: center;
 
-    gap: 5px;
+    gap: 6px;
 }
 
-.action-button {
-    width: 29px;
-    height: 29px;
 
-    display: inline-flex;
+.nilai-row-actions button {
+    width: 26px;
+    height: 26px;
+
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    border: 1px solid var(--border);
+    padding: 0;
 
-    border-radius: 7px;
+    border: 0;
 
-    background: #ffffff;
+    border-radius: 5px;
 
-    transition: .15s;
+    color: #ffffff;
+
+    cursor: pointer;
+
+    transition:
+        transform .14s ease,
+        opacity .14s ease;
 }
 
-.action-button svg {
-    width: 13px;
-    height: 13px;
+
+.nilai-row-actions button:hover {
+    transform:
+        translateY(-1px);
+
+    opacity: .9;
 }
 
-.action-button.view {
-    color: var(--primary);
+
+.nilai-row-actions svg {
+    width: 12px;
+    height: 12px;
 }
 
-.action-button.edit {
-    color: #d97706;
+
+.nilai-row-actions .view {
+    background: #3e9bff;
 }
 
-.action-button.delete {
-    color: #dc2626;
+
+.nilai-row-actions .edit {
+    background: #1377e2;
 }
 
-.action-button:hover {
-    background: #f8fafc;
 
-    transform: translateY(-1px);
+.nilai-row-actions .delete {
+    background: #f23848;
 }
 
 
@@ -561,97 +1316,430 @@
    TABLE FOOTER
 ========================================================= */
 
-.table-footer {
+.nilai-table-footer {
+    min-height: 56px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    gap: 20px;
+    gap: 15px;
 
-    padding: 12px 15px;
+    padding:
+        10px
+        15px;
 
-    color: #97a2b1;
-
-    font-size: 8.5px;
+    border-top:
+        1px solid
+        #eef2f6;
 }
 
-.pagination-custom {
+
+/* =========================================================
+   TABLE INFO
+========================================================= */
+
+.nilai-table-info {
+    color: #5f7390;
+
+    font-size: 9px;
+}
+
+
+.nilai-table-info strong {
+    color: #1e385f;
+}
+
+
+/* =========================================================
+   PAGINATION AREA
+========================================================= */
+
+.nilai-pagination-area {
     display: flex;
+    align-items: center;
 
-    gap: 4px;
+    gap: 14px;
 }
 
-.pagination-custom button {
-    min-width: 28px;
-    height: 28px;
+
+.nilai-pagination-area > select {
+    height: 34px;
+
+    padding:
+        0
+        26px
+        0
+        10px;
+
+    border: 1px solid #d9e3ed;
+
+    border-radius: 6px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: #3b5577;
+
+    font-size: 9px;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.nilai-pagination {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+}
+
+
+.nilai-pagination button {
+    min-width: 34px;
+    height: 34px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border: 1px solid var(--border);
+    border: 1px solid #dce5ee;
 
-    border-radius: 7px;
+    border-radius: 6px;
 
     background: #ffffff;
 
-    color: #758195;
+    color: #496481;
 
-    font-size: 8.5px;
+    font-size: 9px;
+
+    cursor: pointer;
+
+    transition:
+        background .15s ease,
+        color .15s ease,
+        border-color .15s ease;
 }
 
-.pagination-custom button.active {
-    border-color: var(--primary);
 
-    background: var(--primary);
+.nilai-pagination button:hover:not(:disabled):not(.active) {
+    border-color: #b9cce0;
+
+    background: #f3f8fe;
+}
+
+
+.nilai-pagination button.active {
+    border-color: #1471db;
+
+    background: #1471db;
 
     color: #ffffff;
 }
 
-.pagination-custom button:disabled {
-    opacity: .4;
+
+.nilai-pagination button:disabled {
+    opacity: .45;
 
     cursor: not-allowed;
 }
 
-.pagination-custom svg {
+
+.nilai-pagination button svg {
     width: 12px;
     height: 12px;
 }
 
 
+.nilai-pagination span {
+    color: #667b96;
+
+    font-size: 9px;
+}
+
+
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE - LARGE
 ========================================================= */
 
-@media (max-width: 1200px) {
+@media (max-width: 1450px) {
 
-    .summary-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
+    .nilai-kpi-content > strong {
+        font-size: 25px;
     }
 
-    .filter-grid {
+
+    .nilai-category-legend p,
+    .nilai-category-legend strong {
+        font-size: 9px;
+    }
+
+
+    .nilai-filter-grid {
         grid-template-columns:
-            repeat(2, 1fr);
+            minmax(250px, 1.5fr)
+            minmax(130px, .8fr)
+            minmax(145px, .9fr)
+            minmax(150px, .95fr)
+            auto;
     }
 
 }
 
 
-@media (max-width: 650px) {
+/* =========================================================
+   RESPONSIVE - 1350
+========================================================= */
 
-    .module-header {
-        flex-direction: column;
+@media (max-width: 1350px) {
+
+    .nilai-kpi-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 
-    .summary-grid,
-    .filter-grid {
+
+    .nilai-filter-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .nilai-filter-actions {
+        grid-column:
+            1 / 3;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE - 1050
+========================================================= */
+
+@media (max-width: 1050px) {
+
+    .nilai-chart-grid {
         grid-template-columns: 1fr;
     }
 
-    .btn-module-primary {
+
+    .nilai-page-header {
+        align-items: flex-start;
+    }
+
+
+    .nilai-header-actions {
+        flex-wrap: wrap;
+
+        justify-content: flex-end;
+    }
+
+
+    .nilai-heading h1 {
+        font-size: 30px;
+    }
+
+
+    .nilai-chart-body {
+        height: 250px;
+    }
+
+
+    .nilai-distribution-body {
+        min-height: 250px;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+
+@media (max-width: 760px) {
+
+    .nilai-page-header {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .nilai-header-actions {
         width: 100%;
+
+        justify-content: space-between;
+    }
+
+
+    .nilai-date-card {
+        flex: 1;
+    }
+
+
+    .nilai-heading h1 {
+        font-size: 28px;
+    }
+
+
+    .nilai-heading p {
+        font-size: 12px;
+    }
+
+
+    .nilai-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .nilai-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .nilai-filter-actions {
+        grid-column: auto;
+    }
+
+
+    .nilai-distribution-body {
+        grid-template-columns: 1fr;
+    }
+
+
+    .nilai-donut-wrap {
+        width: 175px;
+        height: 175px;
+    }
+
+
+    .nilai-category-legend {
+        max-width: 420px;
+
+        width: 100%;
+
+        margin: auto;
+    }
+
+
+    .nilai-card-header h3,
+    .nilai-filter-title h3,
+    .nilai-table-header h3 {
+        font-size: 12px;
+    }
+
+
+    .nilai-table-footer {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .nilai-pagination-area {
+        width: 100%;
+
+        overflow-x: auto;
+
+        padding-bottom: 2px;
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE - PHONE
+========================================================= */
+
+@media (max-width: 520px) {
+
+    .nilai-header-actions {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .nilai-date-card {
+        width: 100%;
+    }
+
+
+    .nilai-add-button {
+        width: 100%;
+    }
+
+
+    .nilai-heading h1 {
+        font-size: 26px;
+    }
+
+
+    .nilai-kpi-card {
+        min-height: 108px;
+    }
+
+
+    .nilai-kpi-content > strong {
+        font-size: 23px;
+    }
+
+
+    .nilai-kpi-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+
+    .nilai-kpi-icon svg {
+        width: 23px;
+        height: 23px;
+    }
+
+
+    .nilai-sparkline {
+        width: 55px;
+    }
+
+
+    .nilai-card-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .nilai-period-select {
+        width: 100%;
+    }
+
+
+    .nilai-filter-actions {
+        flex-direction: column;
+    }
+
+
+    .nilai-filter-button,
+    .nilai-reset-button {
+        width: 100%;
+    }
+
+
+    .nilai-table-header {
+        align-items: flex-start;
+    }
+
+
+    .nilai-pagination-area {
+        align-items: flex-start;
+
+        flex-direction: column;
     }
 
 }

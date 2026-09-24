@@ -2,79 +2,104 @@
 
 @section('title', 'Nilai Aset')
 
-@section('page-title', 'Nilai Aset')
-
-@section('page-description', 'Monitoring dan pengelolaan nilai aset perusahaan')
-
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/pages/nilai.css') }}">
 @endpush
 
 
-
 @section('content')
 
-    <section class="content">
+    <section class="content nilai-page">
 
 
         {{-- ============================================================
-         HEADER HALAMAN
+         PAGE HEADER
     ============================================================= --}}
-        <div class="module-header">
+        <div class="nilai-page-header">
 
-            <div>
 
-                <span class="module-eyebrow">
+            <div class="nilai-heading">
+
+                <span class="nilai-eyebrow">
                     Manajemen Aset
                 </span>
 
-                <h2>
+                <h1>
                     Nilai Aset
-                </h2>
+                </h1>
 
                 <p>
-                    Kelola pencatatan nilai aset, voucher transaksi,
-                    lokasi, kategori, dan riwayat perubahan nilai
-                    aset perusahaan.
+                    Kelola penilaian aset, transaksi voucher, kategori,
+                    lokasi, serta riwayat nilai aset perusahaan dengan
+                    data yang akurat dan terintegrasi.
                 </p>
 
             </div>
 
 
-            <button type="button" class="btn-module-primary">
 
-                <i data-lucide="plus"></i>
+            <div class="nilai-header-actions">
 
-                <span>
-                    Tambah Nilai Aset
-                </span>
 
-            </button>
+                {{-- DATE --}}
+                <div class="nilai-date-card">
+
+                    <div class="nilai-date-icon">
+                        <i data-lucide="calendar-days"></i>
+                    </div>
+
+                    <div>
+
+                        <strong id="nilaiCurrentDate">
+                            Kamis, 24 September 2026
+                        </strong>
+
+                        <span id="nilaiCurrentTime">
+                            12:24 WIB
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                {{-- ADD --}}
+                <button type="button" class="nilai-add-button">
+
+                    <i data-lucide="plus"></i>
+
+                    <span>
+                        Tambah Nilai Aset
+                    </span>
+
+                </button>
+
+
+            </div>
+
 
         </div>
 
 
 
         {{-- ============================================================
-         SUMMARY
+         KPI
     ============================================================= --}}
-        <div class="summary-grid">
+        <div class="nilai-kpi-grid">
 
 
             {{-- TOTAL NILAI --}}
-            <div class="summary-card">
+            <div class="nilai-kpi-card">
 
-                <div class="summary-icon blue">
-
-                    <i data-lucide="wallet-cards"></i>
-
+                <div class="nilai-kpi-icon blue">
+                    <i data-lucide="database"></i>
                 </div>
 
+                <div class="nilai-kpi-content">
 
-                <div>
-
-                    <span class="summary-label">
+                    <span>
                         Total Nilai Aset
                     </span>
 
@@ -82,9 +107,24 @@
                         Rp 928,7 M
                     </strong>
 
-                    <small>
-                        Seluruh nilai aset tercatat
+                    <small class="positive">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +5,2% dari tahun lalu
+
                     </small>
+
+                </div>
+
+
+                <div class="nilai-sparkline blue">
+
+                    <svg viewBox="0 0 100 45">
+
+                        <polyline points="2,38 18,21 33,27 50,13 65,20 82,7 98,3" />
+
+                    </svg>
 
                 </div>
 
@@ -93,18 +133,15 @@
 
 
             {{-- PENAMBAHAN --}}
-            <div class="summary-card">
+            <div class="nilai-kpi-card">
 
-                <div class="summary-icon green">
-
-                    <i data-lucide="trending-up"></i>
-
+                <div class="nilai-kpi-icon green">
+                    <i data-lucide="chart-no-axes-column-increasing"></i>
                 </div>
 
+                <div class="nilai-kpi-content">
 
-                <div>
-
-                    <span class="summary-label">
+                    <span>
                         Penambahan Tahun Ini
                     </span>
 
@@ -112,9 +149,24 @@
                         Rp 53,7 M
                     </strong>
 
-                    <small class="text-success-custom">
-                        +6,1% dari tahun sebelumnya
+                    <small class="positive">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +6,1% dari tahun lalu
+
                     </small>
+
+                </div>
+
+
+                <div class="nilai-sparkline green">
+
+                    <svg viewBox="0 0 100 45">
+
+                        <polyline points="2,40 15,30 26,33 41,16 54,23 72,12 85,14 98,2" />
+
+                    </svg>
 
                 </div>
 
@@ -123,18 +175,15 @@
 
 
             {{-- TRANSAKSI --}}
-            <div class="summary-card">
+            <div class="nilai-kpi-card">
 
-                <div class="summary-icon purple">
-
-                    <i data-lucide="receipt-text"></i>
-
+                <div class="nilai-kpi-icon purple">
+                    <i data-lucide="file-text"></i>
                 </div>
 
+                <div class="nilai-kpi-content">
 
-                <div>
-
-                    <span class="summary-label">
+                    <span>
                         Total Transaksi
                     </span>
 
@@ -148,23 +197,31 @@
 
                 </div>
 
+
+                <div class="nilai-sparkline purple">
+
+                    <svg viewBox="0 0 100 45">
+
+                        <polyline points="2,36 15,27 26,31 39,20 52,24 67,13 81,18 98,4" />
+
+                    </svg>
+
+                </div>
+
             </div>
 
 
 
             {{-- TAHUN --}}
-            <div class="summary-card">
+            <div class="nilai-kpi-card">
 
-                <div class="summary-icon orange">
-
+                <div class="nilai-kpi-icon orange">
                     <i data-lucide="calendar-days"></i>
-
                 </div>
 
+                <div class="nilai-kpi-content">
 
-                <div>
-
-                    <span class="summary-label">
+                    <span>
                         Tahun Aktif
                     </span>
 
@@ -173,7 +230,7 @@
                     </strong>
 
                     <small>
-                        Periode pembukuan aktif
+                        Periode penilaian aset
                     </small>
 
                 </div>
@@ -186,57 +243,71 @@
 
 
         {{-- ============================================================
-         FILTER
+         CHART
     ============================================================= --}}
-        <div class="module-card filter-card">
+        <div class="nilai-chart-grid">
 
 
-            <div class="filter-top">
+            {{-- TREND --}}
+            <div class="nilai-card nilai-trend-card">
 
-                <div>
 
-                    <h3>
-                        Filter Data
-                    </h3>
+                <div class="nilai-card-header">
 
-                    <p>
-                        Cari dan tampilkan nilai aset berdasarkan
-                        kriteria tertentu.
-                    </p>
+                    <div>
+
+                        <h3>
+                            Tren Nilai Aset 5 Tahun Terakhir
+                        </h3>
+
+                        <p>
+                            Dalam Miliar Rupiah (Rp)
+                        </p>
+
+                    </div>
+
+
+                    <select class="nilai-period-select">
+
+                        <option>
+                            5 Tahun Terakhir
+                        </option>
+
+                        <option>
+                            3 Tahun Terakhir
+                        </option>
+
+                    </select>
 
                 </div>
 
 
-                <button type="button" class="btn-filter-reset">
+                <div class="nilai-chart-body">
 
-                    <i data-lucide="rotate-ccw"></i>
+                    <canvas id="nilaiTrendChart"></canvas>
 
-                    Reset
+                </div>
 
-                </button>
 
             </div>
 
 
 
-            <div class="filter-grid">
+            {{-- CATEGORY DISTRIBUTION --}}
+            <div class="nilai-card">
 
 
-                {{-- SEARCH --}}
-                <div class="filter-field filter-search">
+                <div class="nilai-card-header">
 
-                    <label>
-                        Pencarian
-                    </label>
+                    <div>
 
+                        <h3>
+                            Distribusi Nilai Aset per Kategori
+                        </h3>
 
-                    <div class="input-with-icon">
-
-                        <i data-lucide="search"></i>
-
-
-                        <input type="text" class="form-control module-input"
-                            placeholder="Cari voucher, aktiva, uraian...">
+                        <p>
+                            Proporsi nilai berdasarkan kelompok aset
+                        </p>
 
                     </div>
 
@@ -244,29 +315,220 @@
 
 
 
-                {{-- TAHUN --}}
-                <div class="filter-field">
+                <div class="nilai-distribution-body">
+
+
+                    <div class="nilai-donut-wrap">
+
+                        <canvas id="nilaiCategoryChart"></canvas>
+
+
+                        <div class="nilai-donut-center">
+
+                            <strong>
+                                928,7 M
+                            </strong>
+
+                            <span>
+                                Total Nilai
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="nilai-category-legend">
+
+
+                        <div>
+
+                            <span class="nilai-dot tanah"></span>
+
+                            <p>
+                                Tanah
+                            </p>
+
+                            <strong>
+                                245,6 M
+                            </strong>
+
+                            <small>
+                                26,5%
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="nilai-dot mesin"></span>
+
+                            <p>
+                                Peralatan & Mesin
+                            </p>
+
+                            <strong>
+                                280,4 M
+                            </strong>
+
+                            <small>
+                                30,2%
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="nilai-dot gedung"></span>
+
+                            <p>
+                                Gedung & Bangunan
+                            </p>
+
+                            <strong>
+                                210,8 M
+                            </strong>
+
+                            <small>
+                                22,7%
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="nilai-dot jalan"></span>
+
+                            <p>
+                                Jalan & Jaringan
+                            </p>
+
+                            <strong>
+                                98,3 M
+                            </strong>
+
+                            <small>
+                                10,6%
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="nilai-dot lainnya"></span>
+
+                            <p>
+                                Aset Tetap Lainnya
+                            </p>
+
+                            <strong>
+                                63,1 M
+                            </strong>
+
+                            <small>
+                                6,8%
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="nilai-dot konstruksi"></span>
+
+                            <p>
+                                Konstruksi
+                            </p>
+
+                            <strong>
+                                30,5 M
+                            </strong>
+
+                            <small>
+                                3,3%
+                            </small>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        {{-- ============================================================
+         FILTER
+    ============================================================= --}}
+        <div class="nilai-card nilai-filter-card">
+
+
+            <div class="nilai-filter-title">
+
+                <h3>
+                    Filter Data Nilai Aset
+                </h3>
+
+            </div>
+
+
+            <div class="nilai-filter-grid">
+
+
+                {{-- SEARCH --}}
+                <div class="nilai-filter-group nilai-search-group">
+
+                    <label>
+                        Pencarian
+                    </label>
+
+
+                    <div class="nilai-search-input">
+
+                        <i data-lucide="search"></i>
+
+                        <input type="text" id="nilaiSearch" placeholder="Cari voucher, aktiva, uraian, lokasi...">
+
+                    </div>
+
+                </div>
+
+
+
+                {{-- YEAR --}}
+                <div class="nilai-filter-group">
 
                     <label>
                         Tahun
                     </label>
 
+                    <select id="nilaiYear">
 
-                    <select class="form-select module-input">
-
-                        <option>
+                        <option value="">
                             Semua Tahun
                         </option>
 
-                        <option selected>
+                        <option value="2026">
                             2026
                         </option>
 
-                        <option>
+                        <option value="2025">
                             2025
                         </option>
 
-                        <option>
+                        <option value="2024">
                             2024
                         </option>
 
@@ -276,18 +538,21 @@
 
 
 
-                {{-- LOKASI --}}
-                <div class="filter-field">
+                {{-- LOCATION --}}
+                <div class="nilai-filter-group">
 
                     <label>
                         Lokasi
                     </label>
 
+                    <select id="nilaiLocation">
 
-                    <select class="form-select module-input">
+                        <option value="">
+                            Semua Lokasi
+                        </option>
 
                         <option>
-                            Semua Lokasi
+                            IPA Kota
                         </option>
 
                         <option>
@@ -295,11 +560,11 @@
                         </option>
 
                         <option>
-                            IPA Gunung Lipan
+                            Jl. Melati
                         </option>
 
                         <option>
-                            Gudang
+                            Zona Timur
                         </option>
 
                     </select>
@@ -308,17 +573,16 @@
 
 
 
-                {{-- KATEGORI --}}
-                <div class="filter-field">
+                {{-- CATEGORY --}}
+                <div class="nilai-filter-group">
 
                     <label>
                         Kategori
                     </label>
 
+                    <select id="nilaiCategory">
 
-                    <select class="form-select module-input">
-
-                        <option>
+                        <option value="">
                             Semua Kategori
                         </option>
 
@@ -335,15 +599,7 @@
                         </option>
 
                         <option>
-                            Jalan, Irigasi & Jaringan
-                        </option>
-
-                        <option>
-                            Aset Tetap Lainnya
-                        </option>
-
-                        <option>
-                            Konstruksi
+                            Jalan & Jaringan
                         </option>
 
                     </select>
@@ -351,7 +607,35 @@
                 </div>
 
 
+
+                {{-- BUTTON --}}
+                <div class="nilai-filter-actions">
+
+
+                    <button type="button" class="nilai-filter-button">
+
+                        <i data-lucide="list-filter"></i>
+
+                        Filter
+
+                    </button>
+
+
+
+                    <button type="button" class="nilai-reset-button" onclick="resetNilaiFilter()">
+
+                        <i data-lucide="refresh-cw"></i>
+
+                        Reset
+
+                    </button>
+
+
+                </div>
+
+
             </div>
+
 
         </div>
 
@@ -360,10 +644,11 @@
         {{-- ============================================================
          TABLE
     ============================================================= --}}
-        <div class="module-card">
+        <div class="nilai-card nilai-table-card">
 
 
-            <div class="module-card-header">
+            <div class="nilai-table-header">
+
 
                 <div>
 
@@ -371,25 +656,21 @@
                         Daftar Nilai Aset
                     </h3>
 
-                    <p>
-                        Informasi transaksi dan nilai aset perusahaan.
-                    </p>
-
                 </div>
 
 
+                <button type="button" class="nilai-export-button">
 
-                <div class="header-actions">
+                    <i data-lucide="download"></i>
 
-                    <button type="button" class="btn-module-secondary">
+                    <span>
+                        Ekspor
+                    </span>
 
-                        <i data-lucide="download"></i>
+                    <i data-lucide="chevron-down"></i>
 
-                        Export
+                </button>
 
-                    </button>
-
-                </div>
 
             </div>
 
@@ -397,7 +678,7 @@
 
             <div class="table-responsive">
 
-                <table class="modern-table">
+                <table class="nilai-table" id="nilaiTable">
 
 
                     <thead>
@@ -428,15 +709,15 @@
                                 Uraian
                             </th>
 
-                            <th class="text-end">
-                                Nilai
+                            <th class="nilai-column">
+                                Nilai (Rp)
                             </th>
 
-                            <th>
+                            <th class="status-column">
                                 Status
                             </th>
 
-                            <th class="text-center">
+                            <th class="action-column">
                                 Aksi
                             </th>
 
@@ -449,233 +730,55 @@
                     <tbody>
 
 
-                        {{-- DATA 1 --}}
                         <tr>
 
+                            <td>1</td>
+
                             <td>
-                                1
+                                VAL-2026-001
                             </td>
 
+                            <td>
+                                04 Jan 2026
+                            </td>
+
+                            <td>
+                                Pompa Distribusi
+                            </td>
+
+                            <td>
+                                IPA Kota
+                            </td>
+
+                            <td>
+                                Penambahan pompa distribusi 250 m³/jam
+                            </td>
+
+                            <td class="nilai-column">
+                                1.250.000.000
+                            </td>
 
                             <td>
 
-                                <div class="table-main-text">
-                                    VC-2026-00125
-                                </div>
-
-                                <span class="table-sub-text">
-                                    Tahun 2026
+                                <span class="nilai-status selesai">
+                                    Selesai
                                 </span>
 
                             </td>
 
-
-                            <td>
-                                12 Sep 2026
-                            </td>
-
-
                             <td>
 
-                                <div class="asset-table-name">
+                                <div class="nilai-row-actions">
 
-                                    <div class="asset-table-icon">
-
-                                        <i data-lucide="monitor"></i>
-
-                                    </div>
-
-
-                                    <div>
-
-                                        <strong>
-                                            Laptop Dell Latitude
-                                        </strong>
-
-                                        <span>
-                                            02.03.01.001
-                                        </span>
-
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-
-                            <td>
-
-                                <strong class="table-main-text">
-                                    Kantor Pusat
-                                </strong>
-
-                                <span class="table-sub-text">
-                                    Divisi IT
-                                </span>
-
-                            </td>
-
-
-                            <td>
-                                Pengadaan perangkat kerja
-                            </td>
-
-
-                            <td class="text-end">
-
-                                <strong class="money-value">
-                                    Rp 18.500.000
-                                </strong>
-
-                            </td>
-
-
-                            <td>
-
-                                <span class="status-pill active">
-                                    Aktif
-                                </span>
-
-                            </td>
-
-
-                            <td>
-
-                                <div class="table-actions">
-
-                                    <button type="button" class="action-button view" title="Detail">
-
-                                        <i data-lucide="eye"></i>
-
-                                    </button>
-
-
-                                    <button type="button" class="action-button edit" title="Edit">
-
-                                        <i data-lucide="square-pen"></i>
-
-                                    </button>
-
-
-                                    <button type="button" class="action-button delete" title="Hapus">
-
-                                        <i data-lucide="trash-2"></i>
-
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 2 --}}
-                        <tr>
-
-                            <td>
-                                2
-                            </td>
-
-
-                            <td>
-
-                                <div class="table-main-text">
-                                    VC-2026-00124
-                                </div>
-
-                                <span class="table-sub-text">
-                                    Tahun 2026
-                                </span>
-
-                            </td>
-
-
-                            <td>
-                                08 Sep 2026
-                            </td>
-
-
-                            <td>
-
-                                <div class="asset-table-name">
-
-                                    <div class="asset-table-icon">
-
-                                        <i data-lucide="settings"></i>
-
-                                    </div>
-
-
-                                    <div>
-
-                                        <strong>
-                                            Pompa Distribusi
-                                        </strong>
-
-                                        <span>
-                                            03.01.04.018
-                                        </span>
-
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-
-                            <td>
-
-                                <strong class="table-main-text">
-                                    IPA Gunung Lipan
-                                </strong>
-
-                                <span class="table-sub-text">
-                                    Produksi
-                                </span>
-
-                            </td>
-
-
-                            <td>
-                                Penambahan aset operasional
-                            </td>
-
-
-                            <td class="text-end">
-
-                                <strong class="money-value">
-                                    Rp 186.500.000
-                                </strong>
-
-                            </td>
-
-
-                            <td>
-
-                                <span class="status-pill active">
-                                    Aktif
-                                </span>
-
-                            </td>
-
-
-                            <td>
-
-                                <div class="table-actions">
-
-                                    <button type="button" class="action-button view">
+                                    <button type="button" class="view" title="Detail">
                                         <i data-lucide="eye"></i>
                                     </button>
 
-
-                                    <button type="button" class="action-button edit">
+                                    <button type="button" class="edit" title="Edit">
                                         <i data-lucide="square-pen"></i>
                                     </button>
 
-
-                                    <button type="button" class="action-button delete">
+                                    <button type="button" class="delete" title="Hapus">
                                         <i data-lucide="trash-2"></i>
                                     </button>
 
@@ -687,111 +790,415 @@
 
 
 
-                        {{-- DATA 3 --}}
                         <tr>
 
+                            <td>2</td>
+
                             <td>
-                                3
+                                VAL-2026-002
                             </td>
 
+                            <td>
+                                12 Jan 2026
+                            </td>
+
+                            <td>
+                                Tanah
+                            </td>
+
+                            <td>
+                                Jl. Melati
+                            </td>
+
+                            <td>
+                                Penilaian tanah untuk perluasan IPA
+                            </td>
+
+                            <td class="nilai-column">
+                                4.750.000.000
+                            </td>
 
                             <td>
 
-                                <div class="table-main-text">
-                                    VC-2026-00123
-                                </div>
-
-                                <span class="table-sub-text">
-                                    Tahun 2026
+                                <span class="nilai-status verifikasi">
+                                    Verifikasi
                                 </span>
 
                             </td>
 
-
-                            <td>
-                                01 Sep 2026
-                            </td>
-
-
                             <td>
 
-                                <div class="asset-table-name">
+                                <div class="nilai-row-actions">
 
-                                    <div class="asset-table-icon">
+                                    <button class="view">
+                                        <i data-lucide="eye"></i>
+                                    </button>
 
-                                        <i data-lucide="printer"></i>
+                                    <button class="edit">
+                                        <i data-lucide="square-pen"></i>
+                                    </button>
 
-                                    </div>
-
-
-                                    <div>
-
-                                        <strong>
-                                            Printer Epson L5290
-                                        </strong>
-
-                                        <span>
-                                            02.04.02.009
-                                        </span>
-
-                                    </div>
+                                    <button class="delete">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
 
                                 </div>
 
                             </td>
 
+                        </tr>
+
+
+
+                        <tr>
+
+                            <td>3</td>
+
+                            <td>
+                                VAL-2026-003
+                            </td>
+
+                            <td>
+                                18 Feb 2026
+                            </td>
+
+                            <td>
+                                Kendaraan Operasional
+                            </td>
+
+                            <td>
+                                Divisi Produksi
+                            </td>
+
+                            <td>
+                                Pengadaan mobil operasional pick up
+                            </td>
+
+                            <td class="nilai-column">
+                                325.000.000
+                            </td>
 
                             <td>
 
-                                <strong class="table-main-text">
-                                    Kantor Pusat
-                                </strong>
-
-                                <span class="table-sub-text">
-                                    Administrasi
-                                </span>
-
-                            </td>
-
-
-                            <td>
-                                Pengadaan perlengkapan kantor
-                            </td>
-
-
-                            <td class="text-end">
-
-                                <strong class="money-value">
-                                    Rp 6.750.000
-                                </strong>
-
-                            </td>
-
-
-                            <td>
-
-                                <span class="status-pill active">
+                                <span class="nilai-status aktif">
                                     Aktif
                                 </span>
 
                             </td>
 
-
                             <td>
 
-                                <div class="table-actions">
+                                <div class="nilai-row-actions">
 
-                                    <button type="button" class="action-button view">
+                                    <button class="view">
                                         <i data-lucide="eye"></i>
                                     </button>
 
-
-                                    <button type="button" class="action-button edit">
+                                    <button class="edit">
                                         <i data-lucide="square-pen"></i>
                                     </button>
 
+                                    <button class="delete">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
 
-                                    <button type="button" class="action-button delete">
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+
+                        <tr>
+
+                            <td>4</td>
+
+                            <td>
+                                VAL-2026-004
+                            </td>
+
+                            <td>
+                                10 Mar 2026
+                            </td>
+
+                            <td>
+                                Gedung Kantor
+                            </td>
+
+                            <td>
+                                Kantor Pusat
+                            </td>
+
+                            <td>
+                                Penilaian gedung kantor utama
+                            </td>
+
+                            <td class="nilai-column">
+                                12.500.000.000
+                            </td>
+
+                            <td>
+
+                                <span class="nilai-status selesai">
+                                    Selesai
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <div class="nilai-row-actions">
+
+                                    <button class="view">
+                                        <i data-lucide="eye"></i>
+                                    </button>
+
+                                    <button class="edit">
+                                        <i data-lucide="square-pen"></i>
+                                    </button>
+
+                                    <button class="delete">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+
+                        <tr>
+
+                            <td>5</td>
+
+                            <td>
+                                VAL-2026-005
+                            </td>
+
+                            <td>
+                                22 Mar 2026
+                            </td>
+
+                            <td>
+                                Generator Set
+                            </td>
+
+                            <td>
+                                IPA Kota
+                            </td>
+
+                            <td>
+                                Pengadaan genset 500 KVA
+                            </td>
+
+                            <td class="nilai-column">
+                                2.350.000.000
+                            </td>
+
+                            <td>
+
+                                <span class="nilai-status draft">
+                                    Draft
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <div class="nilai-row-actions">
+
+                                    <button class="view">
+                                        <i data-lucide="eye"></i>
+                                    </button>
+
+                                    <button class="edit">
+                                        <i data-lucide="square-pen"></i>
+                                    </button>
+
+                                    <button class="delete">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+
+                        <tr>
+
+                            <td>6</td>
+
+                            <td>
+                                VAL-2026-006
+                            </td>
+
+                            <td>
+                                05 Apr 2026
+                            </td>
+
+                            <td>
+                                Pipa Jaringan
+                            </td>
+
+                            <td>
+                                Zona Timur
+                            </td>
+
+                            <td>
+                                Penambahan jaringan pipa HDPE
+                            </td>
+
+                            <td class="nilai-column">
+                                3.125.000.000
+                            </td>
+
+                            <td>
+
+                                <span class="nilai-status aktif">
+                                    Aktif
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <div class="nilai-row-actions">
+
+                                    <button class="view">
+                                        <i data-lucide="eye"></i>
+                                    </button>
+
+                                    <button class="edit">
+                                        <i data-lucide="square-pen"></i>
+                                    </button>
+
+                                    <button class="delete">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+
+                        <tr>
+
+                            <td>7</td>
+
+                            <td>
+                                VAL-2026-007
+                            </td>
+
+                            <td>
+                                18 Apr 2026
+                            </td>
+
+                            <td>
+                                Peralatan Laboratorium
+                            </td>
+
+                            <td>
+                                Lab Kualitas Air
+                            </td>
+
+                            <td>
+                                Pengadaan alat uji kualitas air
+                            </td>
+
+                            <td class="nilai-column">
+                                680.000.000
+                            </td>
+
+                            <td>
+
+                                <span class="nilai-status verifikasi">
+                                    Verifikasi
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <div class="nilai-row-actions">
+
+                                    <button class="view">
+                                        <i data-lucide="eye"></i>
+                                    </button>
+
+                                    <button class="edit">
+                                        <i data-lucide="square-pen"></i>
+                                    </button>
+
+                                    <button class="delete">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+
+                        <tr>
+
+                            <td>8</td>
+
+                            <td>
+                                VAL-2026-008
+                            </td>
+
+                            <td>
+                                02 Mei 2026
+                            </td>
+
+                            <td>
+                                Bangunan IPA
+                            </td>
+
+                            <td>
+                                IPA Kota
+                            </td>
+
+                            <td>
+                                Penilaian bangunan IPA kapasitas 500 l/det
+                            </td>
+
+                            <td class="nilai-column">
+                                18.200.000.000
+                            </td>
+
+                            <td>
+
+                                <span class="nilai-status aktif">
+                                    Aktif
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <div class="nilai-row-actions">
+
+                                    <button class="view">
+                                        <i data-lucide="eye"></i>
+                                    </button>
+
+                                    <button class="edit">
+                                        <i data-lucide="square-pen"></i>
+                                    </button>
+
+                                    <button class="delete">
                                         <i data-lucide="trash-2"></i>
                                     </button>
 
@@ -804,6 +1211,7 @@
 
                     </tbody>
 
+
                 </table>
 
             </div>
@@ -813,40 +1221,103 @@
             {{-- ========================================================
              TABLE FOOTER
         ========================================================= --}}
-            <div class="table-footer">
-
-                <span>
-                    Menampilkan 1 - 3 dari 1.284 data
-                </span>
+            <div class="nilai-table-footer">
 
 
-                <div class="pagination-custom">
+                <div class="nilai-table-info">
 
-                    <button type="button" disabled>
-                        <i data-lucide="chevron-left"></i>
-                    </button>
+                    Menampilkan
 
+                    <strong>
+                        1 - 8
+                    </strong>
 
-                    <button type="button" class="active">
-                        1
-                    </button>
+                    dari
 
+                    <strong>
+                        1.284
+                    </strong>
 
-                    <button type="button">
-                        2
-                    </button>
-
-
-                    <button type="button">
-                        3
-                    </button>
-
-
-                    <button type="button">
-                        <i data-lucide="chevron-right"></i>
-                    </button>
+                    data
 
                 </div>
+
+
+
+                <div class="nilai-pagination-area">
+
+
+                    <select>
+
+                        <option>
+                            10 per halaman
+                        </option>
+
+                        <option>
+                            25 per halaman
+                        </option>
+
+                        <option>
+                            50 per halaman
+                        </option>
+
+                    </select>
+
+
+
+                    <div class="nilai-pagination">
+
+
+                        <button disabled>
+                            <i data-lucide="chevron-left"></i>
+                        </button>
+
+
+                        <button class="active">
+                            1
+                        </button>
+
+
+                        <button>
+                            2
+                        </button>
+
+
+                        <button>
+                            3
+                        </button>
+
+
+                        <button>
+                            4
+                        </button>
+
+
+                        <button>
+                            5
+                        </button>
+
+
+                        <span>
+                            ...
+                        </span>
+
+
+                        <button>
+                            161
+                        </button>
+
+
+                        <button>
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
 
             </div>
 
@@ -857,3 +1328,11 @@
     </section>
 
 @endsection
+
+
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="{{ asset('js/pages/nilai.js') }}"></script>
+@endpush
