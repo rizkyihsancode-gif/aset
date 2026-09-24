@@ -74,144 +74,143 @@
 
 
 
-        {{-- ========================================================
-             MASTER DATA
-        ========================================================= --}}
-        <div class="sidebar-menu-group" id="masterGroup">
+        {{-- =========================================================
+     MASTER DATA
+========================================================= --}}
+        <div class="sidebar-menu-group
+        {{ request()->routeIs('master.*') ? 'open' : '' }}" id="masterGroup">
 
-            <button type="button" class="sidebar-menu-item sidebar-parent" onclick="toggleMenu('masterGroup')">
+            <button type="button"
+                class="sidebar-menu-item sidebar-parent
+            {{ request()->routeIs('master.*') ? 'parent-active' : '' }}"
+                onclick="toggleMenu('masterGroup')">
 
                 <span class="sidebar-menu-icon">
-
                     <i data-lucide="database"></i>
-
                 </span>
-
 
                 <span class="sidebar-menu-text">
                     Master Data
                 </span>
 
-
                 <span class="sidebar-arrow">
-
                     <i data-lucide="chevron-down"></i>
-
                 </span>
 
             </button>
 
 
-
             <div class="sidebar-submenu">
 
 
-                <a
-                    href="{{ route('Master.data_barang') }}"class="sidebar-submenu-item{{ request()->routeIs('Master.data_barang') ? 'active' : '' }}">
+                {{-- BARANG --}}
+                <a href="{{ route('master.data_barang') }}"
+                    class="sidebar-submenu-item
+                {{ request()->routeIs('master.data_barang') ? 'active' : '' }}">
 
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="package"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         Barang
                     </span>
 
                 </a>
 
 
-
+                {{-- DEPARTEMEN --}}
                 <a href="#" class="sidebar-submenu-item">
 
                     <span class="sidebar-submenu-icon">
-                        <i data-lucide="building"></i>
+                        <i data-lucide="building-2"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         Departemen
                     </span>
 
                 </a>
 
 
-
+                {{-- DIVISI --}}
                 <a href="#" class="sidebar-submenu-item">
 
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="network"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         Divisi
                     </span>
 
                 </a>
 
 
-
+                {{-- RUANGAN --}}
                 <a href="#" class="sidebar-submenu-item">
 
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="door-open"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         Ruangan
                     </span>
 
                 </a>
 
 
-
+                {{-- SDM --}}
                 <a href="#" class="sidebar-submenu-item">
 
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="user-round"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         SDM Pendukung
                     </span>
 
                 </a>
 
 
-
+                {{-- LOKASI --}}
                 <a href="#" class="sidebar-submenu-item">
 
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="map-pin"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         Lokasi
                     </span>
 
                 </a>
 
 
-
+                {{-- BAHAN --}}
                 <a href="#" class="sidebar-submenu-item">
 
                     <span class="sidebar-submenu-icon">
-                        <i data-lucide="boxes"></i>
+                        <i data-lucide="component"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         Bahan
                     </span>
 
                 </a>
 
 
-
+                {{-- KODE AKTIVA --}}
                 <a href="#" class="sidebar-submenu-item">
 
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="badge-check"></i>
                     </span>
 
-                    <span>
+                    <span class="sidebar-submenu-text">
                         Kode Aktiva
                     </span>
 

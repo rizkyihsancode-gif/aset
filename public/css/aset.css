@@ -551,119 +551,119 @@ textarea {
    SUBMENU
 ========================================================= */
 
-.sidebar-submenu {
+.sidebar-menu-group {
+    width: 100%;
+}
 
+.sidebar-submenu {
     display: none;
-
-    padding:
-
-        3px
-        0
-        6px
-        25px;
-
+    width: 100%;
+    padding: 4px 0 7px 25px;
 }
 
-
-.sidebar-menu-group.open
-.sidebar-submenu {
-
+.sidebar-menu-group.open .sidebar-submenu {
     display: block;
-
 }
 
+/* Parent menu tetap terlihat aktif ketika salah satu child aktif */
+.sidebar-menu-group.open .sidebar-parent,
+.sidebar-menu-item.parent-active {
+    color: #ffffff;
+}
 
 /* =========================================================
    SUBMENU ITEM
 ========================================================= */
 
 .sidebar-submenu-item {
-
-    min-height: 33px;
-
-    display: flex;
+    width: 100%;
+    min-height: 36px;
+    position: relative;
+    display: flex !important;
     align-items: center;
-
     gap: 10px;
-
-    margin-bottom: 1px;
-
-    padding:
-
-        7px
-        9px;
-
+    margin: 1px 0;
+    padding: 8px 10px;
     border-radius: 8px;
-
-    color:
-
-        rgba(255, 255, 255, .75);
-
-    font-size: 12px;
-
+    background: transparent;
+    color: rgba(255, 255, 255, .76) !important;
+    font-size: 11px;
     font-weight: 450;
-
-    transition:
-
-        color .17s ease,
-        background .17s ease;
-
+    line-height: 1.2;
+    text-decoration: none !important;
+    transition: color .17s ease, background .17s ease, transform .17s ease, box-shadow .17s ease;
 }
-
 
 .sidebar-submenu-item:hover {
-
-    color: #ffffff;
-
-    background:
-
-        rgba(255, 255, 255, .075);
-
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, .075);
 }
 
-
-/* SUBMENU ACTIVE */
+/* =========================================================
+   SUBMENU ACTIVE
+========================================================= */
 
 .sidebar-submenu-item.active {
-
-    color: #ffffff;
-
-    background:
-
-        rgba(255, 255, 255, .11);
-
+    color: #ffffff !important;
+    background: linear-gradient(90deg, #1675df 0%, #1162c7 100%) !important;
+    box-shadow: 0 6px 14px rgba(2, 35, 77, .18);
+    font-weight: 600;
 }
 
+.sidebar-submenu-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: #9bd8ff;
+}
 
 /* =========================================================
    SUBMENU ICON
 ========================================================= */
 
 .sidebar-submenu-icon {
-
-    width: 16px;
-    min-width: 16px;
-
+    width: 17px;
+    height: 17px;
+    min-width: 17px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    color:
-
-        rgba(255, 255, 255, .67);
-
+    color: rgba(255, 255, 255, .68);
 }
-
 
 .sidebar-submenu-icon svg {
-
-    width: 13px;
-    height: 13px;
-
+    width: 14px;
+    height: 14px;
     stroke-width: 1.8;
-
 }
 
+.sidebar-submenu-item:hover .sidebar-submenu-icon,
+.sidebar-submenu-item.active .sidebar-submenu-icon {
+    color: #ffffff !important;
+}
+
+/* =========================================================
+   SUBMENU TEXT
+========================================================= */
+
+.sidebar-submenu-text {
+    min-width: 0;
+    display: block;
+    flex: 1;
+    overflow: hidden;
+    color: inherit !important;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sidebar-submenu-item.active .sidebar-submenu-text {
+    color: #ffffff !important;
+}
 
 /* =========================================================
    SIDEBAR FOOTER
