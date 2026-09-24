@@ -1,88 +1,180 @@
 @extends('layouts.main')
 
-
 @section('title', 'Dashboard')
-
 
 @section('page-title', 'Dashboard')
 
-
 @section('page-description', 'Ringkasan dan monitoring aset perusahaan')
+
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/pages/dashboard.css') }}">
+@endpush
 
 
 
 @section('content')
 
-    <section class="content">
+    <section class="content dashboard-page">
 
 
-        {{-- =====================================================
-         WELCOME
-    ====================================================== --}}
+        {{-- ============================================================
+         DASHBOARD TOP
+    ============================================================= --}}
+        <div class="dashboard-top">
 
-        <div class="welcome">
 
-            <div class="welcome-content">
+            <div class="dashboard-heading">
 
-                <span class="welcome-label">
-                    Sistem Informasi Manajemen Aset
+                <span class="dashboard-eyebrow">
+                    Overview
                 </span>
 
                 <h2>
-                    Selamat datang, Administrator
+                    Dashboard
                 </h2>
 
                 <p>
-                    Pantau jumlah, nilai, kondisi, dan perkembangan seluruh
-                    aset Perumdam Tirta Kencana dalam satu dashboard
-                    terintegrasi.
+                    Ringkasan dan monitoring aset perusahaan
                 </p>
 
             </div>
+
+
+
+            {{-- DATE CARD --}}
+            <div class="dashboard-date">
+
+                <div class="dashboard-date-icon">
+                    <i data-lucide="calendar-days"></i>
+                </div>
+
+
+                <div>
+
+                    <strong id="dashboardDate">
+                        Kamis, 24 September 2026
+                    </strong>
+
+                    <span id="dashboardTime">
+                        11:07 WIB
+                    </span>
+
+                </div>
+
+            </div>
+
 
         </div>
 
 
 
-        {{-- =====================================================
-         KPI
-    ====================================================== --}}
-
-        <div class="kpi-grid">
-
-
-            {{-- TOTAL ASET --}}
-            <div class="kpi-card">
-
-                <div class="kpi-head">
-
-                    <div>
-
-                        <span class="kpi-label">
-                            Total Aset
-                        </span>
-
-                        <div class="kpi-value">
-                            2.485
-                        </div>
-
-                    </div>
+        {{-- ============================================================
+         HERO BANNER
+    ============================================================= --}}
+        <div class="dashboard-hero">
 
 
-                    <div class="kpi-icon blue">
-                        <i data-lucide="boxes"></i>
-                    </div>
+            <div class="dashboard-hero-overlay"></div>
+
+
+            <div class="dashboard-hero-content">
+
+
+                <span>
+                    Sistem Informasi
+                </span>
+
+
+                <h1>
+                    Manajemen Aset
+                </h1>
+
+
+                <h3>
+                    Perumdam Tirta Kencana
+                </h3>
+
+
+                <div class="dashboard-welcome">
+
+                    <strong>
+                        Selamat datang, Administrator
+                    </strong>
+
+                    <p>
+                        Pantau, kelola, dan optimalkan aset perusahaan
+                        untuk mendukung pelayanan air bersih yang lebih baik.
+                    </p>
 
                 </div>
 
 
-                <div class="kpi-footer">
+            </div>
 
-                    <span class="positive">
-                        +24
+
+
+            <div class="dashboard-hero-quote">
+
+                <p>
+                    “Aset yang terkelola dengan baik
+                    <br>
+                    untuk pelayanan air yang lebih baik”
+                </p>
+
+                <span></span>
+
+            </div>
+
+
+        </div>
+
+
+
+        {{-- ============================================================
+         KPI
+    ============================================================= --}}
+        <div class="dashboard-kpi-grid">
+
+
+            {{-- TOTAL ASET --}}
+            <div class="dashboard-kpi-card">
+
+                <div class="kpi-icon blue">
+
+                    <i data-lucide="box"></i>
+
+                </div>
+
+
+                <div class="kpi-main">
+
+                    <span>
+                        Total Aset
                     </span>
 
-                    aset tahun ini
+                    <strong>
+                        2.485
+                    </strong>
+
+                    <small class="positive">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +5,2% dari tahun lalu
+
+                    </small>
+
+                </div>
+
+
+                <div class="kpi-mini-chart">
+
+                    <svg viewBox="0 0 100 45">
+
+                        <polyline points="2,35 17,22 31,27 47,12 62,17 78,9 98,2" />
+
+                    </svg>
 
                 </div>
 
@@ -90,33 +182,45 @@
 
 
 
-            {{-- NILAI ASET --}}
-            <div class="kpi-card">
+            {{-- TOTAL NILAI --}}
+            <div class="dashboard-kpi-card">
 
-                <div class="kpi-head">
+                <div class="kpi-icon blue">
 
-                    <div>
-
-                        <span class="kpi-label">
-                            Total Nilai Aset
-                        </span>
-
-                        <div class="kpi-value currency">
-                            Rp 928,7 M
-                        </div>
-
-                    </div>
-
-
-                    <div class="kpi-icon purple">
-                        <i data-lucide="wallet-cards"></i>
-                    </div>
+                    <i data-lucide="coins"></i>
 
                 </div>
 
 
-                <div class="kpi-footer">
-                    Nilai perolehan seluruh aset
+                <div class="kpi-main">
+
+                    <span>
+                        Total Nilai Aset
+                    </span>
+
+                    <strong class="kpi-money">
+                        Rp 928,7 M
+                    </strong>
+
+                    <small class="positive">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        +6,1% dari tahun lalu
+
+                    </small>
+
+                </div>
+
+
+                <div class="kpi-mini-chart">
+
+                    <svg viewBox="0 0 100 45">
+
+                        <polyline points="2,36 14,24 28,29 42,13 57,17 73,7 98,11" />
+
+                    </svg>
+
                 </div>
 
             </div>
@@ -124,37 +228,41 @@
 
 
             {{-- KONDISI BAIK --}}
-            <div class="kpi-card">
+            <div class="dashboard-kpi-card kpi-green-card">
 
-                <div class="kpi-head">
+                <div class="kpi-icon green">
 
-                    <div>
-
-                        <span class="kpi-label">
-                            Kondisi Baik
-                        </span>
-
-                        <div class="kpi-value">
-                            2.215
-                        </div>
-
-                    </div>
-
-
-                    <div class="kpi-icon green">
-                        <i data-lucide="circle-check-big"></i>
-                    </div>
+                    <i data-lucide="check"></i>
 
                 </div>
 
 
-                <div class="kpi-footer">
+                <div class="kpi-main">
 
-                    <span class="positive">
-                        89,1%
+                    <span>
+                        Kondisi Baik
                     </span>
 
-                    dari total aset
+                    <strong>
+                        2.215
+                    </strong>
+
+                    <small>
+                        89,1% dari total aset
+                    </small>
+
+                </div>
+
+
+                <div class="kpi-circle good">
+
+                    <div>
+
+                        <strong>
+                            89,1%
+                        </strong>
+
+                    </div>
 
                 </div>
 
@@ -163,32 +271,42 @@
 
 
             {{-- PERLU PERHATIAN --}}
-            <div class="kpi-card">
+            <div class="dashboard-kpi-card kpi-warning-card">
 
-                <div class="kpi-head">
+                <div class="kpi-icon orange">
 
-                    <div>
-
-                        <span class="kpi-label">
-                            Perlu Perhatian
-                        </span>
-
-                        <div class="kpi-value">
-                            270
-                        </div>
-
-                    </div>
-
-
-                    <div class="kpi-icon orange">
-                        <i data-lucide="triangle-alert"></i>
-                    </div>
+                    <i data-lucide="triangle-alert"></i>
 
                 </div>
 
 
-                <div class="kpi-footer">
-                    Maintenance dan rusak
+                <div class="kpi-main">
+
+                    <span>
+                        Perlu Perhatian
+                    </span>
+
+                    <strong>
+                        270
+                    </strong>
+
+                    <small>
+                        10,9% dari total aset
+                    </small>
+
+                </div>
+
+
+                <div class="kpi-circle warning">
+
+                    <div>
+
+                        <strong>
+                            10,9%
+                        </strong>
+
+                    </div>
+
                 </div>
 
             </div>
@@ -198,15 +316,14 @@
 
 
 
-        {{-- =====================================================
-         CHART ROW 1
-    ====================================================== --}}
+        {{-- ============================================================
+         CHART ROW
+    ============================================================= --}}
+        <div class="dashboard-chart-grid">
 
-        <div class="dashboard-grid-main">
 
-
-            {{-- PERTUMBUHAN NILAI --}}
-            <div class="dashboard-card">
+            {{-- GROWTH --}}
+            <div class="dashboard-card growth-card">
 
                 <div class="dashboard-card-header">
 
@@ -217,26 +334,30 @@
                         </h3>
 
                         <p>
-                            Perkembangan nilai aset lima tahun terakhir
+                            Dalam Miliar Rupiah (Rp)
                         </p>
 
                     </div>
 
 
-                    <button class="card-action">
-                        <i data-lucide="more-horizontal"></i>
-                    </button>
+                    <select class="dashboard-period">
+
+                        <option>
+                            5 Tahun Terakhir
+                        </option>
+
+                        <option>
+                            3 Tahun Terakhir
+                        </option>
+
+                    </select>
 
                 </div>
 
 
-                <div class="dashboard-card-body">
+                <div class="dashboard-card-body chart-area">
 
-                    <div class="chart-large">
-
-                        <canvas id="growthChart"></canvas>
-
-                    </div>
+                    <canvas id="assetGrowthChart"></canvas>
 
                 </div>
 
@@ -244,19 +365,19 @@
 
 
 
-            {{-- KOMPOSISI --}}
-            <div class="dashboard-card">
+            {{-- DONUT KIB --}}
+            <div class="dashboard-card kib-card">
 
                 <div class="dashboard-card-header">
 
                     <div>
 
                         <h3>
-                            Komposisi K.I.B
+                            Komposisi Aset per KIB
                         </h3>
 
                         <p>
-                            Berdasarkan kategori aset
+                            Jumlah aset berdasarkan kategori
                         </p>
 
                     </div>
@@ -264,32 +385,86 @@
                 </div>
 
 
-                <div class="dashboard-card-body">
+                <div class="dashboard-card-body kib-content">
 
-                    <div class="chart-doughnut">
 
-                        <canvas id="compositionChart"></canvas>
+                    <div class="kib-chart-wrap">
+
+                        <canvas id="kibCompositionChart"></canvas>
+
+
+                        <div class="donut-center">
+
+                            <strong>
+                                2.485
+                            </strong>
+
+                            <span>
+                                Aset
+                            </span>
+
+                        </div>
 
                     </div>
+
+
+
+                    <div class="kib-legend">
+
+
+                        <div>
+                            <span class="legend-dot blue"></span>
+                            <p>Tanah</p>
+                            <strong>245</strong>
+                        </div>
+
+
+                        <div>
+                            <span class="legend-dot orange"></span>
+                            <p>Peralatan & Mesin</p>
+                            <strong>1.020</strong>
+                        </div>
+
+
+                        <div>
+                            <span class="legend-dot yellow"></span>
+                            <p>Gedung & Bangunan</p>
+                            <strong>380</strong>
+                        </div>
+
+
+                        <div>
+                            <span class="legend-dot purple"></span>
+                            <p>Jalan & Jaringan</p>
+                            <strong>510</strong>
+                        </div>
+
+
+                        <div>
+                            <span class="legend-dot red"></span>
+                            <p>Aset Tetap Lainnya</p>
+                            <strong>260</strong>
+                        </div>
+
+
+                        <div>
+                            <span class="legend-dot indigo"></span>
+                            <p>Konstruksi</p>
+                            <strong>70</strong>
+                        </div>
+
+
+                    </div>
+
 
                 </div>
 
             </div>
 
 
-        </div>
 
-
-
-        {{-- =====================================================
-         CHART ROW 2
-    ====================================================== --}}
-
-        <div class="dashboard-grid-secondary">
-
-
-            {{-- BAR CHART --}}
-            <div class="dashboard-card">
+            {{-- CATEGORY --}}
+            <div class="dashboard-card category-card">
 
                 <div class="dashboard-card-header">
 
@@ -300,7 +475,7 @@
                         </h3>
 
                         <p>
-                            Distribusi berdasarkan kelompok K.I.B
+                            Perbandingan jumlah aset setiap kategori
                         </p>
 
                     </div>
@@ -308,173 +483,124 @@
                 </div>
 
 
-                <div class="dashboard-card-body">
-
-                    <div class="chart-bar">
-
-                        <canvas id="categoryChart"></canvas>
-
-                    </div>
-
-                </div>
-
-            </div>
+                <div class="dashboard-card-body category-list">
 
 
+                    <div class="category-item">
 
-            {{-- KONDISI --}}
-            <div class="dashboard-card">
+                        <span>
+                            Peralatan & Mesin
+                        </span>
 
-                <div class="dashboard-card-header">
+                        <div class="category-progress">
 
-                    <div>
-
-                        <h3>
-                            Kondisi Aset
-                        </h3>
-
-                        <p>
-                            Monitoring kondisi aset aktif
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="dashboard-card-body">
-
-
-                    <div class="condition-item">
-
-                        <div class="condition-head">
-
-                            <span>
-                                <span class="status-dot good"></span>
-                                Baik
-                            </span>
-
-                            <strong>
-                                2.215
-                            </strong>
+                            <div style="width:100%"></div>
 
                         </div>
 
-
-                        <div class="progress-track">
-
-                            <div class="progress-value good" style="width: 89%;"></div>
-
-                        </div>
+                        <strong>
+                            1.020
+                        </strong>
 
                     </div>
 
 
 
-                    <div class="condition-item">
+                    <div class="category-item">
 
-                        <div class="condition-head">
+                        <span>
+                            Jalan & Jaringan
+                        </span>
 
-                            <span>
-                                <span class="status-dot maintenance"></span>
-                                Maintenance
-                            </span>
+                        <div class="category-progress">
 
-                            <strong>
-                                168
-                            </strong>
+                            <div style="width:50%"></div>
 
                         </div>
 
-
-                        <div class="progress-track">
-
-                            <div class="progress-value maintenance" style="width: 7%;"></div>
-
-                        </div>
+                        <strong>
+                            510
+                        </strong>
 
                     </div>
 
 
 
-                    <div class="condition-item">
+                    <div class="category-item">
 
-                        <div class="condition-head">
+                        <span>
+                            Gedung & Bangunan
+                        </span>
 
-                            <span>
-                                <span class="status-dot broken"></span>
-                                Rusak
-                            </span>
+                        <div class="category-progress">
 
-                            <strong>
-                                102
-                            </strong>
+                            <div style="width:37%"></div>
 
                         </div>
 
-
-                        <div class="progress-track">
-
-                            <div class="progress-value broken" style="width: 4%;"></div>
-
-                        </div>
+                        <strong>
+                            380
+                        </strong>
 
                     </div>
 
 
 
-                    <div class="mini-stat-grid">
+                    <div class="category-item">
 
-                        <div class="mini-stat">
+                        <span>
+                            Aset Lainnya
+                        </span>
 
-                            <span>
-                                Lokasi
-                            </span>
+                        <div class="category-progress">
 
-                            <strong>
-                                34
-                            </strong>
+                            <div style="width:25%"></div>
 
                         </div>
 
+                        <strong>
+                            260
+                        </strong>
 
-                        <div class="mini-stat">
-
-                            <span>
-                                Ruangan
-                            </span>
-
-                            <strong>
-                                78
-                            </strong>
-
-                        </div>
+                    </div>
 
 
-                        <div class="mini-stat">
 
-                            <span>
-                                Departemen
-                            </span>
+                    <div class="category-item">
 
-                            <strong>
-                                12
-                            </strong>
+                        <span>
+                            Tanah
+                        </span>
+
+                        <div class="category-progress">
+
+                            <div style="width:24%"></div>
 
                         </div>
 
+                        <strong>
+                            245
+                        </strong>
 
-                        <div class="mini-stat">
+                    </div>
 
-                            <span>
-                                Divisi
-                            </span>
 
-                            <strong>
-                                26
-                            </strong>
+
+                    <div class="category-item">
+
+                        <span>
+                            Konstruksi
+                        </span>
+
+                        <div class="category-progress">
+
+                            <div style="width:7%"></div>
 
                         </div>
+
+                        <strong>
+                            70
+                        </strong>
 
                     </div>
 
@@ -488,15 +614,224 @@
 
 
 
-        {{-- =====================================================
-         BOTTOM
-    ====================================================== --}}
-
+        {{-- ============================================================
+         BOTTOM ROW
+    ============================================================= --}}
         <div class="dashboard-bottom-grid">
 
 
-            {{-- ASET TERBARU --}}
-            <div class="dashboard-card">
+            {{-- CONDITION --}}
+            <div class="dashboard-card condition-card">
+
+                <div class="dashboard-card-header">
+
+                    <div>
+
+                        <h3>
+                            Kondisi Aset
+                        </h3>
+
+                        <p>
+                            Distribusi kondisi aset saat ini
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-card-body condition-content">
+
+
+                    <div class="condition-chart-wrap">
+
+                        <canvas id="assetConditionChart"></canvas>
+
+
+                        <div class="donut-center condition-center">
+
+                            <strong>
+                                2.485
+                            </strong>
+
+                            <span>
+                                Aset
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="condition-legend">
+
+
+                        <div>
+
+                            <span class="condition-dot good"></span>
+
+                            <p>
+                                Baik
+                            </p>
+
+                            <strong>
+                                2.215
+                            </strong>
+
+                            <small>
+                                89,1%
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="condition-dot maintenance"></span>
+
+                            <p>
+                                Maintenance
+                            </p>
+
+                            <strong>
+                                180
+                            </strong>
+
+                            <small>
+                                7,2%
+                            </small>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="condition-dot broken"></span>
+
+                            <p>
+                                Rusak
+                            </p>
+
+                            <strong>
+                                90
+                            </strong>
+
+                            <small>
+                                3,6%
+                            </small>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+
+            {{-- MASTER STAT --}}
+            <div class="dashboard-card master-stat-card">
+
+                <div class="dashboard-card-header">
+
+                    <div>
+
+                        <h3>
+                            Statistik Master Data
+                        </h3>
+
+                        <p>
+                            Data referensi dalam sistem
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-card-body master-stat-grid">
+
+
+                    <div class="master-stat">
+
+                        <div>
+                            <i data-lucide="map-pin"></i>
+                        </div>
+
+                        <span>
+                            Lokasi
+                        </span>
+
+                        <strong>
+                            24
+                        </strong>
+
+                    </div>
+
+
+                    <div class="master-stat">
+
+                        <div>
+                            <i data-lucide="building-2"></i>
+                        </div>
+
+                        <span>
+                            Ruangan
+                        </span>
+
+                        <strong>
+                            186
+                        </strong>
+
+                    </div>
+
+
+                    <div class="master-stat">
+
+                        <div>
+                            <i data-lucide="network"></i>
+                        </div>
+
+                        <span>
+                            Departemen
+                        </span>
+
+                        <strong>
+                            12
+                        </strong>
+
+                    </div>
+
+
+                    <div class="master-stat">
+
+                        <div>
+                            <i data-lucide="users"></i>
+                        </div>
+
+                        <span>
+                            Divisi
+                        </span>
+
+                        <strong>
+                            36
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+            </div>
+
+
+
+            {{-- LATEST ASSET --}}
+            <div class="dashboard-card latest-assets">
 
                 <div class="dashboard-card-header">
 
@@ -507,144 +842,160 @@
                         </h3>
 
                         <p>
-                            Data aset terakhir yang ditambahkan
+                            5 aset terakhir yang ditambahkan
                         </p>
 
                     </div>
 
 
-                    <a href="#" class="view-all">
+                    <a href="#">
                         Lihat Semua
                     </a>
 
                 </div>
 
 
-                <div class="table-responsive">
-
-                    <table class="asset-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>Aset</th>
-                                <th>Lokasi</th>
-                                <th>Kategori</th>
-                                <th>Kondisi</th>
-
-                            </tr>
-
-                        </thead>
+                <div class="dashboard-card-body asset-list">
 
 
-                        <tbody>
+                    <div class="asset-item">
 
+                        <div class="asset-thumb laptop">
 
-                            <tr>
+                            <i data-lucide="laptop"></i>
 
-                                <td>
+                        </div>
 
-                                    <strong>
-                                        Laptop Dell Latitude
-                                    </strong>
+                        <div>
 
-                                    <span>
-                                        AST-IT-001
-                                    </span>
+                            <strong>
+                                Laptop Dell Latitude
+                            </strong>
 
-                                </td>
+                            <span>
+                                IT-2025-001
+                            </span>
 
-                                <td>
-                                    Bagian IT
-                                </td>
+                        </div>
 
-                                <td>
-                                    Peralatan
-                                </td>
+                        <small>
+                            2 Des 2025
+                        </small>
 
-                                <td>
-
-                                    <span class="badge-status good">
-                                        Baik
-                                    </span>
-
-                                </td>
-
-                            </tr>
+                    </div>
 
 
 
-                            <tr>
+                    <div class="asset-item">
 
-                                <td>
+                        <div class="asset-thumb printer">
 
-                                    <strong>
-                                        Printer Epson L5290
-                                    </strong>
+                            <i data-lucide="printer"></i>
 
-                                    <span>
-                                        AST-ADM-008
-                                    </span>
+                        </div>
 
-                                </td>
+                        <div>
 
-                                <td>
-                                    Administrasi
-                                </td>
+                            <strong>
+                                Printer Epson L5290
+                            </strong>
 
-                                <td>
-                                    Peralatan
-                                </td>
+                            <span>
+                                IT-2025-002
+                            </span>
 
-                                <td>
+                        </div>
 
-                                    <span class="badge-status maintenance">
-                                        Maintenance
-                                    </span>
+                        <small>
+                            1 Des 2025
+                        </small>
 
-                                </td>
-
-                            </tr>
+                    </div>
 
 
 
-                            <tr>
+                    <div class="asset-item">
 
-                                <td>
+                        <div class="asset-thumb machine">
 
-                                    <strong>
-                                        Pompa Distribusi
-                                    </strong>
+                            <i data-lucide="settings"></i>
 
-                                    <span>
-                                        AST-PRD-014
-                                    </span>
+                        </div>
 
-                                </td>
+                        <div>
 
-                                <td>
-                                    IPA
-                                </td>
+                            <strong>
+                                Pompa Distribusi
+                            </strong>
 
-                                <td>
-                                    Mesin
-                                </td>
+                            <span>
+                                PM-2025-015
+                            </span>
 
-                                <td>
+                        </div>
 
-                                    <span class="badge-status good">
-                                        Baik
-                                    </span>
+                        <small>
+                            29 Nov 2025
+                        </small>
 
-                                </td>
-
-                            </tr>
+                    </div>
 
 
-                        </tbody>
 
-                    </table>
+                    <div class="asset-item">
+
+                        <div class="asset-thumb land">
+
+                            <i data-lucide="map"></i>
+
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Tanah IPA Gunung Lipan
+                            </strong>
+
+                            <span>
+                                TN-2025-003
+                            </span>
+
+                        </div>
+
+                        <small>
+                            28 Nov 2025
+                        </small>
+
+                    </div>
+
+
+
+                    <div class="asset-item">
+
+                        <div class="asset-thumb building">
+
+                            <i data-lucide="building"></i>
+
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Gedung Kantor Unit
+                            </strong>
+
+                            <span>
+                                GD-2025-001
+                            </span>
+
+                        </div>
+
+                        <small>
+                            27 Nov 2025
+                        </small>
+
+                    </div>
+
 
                 </div>
 
@@ -652,8 +1003,8 @@
 
 
 
-            {{-- AKTIVITAS --}}
-            <div class="dashboard-card">
+            {{-- ACTIVITY --}}
+            <div class="dashboard-card activity-card">
 
                 <div class="dashboard-card-header">
 
@@ -664,38 +1015,40 @@
                         </h3>
 
                         <p>
-                            Riwayat perubahan terakhir
+                            5 aktivitas terakhir di sistem
                         </p>
 
                     </div>
 
+
+                    <a href="#">
+                        Lihat Semua
+                    </a>
+
                 </div>
 
 
-                <div class="dashboard-card-body">
+                <div class="dashboard-card-body activity-list">
 
 
                     <div class="activity-item">
 
-                        <div class="activity-icon">
-                            <i data-lucide="circle-plus"></i>
-                        </div>
+                        <span class="activity-icon blue">
+                            <i data-lucide="plus"></i>
+                        </span>
 
-                        <div>
-
+                        <p>
+                            Menambahkan data aset
                             <strong>
-                                Aset baru ditambahkan
+                                Laptop Dell Latitude
                             </strong>
+                        </p>
 
-                            <p>
-                                Laptop Dell Latitude ditambahkan ke sistem.
-                            </p>
-
-                            <small>
-                                10 menit lalu
-                            </small>
-
-                        </div>
+                        <small>
+                            2 Des 2025
+                            <br>
+                            14:20
+                        </small>
 
                     </div>
 
@@ -703,51 +1056,91 @@
 
                     <div class="activity-item">
 
-                        <div class="activity-icon">
-                            <i data-lucide="wrench"></i>
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Status aset diperbarui
-                            </strong>
-
-                            <p>
-                                Printer Epson masuk proses maintenance.
-                            </p>
-
-                            <small>
-                                1 jam lalu
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="activity-item">
-
-                        <div class="activity-icon">
+                        <span class="activity-icon green">
                             <i data-lucide="map-pin"></i>
-                        </div>
+                        </span>
 
-                        <div>
-
+                        <p>
+                            Mengubah data lokasi
                             <strong>
-                                Lokasi aset berubah
+                                Kantor Pusat
                             </strong>
+                        </p>
 
-                            <p>
-                                Router dipindahkan ke Server Room.
-                            </p>
+                        <small>
+                            2 Des 2025
+                            <br>
+                            10:15
+                        </small>
 
-                            <small>
-                                3 jam lalu
-                            </small>
+                    </div>
 
-                        </div>
+
+
+                    <div class="activity-item">
+
+                        <span class="activity-icon purple">
+                            <i data-lucide="file-up"></i>
+                        </span>
+
+                        <p>
+                            Mengunggah dokumen
+                            <strong>
+                                BAST Pompa Distribusi
+                            </strong>
+                        </p>
+
+                        <small>
+                            1 Des 2025
+                            <br>
+                            16:40
+                        </small>
+
+                    </div>
+
+
+
+                    <div class="activity-item">
+
+                        <span class="activity-icon orange">
+                            <i data-lucide="badge-dollar-sign"></i>
+                        </span>
+
+                        <p>
+                            Menambahkan nilai aset
+                            <strong>
+                                Voucher VCH-2025-0123
+                            </strong>
+                        </p>
+
+                        <small>
+                            1 Des 2025
+                            <br>
+                            11:22
+                        </small>
+
+                    </div>
+
+
+
+                    <div class="activity-item">
+
+                        <span class="activity-icon blue">
+                            <i data-lucide="archive"></i>
+                        </span>
+
+                        <p>
+                            Mengubah data arsip
+                            <strong>
+                                Sertifikat Tanah IPA
+                            </strong>
+                        </p>
+
+                        <small>
+                            30 Nov 2025
+                            <br>
+                            09:18
+                        </small>
 
                     </div>
 
@@ -769,278 +1162,5 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script>
-        Chart.defaults.font.family =
-            'Inter, system-ui, sans-serif';
-
-        Chart.defaults.color =
-            '#7b8799';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | PERTUMBUHAN NILAI ASET
-        |--------------------------------------------------------------------------
-        */
-
-        new Chart(
-            document.getElementById('growthChart'), {
-
-                type: 'line',
-
-                data: {
-
-                    labels: [
-                        '2022',
-                        '2023',
-                        '2024',
-                        '2025',
-                        '2026'
-                    ],
-
-                    datasets: [{
-                        label: 'Nilai Aset',
-
-                        data: [
-                            720,
-                            768,
-                            814,
-                            875,
-                            928.7
-                        ],
-
-                        borderColor: '#0b63ce',
-
-                        backgroundColor: 'rgba(11,99,206,.08)',
-
-                        borderWidth: 2,
-
-                        fill: true,
-
-                        tension: .4,
-
-                        pointRadius: 3,
-
-                        pointBackgroundColor: '#0b63ce'
-                    }]
-
-                },
-
-
-                options: {
-
-                    responsive: true,
-
-                    maintainAspectRatio: false,
-
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-
-                    scales: {
-
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-
-                        y: {
-
-                            grid: {
-                                color: '#edf1f5'
-                            },
-
-                            ticks: {
-
-                                callback: function(value) {
-                                    return value + ' M';
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-        );
-
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | KOMPOSISI KIB
-        |--------------------------------------------------------------------------
-        */
-
-        new Chart(
-            document.getElementById('compositionChart'), {
-
-                type: 'doughnut',
-
-                data: {
-
-                    labels: [
-                        'Tanah',
-                        'Peralatan & Mesin',
-                        'Gedung',
-                        'Jalan & Jaringan',
-                        'Aset Lainnya',
-                        'Konstruksi'
-                    ],
-
-                    datasets: [{
-
-                        data: [
-                            245,
-                            1020,
-                            380,
-                            510,
-                            260,
-                            70
-                        ],
-
-                        backgroundColor: [
-                            '#0b63ce',
-                            '#5b8def',
-                            '#16a34a',
-                            '#f59e0b',
-                            '#8b5cf6',
-                            '#ef4444'
-                        ],
-
-                        borderWidth: 0
-
-                    }]
-
-                },
-
-
-                options: {
-
-                    responsive: true,
-
-                    maintainAspectRatio: false,
-
-                    cutout: '70%',
-
-                    plugins: {
-
-                        legend: {
-
-                            position: 'bottom',
-
-                            labels: {
-
-                                boxWidth: 8,
-
-                                usePointStyle: true,
-
-                                pointStyle: 'circle',
-
-                                font: {
-                                    size: 10
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-        );
-
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | JUMLAH ASET PER KATEGORI
-        |--------------------------------------------------------------------------
-        */
-
-        new Chart(
-            document.getElementById('categoryChart'), {
-
-                type: 'bar',
-
-                data: {
-
-                    labels: [
-                        'Tanah',
-                        'Peralatan & Mesin',
-                        'Gedung',
-                        'Jalan & Jaringan',
-                        'Aset Lainnya',
-                        'Konstruksi'
-                    ],
-
-                    datasets: [{
-
-                        label: 'Jumlah',
-
-                        data: [
-                            245,
-                            1020,
-                            380,
-                            510,
-                            260,
-                            70
-                        ],
-
-                        backgroundColor: 'rgba(11,99,206,.82)',
-
-                        borderRadius: 5,
-
-                        barThickness: 14
-
-                    }]
-
-                },
-
-
-                options: {
-
-                    indexAxis: 'y',
-
-                    responsive: true,
-
-                    maintainAspectRatio: false,
-
-                    plugins: {
-
-                        legend: {
-                            display: false
-                        }
-
-                    },
-
-                    scales: {
-
-                        y: {
-                            grid: {
-                                display: false
-                            }
-                        },
-
-                        x: {
-                            grid: {
-                                color: '#edf1f5'
-                            }
-                        }
-
-                    }
-
-                }
-
-            }
-        );
-    </script>
+    <script src="{{ asset('js/pages/dashboard.js') }}"></script>
 @endpush

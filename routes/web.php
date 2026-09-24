@@ -46,10 +46,13 @@ Route::get('/dashboard', function () {
 // ------------------------------------------------
 // DASHBOARD ROUTES
 // -------------------------------------------------
-Route::get('/nilai', function () {
+Route::get('/nilai-aset', function () {
+
     return view('main.nilai');
-});
+})->name('main.nilai');
+
 
 Route::get('/arsip', function () {
+
     return view('main.arsip');
-});
+})->name('main.arsip');

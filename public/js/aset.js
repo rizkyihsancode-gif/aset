@@ -1,7 +1,34 @@
 /*
 |--------------------------------------------------------------------------
-| Sidebar Toggle
+| SISTEM ASET
+| GLOBAL JAVASCRIPT
 |--------------------------------------------------------------------------
+*/
+
+
+/*
+|--------------------------------------------------------------------------
+| BREAKPOINT
+|--------------------------------------------------------------------------
+*/
+
+const ASSET_MOBILE_BREAKPOINT = 820;
+
+
+
+/*
+|--------------------------------------------------------------------------
+| SIDEBAR TOGGLE
+|--------------------------------------------------------------------------
+|
+| Desktop:
+| - Collapse menjadi icon only.
+| - Expand kembali.
+|
+| Mobile:
+| - Sidebar slide dari kiri.
+| - Overlay muncul.
+|
 */
 
 function toggleSidebar() {
@@ -13,28 +40,43 @@ function toggleSidebar() {
         document.getElementById('sidebarOverlay');
 
 
+    if (!sidebar) {
+
+        return;
+
+    }
+
+
+
     /*
     |--------------------------------------------------------------------------
     | MOBILE
     |--------------------------------------------------------------------------
     */
 
-    if (window.innerWidth <= 820) {
+    if (
+        window.innerWidth <=
+        ASSET_MOBILE_BREAKPOINT
+    ) {
 
-        if (!sidebar) {
-            return;
-        }
-
-        sidebar.classList.toggle('open');
+        sidebar.classList.toggle(
+            'open'
+        );
 
 
         if (overlay) {
-            overlay.classList.toggle('show');
+
+            overlay.classList.toggle(
+                'show'
+            );
+
         }
 
 
         return;
+
     }
+
 
 
     /*
@@ -48,18 +90,17 @@ function toggleSidebar() {
     );
 
 
-    /*
-    Simpan kondisi sidebar.
-
-    Jadi kalau user refresh browser,
-    posisi sidebar tetap sama.
-    */
-
     const collapsed =
         document.body.classList.contains(
             'sidebar-collapsed'
         );
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE STATE
+    |--------------------------------------------------------------------------
+    */
 
     localStorage.setItem(
         'aset-sidebar-collapsed',
@@ -72,58 +113,57 @@ function toggleSidebar() {
 
 /*
 |--------------------------------------------------------------------------
-| Load Sidebar State
+| SIDEBAR DROPDOWN
 |--------------------------------------------------------------------------
-*/
-
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
-
-        const savedState =
-            localStorage.getItem(
-                'aset-sidebar-collapsed'
-            );
-
-
-        if (
-            savedState === '1' &&
-            window.innerWidth > 820
-        ) {
-
-            document.body.classList.add(
-                'sidebar-collapsed'
-            );
-
-        }
-
-    }
-);
-
-
-
-/*
-|--------------------------------------------------------------------------
-| Sidebar Dropdown
-|--------------------------------------------------------------------------
+|
+| Digunakan oleh:
+|
+| toggleMenu('masterGroup')
+| toggleMenu('kibGroup')
+|
 */
 
 function toggleMenu(id) {
 
+    const menu =
+        document.getElementById(id);
+
+
+    if (!menu) {
+
+        return;
+
+    }
+
+
+
     /*
-    Kalau sidebar sedang collapse,
-    buka sidebar terlebih dahulu.
+    |--------------------------------------------------------------------------
+    | DESKTOP COLLAPSED
+    |--------------------------------------------------------------------------
+    |
+    | Jika sidebar sedang kecil lalu user klik Master Data / KIB,
+    | sidebar dibuka dulu.
+    |
     */
 
     if (
+
+        window.innerWidth >
+        ASSET_MOBILE_BREAKPOINT
+
+        &&
+
         document.body.classList.contains(
             'sidebar-collapsed'
         )
+
     ) {
 
         document.body.classList.remove(
             'sidebar-collapsed'
         );
+
 
         localStorage.setItem(
             'aset-sidebar-collapsed',
@@ -132,20 +172,15 @@ function toggleMenu(id) {
 
 
         /*
-        Delay sedikit agar animasi sidebar
-        selesai dahulu.
+        Tunggu sedikit agar animasi sidebar selesai.
         */
 
         setTimeout(
             function () {
 
-                const menu =
-                    document.getElementById(id);
-
-
-                if (menu) {
-                    menu.classList.toggle('open');
-                }
+                menu.classList.toggle(
+                    'open'
+                );
 
             },
             220
@@ -153,19 +188,20 @@ function toggleMenu(id) {
 
 
         return;
+
     }
 
 
-    const menu =
-        document.getElementById(id);
 
+    /*
+    |--------------------------------------------------------------------------
+    | NORMAL TOGGLE
+    |--------------------------------------------------------------------------
+    */
 
-    if (!menu) {
-        return;
-    }
-
-
-    menu.classList.toggle('open');
+    menu.classList.toggle(
+        'open'
+    );
 
 }
 
@@ -173,7 +209,222 @@ function toggleMenu(id) {
 
 /*
 |--------------------------------------------------------------------------
-| Window Resize
+| CLOSE MOBILE SIDEBAR
+|--------------------------------------------------------------------------
+*/
+
+function closeMobileSidebar() {
+
+    const sidebar =
+        document.getElementById('sidebar');
+
+    const overlay =
+        document.getElementById('sidebarOverlay');
+
+
+    if (sidebar) {
+
+        sidebar.classList.remove(
+            'open'
+        );
+
+    }
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            'show'
+        );
+
+    }
+
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| LOAD SAVED SIDEBAR STATE
+|--------------------------------------------------------------------------
+*/
+
+function loadSidebarState() {
+
+    /*
+    Mobile tidak menggunakan collapsed desktop.
+    */
+
+    if (
+
+        window.innerWidth <=
+        ASSET_MOBILE_BREAKPOINT
+
+    ) {
+
+        document.body.classList.remove(
+            'sidebar-collapsed'
+        );
+
+
+        return;
+
+    }
+
+
+    const savedState =
+        localStorage.getItem(
+            'aset-sidebar-collapsed'
+        );
+
+
+    if (savedState === '1') {
+
+        document.body.classList.add(
+            'sidebar-collapsed'
+        );
+
+    } else {
+
+        document.body.classList.remove(
+            'sidebar-collapsed'
+        );
+
+    }
+
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| RESTORE OPEN MENU STATE
+|--------------------------------------------------------------------------
+|
+| Ini opsional tetapi berguna agar dropdown tetap terbuka
+| selama halaman aktif berada di dalam group.
+|
+*/
+
+function restoreOpenMenus() {
+
+    const groups =
+        document.querySelectorAll(
+            '.sidebar-menu-group'
+        );
+
+
+    groups.forEach(
+        function (group) {
+
+            /*
+            Jika submenu punya item aktif,
+            parent otomatis dibuka.
+            */
+
+            const activeChild =
+                group.querySelector(
+                    '.sidebar-submenu-item.active'
+                );
+
+
+            if (activeChild) {
+
+                group.classList.add(
+                    'open'
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| CLOSE SIDEBAR WHEN CLICKING SUBMENU ON MOBILE
+|--------------------------------------------------------------------------
+*/
+
+function setupMobileMenuLinks() {
+
+    const links =
+        document.querySelectorAll(
+            '.sidebar a'
+        );
+
+
+    links.forEach(
+        function (link) {
+
+            link.addEventListener(
+                'click',
+                function () {
+
+                    if (
+
+                        window.innerWidth <=
+                        ASSET_MOBILE_BREAKPOINT
+
+                    ) {
+
+                        closeMobileSidebar();
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| ESC KEY
+|--------------------------------------------------------------------------
+|
+| Di mobile user bisa tekan ESC untuk menutup sidebar.
+|
+*/
+
+function setupEscapeSidebar() {
+
+    document.addEventListener(
+        'keydown',
+        function (event) {
+
+            if (
+
+                event.key === 'Escape'
+
+                &&
+
+                window.innerWidth <=
+                ASSET_MOBILE_BREAKPOINT
+
+            ) {
+
+                closeMobileSidebar();
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| WINDOW RESIZE
 |--------------------------------------------------------------------------
 */
 
@@ -182,7 +433,9 @@ window.addEventListener(
     function () {
 
         const sidebar =
-            document.getElementById('sidebar');
+            document.getElementById(
+                'sidebar'
+            );
 
         const overlay =
             document.getElementById(
@@ -190,20 +443,44 @@ window.addEventListener(
             );
 
 
-        if (window.innerWidth > 820) {
+        /*
+        |--------------------------------------------------------------------------
+        | SWITCH TO DESKTOP
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+
+            window.innerWidth >
+            ASSET_MOBILE_BREAKPOINT
+
+        ) {
+
+            /*
+            Hapus mobile state.
+            */
 
             if (sidebar) {
-                sidebar.classList.remove('open');
+
+                sidebar.classList.remove(
+                    'open'
+                );
+
             }
 
 
             if (overlay) {
-                overlay.classList.remove('show');
+
+                overlay.classList.remove(
+                    'show'
+                );
+
             }
 
 
+
             /*
-            Kembalikan state desktop
+            Restore desktop collapsed state.
             */
 
             const savedState =
@@ -218,18 +495,95 @@ window.addEventListener(
                     'sidebar-collapsed'
                 );
 
+            } else {
+
+                document.body.classList.remove(
+                    'sidebar-collapsed'
+                );
+
             }
 
-        } else {
+        }
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SWITCH TO MOBILE
+        |--------------------------------------------------------------------------
+        */
+
+        else {
 
             /*
-            Di mobile jangan pakai
-            collapsed desktop.
+            Jangan tampilkan collapsed desktop
+            pada layar mobile.
             */
 
             document.body.classList.remove(
                 'sidebar-collapsed'
             );
+
+        }
+
+    }
+);
+
+
+
+/*
+|--------------------------------------------------------------------------
+| DOM READY
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        /*
+        Sidebar state
+        */
+
+        loadSidebarState();
+
+
+
+        /*
+        Parent menu
+        */
+
+        restoreOpenMenus();
+
+
+
+        /*
+        Mobile links
+        */
+
+        setupMobileMenuLinks();
+
+
+
+        /*
+        ESC support
+        */
+
+        setupEscapeSidebar();
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | LUCIDE ICON
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            window.lucide
+        ) {
+
+            lucide.createIcons();
 
         }
 

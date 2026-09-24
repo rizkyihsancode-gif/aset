@@ -1,54 +1,75 @@
 <header class="topbar">
 
+    {{-- ============================================================
+         LEFT
+    ============================================================= --}}
     <div class="topbar-left">
 
         {{-- SIDEBAR TOGGLE --}}
         <button type="button" class="sidebar-toggle" onclick="toggleSidebar()" title="Buka / Tutup Sidebar">
-            <i data-lucide="panel-left"></i>
+            <i data-lucide="menu"></i>
         </button>
 
 
-        <div class="page-title">
+        {{-- SEARCH --}}
+        <div class="header-search">
 
-            <h1>
-                @yield('page-title', 'Dashboard')
-            </h1>
+            <i data-lucide="search"></i>
 
-            <p>
-                @yield('page-description', 'Sistem Informasi Manajemen Aset')
-            </p>
+            <input type="text" placeholder="Cari aset, lokasi, dokumen, atau menu...">
 
         </div>
 
     </div>
 
 
+
+    {{-- ============================================================
+         RIGHT
+    ============================================================= --}}
     <div class="topbar-right">
 
-        <button type="button" class="top-action" title="Pencarian">
-            <i data-lucide="search"></i>
-        </button>
 
+        {{-- NOTIFICATION --}}
+        <button type="button" class="topbar-action" title="Notifikasi">
 
-        <button type="button" class="top-action" title="Notifikasi">
             <i data-lucide="bell"></i>
 
             <span class="notification-dot"></span>
+
         </button>
 
 
+
+        {{-- USER --}}
         <div class="header-user">
 
             <div class="header-avatar">
                 A
             </div>
 
+
             <div class="header-user-info">
-                <strong>Administrator</strong>
-                <span>Super Admin</span>
+
+                <strong>
+                    Administrator
+                </strong>
+
+                <span>
+                    Super Admin
+                </span>
+
+            </div>
+
+
+            <div class="header-user-arrow">
+
+                <i data-lucide="chevron-down"></i>
+
             </div>
 
         </div>
+
 
     </div>
 
