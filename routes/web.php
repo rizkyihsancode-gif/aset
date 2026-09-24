@@ -38,7 +38,10 @@ Route::get('/dashboard', function () {
 // ------------------------------------------------
 // MASTER DATA ROUTES
 // ------------------------------------------------
+Route::get('/master-data/barang', function () {
 
+    return view('master.data_barang');
+})->name('Master.data_barang');
 
 
 

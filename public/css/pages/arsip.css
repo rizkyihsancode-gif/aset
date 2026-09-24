@@ -47,7 +47,7 @@
 
     color: #0868d0;
 
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 750;
 
     letter-spacing: 1.2px;
@@ -102,7 +102,7 @@
 ========================================================= */
 
 .arsip-date-card {
-    min-width: 205px;
+    min-width: 215px;
 
     display: flex;
     align-items: center;
@@ -116,7 +116,7 @@
     border-radius: 10px;
 
     background:
-        rgba(255,255,255,.92);
+        rgba(255,255,255,.94);
 
     box-shadow:
         0 5px 17px
@@ -125,8 +125,8 @@
 
 
 .arsip-date-icon {
-    width: 39px;
-    height: 39px;
+    width: 40px;
+    height: 40px;
 
     flex-shrink: 0;
 
@@ -143,8 +143,8 @@
 
 
 .arsip-date-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
 }
 
 
@@ -153,7 +153,7 @@
 
     color: #1d3357;
 
-    font-size: 10.5px;
+    font-size: 11.5px;
 
     font-weight: 650;
 }
@@ -166,7 +166,7 @@
 
     color: #778aa6;
 
-    font-size: 9px;
+    font-size: 10.5px;
 }
 
 
@@ -210,13 +210,20 @@
 
     transition:
         transform .18s ease,
-        box-shadow .18s ease;
+        box-shadow .18s ease,
+        background .18s ease;
 }
 
 
 .arsip-add-button:hover {
-    transform:
-        translateY(-1px);
+    transform: translateY(-1px);
+
+    background:
+        linear-gradient(
+            90deg,
+            #106fd6,
+            #075fbf
+        );
 
     box-shadow:
         0 11px 22px
@@ -265,7 +272,7 @@
     border-radius: 12px;
 
     background:
-        rgba(255,255,255,.96);
+        rgba(255,255,255,.97);
 
     box-shadow:
         0 5px 18px
@@ -359,9 +366,9 @@
 
     color: #17315a;
 
-    font-size: 11.5px;
+    font-size: 12px;
 
-    font-weight: 620;
+    font-weight: 650;
 }
 
 
@@ -372,7 +379,7 @@
 
     color: #071b4c;
 
-    font-size: 27px;
+    font-size: 28px;
 
     line-height: 1;
 
@@ -386,11 +393,11 @@
     display: flex;
     align-items: center;
 
-    gap: 3px;
+    gap: 4px;
 
     margin-top: 9px;
 
-    font-size: 9.5px;
+    font-size: 10.5px;
 
     white-space: nowrap;
 }
@@ -407,8 +414,8 @@
 
 
 .arsip-kpi-content small svg {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
 }
 
 
@@ -513,7 +520,7 @@
     border-radius: 12px;
 
     background:
-        rgba(255,255,255,.96);
+        rgba(255,255,255,.97);
 
     box-shadow:
         0 5px 18px
@@ -530,7 +537,7 @@
 
     grid-template-columns:
         minmax(0,1fr)
-        330px;
+        355px;
 
     align-items: start;
 
@@ -554,9 +561,9 @@
 
 .arsip-section-header {
     padding:
-        16px
+        17px
         18px
-        8px;
+        9px;
 }
 
 
@@ -567,20 +574,20 @@
 
     color: #10264d;
 
-    font-size: 13px;
+    font-size: 14px;
 
     font-weight: 700;
 }
 
 
 .arsip-section-header p {
-    margin: 4px 0 0;
+    margin: 5px 0 0;
 
     color: #6e829f;
 
-    font-size: 10px;
+    font-size: 11.5px;
 
-    line-height: 1.45;
+    line-height: 1.5;
 }
 
 
@@ -593,7 +600,7 @@
 
     grid-template-columns:
         minmax(0,1.65fr)
-        minmax(260px,.85fr);
+        minmax(290px,.85fr);
 
     align-items: center;
 
@@ -617,8 +624,8 @@
 
 
 .storage-node {
-    min-width: 145px;
-    min-height: 68px;
+    min-width: 150px;
+    min-height: 72px;
 
     display: flex;
     align-items: center;
@@ -626,7 +633,7 @@
     gap: 11px;
 
     padding:
-        10px
+        11px
         12px;
 
     border: 1px solid #dce7f3;
@@ -658,8 +665,8 @@
 
 
 .storage-node-icon {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
 
     flex-shrink: 0;
 
@@ -676,8 +683,8 @@
 
 
 .storage-node-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 23px;
+    height: 23px;
 }
 
 
@@ -686,7 +693,9 @@
 
     color: #17305a;
 
-    font-size: 11px;
+    font-size: 12px;
+
+    font-weight: 650;
 }
 
 
@@ -697,13 +706,13 @@
 
     color: #7587a0;
 
-    font-size: 9px;
+    font-size: 10.5px;
 }
 
 
 .storage-chevron {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
 
     flex-shrink: 0;
 
@@ -731,7 +740,7 @@
 
     color: #17305a;
 
-    font-size: 11px;
+    font-size: 12px;
 
     font-weight: 700;
 }
@@ -748,17 +757,17 @@
 
 
 .storage-location-chips button {
-    min-height: 34px;
+    min-height: 38px;
 
     display: flex;
     align-items: center;
     justify-content: flex-start;
 
-    gap: 6px;
+    gap: 7px;
 
     padding:
         0
-        9px;
+        10px;
 
     border: 1px solid #dbe6f1;
 
@@ -768,9 +777,15 @@
 
     color: #3c5576;
 
-    font-size: 8.5px;
+    font-size: 10.5px;
+
+    font-weight: 500;
 
     cursor: pointer;
+
+    transition:
+        background .16s ease,
+        border-color .16s ease;
 }
 
 
@@ -782,8 +797,8 @@
 
 
 .storage-location-chips svg {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
 
     color: #176fd3;
 }
@@ -795,14 +810,14 @@
 
 .arsip-filter-card {
     padding:
-        14px
+        15px
         16px
-        15px;
+        16px;
 }
 
 
 .arsip-filter-title h3 {
-    margin-bottom: 11px;
+    margin-bottom: 12px;
 }
 
 
@@ -810,8 +825,8 @@
     display: grid;
 
     grid-template-columns:
-        minmax(260px,1.35fr)
-        repeat(3,minmax(145px,.8fr));
+        minmax(280px,1.35fr)
+        repeat(3,minmax(150px,.8fr));
 
     gap: 12px;
 }
@@ -824,7 +839,7 @@
 
     color: #344d70;
 
-    font-size: 10px;
+    font-size: 11px;
 
     font-weight: 600;
 }
@@ -833,7 +848,7 @@
 .arsip-filter-group select,
 .arsip-search-input input {
     width: 100%;
-    height: 40px;
+    height: 42px;
 
     border: 1px solid #d7e2ed;
 
@@ -845,7 +860,7 @@
 
     color: #334f74;
 
-    font-size: 10.5px;
+    font-size: 11px;
 
     transition:
         border-color .16s ease,
@@ -927,7 +942,7 @@
 .arsip-filter-button,
 .arsip-reset-button {
     min-width: 108px;
-    height: 40px;
+    height: 42px;
 
     display: flex;
     align-items: center;
@@ -937,11 +952,15 @@
 
     border-radius: 7px;
 
-    font-size: 10px;
+    font-size: 11px;
 
     font-weight: 600;
 
     cursor: pointer;
+
+    transition:
+        transform .16s ease,
+        background .16s ease;
 }
 
 
@@ -959,12 +978,23 @@
 }
 
 
+.arsip-filter-button:hover {
+    transform:
+        translateY(-1px);
+}
+
+
 .arsip-reset-button {
     border: 0;
 
     background: #e7f0fb;
 
     color: #34567e;
+}
+
+
+.arsip-reset-button:hover {
+    background: #dceaf8;
 }
 
 
@@ -980,7 +1010,7 @@
 ========================================================= */
 
 .arsip-table-header {
-    min-height: 52px;
+    min-height: 54px;
 
     display: flex;
     align-items: center;
@@ -995,7 +1025,7 @@
 
 
 .arsip-export-button {
-    height: 33px;
+    height: 35px;
 
     display: flex;
     align-items: center;
@@ -1015,15 +1045,24 @@
 
     color: #334f72;
 
-    font-size: 9px;
+    font-size: 10.5px;
+
+    font-weight: 500;
 
     cursor: pointer;
 }
 
 
+.arsip-export-button:hover {
+    border-color: #c0d1e3;
+
+    background: #f8fbff;
+}
+
+
 .arsip-export-button svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
 }
 
 
@@ -1041,11 +1080,11 @@
 
 
 .arsip-table thead th {
-    height: 38px;
+    height: 42px;
 
     padding:
-        8px
-        10px;
+        9px
+        11px;
 
     border:
         1px solid #dce6ef;
@@ -1059,27 +1098,29 @@
 
     color: #17325a;
 
-    font-size: 9px;
+    font-size: 10.5px;
 
     font-weight: 700;
 
     text-align: left;
+
+    vertical-align: middle;
 }
 
 
 .arsip-table tbody td {
-    min-height: 39px;
+    height: 42px;
 
     padding:
-        8px
-        10px;
+        9px
+        11px;
 
     border:
         1px solid #e4ebf2;
 
     color: #354f73;
 
-    font-size: 9px;
+    font-size: 11px;
 
     vertical-align: middle;
 }
@@ -1113,6 +1154,8 @@
 .arsip-doc-title {
     color: #17305a;
 
+    font-size: 11px;
+
     font-weight: 650;
 }
 
@@ -1120,11 +1163,11 @@
 .table-sub {
     display: block;
 
-    margin-top: 2px;
+    margin-top: 3px;
 
     color: #7d8ea5;
 
-    font-size: 8px;
+    font-size: 10px;
 }
 
 
@@ -1145,11 +1188,11 @@
 
     padding:
         5px
-        9px;
+        10px;
 
     border-radius: 20px;
 
-    font-size: 8px;
+    font-size: 10px;
 
     font-weight: 650;
 }
@@ -1200,8 +1243,8 @@
 
 
 .arsip-row-actions button {
-    width: 29px;
-    height: 29px;
+    width: 30px;
+    height: 30px;
 
     display: flex;
     align-items: center;
@@ -1228,8 +1271,8 @@
 
 
 .arsip-row-actions svg {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
 }
 
 
@@ -1263,7 +1306,7 @@
 ========================================================= */
 
 .arsip-table-footer {
-    min-height: 56px;
+    min-height: 58px;
 
     display: flex;
     align-items: center;
@@ -1283,7 +1326,7 @@
 .arsip-table-info {
     color: #5f7390;
 
-    font-size: 9px;
+    font-size: 10.5px;
 }
 
 
@@ -1301,7 +1344,7 @@
 
 
 .arsip-pagination-area > select {
-    height: 34px;
+    height: 36px;
 
     padding:
         0
@@ -1317,7 +1360,7 @@
 
     color: #3b5577;
 
-    font-size: 9px;
+    font-size: 10.5px;
 }
 
 
@@ -1330,8 +1373,8 @@
 
 
 .arsip-pagination button {
-    min-width: 32px;
-    height: 32px;
+    min-width: 34px;
+    height: 34px;
 
     display: flex;
     align-items: center;
@@ -1345,7 +1388,21 @@
 
     color: #496481;
 
-    font-size: 9px;
+    font-size: 10.5px;
+
+    cursor: pointer;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        color .15s ease;
+}
+
+
+.arsip-pagination button:hover:not(:disabled):not(.active) {
+    border-color: #bdd2e8;
+
+    background: #f4f9ff;
 }
 
 
@@ -1360,19 +1417,21 @@
 
 .arsip-pagination button:disabled {
     opacity: .45;
+
+    cursor: not-allowed;
 }
 
 
 .arsip-pagination button svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
 }
 
 
 .arsip-pagination span {
     color: #667b96;
 
-    font-size: 9px;
+    font-size: 10.5px;
 }
 
 
@@ -1385,12 +1444,12 @@
 
     top: 76px;
 
-    padding-bottom: 14px;
+    padding-bottom: 15px;
 }
 
 
 .arsip-detail-header {
-    min-height: 54px;
+    min-height: 56px;
 
     display: flex;
     align-items: center;
@@ -1410,15 +1469,15 @@
 
     color: #10264d;
 
-    font-size: 14px;
+    font-size: 15px;
 
     font-weight: 700;
 }
 
 
 .arsip-detail-close {
-    width: 30px;
-    height: 30px;
+    width: 31px;
+    height: 31px;
 
     display: flex;
     align-items: center;
@@ -1442,8 +1501,8 @@
 
 
 .arsip-detail-close svg {
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
 }
 
 
@@ -1455,7 +1514,7 @@
     display: grid;
 
     grid-template-columns:
-        48px
+        50px
         minmax(0,1fr)
         auto;
 
@@ -1470,8 +1529,8 @@
 
 
 .arsip-detail-file-icon {
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
 
     display: flex;
     align-items: center;
@@ -1491,8 +1550,8 @@
 
 
 .arsip-detail-file-icon svg {
-    width: 25px;
-    height: 25px;
+    width: 26px;
+    height: 26px;
 }
 
 
@@ -1501,9 +1560,9 @@
 
     color: #142b53;
 
-    font-size: 11px;
+    font-size: 12px;
 
-    line-height: 1.35;
+    line-height: 1.4;
 }
 
 
@@ -1515,11 +1574,11 @@
 
     padding:
         5px
-        8px;
+        9px;
 
     border-radius: 20px;
 
-    font-size: 8px;
+    font-size: 10px;
 
     font-weight: 650;
 }
@@ -1565,12 +1624,12 @@
     padding:
         0
         13px
-        13px;
+        14px;
 }
 
 
 .detail-section-heading {
-    min-height: 31px;
+    min-height: 34px;
 
     display: flex;
     align-items: center;
@@ -1579,7 +1638,7 @@
 
     padding:
         0
-        9px;
+        10px;
 
     border-radius: 7px;
 
@@ -1592,15 +1651,15 @@
 
     color: #17345e;
 
-    font-size: 9px;
+    font-size: 11px;
 
     font-weight: 700;
 }
 
 
 .detail-section-heading svg {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
 
     color: #1974d8;
 }
@@ -1612,8 +1671,8 @@
 
 .detail-data-list {
     padding:
-        9px
-        7px
+        10px
+        8px
         0;
 }
 
@@ -1622,12 +1681,12 @@
     display: grid;
 
     grid-template-columns:
-        105px 1fr;
+        118px 1fr;
 
-    gap: 8px;
+    gap: 9px;
 
     padding:
-        4px
+        5px
         0;
 }
 
@@ -1637,18 +1696,18 @@
 .detail-retention-list span {
     color: #637895;
 
-    font-size: 8.5px;
+    font-size: 10.5px;
 }
 
 
 .detail-data-list strong {
     color: #1b365f;
 
-    font-size: 8.8px;
+    font-size: 11px;
 
     font-weight: 600;
 
-    line-height: 1.3;
+    line-height: 1.35;
 }
 
 
@@ -1656,10 +1715,12 @@
     width: fit-content;
 
     padding:
-        3px
-        8px;
+        4px
+        9px;
 
     border-radius: 20px;
+
+    font-size: 10px;
 }
 
 
@@ -1684,8 +1745,8 @@
 .detail-location-list,
 .detail-retention-list {
     padding:
-        9px
-        7px
+        10px
+        8px
         0;
 }
 
@@ -1695,24 +1756,24 @@
     display: grid;
 
     grid-template-columns:
-        19px
-        92px
+        20px
+        105px
         1fr;
 
     align-items: center;
 
-    gap: 5px;
+    gap: 6px;
 
     padding:
-        5px
+        6px
         0;
 }
 
 
 .detail-location-list svg,
 .detail-retention-list svg {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
 
     color: #1474db;
 }
@@ -1722,7 +1783,7 @@
 .detail-retention-list strong {
     color: #1c375e;
 
-    font-size: 8.8px;
+    font-size: 11px;
 
     font-weight: 600;
 }
@@ -1746,7 +1807,7 @@
     gap: 9px;
 
     padding:
-        2px
+        3px
         13px
         0;
 }
@@ -1754,7 +1815,7 @@
 
 .detail-view-button,
 .detail-download-button {
-    min-height: 43px;
+    min-height: 44px;
 
     display: flex;
     align-items: center;
@@ -1764,7 +1825,7 @@
 
     border-radius: 8px;
 
-    font-size: 9.5px;
+    font-size: 11px;
 
     font-weight: 650;
 
@@ -1795,6 +1856,21 @@
 }
 
 
+.detail-view-button:hover {
+    background: #f4f9ff;
+}
+
+
+.detail-download-button:hover {
+    background:
+        linear-gradient(
+            90deg,
+            #126ed4,
+            #075ebe
+        );
+}
+
+
 .detail-view-button svg,
 .detail-download-button svg {
     width: 15px;
@@ -1817,7 +1893,7 @@
 
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE 1450
 ========================================================= */
 
 @media (max-width: 1450px) {
@@ -1825,12 +1901,12 @@
     .arsip-workspace {
         grid-template-columns:
             minmax(0,1fr)
-            300px;
+            330px;
     }
 
 
     .storage-node {
-        min-width: 125px;
+        min-width: 135px;
     }
 
 
@@ -1841,6 +1917,10 @@
 
 }
 
+
+/* =========================================================
+   RESPONSIVE 1250
+========================================================= */
 
 @media (max-width: 1250px) {
 
@@ -1857,7 +1937,6 @@
 
     .storage-other {
         padding-left: 0;
-
         padding-top: 15px;
 
         border-left: 0;
@@ -1887,6 +1966,10 @@
 }
 
 
+/* =========================================================
+   RESPONSIVE 1050
+========================================================= */
+
 @media (max-width: 1050px) {
 
     .arsip-page-header {
@@ -1914,11 +1997,15 @@
     .storage-flow {
         overflow-x: auto;
 
-        padding-bottom: 4px;
+        padding-bottom: 5px;
     }
 
 }
 
+
+/* =========================================================
+   RESPONSIVE TABLET
+========================================================= */
 
 @media (max-width: 760px) {
 
@@ -1983,10 +2070,16 @@
         width: 100%;
 
         overflow-x: auto;
+
+        padding-bottom: 3px;
     }
 
 }
 
+
+/* =========================================================
+   RESPONSIVE PHONE
+========================================================= */
 
 @media (max-width: 520px) {
 
@@ -2008,6 +2101,11 @@
     }
 
 
+    .arsip-kpi-content > strong {
+        font-size: 24px;
+    }
+
+
     .storage-location-chips {
         grid-template-columns: 1fr;
     }
@@ -2026,6 +2124,21 @@
 
     .arsip-detail-actions {
         grid-template-columns: 1fr;
+    }
+
+
+    .detail-data-list > div {
+        grid-template-columns:
+            105px 1fr;
+    }
+
+
+    .detail-location-list > div,
+    .detail-retention-list > div {
+        grid-template-columns:
+            20px
+            90px
+            1fr;
     }
 
 }

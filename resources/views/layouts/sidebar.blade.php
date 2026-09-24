@@ -106,7 +106,8 @@
             <div class="sidebar-submenu">
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a
+                    href="{{ route('Master.data_barang') }}"class="sidebar-submenu-item{{ request()->routeIs('Master.data_barang') ? 'active' : '' }}">
 
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="package"></i>
