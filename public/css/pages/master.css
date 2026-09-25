@@ -1,0 +1,686 @@
+/* ==========================================================
+   SISTEM ASET
+   MASTER DATA CSS
+   Perumdam Tirta Kencana
+========================================================== */
+
+
+/* ==========================================================
+   MASTER PAGE GLOBAL
+========================================================== */
+
+.master-page {
+
+    padding: 24px;
+
+    color: #172033;
+
+}
+
+
+
+/* ==========================================================
+   HEADER / HERO MASTER
+========================================================== */
+
+
+.master-header {
+
+    position: relative;
+
+    margin:
+
+    -24px
+    -24px
+    25px;
+
+
+    padding:
+
+    35px
+    30px
+    90px;
+
+
+    background:
+
+    linear-gradient(
+        90deg,
+        rgba(245,250,255,.95),
+        rgba(245,250,255,.65)
+    ),
+    url('/images/bg-asset.jpg');
+
+
+    background-size:cover;
+
+    background-position:center;
+
+    border-bottom:
+
+    1px solid #e7ecf2;
+
+}
+
+
+
+.master-breadcrumb {
+
+    font-size:12px;
+
+    color:#7b8799;
+
+    margin-bottom:12px;
+
+}
+
+
+
+.master-header h1 {
+
+
+    margin:0;
+
+    font-size:32px;
+
+    font-weight:700;
+
+    color:#172033;
+
+
+}
+
+
+
+.master-header p {
+
+
+    margin-top:8px;
+
+    max-width:600px;
+
+    color:#64748b;
+
+    font-size:14px;
+
+
+}
+
+
+
+/* ==========================================================
+   STATISTIC CARD
+========================================================== */
+
+
+.master-stat-wrapper {
+
+
+    display:grid;
+
+    grid-template-columns:
+
+    repeat(3,1fr);
+
+
+    gap:18px;
+
+
+    margin-top:-65px;
+
+
+    position:relative;
+
+}
+
+
+
+.master-stat-card {
+
+
+    background:#ffffff;
+
+
+    border:
+
+    1px solid #e7ecf2;
+
+
+    border-radius:16px;
+
+
+    padding:20px;
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    gap:15px;
+
+
+    box-shadow:
+
+    0 10px 25px
+
+    rgba(15,23,42,.06);
+
+
+}
+
+
+
+.master-stat-icon {
+
+
+    width:55px;
+
+    height:55px;
+
+
+    border-radius:14px;
+
+
+    background:#eaf3ff;
+
+
+    color:#0b63ce;
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    justify-content:center;
+
+
+}
+
+
+
+.master-stat-icon svg {
+
+
+    width:26px;
+
+    height:26px;
+
+}
+
+
+
+.master-stat-card small {
+
+
+    display:block;
+
+
+    font-size:12px;
+
+
+    color:#7b8799;
+
+
+}
+
+
+
+.master-stat-card h2 {
+
+
+    margin:4px 0;
+
+
+    font-size:28px;
+
+
+    color:#172033;
+
+
+}
+
+
+
+.master-stat-card span {
+
+
+    font-size:12px;
+
+
+    color:#16a34a;
+
+
+}
+
+
+
+/* ==========================================================
+   CONTENT CARD
+========================================================== */
+
+
+.master-card {
+
+
+    background:#ffffff;
+
+
+    border:
+
+    1px solid #e7ecf2;
+
+
+    border-radius:16px;
+
+
+    padding:22px;
+
+
+    margin-top:22px;
+
+
+}
+
+
+
+.master-card-header {
+
+
+    display:flex;
+
+
+    justify-content:space-between;
+
+
+    align-items:center;
+
+
+    margin-bottom:20px;
+
+
+}
+
+
+
+.master-card-title {
+
+
+    font-size:20px;
+
+
+    font-weight:700;
+
+
+    color:#172033;
+
+
+}
+
+
+
+/* ==========================================================
+   FILTER
+========================================================== */
+
+
+.master-filter {
+
+
+    display:flex;
+
+
+    gap:12px;
+
+
+    margin-bottom:20px;
+
+
+}
+
+
+
+.master-filter input,
+.master-filter select {
+
+
+    height:42px;
+
+
+    border:
+
+    1px solid #dbe3ef;
+
+
+    border-radius:10px;
+
+
+    padding:
+
+    0 14px;
+
+
+    font-size:13px;
+
+
+    outline:none;
+
+
+}
+
+
+
+.master-filter input {
+
+
+    flex:1;
+
+
+}
+
+
+
+.master-filter input:focus,
+.master-filter select:focus {
+
+
+    border-color:#0b63ce;
+
+
+}
+
+
+
+/* ==========================================================
+   BUTTON
+========================================================== */
+
+
+.master-btn {
+
+
+    height:42px;
+
+
+    padding:
+
+    0 18px;
+
+
+    border-radius:10px;
+
+
+    border:none;
+
+
+    background:#0b63ce;
+
+
+    color:white;
+
+
+    font-size:13px;
+
+
+    cursor:pointer;
+
+
+}
+
+
+
+.master-btn:hover {
+
+
+    background:#074f9f;
+
+
+}
+
+
+
+
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+
+.master-table {
+
+
+    width:100%;
+
+
+    border-collapse:collapse;
+
+
+}
+
+
+
+.master-table thead {
+
+
+    background:#f0f6ff;
+
+
+}
+
+
+
+.master-table th {
+
+
+    padding:14px;
+
+
+    text-align:left;
+
+
+    font-size:12px;
+
+
+    color:#34466b;
+
+
+    font-weight:700;
+
+
+}
+
+
+
+.master-table td {
+
+
+    padding:14px;
+
+
+    border-bottom:
+
+    1px solid #edf1f7;
+
+
+    font-size:13px;
+
+
+    color:#475569;
+
+
+}
+
+
+
+.master-table tbody tr:hover {
+
+
+    background:#f8fbff;
+
+
+}
+
+
+
+/* ==========================================================
+   ACTION BUTTON
+========================================================== */
+
+
+.master-action {
+
+
+    display:flex;
+
+
+    gap:6px;
+
+
+}
+
+
+
+.master-action button {
+
+
+    width:32px;
+
+
+    height:32px;
+
+
+    border:none;
+
+
+    border-radius:8px;
+
+
+    display:flex;
+
+
+    align-items:center;
+
+
+    justify-content:center;
+
+
+    cursor:pointer;
+
+
+}
+
+
+
+.btn-view {
+
+
+    background:#eaf3ff;
+
+    color:#0b63ce;
+
+}
+
+
+
+.btn-edit {
+
+
+    background:#fff4df;
+
+    color:#f59e0b;
+
+}
+
+
+
+.btn-delete {
+
+
+    background:#ffe8e8;
+
+    color:#dc2626;
+
+}
+
+
+
+
+/* ==========================================================
+   PAGINATION
+========================================================== */
+
+
+.master-pagination {
+
+
+    margin-top:20px;
+
+
+    display:flex;
+
+
+    justify-content:flex-end;
+
+
+    gap:5px;
+
+
+}
+
+
+
+.master-pagination button {
+
+
+    width:34px;
+
+    height:34px;
+
+
+    border-radius:8px;
+
+
+    border:
+
+    1px solid #e2e8f0;
+
+
+    background:white;
+
+
+}
+
+
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+
+@media(max-width:900px){
+
+
+.master-stat-wrapper{
+
+
+grid-template-columns:1fr;
+
+
+}
+
+
+
+.master-filter{
+
+
+flex-direction:column;
+
+
+}
+
+
+
+}

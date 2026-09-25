@@ -1,862 +1,1529 @@
 /* =========================================================
-   MASTER DATA - BARANG
+   MASTER DATA - DIVISI
 ========================================================= */
-.barang-page {
-    --barang-primary: #0b63ce;
-    --barang-primary-dark: #074f9f;
-    --barang-primary-light: #eaf3ff;
-    --barang-background: #f5f7fb;
-    --barang-surface: #ffffff;
-    --barang-text: #172033;
-    --barang-muted: #7b8799;
-    --barang-border: #e7ecf2;
-    --barang-success: #16a34a;
-    --barang-warning: #f59e0b;
-    --barang-danger: #dc2626;
+
+.divisi-page {
     min-height: calc(100vh - 60px);
-    background: var(--barang-background);
+
+    background:
+        linear-gradient(
+            180deg,
+            #f2f8ff 0%,
+            #f6f9fc 100%
+        );
 }
+
+
 /* =========================================================
    HERO
 ========================================================= */
-.barang-hero {
+
+.divisi-hero {
     position: relative;
+
     overflow: hidden;
-    margin: -21px -24px 16px;
-    padding: 20px 24px 17px;
-    background: url('../../images/pdam4.png') right center / cover no-repeat;
+
+    margin:
+        -21px
+        -24px
+        16px;
+
+    padding:
+        20px
+        24px
+        17px;
+
+    background:
+        url('/images/pdam4.png')
+        right center / cover
+        no-repeat;
 }
-.barang-hero-overlay {
+
+
+.divisi-hero-overlay {
     position: absolute;
+
     inset: 0;
-    background: linear-gradient( 90deg, rgba(245,250,255,.99) 0%, rgba(239,248,255,.96) 30%, rgba(225,241,255,.86) 55%, rgba(207,232,252,.22) 100% );
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(245,250,255,.99) 0%,
+            rgba(239,248,255,.96) 30%,
+            rgba(225,241,255,.86) 55%,
+            rgba(207,232,252,.22) 100%
+        );
+
     pointer-events: none;
 }
-.barang-hero-top {
+
+
+.divisi-hero-top {
     position: relative;
+
     z-index: 2;
+
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
+
     gap: 25px;
+
     margin-bottom: 17px;
 }
+
+
 /* =========================================================
    BREADCRUMB
 ========================================================= */
-.barang-breadcrumb {
+
+.divisi-breadcrumb {
     display: flex;
     align-items: center;
+
     gap: 7px;
+
     margin-bottom: 11px;
+
     color: #637b9a;
-    font-size: 13px;
+
+    font-size: 11px;
 }
-.barang-breadcrumb a {
+
+
+.divisi-breadcrumb a {
     display: flex;
+
     color: #416995;
 }
-.barang-breadcrumb svg {
+
+
+.divisi-breadcrumb svg {
     width: 13px;
     height: 13px;
 }
-.barang-breadcrumb > svg {
+
+
+.divisi-breadcrumb > svg {
     width: 11px;
     height: 11px;
+
     color: #8fa1b6;
 }
-.barang-breadcrumb strong {
+
+
+.divisi-breadcrumb strong {
     color: #375779;
+
     font-weight: 600;
 }
+
+
 /* =========================================================
    TITLE
 ========================================================= */
-.barang-heading h1 {
+
+.divisi-heading h1 {
     margin: 0;
+
     color: #071b4b;
+
     font-size: 34px;
+
     line-height: 1.05;
+
     font-weight: 780;
 }
-.barang-heading p {
-    margin: 7px 0 0;
+
+
+.divisi-heading p {
+    margin:
+        7px
+        0
+        0;
+
     color: #587197;
+
     font-size: 13px;
 }
+
+
 /* =========================================================
    DATE
 ========================================================= */
-.barang-date-card {
+
+.divisi-date-card {
     min-width: 218px;
+
     display: flex;
     align-items: center;
+
     gap: 11px;
-    padding: 11px 14px;
-    border: 1px solid rgba(220,232,244,.9);
+
+    padding:
+        11px
+        14px;
+
+    border:
+        1px solid
+        rgba(220,232,244,.9);
+
     border-radius: 10px;
-    background: rgba(255,255,255,.92);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 7px 22px rgba(27,75,118,.07);
+
+    background:
+        rgba(255,255,255,.92);
+
+    backdrop-filter:
+        blur(8px);
+
+    box-shadow:
+        0 7px 22px
+        rgba(27,75,118,.07);
 }
-.barang-date-icon {
+
+
+.divisi-date-icon {
     width: 40px;
     height: 40px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     flex-shrink: 0;
+
     border-radius: 8px;
+
     background: #eaf3ff;
+
     color: #086ad3;
 }
-.barang-date-icon svg {
+
+
+.divisi-date-icon svg {
     width: 19px;
     height: 19px;
 }
-.barang-date-card strong {
+
+
+.divisi-date-card strong {
     display: block;
+
     color: #1d3357;
-    font-size: 13px;
+
+    font-size: 11px;
+
     font-weight: 650;
 }
-.barang-date-card span {
+
+
+.divisi-date-card span {
     display: block;
+
     margin-top: 3px;
+
     color: #778aa6;
-    font-size: 12px;
+
+    font-size: 10px;
 }
+
+
 /* =========================================================
    KPI
 ========================================================= */
-.barang-kpi-grid {
+
+.divisi-kpi-grid {
     position: relative;
+
     z-index: 2;
+
     display: grid;
-    grid-template-columns: repeat(3, minmax(0,1fr));
+
+    grid-template-columns:
+        repeat(3, minmax(0,1fr));
+
     gap: 14px;
 }
-.barang-kpi-card {
+
+
+.divisi-kpi-card {
     min-height: 104px;
+
     display: flex;
     align-items: center;
+
     gap: 15px;
-    padding: 15px 17px;
-    border: 1px solid rgba(218,230,242,.93);
+
+    padding:
+        15px
+        17px;
+
+    border:
+        1px solid
+        rgba(218,230,242,.93);
+
     border-radius: 11px;
-    background: rgba(255,255,255,.94);
-    backdrop-filter: blur(9px);
-    box-shadow: 0 8px 24px rgba(28,67,105,.06);
+
+    background:
+        rgba(255,255,255,.94);
+
+    backdrop-filter:
+        blur(9px);
+
+    box-shadow:
+        0 8px 24px
+        rgba(28,67,105,.06);
 }
-.barang-kpi-icon {
+
+
+.divisi-kpi-icon {
     width: 54px;
     height: 54px;
+
     flex-shrink: 0;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     border-radius: 11px;
+
     color: white;
-    background: var(--barang-primary);
+
+    background:
+        linear-gradient(
+            145deg,
+            #1680ef,
+            #0767d6
+        );
 }
-.barang-kpi-icon svg {
+
+
+.divisi-kpi-icon svg {
     width: 26px;
     height: 26px;
 }
-.barang-kpi-content {
+
+
+.divisi-kpi-content {
     min-width: 0;
+
     flex: 1;
 }
-.barang-kpi-content > span {
+
+
+.divisi-kpi-content > span {
     color: #17315a;
+
     font-size: 12px;
+
     font-weight: 650;
 }
-.barang-kpi-content > strong {
+
+
+.divisi-kpi-content > strong {
     display: block;
+
     margin-top: 5px;
+
     color: #071b4c;
+
     font-size: 28px;
+
     font-weight: 780;
+
     line-height: 1;
 }
-.barang-kpi-content > strong.barang-kpi-text {
+
+
+.divisi-kpi-content > strong.divisi-kpi-text {
     font-size: 24px;
 }
-.barang-kpi-content p {
-    margin: 5px 0 0;
+
+
+.divisi-kpi-content p {
+    margin:
+        5px
+        0
+        0;
+
     color: #72839c;
-    font-size: 12px;
+
+    font-size: 10px;
 }
-.barang-kpi-value {
+
+
+.divisi-kpi-value {
     display: flex;
     align-items: center;
+
     gap: 18px;
+
     margin-top: 5px;
 }
-.barang-kpi-value strong {
+
+
+.divisi-kpi-value strong {
     color: #071b4c;
+
     font-size: 28px;
+
     font-weight: 780;
 }
-.barang-kpi-value small {
+
+
+.divisi-kpi-value small {
     display: flex;
     align-items: center;
+
     gap: 4px;
-    color: var(--barang-success);
-    font-size: 13px;
+
+    color: #20a75b;
+
+    font-size: 11px;
+
     font-weight: 650;
 }
-.barang-kpi-value small svg {
+
+
+.divisi-kpi-value small svg {
     width: 13px;
     height: 13px;
 }
-.barang-sparkline {
+
+
+.divisi-sparkline {
     width: 65px;
+
     flex-shrink: 0;
 }
-.barang-sparkline svg {
+
+
+.divisi-sparkline svg {
     width: 100%;
     height: 48px;
 }
-.barang-sparkline polyline {
+
+
+.divisi-sparkline polyline {
     fill: none;
+
     stroke: #65a9fa;
+
     stroke-width: 3;
+
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.barang-kpi-watermark {
+
+
+.divisi-kpi-watermark {
     flex-shrink: 0;
-    color: rgba(31,116,218,.19);
+
+    color:
+        rgba(31,116,218,.19);
 }
-.barang-kpi-watermark svg {
+
+
+.divisi-kpi-watermark svg {
     width: 48px;
     height: 48px;
 }
+
+
 /* =========================================================
    CARD
 ========================================================= */
-.barang-card {
+
+.divisi-card {
     overflow: hidden;
-    border: 1px solid #dfe8f1;
+
+    border:
+        1px solid #dfe8f1;
+
     border-radius: 12px;
-    background: rgba(255,255,255,.97);
-    box-shadow: 0 5px 18px rgba(30,70,110,.03);
+
+    background:
+        rgba(255,255,255,.97);
+
+    box-shadow:
+        0 5px 18px
+        rgba(30,70,110,.03);
 }
+
+
 /* =========================================================
    FILTER
 ========================================================= */
-.barang-filter-card {
+
+.divisi-filter-card {
     margin-bottom: 15px;
-    padding: 14px 16px 15px;
+
+    padding:
+        14px
+        16px
+        15px;
 }
-.barang-filter-header {
+
+
+.divisi-filter-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 15px;
+
     margin-bottom: 12px;
 }
-.barang-filter-header h3 {
+
+
+.divisi-filter-header h3 {
     margin: 0;
+
     color: #10264d;
+
     font-size: 18px;
+
     font-weight: 720;
 }
-.barang-add-button {
+
+
+.divisi-add-button {
     height: 40px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 7px;
-    padding: 0 17px;
+
+    padding:
+        0
+        17px;
+
     border: 0;
+
     border-radius: 7px;
-    background: var(--barang-primary);
+
+    background:
+        linear-gradient(
+            90deg,
+            #1678e1,
+            #0766d0
+        );
+
     color: white;
-    font-size: 13px;
+
+    font-size: 11px;
+
     font-weight: 650;
+
     cursor: pointer;
 }
-.barang-add-button svg {
+
+
+.divisi-add-button svg {
     width: 15px;
     height: 15px;
 }
-.barang-filter-grid {
+
+
+.divisi-filter-grid {
     display: grid;
-    grid-template-columns: minmax(280px,1.55fr) minmax(210px,.85fr) auto auto auto;
+
+    grid-template-columns:
+        minmax(280px,1.55fr)
+        minmax(210px,.85fr)
+        auto
+        auto
+        auto;
+
     align-items: end;
+
     gap: 10px;
 }
-.barang-search {
+
+
+.divisi-search {
     position: relative;
 }
-.barang-search svg {
+
+
+.divisi-search svg {
     width: 16px;
     height: 16px;
+
     position: absolute;
+
     left: 13px;
     top: 50%;
-    transform: translateY(-50%);
+
+    transform:
+        translateY(-50%);
+
     color: #547091;
 }
-.barang-search input,
-.barang-select-group select {
+
+
+.divisi-search input,
+.divisi-select-group select {
     width: 100%;
     height: 42px;
-    border: 1px solid #d7e2ed;
+
+    border:
+        1px solid #d7e2ed;
+
     border-radius: 7px;
+
     outline: none;
+
     background: #ffffff;
+
     color: #334f74;
+
     font-size: 14px;
 }
-.barang-search input {
-    padding: 0 12px 0 39px;
+
+
+.divisi-search input {
+    padding:
+        0
+        12px
+        0
+        39px;
 }
-.barang-select-group label {
+
+
+.divisi-select-group label {
     display: block;
+
     margin-bottom: 6px;
+
     color: #344d70;
-    font-size: 12px;
+
+    font-size: 10.5px;
+
     font-weight: 600;
 }
-.barang-select-group select {
-    padding: 0 11px;
+
+
+.divisi-select-group select {
+    padding:
+        0
+        11px;
 }
-.barang-filter-button,
-.barang-reset-button,
-.barang-export-button {
+
+
+.divisi-filter-button,
+.divisi-reset-button,
+.divisi-export-button {
     height: 42px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 7px;
-    padding: 0 15px;
+
+    padding:
+        0
+        15px;
+
     border-radius: 7px;
-    font-size: 13px;
+
+    font-size: 11px;
+
     font-weight: 600;
+
     cursor: pointer;
 }
-.barang-filter-button {
+
+
+.divisi-filter-button {
     border: 0;
-    background: var(--barang-primary);
+
+    background:
+        linear-gradient(
+            90deg,
+            #2583ed,
+            #106bd2
+        );
+
     color: white;
 }
-.barang-reset-button {
+
+
+.divisi-reset-button {
     border: 1px solid #d6e1ed;
+
     background: white;
+
     color: #34567e;
 }
-.barang-export-button {
-    border: 1px solid #d6e1ed;
+
+
+.divisi-export-button {
+    border:
+        1px solid #d6e1ed;
+
     background: white;
+
     color: #344f71;
 }
-.barang-filter-button svg,
-.barang-reset-button svg,
-.barang-export-button svg {
+
+
+.divisi-filter-button svg,
+.divisi-reset-button svg,
+.divisi-export-button svg {
     width: 14px;
     height: 14px;
 }
+
+
 /* =========================================================
    TABLE
 ========================================================= */
-.barang-table-card {
+
+.divisi-table-card {
     margin-bottom: 15px;
 }
-.barang-table-header {
+
+
+.divisi-table-header {
     min-height: 54px;
+
     display: flex;
     align-items: center;
-    padding: 10px 16px;
+
+    padding:
+        10px
+        16px;
 }
-.barang-table-header h3 {
+
+
+.divisi-table-header h3 {
     margin: 0;
+
     color: #10264d;
+
     font-size: 18px;
+
     font-weight: 720;
 }
-.barang-table {
+
+
+.divisi-table {
     width: calc(100% - 32px);
-    margin: 0 16px;
+
+    margin:
+        0
+        16px;
+
     border-collapse: collapse;
+
     white-space: nowrap;
 }
-.barang-table thead th {
-    padding: 14px 16px;
-    border: 1px solid var(--barang-border);
-    background: #edf5ff;
+
+
+.divisi-table thead th {
+    height: 42px;
+
+    padding:
+        9px
+        12px;
+
+    border:
+        1px solid #dce6ef;
+
+    background:
+        linear-gradient(
+            180deg,
+            #e9f4ff,
+            #dfeefa
+        );
+
     color: #17325a;
-    font-size: 14px;
+
+    font-size: 12.5px;
+
     font-weight: 700;
+
     text-align: left;
 }
-.barang-table tbody td {
-    padding: 14px 16px;
-    border: 1px solid var(--barang-border);
-    color: var(--barang-text);
-    font-size: 14px;
-    line-height: 1.5;
+
+
+.divisi-table tbody td {
+    height: 43px;
+
+    padding:
+        9px
+        12px;
+
+    border:
+        1px solid #e4ebf2;
+
+    color: #354f73;
+
+    font-size: 12.5px;
 }
-.barang-table tbody tr:nth-child(even) {
+
+
+.divisi-table tbody tr:nth-child(even) {
     background: #fbfdff;
 }
-.barang-table tbody tr:hover {
+
+
+.divisi-table tbody tr:hover {
     background: #f3f8fe;
 }
-.barang-col-no {
+
+
+.divisi-col-no {
     width: 65px;
 }
-.barang-col-action {
+
+
+.divisi-col-action {
     width: 140px;
+
     text-align: center !important;
 }
+
+
 /* =========================================================
    ACTIONS
 ========================================================= */
-.barang-actions {
+
+.divisi-actions {
     display: flex;
     justify-content: center;
+
     gap: 7px;
 }
-.barang-actions button {
-    width: 32px;
-    height: 32px;
+
+
+.divisi-actions button {
+    width: 30px;
+    height: 30px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     border: 0;
+
     border-radius: 6px;
+
     cursor: pointer;
 }
-.barang-actions svg {
+
+
+.divisi-actions svg {
     width: 14px;
     height: 14px;
 }
-.barang-actions .view {
+
+
+.divisi-actions .view {
     background: #e6f3ff;
-    color: var(--barang-primary);
+
+    color: #1173da;
 }
-.barang-actions .edit {
+
+
+.divisi-actions .edit {
     background: #fff0d8;
+
     color: #e58a00;
 }
-.barang-actions .delete {
+
+
+.divisi-actions .delete {
     background: #ffe4e7;
-    color: var(--barang-danger);
+
+    color: #ef3347;
 }
+
+
 /* =========================================================
    FOOTER
 ========================================================= */
-.barang-table-footer {
+
+.divisi-table-footer {
     min-height: 58px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 15px;
-    padding: 10px 16px;
+
+    padding:
+        10px
+        16px;
 }
-.barang-table-info {
+
+
+.divisi-table-info {
     color: #5f7390;
-    font-size: 12px;
+
+    font-size: 10.5px;
 }
-.barang-pagination-area {
+
+
+.divisi-pagination-area {
     display: flex;
     align-items: center;
+
     gap: 9px;
+
     color: #657b99;
-    font-size: 12px;
+
+    font-size: 10.5px;
 }
-.barang-pagination-area select {
+
+
+.divisi-pagination-area select {
     height: 36px;
-    padding: 0 25px 0 10px;
-    border: 1px solid #d9e3ed;
+
+    padding:
+        0
+        25px
+        0
+        10px;
+
+    border:
+        1px solid #d9e3ed;
+
     border-radius: 6px;
+
     background: white;
+
     color: #3b5577;
-    font-size: 12px;
+
+    font-size: 10.5px;
 }
-.barang-pagination {
+
+
+.divisi-pagination {
     display: flex;
+
     gap: 6px;
+
     margin-left: 8px;
 }
-.barang-pagination button {
+
+
+.divisi-pagination button {
     min-width: 34px;
     height: 34px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #dce5ee;
+
+    border:
+        1px solid #dce5ee;
+
     border-radius: 6px;
+
     background: white;
+
     color: #496481;
-    font-size: 12px;
+
+    font-size: 10.5px;
+
     cursor: pointer;
 }
-.barang-pagination button.active {
-    border-color: var(--barang-primary);
-    background: var(--barang-primary);
+
+
+.divisi-pagination button.active {
+    border-color: #1471db;
+
+    background: #1471db;
+
     color: white;
 }
-.barang-pagination button:disabled {
+
+
+.divisi-pagination button:disabled {
     opacity: .45;
 }
+
+
 /* =========================================================
    BOTTOM
 ========================================================= */
-.barang-bottom-grid {
+
+.divisi-bottom-grid {
     display: grid;
-    grid-template-columns: .95fr 1.15fr;
+
+    grid-template-columns:
+        .95fr
+        1.15fr;
+
     gap: 15px;
 }
-.barang-bottom-header {
+
+
+.divisi-bottom-header {
     min-height: 52px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+
+    padding:
+        10px
+        16px;
 }
-.barang-bottom-header h3 {
+
+
+.divisi-bottom-header h3 {
     margin: 0;
+
     color: #10264d;
+
     font-size: 14px;
+
     font-weight: 700;
 }
-.barang-bottom-header a {
+
+
+.divisi-bottom-header a {
     color: #086cd4;
-    font-size: 12px;
+
+    font-size: 10.5px;
+
     font-weight: 600;
 }
+
+
 /* =========================================================
    DISTRIBUTION
 ========================================================= */
-.barang-distribution-content {
+
+.divisi-distribution-content {
     min-height: 215px;
+
     display: grid;
-    grid-template-columns: 195px 1fr;
+
+    grid-template-columns:
+        195px
+        1fr;
+
     align-items: center;
+
     gap: 18px;
-    padding: 3px 18px 18px;
+
+    padding:
+        3px
+        18px
+        18px;
 }
-.barang-chart-wrap {
+
+
+.divisi-chart-wrap {
     width: 175px;
     height: 175px;
+
     position: relative;
+
     margin: auto;
 }
-.barang-chart-center {
+
+
+.divisi-chart-center {
     position: absolute;
+
     inset: 0;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     flex-direction: column;
+
     pointer-events: none;
 }
-.barang-chart-center strong {
+
+
+.divisi-chart-center strong {
     color: #10254d;
+
     font-size: 20px;
+
     font-weight: 750;
 }
-.barang-chart-center span {
+
+
+.divisi-chart-center span {
     color: #627a99;
-    font-size: 12px;
+
+    font-size: 10.5px;
 }
-.barang-legend {
+
+
+.divisi-legend {
     display: flex;
+
     flex-direction: column;
+
     gap: 10px;
 }
-.barang-legend > div {
+
+
+.divisi-legend > div {
     display: grid;
-    grid-template-columns: 10px 1fr auto 43px;
+
+    grid-template-columns:
+        10px
+        1fr
+        auto
+        43px;
+
     align-items: center;
+
     gap: 8px;
 }
-.barang-legend p {
+
+
+.divisi-legend p {
     margin: 0;
+
     color: #284268;
-    font-size: 12px;
+
+    font-size: 10.5px;
 }
-.barang-legend strong {
+
+
+.divisi-legend strong {
     color: #10264e;
-    font-size: 12px;
+
+    font-size: 10.5px;
 }
-.barang-legend small {
+
+
+.divisi-legend small {
     color: #667d9c;
-    font-size: 12px;
+
+    font-size: 10px;
+
     text-align: right;
 }
-.barang-dot {
+
+
+.divisi-dot {
     width: 9px;
     height: 9px;
+
     border-radius: 50%;
 }
-.barang-dot.c1 { background: #3389ee; }
-.barang-dot.c2 { background: #4fc184; }
-.barang-dot.c3 { background: #ffc85c; }
-.barang-dot.c4 { background: #ff9024; }
-.barang-dot.c5 { background: #8558e8; }
-.barang-dot.c6 { background: #aab7ca; }
+
+
+.divisi-dot.c1 { background: #3389ee; }
+.divisi-dot.c2 { background: #55a8f1; }
+.divisi-dot.c3 { background: #4fc184; }
+.divisi-dot.c4 { background: #ffc85c; }
+.divisi-dot.c5 { background: #ff9024; }
+.divisi-dot.c6 { background: #8558e8; }
+
+
 /* =========================================================
    LATEST
 ========================================================= */
-.barang-latest-table {
+
+.divisi-latest-table {
     width: calc(100% - 32px);
-    margin: 0 16px 16px;
+
+    margin:
+        0
+        16px
+        16px;
+
     border-collapse: collapse;
 }
-.barang-latest-table th {
+
+
+.divisi-latest-table th {
     height: 37px;
-    padding: 7px 10px;
-    border: 1px solid #dde7f0;
-    background: #edf5ff;
+
+    padding:
+        7px
+        10px;
+
+    border:
+        1px solid #dde7f0;
+
+    background:
+        linear-gradient(
+            180deg,
+            #e9f4ff,
+            #e1eef9
+        );
+
     color: #17325a;
-    font-size: 12px;
+
+    font-size: 10px;
+
     font-weight: 700;
+
     text-align: left;
 }
-.barang-latest-table td {
+
+
+.divisi-latest-table td {
     height: 34px;
-    padding: 7px 10px;
-    border: 1px solid #e5ebf2;
+
+    padding:
+        7px
+        10px;
+
+    border:
+        1px solid #e5ebf2;
+
     color: #354f73;
-    font-size: 12px;
+
+    font-size: 10.5px;
 }
+
+
 /* =========================================================
    MODAL
 ========================================================= */
-.barang-modal {
-    width: min(480px, calc(100% - 32px));
-    max-height: calc(100dvh - 32px);
-    margin: auto;
-    padding: 0;
-    border: 0;
-    border-radius: 14px;
-    overflow: auto;
-    background: white;
-    color: var(--barang-text);
-    box-shadow: 0 25px 70px rgba(8,40,80,.22);
+
+.divisi-modal {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 3000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: .2s ease;
 }
-.barang-modal::backdrop {
-    background: rgba(5,25,50,.46);
-    backdrop-filter: blur(2px);
+
+
+.divisi-modal.show {
+    opacity: 1;
+
+    visibility: visible;
 }
-.barang-modal-dialog {
+
+
+.divisi-modal-backdrop {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        rgba(5,25,50,.46);
+
+    backdrop-filter:
+        blur(2px);
+}
+
+
+.divisi-modal-dialog {
     width: 100%;
     max-width: 480px;
+
     position: relative;
+
     z-index: 2;
+
     overflow: hidden;
+
     border-radius: 14px;
+
     background: white;
-    box-shadow: 0 25px 70px rgba(8,40,80,.22);
+
+    box-shadow:
+        0 25px 70px
+        rgba(8,40,80,.22);
 }
-.barang-modal-header {
+
+
+.divisi-modal-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 18px 20px;
-    border-bottom: 1px solid #e7edf4;
+
+    padding:
+        18px
+        20px;
+
+    border-bottom:
+        1px solid #e7edf4;
 }
-.barang-modal-header h3 {
+
+
+.divisi-modal-header h3 {
     margin: 0;
+
     color: #11264d;
+
     font-size: 16px;
 }
-.barang-modal-header p {
-    margin: 4px 0 0;
+
+
+.divisi-modal-header p {
+    margin:
+        4px
+        0
+        0;
+
     color: #71839d;
-    font-size: 13px;
+
+    font-size: 11px;
 }
-.barang-modal-header > button {
+
+
+.divisi-modal-header > button {
     width: 32px;
     height: 32px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     border: 0;
+
     border-radius: 7px;
+
     background: transparent;
+
     color: #536f91;
+
     cursor: pointer;
 }
-.barang-modal-body {
+
+
+.divisi-modal-body {
     display: flex;
+
     flex-direction: column;
+
     gap: 15px;
+
     padding: 20px;
 }
-.barang-form-group label {
+
+
+.divisi-form-group label {
     display: block;
+
     margin-bottom: 7px;
+
     color: #304b70;
-    font-size: 13px;
+
+    font-size: 11px;
+
     font-weight: 600;
 }
-.barang-form-group input,
-.barang-form-group select {
+
+
+.divisi-form-group input,
+.divisi-form-group select {
     width: 100%;
     height: 43px;
-    padding: 0 12px;
-    border: 1px solid #d5e1ed;
+
+    padding:
+        0
+        12px;
+
+    border:
+        1px solid #d5e1ed;
+
     border-radius: 7px;
+
     outline: none;
+
     background: white;
+
     color: #324d70;
-    font-size: 13px;
+
+    font-size: 11px;
 }
-.barang-form-group input:focus,
-.barang-form-group select:focus {
+
+
+.divisi-form-group input:focus,
+.divisi-form-group select:focus {
     border-color: #2580e8;
-    box-shadow: 0 0 0 3px rgba(37,128,232,.08);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(37,128,232,.08);
 }
-.barang-modal-footer {
+
+
+.divisi-modal-footer {
     display: flex;
+
     justify-content: flex-end;
+
     gap: 9px;
-    padding: 14px 20px;
-    border-top: 1px solid #e7edf4;
+
+    padding:
+        14px
+        20px;
+
+    border-top:
+        1px solid #e7edf4;
+
     background: #fafcff;
 }
-.barang-cancel-button,
-.barang-save-button {
+
+
+.divisi-cancel-button,
+.divisi-save-button {
     height: 40px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 7px;
-    padding: 0 16px;
+
+    padding:
+        0
+        16px;
+
     border-radius: 7px;
-    font-size: 13px;
+
+    font-size: 11px;
+
     font-weight: 600;
+
     cursor: pointer;
 }
-.barang-cancel-button {
-    border: 1px solid #d6e0eb;
+
+
+.divisi-cancel-button {
+    border:
+        1px solid #d6e0eb;
+
     background: white;
+
     color: #526b89;
 }
-.barang-save-button {
+
+
+.divisi-save-button {
     border: 0;
-    background: var(--barang-primary);
+
+    background:
+        linear-gradient(
+            90deg,
+            #1778df,
+            #0966cc
+        );
+
     color: white;
 }
+
+
 /* =========================================================
    RESPONSIVE
 ========================================================= */
-/* Penyempurnaan interaksi khusus Barang. */
-.barang-page [hidden] { display: none !important; }
-.barang-page .table-responsive { overflow-x: auto; }
-.barang-page :is(button, input, select, a, .table-responsive):focus-visible {
-    outline: 3px solid rgba(11,99,206,.45);
-    outline-offset: 3px;
-}
-.barang-page button:disabled { opacity: .5; cursor: not-allowed; }
-.barang-page :is(.barang-add-button, .barang-filter-button):hover {
-    background: var(--barang-primary-dark);
-}
-.barang-table-header { justify-content: space-between; gap: 12px; }
-.barang-demo-badge {
-    padding: 4px 9px;
-    border-radius: 6px;
-    background: var(--barang-primary-light);
-    color: var(--barang-primary-dark);
-    font-size: 12px;
-    white-space: nowrap;
-}
-.barang-table tbody td.barang-empty { padding: 32px 16px; text-align: center; white-space: normal; }
-.barang-bottom-grid > *, .barang-distribution-content > * { min-width: 0; }
-.barang-pagination svg { width: 16px; height: 16px; }
-.barang-pagination button:disabled { cursor: not-allowed; }
-.barang-chart-wrap canvas { position: relative; z-index: 1; }
-.barang-chart-center { z-index: 2; }
-.barang-chart-wrap.barang-chart-fallback { border-radius: 50%; }
-.barang-chart-fallback::before {
-    content: "";
-    position: absolute;
-    inset: 16%;
-    border-radius: 50%;
-    background: white;
-}
-.barang-latest-table { min-width: 470px; }
-.barang-modal-note {
-    margin: 0;
-    padding: 10px 12px;
-    border-radius: 7px;
-    background: var(--barang-primary-light);
-    color: var(--barang-primary-dark);
-    font-size: 13px;
-    line-height: 1.5;
-}
-.barang-form-group :is(input[readonly], select:disabled) { background: #f5f7fb; }
-.barang-save-button.barang-delete-button { background: var(--barang-danger); }
+
 @media (max-width: 1200px) {
-    .barang-bottom-grid { grid-template-columns: 1fr; }
-    .barang-filter-grid {
-        grid-template-columns: repeat(2,1fr);
+
+    .divisi-filter-grid {
+        grid-template-columns:
+            repeat(2,1fr);
     }
+
 }
+
+
 @media (max-width: 1000px) {
-    .barang-kpi-grid {
-        grid-template-columns: repeat(2,1fr);
+
+    .divisi-kpi-grid {
+        grid-template-columns:
+            repeat(2,1fr);
     }
-    .barang-kpi-card:last-child {
-        grid-column: 1 / 3;
+
+    .divisi-kpi-card:last-child {
+        grid-column:
+            1 / 3;
     }
-    .barang-bottom-grid {
+
+    .divisi-bottom-grid {
         grid-template-columns: 1fr;
     }
+
 }
+
+
 @media (max-width: 760px) {
-    .barang-hero {
-        margin: -18px -17px 16px;
-        padding: 18px 17px;
+
+    .divisi-hero {
+        margin:
+            -18px
+            -17px
+            16px;
+
+        padding:
+            18px
+            17px;
     }
-    .barang-hero-top {
+
+    .divisi-hero-top {
         flex-direction: column;
     }
-    .barang-date-card {
+
+    .divisi-date-card {
         width: 100%;
     }
-    .barang-heading h1 {
+
+    .divisi-heading h1 {
         font-size: 28px;
     }
-    .barang-kpi-grid {
+
+    .divisi-kpi-grid {
         grid-template-columns: 1fr;
     }
-    .barang-kpi-card:last-child {
+
+    .divisi-kpi-card:last-child {
         grid-column: auto;
     }
-    .barang-filter-header {
+
+    .divisi-filter-header {
         flex-direction: column;
         align-items: stretch;
     }
-    .barang-add-button {
+
+    .divisi-add-button {
         width: 100%;
     }
-    .barang-filter-grid {
+
+    .divisi-filter-grid {
         grid-template-columns: 1fr;
     }
-    .barang-table-footer {
+
+    .divisi-table-footer {
         flex-direction: column;
+
         align-items: flex-start;
     }
-    .barang-pagination-area {
+
+    .divisi-pagination-area {
         width: 100%;
-        flex-wrap: wrap;
+
+        overflow-x: auto;
     }
-    .barang-distribution-content {
+
+    .divisi-distribution-content {
         grid-template-columns: 1fr;
     }
-}
-@media (max-width: 600px) {
-    .barang-hero { margin: -16px -13px 16px; padding: 16px 13px; }
-    .barang-date-card { min-width: 0; }
-    .barang-kpi-card { padding: 15px; gap: 12px; }
-    .barang-sparkline, .barang-kpi-watermark { display: none; }
-    .barang-pagination { margin-left: 0; }
+
 }

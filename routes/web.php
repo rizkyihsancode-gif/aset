@@ -39,11 +39,24 @@ Route::get('/dashboard', function () {
 // MASTER DATA ROUTES
 // ------------------------------------------------
 Route::get('/master-data/barang', function () {
-
     return view('master.data_barang');
-})->name('Master.data_barang');
+})->name('master.data_barang');
 
+Route::get('/master-data/departemen', function () {
+    return view('master.data_departemen');
+})->name('master.data_departemen');
 
+Route::get('/master-data/divisi', function () {
+    return view('master.data_divisi');
+})->name('master.data_divisi');
+
+Route::get('/master-data/ruangan', function () {
+    return view('master.data_ruangan');
+})->name('master.data_ruangan');
+
+Route::get('/master-data/sdm', function () {
+    return view('master.data_sdm');
+})->name('master.data_sdm');
 
 
 // ------------------------------------------------

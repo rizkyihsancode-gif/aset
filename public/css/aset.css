@@ -233,6 +233,22 @@ textarea {
 }
 
 
+/* Logo berupa file gambar */
+.sidebar-brand-logo img {
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    max-width: 45px;
+    max-height: 45px;
+
+    object-fit: contain;
+
+}
+
+
 /* BRAND TEXT */
 
 .sidebar-brand-text {
@@ -284,7 +300,8 @@ textarea {
    SIDEBAR MENU AREA
 ========================================================= */
 
-.sidebar-menu {
+.sidebar-menu,
+.sidebar-navigation {
 
     flex: 1;
 
@@ -302,21 +319,24 @@ textarea {
 
 /* SCROLLBAR */
 
-.sidebar-menu::-webkit-scrollbar {
+.sidebar-menu::-webkit-scrollbar,
+.sidebar-navigation::-webkit-scrollbar {
 
     width: 4px;
 
 }
 
 
-.sidebar-menu::-webkit-scrollbar-track {
+.sidebar-menu::-webkit-scrollbar-track,
+.sidebar-navigation::-webkit-scrollbar-track {
 
     background: transparent;
 
 }
 
 
-.sidebar-menu::-webkit-scrollbar-thumb {
+.sidebar-menu::-webkit-scrollbar-thumb,
+.sidebar-navigation::-webkit-scrollbar-thumb {
 
     border-radius: 20px;
 
@@ -343,7 +363,7 @@ textarea {
 
         rgba(255, 255, 255, .57);
 
-    font-size: 8px;
+    font-size: 14px;
 
     font-weight: 650;
 
@@ -772,7 +792,7 @@ textarea {
 
     color: #ffffff;
 
-    font-size: 9.4px;
+    font-size: 13px;
 
     font-weight: 620;
 
@@ -791,7 +811,7 @@ textarea {
 
         rgba(255, 255, 255, .61);
 
-    font-size: 7.5px;
+    font-size: 10px;
 
 }
 
@@ -1197,7 +1217,7 @@ textarea {
 
     gap: 9px;
 
-    padding-left: 13px;
+    padding-left: 8px;
 
     border-left:
 
@@ -1211,8 +1231,8 @@ textarea {
 
 .header-avatar {
 
-    width: 35px;
-    height: 35px;
+    width: 40px;
+    height: 40px;
 
     min-width: 35px;
 
@@ -1220,7 +1240,7 @@ textarea {
     align-items: center;
     justify-content: center;
 
-    border-radius: 50%;
+    border-radius: 60%;
 
     color: #ffffff;
 
@@ -1258,7 +1278,7 @@ textarea {
 
     color: #172b4d;
 
-    font-size: 9.5px;
+    font-size: 14px;
 
     font-weight: 650;
 
@@ -1273,7 +1293,7 @@ textarea {
 
     color: #677d9b;
 
-    font-size: 7.5px;
+    font-size: 10px;
 
 }
 
@@ -1871,4 +1891,275 @@ body.sidebar-collapsed
 
     }
 
+}
+
+/* =========================================================
+   SIDEBAR MASTER DATA - FINAL ACTIVE FIX
+========================================================= */
+
+.sidebar .sidebar-submenu {
+    width: 100%;
+}
+
+
+.sidebar .sidebar-submenu-item {
+    width: 100%;
+
+    min-height: 38px;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex-direction: row !important;
+
+    gap: 10px;
+
+    position: relative;
+
+    padding: 8px 11px;
+
+    margin: 2px 0;
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    color:
+        rgba(255,255,255,.78) !important;
+
+    text-decoration: none !important;
+
+    line-height: 1 !important;
+
+    white-space: nowrap;
+
+    transition:
+        background .17s ease,
+        color .17s ease,
+        transform .17s ease;
+}
+
+
+/* ICON */
+
+.sidebar .sidebar-submenu-item
+.sidebar-submenu-icon {
+    width: 18px !important;
+    height: 18px !important;
+
+    min-width: 18px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    position: static !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    flex-shrink: 0;
+
+    color:
+        rgba(255,255,255,.72) !important;
+}
+
+
+.sidebar .sidebar-submenu-item
+.sidebar-submenu-icon svg {
+    width: 14px !important;
+    height: 14px !important;
+
+    display: block;
+
+    margin: 0 !important;
+
+    stroke-width: 1.9;
+}
+
+
+/* TEXT */
+
+.sidebar .sidebar-submenu-item
+.sidebar-submenu-text {
+    display: block !important;
+
+    width: auto !important;
+
+    min-width: 0;
+
+    flex: 1;
+
+    position: static !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    color: inherit !important;
+
+    font-size: 10.5px;
+
+    font-weight: 450;
+
+    line-height: 1.2 !important;
+
+    text-align: left !important;
+
+    text-decoration: none !important;
+
+    white-space: nowrap;
+}
+
+
+/* HOVER */
+
+.sidebar .sidebar-submenu-item:hover {
+    background:
+        rgba(255,255,255,.08);
+
+    color: #ffffff !important;
+}
+
+
+.sidebar .sidebar-submenu-item:hover
+.sidebar-submenu-icon {
+    color: #ffffff !important;
+}
+
+
+/* =========================================================
+   ACTIVE SUBMENU
+========================================================= */
+
+.sidebar .sidebar-submenu-item.active {
+    display: flex !important;
+    align-items: center !important;
+
+    flex-direction: row !important;
+
+    background:
+        linear-gradient(
+            90deg,
+            #1878df 0%,
+            #1263bf 100%
+        ) !important;
+
+    color: #ffffff !important;
+
+    font-weight: 600 !important;
+
+    box-shadow:
+        0 5px 14px
+        rgba(4,39,76,.20);
+}
+
+
+.sidebar .sidebar-submenu-item.active
+.sidebar-submenu-icon {
+    color: #ffffff !important;
+}
+
+
+.sidebar .sidebar-submenu-item.active
+.sidebar-submenu-text {
+    color: #ffffff !important;
+
+    font-weight: 600 !important;
+}
+
+
+/* REMOVE BROWSER LINK COLORS */
+
+.sidebar .sidebar-submenu-item:link,
+.sidebar .sidebar-submenu-item:visited,
+.sidebar .sidebar-submenu-item:focus,
+.sidebar .sidebar-submenu-item:active {
+    text-decoration: none !important;
+}
+
+
+/* ACTIVE INDICATOR */
+
+.sidebar .sidebar-submenu-item.active::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+
+    top: 8px;
+    bottom: 8px;
+
+    width: 3px;
+
+    border-radius:
+        0
+        4px
+        4px
+        0;
+
+    background: #8dd7ff;
+}
+
+
+/* =========================================================
+   MASTER PARENT ACTIVE
+========================================================= */
+
+.sidebar .sidebar-menu-group.open
+.sidebar-parent {
+    color: #ffffff !important;
+
+    background:
+        rgba(255,255,255,.06);
+}
+
+
+.sidebar .sidebar-menu-group.open
+.sidebar-arrow {
+    transform: rotate(180deg);
+}
+
+
+/* =========================================================
+   CRITICAL RESET
+   MENCEGAH CSS PAGE MERUSAK SIDEBAR
+========================================================= */
+
+.sidebar a,
+.sidebar button,
+.sidebar span {
+    box-sizing: border-box;
+}
+
+
+.sidebar a {
+    text-decoration: none;
+}
+
+
+.sidebar .sidebar-submenu-item.active span {
+    color: inherit !important;
+}
+
+
+.sidebar .sidebar-submenu-item.active svg {
+    color: inherit !important;
+}
+
+
+/* Jangan izinkan style .active dari page lain merusak submenu */
+
+.sidebar .sidebar-submenu-item.active {
+    position: relative !important;
+    float: none !important;
+
+    width: 100% !important;
+
+    height: auto !important;
+
+    min-height: 38px !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }

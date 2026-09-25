@@ -1,50 +1,50 @@
-/* Master Barang: khusus halaman Barang, tidak mengubah layout global. */
-let barangCurrentPage = 1;
-let barangChart = null;
-let barangPreviousOverflow = '';
-const barangNumber = new Intl.NumberFormat('id-ID');
+/* Master Ruangan: khusus halaman Ruangan, tidak mengubah layout global. */
+let ruanganCurrentPage = 1;
+let ruanganChart = null;
+let ruanganPreviousOverflow = '';
+const ruanganNumber = new Intl.NumberFormat('id-ID');
 
 document.addEventListener('DOMContentLoaded', function () {
-    if (!document.querySelector('.barang-page')) return;
-    updateBarangDate();
-    window.setInterval(updateBarangDate, 1000);
-    initBarangChart();
-    filterBarangTable();
+    if (!document.querySelector('.ruangan-page')) return;
+    updateRuanganDate();
+    window.setInterval(updateRuanganDate, 1000);
+    initRuanganChart();
+    filterRuanganTable();
     if (window.lucide) window.lucide.createIcons();
 
-    document.getElementById('barangSearch').addEventListener('input', filterBarangTable);
-    document.getElementById('barangGolongan').addEventListener('change', filterBarangTable);
-    document.getElementById('barangPageSize').addEventListener('change', filterBarangTable);
-    document.getElementById('barangTable').addEventListener('click', function (event) {
+    document.getElementById('ruanganSearch').addEventListener('input', filterRuanganTable);
+    document.getElementById('ruanganDivisi').addEventListener('change', filterRuanganTable);
+    document.getElementById('ruanganPageSize').addEventListener('change', filterRuanganTable);
+    document.getElementById('ruanganTable').addEventListener('click', function (event) {
         const button = event.target.closest('button[data-action]');
-        if (button) openBarangModal(button.dataset.action, button.closest('tr'));
+        if (button) openRuanganModal(button.dataset.action, button.closest('tr'));
     });
-    document.getElementById('barangViewAll').addEventListener('click', function (event) {
+    document.getElementById('ruanganViewAll').addEventListener('click', function (event) {
         event.preventDefault();
-        resetBarangFilter();
-        document.getElementById('barangList').scrollIntoView({ block: 'start' });
-        document.getElementById('barangSearch').focus({ preventScroll: true });
+        resetRuanganFilter();
+        document.getElementById('ruanganList').scrollIntoView({ block: 'start' });
+        document.getElementById('ruanganSearch').focus({ preventScroll: true });
     });
-    const modal = document.getElementById('barangModal');
+    const modal = document.getElementById('ruanganModal');
     modal.addEventListener('click', function (event) {
         const box = modal.getBoundingClientRect();
         const outside = event.clientX < box.left || event.clientX > box.right
             || event.clientY < box.top || event.clientY > box.bottom;
-        if (event.target === modal && outside) closeBarangModal();
+        if (event.target === modal && outside) closeRuanganModal();
     });
     modal.addEventListener('close', function () {
-        document.body.style.overflow = barangPreviousOverflow;
+        document.body.style.overflow = ruanganPreviousOverflow;
     });
     // Belum ada endpoint CRUD pada proyek. Form tidak mengirim data semu.
-    document.getElementById('barangForm').addEventListener('submit', function (event) {
+    document.getElementById('ruanganForm').addEventListener('submit', function (event) {
         event.preventDefault();
     });
 });
 
 /* WITA, walaupun komputer pengguna berada di zona waktu lain. */
-function updateBarangDate() {
-    const date = document.getElementById('barangCurrentDate');
-    const time = document.getElementById('barangCurrentTime');
+function updateRuanganDate() {
+    const date = document.getElementById('ruanganCurrentDate');
+    const time = document.getElementById('ruanganCurrentTime');
     if (!date || !time) return;
     const now = new Date();
     date.textContent = new Intl.DateTimeFormat('id-ID', {
@@ -58,51 +58,51 @@ function updateBarangDate() {
 }
 
 /* Data berasal dari baris Blade, tidak diduplikasi di JavaScript. */
-function getBarangRows() {
-    return Array.from(document.querySelectorAll('#barangTable tbody tr[data-golongan]'));
+function getRuanganRows() {
+    return Array.from(document.querySelectorAll('#ruanganTable tbody tr[data-divisi]'));
 }
 
-function getFilteredBarangRows() {
-    const search = document.getElementById('barangSearch').value.trim().toLocaleLowerCase('id-ID');
-    const golongan = document.getElementById('barangGolongan').value;
-    return getBarangRows().filter(function (row) {
+function getFilteredRuanganRows() {
+    const search = document.getElementById('ruanganSearch').value.trim().toLocaleLowerCase('id-ID');
+    const divisi = document.getElementById('ruanganDivisi').value;
+    return getRuanganRows().filter(function (row) {
         const name = row.cells[1].textContent.toLocaleLowerCase('id-ID');
         const code = row.cells[2].textContent.toLocaleLowerCase('id-ID');
         return (!search || name.includes(search) || code.includes(search))
-            && (!golongan || row.dataset.golongan === golongan);
+            && (!divisi || row.dataset.divisi === divisi);
     });
 }
 
-function filterBarangTable() {
-    barangCurrentPage = 1;
-    renderBarangTable();
+function filterRuanganTable() {
+    ruanganCurrentPage = 1;
+    renderRuanganTable();
 }
 
-function resetBarangFilter() {
-    document.getElementById('barangSearch').value = '';
-    document.getElementById('barangGolongan').value = '';
-    filterBarangTable();
+function resetRuanganFilter() {
+    document.getElementById('ruanganSearch').value = '';
+    document.getElementById('ruanganDivisi').value = '';
+    filterRuanganTable();
 }
 
-function renderBarangTable() {
-    const allRows = getBarangRows();
-    const filtered = getFilteredBarangRows();
-    const size = Number(document.getElementById('barangPageSize').value) || 10;
+function renderRuanganTable() {
+    const allRows = getRuanganRows();
+    const filtered = getFilteredRuanganRows();
+    const size = Number(document.getElementById('ruanganPageSize').value) || 10;
     const pages = Math.max(1, Math.ceil(filtered.length / size));
-    barangCurrentPage = Math.min(Math.max(1, barangCurrentPage), pages);
-    const start = (barangCurrentPage - 1) * size;
+    ruanganCurrentPage = Math.min(Math.max(1, ruanganCurrentPage), pages);
+    const start = (ruanganCurrentPage - 1) * size;
     allRows.forEach(function (row) { row.hidden = true; });
     filtered.slice(start, start + size).forEach(function (row, index) {
         row.hidden = false;
         row.cells[0].textContent = start + index + 1;
     });
-    document.getElementById('barangEmptyRow').hidden = filtered.length > 0;
+    document.getElementById('ruanganEmptyRow').hidden = filtered.length > 0;
     const from = filtered.length ? start + 1 : 0;
     const to = Math.min(start + size, filtered.length);
-    let info = `Menampilkan ${from}–${to} dari ${barangNumber.format(filtered.length)} data contoh`;
-    if (filtered.length !== allRows.length) info += ` (total ${barangNumber.format(allRows.length)})`;
-    document.getElementById('barangTableInfo').textContent = info;
-    const pagination = document.getElementById('barangPagination');
+    let info = `Menampilkan ${from}–${to} dari ${ruanganNumber.format(filtered.length)} data contoh`;
+    if (filtered.length !== allRows.length) info += ` (total ${ruanganNumber.format(allRows.length)})`;
+    document.getElementById('ruanganTableInfo').textContent = info;
+    const pagination = document.getElementById('ruanganPagination');
     pagination.replaceChildren();
     function addPageButton(label, page, disabled, current) {
         const button = document.createElement('button');
@@ -116,33 +116,33 @@ function renderBarangTable() {
             button.setAttribute('aria-current', 'page');
         }
         button.addEventListener('click', function () {
-            barangCurrentPage = page;
-            renderBarangTable();
+            ruanganCurrentPage = page;
+            renderRuanganTable();
             const active = pagination.querySelector('[aria-current="page"]');
             if (active) active.focus({ preventScroll: true });
         });
         pagination.appendChild(button);
     }
-    addPageButton('‹', barangCurrentPage - 1, barangCurrentPage === 1, false);
-    const first = Math.max(1, Math.min(barangCurrentPage - 2, pages - 4));
+    addPageButton('‹', ruanganCurrentPage - 1, ruanganCurrentPage === 1, false);
+    const first = Math.max(1, Math.min(ruanganCurrentPage - 2, pages - 4));
     for (let page = first; page <= Math.min(pages, first + 4); page++) {
-        addPageButton(String(page), page, false, page === barangCurrentPage);
+        addPageButton(String(page), page, false, page === ruanganCurrentPage);
     }
-    addPageButton('›', barangCurrentPage + 1, barangCurrentPage === pages, false);
+    addPageButton('›', ruanganCurrentPage + 1, ruanganCurrentPage === pages, false);
 }
 
 /* Chart dan legenda memakai angka yang sama dari Blade. */
-function initBarangChart() {
-    const canvas = document.getElementById('barangDistributionChart');
+function initRuanganChart() {
+    const canvas = document.getElementById('ruanganDistributionChart');
     if (!canvas) return;
-    const groups = Array.from(document.querySelectorAll('#barangLegend [data-count]'));
+    const groups = Array.from(document.querySelectorAll('#ruanganLegend [data-count]'));
     const labels = groups.map(function (item) { return item.dataset.label; });
     const counts = groups.map(function (item) { return Number(item.dataset.count); });
     const colors = groups.map(function (item) { return item.dataset.color; });
     const total = counts.reduce(function (sum, count) { return sum + count; }, 0);
     const wrap = canvas.parentElement;
-    wrap.querySelector('.barang-chart-center strong').textContent = barangNumber.format(total);
-    if (barangChart) { barangChart.destroy(); barangChart = null; }
+    wrap.querySelector('.ruangan-chart-center strong').textContent = ruanganNumber.format(total);
+    if (ruanganChart) { ruanganChart.destroy(); ruanganChart = null; }
     // Diagram tetap muncul jika CDN Chart.js gagal dimuat.
     if (typeof window.Chart !== 'function') {
         let angle = 0;
@@ -152,14 +152,14 @@ function initBarangChart() {
             return `${colors[index]} ${start}deg ${angle}deg`;
         });
         canvas.hidden = true;
-        wrap.classList.add('barang-chart-fallback');
+        wrap.classList.add('ruangan-chart-fallback');
         wrap.style.background = total ? `conic-gradient(${segments.join(',')})` : '#e7ecf2';
         return;
     }
     canvas.hidden = false;
-    wrap.classList.remove('barang-chart-fallback');
+    wrap.classList.remove('ruangan-chart-fallback');
     wrap.style.background = '';
-    barangChart = new window.Chart(canvas, {
+    ruanganChart = new window.Chart(canvas, {
         type: 'doughnut',
         data: { labels: labels, datasets: [{
             data: counts, backgroundColor: colors, borderColor: '#ffffff',
@@ -170,7 +170,7 @@ function initBarangChart() {
             plugins: {
                 legend: { display: false },
                 tooltip: { callbacks: { label: function (context) {
-                    return `${context.label}: ${barangNumber.format(context.raw)} barang`;
+                    return `${context.label}: ${ruanganNumber.format(context.raw)} ruangan`;
                 } } }
             }
         }
@@ -178,53 +178,56 @@ function initBarangChart() {
 }
 
 /* Dialog native mendukung Escape dan fokus keyboard. */
-function openBarangModal(mode = 'add', row = null) {
-    const modal = document.getElementById('barangModal');
+function openRuanganModal(mode = 'add', row = null) {
+    const modal = document.getElementById('ruanganModal');
     if (!modal || modal.open) return;
-    const titles = { add: 'Tambah Barang', view: 'Detail Barang', edit: 'Edit Barang', delete: 'Hapus Barang' };
+    const titles = { add: 'Tambah Ruangan', view: 'Detail Ruangan', edit: 'Edit Ruangan', delete: 'Hapus Ruangan' };
     const descriptions = {
-        add: 'Tambahkan data master barang baru.', view: 'Informasi data master barang.',
-        edit: 'Perbarui informasi data master barang.', delete: 'Periksa barang yang akan dihapus.'
+        add: 'Tambahkan data master ruangan baru.', view: 'Informasi data master ruangan.',
+        edit: 'Perbarui informasi data master ruangan.', delete: 'Periksa ruangan yang akan dihapus.'
     };
     const readonly = mode === 'view' || mode === 'delete';
-    document.getElementById('barangForm').reset();
-    document.getElementById('barangModalTitle').textContent = titles[mode] || titles.add;
-    document.getElementById('barangModalDescription').textContent = descriptions[mode] || descriptions.add;
-    const name = document.getElementById('barangName');
-    const code = document.getElementById('barangCode');
-    const group = document.getElementById('barangFormGolongan');
+    document.getElementById('ruanganForm').reset();
+    document.getElementById('ruanganModalTitle').textContent = titles[mode] || titles.add;
+    document.getElementById('ruanganModalDescription').textContent = descriptions[mode] || descriptions.add;
+    const name = document.getElementById('ruanganName');
+    const code = document.getElementById('ruanganCode');
+    const group = document.getElementById('ruanganFormDivisi');
     name.value = row ? row.cells[1].textContent.trim() : '';
     code.value = row ? row.cells[2].textContent.trim() : '';
-    group.value = row ? row.dataset.golongan : '';
+    group.value = row ? row.dataset.divisi : '';
     name.readOnly = readonly;
     code.readOnly = readonly;
     group.disabled = readonly;
-    const save = document.getElementById('barangSaveButton');
+    const description = document.getElementById('ruanganDescription');
+    description.value = row ? row.cells[4].textContent.trim() : '';
+    description.readOnly = readonly;
+    const save = document.getElementById('ruanganSaveButton');
     save.hidden = mode === 'view';
     save.disabled = true;
-    save.textContent = mode === 'delete' ? 'Hapus Barang' : 'Simpan Barang';
-    save.classList.toggle('barang-delete-button', mode === 'delete');
-    document.getElementById('barangModalNote').textContent = mode === 'view'
+    save.textContent = mode === 'delete' ? 'Hapus Ruangan' : 'Simpan Ruangan';
+    save.classList.toggle('ruangan-delete-button', mode === 'delete');
+    document.getElementById('ruanganModalNote').textContent = mode === 'view'
         ? 'Data contoh untuk pratinjau tampilan.'
         : mode === 'delete' ? 'Pratinjau konfirmasi. Penghapusan ke database belum dihubungkan.'
         : 'Pratinjau formulir. Penyimpanan ke database belum dihubungkan.';
-    barangPreviousOverflow = document.body.style.overflow;
+    ruanganPreviousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     modal.showModal();
     if (!readonly) name.focus();
 }
 
-function closeBarangModal() {
-    const modal = document.getElementById('barangModal');
+function closeRuanganModal() {
+    const modal = document.getElementById('ruanganModal');
     if (modal && modal.open) modal.close();
 }
 
 /* Ekspor seluruh hasil filter, termasuk halaman lain; tanpa kolom Aksi. */
-function exportBarangCSV() {
-    const records = [['No', 'Nama Barang', 'Kode Barang', 'Golongan']];
-    getFilteredBarangRows().forEach(function (row, index) {
+function exportRuanganCSV() {
+    const records = [['No', 'Nama Ruangan', 'Kode Ruangan', 'Divisi', 'Keterangan']];
+    getFilteredRuanganRows().forEach(function (row, index) {
         records.push([index + 1, row.cells[1].textContent.trim(),
-            row.cells[2].textContent.trim(), row.dataset.golongan]);
+            row.cells[2].textContent.trim(), row.dataset.divisi, row.cells[4].textContent.trim()]);
     });
     function csvCell(value) {
         let text = String(value);
@@ -237,9 +240,10 @@ function exportBarangCSV() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'data-barang.csv';
+    link.download = 'data-ruangan.csv';
     document.body.appendChild(link);
     link.click();
     link.remove();
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
 }
+
