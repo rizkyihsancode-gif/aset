@@ -1,0 +1,882 @@
+/* =========================================================
+   MASTER DATA - BAHAN
+========================================================= */
+.bahan-page {
+    --bahan-primary: #0b63ce;
+    --bahan-primary-dark: #074f9f;
+    --bahan-primary-light: #eaf3ff;
+    --bahan-background: #f5f7fb;
+    --bahan-surface: #ffffff;
+    --bahan-text: #172033;
+    --bahan-muted: #7b8799;
+    --bahan-border: #e7ecf2;
+    --bahan-success: #16a34a;
+    --bahan-warning: #f59e0b;
+    --bahan-danger: #dc2626;
+    min-height: calc(100vh - 60px);
+    background: var(--bahan-background);
+}
+/* =========================================================
+   HERO
+========================================================= */
+.bahan-hero {
+    position: relative;
+    overflow: hidden;
+    margin: -21px -24px 16px;
+    padding: 20px 24px 17px;
+    background: url('../../images/pdam4.png') right center / cover no-repeat;
+}
+.bahan-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient( 90deg, rgba(245,250,255,.99) 0%, rgba(239,248,255,.96) 30%, rgba(225,241,255,.86) 55%, rgba(207,232,252,.22) 100% );
+    pointer-events: none;
+}
+.bahan-hero-top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 25px;
+    margin-bottom: 17px;
+}
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+.bahan-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 11px;
+    color: #637b9a;
+    font-size: 13px;
+}
+.bahan-breadcrumb a {
+    display: flex;
+    color: #416995;
+}
+.bahan-breadcrumb svg {
+    width: 13px;
+    height: 13px;
+}
+.bahan-breadcrumb > svg {
+    width: 11px;
+    height: 11px;
+    color: #8fa1b6;
+}
+.bahan-breadcrumb strong {
+    color: #375779;
+    font-weight: 600;
+}
+/* =========================================================
+   TITLE
+========================================================= */
+.bahan-heading h1 {
+    margin: 0;
+    color: #071b4b;
+    font-size: 34px;
+    line-height: 1.05;
+    font-weight: 780;
+}
+.bahan-heading p {
+    margin: 7px 0 0;
+    color: #587197;
+    font-size: 13px;
+}
+/* =========================================================
+   DATE
+========================================================= */
+.bahan-date-card {
+    min-width: 218px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 14px;
+    border: 1px solid rgba(220,232,244,.9);
+    border-radius: 10px;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 7px 22px rgba(27,75,118,.07);
+}
+.bahan-date-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #eaf3ff;
+    color: #086ad3;
+}
+.bahan-date-icon svg {
+    width: 19px;
+    height: 19px;
+}
+.bahan-date-card strong {
+    display: block;
+    color: #1d3357;
+    font-size: 13px;
+    font-weight: 650;
+}
+.bahan-date-card span {
+    display: block;
+    margin-top: 3px;
+    color: #778aa6;
+    font-size: 12px;
+}
+/* =========================================================
+   KPI
+========================================================= */
+.bahan-kpi-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 14px;
+}
+.bahan-kpi-card {
+    min-height: 104px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 17px;
+    border: 1px solid rgba(218,230,242,.93);
+    border-radius: 11px;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(9px);
+    box-shadow: 0 8px 24px rgba(28,67,105,.06);
+}
+.bahan-kpi-icon {
+    width: 54px;
+    height: 54px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    color: white;
+    background: var(--bahan-primary);
+}
+.bahan-kpi-icon svg {
+    width: 26px;
+    height: 26px;
+}
+.bahan-kpi-content {
+    min-width: 0;
+    flex: 1;
+}
+.bahan-kpi-content > span {
+    color: #17315a;
+    font-size: 12px;
+    font-weight: 650;
+}
+.bahan-kpi-content > strong {
+    display: block;
+    margin-top: 5px;
+    color: #071b4c;
+    font-size: 28px;
+    font-weight: 780;
+    line-height: 1;
+}
+.bahan-kpi-content > strong.bahan-kpi-text {
+    font-size: 24px;
+}
+.bahan-kpi-content p {
+    margin: 5px 0 0;
+    color: #72839c;
+    font-size: 12px;
+}
+.bahan-kpi-value {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 5px;
+}
+.bahan-kpi-value strong {
+    color: #071b4c;
+    font-size: 28px;
+    font-weight: 780;
+}
+.bahan-kpi-value small {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--bahan-success);
+    font-size: 13px;
+    font-weight: 650;
+}
+.bahan-kpi-value small svg {
+    width: 13px;
+    height: 13px;
+}
+.bahan-sparkline {
+    width: 65px;
+    flex-shrink: 0;
+}
+.bahan-sparkline svg {
+    width: 100%;
+    height: 48px;
+}
+.bahan-sparkline polyline {
+    fill: none;
+    stroke: #65a9fa;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.bahan-kpi-watermark {
+    flex-shrink: 0;
+    color: rgba(31,116,218,.19);
+}
+.bahan-kpi-watermark svg {
+    width: 48px;
+    height: 48px;
+}
+/* =========================================================
+   CARD
+========================================================= */
+.bahan-card {
+    overflow: hidden;
+    border: 1px solid #dfe8f1;
+    border-radius: 12px;
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 5px 18px rgba(30,70,110,.03);
+}
+/* =========================================================
+   FILTER
+========================================================= */
+.bahan-filter-card {
+    margin-bottom: 15px;
+    padding: 14px 16px 15px;
+}
+.bahan-filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+.bahan-filter-header h3 {
+    margin: 0;
+    color: #10264d;
+    font-size: 18px;
+    font-weight: 720;
+}
+.bahan-add-button {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 17px;
+    border: 0;
+    border-radius: 7px;
+    background: var(--bahan-primary);
+    color: white;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+.bahan-add-button svg {
+    width: 15px;
+    height: 15px;
+}
+.bahan-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(280px,1.55fr) minmax(210px,.85fr) auto auto auto;
+    align-items: end;
+    gap: 10px;
+}
+.bahan-search {
+    position: relative;
+}
+.bahan-search svg {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #547091;
+}
+.bahan-search input,
+.bahan-select-group select {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #d7e2ed;
+    border-radius: 7px;
+    outline: none;
+    background: #ffffff;
+    color: #334f74;
+    font-size: 14px;
+}
+.bahan-search input {
+    padding: 0 12px 0 39px;
+}
+.bahan-select-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #344d70;
+    font-size: 12px;
+    font-weight: 600;
+}
+.bahan-select-group select {
+    padding: 0 11px;
+}
+.bahan-filter-button,
+.bahan-reset-button,
+.bahan-export-button {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 15px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.bahan-filter-button {
+    border: 0;
+    background: var(--bahan-primary);
+    color: white;
+}
+.bahan-reset-button {
+    border: 1px solid #d6e1ed;
+    background: white;
+    color: #34567e;
+}
+.bahan-export-button {
+    border: 1px solid #d6e1ed;
+    background: white;
+    color: #344f71;
+}
+.bahan-filter-button svg,
+.bahan-reset-button svg,
+.bahan-export-button svg {
+    width: 14px;
+    height: 14px;
+}
+/* =========================================================
+   TABLE
+========================================================= */
+.bahan-table-card {
+    margin-bottom: 15px;
+}
+.bahan-table-header {
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+}
+.bahan-table-header h3 {
+    margin: 0;
+    color: #10264d;
+    font-size: 18px;
+    font-weight: 720;
+}
+.bahan-table {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+.bahan-table thead th {
+    padding: 14px 16px;
+    border: 1px solid var(--bahan-border);
+    background: #edf5ff;
+    color: #17325a;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+}
+.bahan-table tbody td {
+    padding: 14px 16px;
+    border: 1px solid var(--bahan-border);
+    color: var(--bahan-text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+.bahan-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+.bahan-table tbody tr:hover {
+    background: #f3f8fe;
+}
+.bahan-col-no {
+    width: 65px;
+}
+.bahan-col-action {
+    width: 140px;
+    text-align: center !important;
+}
+/* =========================================================
+   ACTIONS
+========================================================= */
+.bahan-actions {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+}
+.bahan-actions button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.bahan-actions svg {
+    width: 14px;
+    height: 14px;
+}
+.bahan-actions .view {
+    background: #e6f3ff;
+    color: var(--bahan-primary);
+}
+.bahan-actions .edit {
+    background: #fff0d8;
+    color: #e58a00;
+}
+.bahan-actions .delete {
+    background: #ffe4e7;
+    color: var(--bahan-danger);
+}
+/* =========================================================
+   FOOTER
+========================================================= */
+.bahan-table-footer {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 10px 16px;
+}
+.bahan-table-info {
+    color: #5f7390;
+    font-size: 12px;
+}
+.bahan-pagination-area {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #657b99;
+    font-size: 12px;
+}
+.bahan-pagination-area select {
+    height: 36px;
+    padding: 0 25px 0 10px;
+    border: 1px solid #d9e3ed;
+    border-radius: 6px;
+    background: white;
+    color: #3b5577;
+    font-size: 12px;
+}
+.bahan-pagination {
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+}
+.bahan-pagination button {
+    min-width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dce5ee;
+    border-radius: 6px;
+    background: white;
+    color: #496481;
+    font-size: 12px;
+    cursor: pointer;
+}
+.bahan-pagination button.active {
+    border-color: var(--bahan-primary);
+    background: var(--bahan-primary);
+    color: white;
+}
+.bahan-pagination button:disabled {
+    opacity: .45;
+}
+/* =========================================================
+   BOTTOM
+========================================================= */
+.bahan-bottom-grid {
+    display: grid;
+    grid-template-columns: .95fr 1.15fr;
+    gap: 15px;
+}
+.bahan-bottom-header {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+}
+.bahan-bottom-header h3 {
+    margin: 0;
+    color: #10264d;
+    font-size: 14px;
+    font-weight: 700;
+}
+.bahan-bottom-header a {
+    color: #086cd4;
+    font-size: 12px;
+    font-weight: 600;
+}
+/* =========================================================
+   DISTRIBUTION
+========================================================= */
+.bahan-distribution-content {
+    min-height: 215px;
+    display: grid;
+    grid-template-columns: 195px 1fr;
+    align-items: center;
+    gap: 18px;
+    padding: 3px 18px 18px;
+}
+.bahan-chart-wrap {
+    width: 175px;
+    height: 175px;
+    position: relative;
+    margin: auto;
+}
+.bahan-chart-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    pointer-events: none;
+}
+.bahan-chart-center strong {
+    color: #10254d;
+    font-size: 20px;
+    font-weight: 750;
+}
+.bahan-chart-center span {
+    color: #627a99;
+    font-size: 12px;
+}
+.bahan-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.bahan-legend > div {
+    display: grid;
+    grid-template-columns: 10px 1fr auto 43px;
+    align-items: center;
+    gap: 8px;
+}
+.bahan-legend p {
+    margin: 0;
+    color: #284268;
+    font-size: 12px;
+}
+.bahan-legend strong {
+    color: #10264e;
+    font-size: 12px;
+}
+.bahan-legend small {
+    color: #667d9c;
+    font-size: 12px;
+    text-align: right;
+}
+.bahan-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+/* =========================================================
+   LATEST
+========================================================= */
+.bahan-latest-table {
+    width: calc(100% - 32px);
+    margin: 0 16px 16px;
+    border-collapse: collapse;
+}
+.bahan-latest-table th {
+    height: 37px;
+    padding: 7px 10px;
+    border: 1px solid #dde7f0;
+    background: #edf5ff;
+    color: #17325a;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+}
+.bahan-latest-table td {
+    height: 34px;
+    padding: 7px 10px;
+    border: 1px solid #e5ebf2;
+    color: #354f73;
+    font-size: 12px;
+}
+/* =========================================================
+   MODAL
+========================================================= */
+.bahan-modal {
+    width: min(480px, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 14px;
+    overflow: auto;
+    background: white;
+    color: var(--bahan-text);
+    box-shadow: 0 25px 70px rgba(8,40,80,.22);
+}
+.bahan-modal::backdrop {
+    background: rgba(5,25,50,.46);
+    backdrop-filter: blur(2px);
+}
+.bahan-modal-dialog {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 25px 70px rgba(8,40,80,.22);
+}
+.bahan-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e7edf4;
+}
+.bahan-modal-header h3 {
+    margin: 0;
+    color: #11264d;
+    font-size: 16px;
+}
+.bahan-modal-header p {
+    margin: 4px 0 0;
+    color: #71839d;
+    font-size: 13px;
+}
+.bahan-modal-header > button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #536f91;
+    cursor: pointer;
+}
+.bahan-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+}
+.bahan-form-group label {
+    display: block;
+    margin-bottom: 7px;
+    color: #304b70;
+    font-size: 13px;
+    font-weight: 600;
+}
+.bahan-form-group input,
+.bahan-form-group select {
+    width: 100%;
+    height: 43px;
+    padding: 0 12px;
+    border: 1px solid #d5e1ed;
+    border-radius: 7px;
+    outline: none;
+    background: white;
+    color: #324d70;
+    font-size: 13px;
+}
+.bahan-form-group input:focus,
+.bahan-form-group select:focus {
+    border-color: #2580e8;
+    box-shadow: 0 0 0 3px rgba(37,128,232,.08);
+}
+.bahan-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding: 14px 20px;
+    border-top: 1px solid #e7edf4;
+    background: #fafcff;
+}
+.bahan-cancel-button,
+.bahan-save-button {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 16px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.bahan-cancel-button {
+    border: 1px solid #d6e0eb;
+    background: white;
+    color: #526b89;
+}
+.bahan-save-button {
+    border: 0;
+    background: var(--bahan-primary);
+    color: white;
+}
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+/* Penyempurnaan interaksi khusus Barang. */
+.bahan-page [hidden] { display: none !important; }
+.bahan-page .table-responsive { overflow-x: auto; }
+.bahan-page :is(button, input, select, a, .table-responsive):focus-visible {
+    outline: 3px solid rgba(11,99,206,.45);
+    outline-offset: 3px;
+}
+.bahan-page button:disabled { opacity: .5; cursor: not-allowed; }
+.bahan-page :is(.bahan-add-button, .bahan-filter-button):hover {
+    background: var(--bahan-primary-dark);
+}
+.bahan-table-header { justify-content: space-between; gap: 12px; }
+.bahan-demo-badge {
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: var(--bahan-primary-light);
+    color: var(--bahan-primary-dark);
+    font-size: 12px;
+    white-space: nowrap;
+}
+.bahan-table tbody td.bahan-empty { padding: 32px 16px; text-align: center; white-space: normal; }
+.bahan-bottom-grid > *, .bahan-distribution-content > * { min-width: 0; }
+.bahan-pagination svg { width: 16px; height: 16px; }
+.bahan-pagination button:disabled { cursor: not-allowed; }
+.bahan-chart-wrap canvas { position: relative; z-index: 1; }
+.bahan-chart-center { z-index: 2; }
+.bahan-chart-wrap.bahan-chart-fallback { border-radius: 50%; }
+.bahan-chart-fallback::before {
+    content: "";
+    position: absolute;
+    inset: 16%;
+    border-radius: 50%;
+    background: white;
+}
+.bahan-latest-table { min-width: 470px; }
+.bahan-modal-note {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 7px;
+    background: var(--bahan-primary-light);
+    color: var(--bahan-primary-dark);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.bahan-form-group :is(input[readonly], select:disabled) { background: #f5f7fb; }
+.bahan-save-button.bahan-delete-button { background: var(--bahan-danger); }
+@media (max-width: 1200px) {
+    .bahan-bottom-grid { grid-template-columns: 1fr; }
+    .bahan-filter-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+@media (max-width: 1000px) {
+    .bahan-kpi-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+    .bahan-kpi-card:last-child {
+        grid-column: 1 / 3;
+    }
+    .bahan-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 760px) {
+    .bahan-hero {
+        margin: -18px -17px 16px;
+        padding: 18px 17px;
+    }
+    .bahan-hero-top {
+        flex-direction: column;
+    }
+    .bahan-date-card {
+        width: 100%;
+    }
+    .bahan-heading h1 {
+        font-size: 28px;
+    }
+    .bahan-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .bahan-kpi-card:last-child {
+        grid-column: auto;
+    }
+    .bahan-filter-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .bahan-add-button {
+        width: 100%;
+    }
+    .bahan-filter-grid {
+        grid-template-columns: 1fr;
+    }
+    .bahan-table-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .bahan-pagination-area {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .bahan-distribution-content {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 600px) {
+    .bahan-hero { margin: -16px -13px 16px; padding: 16px 13px; }
+    .bahan-date-card { min-width: 0; }
+    .bahan-kpi-card { padding: 15px; gap: 12px; }
+    .bahan-sparkline, .bahan-kpi-watermark { display: none; }
+    .bahan-pagination { margin-left: 0; }
+}
+
+/* Penyesuaian kolom dan form Bahan. */
+.bahan-dot.c1 { background: #3389ee; }
+.bahan-dot.c2 { background: #55a8f1; }
+.bahan-dot.c3 { background: #4fc184; }
+.bahan-dot.c4 { background: #ffc85c; }
+.bahan-dot.c5 { background: #ff9024; }
+.bahan-filter-grid { grid-template-columns: minmax(240px,1.4fr) minmax(190px,1fr) minmax(190px,1fr) auto auto auto; }
+.bahan-table { min-width: 1100px; }
+.bahan-code { font-variant-numeric: tabular-nums; }
+.bahan-description { min-width: 210px; max-width: 320px; white-space: normal; }
+.bahan-status { display: inline-flex; justify-content: center; min-width: 70px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.bahan-status.is-active { background: #dcfce7; color: #166534; }
+.bahan-status.is-inactive { background: #edf1f7; color: #526173; }
+.bahan-modal { width: min(700px, calc(100% - 32px)); }
+.bahan-modal-dialog { max-width: none; }
+.bahan-modal-body { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.bahan-modal-note, .bahan-form-wide { grid-column: 1 / -1; }
+.bahan-form-group textarea { width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid #d5e1ed; border-radius: 7px; background: white; color: #324d70; font-size: 14px; resize: vertical; }
+.bahan-form-group textarea:focus-visible { outline: 3px solid rgba(11,99,206,.45); outline-offset: 3px; }
+.bahan-form-group textarea[readonly] { background: #f5f7fb; }
+@media (max-width: 1400px) { .bahan-filter-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width: 1000px) { .bahan-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 760px) { .bahan-filter-grid, .bahan-modal-body { grid-template-columns: 1fr; } }
+
+.bahan-stock { text-align: right; font-variant-numeric: tabular-nums; }

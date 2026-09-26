@@ -125,7 +125,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('master.data_lokasi') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('master.data_lokasi') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="map-pin"></i>
                     </span>
@@ -136,7 +137,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('master.data_bahan') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('master.data_bahan') ? 'active' : '' }}   ">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="component"></i>
                     </span>
@@ -147,7 +149,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('master.data_aktiva') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('master.data_aktiva') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="badge-check"></i>
                     </span>

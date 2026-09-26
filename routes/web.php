@@ -58,6 +58,17 @@ Route::get('/master-data/sdm', function () {
     return view('master.data_sdm');
 })->name('master.data_sdm');
 
+Route::get('/master-data/lokasi', function () {
+    return view('master.data_lokasi');
+})->name('master.data_lokasi');
+
+Route::get('/master-data/bahan', function () {
+    return view('master.data_bahan');
+})->name('master.data_bahan');
+
+Route::get('/master-data/aktiva', function () {
+    return view('master.data_aktiva');
+})->name('master.data_aktiva');
 
 // ------------------------------------------------
 // DASHBOARD ROUTES

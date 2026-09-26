@@ -1,0 +1,880 @@
+/* =========================================================
+   MASTER DATA - LOKASI
+========================================================= */
+.lokasi-page {
+    --lokasi-primary: #0b63ce;
+    --lokasi-primary-dark: #074f9f;
+    --lokasi-primary-light: #eaf3ff;
+    --lokasi-background: #f5f7fb;
+    --lokasi-surface: #ffffff;
+    --lokasi-text: #172033;
+    --lokasi-muted: #7b8799;
+    --lokasi-border: #e7ecf2;
+    --lokasi-success: #16a34a;
+    --lokasi-warning: #f59e0b;
+    --lokasi-danger: #dc2626;
+    min-height: calc(100vh - 60px);
+    background: var(--lokasi-background);
+}
+/* =========================================================
+   HERO
+========================================================= */
+.lokasi-hero {
+    position: relative;
+    overflow: hidden;
+    margin: -21px -24px 16px;
+    padding: 20px 24px 17px;
+    background: url('../../images/pdam4.png') right center / cover no-repeat;
+}
+.lokasi-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient( 90deg, rgba(245,250,255,.99) 0%, rgba(239,248,255,.96) 30%, rgba(225,241,255,.86) 55%, rgba(207,232,252,.22) 100% );
+    pointer-events: none;
+}
+.lokasi-hero-top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 25px;
+    margin-bottom: 17px;
+}
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+.lokasi-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 11px;
+    color: #637b9a;
+    font-size: 13px;
+}
+.lokasi-breadcrumb a {
+    display: flex;
+    color: #416995;
+}
+.lokasi-breadcrumb svg {
+    width: 13px;
+    height: 13px;
+}
+.lokasi-breadcrumb > svg {
+    width: 11px;
+    height: 11px;
+    color: #8fa1b6;
+}
+.lokasi-breadcrumb strong {
+    color: #375779;
+    font-weight: 600;
+}
+/* =========================================================
+   TITLE
+========================================================= */
+.lokasi-heading h1 {
+    margin: 0;
+    color: #071b4b;
+    font-size: 34px;
+    line-height: 1.05;
+    font-weight: 780;
+}
+.lokasi-heading p {
+    margin: 7px 0 0;
+    color: #587197;
+    font-size: 13px;
+}
+/* =========================================================
+   DATE
+========================================================= */
+.lokasi-date-card {
+    min-width: 218px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 14px;
+    border: 1px solid rgba(220,232,244,.9);
+    border-radius: 10px;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 7px 22px rgba(27,75,118,.07);
+}
+.lokasi-date-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #eaf3ff;
+    color: #086ad3;
+}
+.lokasi-date-icon svg {
+    width: 19px;
+    height: 19px;
+}
+.lokasi-date-card strong {
+    display: block;
+    color: #1d3357;
+    font-size: 13px;
+    font-weight: 650;
+}
+.lokasi-date-card span {
+    display: block;
+    margin-top: 3px;
+    color: #778aa6;
+    font-size: 12px;
+}
+/* =========================================================
+   KPI
+========================================================= */
+.lokasi-kpi-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 14px;
+}
+.lokasi-kpi-card {
+    min-height: 104px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 17px;
+    border: 1px solid rgba(218,230,242,.93);
+    border-radius: 11px;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(9px);
+    box-shadow: 0 8px 24px rgba(28,67,105,.06);
+}
+.lokasi-kpi-icon {
+    width: 54px;
+    height: 54px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    color: white;
+    background: var(--lokasi-primary);
+}
+.lokasi-kpi-icon svg {
+    width: 26px;
+    height: 26px;
+}
+.lokasi-kpi-content {
+    min-width: 0;
+    flex: 1;
+}
+.lokasi-kpi-content > span {
+    color: #17315a;
+    font-size: 12px;
+    font-weight: 650;
+}
+.lokasi-kpi-content > strong {
+    display: block;
+    margin-top: 5px;
+    color: #071b4c;
+    font-size: 28px;
+    font-weight: 780;
+    line-height: 1;
+}
+.lokasi-kpi-content > strong.lokasi-kpi-text {
+    font-size: 24px;
+}
+.lokasi-kpi-content p {
+    margin: 5px 0 0;
+    color: #72839c;
+    font-size: 12px;
+}
+.lokasi-kpi-value {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 5px;
+}
+.lokasi-kpi-value strong {
+    color: #071b4c;
+    font-size: 28px;
+    font-weight: 780;
+}
+.lokasi-kpi-value small {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--lokasi-success);
+    font-size: 13px;
+    font-weight: 650;
+}
+.lokasi-kpi-value small svg {
+    width: 13px;
+    height: 13px;
+}
+.lokasi-sparkline {
+    width: 65px;
+    flex-shrink: 0;
+}
+.lokasi-sparkline svg {
+    width: 100%;
+    height: 48px;
+}
+.lokasi-sparkline polyline {
+    fill: none;
+    stroke: #65a9fa;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.lokasi-kpi-watermark {
+    flex-shrink: 0;
+    color: rgba(31,116,218,.19);
+}
+.lokasi-kpi-watermark svg {
+    width: 48px;
+    height: 48px;
+}
+/* =========================================================
+   CARD
+========================================================= */
+.lokasi-card {
+    overflow: hidden;
+    border: 1px solid #dfe8f1;
+    border-radius: 12px;
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 5px 18px rgba(30,70,110,.03);
+}
+/* =========================================================
+   FILTER
+========================================================= */
+.lokasi-filter-card {
+    margin-bottom: 15px;
+    padding: 14px 16px 15px;
+}
+.lokasi-filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+.lokasi-filter-header h3 {
+    margin: 0;
+    color: #10264d;
+    font-size: 18px;
+    font-weight: 720;
+}
+.lokasi-add-button {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 17px;
+    border: 0;
+    border-radius: 7px;
+    background: var(--lokasi-primary);
+    color: white;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+.lokasi-add-button svg {
+    width: 15px;
+    height: 15px;
+}
+.lokasi-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(280px,1.55fr) minmax(210px,.85fr) auto auto auto;
+    align-items: end;
+    gap: 10px;
+}
+.lokasi-search {
+    position: relative;
+}
+.lokasi-search svg {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #547091;
+}
+.lokasi-search input,
+.lokasi-select-group select {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #d7e2ed;
+    border-radius: 7px;
+    outline: none;
+    background: #ffffff;
+    color: #334f74;
+    font-size: 14px;
+}
+.lokasi-search input {
+    padding: 0 12px 0 39px;
+}
+.lokasi-select-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #344d70;
+    font-size: 12px;
+    font-weight: 600;
+}
+.lokasi-select-group select {
+    padding: 0 11px;
+}
+.lokasi-filter-button,
+.lokasi-reset-button,
+.lokasi-export-button {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 15px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.lokasi-filter-button {
+    border: 0;
+    background: var(--lokasi-primary);
+    color: white;
+}
+.lokasi-reset-button {
+    border: 1px solid #d6e1ed;
+    background: white;
+    color: #34567e;
+}
+.lokasi-export-button {
+    border: 1px solid #d6e1ed;
+    background: white;
+    color: #344f71;
+}
+.lokasi-filter-button svg,
+.lokasi-reset-button svg,
+.lokasi-export-button svg {
+    width: 14px;
+    height: 14px;
+}
+/* =========================================================
+   TABLE
+========================================================= */
+.lokasi-table-card {
+    margin-bottom: 15px;
+}
+.lokasi-table-header {
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+}
+.lokasi-table-header h3 {
+    margin: 0;
+    color: #10264d;
+    font-size: 18px;
+    font-weight: 720;
+}
+.lokasi-table {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+.lokasi-table thead th {
+    padding: 14px 16px;
+    border: 1px solid var(--lokasi-border);
+    background: #edf5ff;
+    color: #17325a;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+}
+.lokasi-table tbody td {
+    padding: 14px 16px;
+    border: 1px solid var(--lokasi-border);
+    color: var(--lokasi-text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+.lokasi-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+.lokasi-table tbody tr:hover {
+    background: #f3f8fe;
+}
+.lokasi-col-no {
+    width: 65px;
+}
+.lokasi-col-action {
+    width: 140px;
+    text-align: center !important;
+}
+/* =========================================================
+   ACTIONS
+========================================================= */
+.lokasi-actions {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+}
+.lokasi-actions button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.lokasi-actions svg {
+    width: 14px;
+    height: 14px;
+}
+.lokasi-actions .view {
+    background: #e6f3ff;
+    color: var(--lokasi-primary);
+}
+.lokasi-actions .edit {
+    background: #fff0d8;
+    color: #e58a00;
+}
+.lokasi-actions .delete {
+    background: #ffe4e7;
+    color: var(--lokasi-danger);
+}
+/* =========================================================
+   FOOTER
+========================================================= */
+.lokasi-table-footer {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 10px 16px;
+}
+.lokasi-table-info {
+    color: #5f7390;
+    font-size: 12px;
+}
+.lokasi-pagination-area {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #657b99;
+    font-size: 12px;
+}
+.lokasi-pagination-area select {
+    height: 36px;
+    padding: 0 25px 0 10px;
+    border: 1px solid #d9e3ed;
+    border-radius: 6px;
+    background: white;
+    color: #3b5577;
+    font-size: 12px;
+}
+.lokasi-pagination {
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+}
+.lokasi-pagination button {
+    min-width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dce5ee;
+    border-radius: 6px;
+    background: white;
+    color: #496481;
+    font-size: 12px;
+    cursor: pointer;
+}
+.lokasi-pagination button.active {
+    border-color: var(--lokasi-primary);
+    background: var(--lokasi-primary);
+    color: white;
+}
+.lokasi-pagination button:disabled {
+    opacity: .45;
+}
+/* =========================================================
+   BOTTOM
+========================================================= */
+.lokasi-bottom-grid {
+    display: grid;
+    grid-template-columns: .95fr 1.15fr;
+    gap: 15px;
+}
+.lokasi-bottom-header {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+}
+.lokasi-bottom-header h3 {
+    margin: 0;
+    color: #10264d;
+    font-size: 14px;
+    font-weight: 700;
+}
+.lokasi-bottom-header a {
+    color: #086cd4;
+    font-size: 12px;
+    font-weight: 600;
+}
+/* =========================================================
+   DISTRIBUTION
+========================================================= */
+.lokasi-distribution-content {
+    min-height: 215px;
+    display: grid;
+    grid-template-columns: 195px 1fr;
+    align-items: center;
+    gap: 18px;
+    padding: 3px 18px 18px;
+}
+.lokasi-chart-wrap {
+    width: 175px;
+    height: 175px;
+    position: relative;
+    margin: auto;
+}
+.lokasi-chart-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    pointer-events: none;
+}
+.lokasi-chart-center strong {
+    color: #10254d;
+    font-size: 20px;
+    font-weight: 750;
+}
+.lokasi-chart-center span {
+    color: #627a99;
+    font-size: 12px;
+}
+.lokasi-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.lokasi-legend > div {
+    display: grid;
+    grid-template-columns: 10px 1fr auto 43px;
+    align-items: center;
+    gap: 8px;
+}
+.lokasi-legend p {
+    margin: 0;
+    color: #284268;
+    font-size: 12px;
+}
+.lokasi-legend strong {
+    color: #10264e;
+    font-size: 12px;
+}
+.lokasi-legend small {
+    color: #667d9c;
+    font-size: 12px;
+    text-align: right;
+}
+.lokasi-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+/* =========================================================
+   LATEST
+========================================================= */
+.lokasi-latest-table {
+    width: calc(100% - 32px);
+    margin: 0 16px 16px;
+    border-collapse: collapse;
+}
+.lokasi-latest-table th {
+    height: 37px;
+    padding: 7px 10px;
+    border: 1px solid #dde7f0;
+    background: #edf5ff;
+    color: #17325a;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+}
+.lokasi-latest-table td {
+    height: 34px;
+    padding: 7px 10px;
+    border: 1px solid #e5ebf2;
+    color: #354f73;
+    font-size: 12px;
+}
+/* =========================================================
+   MODAL
+========================================================= */
+.lokasi-modal {
+    width: min(480px, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 14px;
+    overflow: auto;
+    background: white;
+    color: var(--lokasi-text);
+    box-shadow: 0 25px 70px rgba(8,40,80,.22);
+}
+.lokasi-modal::backdrop {
+    background: rgba(5,25,50,.46);
+    backdrop-filter: blur(2px);
+}
+.lokasi-modal-dialog {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 25px 70px rgba(8,40,80,.22);
+}
+.lokasi-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e7edf4;
+}
+.lokasi-modal-header h3 {
+    margin: 0;
+    color: #11264d;
+    font-size: 16px;
+}
+.lokasi-modal-header p {
+    margin: 4px 0 0;
+    color: #71839d;
+    font-size: 13px;
+}
+.lokasi-modal-header > button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #536f91;
+    cursor: pointer;
+}
+.lokasi-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+}
+.lokasi-form-group label {
+    display: block;
+    margin-bottom: 7px;
+    color: #304b70;
+    font-size: 13px;
+    font-weight: 600;
+}
+.lokasi-form-group input,
+.lokasi-form-group select {
+    width: 100%;
+    height: 43px;
+    padding: 0 12px;
+    border: 1px solid #d5e1ed;
+    border-radius: 7px;
+    outline: none;
+    background: white;
+    color: #324d70;
+    font-size: 13px;
+}
+.lokasi-form-group input:focus,
+.lokasi-form-group select:focus {
+    border-color: #2580e8;
+    box-shadow: 0 0 0 3px rgba(37,128,232,.08);
+}
+.lokasi-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding: 14px 20px;
+    border-top: 1px solid #e7edf4;
+    background: #fafcff;
+}
+.lokasi-cancel-button,
+.lokasi-save-button {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 16px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.lokasi-cancel-button {
+    border: 1px solid #d6e0eb;
+    background: white;
+    color: #526b89;
+}
+.lokasi-save-button {
+    border: 0;
+    background: var(--lokasi-primary);
+    color: white;
+}
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+/* Penyempurnaan interaksi khusus Barang. */
+.lokasi-page [hidden] { display: none !important; }
+.lokasi-page .table-responsive { overflow-x: auto; }
+.lokasi-page :is(button, input, select, a, .table-responsive):focus-visible {
+    outline: 3px solid rgba(11,99,206,.45);
+    outline-offset: 3px;
+}
+.lokasi-page button:disabled { opacity: .5; cursor: not-allowed; }
+.lokasi-page :is(.lokasi-add-button, .lokasi-filter-button):hover {
+    background: var(--lokasi-primary-dark);
+}
+.lokasi-table-header { justify-content: space-between; gap: 12px; }
+.lokasi-demo-badge {
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: var(--lokasi-primary-light);
+    color: var(--lokasi-primary-dark);
+    font-size: 12px;
+    white-space: nowrap;
+}
+.lokasi-table tbody td.lokasi-empty { padding: 32px 16px; text-align: center; white-space: normal; }
+.lokasi-bottom-grid > *, .lokasi-distribution-content > * { min-width: 0; }
+.lokasi-pagination svg { width: 16px; height: 16px; }
+.lokasi-pagination button:disabled { cursor: not-allowed; }
+.lokasi-chart-wrap canvas { position: relative; z-index: 1; }
+.lokasi-chart-center { z-index: 2; }
+.lokasi-chart-wrap.lokasi-chart-fallback { border-radius: 50%; }
+.lokasi-chart-fallback::before {
+    content: "";
+    position: absolute;
+    inset: 16%;
+    border-radius: 50%;
+    background: white;
+}
+.lokasi-latest-table { min-width: 470px; }
+.lokasi-modal-note {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 7px;
+    background: var(--lokasi-primary-light);
+    color: var(--lokasi-primary-dark);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.lokasi-form-group :is(input[readonly], select:disabled) { background: #f5f7fb; }
+.lokasi-save-button.lokasi-delete-button { background: var(--lokasi-danger); }
+@media (max-width: 1200px) {
+    .lokasi-bottom-grid { grid-template-columns: 1fr; }
+    .lokasi-filter-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+@media (max-width: 1000px) {
+    .lokasi-kpi-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+    .lokasi-kpi-card:last-child {
+        grid-column: 1 / 3;
+    }
+    .lokasi-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 760px) {
+    .lokasi-hero {
+        margin: -18px -17px 16px;
+        padding: 18px 17px;
+    }
+    .lokasi-hero-top {
+        flex-direction: column;
+    }
+    .lokasi-date-card {
+        width: 100%;
+    }
+    .lokasi-heading h1 {
+        font-size: 28px;
+    }
+    .lokasi-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .lokasi-kpi-card:last-child {
+        grid-column: auto;
+    }
+    .lokasi-filter-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .lokasi-add-button {
+        width: 100%;
+    }
+    .lokasi-filter-grid {
+        grid-template-columns: 1fr;
+    }
+    .lokasi-table-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .lokasi-pagination-area {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .lokasi-distribution-content {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 600px) {
+    .lokasi-hero { margin: -16px -13px 16px; padding: 16px 13px; }
+    .lokasi-date-card { min-width: 0; }
+    .lokasi-kpi-card { padding: 15px; gap: 12px; }
+    .lokasi-sparkline, .lokasi-kpi-watermark { display: none; }
+    .lokasi-pagination { margin-left: 0; }
+}
+
+/* Penyesuaian kolom dan form Lokasi. */
+.lokasi-dot.c1 { background: #3389ee; }
+.lokasi-dot.c2 { background: #55a8f1; }
+.lokasi-dot.c3 { background: #4fc184; }
+.lokasi-dot.c4 { background: #ffc85c; }
+.lokasi-dot.c5 { background: #ff9024; }
+.lokasi-filter-grid { grid-template-columns: minmax(240px,1.4fr) minmax(190px,1fr) minmax(190px,1fr) auto auto auto; }
+.lokasi-table { min-width: 1100px; }
+.lokasi-code { font-variant-numeric: tabular-nums; }
+.lokasi-description { min-width: 210px; max-width: 320px; white-space: normal; }
+.lokasi-status { display: inline-flex; justify-content: center; min-width: 70px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.lokasi-status.is-active { background: #dcfce7; color: #166534; }
+.lokasi-status.is-inactive { background: #edf1f7; color: #526173; }
+.lokasi-modal { width: min(700px, calc(100% - 32px)); }
+.lokasi-modal-dialog { max-width: none; }
+.lokasi-modal-body { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.lokasi-modal-note, .lokasi-form-wide { grid-column: 1 / -1; }
+.lokasi-form-group textarea { width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid #d5e1ed; border-radius: 7px; background: white; color: #324d70; font-size: 14px; resize: vertical; }
+.lokasi-form-group textarea:focus-visible { outline: 3px solid rgba(11,99,206,.45); outline-offset: 3px; }
+.lokasi-form-group textarea[readonly] { background: #f5f7fb; }
+@media (max-width: 1400px) { .lokasi-filter-grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width: 1000px) { .lokasi-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 760px) { .lokasi-filter-grid, .lokasi-modal-body { grid-template-columns: 1fr; } }
