@@ -1,0 +1,1598 @@
+/* =========================================================
+   K.I.B - JALAN, IRIGASI DAN JARINGAN
+   jalan.css
+
+   Fokus hanya halaman Jalan.
+   Tidak mengubah sidebar/header/layout global.
+========================================================= */
+
+.jalan-page,
+.jalan-page * {
+    box-sizing: border-box;
+}
+
+.jalan-page {
+    --jalan-primary: #0868e9;
+    --jalan-primary-dark: #0757c7;
+    --jalan-text: #10295a;
+    --jalan-heading: #071d4f;
+    --jalan-muted: #60779a;
+    --jalan-border: #dce7f2;
+    --jalan-surface: #ffffff;
+    --jalan-page: #f4f8fd;
+
+    position: relative;
+    min-height: calc(100vh - 60px);
+    color: var(--jalan-text);
+    background: var(--jalan-page);
+}
+
+.jalan-page [hidden] {
+    display: none !important;
+}
+
+.jalan-page button,
+.jalan-page input,
+.jalan-page select {
+    font: inherit;
+}
+
+.jalan-page button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.jalan-page :is(
+    button,
+    input,
+    select,
+    a,
+    .jalan-table-scroll
+):focus-visible {
+    outline: 3px solid rgba(8, 104, 233, .22);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.jalan-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    margin: -21px -24px 10px;
+    padding: 25px 24px 13px;
+
+    background:
+        url('../../images/pdam4.png') right center / cover no-repeat;
+}
+
+.jalan-hero::after {
+    content: '';
+
+    position: absolute;
+    inset: 0;
+
+    z-index: -1;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(247, 251, 255, .99) 0%,
+            rgba(242, 249, 255, .97) 31%,
+            rgba(225, 241, 255, .86) 55%,
+            rgba(204, 230, 251, .42) 76%,
+            rgba(204, 230, 251, .08) 100%
+        );
+}
+
+.jalan-hero-overlay {
+    position: absolute;
+    inset: 0;
+
+    z-index: -1;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at 72% 15%,
+            rgba(255,255,255,.42),
+            transparent 34%
+        );
+}
+
+.jalan-hero-inner {
+    position: relative;
+    z-index: 1;
+}
+
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+
+.jalan-breadcrumb {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 12px;
+
+    color: #526d96;
+
+    font-size: 13px;
+    line-height: 1;
+}
+
+.jalan-breadcrumb a {
+    display: inline-flex;
+    align-items: center;
+
+    color: #496b98;
+
+    text-decoration: none;
+}
+
+.jalan-breadcrumb a:hover {
+    color: var(--jalan-primary);
+}
+
+.jalan-breadcrumb strong {
+    color: #3d5d87;
+    font-weight: 650;
+}
+
+.jalan-breadcrumb :is(svg, i) {
+    width: 14px;
+    height: 14px;
+
+    flex: 0 0 auto;
+}
+
+.jalan-breadcrumb > :is(svg, i) {
+    width: 11px;
+    height: 11px;
+
+    color: #94a8c2;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.jalan-heading {
+    max-width: 760px;
+    margin-bottom: 14px;
+}
+
+.jalan-heading h1 {
+    margin: 0;
+
+    color: var(--jalan-heading);
+
+    font-size: clamp(28px, 2.25vw, 36px);
+
+    font-weight: 800;
+
+    line-height: 1.08;
+
+    letter-spacing: -.7px;
+}
+
+.jalan-heading p {
+    max-width: 680px;
+
+    margin: 6px 0 0;
+
+    color: #4c6791;
+
+    font-size: 14px;
+
+    line-height: 1.48;
+}
+
+
+/* =========================================================
+   KPI
+========================================================= */
+
+.jalan-kpi-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.jalan-kpi-card {
+    min-width: 0;
+
+    min-height: 86px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 13px 16px;
+
+    border: 1px solid rgba(214,228,241,.94);
+
+    border-radius: 10px;
+
+    background: rgba(255,255,255,.94);
+
+    box-shadow:
+        0 8px 25px rgba(31,73,116,.07);
+
+    backdrop-filter: blur(8px);
+}
+
+.jalan-kpi-icon {
+    width: 52px;
+    height: 52px;
+
+    flex: 0 0 52px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #1173f5,
+            #075edb
+        );
+
+    color: #fff;
+
+    box-shadow:
+        0 6px 15px rgba(8,104,233,.16);
+}
+
+.jalan-kpi-icon :is(svg, i) {
+    width: 25px;
+    height: 25px;
+
+    stroke-width: 2;
+}
+
+.jalan-kpi-content {
+    min-width: 0;
+}
+
+.jalan-kpi-content span {
+    display: block;
+
+    color: #17345f;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    line-height: 1.2;
+}
+
+.jalan-kpi-content strong {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #071a4b;
+
+    font-size: clamp(21px, 1.65vw, 27px);
+
+    font-weight: 800;
+
+    line-height: 1.05;
+
+    letter-spacing: -.35px;
+
+    white-space: nowrap;
+}
+
+.jalan-kpi-content p {
+    margin: 2px 0 0;
+
+    color: #778aa5;
+
+    font-size: 11px;
+
+    line-height: 1.2;
+}
+
+.jalan-kpi-inline {
+    display: flex;
+
+    align-items: baseline;
+
+    gap: 8px;
+
+    min-width: 0;
+}
+
+.jalan-kpi-inline small {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 3px;
+
+    color: #16a34a;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.jalan-kpi-inline small :is(svg, i) {
+    width: 13px;
+    height: 13px;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.jalan-card {
+    border: 1px solid #e0e8f1;
+
+    border-radius: 11px;
+
+    background: var(--jalan-surface);
+
+    box-shadow:
+        0 5px 22px rgba(35,75,115,.045);
+}
+
+
+/* =========================================================
+   WORKSPACE
+========================================================= */
+
+.jalan-workspace {
+    overflow: hidden;
+
+    padding: 0 16px 12px;
+}
+
+.jalan-workspace-head {
+    min-height: 56px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 18px;
+
+    border-bottom: 1px solid #e7edf4;
+}
+
+
+/* =========================================================
+   TABS
+========================================================= */
+
+.jalan-tabs {
+    min-width: 0;
+
+    align-self: stretch;
+
+    display: flex;
+
+    align-items: stretch;
+
+    gap: 4px;
+}
+
+.jalan-tabs button {
+    position: relative;
+
+    min-width: 104px;
+
+    padding: 0 12px;
+
+    border: 0;
+
+    background: transparent;
+
+    color: #52698d;
+
+    font-size: 13px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        color .18s ease,
+        background .18s ease;
+}
+
+.jalan-tabs button:hover {
+    color: var(--jalan-primary);
+
+    background: #f8fbff;
+}
+
+.jalan-tabs button.active {
+    color: var(--jalan-primary);
+
+    font-weight: 700;
+}
+
+.jalan-tabs button.active::after {
+    content: '';
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: -1px;
+
+    height: 2px;
+
+    border-radius: 99px 99px 0 0;
+
+    background: #0b6bf1;
+}
+
+
+/* =========================================================
+   ADD BUTTON
+========================================================= */
+
+.jalan-add-button {
+    height: 38px;
+
+    flex: 0 0 auto;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 17px;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0d70f2,
+            #075fdb
+        );
+
+    color: #fff;
+
+    font-size: 13px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 13px rgba(8,104,233,.14);
+
+    transition:
+        transform .16s ease,
+        background .16s ease,
+        box-shadow .16s ease;
+}
+
+.jalan-add-button:hover {
+    background:
+        linear-gradient(
+            180deg,
+            #0a68e5,
+            #0556c7
+        );
+
+    box-shadow:
+        0 7px 17px rgba(8,104,233,.19);
+
+    transform: translateY(-1px);
+}
+
+.jalan-add-button:active {
+    transform: translateY(0);
+}
+
+.jalan-add-button :is(svg, i) {
+    width: 15px;
+    height: 15px;
+}
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+.jalan-filter-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(280px, 1.7fr)
+        repeat(3, minmax(145px, .88fr));
+
+    gap: 10px;
+
+    padding-top: 10px;
+}
+
+.jalan-search {
+    position: relative;
+    min-width: 0;
+}
+
+.jalan-search :is(svg, i) {
+    position: absolute;
+
+    left: 12px;
+    top: 50%;
+
+    width: 15px;
+    height: 15px;
+
+    transform: translateY(-50%);
+
+    color: #47698f;
+
+    pointer-events: none;
+}
+
+.jalan-search input,
+.jalan-select-field select {
+    width: 100%;
+
+    height: 38px;
+
+    border: 1px solid #d9e4ef;
+
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: #3d577b;
+
+    font-size: 12px;
+
+    outline: none;
+
+    transition:
+        border-color .16s ease,
+        box-shadow .16s ease;
+}
+
+.jalan-search input {
+    padding:
+        0
+        12px
+        0
+        38px;
+
+    background: #f8fbff;
+}
+
+.jalan-select-field select {
+    padding:
+        0
+        34px
+        0
+        11px;
+
+    appearance: none;
+
+    background-image:
+        linear-gradient(
+            45deg,
+            transparent 50%,
+            #58718e 50%
+        ),
+        linear-gradient(
+            135deg,
+            #58718e 50%,
+            transparent 50%
+        );
+
+    background-position:
+        calc(100% - 15px) 16px,
+        calc(100% - 10px) 16px;
+
+    background-size:
+        5px 5px,
+        5px 5px;
+
+    background-repeat: no-repeat;
+}
+
+.jalan-search input::placeholder {
+    color: #7b91ad;
+}
+
+.jalan-search input:hover,
+.jalan-select-field select:hover {
+    border-color: #c8d9ea;
+}
+
+.jalan-search input:focus,
+.jalan-select-field select:focus {
+    border-color: #6ca6ec;
+
+    box-shadow:
+        0 0 0 3px rgba(8,104,233,.08);
+}
+
+
+/* =========================================================
+   FILTER ACTIONS
+========================================================= */
+
+.jalan-filter-actions {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 9px 0;
+}
+
+.jalan-filter-actions > div {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+}
+
+.jalan-secondary-button {
+    min-height: 36px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 14px;
+
+    border: 1px solid #d9e4ef;
+
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: #25466f;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        border-color .16s ease,
+        background .16s ease,
+        color .16s ease;
+}
+
+.jalan-secondary-button:hover {
+    border-color: #bfd3e8;
+
+    background: #f7fbff;
+
+    color: var(--jalan-primary);
+}
+
+.jalan-secondary-button :is(svg, i) {
+    width: 14px;
+    height: 14px;
+}
+
+.jalan-export-button {
+    min-width: 88px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.jalan-table-scroll {
+    width: 100%;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    border: 1px solid #e1e9f2;
+
+    border-radius: 8px;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        #c5d6e8
+        transparent;
+}
+
+.jalan-table-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.jalan-table-scroll::-webkit-scrollbar-track {
+    background: #f5f8fb;
+}
+
+.jalan-table-scroll::-webkit-scrollbar-thumb {
+    border-radius: 99px;
+
+    background: #c7d7e8;
+}
+
+.jalan-table {
+    width: 100%;
+
+    min-width: 1220px;
+
+    table-layout: fixed;
+
+    border-collapse: collapse;
+
+    background: #fff;
+}
+
+.jalan-table th,
+.jalan-table td {
+    border-right: 1px solid #e8eef4;
+}
+
+.jalan-table th:last-child,
+.jalan-table td:last-child {
+    border-right: 0;
+}
+
+.jalan-table th {
+    height: 37px;
+
+    padding: 7px 8px;
+
+    background: #edf5ff;
+
+    color: #112b54;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+.jalan-table td {
+    height: 55px;
+
+    padding: 5px 8px;
+
+    border-top: 1px solid #e7edf4;
+
+    color: #365682;
+
+    font-size: 11px;
+
+    line-height: 1.3;
+
+    vertical-align: middle;
+
+    overflow-wrap: anywhere;
+}
+
+.jalan-table tbody tr {
+    transition: background .12s ease;
+}
+
+.jalan-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+
+/* COLUMN WIDTHS */
+
+.jalan-table th:nth-child(1),
+.jalan-table td:nth-child(1) {
+    width: 34px;
+
+    text-align: center;
+}
+
+.jalan-table th:nth-child(2),
+.jalan-table td:nth-child(2) {
+    width: 38px;
+
+    text-align: center;
+}
+
+.jalan-table th:nth-child(3),
+.jalan-table td:nth-child(3) {
+    width: 104px;
+}
+
+.jalan-table th:nth-child(4),
+.jalan-table td:nth-child(4) {
+    width: 54px;
+
+    text-align: center;
+}
+
+.jalan-table th:nth-child(5),
+.jalan-table td:nth-child(5) {
+    width: 150px;
+}
+
+.jalan-table th:nth-child(6),
+.jalan-table td:nth-child(6) {
+    width: 88px;
+}
+
+.jalan-table th:nth-child(7),
+.jalan-table td:nth-child(7) {
+    width: 116px;
+}
+
+.jalan-table th:nth-child(8),
+.jalan-table td:nth-child(8) {
+    width: 130px;
+}
+
+.jalan-table th:nth-child(9),
+.jalan-table td:nth-child(9) {
+    width: 55px;
+
+    text-align: center;
+}
+
+.jalan-table th:nth-child(10),
+.jalan-table td:nth-child(10) {
+    width: 125px;
+}
+
+.jalan-table th:nth-child(11),
+.jalan-table td:nth-child(11) {
+    width: 120px;
+}
+
+.jalan-table th:nth-child(12),
+.jalan-table td:nth-child(12) {
+    width: 72px;
+
+    text-align: center;
+}
+
+.jalan-table th:nth-child(13),
+.jalan-table td:nth-child(13) {
+    width: 112px;
+
+    text-align: center;
+}
+
+.jalan-table input[type='checkbox'] {
+    width: 13px;
+    height: 13px;
+
+    margin: 0;
+
+    accent-color: #0b68e8;
+
+    cursor: pointer;
+}
+
+.jalan-code {
+    white-space: nowrap;
+
+    font-variant-numeric: tabular-nums;
+}
+
+.jalan-name {
+    white-space: normal;
+
+    color: #304f7d !important;
+}
+
+.jalan-thumb {
+    width: 36px;
+    height: 30px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #dce6ef;
+
+    border-radius: 5px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f4f8fc,
+            #e8eef5
+        );
+
+    color: #496c92;
+}
+
+.jalan-thumb :is(svg, i) {
+    width: 17px;
+    height: 17px;
+
+    stroke-width: 1.8;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.jalan-status {
+    min-width: 58px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 5px 9px;
+
+    border-radius: 6px;
+
+    font-size: 11px;
+
+    font-weight: 650;
+
+    line-height: 1;
+
+    white-space: nowrap;
+}
+
+.jalan-status.is-good {
+    background: #dcfce7;
+
+    color: #15803d;
+}
+
+.jalan-status.is-fair {
+    background: #fff3d6;
+
+    color: #d97706;
+}
+
+.jalan-status.is-bad {
+    background: #ffe4e6;
+
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.jalan-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+}
+
+.jalan-actions button {
+    width: 31px;
+    height: 28px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 0;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    transition:
+        transform .14s ease,
+        filter .14s ease;
+}
+
+.jalan-actions button:hover {
+    filter: brightness(.97);
+
+    transform: translateY(-1px);
+}
+
+.jalan-actions button:active {
+    transform: translateY(0);
+}
+
+.jalan-actions button :is(svg, i) {
+    width: 14px;
+    height: 14px;
+
+    stroke-width: 2.2;
+}
+
+.jalan-actions .view {
+    background: #e6f2ff;
+
+    color: #006be9;
+}
+
+.jalan-actions .edit {
+    background: #fff0d8;
+
+    color: #f59e0b;
+}
+
+.jalan-actions .delete {
+    background: #ffe5e7;
+
+    color: #ef4444;
+}
+
+.jalan-empty {
+    padding: 30px 15px !important;
+
+    color: #70849f !important;
+
+    text-align: center !important;
+}
+
+
+/* =========================================================
+   TABLE FOOTER
+========================================================= */
+
+.jalan-table-footer {
+    min-height: 57px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    color: #5d7392;
+
+    font-size: 12px;
+}
+
+.jalan-table-info {
+    min-width: 0;
+}
+
+.jalan-pagination-area {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    white-space: nowrap;
+}
+
+.jalan-pagination-area > span {
+    color: #607797;
+}
+
+.jalan-pagination-area select {
+    width: 70px;
+    height: 36px;
+
+    padding: 0 25px 0 10px;
+
+    border: 1px solid #d9e4ef;
+
+    border-radius: 6px;
+
+    background: #fff;
+
+    color: #375479;
+
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+.jalan-pagination {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin-left: 8px;
+}
+
+.jalan-pagination button {
+    min-width: 34px;
+    height: 34px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 8px;
+
+    border: 1px solid #dce5ee;
+
+    border-radius: 6px;
+
+    background: #fff;
+
+    color: #395777;
+
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+.jalan-pagination button:hover:not(:disabled):not(.active) {
+    border-color: #bfd4e9;
+
+    background: #f6faff;
+
+    color: var(--jalan-primary);
+}
+
+.jalan-pagination button.active {
+    border-color: var(--jalan-primary);
+
+    background: var(--jalan-primary);
+
+    color: #fff;
+
+    font-weight: 700;
+}
+
+.jalan-pagination button:disabled {
+    opacity: .42;
+
+    cursor: not-allowed;
+}
+
+.jalan-pagination button :is(svg, i) {
+    width: 15px;
+    height: 15px;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.jalan-modal {
+    width: min(760px, calc(100% - 32px));
+
+    max-width: 760px;
+
+    max-height: calc(100dvh - 32px);
+
+    margin: auto;
+
+    padding: 0;
+
+    overflow: hidden;
+
+    border: 0;
+
+    border-radius: 14px;
+
+    background: #fff;
+
+    color: var(--jalan-text);
+
+    box-shadow:
+        0 25px 75px rgba(7,35,70,.25);
+}
+
+.jalan-modal::backdrop {
+    background: rgba(4,27,55,.5);
+
+    backdrop-filter: blur(2px);
+}
+
+.jalan-modal-dialog {
+    max-height: calc(100dvh - 32px);
+
+    overflow: auto;
+
+    border-radius: 14px;
+}
+
+.jalan-modal-header {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 17px 20px;
+
+    border-bottom: 1px solid #e7edf4;
+
+    background: #fff;
+}
+
+.jalan-modal-header h3 {
+    margin: 0;
+
+    color: #10295a;
+
+    font-size: 17px;
+
+    font-weight: 750;
+}
+
+.jalan-modal-header p {
+    margin: 4px 0 0;
+
+    color: #71839d;
+
+    font-size: 12px;
+}
+
+.jalan-modal-header > button {
+    width: 32px;
+    height: 32px;
+
+    flex: 0 0 32px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #58718e;
+
+    cursor: pointer;
+}
+
+.jalan-modal-header > button:hover {
+    background: #f1f6fb;
+
+    color: #173a67;
+}
+
+.jalan-modal-header > button :is(svg, i) {
+    width: 17px;
+    height: 17px;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.jalan-modal-body {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+
+    padding: 18px 20px;
+}
+
+.jalan-modal-note {
+    grid-column: 1 / -1;
+
+    margin: 0;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d9eaff;
+
+    border-radius: 7px;
+
+    background: #edf5ff;
+
+    color: #1455a0;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+}
+
+.jalan-form-group {
+    min-width: 0;
+}
+
+.jalan-form-group label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #304b70;
+
+    font-size: 12px;
+
+    font-weight: 650;
+}
+
+.jalan-form-group input,
+.jalan-form-group select {
+    width: 100%;
+
+    height: 40px;
+
+    padding: 0 11px;
+
+    border: 1px solid #d8e2ec;
+
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: #334f72;
+
+    font-size: 12px;
+
+    outline: none;
+}
+
+.jalan-form-group input:focus,
+.jalan-form-group select:focus {
+    border-color: #6ca6ec;
+
+    box-shadow:
+        0 0 0 3px rgba(8,104,233,.08);
+}
+
+.jalan-form-group :is(
+    input[readonly],
+    select:disabled
+) {
+    background: #f5f7fb;
+
+    color: #657a98;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.jalan-modal-footer {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 9px;
+
+    padding: 13px 20px;
+
+    border-top: 1px solid #e7edf4;
+
+    background: #fafcff;
+}
+
+.jalan-cancel-button,
+.jalan-save-button {
+    min-height: 38px;
+
+    padding: 0 15px;
+
+    border-radius: 7px;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.jalan-cancel-button {
+    border: 1px solid #d7e1eb;
+
+    background: #fff;
+
+    color: #526b89;
+}
+
+.jalan-cancel-button:hover {
+    background: #f7faff;
+}
+
+.jalan-save-button {
+    border: 0;
+
+    background: #0b63ce;
+
+    color: #fff;
+}
+
+.jalan-save-button:disabled {
+    opacity: .5;
+
+    cursor: not-allowed;
+}
+
+.jalan-save-button.jalan-delete-button {
+    background: #dc2626;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .jalan-kpi-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .jalan-filter-row {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+@media (max-width: 900px) {
+
+    .jalan-hero {
+        margin:
+            -18px
+            -17px
+            10px;
+
+        padding:
+            20px
+            17px
+            12px;
+    }
+
+    .jalan-heading h1 {
+        font-size: 30px;
+    }
+
+    .jalan-workspace-head {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .jalan-tabs {
+        overflow-x: auto;
+    }
+
+    .jalan-tabs button {
+        min-height: 48px;
+    }
+
+    .jalan-add-button {
+        width: 100%;
+    }
+
+    .jalan-table-footer {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding-top: 12px;
+    }
+
+    .jalan-pagination-area {
+        width: 100%;
+
+        justify-content: flex-end;
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .jalan-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .jalan-filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .jalan-filter-actions {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .jalan-filter-actions > div {
+        width: 100%;
+    }
+
+    .jalan-filter-actions button {
+        flex: 1;
+    }
+
+    .jalan-modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .jalan-modal-note {
+        grid-column: auto;
+    }
+
+    .jalan-pagination {
+        margin-left: 0;
+    }
+
+}
+
+@media (max-width: 480px) {
+
+    .jalan-pagination-area {
+        align-items: flex-start;
+
+        flex-wrap: wrap;
+    }
+
+    .jalan-pagination {
+        width: 100%;
+
+        overflow-x: auto;
+
+        padding-bottom: 3px;
+    }
+
+}   

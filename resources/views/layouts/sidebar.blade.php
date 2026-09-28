@@ -186,7 +186,8 @@
 
             <div class="sidebar-submenu">
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('kib.tanah') }}"
+                    class="sidebar-submenu-item"{{ request()->routeIs('kib.tanah') ? 'active' : '' }}>
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="map"></i>
                     </span>
@@ -197,7 +198,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('kib.mesin') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('kib.mesin') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="settings"></i>
                     </span>
@@ -208,7 +210,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('kib.gedung') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('kib.gedung') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="building-2"></i>
                     </span>
@@ -219,7 +222,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('kib.jalan') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('kib.jalan') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="route"></i>
                     </span>
@@ -230,7 +234,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('kib.aset_ttp') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('kib.aset_ttp') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="package-open"></i>
                     </span>
@@ -241,7 +246,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('kib.konstruksi') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('kib.konstruksi') ? 'active' : '' }}  ">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="construction"></i>
                     </span>
@@ -252,7 +258,8 @@
                 </a>
 
 
-                <a href="#" class="sidebar-submenu-item">
+                <a href="{{ route('kib.kir') }}"
+                    class="sidebar-submenu-item {{ request()->routeIs('kib.kir') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon">
                         <i data-lucide="clipboard-list"></i>
                     </span>

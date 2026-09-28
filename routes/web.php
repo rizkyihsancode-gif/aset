@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\Barang;
 
 
 Route::get('/', function () {
@@ -34,12 +35,28 @@ Route::get('/dashboard', function () {
     return view('main.dashboard');
 })->name('dashboard');
 
+// ------------------------------------------------
+// DASHBOARD ROUTES
+// -------------------------------------------------
+Route::get('/nilai-aset', function () {
+
+    return view('main.nilai');
+})->name('main.nilai');
+
+
+Route::get('/arsip', function () {
+
+    return view('main.arsip');
+})->name('main.arsip');
+
 
 // ------------------------------------------------
 // MASTER DATA ROUTES
 // ------------------------------------------------
 Route::get('/master-data/barang', function () {
-    return view('master.data_barang');
+    $barangs = Barang::orderBy('nama_barang', 'asc')->get();
+
+    return view('master.data_barang', compact('barangs'));
 })->name('master.data_barang');
 
 Route::get('/master-data/departemen', function () {
@@ -71,15 +88,33 @@ Route::get('/master-data/aktiva', function () {
 })->name('master.data_aktiva');
 
 // ------------------------------------------------
-// DASHBOARD ROUTES
+// K.I.B ROUTES
 // -------------------------------------------------
-Route::get('/nilai-aset', function () {
 
-    return view('main.nilai');
-})->name('main.nilai');
+Route::get('/kib/tanah', function () {
+    return view('kib.tanah');
+})->name('kib.tanah');
 
+Route::get('/kib/mesin', function () {
+    return view('kib.mesin');
+})->name('kib.mesin');
 
-Route::get('/arsip', function () {
+Route::get('/kib/gedung', function () {
+    return view('kib.gedung');
+})->name('kib.gedung');
 
-    return view('main.arsip');
-})->name('main.arsip');
+Route::get('/kib/jalan', function () {
+    return view('kib.jalan');
+})->name('kib.jalan');
+
+Route::get('/kib/aset_ttp', function () {
+    return view('kib.aset_ttp');
+})->name('kib.aset_ttp');
+
+Route::get('/kib/konstruksi', function () {
+    return view('kib.konstruksi');
+})->name('kib.konstruksi');
+
+Route::get('/kib/kir', function () {
+    return view('kib.kir');
+})->name('kib.kir');

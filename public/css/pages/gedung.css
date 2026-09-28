@@ -1,0 +1,1568 @@
+/* =========================================================
+   GEDUNG & BANGUNAN
+   K.I.B PAGE
+========================================================= */
+
+.gedung-page {
+
+    --gedung-primary: #0868e9;
+    --gedung-primary-dark: #0758c5;
+
+    --gedung-text: #10264d;
+    --gedung-muted: #647997;
+
+    --gedung-border: #dfe8f1;
+
+    min-height: calc(100vh - 60px);
+
+    background: #f4f8fd;
+
+    color: var(--gedung-text);
+
+    padding-bottom: 24px;
+}
+
+
+.gedung-page *,
+.gedung-page *::before,
+.gedung-page *::after {
+    box-sizing: border-box;
+}
+
+
+.gedung-page button,
+.gedung-page input,
+.gedung-page select {
+    font-family: inherit;
+}
+
+
+.gedung-page [hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.gedung-hero {
+
+    position: relative;
+
+    overflow: hidden;
+
+    margin: -21px -24px 12px;
+
+    padding: 24px 24px 13px;
+
+    min-height: 220px;
+
+    background:
+        url('../../images/pdam4.png')
+        center right / cover
+        no-repeat;
+}
+
+
+.gedung-hero-overlay {
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(246, 251, 255, .99) 0%,
+            rgba(241, 249, 255, .97) 34%,
+            rgba(224, 241, 255, .82) 63%,
+            rgba(204, 231, 253, .18) 100%
+        );
+}
+
+
+.gedung-hero-inner {
+
+    position: relative;
+
+    z-index: 2;
+}
+
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+
+.gedung-breadcrumb {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 11px;
+
+    color: #557296;
+
+    font-size: 12px;
+}
+
+
+.gedung-breadcrumb a {
+
+    display: flex;
+
+    align-items: center;
+
+    color: #4b6c93;
+
+    text-decoration: none;
+}
+
+
+.gedung-breadcrumb svg {
+
+    width: 14px;
+    height: 14px;
+}
+
+
+.gedung-breadcrumb > svg {
+
+    width: 11px;
+    height: 11px;
+
+    color: #9aabc0;
+}
+
+
+.gedung-breadcrumb strong {
+
+    color: #3f5e83;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.gedung-heading {
+
+    margin-bottom: 13px;
+
+    max-width: 760px;
+}
+
+
+.gedung-heading h1 {
+
+    margin: 0;
+
+    color: #071d4e;
+
+    font-size: 33px;
+
+    line-height: 1.1;
+
+    font-weight: 800;
+
+    letter-spacing: -.6px;
+}
+
+
+.gedung-heading p {
+
+    margin: 6px 0 0;
+
+    color: #526d93;
+
+    font-size: 13px;
+
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   KPI GRID
+========================================================= */
+
+.gedung-kpi-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 13px;
+}
+
+
+.gedung-kpi-card {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    min-height: 82px;
+
+    padding: 12px 14px;
+
+    border: 1px solid rgba(219, 230, 241, .92);
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, .95);
+
+    box-shadow:
+        0 7px 22px rgba(25, 67, 108, .05);
+
+    backdrop-filter: blur(6px);
+}
+
+
+.gedung-kpi-icon {
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+
+    border-radius: 9px;
+
+    color: white;
+}
+
+
+.gedung-kpi-icon svg {
+
+    width: 23px;
+    height: 23px;
+}
+
+
+.gedung-kpi-icon.blue {
+
+    background:
+        linear-gradient(
+            145deg,
+            #1675ee,
+            #075ccf
+        );
+}
+
+
+.gedung-kpi-icon.green {
+
+    background:
+        linear-gradient(
+            145deg,
+            #16b36f,
+            #08834f
+        );
+}
+
+
+.gedung-kpi-icon.yellow {
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffc21a,
+            #ef9e00
+        );
+}
+
+
+.gedung-kpi-icon.red {
+
+    background:
+        linear-gradient(
+            145deg,
+            #ff4a4f,
+            #e52329
+        );
+}
+
+
+.gedung-kpi-content span {
+
+    display: block;
+
+    color: #536c8d;
+
+    font-size: 11px;
+
+    font-weight: 650;
+}
+
+
+.gedung-kpi-content strong {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #071a49;
+
+    font-size: 24px;
+
+    line-height: 1.05;
+
+    font-weight: 800;
+}
+
+
+.gedung-kpi-content small {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #7b8da7;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.gedung-card {
+
+    margin: 0;
+
+    padding: 0 16px 13px;
+
+    border: 1px solid #e0e8f1;
+
+    border-radius: 11px;
+
+    background: white;
+
+    box-shadow:
+        0 5px 20px rgba(35, 75, 115, .035);
+}
+
+
+/* =========================================================
+   CARD HEADER
+========================================================= */
+
+.gedung-card-header {
+
+    min-height: 59px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    border-bottom: 1px solid #e6edf4;
+}
+
+
+.gedung-card-header h2 {
+
+    margin: 0;
+
+    color: #10264d;
+
+    font-size: 20px;
+
+    font-weight: 800;
+}
+
+
+.gedung-card-header p {
+
+    margin: 3px 0 0;
+
+    color: #8090a7;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   ADD BUTTON
+========================================================= */
+
+.gedung-add-btn {
+
+    height: 37px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 15px;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background: #0868e9;
+
+    color: #fff;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        background .18s ease,
+        transform .18s ease;
+}
+
+
+.gedung-add-btn:hover {
+
+    background: var(--gedung-primary-dark);
+
+    transform: translateY(-1px);
+}
+
+
+.gedung-add-btn svg {
+
+    width: 15px;
+    height: 15px;
+}
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+.gedung-filter {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(300px, 1.7fr)
+        minmax(170px, .8fr)
+        minmax(170px, .8fr)
+        minmax(190px, .9fr)
+        auto;
+
+    gap: 9px;
+
+    padding: 10px 0 8px;
+}
+
+
+.gedung-search {
+
+    position: relative;
+}
+
+
+.gedung-search svg {
+
+    position: absolute;
+
+    left: 12px;
+
+    top: 50%;
+
+    width: 15px;
+    height: 15px;
+
+    transform: translateY(-50%);
+
+    color: #587596;
+
+    pointer-events: none;
+}
+
+
+.gedung-search input,
+.gedung-filter select {
+
+    width: 100%;
+
+    height: 37px;
+
+    border: 1px solid #d8e3ed;
+
+    border-radius: 7px;
+
+    background: #f9fbfe;
+
+    color: #3c5677;
+
+    font-size: 11px;
+
+    outline: none;
+}
+
+
+.gedung-search input {
+
+    padding: 0 12px 0 37px;
+}
+
+
+.gedung-filter select {
+
+    padding: 0 10px;
+}
+
+
+.gedung-search input:focus,
+.gedung-filter select:focus {
+
+    border-color: #7eb1ee;
+
+    background: #fff;
+
+    box-shadow:
+        0 0 0 3px rgba(8, 104, 233, .08);
+}
+
+
+/* =========================================================
+   FILTER BUTTON
+========================================================= */
+
+.gedung-filter-btn {
+
+    height: 37px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 13px;
+
+    border: 1px solid #d8e3ed;
+
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: #385779;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+.gedung-filter-btn:hover {
+
+    background: #f4f8fc;
+}
+
+
+.gedung-filter-btn svg {
+
+    width: 14px;
+    height: 14px;
+}
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.gedung-toolbar {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 0 0 8px;
+}
+
+
+.gedung-toolbar-left,
+.gedung-toolbar-right {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+.gedung-tool-btn {
+
+    height: 34px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 0 12px;
+
+    border: 1px solid #dbe5ef;
+
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: #395778;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+.gedung-tool-btn:hover {
+
+    background: #f7faff;
+}
+
+
+.gedung-tool-btn svg {
+
+    width: 14px;
+    height: 14px;
+}
+
+
+/* =========================================================
+   ADVANCED FILTER
+========================================================= */
+
+.gedung-advanced-filter {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(200px, 260px));
+
+    gap: 13px;
+
+    padding: 12px;
+
+    margin-bottom: 10px;
+
+    border: 1px solid #dce7f1;
+
+    border-radius: 8px;
+
+    background: #f7faff;
+}
+
+
+.gedung-advanced-filter label {
+
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #45617f;
+
+    font-size: 10px;
+
+    font-weight: 650;
+}
+
+
+.gedung-advanced-filter select {
+
+    width: 100%;
+
+    height: 35px;
+
+    padding: 0 10px;
+
+    border: 1px solid #d7e2ed;
+
+    border-radius: 6px;
+
+    background: white;
+
+    color: #3e5878;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.gedung-table-wrapper {
+
+    overflow: auto;
+
+    border: 1px solid #e1e9f1;
+
+    border-radius: 8px;
+
+    background: white;
+}
+
+
+.gedung-table-wrapper:focus-visible {
+
+    outline: 3px solid rgba(8, 104, 233, .2);
+
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.gedung-table {
+
+    width: 100%;
+
+    min-width: 1450px;
+
+    border-collapse: collapse;
+
+    white-space: nowrap;
+}
+
+
+.gedung-table th {
+
+    height: 38px;
+
+    padding: 7px 10px;
+
+    border-right: 1px solid #dce6f0;
+
+    background: #edf5ff;
+
+    color: #16345d;
+
+    font-size: 10px;
+
+    font-weight: 750;
+
+    text-align: left;
+
+    vertical-align: middle;
+}
+
+
+.gedung-table td {
+
+    height: 43px;
+
+    padding: 6px 10px;
+
+    border-top: 1px solid #e7edf3;
+
+    border-right: 1px solid #edf1f5;
+
+    color: #3c5a7e;
+
+    font-size: 10.5px;
+
+    vertical-align: middle;
+}
+
+
+.gedung-table tbody tr {
+
+    transition:
+        background .15s ease;
+}
+
+
+.gedung-table tbody tr:hover {
+
+    background: #f8fbff;
+}
+
+
+.gedung-table .check-column {
+
+    width: 35px;
+
+    text-align: center;
+}
+
+
+.gedung-table input[type="checkbox"] {
+
+    width: 13px;
+
+    height: 13px;
+
+    margin: 0;
+
+    accent-color: #0868e9;
+
+    vertical-align: middle;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.gedung-status {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 68px;
+
+    padding: 5px 9px;
+
+    border-radius: 5px;
+
+    font-size: 10px;
+
+    font-weight: 650;
+}
+
+
+.gedung-status.baik {
+
+    background: #dcfce7;
+
+    color: #15803d;
+}
+
+
+.gedung-status.sedang {
+
+    background: #fff2d5;
+
+    color: #d97706;
+}
+
+
+.gedung-status.rusak {
+
+    background: #ffe3e5;
+
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.gedung-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+}
+
+
+.gedung-actions button {
+
+    width: 30px;
+
+    height: 27px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    transition:
+        transform .15s ease,
+        filter .15s ease;
+}
+
+
+.gedung-actions button:hover {
+
+    transform: translateY(-1px);
+
+    filter: brightness(.97);
+}
+
+
+.gedung-actions svg {
+
+    width: 13px;
+
+    height: 13px;
+}
+
+
+.gedung-actions .view {
+
+    background: #e5f2ff;
+
+    color: #0868e9;
+}
+
+
+.gedung-actions .edit {
+
+    background: #fff0d5;
+
+    color: #e89400;
+}
+
+
+.gedung-actions .delete {
+
+    background: #ffe5e7;
+
+    color: #e82e36;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.gedung-empty {
+
+    padding: 40px 20px !important;
+
+    text-align: center !important;
+}
+
+
+.gedung-empty svg {
+
+    width: 28px;
+
+    height: 28px;
+
+    margin-bottom: 8px;
+
+    color: #8da1ba;
+}
+
+
+.gedung-empty strong {
+
+    display: block;
+
+    color: #476382;
+
+    font-size: 13px;
+}
+
+
+.gedung-empty span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #8495aa;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.gedung-footer {
+
+    min-height: 55px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    color: #617894;
+
+    font-size: 11px;
+}
+
+
+.gedung-pagination-area {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+.gedung-pagination-area select {
+
+    width: 63px;
+
+    height: 34px;
+
+    padding: 0 8px;
+
+    border: 1px solid #d8e3ed;
+
+    border-radius: 6px;
+
+    background: #fff;
+
+    color: #3c5777;
+
+    font-size: 11px;
+}
+
+
+.gedung-pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    margin-left: 8px;
+}
+
+
+.gedung-pagination button {
+
+    min-width: 31px;
+
+    height: 32px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 1px solid #dce5ee;
+
+    border-radius: 6px;
+
+    background: white;
+
+    color: #3d5877;
+
+    font-size: 11px;
+
+    cursor: pointer;
+}
+
+
+.gedung-pagination button:hover:not(:disabled) {
+
+    background: #f3f8ff;
+}
+
+
+.gedung-pagination button.active {
+
+    border-color: #0868e9;
+
+    background: #0868e9;
+
+    color: #fff;
+}
+
+
+.gedung-pagination button:disabled {
+
+    opacity: .4;
+
+    cursor: not-allowed;
+}
+
+
+.gedung-pagination svg {
+
+    width: 14px;
+
+    height: 14px;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.gedung-modal {
+
+    width: min(760px, calc(100% - 30px));
+
+    max-height: calc(100dvh - 30px);
+
+    padding: 0;
+
+    border: 0;
+
+    border-radius: 14px;
+
+    background: white;
+
+    color: var(--gedung-text);
+
+    box-shadow:
+        0 25px 80px rgba(9, 36, 70, .25);
+}
+
+
+.gedung-modal::backdrop {
+
+    background: rgba(5, 28, 57, .48);
+
+    backdrop-filter: blur(2px);
+}
+
+
+.gedung-modal-dialog {
+
+    overflow: hidden;
+
+    border-radius: 14px;
+}
+
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.gedung-modal-header {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 17px 20px;
+
+    border-bottom: 1px solid #e6edf4;
+}
+
+
+.gedung-modal-header h3 {
+
+    margin: 0;
+
+    color: #122a50;
+
+    font-size: 17px;
+
+    font-weight: 750;
+}
+
+
+.gedung-modal-header p {
+
+    margin: 4px 0 0;
+
+    color: #7b8ca3;
+
+    font-size: 11px;
+}
+
+
+.gedung-modal-close {
+
+    width: 31px;
+
+    height: 31px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 6px;
+
+    background: #f5f8fc;
+
+    color: #607795;
+
+    cursor: pointer;
+}
+
+
+.gedung-modal-close:hover {
+
+    background: #edf2f8;
+}
+
+
+.gedung-modal-close svg {
+
+    width: 15px;
+
+    height: 15px;
+}
+
+
+/* =========================================================
+   MODAL BODY
+========================================================= */
+
+.gedung-modal-body {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 13px;
+
+    max-height: calc(100dvh - 210px);
+
+    overflow-y: auto;
+
+    padding: 17px 20px;
+}
+
+
+.gedung-modal-note {
+
+    grid-column: 1 / -1;
+
+    padding: 10px 12px;
+
+    border-radius: 7px;
+
+    background: #edf5ff;
+
+    color: #245b98;
+
+    font-size: 10.5px;
+
+    line-height: 1.45;
+}
+
+
+.gedung-form-group label {
+
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #3c5878;
+
+    font-size: 11px;
+
+    font-weight: 650;
+}
+
+
+.gedung-form-group input,
+.gedung-form-group select {
+
+    width: 100%;
+
+    height: 39px;
+
+    padding: 0 10px;
+
+    border: 1px solid #d7e2ed;
+
+    border-radius: 7px;
+
+    background: white;
+
+    color: #3c5677;
+
+    font-size: 11px;
+
+    outline: none;
+}
+
+
+.gedung-form-group input:focus,
+.gedung-form-group select:focus {
+
+    border-color: #7cb0ec;
+
+    box-shadow:
+        0 0 0 3px rgba(8, 104, 233, .08);
+}
+
+
+.gedung-form-group input[readonly],
+.gedung-form-group select:disabled {
+
+    background: #f5f7fa;
+
+    color: #77879d;
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.gedung-modal-footer {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    padding: 13px 20px;
+
+    border-top: 1px solid #e6edf4;
+
+    background: #fafcff;
+}
+
+
+.gedung-cancel-btn,
+.gedung-save-btn {
+
+    height: 37px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 14px;
+
+    border-radius: 7px;
+
+    font-size: 11px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+
+.gedung-cancel-btn {
+
+    border: 1px solid #d8e2ec;
+
+    background: white;
+
+    color: #536b88;
+}
+
+
+.gedung-save-btn {
+
+    border: 0;
+
+    background: #0868e9;
+
+    color: white;
+}
+
+
+.gedung-save-btn:hover {
+
+    background: #075bc9;
+}
+
+
+.gedung-save-btn svg {
+
+    width: 14px;
+
+    height: 14px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1300px) {
+
+    .gedung-kpi-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .gedung-filter {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .gedung-filter-btn {
+
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 850px) {
+
+    .gedung-hero {
+
+        margin: -18px -17px 10px;
+
+        padding: 18px 17px 12px;
+    }
+
+
+    .gedung-card-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding: 11px 0;
+    }
+
+
+    .gedung-add-btn {
+
+        align-self: flex-end;
+    }
+
+
+    .gedung-toolbar {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .gedung-toolbar-right {
+
+        width: 100%;
+    }
+
+
+    .gedung-toolbar-right .gedung-tool-btn {
+
+        width: 100%;
+    }
+
+
+    .gedung-footer {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding: 10px 0;
+    }
+
+
+    .gedung-pagination-area {
+
+        flex-wrap: wrap;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .gedung-hero {
+
+        margin: -15px -12px 10px;
+
+        padding: 15px 12px 11px;
+    }
+
+
+    .gedung-kpi-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+
+    .gedung-filter {
+
+        grid-template-columns: 1fr;
+    }
+
+
+    .gedung-advanced-filter {
+
+        grid-template-columns: 1fr;
+    }
+
+
+    .gedung-modal-body {
+
+        grid-template-columns: 1fr;
+    }
+
+
+    .gedung-heading h1 {
+
+        font-size: 27px;
+    }
+
+
+    .gedung-card {
+
+        padding-left: 11px;
+
+        padding-right: 11px;
+    }
+
+}

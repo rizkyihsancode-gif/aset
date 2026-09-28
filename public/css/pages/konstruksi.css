@@ -1,0 +1,1724 @@
+/* =========================================================
+   K.I.B 06 - KONSTRUKSI DALAM PENGERJAAN
+========================================================= */
+
+.kontruksi-page,
+.kontruksi-page * {
+    box-sizing: border-box;
+}
+
+.kontruksi-page {
+    --k-primary: #0b63ce;
+    --k-primary-dark: #0754aa;
+
+    --k-heading: #071b4b;
+    --k-text: #304f76;
+    --k-muted: #7185a2;
+
+    --k-border: #dce6f0;
+    --k-background: #f5f8fc;
+
+    min-height: calc(100vh - 60px);
+
+    color: var(--k-text);
+
+    background: var(--k-background);
+}
+
+.kontruksi-page [hidden] {
+    display: none !important;
+}
+
+.kontruksi-page button,
+.kontruksi-page input,
+.kontruksi-page select {
+    font: inherit;
+}
+
+.kontruksi-page :is(
+    button,
+    input,
+    select,
+    a,
+    .kontruksi-table-scroll
+):focus-visible {
+    outline: 3px solid rgba(11,99,206,.18);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.kontruksi-hero {
+    position: relative;
+
+    overflow: hidden;
+
+    margin: -21px -24px 10px;
+
+    padding: 22px 24px 14px;
+
+    background:
+        url('../../images/pdam4.png')
+        right center / cover no-repeat;
+}
+
+.kontruksi-hero-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(247,251,255,.99) 0%,
+            rgba(240,248,255,.97) 30%,
+            rgba(225,241,255,.87) 55%,
+            rgba(205,231,253,.34) 76%,
+            rgba(205,231,253,.08) 100%
+        );
+}
+
+.kontruksi-hero-inner {
+    position: relative;
+
+    z-index: 1;
+}
+
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+
+.kontruksi-breadcrumb {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 10px;
+
+    color: #627a9b;
+
+    font-size: 13px;
+}
+
+.kontruksi-breadcrumb a {
+    display: inline-flex;
+
+    color: #416995;
+
+    text-decoration: none;
+}
+
+.kontruksi-breadcrumb a:hover {
+    color: var(--k-primary);
+}
+
+.kontruksi-breadcrumb strong {
+    color: #375779;
+
+    font-weight: 650;
+}
+
+.kontruksi-breadcrumb :is(svg, i) {
+    width: 14px;
+    height: 14px;
+}
+
+.kontruksi-breadcrumb > :is(svg, i) {
+    width: 11px;
+    height: 11px;
+
+    color: #8fa1b6;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.kontruksi-heading {
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 15px;
+}
+
+.kontruksi-heading-main {
+    max-width: 800px;
+}
+
+.kontruksi-eyebrow {
+    display: inline-flex;
+
+    align-items: center;
+
+    height: 22px;
+
+    margin-bottom: 5px;
+
+    padding: 0 9px;
+
+    border: 1px solid #cfe1f6;
+
+    border-radius: 5px;
+
+    background: #edf6ff;
+
+    color: #1263b8;
+
+    font-size: 10px;
+
+    font-weight: 750;
+
+    letter-spacing: .4px;
+}
+
+.kontruksi-heading h1 {
+    margin: 0;
+
+    color: var(--k-heading);
+
+    font-size: clamp(28px, 2.3vw, 35px);
+
+    line-height: 1.08;
+
+    font-weight: 800;
+
+    letter-spacing: -.65px;
+}
+
+.kontruksi-heading p {
+    max-width: 720px;
+
+    margin: 7px 0 0;
+
+    color: #587197;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   DATE CARD
+========================================================= */
+
+.kontruksi-date-card {
+    min-width: 218px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 11px 14px;
+
+    border: 1px solid rgba(220,232,244,.9);
+
+    border-radius: 10px;
+
+    background: rgba(255,255,255,.92);
+
+    box-shadow:
+        0 7px 22px rgba(27,75,118,.07);
+
+    backdrop-filter: blur(8px);
+}
+
+.kontruksi-date-icon {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #eaf3ff;
+
+    color: #086ad3;
+}
+
+.kontruksi-date-icon :is(svg, i) {
+    width: 19px;
+    height: 19px;
+}
+
+.kontruksi-date-card strong {
+    display: block;
+
+    color: #1d3357;
+
+    font-size: 13px;
+
+    font-weight: 650;
+}
+
+.kontruksi-date-card span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #778aa6;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   KPI
+========================================================= */
+
+.kontruksi-kpi-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4,minmax(0,1fr));
+
+    gap: 14px;
+}
+
+.kontruksi-kpi-card {
+    min-height: 100px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 14px 16px;
+
+    border: 1px solid rgba(218,230,242,.94);
+
+    border-radius: 10px;
+
+    background: rgba(255,255,255,.94);
+
+    box-shadow:
+        0 8px 24px rgba(28,67,105,.06);
+
+    backdrop-filter: blur(8px);
+}
+
+.kontruksi-kpi-icon {
+    width: 51px;
+    height: 51px;
+
+    flex: 0 0 51px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #0b63ce;
+
+    color: #fff;
+}
+
+.kontruksi-kpi-icon.is-blue {
+    background: #1678df;
+}
+
+.kontruksi-kpi-icon.is-green {
+    background: #17a673;
+}
+
+.kontruksi-kpi-icon.is-orange {
+    background: #e99018;
+}
+
+.kontruksi-kpi-icon :is(svg, i) {
+    width: 23px;
+    height: 23px;
+}
+
+.kontruksi-kpi-content {
+    min-width: 0;
+}
+
+.kontruksi-kpi-content > span {
+    display: block;
+
+    color: #17315a;
+
+    font-size: 12px;
+
+    font-weight: 650;
+}
+
+.kontruksi-kpi-content > strong {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #071b4c;
+
+    font-size: 27px;
+
+    line-height: 1.05;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+.kontruksi-kpi-content > strong.kontruksi-kpi-money {
+    font-size: 21px;
+}
+
+.kontruksi-kpi-content p {
+    margin: 4px 0 0;
+
+    color: #778aa6;
+
+    font-size: 11px;
+}
+
+.kontruksi-kpi-value {
+    display: flex;
+
+    align-items: baseline;
+
+    gap: 8px;
+
+    margin-top: 4px;
+}
+
+.kontruksi-kpi-value strong {
+    color: #071b4c;
+
+    font-size: 27px;
+
+    line-height: 1.05;
+
+    font-weight: 800;
+}
+
+.kontruksi-kpi-value small {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 3px;
+
+    color: #16a34a;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+.kontruksi-kpi-value small :is(svg, i) {
+    width: 13px;
+    height: 13px;
+}
+
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.kontruksi-card {
+    border: 1px solid #e0e8f1;
+
+    border-radius: 11px;
+
+    background: #fff;
+
+    box-shadow:
+        0 5px 22px rgba(35,75,115,.045);
+}
+
+.kontruksi-workspace {
+    overflow: hidden;
+
+    padding:
+        0
+        16px
+        12px;
+}
+
+
+/* =========================================================
+   WORKSPACE HEADER
+========================================================= */
+
+.kontruksi-workspace-head {
+    min-height: 64px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 18px;
+
+    border-bottom: 1px solid #e7edf4;
+}
+
+.kontruksi-section-title {
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+}
+
+.kontruksi-section-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #edf5ff;
+
+    color: #0968d7;
+}
+
+.kontruksi-section-icon :is(svg, i) {
+    width: 18px;
+    height: 18px;
+}
+
+.kontruksi-section-title h2 {
+    margin: 0;
+
+    color: #112b54;
+
+    font-size: 16px;
+
+    font-weight: 750;
+}
+
+.kontruksi-section-title p {
+    margin: 3px 0 0;
+
+    color: #788ba4;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   ADD BUTTON
+========================================================= */
+
+.kontruksi-add-button {
+    height: 38px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 16px;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0d70f2,
+            #075fdb
+        );
+
+    color: #fff;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 13px rgba(8,104,233,.14);
+}
+
+.kontruksi-add-button:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 17px rgba(8,104,233,.2);
+}
+
+.kontruksi-add-button :is(svg, i) {
+    width: 15px;
+    height: 15px;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.kontruksi-summary-grid {
+    display: grid;
+
+    grid-template-columns:
+        .8fr
+        .95fr
+        .95fr
+        1.4fr;
+
+    gap: 10px;
+
+    padding: 11px 0;
+
+    border-bottom: 1px solid #edf1f5;
+}
+
+.kontruksi-summary-item {
+    min-height: 51px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px 11px;
+
+    border: 1px solid #e5edf5;
+
+    border-radius: 8px;
+
+    background: #fafcff;
+}
+
+.kontruksi-summary-icon {
+    width: 33px;
+    height: 33px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 7px;
+
+    background: #eaf4ff;
+
+    color: #0a68d5;
+}
+
+.kontruksi-summary-icon.is-warning {
+    background: #fff5df;
+
+    color: #d97706;
+}
+
+.kontruksi-summary-icon.is-success {
+    background: #e7f8ee;
+
+    color: #16945b;
+}
+
+.kontruksi-summary-icon :is(svg, i) {
+    width: 16px;
+    height: 16px;
+}
+
+.kontruksi-summary-item span {
+    display: block;
+
+    color: #7488a3;
+
+    font-size: 10px;
+}
+
+.kontruksi-summary-item strong {
+    display: block;
+
+    margin-top: 2px;
+
+    color: #18345b;
+
+    font-size: 17px;
+
+    line-height: 1;
+
+    font-weight: 750;
+}
+
+.kontruksi-summary-progress {
+    display: block;
+
+    padding:
+        9px
+        12px;
+}
+
+.kontruksi-summary-progress-head {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+}
+
+.kontruksi-summary-progress-head span {
+    font-size: 11px;
+
+    color: #526c8d;
+}
+
+.kontruksi-summary-progress-head strong {
+    font-size: 13px;
+
+    color: #0b63ce;
+}
+
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.kontruksi-progress-track {
+    width: 100%;
+
+    height: 6px;
+
+    overflow: hidden;
+
+    margin-top: 5px;
+
+    border-radius: 999px;
+
+    background: #e9eef4;
+}
+
+.kontruksi-progress-track span {
+    display: block;
+
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        linear-gradient(
+            90deg,
+            #0b63ce,
+            #55a8f1
+        );
+}
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+.kontruksi-filter {
+    display: grid;
+
+    grid-template-columns:
+        minmax(280px,1.6fr)
+        repeat(3,minmax(135px,.8fr))
+        auto
+        auto;
+
+    gap: 9px;
+
+    padding: 11px 0;
+}
+
+.kontruksi-search {
+    position: relative;
+}
+
+.kontruksi-search :is(svg, i) {
+    position: absolute;
+
+    left: 12px;
+    top: 50%;
+
+    width: 15px;
+    height: 15px;
+
+    transform: translateY(-50%);
+
+    color: #587393;
+
+    pointer-events: none;
+}
+
+.kontruksi-search input,
+.kontruksi-select select {
+    width: 100%;
+
+    height: 37px;
+
+    border: 1px solid #d9e4ef;
+
+    border-radius: 7px;
+
+    color: #3d577b;
+
+    font-size: 12px;
+
+    outline: none;
+}
+
+.kontruksi-search input {
+    padding:
+        0
+        12px
+        0
+        37px;
+
+    background: #f8fbff;
+}
+
+.kontruksi-select select {
+    padding:
+        0
+        33px
+        0
+        11px;
+
+    background: #fff;
+
+    appearance: none;
+
+    background-image:
+        linear-gradient(
+            45deg,
+            transparent 50%,
+            #58718e 50%
+        ),
+        linear-gradient(
+            135deg,
+            #58718e 50%,
+            transparent 50%
+        );
+
+    background-position:
+        calc(100% - 15px) 15px,
+        calc(100% - 10px) 15px;
+
+    background-size:
+        5px 5px,
+        5px 5px;
+
+    background-repeat: no-repeat;
+}
+
+.kontruksi-search input:focus,
+.kontruksi-select select:focus {
+    border-color: #6ca6ec;
+
+    box-shadow:
+        0 0 0 3px rgba(8,104,233,.08);
+}
+
+.kontruksi-filter-button,
+.kontruksi-reset-button {
+    height: 37px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 13px;
+
+    border-radius: 7px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.kontruksi-filter-button {
+    border: 1px solid #0b63ce;
+
+    background: #0b63ce;
+
+    color: #fff;
+}
+
+.kontruksi-reset-button {
+    border: 1px solid #d9e4ef;
+
+    background: #fff;
+
+    color: #496581;
+}
+
+.kontruksi-filter-button :is(svg, i),
+.kontruksi-reset-button :is(svg, i) {
+    width: 14px;
+    height: 14px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.kontruksi-table-scroll {
+    width: 100%;
+
+    overflow-x: auto;
+
+    border: 1px solid #e1e9f2;
+
+    border-radius: 8px;
+
+    scrollbar-width: thin;
+}
+
+.kontruksi-table {
+    width: 100%;
+
+    min-width: 1240px;
+
+    table-layout: fixed;
+
+    border-collapse: collapse;
+}
+
+.kontruksi-table th,
+.kontruksi-table td {
+    border-right: 1px solid #e8eef4;
+}
+
+.kontruksi-table th:last-child,
+.kontruksi-table td:last-child {
+    border-right: 0;
+}
+
+.kontruksi-table th {
+    height: 37px;
+
+    padding: 7px 8px;
+
+    background: #edf5ff;
+
+    color: #112b54;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+.kontruksi-table td {
+    min-height: 60px;
+
+    padding: 7px 8px;
+
+    border-top: 1px solid #e7edf4;
+
+    color: #365682;
+
+    font-size: 11px;
+
+    vertical-align: middle;
+}
+
+.kontruksi-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+
+/* =========================================================
+   TABLE WIDTH
+========================================================= */
+
+.kontruksi-table th:nth-child(1),
+.kontruksi-table td:nth-child(1) {
+    width: 34px;
+
+    text-align: center;
+}
+
+.kontruksi-table th:nth-child(2),
+.kontruksi-table td:nth-child(2) {
+    width: 38px;
+
+    text-align: center;
+}
+
+.kontruksi-table th:nth-child(3),
+.kontruksi-table td:nth-child(3) {
+    width: 110px;
+}
+
+.kontruksi-table th:nth-child(4),
+.kontruksi-table td:nth-child(4) {
+    width: 195px;
+}
+
+.kontruksi-table th:nth-child(5),
+.kontruksi-table td:nth-child(5) {
+    width: 135px;
+}
+
+.kontruksi-table th:nth-child(6),
+.kontruksi-table td:nth-child(6) {
+    width: 125px;
+}
+
+.kontruksi-table th:nth-child(7),
+.kontruksi-table td:nth-child(7) {
+    width: 55px;
+
+    text-align: center;
+}
+
+.kontruksi-table th:nth-child(8),
+.kontruksi-table td:nth-child(8) {
+    width: 135px;
+}
+
+.kontruksi-table th:nth-child(9),
+.kontruksi-table td:nth-child(9) {
+    width: 115px;
+}
+
+.kontruksi-table th:nth-child(10),
+.kontruksi-table td:nth-child(10) {
+    width: 105px;
+}
+
+.kontruksi-table th:nth-child(11),
+.kontruksi-table td:nth-child(11) {
+    width: 120px;
+
+    text-align: center;
+}
+
+.kontruksi-table th:nth-child(12),
+.kontruksi-table td:nth-child(12) {
+    width: 110px;
+
+    text-align: center;
+}
+
+.kontruksi-table input[type='checkbox'] {
+    width: 13px;
+    height: 13px;
+
+    margin: 0;
+
+    accent-color: #0b68e8;
+
+    cursor: pointer;
+}
+
+.kontruksi-code {
+    white-space: nowrap;
+
+    font-variant-numeric: tabular-nums;
+
+    color: #1f507f !important;
+
+    font-weight: 600;
+}
+
+.kontruksi-name strong {
+    display: block;
+
+    color: #304f7d;
+
+    font-size: 11px;
+
+    font-weight: 650;
+
+    line-height: 1.3;
+}
+
+.kontruksi-name small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #8a9bb0;
+
+    font-size: 9px;
+
+    line-height: 1.3;
+}
+
+
+/* =========================================================
+   PROGRESS CELL
+========================================================= */
+
+.kontruksi-progress-cell {
+    min-width: 85px;
+}
+
+.kontruksi-progress-info {
+    display: flex;
+
+    justify-content: flex-end;
+
+    margin-bottom: 3px;
+}
+
+.kontruksi-progress-info span {
+    color: #315d8d;
+
+    font-size: 10px;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.kontruksi-status {
+    min-width: 88px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 5px 8px;
+
+    border-radius: 6px;
+
+    font-size: 10px;
+
+    font-weight: 650;
+
+    line-height: 1.2;
+}
+
+.kontruksi-status.is-running {
+    background: #e5f1ff;
+
+    color: #0866c7;
+}
+
+.kontruksi-status.is-near {
+    background: #fff3d8;
+
+    color: #d97706;
+}
+
+.kontruksi-status.is-complete {
+    background: #dcf8e8;
+
+    color: #16804c;
+}
+
+.kontruksi-status.is-pending {
+    background: #ffe7e9;
+
+    color: #dc3b46;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.kontruksi-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+}
+
+.kontruksi-actions button {
+    width: 30px;
+    height: 28px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    transition:
+        transform .15s ease,
+        background .15s ease;
+}
+
+.kontruksi-actions button:hover {
+    transform: translateY(-1px);
+}
+
+.kontruksi-actions button :is(svg, i) {
+    width: 14px;
+    height: 14px;
+}
+
+.kontruksi-actions .view {
+    background: #e6f2ff;
+
+    color: #006be9;
+}
+
+.kontruksi-actions .edit {
+    background: #fff0d8;
+
+    color: #f59e0b;
+}
+
+.kontruksi-actions .delete {
+    background: #ffe5e7;
+
+    color: #ef4444;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.kontruksi-empty {
+    padding: 40px 20px !important;
+
+    text-align: center !important;
+
+    color: #7588a1 !important;
+}
+
+.kontruksi-empty :is(svg, i) {
+    display: block;
+
+    width: 28px;
+    height: 28px;
+
+    margin: 0 auto 9px;
+
+    color: #8ea3bc;
+}
+
+.kontruksi-empty strong {
+    display: block;
+
+    color: #536b89;
+
+    font-size: 13px;
+}
+
+.kontruksi-empty span {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.kontruksi-table-footer {
+    min-height: 57px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    color: #5d7392;
+
+    font-size: 12px;
+}
+
+.kontruksi-pagination-area {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+.kontruksi-pagination-area select {
+    width: 66px;
+    height: 35px;
+
+    padding: 0 9px;
+
+    border: 1px solid #d9e4ef;
+
+    border-radius: 6px;
+
+    background: #fff;
+
+    color: #375479;
+
+    font-size: 12px;
+}
+
+.kontruksi-pagination {
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    margin-left: 8px;
+}
+
+.kontruksi-pagination button {
+    min-width: 33px;
+    height: 33px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 8px;
+
+    border: 1px solid #dce5ee;
+
+    border-radius: 6px;
+
+    background: #fff;
+
+    color: #395777;
+
+    font-size: 11px;
+
+    cursor: pointer;
+}
+
+.kontruksi-pagination button:hover:not(:disabled):not(.active) {
+    border-color: #bfd4e9;
+
+    background: #f6faff;
+
+    color: var(--k-primary);
+}
+
+.kontruksi-pagination button.active {
+    border-color: var(--k-primary);
+
+    background: var(--k-primary);
+
+    color: #fff;
+
+    font-weight: 700;
+}
+
+.kontruksi-pagination button:disabled {
+    opacity: .42;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.kontruksi-modal {
+    width: min(780px, calc(100% - 32px));
+
+    max-width: 780px;
+
+    max-height: calc(100dvh - 32px);
+
+    margin: auto;
+
+    padding: 0;
+
+    overflow: hidden;
+
+    border: 0;
+
+    border-radius: 14px;
+
+    background: #fff;
+
+    box-shadow:
+        0 25px 75px rgba(7,35,70,.25);
+}
+
+.kontruksi-modal::backdrop {
+    background: rgba(4,27,55,.5);
+
+    backdrop-filter: blur(2px);
+}
+
+.kontruksi-modal-dialog {
+    max-height: calc(100dvh - 32px);
+
+    overflow: auto;
+}
+
+.kontruksi-modal-header {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 17px 20px;
+
+    border-bottom: 1px solid #e7edf4;
+}
+
+.kontruksi-modal-label {
+    display: inline-flex;
+
+    margin-bottom: 4px;
+
+    color: #0b63ce;
+
+    font-size: 10px;
+
+    font-weight: 750;
+
+    letter-spacing: .5px;
+}
+
+.kontruksi-modal-header h3 {
+    margin: 0;
+
+    color: #10295a;
+
+    font-size: 17px;
+
+    font-weight: 750;
+}
+
+.kontruksi-modal-header p {
+    margin: 4px 0 0;
+
+    color: #71839d;
+
+    font-size: 12px;
+}
+
+.kontruksi-modal-header > button {
+    width: 32px;
+    height: 32px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #58718e;
+
+    cursor: pointer;
+}
+
+.kontruksi-modal-header > button:hover {
+    background: #f1f6fb;
+}
+
+.kontruksi-modal-header > button :is(svg, i) {
+    width: 17px;
+    height: 17px;
+}
+
+
+/* =========================================================
+   MODAL FORM
+========================================================= */
+
+.kontruksi-modal-body {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2,minmax(0,1fr));
+
+    gap: 14px;
+
+    padding: 18px 20px;
+}
+
+.kontruksi-modal-note {
+    grid-column: 1 / -1;
+
+    padding: 10px 12px;
+
+    border: 1px solid #d9eaff;
+
+    border-radius: 7px;
+
+    background: #edf5ff;
+
+    color: #1455a0;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+}
+
+.kontruksi-form-group label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #304b70;
+
+    font-size: 12px;
+
+    font-weight: 650;
+}
+
+.kontruksi-form-group input,
+.kontruksi-form-group select {
+    width: 100%;
+
+    height: 40px;
+
+    padding: 0 11px;
+
+    border: 1px solid #d8e2ec;
+
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: #334f72;
+
+    font-size: 12px;
+
+    outline: none;
+}
+
+.kontruksi-form-group input:focus,
+.kontruksi-form-group select:focus {
+    border-color: #6ca6ec;
+
+    box-shadow:
+        0 0 0 3px rgba(8,104,233,.08);
+}
+
+.kontruksi-progress-input {
+    position: relative;
+}
+
+.kontruksi-progress-input input {
+    padding-right: 32px;
+}
+
+.kontruksi-progress-input span {
+    position: absolute;
+
+    top: 50%;
+    right: 11px;
+
+    transform: translateY(-50%);
+
+    color: #70849f;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.kontruksi-modal-footer {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 9px;
+
+    padding: 13px 20px;
+
+    border-top: 1px solid #e7edf4;
+
+    background: #fafcff;
+}
+
+.kontruksi-cancel-button,
+.kontruksi-save-button {
+    min-height: 38px;
+
+    padding: 0 15px;
+
+    border-radius: 7px;
+
+    font-size: 12px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.kontruksi-cancel-button {
+    border: 1px solid #d7e1eb;
+
+    background: #fff;
+
+    color: #526b89;
+}
+
+.kontruksi-save-button {
+    border: 0;
+
+    background: #0b63ce;
+
+    color: #fff;
+}
+
+.kontruksi-save-button.aset-ttp-delete-button {
+    background: #dc2626;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1250px) {
+
+    .kontruksi-kpi-grid {
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+    .kontruksi-summary-grid {
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+    .kontruksi-filter {
+        grid-template-columns:
+            repeat(3,minmax(0,1fr));
+    }
+
+}
+
+@media (max-width: 900px) {
+
+    .kontruksi-hero {
+        margin:
+            -18px
+            -17px
+            10px;
+
+        padding:
+            20px
+            17px
+            12px;
+    }
+
+    .kontruksi-heading {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .kontruksi-date-card {
+        width: 100%;
+    }
+
+    .kontruksi-workspace-head {
+        align-items: stretch;
+
+        flex-direction: column;
+
+        padding: 12px 0;
+    }
+
+    .kontruksi-add-button {
+        width: 100%;
+    }
+
+    .kontruksi-filter {
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+    .kontruksi-table-footer {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding-top: 12px;
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .kontruksi-kpi-grid,
+    .kontruksi-summary-grid,
+    .kontruksi-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .kontruksi-modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .kontruksi-modal-note {
+        grid-column: auto;
+    }
+
+    .kontruksi-pagination-area {
+        flex-wrap: wrap;
+    }
+
+}

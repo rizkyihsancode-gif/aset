@@ -1,0 +1,1123 @@
+/* =========================================================
+   K.I.R PAGE
+========================================================= */
+
+.kir-page {
+    --primary: #0b63ce;
+    --primary-dark: #084f9f;
+    --text: #10264d;
+    --muted: #617797;
+    --border: #dfe8f1;
+
+    min-height: calc(100vh - 60px);
+    background: #f4f8fd;
+    color: var(--text);
+}
+
+.kir-page [hidden] {
+    display: none !important;
+}
+
+.kir-page .table-responsive {
+    overflow-x: auto;
+}
+
+.kir-page :is(
+    button,
+    input,
+    select,
+    a,
+    .table-responsive
+):focus-visible {
+    outline: 3px solid rgba(11, 99, 206, .32);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.kir-hero {
+    position: relative;
+    overflow: hidden;
+
+    margin: -21px -24px 10px;
+
+    padding: 24px 24px 12px;
+
+    background:
+        url('../../images/pdam4.png')
+        right center / cover
+        no-repeat;
+}
+
+.kir-hero-overlay {
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(246, 251, 255, .995) 0%,
+            rgba(239, 248, 255, .96) 36%,
+            rgba(221, 239, 255, .80) 62%,
+            rgba(200, 228, 250, .18) 100%
+        );
+}
+
+.kir-hero-inner {
+    position: relative;
+    z-index: 1;
+}
+
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+
+.kir-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 12px;
+
+    color: #4f6c94;
+    font-size: 13px;
+}
+
+.kir-breadcrumb a {
+    display: flex;
+    color: #486b96;
+}
+
+.kir-breadcrumb svg {
+    width: 14px;
+    height: 14px;
+}
+
+.kir-breadcrumb > svg {
+    width: 11px;
+    height: 11px;
+    color: #93a6be;
+}
+
+.kir-breadcrumb strong {
+    font-weight: 600;
+    color: #3c5d87;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.kir-heading {
+    max-width: 700px;
+    margin-bottom: 13px;
+}
+
+.kir-heading h1 {
+    margin: 0;
+
+    color: #081d4e;
+
+    font-size: 34px;
+    line-height: 1.08;
+    font-weight: 800;
+}
+
+.kir-heading p {
+    margin: 6px 0 0;
+
+    color: #4f6b95;
+
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+
+/* =========================================================
+   KPI
+========================================================= */
+
+.kir-kpi-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.kir-kpi-card {
+    min-height: 86px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 13px 16px;
+
+    border: 1px solid rgba(218, 230, 242, .92);
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, .94);
+
+    box-shadow:
+        0 8px 24px rgba(30, 70, 110, .05);
+
+    backdrop-filter: blur(7px);
+}
+
+.kir-kpi-icon {
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+
+    border-radius: 9px;
+
+    background: #0d69ec;
+
+    color: #fff;
+}
+
+.kir-kpi-icon svg {
+    width: 25px;
+    height: 25px;
+}
+
+.kir-kpi-card span {
+    display: block;
+
+    color: #17325c;
+
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.kir-kpi-card strong {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #071a49;
+
+    font-size: 26px;
+    line-height: 1.05;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+.kir-kpi-card p {
+    margin: 1px 0 0 63px;
+
+    color: #778aa6;
+
+    font-size: 11px;
+}
+
+.kir-kpi-inline {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.kir-kpi-inline small {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+
+    color: #16a34a;
+
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.kir-kpi-inline small svg {
+    width: 13px;
+    height: 13px;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.kir-card {
+    border: 1px solid #e0e8f1;
+
+    border-radius: 11px;
+
+    background: #fff;
+
+    box-shadow:
+        0 5px 20px rgba(35, 75, 115, .04);
+}
+
+.kir-workspace {
+    padding: 0 16px 13px;
+}
+
+
+/* =========================================================
+   TITLE BAR
+========================================================= */
+
+.kir-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    min-height: 56px;
+
+    border-bottom: 1px solid #e7edf4;
+}
+
+.kir-titlebar h2 {
+    margin: 0;
+
+    color: #10264d;
+
+    font-size: 22px;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   ADD BUTTON
+========================================================= */
+
+.kir-add-button {
+    height: 38px;
+
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 0 17px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #0868e9;
+    color: #fff;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.kir-add-button:hover {
+    background: #0758c4;
+}
+
+.kir-add-button svg {
+    width: 15px;
+    height: 15px;
+}
+
+
+/* =========================================================
+   FILTER
+========================================================= */
+
+.kir-filter-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(300px, 1.7fr)
+        repeat(3, minmax(165px, .85fr))
+        minmax(160px, .8fr);
+
+    gap: 10px;
+
+    padding-top: 10px;
+}
+
+.kir-filter-row select,
+.kir-search input {
+    width: 100%;
+    height: 38px;
+
+    border: 1px solid #d9e4ef;
+    border-radius: 7px;
+
+    background: #fff;
+    color: #3c567b;
+
+    font-size: 12px;
+
+    outline: none;
+}
+
+.kir-search {
+    position: relative;
+}
+
+.kir-search svg {
+    position: absolute;
+
+    left: 12px;
+    top: 50%;
+
+    width: 15px;
+    height: 15px;
+
+    transform: translateY(-50%);
+
+    color: #47688f;
+}
+
+.kir-search input {
+    padding: 0 12px 0 38px;
+
+    background: #f8fbff;
+}
+
+.kir-filter-row select {
+    padding: 0 11px;
+}
+
+
+/* =========================================================
+   DATE FIELD
+========================================================= */
+
+.kir-date-field {
+    position: relative;
+}
+
+.kir-date-field > svg {
+    position: absolute;
+
+    left: 12px;
+    top: 50%;
+
+    width: 15px;
+    height: 15px;
+
+    transform: translateY(-50%);
+
+    color: #385a82;
+
+    z-index: 2;
+}
+
+.kir-date-field select {
+    padding-left: 37px;
+}
+
+
+/* =========================================================
+   FILTER ACTION
+========================================================= */
+
+.kir-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 9px 0;
+}
+
+.kir-filter-actions > div {
+    display: flex;
+    gap: 9px;
+}
+
+.kir-secondary-button {
+    height: 36px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 14px;
+
+    border: 1px solid #d9e4ef;
+    border-radius: 7px;
+
+    background: #fff;
+    color: #23456e;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.kir-secondary-button:first-child {
+    background: #f6faff;
+}
+
+.kir-secondary-button svg {
+    width: 14px;
+    height: 14px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.kir-table-scroll {
+    border: 1px solid #e3ebf3;
+
+    border-radius: 8px;
+
+    overflow: auto;
+}
+
+.kir-table {
+    width: 100%;
+
+    min-width: 1460px;
+
+    border-collapse: collapse;
+
+    white-space: nowrap;
+}
+
+.kir-table th {
+    height: 37px;
+
+    padding: 7px 10px;
+
+    border-right: 1px solid #e1eaf3;
+
+    background: #edf5ff;
+
+    color: #112b54;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-align: left;
+}
+
+.kir-table td {
+    height: 41px;
+
+    padding: 5px 10px;
+
+    border-top: 1px solid #e7edf4;
+    border-right: 1px solid #edf1f5;
+
+    color: #365682;
+
+    font-size: 11px;
+    line-height: 1.3;
+
+    vertical-align: middle;
+}
+
+.kir-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+.kir-table input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+
+    accent-color: #0b68e8;
+}
+
+.kir-thumb-col {
+    width: 46px;
+}
+
+
+/* =========================================================
+   VEHICLE ICON
+========================================================= */
+
+.kir-thumb {
+    width: 35px;
+    height: 29px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #dfe8f1;
+
+    border-radius: 5px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f2f7fc,
+            #e7eef6
+        );
+
+    color: #496c92;
+}
+
+.kir-thumb svg {
+    width: 19px;
+    height: 19px;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.kir-status {
+    display: inline-flex;
+
+    min-width: 62px;
+
+    justify-content: center;
+
+    padding: 5px 9px;
+
+    border-radius: 6px;
+
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.kir-status.is-good,
+.kir-status.is-active,
+.kir-status.is-done {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.kir-status.is-fair,
+.kir-status.is-warning,
+.kir-status.is-early {
+    background: #fff3d6;
+    color: #d97706;
+}
+
+.kir-status.is-bad,
+.kir-status.is-expired {
+    background: #ffe4e6;
+    color: #dc2626;
+}
+
+.kir-status.is-progress {
+    background: #e5f1ff;
+    color: #0b63ce;
+}
+
+
+/* =========================================================
+   ACTION BUTTON
+========================================================= */
+
+.kir-actions {
+    display: flex;
+    justify-content: center;
+
+    gap: 7px;
+}
+
+.kir-actions button {
+    width: 31px;
+    height: 27px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+}
+
+.kir-actions svg {
+    width: 14px;
+    height: 14px;
+}
+
+.kir-actions .view {
+    background: #e6f2ff;
+    color: #006be9;
+}
+
+.kir-actions .edit {
+    background: #fff0d8;
+    color: #f59e0b;
+}
+
+.kir-actions .delete {
+    background: #ffe5e7;
+    color: #ef4444;
+}
+
+.kir-empty {
+    text-align: center !important;
+
+    padding: 28px !important;
+
+    color: #70849f !important;
+}
+
+
+/* =========================================================
+   TABLE FOOTER
+========================================================= */
+
+.kir-table-footer {
+    min-height: 57px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    color: #5d7392;
+
+    font-size: 12px;
+}
+
+.kir-pagination-area {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+.kir-pagination-area select {
+    height: 36px;
+
+    min-width: 70px;
+
+    padding: 0 10px;
+
+    border: 1px solid #d9e4ef;
+    border-radius: 6px;
+
+    background: #fff;
+    color: #375479;
+}
+
+.kir-pagination {
+    display: flex;
+
+    gap: 6px;
+
+    margin-left: 9px;
+}
+
+.kir-pagination button {
+    min-width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #dce5ee;
+
+    border-radius: 6px;
+
+    background: #fff;
+    color: #395777;
+
+    font-size: 12px;
+
+    cursor: pointer;
+}
+
+.kir-pagination button.active {
+    border-color: #0868ea;
+
+    background: #0868ea;
+    color: #fff;
+}
+
+.kir-pagination button:disabled {
+    opacity: .38;
+
+    cursor: not-allowed;
+}
+
+.kir-pagination svg {
+    width: 15px;
+    height: 15px;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.kir-modal {
+    width: min(760px, calc(100% - 32px));
+
+    max-height: calc(100dvh - 32px);
+
+    padding: 0;
+
+    border: 0;
+
+    border-radius: 14px;
+
+    background: #fff;
+
+    color: var(--text);
+
+    box-shadow:
+        0 25px 75px rgba(7, 35, 70, .25);
+}
+
+.kir-modal::backdrop {
+    background: rgba(4, 27, 55, .5);
+
+    backdrop-filter: blur(2px);
+}
+
+.kir-modal-dialog {
+    overflow: hidden;
+
+    border-radius: 14px;
+}
+
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.kir-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    padding: 17px 20px;
+
+    border-bottom: 1px solid #e7edf4;
+}
+
+.kir-modal-header h3 {
+    margin: 0;
+
+    font-size: 17px;
+}
+
+.kir-modal-header p {
+    margin: 4px 0 0;
+
+    color: #71839d;
+
+    font-size: 12px;
+}
+
+.kir-modal-header > button {
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background: transparent;
+    color: #58718e;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   MODAL BODY
+========================================================= */
+
+.kir-modal-body {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+
+    padding: 18px 20px;
+}
+
+.kir-modal-note {
+    grid-column: 1 / -1;
+
+    margin: 0;
+
+    padding: 10px 12px;
+
+    border-radius: 7px;
+
+    background: #edf5ff;
+
+    color: #1455a0;
+
+    font-size: 12px;
+}
+
+.kir-form-group label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #304b70;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.kir-form-group input,
+.kir-form-group select {
+    width: 100%;
+    height: 40px;
+
+    padding: 0 11px;
+
+    border: 1px solid #d8e2ec;
+
+    border-radius: 7px;
+
+    background: #fff;
+
+    color: #334f72;
+
+    font-size: 12px;
+}
+
+.kir-form-group :is(
+    input[readonly],
+    select:disabled
+) {
+    background: #f5f7fb;
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.kir-modal-footer {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 9px;
+
+    padding: 13px 20px;
+
+    border-top: 1px solid #e7edf4;
+
+    background: #fafcff;
+}
+
+.kir-cancel-button,
+.kir-save-button {
+    height: 38px;
+
+    padding: 0 15px;
+
+    border-radius: 7px;
+
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.kir-cancel-button {
+    border: 1px solid #d7e1eb;
+
+    background: #fff;
+
+    color: #526b89;
+}
+
+.kir-save-button {
+    border: 0;
+
+    background: #0b63ce;
+
+    color: #fff;
+}
+
+.kir-save-button:disabled {
+    opacity: .5;
+}
+
+.kir-save-button.kir-delete-button {
+    background: #dc2626;
+}
+
+
+/* =========================================================
+   COLORS
+========================================================= */
+
+.kir-kpi-icon.is-green {
+    background:
+        linear-gradient(
+            145deg,
+            #11a96a,
+            #078249
+        );
+}
+
+.kir-kpi-icon.is-yellow {
+    background:
+        linear-gradient(
+            145deg,
+            #ffbd0a,
+            #f4a000
+        );
+}
+
+.kir-kpi-icon.is-red {
+    background:
+        linear-gradient(
+            145deg,
+            #ff3b3f,
+            #ef2328
+        );
+}
+
+.kir-thumb.is-truck {
+    color: #b98200;
+
+    background:
+        linear-gradient(
+            145deg,
+            #fff8d9,
+            #f3edca
+        );
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1400px) {
+
+    .kir-filter-row {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .kir-kpi-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 900px) {
+
+    .kir-hero {
+        margin: -18px -17px 10px;
+
+        padding: 18px 17px 12px;
+    }
+
+    .kir-heading h1 {
+        font-size: 29px;
+    }
+
+    .kir-titlebar {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding: 10px 0;
+    }
+
+    .kir-add-button {
+        align-self: flex-end;
+    }
+
+    .kir-filter-row {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .kir-table-footer {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        padding-top: 12px;
+    }
+
+    .kir-pagination-area {
+        width: 100%;
+
+        flex-wrap: wrap;
+    }
+
+}
+
+
+@media (max-width: 620px) {
+
+    .kir-hero {
+        margin: -16px -13px 10px;
+
+        padding: 16px 13px 12px;
+    }
+
+    .kir-kpi-grid,
+    .kir-filter-row,
+    .kir-modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .kir-kpi-card {
+        min-height: 76px;
+    }
+
+    .kir-filter-actions {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    .kir-filter-actions > div {
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .kir-secondary-button {
+        width: 100%;
+    }
+
+    .kir-pagination {
+        margin-left: 0;
+    }
+
+    .kir-heading h1 {
+        font-size: 25px;
+    }
+
+}

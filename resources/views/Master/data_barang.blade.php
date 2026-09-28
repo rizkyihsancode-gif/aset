@@ -232,143 +232,48 @@
                     </thead>
 
                     <tbody>
-                        <tr data-golongan="Elektronik">
-                            <td>1</td>
-                            <td>Laptop Dell Latitude 5420</td>
-                            <td>BRG-001</td>
-                            <td>Elektronik</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Laptop Dell Latitude 5420"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Laptop Dell Latitude 5420"><i
-                                            data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Laptop Dell Latitude 5420"><i
-                                            data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-golongan="Elektronik">
-                            <td>2</td>
-                            <td>Printer Epson L5290</td>
-                            <td>BRG-002</td>
-                            <td>Elektronik</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Printer Epson L5290"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Printer Epson L5290"><i data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Printer Epson L5290"><i data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-golongan="Mekanikal">
-                            <td>3</td>
-                            <td>Pompa Distribusi 250 m³/jam</td>
-                            <td>BRG-003</td>
-                            <td>Mekanikal</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Pompa Distribusi 250 m³/jam"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Pompa Distribusi 250 m³/jam"><i
-                                            data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Pompa Distribusi 250 m³/jam"><i
-                                            data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-golongan="Furnitur">
-                            <td>4</td>
-                            <td>Meja Kerja Staff</td>
-                            <td>BRG-004</td>
-                            <td>Furnitur</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Meja Kerja Staff"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Meja Kerja Staff"><i data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Meja Kerja Staff"><i data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-golongan="Furnitur">
-                            <td>5</td>
-                            <td>Kursi Rapat Utama</td>
-                            <td>BRG-005</td>
-                            <td>Furnitur</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Kursi Rapat Utama"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Kursi Rapat Utama"><i data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Kursi Rapat Utama"><i data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-golongan="Furnitur">
-                            <td>6</td>
-                            <td>Lemari Arsip Besi</td>
-                            <td>BRG-006</td>
-                            <td>Furnitur</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Lemari Arsip Besi"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Lemari Arsip Besi"><i data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Lemari Arsip Besi"><i data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-golongan="Elektrikal">
-                            <td>7</td>
-                            <td>Panel Kontrol Motor</td>
-                            <td>BRG-007</td>
-                            <td>Elektrikal</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Panel Kontrol Motor"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Panel Kontrol Motor"><i data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Panel Kontrol Motor"><i data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-golongan="Mekanikal">
-                            <td>8</td>
-                            <td>Genset Cadangan 100 kVA</td>
-                            <td>BRG-008</td>
-                            <td>Mekanikal</td>
-                            <td>
-                                <div class="barang-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat barang"
-                                        aria-label="Lihat Genset Cadangan 100 kVA"><i data-lucide="eye"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit barang"
-                                        aria-label="Edit Genset Cadangan 100 kVA"><i
-                                            data-lucide="square-pen"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus barang"
-                                        aria-label="Hapus Genset Cadangan 100 kVA"><i data-lucide="trash-2"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr id="barangEmptyRow" hidden>
-                            <td colspan="5" class="barang-empty">Tidak ada barang yang sesuai. Coba kata kunci atau
-                                golongan lain.</td>
-                        </tr>
+
+                        @forelse ($barangs as $b)
+                            <tr data-record>
+                                <td>{{ $loop->iteration }}</td>
+
+                                <td>
+                                    {{ $b->nama_barang }}
+                                </td>
+
+                                <td>
+                                    {{ $b->kode_barang }}
+                                </td>
+
+                                <td>
+                                    {{ $b->golongan }}
+                                </td>
+
+                                <td>
+                                    <div class="barang-actions">
+
+                                        <a href="/barang/edit/{{ $b->barang_id }}" class="edit" title="Edit">
+                                            <i data-lucide="square-pen"></i>
+                                        </a>
+
+                                        <a href="/barang/hapus/{{ $b->barang_id }}" class="delete" title="Hapus"
+                                            onclick="return confirm('Yakin ingin menghapus barang ini?')">
+                                            <i data-lucide="trash-2"></i>
+                                        </a>
+
+                                    </div>
+                                </td>
+                            </tr>
+
+                        @empty
+
+                            <tr id="barangEmptyRow">
+                                <td colspan="5" class="barang-empty">
+                                    Belum ada data barang.
+                                </td>
+                            </tr>
+                        @endforelse
+
                     </tbody>
 
                 </table>
