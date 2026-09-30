@@ -1,57 +1,77 @@
-/* =========================================================
-   SISTEM ASET - MASTER DATA BARANG
-   =========================================================
-   FUNGSI:
-   1. CRUD Barang
-   2. Search
-   3. Filter Golongan
-   4. Pagination
-   5. Total Barang
-   6. Total Golongan
-   7. Update Terakhir
-   8. Chart Distribusi Golongan
-   9. Barang Terbaru
-   10. Export CSV
-   11. Last Seen / Last Update
-   12. Penyimpanan sementara menggunakan localStorage
+/* ============================================================
+   SISTEM ASET
+   MASTER DATA BARANG
+   ============================================================
+
+   SUMBER DATA:
+   - Database Laravel
+   - Blade sebagai initial render
+
+   CRUD:
+   - CREATE  -> Laravel POST
+   - UPDATE  -> Laravel PUT
+   - DELETE  -> Laravel DELETE
 
    CATATAN:
-   Backend PostgreSQL belum digunakan.
-   Setelah backend selesai, storage ini dapat diganti
-   dengan fetch() ke Laravel Controller.
-========================================================= */
+   - Tidak menggunakan localStorage sebagai database
+   - Search / filter / pagination tetap frontend
+   - Setelah CRUD berhasil halaman direload agar data
+     selalu sinkron dengan database
+
+   ============================================================ */
+
+(function () {
+
+    'use strict';
 
 
-/* =========================================================
-   GLOBAL STATE
-========================================================= */
+    /* ============================================================
+       CONFIG
+       ============================================================ */
 
-let barangCurrentPage = 1;
-let barangChart = null;
-let barangPreviousOverflow = '';
+    const DEFAULT_PAGE_SIZE = 10;
 
-const BARANG_STORAGE_KEY =
-    'sistem_aset_barang_v2';
-
-const barangNumber =
-    new Intl.NumberFormat('id-ID');
+    const TIMEZONE = 'Asia/Makassar';
 
 
-/* =========================================================
-   INITIALIZATION
-========================================================= */
+    /* ============================================================
+       STATE
+       ============================================================ */
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+    let currentPage = 1;
+
+    let chartInstance = null;
+
+    let barangData = [];
+
+    let golonganMap = {};
+
+    let modalMode = 'add';
+
+    let modalRecordId = null;
+
+    let previousBodyOverflow = '';
+
+
+    /* ============================================================
+       FORMATTER
+       ============================================================ */
+
+    const numberFormatter = new Intl.NumberFormat('id-ID');
+
+
+    /* ============================================================
+       DOM READY
+       ============================================================ */
+
+    document.addEventListener('DOMContentLoaded', function () {
 
         const table =
-            document.getElementById(
-                'barangTable'
-            );
+            document.getElementById('barangTable');
+
 
         /*
-         * Jika bukan halaman Barang,
+         * Kalau bukan halaman Barang,
          * jangan jalankan script.
          */
 
@@ -61,111 +81,2352 @@ document.addEventListener(
 
 
         /*
-         * Pastikan data tersedia.
+         * Mapping golongan dari Blade.
+         */
+
+        buildGolonganMap();
+
+
+        /*
+         * Data awal berasal dari Blade/database.
          */
 
         initializeBarangData();
 
 
         /*
+         * Event.
+         */
+
+        bindSearch();
+
+        bindFilter();
+
+        bindPageSize();
+
+        bindTableActions();
+
+        bindForm();
+
+        bindModal();
+
+        bindEscapeKey();
+
+
+        /*
+         * Render bagian frontend.
+         */
+
+        renderPage();
+
+
+        /*
          * Jam WITA.
          */
 
-        updateBarangDate();
+        updateCurrentDate();
 
-        window.setInterval(
-            updateBarangDate,
+        setInterval(
+            updateCurrentDate,
             1000
         );
 
 
         /*
-         * Render seluruh UI.
+         * Lucide.
          */
 
-        renderBarangPage();
+        refreshIcons();
+
+    });
+
+
+    /* ============================================================
+       INITIAL DATA
+       ============================================================ */
+
+    function initializeBarangData() {
+
+        /*
+         * Data berasal dari tabel yang sudah dirender Laravel.
+         *
+         * Dengan demikian:
+         *
+         * DATABASE
+         *    ↓
+         * Controller
+         *    ↓
+         * Blade
+         *    ↓
+         * JavaScript
+         *
+         * Tidak ada localStorage Barang.
+         */
+
+        barangData =
+            readBarangFromBlade()
+                .map(normalizeBarang);
+
+    }
+
+
+    /* ============================================================
+       READ DATA FROM BLADE
+       ============================================================ */
+
+    function readBarangFromBlade() {
+
+        const rows =
+            Array.from(
+                document.querySelectorAll(
+                    '#barangTable tbody tr'
+                )
+            );
+
+
+        const records = [];
+
+
+        rows.forEach(
+            function (row, index) {
+
+                /*
+                 * Abaikan empty row.
+                 */
+
+                if (
+                    row.id ===
+                    'barangEmptyRow'
+                ) {
+                    return;
+                }
+
+
+                if (
+                    row.cells.length < 4
+                ) {
+                    return;
+                }
+
+
+                const name =
+                    row.dataset.namaBarang ||
+                    row.cells[1]
+                        ?.textContent
+                        ?.trim() ||
+                    '';
+
+
+                const code =
+                    row.dataset.kodeBarang ||
+                    row.cells[2]
+                        ?.textContent
+                        ?.trim() ||
+                    '';
+
+
+                const groupId =
+                    row.dataset.golongan ||
+                    row.dataset.golonganId ||
+                    '';
+
+
+                const groupName =
+                    row.dataset.golonganName ||
+                    row.dataset.golonganNama ||
+                    getCellGolonganName(
+                        row.cells[3]
+                    );
+
+
+                const id =
+                    row.dataset.id ||
+                    row.dataset.barangId ||
+                    '';
+
+
+                const createdAt =
+                    row.dataset.createdAt ||
+                    '';
+
+
+                const updatedAt =
+                    row.dataset.updatedAt ||
+                    '';
+
+
+                if (
+                    !name &&
+                    !code
+                ) {
+                    return;
+                }
+
+
+                records.push({
+
+                    id:
+                        id ||
+                        `blade-${index}`,
+
+                    nama_barang:
+                        name,
+
+                    kode_barang:
+                        code,
+
+                    golongan:
+                        groupId,
+
+                    nama_golongan:
+                        groupName,
+
+                    created_at:
+                        createdAt,
+
+                    updated_at:
+                        updatedAt
+
+                });
+
+            }
+        );
+
+
+        return records;
+
+    }
+
+
+    function getCellGolonganName(cell) {
+
+        if (!cell) {
+            return '';
+        }
+
+
+        const text =
+            String(
+                cell.textContent || ''
+            ).trim();
 
 
         /*
-         * Event search.
+         * Kalau hanya angka,
+         * jangan dianggap sebagai nama golongan.
          */
+
+        if (
+            /^\d+$/.test(text)
+        ) {
+            return '';
+        }
+
+
+        return text;
+
+    }
+
+
+    /* ============================================================
+       NORMALIZE DATA
+       ============================================================ */
+
+    function normalizeBarang(item) {
+
+        if (!item) {
+
+            return {
+
+                id:
+                    '',
+
+                nama_barang:
+                    '',
+
+                kode_barang:
+                    '',
+
+                golongan:
+                    '',
+
+                nama_golongan:
+                    '',
+
+                created_at:
+                    '',
+
+                updated_at:
+                    ''
+
+            };
+
+        }
+
+
+        const groupId =
+            resolveGolonganId(item);
+
+
+        const groupName =
+            resolveGolonganName(item);
+
+
+        return {
+
+            id:
+                item.id ?? '',
+
+            nama_barang:
+                String(
+                    item.nama_barang ??
+                    item.nama ??
+                    ''
+                ).trim(),
+
+            kode_barang:
+                String(
+                    item.kode_barang ??
+                    item.kode ??
+                    ''
+                ).trim(),
+
+            golongan:
+                groupId,
+
+            nama_golongan:
+                groupName !== '-'
+                    ? groupName
+                    : '',
+
+            created_at:
+                item.created_at ||
+                item.createdAt ||
+                '',
+
+            updated_at:
+                item.updated_at ||
+                item.updatedAt ||
+                ''
+
+        };
+
+    }
+
+
+    function getBarangData() {
+
+        return barangData.map(
+            normalizeBarang
+        );
+
+    }
+
+
+    /* ============================================================
+       GOLONGAN MAP
+       ============================================================ */
+
+    function buildGolonganMap() {
+
+        golonganMap = {};
+
+
+        /*
+         * Kalau Blade suatu saat menyediakan map langsung.
+         */
+
+        if (
+            window.BARANG_GOLONGAN_MAP &&
+            typeof window.BARANG_GOLONGAN_MAP === 'object'
+        ) {
+
+            Object.entries(
+                window.BARANG_GOLONGAN_MAP
+            ).forEach(
+                function (entry) {
+
+                    registerGolongan(
+                        entry[0],
+                        entry[1]
+                    );
+
+                }
+            );
+
+        }
+
+
+        /*
+         * Ambil dari dropdown filter.
+         */
+
+        readGolonganSelect(
+            document.getElementById(
+                'barangGolongan'
+            )
+        );
+
+
+        /*
+         * Ambil dari dropdown modal.
+         */
+
+        readGolonganSelect(
+            document.getElementById(
+                'barangFormGolongan'
+            )
+        );
+
+
+        /*
+         * Ambil juga dari row Blade.
+         */
+
+        const rows =
+            document.querySelectorAll(
+                '#barangTable tbody tr'
+            );
+
+
+        rows.forEach(
+            function (row) {
+
+                if (
+                    row.id ===
+                    'barangEmptyRow'
+                ) {
+                    return;
+                }
+
+
+                const id =
+                    row.dataset.golongan ||
+                    row.dataset.golonganId ||
+                    '';
+
+
+                const name =
+                    row.dataset.golonganName ||
+                    row.dataset.golonganNama ||
+                    '';
+
+
+                if (
+                    id &&
+                    name
+                ) {
+
+                    registerGolongan(
+                        id,
+                        name
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    function readGolonganSelect(select) {
+
+        if (!select) {
+            return;
+        }
+
+
+        Array.from(
+            select.options
+        ).forEach(
+            function (option) {
+
+                const id =
+                    String(
+                        option.value || ''
+                    ).trim();
+
+
+                const name =
+                    String(
+                        option.textContent || ''
+                    ).trim();
+
+
+                if (!id) {
+                    return;
+                }
+
+
+                const lower =
+                    name.toLocaleLowerCase(
+                        'id-ID'
+                    );
+
+
+                if (
+                    lower.includes(
+                        'semua golongan'
+                    ) ||
+                    lower.includes(
+                        'pilih golongan'
+                    )
+                ) {
+                    return;
+                }
+
+
+                registerGolongan(
+                    id,
+                    name
+                );
+
+            }
+        );
+
+    }
+
+
+    function registerGolongan(
+        id,
+        name
+    ) {
+
+        id =
+            String(
+                id ?? ''
+            ).trim();
+
+
+        name =
+            String(
+                name ?? ''
+            ).trim();
+
+
+        if (
+            !id ||
+            !name
+        ) {
+            return;
+        }
+
+
+        /*
+         * Nama golongan jangan hanya angka.
+         */
+
+        if (
+            /^\d+$/.test(name)
+        ) {
+            return;
+        }
+
+
+        golonganMap[id] =
+            name;
+
+    }
+
+
+    function resolveGolonganId(item) {
+
+        if (!item) {
+            return '';
+        }
+
+
+        let value =
+            item.golongan_id ??
+            item.golonganId ??
+            item.golongan ??
+            '';
+
+
+        value =
+            String(
+                value
+            ).trim();
+
+
+        /*
+         * Biasanya ID berupa angka.
+         */
+
+        if (
+            value &&
+            golonganMap[value]
+        ) {
+            return value;
+        }
+
+
+        /*
+         * Jika value numeric tetapi map belum ada.
+         */
+
+        if (
+            /^\d+$/.test(value)
+        ) {
+            return value;
+        }
+
+
+        /*
+         * Kalau value berupa nama,
+         * cari ID berdasarkan nama.
+         */
+
+        if (value) {
+
+            const normalizedValue =
+                value.toLocaleLowerCase(
+                    'id-ID'
+                );
+
+
+            const found =
+                Object.entries(
+                    golonganMap
+                ).find(
+                    function (entry) {
+
+                        return (
+                            String(entry[1])
+                                .toLocaleLowerCase(
+                                    'id-ID'
+                                ) ===
+                            normalizedValue
+                        );
+
+                    }
+                );
+
+
+            if (found) {
+                return found[0];
+            }
+
+        }
+
+
+        return '';
+
+    }
+
+
+    function resolveGolonganName(item) {
+
+        if (!item) {
+            return '-';
+        }
+
+
+        /*
+         * Prioritas nama yang sudah dikirim backend.
+         */
+
+        const directName =
+            item.nama_golongan ||
+            item.golongan_nama ||
+            item.golongan_name ||
+            item.namaGolongan ||
+            '';
+
+
+        if (
+            directName &&
+            !/^\d+$/.test(
+                String(
+                    directName
+                ).trim()
+            )
+        ) {
+
+            return String(
+                directName
+            ).trim();
+
+        }
+
+
+        const id =
+            resolveGolonganId(item);
+
+
+        if (
+            id &&
+            golonganMap[id]
+        ) {
+            return golonganMap[id];
+        }
+
+
+        /*
+         * Kalau item.golongan ternyata nama.
+         */
+
+        const raw =
+            String(
+                item.golongan ?? ''
+            ).trim();
+
+
+        if (
+            raw &&
+            !/^\d+$/.test(raw)
+        ) {
+            return raw;
+        }
+
+
+        return '-';
+
+    }
+
+
+    /* ============================================================
+       FILTERED DATA
+       ============================================================ */
+
+    function getFilteredData() {
+
+        const records =
+            getBarangData();
+
+
+        const searchElement =
+            document.getElementById(
+                'barangSearch'
+            );
+
+
+        const groupElement =
+            document.getElementById(
+                'barangGolongan'
+            );
+
+
+        const search =
+            searchElement
+                ? String(
+                    searchElement.value || ''
+                )
+                    .trim()
+                    .toLocaleLowerCase(
+                        'id-ID'
+                    )
+                : '';
+
+
+        const selectedGroup =
+            groupElement
+                ? String(
+                    groupElement.value || ''
+                ).trim()
+                : '';
+
+
+        return records.filter(
+            function (item) {
+
+                const name =
+                    String(
+                        item.nama_barang || ''
+                    )
+                        .toLocaleLowerCase(
+                            'id-ID'
+                        );
+
+
+                const code =
+                    String(
+                        item.kode_barang || ''
+                    )
+                        .toLocaleLowerCase(
+                            'id-ID'
+                        );
+
+
+                const groupName =
+                    resolveGolonganName(
+                        item
+                    )
+                        .toLocaleLowerCase(
+                            'id-ID'
+                        );
+
+
+                const groupId =
+                    resolveGolonganId(
+                        item
+                    );
+
+
+                const searchMatch =
+                    !search ||
+                    name.includes(search) ||
+                    code.includes(search) ||
+                    groupName.includes(search);
+
+
+                const groupMatch =
+                    !selectedGroup ||
+                    groupId === selectedGroup;
+
+
+                return (
+                    searchMatch &&
+                    groupMatch
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       MAIN RENDER
+       ============================================================ */
+
+    function renderPage() {
+
+        renderTable();
+
+        updateKPI();
+
+        updateChart();
+
+        refreshIcons();
+
+    }
+
+
+    /* ============================================================
+       TABLE
+       ============================================================ */
+
+    function renderTable() {
+
+        const table =
+            document.getElementById(
+                'barangTable'
+            );
+
+
+        if (!table) {
+            return;
+        }
+
+
+        const tbody =
+            table.querySelector(
+                'tbody'
+            );
+
+
+        if (!tbody) {
+            return;
+        }
+
+
+        const records =
+            getFilteredData();
+
+
+        const pageSizeElement =
+            document.getElementById(
+                'barangPageSize'
+            );
+
+
+        const pageSize =
+            Number(
+                pageSizeElement?.value
+            ) ||
+            DEFAULT_PAGE_SIZE;
+
+
+        const total =
+            records.length;
+
+
+        const totalPages =
+            Math.max(
+                1,
+                Math.ceil(
+                    total /
+                    pageSize
+                )
+            );
+
+
+        currentPage =
+            Math.min(
+                Math.max(
+                    currentPage,
+                    1
+                ),
+                totalPages
+            );
+
+
+        const start =
+            (
+                currentPage - 1
+            ) *
+            pageSize;
+
+
+        const visible =
+            records.slice(
+                start,
+                start + pageSize
+            );
+
+
+        tbody.replaceChildren();
+
+
+        /*
+         * Tidak ada data.
+         */
+
+        if (
+            visible.length === 0
+        ) {
+
+            const row =
+                document.createElement(
+                    'tr'
+                );
+
+
+            row.id =
+                'barangEmptyRow';
+
+
+            const cell =
+                document.createElement(
+                    'td'
+                );
+
+
+            cell.colSpan =
+                5;
+
+
+            cell.className =
+                'barang-empty';
+
+
+            cell.textContent =
+                total === 0
+                    ? 'Belum ada data barang.'
+                    : 'Data barang tidak ditemukan.';
+
+
+            row.appendChild(
+                cell
+            );
+
+
+            tbody.appendChild(
+                row
+            );
+
+        }
+
+
+        /*
+         * Render row.
+         */
+
+        visible.forEach(
+            function (item, index) {
+
+                const row =
+                    document.createElement(
+                        'tr'
+                    );
+
+
+                row.dataset.id =
+                    String(
+                        item.id
+                    );
+
+
+                row.dataset.golongan =
+                    resolveGolonganId(
+                        item
+                    );
+
+
+                row.dataset.golonganName =
+                    resolveGolonganName(
+                        item
+                    );
+
+
+                /*
+                 * NO
+                 */
+
+                const no =
+                    document.createElement(
+                        'td'
+                    );
+
+
+                no.textContent =
+                    start +
+                    index +
+                    1;
+
+
+                /*
+                 * NAMA
+                 */
+
+                const name =
+                    document.createElement(
+                        'td'
+                    );
+
+
+                name.textContent =
+                    item.nama_barang ||
+                    '-';
+
+
+                /*
+                 * KODE
+                 */
+
+                const code =
+                    document.createElement(
+                        'td'
+                    );
+
+
+                code.textContent =
+                    item.kode_barang ||
+                    '-';
+
+
+                /*
+                 * GOLONGAN
+                 */
+
+                const group =
+                    document.createElement(
+                        'td'
+                    );
+
+
+                group.textContent =
+                    resolveGolonganName(
+                        item
+                    );
+
+
+                /*
+                 * ACTION
+                 */
+
+                const actionCell =
+                    document.createElement(
+                        'td'
+                    );
+
+
+                const actionWrap =
+                    document.createElement(
+                        'div'
+                    );
+
+
+                actionWrap.className =
+                    'barang-actions';
+
+
+                actionWrap.appendChild(
+                    createActionButton(
+                        'view',
+                        'eye',
+                        'Lihat barang'
+                    )
+                );
+
+
+                actionWrap.appendChild(
+                    createActionButton(
+                        'edit',
+                        'square-pen',
+                        'Edit barang'
+                    )
+                );
+
+
+                actionWrap.appendChild(
+                    createActionButton(
+                        'delete',
+                        'trash-2',
+                        'Hapus barang'
+                    )
+                );
+
+
+                actionCell.appendChild(
+                    actionWrap
+                );
+
+
+                row.appendChild(
+                    no
+                );
+
+
+                row.appendChild(
+                    name
+                );
+
+
+                row.appendChild(
+                    code
+                );
+
+
+                row.appendChild(
+                    group
+                );
+
+
+                row.appendChild(
+                    actionCell
+                );
+
+
+                tbody.appendChild(
+                    row
+                );
+
+            }
+        );
+
+
+        updateTableInfo(
+            total,
+            start,
+            pageSize
+        );
+
+
+        renderPagination(
+            totalPages
+        );
+
+    }
+
+
+    function createActionButton(
+        action,
+        icon,
+        title
+    ) {
+
+        const button =
+            document.createElement(
+                'button'
+            );
+
+
+        button.type =
+            'button';
+
+
+        button.className =
+            action;
+
+
+        button.dataset.action =
+            action;
+
+
+        button.title =
+            title;
+
+
+        const iconElement =
+            document.createElement(
+                'i'
+            );
+
+
+        iconElement.dataset.lucide =
+            icon;
+
+
+        button.appendChild(
+            iconElement
+        );
+
+
+        return button;
+
+    }
+
+
+    /* ============================================================
+       TABLE INFO
+       ============================================================ */
+
+    function updateTableInfo(
+        total,
+        start,
+        pageSize
+    ) {
+
+        const element =
+            document.getElementById(
+                'barangTableInfo'
+            );
+
+
+        if (!element) {
+            return;
+        }
+
+
+        if (
+            total === 0
+        ) {
+
+            element.textContent =
+                'Tidak ada data barang';
+
+            return;
+
+        }
+
+
+        const from =
+            start + 1;
+
+
+        const to =
+            Math.min(
+                start +
+                pageSize,
+                total
+            );
+
+
+        element.textContent =
+            `Menampilkan ${numberFormatter.format(from)}–${numberFormatter.format(to)} dari ${numberFormatter.format(total)} data`;
+
+    }
+
+
+    /* ============================================================
+       PAGINATION
+       ============================================================ */
+
+    function renderPagination(
+        totalPages
+    ) {
+
+        const pagination =
+            document.getElementById(
+                'barangPagination'
+            );
+
+
+        if (!pagination) {
+            return;
+        }
+
+
+        pagination.replaceChildren();
+
+
+        /*
+         * PREVIOUS
+         */
+
+        pagination.appendChild(
+            createPageButton(
+                '‹',
+                currentPage - 1,
+                currentPage === 1
+            )
+        );
+
+
+        /*
+         * PAGE NUMBER
+         */
+
+        if (
+            totalPages <= 7
+        ) {
+
+            for (
+                let page = 1;
+                page <= totalPages;
+                page++
+            ) {
+
+                pagination.appendChild(
+                    createPageButton(
+                        String(page),
+                        page,
+                        false,
+                        page === currentPage
+                    )
+                );
+
+            }
+
+        } else {
+
+            pagination.appendChild(
+                createPageButton(
+                    '1',
+                    1,
+                    false,
+                    currentPage === 1
+                )
+            );
+
+
+            if (
+                currentPage > 4
+            ) {
+
+                pagination.appendChild(
+                    createEllipsis()
+                );
+
+            }
+
+
+            const start =
+                Math.max(
+                    2,
+                    currentPage - 2
+                );
+
+
+            const end =
+                Math.min(
+                    totalPages - 1,
+                    currentPage + 2
+                );
+
+
+            for (
+                let page = start;
+                page <= end;
+                page++
+            ) {
+
+                pagination.appendChild(
+                    createPageButton(
+                        String(page),
+                        page,
+                        false,
+                        page === currentPage
+                    )
+                );
+
+            }
+
+
+            if (
+                currentPage <
+                totalPages - 3
+            ) {
+
+                pagination.appendChild(
+                    createEllipsis()
+                );
+
+            }
+
+
+            pagination.appendChild(
+                createPageButton(
+                    String(
+                        totalPages
+                    ),
+                    totalPages,
+                    false,
+                    currentPage === totalPages
+                )
+            );
+
+        }
+
+
+        /*
+         * NEXT
+         */
+
+        pagination.appendChild(
+            createPageButton(
+                '›',
+                currentPage + 1,
+                currentPage >= totalPages
+            )
+        );
+
+    }
+
+
+    function createPageButton(
+        label,
+        page,
+        disabled,
+        active = false
+    ) {
+
+        const button =
+            document.createElement(
+                'button'
+            );
+
+
+        button.type =
+            'button';
+
+
+        button.textContent =
+            label;
+
+
+        button.disabled =
+            disabled;
+
+
+        if (active) {
+
+            button.classList.add(
+                'active'
+            );
+
+        }
+
+
+        if (!disabled) {
+
+            button.addEventListener(
+                'click',
+                function () {
+
+                    currentPage =
+                        page;
+
+
+                    renderTable();
+
+
+                    refreshIcons();
+
+                }
+            );
+
+        }
+
+
+        return button;
+
+    }
+
+
+    function createEllipsis() {
+
+        const button =
+            document.createElement(
+                'button'
+            );
+
+
+        button.type =
+            'button';
+
+
+        button.textContent =
+            '...';
+
+
+        button.disabled =
+            true;
+
+
+        button.className =
+            'ellipsis';
+
+
+        return button;
+
+    }
+
+
+    /* ============================================================
+       KPI
+       ============================================================ */
+
+    function updateKPI() {
+
+        const records =
+            getBarangData();
+
+
+        const cards =
+            document.querySelectorAll(
+                '.barang-kpi-card'
+            );
+
+
+        if (
+            cards.length === 0
+        ) {
+            return;
+        }
+
+
+        /*
+         * TOTAL BARANG
+         */
+
+        const totalElement =
+            document.querySelector(
+                '#totalBarang'
+            ) ||
+            cards[0]?.querySelector(
+                '.barang-kpi-value strong'
+            );
+
+
+        if (totalElement) {
+
+            totalElement.textContent =
+                numberFormatter.format(
+                    records.length
+                );
+
+        }
+
+
+        /*
+         * TOTAL GOLONGAN
+         */
+
+        const groups =
+            new Set();
+
+
+        records.forEach(
+            function (item) {
+
+                const id =
+                    resolveGolonganId(
+                        item
+                    );
+
+
+                const name =
+                    resolveGolonganName(
+                        item
+                    );
+
+
+                if (id) {
+
+                    groups.add(
+                        `id-${id}`
+                    );
+
+                } else if (
+                    name &&
+                    name !== '-'
+                ) {
+
+                    groups.add(
+                        `name-${name}`
+                    );
+
+                }
+
+            }
+        );
+
+
+        const groupElement =
+            document.querySelector(
+                '#totalGolongan'
+            ) ||
+            cards[1]?.querySelector(
+                '.barang-kpi-content > strong'
+            );
+
+
+        if (groupElement) {
+
+            groupElement.textContent =
+                numberFormatter.format(
+                    groups.size
+                );
+
+        }
+
+
+        /*
+         * UPDATE TERAKHIR
+         *
+         * Jangan ditimpa JavaScript jika Blade
+         * tidak memberikan timestamp.
+         *
+         * Nilai server-rendered tetap dipertahankan.
+         */
+
+        const latest =
+            getLatestRecordWithDate();
+
+
+        if (latest) {
+
+            const date =
+                latest.updated_at ||
+                latest.created_at;
+
+
+            const lastElement =
+                document.querySelector(
+                    '#barangLastUpdate'
+                ) ||
+                cards[2]?.querySelector(
+                    '.barang-kpi-text'
+                );
+
+
+            const description =
+                cards[2]?.querySelector(
+                    '.barang-kpi-content p'
+                );
+
+
+            if (lastElement) {
+
+                lastElement.textContent =
+                    formatLastSeen(
+                        date
+                    );
+
+            }
+
+
+            if (description) {
+
+                description.textContent =
+                    formatDateTime(
+                        date
+                    );
+
+            }
+
+        }
+
+    }
+
+
+    function getLatestRecordWithDate() {
+
+        const records =
+            getBarangData()
+                .filter(
+                    function (item) {
+
+                        return Boolean(
+                            item.updated_at ||
+                            item.created_at
+                        );
+
+                    }
+                );
+
+
+        if (
+            records.length === 0
+        ) {
+            return null;
+        }
+
+
+        return [...records]
+            .sort(
+                function (a, b) {
+
+                    return (
+                        getRecordTimestamp(b) -
+                        getRecordTimestamp(a)
+                    );
+
+                }
+            )[0];
+
+    }
+
+
+    function getRecordTimestamp(item) {
+
+        if (!item) {
+            return 0;
+        }
+
+
+        const value =
+            item.updated_at ||
+            item.created_at ||
+            '';
+
+
+        if (!value) {
+            return 0;
+        }
+
+
+        const timestamp =
+            new Date(
+                value
+            ).getTime();
+
+
+        return Number.isNaN(
+            timestamp
+        )
+            ? 0
+            : timestamp;
+
+    }
+
+
+    /* ============================================================
+       CHART
+       ============================================================ */
+
+    function updateChart() {
+
+        const canvas =
+            document.getElementById(
+                'barangDistributionChart'
+            );
+
+
+        if (!canvas) {
+            return;
+        }
+
+
+        const records =
+            getBarangData();
+
+
+        const distribution = {};
+
+
+        records.forEach(
+            function (item) {
+
+                const group =
+                    resolveGolonganName(
+                        item
+                    );
+
+
+                const label =
+                    group &&
+                    group !== '-'
+                        ? group
+                        : 'Belum Dikategorikan';
+
+
+                distribution[label] =
+                    (
+                        distribution[label] ||
+                        0
+                    ) + 1;
+
+            }
+        );
+
+
+        const labels =
+            Object.keys(
+                distribution
+            );
+
+
+        const values =
+            labels.map(
+                function (label) {
+
+                    return distribution[
+                        label
+                    ];
+
+                }
+            );
+
+
+        /*
+         * TOTAL DI TENGAH CHART
+         */
+
+        const center =
+            document.querySelector(
+                '.barang-chart-center strong'
+            );
+
+
+        if (center) {
+
+            center.textContent =
+                numberFormatter.format(
+                    records.length
+                );
+
+        }
+
+
+        /*
+         * LEGEND
+         */
+
+        renderLegend(
+            distribution
+        );
+
+
+        /*
+         * Hapus chart sebelumnya.
+         */
+
+        if (chartInstance) {
+
+            chartInstance.destroy();
+
+            chartInstance =
+                null;
+
+        }
+
+
+        if (
+            typeof window.Chart !==
+            'function'
+        ) {
+            return;
+        }
+
+
+        const colors = [
+
+            '#3389ee',
+            '#4fc184',
+            '#ffc85c',
+            '#ff9024',
+            '#8558e8',
+            '#aab7ca',
+            '#7c8da6'
+
+        ];
+
+
+        chartInstance =
+            new window.Chart(
+                canvas,
+                {
+
+                    type:
+                        'doughnut',
+
+                    data: {
+
+                        labels:
+                            labels,
+
+                        datasets: [
+                            {
+
+                                data:
+                                    values,
+
+                                backgroundColor:
+                                    labels.map(
+                                        function (
+                                            label,
+                                            index
+                                        ) {
+
+                                            return colors[
+                                                index %
+                                                colors.length
+                                            ];
+
+                                        }
+                                    ),
+
+                                borderWidth:
+                                    2,
+
+                                borderColor:
+                                    '#ffffff'
+
+                            }
+                        ]
+
+                    },
+
+                    options: {
+
+                        responsive:
+                            true,
+
+                        maintainAspectRatio:
+                            false,
+
+                        cutout:
+                            '68%',
+
+                        plugins: {
+
+                            legend: {
+
+                                display:
+                                    false
+
+                            },
+
+                            tooltip: {
+
+                                callbacks: {
+
+                                    label:
+                                        function (
+                                            context
+                                        ) {
+
+                                            return (
+                                                `${context.label}: ` +
+                                                `${numberFormatter.format(context.raw)} barang`
+                                            );
+
+                                        }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    function renderLegend(
+        distribution
+    ) {
+
+        const legend =
+            document.getElementById(
+                'barangLegend'
+            );
+
+
+        if (!legend) {
+            return;
+        }
+
+
+        legend.replaceChildren();
+
+
+        const entries =
+            Object.entries(
+                distribution
+            )
+                .sort(
+                    function (a, b) {
+
+                        return (
+                            b[1] -
+                            a[1]
+                        );
+
+                    }
+                );
+
+
+        const total =
+            entries.reduce(
+                function (
+                    sum,
+                    entry
+                ) {
+
+                    return (
+                        sum +
+                        entry[1]
+                    );
+
+                },
+                0
+            );
+
+
+        const colors = [
+
+            '#3389ee',
+            '#4fc184',
+            '#ffc85c',
+            '#ff9024',
+            '#8558e8',
+            '#aab7ca',
+            '#7c8da6'
+
+        ];
+
+
+        if (
+            entries.length === 0
+        ) {
+
+            const item =
+                document.createElement(
+                    'div'
+                );
+
+
+            const dot =
+                document.createElement(
+                    'span'
+                );
+
+
+            dot.className =
+                'barang-dot';
+
+
+            dot.style.background =
+                '#aab7ca';
+
+
+            const text =
+                document.createElement(
+                    'p'
+                );
+
+
+            text.textContent =
+                'Belum ada data';
+
+
+            const count =
+                document.createElement(
+                    'strong'
+                );
+
+
+            count.textContent =
+                '0';
+
+
+            const percent =
+                document.createElement(
+                    'small'
+                );
+
+
+            percent.textContent =
+                '0,0%';
+
+
+            item.appendChild(
+                dot
+            );
+
+
+            item.appendChild(
+                text
+            );
+
+
+            item.appendChild(
+                count
+            );
+
+
+            item.appendChild(
+                percent
+            );
+
+
+            legend.appendChild(
+                item
+            );
+
+
+            return;
+
+        }
+
+
+        entries.forEach(
+            function (
+                entry,
+                index
+            ) {
+
+                const name =
+                    entry[0];
+
+
+                const count =
+                    entry[1];
+
+
+                const percentage =
+                    total
+                        ? (
+                            count /
+                            total
+                        ) *
+                        100
+                        : 0;
+
+
+                const item =
+                    document.createElement(
+                        'div'
+                    );
+
+
+                item.className =
+                    'barang-legend-item';
+
+
+                const dot =
+                    document.createElement(
+                        'span'
+                    );
+
+
+                dot.className =
+                    'barang-dot';
+
+
+                dot.style.background =
+                    colors[
+                        index %
+                        colors.length
+                    ];
+
+
+                const text =
+                    document.createElement(
+                        'p'
+                    );
+
+
+                text.textContent =
+                    name;
+
+
+                const countElement =
+                    document.createElement(
+                        'strong'
+                    );
+
+
+                countElement.textContent =
+                    numberFormatter.format(
+                        count
+                    );
+
+
+                const percent =
+                    document.createElement(
+                        'small'
+                    );
+
+
+                percent.textContent =
+                    `${percentage.toFixed(1).replace('.', ',')}%`;
+
+
+                item.appendChild(
+                    dot
+                );
+
+
+                item.appendChild(
+                    text
+                );
+
+
+                item.appendChild(
+                    countElement
+                );
+
+
+                item.appendChild(
+                    percent
+                );
+
+
+                legend.appendChild(
+                    item
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       SEARCH
+       ============================================================ */
+
+    function bindSearch() {
 
         const search =
             document.getElementById(
                 'barangSearch'
             );
 
-        if (search) {
 
-            search.addEventListener(
-                'input',
-                function () {
-
-                    barangCurrentPage = 1;
-
-                    renderBarangPage();
-
-                }
-            );
-
+        if (!search) {
+            return;
         }
 
 
-        /*
-         * Event filter golongan.
-         */
+        search.addEventListener(
+            'input',
+            function () {
 
-        const golongan =
+                currentPage =
+                    1;
+
+
+                renderTable();
+
+
+                refreshIcons();
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       FILTER
+       ============================================================ */
+
+    function bindFilter() {
+
+        const filter =
             document.getElementById(
                 'barangGolongan'
             );
 
-        if (golongan) {
 
-            golongan.addEventListener(
-                'change',
-                function () {
-
-                    barangCurrentPage = 1;
-
-                    renderBarangPage();
-
-                }
-            );
-
+        if (!filter) {
+            return;
         }
 
 
-        /*
-         * Event jumlah data per halaman.
-         */
+        filter.addEventListener(
+            'change',
+            function () {
+
+                currentPage =
+                    1;
+
+
+                renderTable();
+
+
+                refreshIcons();
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       PAGE SIZE
+       ============================================================ */
+
+    function bindPageSize() {
 
         const pageSize =
             document.getElementById(
                 'barangPageSize'
             );
 
-        if (pageSize) {
 
-            pageSize.addEventListener(
-                'change',
-                function () {
-
-                    barangCurrentPage = 1;
-
-                    renderBarangPage();
-
-                }
-            );
-
+        if (!pageSize) {
+            return;
         }
 
 
-        /*
-         * Event tabel.
-         *
-         * Menggunakan event delegation.
-         */
+        pageSize.addEventListener(
+            'change',
+            function () {
+
+                currentPage =
+                    1;
+
+
+                renderTable();
+
+
+                refreshIcons();
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       TABLE ACTION
+       ============================================================ */
+
+    function bindTableActions() {
+
+        const table =
+            document.getElementById(
+                'barangTable'
+            );
+
+
+        if (!table) {
+            return;
+        }
+
 
         table.addEventListener(
             'click',
@@ -183,7 +2444,9 @@ document.addEventListener(
 
 
                 const row =
-                    button.closest('tr');
+                    button.closest(
+                        'tr'
+                    );
 
 
                 if (!row) {
@@ -191,15 +2454,15 @@ document.addEventListener(
                 }
 
 
-                const action =
-                    button.dataset.action;
-
-
                 const id =
                     row.dataset.id;
 
 
-                handleBarangAction(
+                const action =
+                    button.dataset.action;
+
+
+                handleAction(
                     action,
                     id
                 );
@@ -207,3429 +2470,38 @@ document.addEventListener(
             }
         );
 
-
-        /*
-         * Form CRUD.
-         */
-
-        const form =
-            document.getElementById(
-                'barangForm'
-            );
-
-
-        if (form) {
-
-            form.addEventListener(
-                'submit',
-                function (event) {
-
-                    event.preventDefault();
-
-                    submitBarangForm();
-
-                }
-            );
-
-        }
-
-
-        /*
-         * Modal.
-         */
-
-        const modal =
-            document.getElementById(
-                'barangModal'
-            );
-
-
-        if (modal) {
-
-            modal.addEventListener(
-                'click',
-                function (event) {
-
-                    if (
-                        event.target === modal
-                    ) {
-
-                        closeBarangModal();
-
-                    }
-
-                }
-            );
-
-
-            modal.addEventListener(
-                'close',
-                function () {
-
-                    document.body.style.overflow =
-                        barangPreviousOverflow;
-
-                }
-            );
-
-        }
-
-
-        /*
-         * Lihat semua barang.
-         */
-
-        const viewAll =
-            document.getElementById(
-                'barangViewAll'
-            );
-
-
-        if (viewAll) {
-
-            viewAll.addEventListener(
-                'click',
-                function (event) {
-
-                    event.preventDefault();
-
-                    resetBarangFilter();
-
-
-                    const list =
-                        document.getElementById(
-                            'barangList'
-                        );
-
-
-                    if (list) {
-
-                        list.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        /*
-         * Lucide.
-         */
-
-        refreshBarangIcons();
-
-    }
-);
-
-
-/* =========================================================
-   LOCAL STORAGE
-========================================================= */
-
-function getBarangStorage() {
-
-    try {
-
-        const raw =
-            localStorage.getItem(
-                BARANG_STORAGE_KEY
-            );
-
-
-        if (!raw) {
-            return [];
-        }
-
-
-        const parsed =
-            JSON.parse(raw);
-
-
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-
-        return parsed;
-
-    } catch (error) {
-
-        console.error(
-            'Gagal membaca localStorage Barang:',
-            error
-        );
-
-
-        return [];
-
-    }
-
-}
-
-
-function saveBarangStorage(
-    records
-) {
-
-    try {
-
-        localStorage.setItem(
-            BARANG_STORAGE_KEY,
-            JSON.stringify(records)
-        );
-
-    } catch (error) {
-
-        console.error(
-            'Gagal menyimpan data Barang:',
-            error
-        );
-
-        showBarangMessage(
-            'Data gagal disimpan pada browser.',
-            'error'
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   INITIAL DATA
-========================================================= */
-
-function initializeBarangData() {
-
-    let records =
-        getBarangStorage();
-
-
-    /*
-     * Jika localStorage belum mempunyai data,
-     * ambil data dari tabel Blade.
-     */
-
-    if (records.length === 0) {
-
-        const rows =
-            Array.from(
-                document.querySelectorAll(
-                    '#barangTable tbody tr'
-                )
-            )
-            .filter(
-                function (row) {
-
-                    return (
-                        row.id !==
-                        'barangEmptyRow' &&
-                        row.cells.length >= 4
-                    );
-
-                }
-            );
-
-
-        records =
-            rows.map(
-                function (row, index) {
-
-                    const name =
-                        row.cells[1]
-                            ? row.cells[1]
-                                .textContent
-                                .trim()
-                            : '';
-
-
-                    const code =
-                        row.cells[2]
-                            ? row.cells[2]
-                                .textContent
-                                .trim()
-                            : '';
-
-
-                    const group =
-                        row.dataset.golongan ||
-                        (
-                            row.cells[3]
-                                ? row.cells[3]
-                                    .textContent
-                                    .trim()
-                                : ''
-                        );
-
-
-                    return {
-
-                        id:
-                            'barang-' +
-                            Date.now() +
-                            '-' +
-                            index,
-
-                        nama_barang:
-                            name,
-
-                        kode_barang:
-                            code,
-
-                        golongan:
-                            group,
-
-                        created_at:
-                            new Date().toISOString(),
-
-                        updated_at:
-                            new Date().toISOString()
-
-                    };
-
-                }
-            );
-
-
-        /*
-         * Simpan data awal.
-         */
-
-        saveBarangStorage(
-            records
-        );
-
     }
 
 
-    /*
-     * Tandai data sebagai sudah
-     * menggunakan sistem baru.
-     */
-
-    document.body.dataset.barangReady =
-        'true';
-
-}
-
-
-/* =========================================================
-   GET ALL DATA
-========================================================= */
-
-function getBarangData() {
-
-    return getBarangStorage();
-
-}
-
-
-/* =========================================================
-   FILTER DATA
-========================================================= */
-
-function getFilteredBarangData() {
-
-    const records =
-        getBarangData();
-
-
-    const searchElement =
-        document.getElementById(
-            'barangSearch'
-        );
-
-
-    const groupElement =
-        document.getElementById(
-            'barangGolongan'
-        );
-
-
-    const search =
-        searchElement
-            ? searchElement.value
-                .trim()
-                .toLocaleLowerCase('id-ID')
-            : '';
-
-
-    const group =
-        groupElement
-            ? groupElement.value
-            : '';
-
-
-    return records.filter(
-        function (item) {
-
-            const name =
-                String(
-                    item.nama_barang || ''
-                )
-                .toLocaleLowerCase(
-                    'id-ID'
-                );
-
-
-            const code =
-                String(
-                    item.kode_barang || ''
-                )
-                .toLocaleLowerCase(
-                    'id-ID'
-                );
-
-
-            const golongan =
-                String(
-                    item.golongan || ''
-                );
-
-
-            const searchMatch =
-                !search ||
-                name.includes(search) ||
-                code.includes(search);
-
-
-            const groupMatch =
-                !group ||
-                golongan === group;
-
-
-            return (
-                searchMatch &&
-                groupMatch
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   RENDER MAIN PAGE
-========================================================= */
-
-function renderBarangPage() {
-
-    renderBarangTable();
-
-    updateBarangKPI();
-
-    updateBarangChart();
-
-    updateBarangLatest();
-
-    updateBarangLastSeen();
-
-    updateBarangGolonganOptions();
-
-    refreshBarangIcons();
-
-}
-
-
-/* =========================================================
-   RENDER TABLE
-========================================================= */
-
-function renderBarangTable() {
-
-    const table =
-        document.getElementById(
-            'barangTable'
-        );
-
-
-    if (!table) {
-        return;
-    }
-
-
-    const tbody =
-        table.querySelector('tbody');
-
-
-    if (!tbody) {
-        return;
-    }
-
-
-    const records =
-        getFilteredBarangData();
-
-
-    const pageSizeElement =
-        document.getElementById(
-            'barangPageSize'
-        );
-
-
-    const pageSize =
-        pageSizeElement
-            ? Number(
-                pageSizeElement.value
-            ) || 10
-            : 10;
-
-
-    const total =
-        records.length;
-
-
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                total / pageSize
-            )
-        );
-
-
-    barangCurrentPage =
-        Math.min(
-            Math.max(
-                1,
-                barangCurrentPage
-            ),
-            totalPages
-        );
-
-
-    const start =
-        (
-            barangCurrentPage - 1
-        ) * pageSize;
-
-
-    const visibleRecords =
-        records.slice(
-            start,
-            start + pageSize
-        );
-
-
-    /*
-     * Buat ulang tbody.
-     */
-
-    tbody.replaceChildren();
-
-
-    /*
-     * Empty state.
-     */
-
-    if (
-        visibleRecords.length === 0
+    function handleAction(
+        action,
+        id
     ) {
 
-        const empty =
-            document.createElement(
-                'tr'
-            );
+        const records =
+            getBarangData();
 
 
-        empty.id =
-            'barangEmptyRow';
-
-
-        const cell =
-            document.createElement(
-                'td'
-            );
-
-
-        cell.colSpan = 5;
-
-
-        cell.className =
-            'barang-empty';
-
-
-        cell.textContent =
-            'Tidak ada barang yang sesuai. Coba kata kunci atau golongan lain.';
-
-
-        empty.appendChild(cell);
-
-        tbody.appendChild(empty);
-
-    }
-
-
-    /*
-     * Render data.
-     */
-
-    visibleRecords.forEach(
-        function (item, index) {
-
-            const row =
-                document.createElement(
-                    'tr'
-                );
-
-
-            row.dataset.id =
-                item.id;
-
-
-            row.dataset.golongan =
-                item.golongan || '';
-
-
-            /*
-             * Nomor.
-             */
-
-            const no =
-                document.createElement(
-                    'td'
-                );
-
-
-            no.textContent =
-                start + index + 1;
-
-
-            /*
-             * Nama.
-             */
-
-            const name =
-                document.createElement(
-                    'td'
-                );
-
-
-            name.textContent =
-                item.nama_barang || '-';
-
-
-            /*
-             * Kode.
-             */
-
-            const code =
-                document.createElement(
-                    'td'
-                );
-
-
-            code.textContent =
-                item.kode_barang || '-';
-
-
-            /*
-             * Golongan.
-             */
-
-            const group =
-                document.createElement(
-                    'td'
-                );
-
-
-            group.textContent =
-                item.golongan || '-';
-
-
-            /*
-             * Aksi.
-             */
-
-            const actionCell =
-                document.createElement(
-                    'td'
-                );
-
-
-            const actionWrap =
-                document.createElement(
-                    'div'
-                );
-
-
-            actionWrap.className =
-                'barang-actions';
-
-
-            /*
-             * View.
-             */
-
-            actionWrap.appendChild(
-                createBarangActionButton(
-                    'view',
-                    'eye',
-                    'Lihat barang',
-                    item.nama_barang
-                )
-            );
-
-
-            /*
-             * Edit.
-             */
-
-            actionWrap.appendChild(
-                createBarangActionButton(
-                    'edit',
-                    'square-pen',
-                    'Edit barang',
-                    item.nama_barang
-                )
-            );
-
-
-            /*
-             * Delete.
-             */
-
-            actionWrap.appendChild(
-                createBarangActionButton(
-                    'delete',
-                    'trash-2',
-                    'Hapus barang',
-                    item.nama_barang
-                )
-            );
-
-
-            actionCell.appendChild(
-                actionWrap
-            );
-
-
-            row.appendChild(no);
-            row.appendChild(name);
-            row.appendChild(code);
-            row.appendChild(group);
-            row.appendChild(actionCell);
-
-
-            tbody.appendChild(row);
-
-        }
-    );
-
-
-    /*
-     * Update footer.
-     */
-
-    updateBarangTableInfo(
-        total,
-        start,
-        pageSize
-    );
-
-
-    /*
-     * Pagination.
-     */
-
-    renderBarangPagination(
-        totalPages
-    );
-
-}
-
-
-/* =========================================================
-   ACTION BUTTON
-========================================================= */
-
-function createBarangActionButton(
-    action,
-    icon,
-    title,
-    name
-) {
-
-    const button =
-        document.createElement(
-            'button'
-        );
-
-
-    button.type =
-        'button';
-
-
-    button.className =
-        action;
-
-
-    button.dataset.action =
-        action;
-
-
-    button.title =
-        title;
-
-
-    button.setAttribute(
-        'aria-label',
-        `${title} ${name || 'barang'}`
-    );
-
-
-    const iconElement =
-        document.createElement(
-            'i'
-        );
-
-
-    iconElement.dataset.lucide =
-        icon;
-
-
-    button.appendChild(
-        iconElement
-    );
-
-
-    return button;
-
-}
-
-
-/* =========================================================
-   TABLE INFO
-========================================================= */
-
-function updateBarangTableInfo(
-    total,
-    start,
-    pageSize
-) {
-
-    const info =
-        document.getElementById(
-            'barangTableInfo'
-        );
-
-
-    if (!info) {
-        return;
-    }
-
-
-    if (total === 0) {
-
-        info.textContent =
-            'Tidak ada data barang';
-
-        return;
-
-    }
-
-
-    const from =
-        start + 1;
-
-
-    const to =
-        Math.min(
-            start + pageSize,
-            total
-        );
-
-
-    const all =
-        getBarangData();
-
-
-    let text =
-        `Menampilkan ${barangNumber.format(from)}–${barangNumber.format(to)} dari ${barangNumber.format(total)} data`;
-
-
-    /*
-     * Jika sedang difilter.
-     */
-
-    if (
-        total !== all.length
-    ) {
-
-        text +=
-            ` (total ${barangNumber.format(all.length)})`;
-
-    }
-
-
-    info.textContent =
-        text;
-
-}
-
-
-/* =========================================================
-   PAGINATION
-========================================================= */
-
-function renderBarangPagination(
-    totalPages
-) {
-
-    const pagination =
-        document.getElementById(
-            'barangPagination'
-        );
-
-
-    if (!pagination) {
-        return;
-    }
-
-
-    pagination.replaceChildren();
-
-
-    /*
-     * Previous.
-     */
-
-    const previous =
-        createBarangPageButton(
-            '‹',
-            barangCurrentPage - 1,
-            barangCurrentPage === 1
-        );
-
-
-    previous.setAttribute(
-        'aria-label',
-        'Halaman sebelumnya'
-    );
-
-
-    pagination.appendChild(
-        previous
-    );
-
-
-    /*
-     * Jika sedikit halaman.
-     */
-
-    if (
-        totalPages <= 7
-    ) {
-
-        for (
-            let page = 1;
-            page <= totalPages;
-            page++
-        ) {
-
-            pagination.appendChild(
-                createBarangPageButton(
-                    String(page),
-                    page,
-                    false,
-                    page === barangCurrentPage
-                )
-            );
-
-        }
-
-    }
-
-
-    /*
-     * Jika banyak halaman.
-     */
-
-    else {
-
-        /*
-         * Halaman pertama.
-         */
-
-        pagination.appendChild(
-            createBarangPageButton(
-                '1',
-                1,
-                false,
-                barangCurrentPage === 1
-            )
-        );
-
-
-        /*
-         * Ellipsis awal.
-         */
-
-        if (
-            barangCurrentPage > 4
-        ) {
-
-            pagination.appendChild(
-                createBarangEllipsis()
-            );
-
-        }
-
-
-        /*
-         * Range halaman.
-         */
-
-        const start =
-            Math.max(
-                2,
-                barangCurrentPage - 2
-            );
-
-
-        const end =
-            Math.min(
-                totalPages - 1,
-                barangCurrentPage + 2
-            );
-
-
-        for (
-            let page = start;
-            page <= end;
-            page++
-        ) {
-
-            pagination.appendChild(
-                createBarangPageButton(
-                    String(page),
-                    page,
-                    false,
-                    page === barangCurrentPage
-                )
-            );
-
-        }
-
-
-        /*
-         * Ellipsis akhir.
-         */
-
-        if (
-            barangCurrentPage <
-            totalPages - 3
-        ) {
-
-            pagination.appendChild(
-                createBarangEllipsis()
-            );
-
-        }
-
-
-        /*
-         * Halaman terakhir.
-         */
-
-        pagination.appendChild(
-            createBarangPageButton(
-                String(totalPages),
-                totalPages,
-                false,
-                barangCurrentPage === totalPages
-            )
-        );
-
-    }
-
-
-    /*
-     * Next.
-     */
-
-    const next =
-        createBarangPageButton(
-            '›',
-            barangCurrentPage + 1,
-            barangCurrentPage >= totalPages
-        );
-
-
-    next.setAttribute(
-        'aria-label',
-        'Halaman berikutnya'
-    );
-
-
-    pagination.appendChild(
-        next
-    );
-
-}
-
-
-/* =========================================================
-   PAGINATION BUTTON
-========================================================= */
-
-function createBarangPageButton(
-    label,
-    page,
-    disabled = false,
-    current = false
-) {
-
-    const button =
-        document.createElement(
-            'button'
-        );
-
-
-    button.type =
-        'button';
-
-
-    button.textContent =
-        label;
-
-
-    button.disabled =
-        disabled;
-
-
-    if (current) {
-
-        button.classList.add(
-            'active'
-        );
-
-
-        button.setAttribute(
-            'aria-current',
-            'page'
-        );
-
-    }
-
-
-    if (!disabled) {
-
-        button.addEventListener(
-            'click',
-            function () {
-
-                barangCurrentPage =
-                    page;
-
-
-                renderBarangTable();
-
-
-                const active =
-                    document.querySelector(
-                        '#barangPagination [aria-current="page"]'
-                    );
-
-
-                if (active) {
-
-                    active.focus({
-                        preventScroll: true
-                    });
-
-                }
-
-            }
-        );
-
-    }
-
-
-    return button;
-
-}
-
-
-/* =========================================================
-   PAGINATION ELLIPSIS
-========================================================= */
-
-function createBarangEllipsis() {
-
-    const button =
-        document.createElement(
-            'button'
-        );
-
-
-    button.type =
-        'button';
-
-
-    button.textContent =
-        '...';
-
-
-    button.disabled =
-        true;
-
-
-    button.className =
-        'ellipsis';
-
-
-    button.setAttribute(
-        'aria-hidden',
-        'true'
-    );
-
-
-    return button;
-
-}
-
-
-/* =========================================================
-   KPI
-========================================================= */
-
-function updateBarangKPI() {
-
-    const records =
-        getBarangData();
-
-
-    const totalBarang =
-        records.length;
-
-
-    const golonganSet =
-        new Set();
-
-
-    records.forEach(
-        function (item) {
-
-            if (
-                item.golongan &&
-                item.golongan.trim()
-            ) {
-
-                golonganSet.add(
-                    item.golongan.trim()
-                );
-
-            }
-
-        }
-    );
-
-
-    const totalGolongan =
-        golonganSet.size;
-
-
-    const cards =
-        document.querySelectorAll(
-            '.barang-kpi-card'
-        );
-
-
-    if (
-        cards.length < 3
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * KPI 1 - Total Barang
-     */
-
-    const totalValue =
-        cards[0].querySelector(
-            '.barang-kpi-value strong'
-        );
-
-
-    if (totalValue) {
-
-        totalValue.textContent =
-            barangNumber.format(
-                totalBarang
-            );
-
-    }
-
-
-    /*
-     * KPI 1 - angka tambahan tahun ini.
-     */
-
-    const currentYear =
-        new Date().getFullYear();
-
-
-    const thisYearCount =
-        records.filter(
-            function (item) {
-
-                if (
-                    !item.created_at
-                ) {
-
-                    return false;
-
-                }
-
-
-                return (
-                    new Date(
-                        item.created_at
-                    ).getFullYear() ===
-                    currentYear
-                );
-
-            }
-        ).length;
-
-
-    const delta =
-        cards[0].querySelector(
-            '.barang-kpi-value small'
-        );
-
-
-    if (delta) {
-
-        delta.innerHTML = '';
-
-        const icon =
-            document.createElement(
-                'i'
-            );
-
-        icon.dataset.lucide =
-            'arrow-up';
-
-
-        delta.appendChild(
-            icon
-        );
-
-
-        delta.appendChild(
-            document.createTextNode(
-                ` +${barangNumber.format(thisYearCount)}`
-            )
-        );
-
-    }
-
-
-    const deltaLabel =
-        cards[0].querySelector(
-            '.barang-kpi-content p'
-        );
-
-
-    if (deltaLabel) {
-
-        deltaLabel.textContent =
-            'ditambahkan tahun ini';
-
-    }
-
-
-    /*
-     * KPI 2 - Total Golongan
-     */
-
-    const groupValue =
-        cards[1].querySelector(
-            '.barang-kpi-content > strong'
-        );
-
-
-    if (groupValue) {
-
-        groupValue.textContent =
-            barangNumber.format(
-                totalGolongan
-            );
-
-    }
-
-
-    /*
-     * KPI 3 - Update Terakhir
-     */
-
-    const latest =
-        getLatestBarangRecord();
-
-
-    const lastValue =
-        cards[2].querySelector(
-            '.barang-kpi-text'
-        );
-
-
-    const lastDescription =
-        cards[2].querySelector(
-            '.barang-kpi-content p'
-        );
-
-
-    if (latest) {
-
-        if (lastValue) {
-
-            lastValue.textContent =
-                formatBarangLastSeen(
-                    latest.updated_at ||
-                    latest.created_at
-                );
-
-        }
-
-
-        if (lastDescription) {
-
-            lastDescription.textContent =
-                formatBarangDateTime(
-                    latest.updated_at ||
-                    latest.created_at
-                );
-
-        }
-
-    } else {
-
-        if (lastValue) {
-
-            lastValue.textContent =
-                'Belum ada';
-
-        }
-
-
-        if (lastDescription) {
-
-            lastDescription.textContent =
-                'belum ada data';
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-   GOLONGAN OPTIONS
-========================================================= */
-
-function updateBarangGolonganOptions() {
-
-    const select =
-        document.getElementById(
-            'barangGolongan'
-        );
-
-
-    if (!select) {
-        return;
-    }
-
-
-    const currentValue =
-        select.value;
-
-
-    const records =
-        getBarangData();
-
-
-    const groups =
-        new Set();
-
-
-    records.forEach(
-        function (item) {
-
-            if (
-                item.golongan
-            ) {
-
-                groups.add(
-                    item.golongan
-                );
-
-            }
-
-        }
-    );
-
-
-    /*
-     * Daftar standar desain.
-     */
-
-    const defaultGroups = [
-        'Elektronik',
-        'Furnitur',
-        'Mekanikal',
-        'Elektrikal',
-        'Alat Kantor',
-        'Lainnya'
-    ];
-
-
-    defaultGroups.forEach(
-        function (group) {
-
-            groups.add(group);
-
-        }
-    );
-
-
-    /*
-     * Bersihkan option selain "Semua".
-     */
-
-    select.replaceChildren();
-
-
-    const allOption =
-        document.createElement(
-            'option'
-        );
-
-
-    allOption.value =
-        '';
-
-
-    allOption.textContent =
-        'Semua Golongan';
-
-
-    select.appendChild(
-        allOption
-    );
-
-
-    Array.from(groups)
-        .sort(
-            function (a, b) {
-
-                return a.localeCompare(
-                    b,
-                    'id-ID'
-                );
-
-            }
-        )
-        .forEach(
-            function (group) {
-
-                const option =
-                    document.createElement(
-                        'option'
-                    );
-
-
-                option.value =
-                    group;
-
-
-                option.textContent =
-                    group;
-
-
-                select.appendChild(
-                    option
-                );
-
-            }
-        );
-
-
-    /*
-     * Kembalikan filter.
-     */
-
-    select.value =
-        currentValue;
-
-}
-
-
-/* =========================================================
-   CHART
-========================================================= */
-
-function updateBarangChart() {
-
-    const canvas =
-        document.getElementById(
-            'barangDistributionChart'
-        );
-
-
-    if (!canvas) {
-        return;
-    }
-
-
-    const records =
-        getBarangData();
-
-
-    /*
-     * Hitung distribusi.
-     */
-
-    const distribution =
-        {};
-
-
-    records.forEach(
-        function (item) {
-
-            const group =
-                item.golongan ||
-                'Lainnya';
-
-
-            distribution[group] =
-                (
-                    distribution[group] ||
-                    0
-                ) + 1;
-
-        }
-    );
-
-
-    /*
-     * Jika belum ada data.
-     */
-
-    if (
-        Object.keys(distribution).length === 0
-    ) {
-
-        distribution.Lainnya =
-            0;
-
-    }
-
-
-    /*
-     * Warna mengikuti data-color
-     * yang sudah tersedia pada Blade.
-     */
-
-    const legendItems =
-        Array.from(
-            document.querySelectorAll(
-                '#barangLegend [data-label]'
-            )
-        );
-
-
-    const colorMap =
-        {};
-
-
-    legendItems.forEach(
-        function (item) {
-
-            colorMap[
-                item.dataset.label
-            ] =
-                item.dataset.color ||
-                '#3389ee';
-
-        }
-    );
-
-
-    /*
-     * Tambahkan warna fallback
-     * untuk golongan baru.
-     */
-
-    const fallbackColors = [
-        '#3389ee',
-        '#4fc184',
-        '#ffc85c',
-        '#ff9024',
-        '#8558e8',
-        '#aab7ca',
-        '#7c8da6',
-        '#5c6bc0'
-    ];
-
-
-    let colorIndex =
-        0;
-
-
-    Object.keys(distribution)
-        .forEach(
-            function (group) {
-
-                if (
-                    !colorMap[group]
-                ) {
-
-                    colorMap[group] =
-                        fallbackColors[
-                            colorIndex %
-                            fallbackColors.length
-                        ];
-
-                    colorIndex++;
-
-                }
-
-            }
-        );
-
-
-    /*
-     * Update legend.
-     */
-
-    updateBarangLegend(
-        distribution,
-        records.length,
-        colorMap
-    );
-
-
-    /*
-     * Destroy chart lama.
-     */
-
-    if (barangChart) {
-
-        barangChart.destroy();
-
-        barangChart = null;
-
-    }
-
-
-    const wrap =
-        canvas.parentElement;
-
-
-    if (!wrap) {
-        return;
-    }
-
-
-    /*
-     * Update angka tengah.
-     */
-
-    const center =
-        wrap.querySelector(
-            '.barang-chart-center strong'
-        );
-
-
-    if (center) {
-
-        center.textContent =
-            barangNumber.format(
-                records.length
-            );
-
-    }
-
-
-    /*
-     * Chart.js tersedia.
-     */
-
-    if (
-        typeof window.Chart ===
-        'function'
-    ) {
-
-        canvas.hidden =
-            false;
-
-
-        wrap.classList.remove(
-            'barang-chart-fallback'
-        );
-
-
-        wrap.style.background =
-            '';
-
-
-        const labels =
-            Object.keys(
-                distribution
-            );
-
-
-        const counts =
-            labels.map(
-                function (label) {
-
-                    return distribution[
-                        label
-                    ];
-
-                }
-            );
-
-
-        const colors =
-            labels.map(
-                function (label) {
-
-                    return colorMap[
-                        label
-                    ];
-
-                }
-            );
-
-
-        barangChart =
-            new window.Chart(
-                canvas,
-                {
-                    type: 'doughnut',
-
-                    data: {
-
-                        labels: labels,
-
-                        datasets: [
-                            {
-                                data: counts,
-
-                                backgroundColor:
-                                    colors,
-
-                                borderColor:
-                                    '#ffffff',
-
-                                borderWidth:
-                                    2,
-
-                                hoverOffset:
-                                    4
-                            }
-                        ]
-
-                    },
-
-                    options: {
-
-                        responsive: true,
-
-                        maintainAspectRatio:
-                            false,
-
-                        cutout:
-                            '68%',
-
-                        plugins: {
-
-                            legend: {
-                                display: false
-                            },
-
-                            tooltip: {
-
-                                callbacks: {
-
-                                    label:
-                                        function (
-                                            context
-                                        ) {
-
-                                            return (
-                                                `${context.label}: ` +
-                                                `${barangNumber.format(context.raw)} barang`
-                                            );
-
-                                        }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-            );
-
-
-        return;
-
-    }
-
-
-    /*
-     * Fallback jika Chart.js tidak tersedia.
-     */
-
-    canvas.hidden =
-        true;
-
-
-    wrap.classList.add(
-        'barang-chart-fallback'
-    );
-
-
-    let angle =
-        0;
-
-
-    const segments =
-        Object.keys(
-            distribution
-        )
-        .map(
-            function (group) {
-
-                const start =
-                    angle;
-
-
-                const count =
-                    distribution[group];
-
-
-                const total =
-                    records.length;
-
-
-                angle +=
-                    total
-                        ? (
-                            count /
-                            total
-                        ) * 360
-                        : 0;
-
-
-                return (
-                    `${colorMap[group]} ` +
-                    `${start}deg ${angle}deg`
-                );
-
-            }
-        );
-
-
-    wrap.style.background =
-        records.length
-            ? `conic-gradient(${segments.join(', ')})`
-            : '#e7ecf2';
-
-}
-
-
-/* =========================================================
-   UPDATE LEGEND
-========================================================= */
-
-function updateBarangLegend(
-    distribution,
-    total,
-    colorMap
-) {
-
-    const legend =
-        document.getElementById(
-            'barangLegend'
-        );
-
-
-    if (!legend) {
-        return;
-    }
-
-
-    legend.replaceChildren();
-
-
-    /*
-     * Urutan golongan.
-     */
-
-    const defaultOrder = [
-        'Elektronik',
-        'Furnitur',
-        'Mekanikal',
-        'Elektrikal',
-        'Alat Kantor',
-        'Lainnya'
-    ];
-
-
-    const groups =
-        Object.keys(distribution);
-
-
-    groups.sort(
-        function (a, b) {
-
-            const ai =
-                defaultOrder.indexOf(a);
-
-
-            const bi =
-                defaultOrder.indexOf(b);
-
-
-            if (
-                ai !== -1 &&
-                bi !== -1
-            ) {
-
-                return ai - bi;
-
-            }
-
-
-            if (ai !== -1) {
-                return -1;
-            }
-
-
-            if (bi !== -1) {
-                return 1;
-            }
-
-
-            return (
-                distribution[b] -
-                distribution[a]
-            );
-
-        }
-    );
-
-
-    groups.forEach(
-        function (group) {
-
-            const count =
-                distribution[group];
-
-
-            const percentage =
-                total
-                    ? (
-                        count /
-                        total
-                    ) * 100
-                    : 0;
-
-
-            const item =
-                document.createElement(
-                    'div'
-                );
-
-
-            item.dataset.label =
-                group;
-
-
-            item.dataset.count =
-                count;
-
-
-            item.dataset.color =
-                colorMap[group];
-
-
-            /*
-             * Dot.
-             */
-
-            const dot =
-                document.createElement(
-                    'span'
-                );
-
-
-            dot.className =
-                'barang-dot';
-
-
-            dot.style.background =
-                colorMap[group];
-
-
-            /*
-             * Nama.
-             */
-
-            const name =
-                document.createElement(
-                    'p'
-                );
-
-
-            name.textContent =
-                group;
-
-
-            /*
-             * Jumlah.
-             */
-
-            const countElement =
-                document.createElement(
-                    'strong'
-                );
-
-
-            countElement.textContent =
-                barangNumber.format(
-                    count
-                );
-
-
-            /*
-             * Persentase.
-             */
-
-            const percentageElement =
-                document.createElement(
-                    'small'
-                );
-
-
-            percentageElement.textContent =
-                `${percentage.toFixed(1).replace('.', ',')}%`;
-
-
-            item.appendChild(dot);
-            item.appendChild(name);
-            item.appendChild(countElement);
-            item.appendChild(
-                percentageElement
-            );
-
-
-            legend.appendChild(item);
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   BARANG TERBARU
-========================================================= */
-
-function updateBarangLatest() {
-
-    const table =
-        document.querySelector(
-            '.barang-latest-table'
-        );
-
-
-    if (!table) {
-        return;
-    }
-
-
-    const tbody =
-        table.querySelector(
-            'tbody'
-        );
-
-
-    if (!tbody) {
-        return;
-    }
-
-
-    const records =
-        getBarangData();
-
-
-    const latest =
-        [...records]
-            .sort(
-                function (a, b) {
-
-                    const dateA =
-                        new Date(
-                            a.created_at ||
-                            a.updated_at ||
-                            0
-                        ).getTime();
-
-
-                    const dateB =
-                        new Date(
-                            b.created_at ||
-                            b.updated_at ||
-                            0
-                        ).getTime();
-
-
-                    return dateB - dateA;
-
-                }
-            )
-            .slice(0, 5);
-
-
-    tbody.replaceChildren();
-
-
-    latest.forEach(
-        function (item, index) {
-
-            const row =
-                document.createElement(
-                    'tr'
-                );
-
-
-            const no =
-                document.createElement(
-                    'td'
-                );
-
-
-            no.textContent =
-                index + 1;
-
-
-            const name =
-                document.createElement(
-                    'td'
-                );
-
-
-            name.textContent =
-                item.nama_barang ||
-                '-';
-
-
-            const group =
-                document.createElement(
-                    'td'
-                );
-
-
-            group.textContent =
-                item.golongan ||
-                '-';
-
-
-            const date =
-                document.createElement(
-                    'td'
-                );
-
-
-            date.textContent =
-                formatBarangDate(
-                    item.created_at ||
-                    item.updated_at
-                );
-
-
-            row.appendChild(no);
-            row.appendChild(name);
-            row.appendChild(group);
-            row.appendChild(date);
-
-
-            tbody.appendChild(row);
-
-        }
-    );
-
-
-    if (
-        latest.length === 0
-    ) {
-
-        const row =
-            document.createElement(
-                'tr'
-            );
-
-
-        const cell =
-            document.createElement(
-                'td'
-            );
-
-
-        cell.colSpan =
-            4;
-
-
-        cell.textContent =
-            'Belum ada data barang.';
-
-
-        row.appendChild(cell);
-
-        tbody.appendChild(row);
-
-    }
-
-}
-
-
-/* =========================================================
-   LAST SEEN
-========================================================= */
-
-function getLatestBarangRecord() {
-
-    const records =
-        getBarangData();
-
-
-    if (
-        records.length === 0
-    ) {
-
-        return null;
-
-    }
-
-
-    return (
-        [...records]
-            .sort(
-                function (a, b) {
-
-                    const dateA =
-                        new Date(
-                            a.updated_at ||
-                            a.created_at ||
-                            0
-                        ).getTime();
-
-
-                    const dateB =
-                        new Date(
-                            b.updated_at ||
-                            b.created_at ||
-                            0
-                        ).getTime();
-
-
-                    return dateB - dateA;
-
-                }
-            )[0]
-    );
-
-}
-
-
-function updateBarangLastSeen() {
-
-    const latest =
-        getLatestBarangRecord();
-
-
-    if (!latest) {
-        return;
-    }
-
-
-    /*
-     * Jika ada element khusus last seen.
-     */
-
-    const lastSeen =
-        document.getElementById(
-            'barangLastSeen'
-        );
-
-
-    if (lastSeen) {
-
-        lastSeen.textContent =
-            formatBarangLastSeen(
-                latest.updated_at ||
-                latest.created_at
-            );
-
-    }
-
-}
-
-
-/* =========================================================
-   LAST SEEN FORMAT
-========================================================= */
-
-function formatBarangLastSeen(
-    dateString
-) {
-
-    if (!dateString) {
-        return '-';
-    }
-
-
-    const timestamp =
-        new Date(
-            dateString
-        ).getTime();
-
-
-    if (
-        Number.isNaN(timestamp)
-    ) {
-
-        return '-';
-
-    }
-
-
-    const now =
-        Date.now();
-
-
-    const diff =
-        Math.max(
-            0,
-            now - timestamp
-        );
-
-
-    const seconds =
-        Math.floor(
-            diff / 1000
-        );
-
-
-    if (
-        seconds < 10
-    ) {
-
-        return 'Baru saja';
-
-    }
-
-
-    if (
-        seconds < 60
-    ) {
-
-        return `${seconds} detik lalu`;
-
-    }
-
-
-    const minutes =
-        Math.floor(
-            seconds / 60
-        );
-
-
-    if (
-        minutes < 60
-    ) {
-
-        return `${minutes} menit lalu`;
-
-    }
-
-
-    const hours =
-        Math.floor(
-            minutes / 60
-        );
-
-
-    if (
-        hours < 24
-    ) {
-
-        return `${hours} jam lalu`;
-
-    }
-
-
-    const days =
-        Math.floor(
-            hours / 24
-        );
-
-
-    if (
-        days < 7
-    ) {
-
-        return `${days} hari lalu`;
-
-    }
-
-
-    return formatBarangDate(
-        dateString
-    );
-
-}
-
-
-/* =========================================================
-   FORMAT DATE
-========================================================= */
-
-function formatBarangDate(
-    dateString
-) {
-
-    if (!dateString) {
-        return '-';
-    }
-
-
-    const date =
-        new Date(
-            dateString
-        );
-
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-
-        return '-';
-
-    }
-
-
-    return new Intl.DateTimeFormat(
-        'id-ID',
-        {
-            timeZone:
-                'Asia/Makassar',
-
-            day:
-                '2-digit',
-
-            month:
-                'short',
-
-            year:
-                'numeric'
-        }
-    ).format(date);
-
-}
-
-
-function formatBarangDateTime(
-    dateString
-) {
-
-    if (!dateString) {
-        return '-';
-    }
-
-
-    const date =
-        new Date(
-            dateString
-        );
-
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-
-        return '-';
-
-    }
-
-
-    return new Intl.DateTimeFormat(
-        'id-ID',
-        {
-            timeZone:
-                'Asia/Makassar',
-
-            day:
-                '2-digit',
-
-            month:
-                'short',
-
-            year:
-                'numeric',
-
-            hour:
-                '2-digit',
-
-            minute:
-                '2-digit',
-
-            hourCycle:
-                'h23'
-        }
-    )
-    .format(date)
-    .replace(
-        /\./g,
-        ':'
-    ) + ' WITA';
-
-}
-
-
-/* =========================================================
-   CLOCK WITA
-========================================================= */
-
-function updateBarangDate() {
-
-    const date =
-        document.getElementById(
-            'barangCurrentDate'
-        );
-
-
-    const time =
-        document.getElementById(
-            'barangCurrentTime'
-        );
-
-
-    if (!date || !time) {
-        return;
-    }
-
-
-    const now =
-        new Date();
-
-
-    date.textContent =
-        new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone:
-                    'Asia/Makassar',
-
-                weekday:
-                    'long',
-
-                day:
-                    'numeric',
-
-                month:
-                    'long',
-
-                year:
-                    'numeric'
-            }
-        ).format(now);
-
-
-    time.textContent =
-        new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone:
-                    'Asia/Makassar',
-
-                hour:
-                    '2-digit',
-
-                minute:
-                    '2-digit',
-
-                second:
-                    '2-digit',
-
-                hourCycle:
-                    'h23'
-            }
-        )
-        .format(now)
-        .replace(
-            /\./g,
-            ':'
-        ) +
-        ' WITA';
-
-}
-
-
-/* =========================================================
-   CRUD ACTION HANDLER
-========================================================= */
-
-function handleBarangAction(
-    action,
-    id
-) {
-
-    const records =
-        getBarangData();
-
-
-    const record =
-        records.find(
-            function (item) {
-
-                return item.id === id;
-
-            }
-        );
-
-
-    if (!record) {
-
-        showBarangMessage(
-            'Data barang tidak ditemukan.',
-            'error'
-        );
-
-        return;
-
-    }
-
-
-    switch (action) {
-
-        case 'view':
-
-            openBarangModal(
-                'view',
-                record
-            );
-
-            break;
-
-
-        case 'edit':
-
-            openBarangModal(
-                'edit',
-                record
-            );
-
-            break;
-
-
-        case 'delete':
-
-            openBarangModal(
-                'delete',
-                record
-            );
-
-            break;
-
-    }
-
-}
-
-
-/* =========================================================
-   OPEN MODAL
-========================================================= */
-
-function openBarangModal(
-    mode = 'add',
-    record = null
-) {
-
-    const modal =
-        document.getElementById(
-            'barangModal'
-        );
-
-
-    if (!modal) {
-        return;
-    }
-
-
-    /*
-     * Jangan cegah membuka modal
-     * ketika modal sebelumnya sudah tertutup.
-     */
-
-    const title =
-        document.getElementById(
-            'barangModalTitle'
-        );
-
-
-    const description =
-        document.getElementById(
-            'barangModalDescription'
-        );
-
-
-    const note =
-        document.getElementById(
-            'barangModalNote'
-        );
-
-
-    const form =
-        document.getElementById(
-            'barangForm'
-        );
-
-
-    const name =
-        document.getElementById(
-            'barangName'
-        );
-
-
-    const code =
-        document.getElementById(
-            'barangCode'
-        );
-
-
-    const group =
-        document.getElementById(
-            'barangFormGolongan'
-        );
-
-
-    const save =
-        document.getElementById(
-            'barangSaveButton'
-        );
-
-
-    if (
-        !form ||
-        !name ||
-        !code ||
-        !group ||
-        !save
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Reset.
-     */
-
-    form.reset();
-
-
-    /*
-     * Simpan mode dan ID pada form.
-     */
-
-    form.dataset.mode =
-        mode;
-
-
-    form.dataset.id =
-        record
-            ? record.id
-            : '';
-
-
-    /*
-     * Mode ADD.
-     */
-
-    if (
-        mode === 'add'
-    ) {
-
-        title.textContent =
-            'Tambah Barang';
-
-
-        description.textContent =
-            'Tambahkan data master barang baru.';
-
-
-        note.textContent =
-            'Data akan disimpan pada penyimpanan browser sementara.';
-
-
-        name.readOnly =
-            false;
-
-
-        code.readOnly =
-            false;
-
-
-        group.disabled =
-            false;
-
-
-        save.hidden =
-            false;
-
-
-        save.disabled =
-            false;
-
-
-        save.textContent =
-            'Simpan Barang';
-
-
-        save.classList.remove(
-            'barang-delete-button'
-        );
-
-    }
-
-
-    /*
-     * Mode VIEW.
-     */
-
-    if (
-        mode === 'view'
-    ) {
-
-        title.textContent =
-            'Detail Barang';
-
-
-        description.textContent =
-            'Informasi data master barang.';
-
-
-        note.textContent =
-            'Detail data barang yang tersimpan.';
-
-
-        name.value =
-            record?.nama_barang ||
-            '';
-
-
-        code.value =
-            record?.kode_barang ||
-            '';
-
-
-        group.value =
-            record?.golongan ||
-            '';
-
-
-        name.readOnly =
-            true;
-
-
-        code.readOnly =
-            true;
-
-
-        group.disabled =
-            true;
-
-
-        save.hidden =
-            true;
-
-
-        save.disabled =
-            true;
-
-    }
-
-
-    /*
-     * Mode EDIT.
-     */
-
-    if (
-        mode === 'edit'
-    ) {
-
-        title.textContent =
-            'Edit Barang';
-
-
-        description.textContent =
-            'Perbarui informasi data master barang.';
-
-
-        note.textContent =
-            'Perubahan akan langsung tersimpan pada penyimpanan browser.';
-
-
-        name.value =
-            record?.nama_barang ||
-            '';
-
-
-        code.value =
-            record?.kode_barang ||
-            '';
-
-
-        group.value =
-            record?.golongan ||
-            '';
-
-
-        name.readOnly =
-            false;
-
-
-        code.readOnly =
-            false;
-
-
-        group.disabled =
-            false;
-
-
-        save.hidden =
-            false;
-
-
-        save.disabled =
-            false;
-
-
-        save.textContent =
-            'Simpan Perubahan';
-
-
-        save.classList.remove(
-            'barang-delete-button'
-        );
-
-    }
-
-
-    /*
-     * Mode DELETE.
-     */
-
-    if (
-        mode === 'delete'
-    ) {
-
-        title.textContent =
-            'Hapus Barang';
-
-
-        description.textContent =
-            'Konfirmasi penghapusan data barang.';
-
-
-        note.textContent =
-            'Data yang dihapus tidak dapat dikembalikan dari penyimpanan browser.';
-
-
-        name.value =
-            record?.nama_barang ||
-            '';
-
-
-        code.value =
-            record?.kode_barang ||
-            '';
-
-
-        group.value =
-            record?.golongan ||
-            '';
-
-
-        name.readOnly =
-            true;
-
-
-        code.readOnly =
-            true;
-
-
-        group.disabled =
-            true;
-
-
-        save.hidden =
-            false;
-
-
-        save.disabled =
-            false;
-
-
-        save.textContent =
-            'Hapus Barang';
-
-
-        save.classList.add(
-            'barang-delete-button'
-        );
-
-    }
-
-
-    barangPreviousOverflow =
-        document.body.style.overflow;
-
-
-    document.body.style.overflow =
-        'hidden';
-
-
-    if (
-        typeof modal.showModal ===
-        'function'
-    ) {
-
-        modal.showModal();
-
-    } else {
-
-        modal.setAttribute(
-            'open',
-            ''
-        );
-
-    }
-
-
-    /*
-     * Focus.
-     */
-
-    if (
-        mode === 'add' ||
-        mode === 'edit'
-    ) {
-
-        window.setTimeout(
-            function () {
-
-                name.focus();
-
-            },
-            50
-        );
-
-    }
-
-
-    refreshBarangIcons();
-
-}
-
-
-/* =========================================================
-   CLOSE MODAL
-========================================================= */
-
-function closeBarangModal() {
-
-    const modal =
-        document.getElementById(
-            'barangModal'
-        );
-
-
-    if (!modal) {
-        return;
-    }
-
-
-    if (
-        typeof modal.close ===
-        'function' &&
-        modal.open
-    ) {
-
-        modal.close();
-
-    } else {
-
-        modal.removeAttribute(
-            'open'
-        );
-
-
-        document.body.style.overflow =
-            barangPreviousOverflow;
-
-    }
-
-}
-
-
-/* =========================================================
-   SUBMIT CRUD
-========================================================= */
-
-function submitBarangForm() {
-
-    const form =
-        document.getElementById(
-            'barangForm'
-        );
-
-
-    if (!form) {
-        return;
-    }
-
-
-    const mode =
-        form.dataset.mode ||
-        'add';
-
-
-    const id =
-        form.dataset.id ||
-        '';
-
-
-    const name =
-        document.getElementById(
-            'barangName'
-        )
-        ?.value
-        .trim();
-
-
-    const code =
-        document.getElementById(
-            'barangCode'
-        )
-        ?.value
-        .trim();
-
-
-    const group =
-        document.getElementById(
-            'barangFormGolongan'
-        )
-        ?.value;
-
-
-    /*
-     * Validasi.
-     */
-
-    if (!name) {
-
-        showBarangMessage(
-            'Nama barang wajib diisi.',
-            'error'
-        );
-
-        return;
-
-    }
-
-
-    if (!code) {
-
-        showBarangMessage(
-            'Kode barang wajib diisi.',
-            'error'
-        );
-
-        return;
-
-    }
-
-
-    if (!group) {
-
-        showBarangMessage(
-            'Golongan wajib dipilih.',
-            'error'
-        );
-
-        return;
-
-    }
-
-
-    /*
-     * Ambil data.
-     */
-
-    const records =
-        getBarangData();
-
-
-    /*
-     * Cek kode duplikat.
-     */
-
-    const duplicate =
-        records.find(
-            function (item) {
-
-                return (
-                    item.kode_barang
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        ) ===
-                    code.toLocaleLowerCase(
-                        'id-ID'
-                    ) &&
-                    item.id !== id
-                );
-
-            }
-        );
-
-
-    if (duplicate) {
-
-        showBarangMessage(
-            'Kode barang sudah digunakan.',
-            'error'
-        );
-
-        return;
-
-    }
-
-
-    /*
-     * ADD.
-     */
-
-    if (
-        mode === 'add'
-    ) {
-
-        const now =
-            new Date()
-                .toISOString();
-
-
-        const newRecord = {
-
-            id:
-                generateBarangId(),
-
-            nama_barang:
-                name,
-
-            kode_barang:
-                code,
-
-            golongan:
-                group,
-
-            created_at:
-                now,
-
-            updated_at:
-                now
-
-        };
-
-
-        records.unshift(
-            newRecord
-        );
-
-
-        saveBarangStorage(
-            records
-        );
-
-
-        barangCurrentPage =
-            1;
-
-
-        closeBarangModal();
-
-        renderBarangPage();
-
-
-        showBarangMessage(
-            'Barang berhasil ditambahkan.',
-            'success'
-        );
-
-
-        return;
-
-    }
-
-
-    /*
-     * EDIT.
-     */
-
-    if (
-        mode === 'edit'
-    ) {
-
-        const index =
-            records.findIndex(
+        const record =
+            records.find(
                 function (item) {
 
-                    return item.id === id;
+                    return (
+                        String(
+                            item.id
+                        ) ===
+                        String(
+                            id
+                        )
+                    );
 
                 }
             );
 
 
-        if (
-            index === -1
-        ) {
+        if (!record) {
 
-            showBarangMessage(
+            showMessage(
                 'Data barang tidak ditemukan.',
                 'error'
             );
@@ -3639,9 +2511,1212 @@ function submitBarangForm() {
         }
 
 
-        records[index] = {
+        if (
+            action ===
+            'view'
+        ) {
 
-            ...records[index],
+            openModal(
+                'view',
+                record
+            );
+
+            return;
+
+        }
+
+
+        if (
+            action ===
+            'edit'
+        ) {
+
+            openModal(
+                'edit',
+                record
+            );
+
+            return;
+
+        }
+
+
+        if (
+            action ===
+            'delete'
+        ) {
+
+            openModal(
+                'delete',
+                record
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       MODAL
+       ============================================================ */
+
+    function bindModal() {
+
+        const modal =
+            document.getElementById(
+                'barangModal'
+            );
+
+
+        if (!modal) {
+            return;
+        }
+
+
+        modal.addEventListener(
+            'click',
+            function (event) {
+
+                if (
+                    event.target ===
+                    modal
+                ) {
+
+                    closeModal();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    function bindEscapeKey() {
+
+        document.addEventListener(
+            'keydown',
+            function (event) {
+
+                if (
+                    event.key !==
+                    'Escape'
+                ) {
+                    return;
+                }
+
+
+                const modal =
+                    document.getElementById(
+                        'barangModal'
+                    );
+
+
+                if (
+                    modal &&
+                    modal.open
+                ) {
+
+                    closeModal();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    function openModal(
+        mode,
+        record = null
+    ) {
+
+        const modal =
+            document.getElementById(
+                'barangModal'
+            );
+
+
+        if (!modal) {
+            return;
+        }
+
+
+        modalMode =
+            mode;
+
+
+        modalRecordId =
+            record
+                ? record.id
+                : null;
+
+
+        const title =
+            document.getElementById(
+                'barangModalTitle'
+            );
+
+
+        const description =
+            document.getElementById(
+                'barangModalDescription'
+            );
+
+
+        const note =
+            document.getElementById(
+                'barangModalNote'
+            );
+
+
+        const form =
+            document.getElementById(
+                'barangForm'
+            );
+
+
+        const name =
+            document.getElementById(
+                'barangName'
+            );
+
+
+        const code =
+            document.getElementById(
+                'barangCode'
+            );
+
+
+        const group =
+            document.getElementById(
+                'barangFormGolongan'
+            );
+
+
+        const save =
+            document.getElementById(
+                'barangSaveButton'
+            );
+
+
+        /*
+         * Bersihkan status sebelumnya.
+         */
+
+        if (save) {
+
+            save.hidden =
+                false;
+
+
+            save.disabled =
+                false;
+
+
+            save.classList.remove(
+                'barang-delete-button'
+            );
+
+        }
+
+
+        if (form) {
+
+            form.dataset.mode =
+                mode;
+
+
+            form.dataset.id =
+                record
+                    ? record.id
+                    : '';
+
+        }
+
+
+        if (name) {
+
+            name.value =
+                record?.nama_barang ||
+                '';
+
+        }
+
+
+        if (code) {
+
+            code.value =
+                record?.kode_barang ||
+                '';
+
+        }
+
+
+        if (group) {
+
+            group.value =
+                record
+                    ? resolveGolonganId(
+                        record
+                    )
+                    : '';
+
+        }
+
+
+        /*
+         * ADD
+         */
+
+        if (
+            mode ===
+            'add'
+        ) {
+
+            if (form) {
+                form.reset();
+            }
+
+
+            if (title) {
+
+                title.textContent =
+                    'Tambah Barang';
+
+            }
+
+
+            if (description) {
+
+                description.textContent =
+                    'Tambahkan data master barang baru.';
+
+            }
+
+
+            if (note) {
+
+                note.textContent =
+                    'Data baru akan disimpan langsung ke database.';
+
+            }
+
+
+            setFormDisabled(
+                false
+            );
+
+
+            if (save) {
+
+                save.hidden =
+                    false;
+
+
+                save.disabled =
+                    false;
+
+
+                save.textContent =
+                    'Simpan Barang';
+
+            }
+
+        }
+
+
+        /*
+         * VIEW
+         */
+
+        if (
+            mode ===
+            'view'
+        ) {
+
+            if (title) {
+
+                title.textContent =
+                    'Detail Barang';
+
+            }
+
+
+            if (description) {
+
+                description.textContent =
+                    'Informasi data master barang.';
+
+            }
+
+
+            if (note) {
+
+                note.textContent =
+                    'Data ini berasal dari database sistem.';
+
+            }
+
+
+            setFormDisabled(
+                true
+            );
+
+
+            if (save) {
+
+                save.hidden =
+                    true;
+
+            }
+
+        }
+
+
+        /*
+         * EDIT
+         */
+
+        if (
+            mode ===
+            'edit'
+        ) {
+
+            if (title) {
+
+                title.textContent =
+                    'Edit Barang';
+
+            }
+
+
+            if (description) {
+
+                description.textContent =
+                    'Perbarui data master barang.';
+
+            }
+
+
+            if (note) {
+
+                note.textContent =
+                    'Perubahan akan disimpan langsung ke database.';
+
+            }
+
+
+            setFormDisabled(
+                false
+            );
+
+
+            if (save) {
+
+                save.hidden =
+                    false;
+
+
+                save.disabled =
+                    false;
+
+
+                save.textContent =
+                    'Simpan Perubahan';
+
+            }
+
+        }
+
+
+        /*
+         * DELETE
+         */
+
+        if (
+            mode ===
+            'delete'
+        ) {
+
+            if (title) {
+
+                title.textContent =
+                    'Hapus Barang';
+
+            }
+
+
+            if (description) {
+
+                description.textContent =
+                    'Konfirmasi penghapusan data barang.';
+
+            }
+
+
+            if (note) {
+
+                note.textContent =
+                    'Data akan dihapus dari database dan tidak dapat dikembalikan.';
+
+            }
+
+
+            setFormDisabled(
+                true
+            );
+
+
+            if (save) {
+
+                save.hidden =
+                    false;
+
+
+                save.disabled =
+                    false;
+
+
+                save.textContent =
+                    'Hapus Barang';
+
+
+                save.classList.add(
+                    'barang-delete-button'
+                );
+
+            }
+
+        }
+
+
+        previousBodyOverflow =
+            document.body.style.overflow;
+
+
+        document.body.style.overflow =
+            'hidden';
+
+
+        if (
+            typeof modal.showModal ===
+            'function'
+        ) {
+
+            if (!modal.open) {
+
+                modal.showModal();
+
+            }
+
+        } else {
+
+            modal.setAttribute(
+                'open',
+                ''
+            );
+
+        }
+
+
+        refreshIcons();
+
+    }
+
+
+    function setFormDisabled(
+        disabled
+    ) {
+
+        const name =
+            document.getElementById(
+                'barangName'
+            );
+
+
+        const code =
+            document.getElementById(
+                'barangCode'
+            );
+
+
+        const group =
+            document.getElementById(
+                'barangFormGolongan'
+            );
+
+
+        if (name) {
+
+            name.readOnly =
+                disabled;
+
+        }
+
+
+        if (code) {
+
+            code.readOnly =
+                disabled;
+
+        }
+
+
+        if (group) {
+
+            group.disabled =
+                disabled;
+
+        }
+
+    }
+
+
+    function closeModal() {
+
+        const modal =
+            document.getElementById(
+                'barangModal'
+            );
+
+
+        if (!modal) {
+            return;
+        }
+
+
+        if (
+            typeof modal.close ===
+            'function' &&
+            modal.open
+        ) {
+
+            modal.close();
+
+        } else {
+
+            modal.removeAttribute(
+                'open'
+            );
+
+        }
+
+
+        document.body.style.overflow =
+            previousBodyOverflow;
+
+
+        const save =
+            document.getElementById(
+                'barangSaveButton'
+            );
+
+
+        if (save) {
+
+            save.classList.remove(
+                'barang-delete-button'
+            );
+
+
+            save.disabled =
+                false;
+
+        }
+
+    }
+
+
+    /* ============================================================
+       FORM EVENT
+       ============================================================ */
+
+    function bindForm() {
+
+        const form =
+            document.getElementById(
+                'barangForm'
+            );
+
+
+        if (!form) {
+            return;
+        }
+
+
+        form.addEventListener(
+            'submit',
+            function (event) {
+
+                event.preventDefault();
+
+
+                submitForm();
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       CSRF
+       ============================================================ */
+
+    function getCsrfToken() {
+
+        /*
+         * Prioritas meta csrf-token
+         * dari layout Laravel.
+         */
+
+        const meta =
+            document.querySelector(
+                'meta[name="csrf-token"]'
+            );
+
+
+        if (
+            meta &&
+            meta.content
+        ) {
+
+            return meta.content;
+
+        }
+
+
+        /*
+         * Fallback dari @csrf di form.
+         */
+
+        const input =
+            document.querySelector(
+                '#barangForm input[name="_token"]'
+            );
+
+
+        if (
+            input &&
+            input.value
+        ) {
+
+            return input.value;
+
+        }
+
+
+        return '';
+
+    }
+
+
+    /* ============================================================
+       CRUD URL
+       ============================================================ */
+
+    function getCrudUrl(
+        type,
+        id = null
+    ) {
+
+        if (
+            !window.BARANG_CRUD
+        ) {
+
+            throw new Error(
+                'Konfigurasi BARANG_CRUD tidak ditemukan pada Blade.'
+            );
+
+        }
+
+
+        if (
+            type ===
+            'store'
+        ) {
+
+            if (
+                !window.BARANG_CRUD.store
+            ) {
+
+                throw new Error(
+                    'URL tambah Barang tidak ditemukan.'
+                );
+
+            }
+
+
+            return window.BARANG_CRUD.store;
+
+        }
+
+
+        if (
+            type ===
+            'update'
+        ) {
+
+            if (
+                !window.BARANG_CRUD.update
+            ) {
+
+                throw new Error(
+                    'URL update Barang tidak ditemukan.'
+                );
+
+            }
+
+
+            return window.BARANG_CRUD.update.replace(
+                '__ID__',
+                encodeURIComponent(
+                    id
+                )
+            );
+
+        }
+
+
+        if (
+            type ===
+            'destroy'
+        ) {
+
+            if (
+                !window.BARANG_CRUD.destroy
+            ) {
+
+                throw new Error(
+                    'URL hapus Barang tidak ditemukan.'
+                );
+
+            }
+
+
+            return window.BARANG_CRUD.destroy.replace(
+                '__ID__',
+                encodeURIComponent(
+                    id
+                )
+            );
+
+        }
+
+
+        throw new Error(
+            'Tipe CRUD Barang tidak valid.'
+        );
+
+    }
+
+
+    /* ============================================================
+       HTTP REQUEST
+       ============================================================ */
+
+    async function requestCrud(
+        url,
+        method,
+        payload = null
+    ) {
+
+        const csrfToken =
+            getCsrfToken();
+
+
+        if (!csrfToken) {
+
+            throw new Error(
+                'CSRF token tidak ditemukan. Pastikan layout memiliki meta csrf-token atau form menggunakan @csrf.'
+            );
+
+        }
+
+
+        const headers = {
+
+            'Accept':
+                'application/json',
+
+            'X-Requested-With':
+                'XMLHttpRequest',
+
+            'X-CSRF-TOKEN':
+                csrfToken
+
+        };
+
+
+        const options = {
+
+            method:
+                method,
+
+            headers:
+                headers,
+
+            credentials:
+                'same-origin'
+
+        };
+
+
+        if (
+            payload !== null
+        ) {
+
+            headers[
+                'Content-Type'
+            ] =
+                'application/json';
+
+
+            options.body =
+                JSON.stringify(
+                    payload
+                );
+
+        }
+
+
+        let response;
+
+
+        try {
+
+            response =
+                await fetch(
+                    url,
+                    options
+                );
+
+        } catch (error) {
+
+            console.error(
+                'Request Barang gagal:',
+                error
+            );
+
+
+            throw new Error(
+                'Tidak dapat terhubung ke server.'
+            );
+
+        }
+
+
+        const contentType =
+            response.headers.get(
+                'content-type'
+            ) || '';
+
+
+        let data =
+            null;
+
+
+        /*
+         * JSON dari Laravel.
+         */
+
+        if (
+            contentType.includes(
+                'application/json'
+            )
+        ) {
+
+            try {
+
+                data =
+                    await response.json();
+
+            } catch (error) {
+
+                data =
+                    null;
+
+            }
+
+        } else {
+
+            /*
+             * Kalau controller lama masih redirect/HTML,
+             * response sukses tetap dapat diterima.
+             */
+
+            try {
+
+                data =
+                    await response.text();
+
+            } catch (error) {
+
+                data =
+                    null;
+
+            }
+
+        }
+
+
+        /*
+         * ERROR RESPONSE
+         */
+
+        if (
+            !response.ok
+        ) {
+
+            let message =
+                (
+                    data &&
+                    typeof data === 'object' &&
+                    data.message
+                )
+                    ? data.message
+                    : `Request gagal dengan status ${response.status}.`;
+
+
+            /*
+             * Laravel validation 422.
+             */
+
+            if (
+                response.status === 422 &&
+                data &&
+                typeof data === 'object' &&
+                data.errors
+            ) {
+
+                const errors =
+                    Object.values(
+                        data.errors
+                    ).flat();
+
+
+                if (
+                    errors.length > 0
+                ) {
+
+                    message =
+                        errors[0];
+
+                }
+
+            }
+
+
+            /*
+             * CSRF.
+             */
+
+            if (
+                response.status === 419
+            ) {
+
+                message =
+                    'Session Laravel atau CSRF token telah kedaluwarsa. Refresh halaman lalu coba lagi.';
+
+            }
+
+
+            /*
+             * Unauthorized.
+             */
+
+            if (
+                response.status === 401
+            ) {
+
+                message =
+                    'Session login telah berakhir. Silakan login kembali.';
+
+            }
+
+
+            /*
+             * Forbidden.
+             */
+
+            if (
+                response.status === 403
+            ) {
+
+                message =
+                    'Kamu tidak memiliki izin untuk melakukan aksi ini.';
+
+            }
+
+
+            /*
+             * Not Found.
+             */
+
+            if (
+                response.status === 404
+            ) {
+
+                message =
+                    'Route atau data Barang tidak ditemukan.';
+
+            }
+
+
+            /*
+             * Method Not Allowed.
+             */
+
+            if (
+                response.status === 405
+            ) {
+
+                message =
+                    `Method ${method} tidak diizinkan oleh route Laravel.`;
+
+            }
+
+
+            /*
+             * Server error.
+             */
+
+            if (
+                response.status >= 500
+            ) {
+
+                message =
+                    (
+                        data &&
+                        typeof data === 'object' &&
+                        data.message
+                    )
+                        ? data.message
+                        : 'Terjadi kesalahan pada server Laravel.';
+
+            }
+
+
+            throw new Error(
+                message
+            );
+
+        }
+
+
+        return data;
+
+    }
+
+
+    /* ============================================================
+       SUBMIT FORM
+       ============================================================ */
+
+    async function submitForm() {
+
+        const saveButton =
+            document.getElementById(
+                'barangSaveButton'
+            );
+
+
+        /*
+         * ========================================================
+         * DELETE
+         * ========================================================
+         */
+
+        if (
+            modalMode ===
+            'delete'
+        ) {
+
+            await deleteBarang(
+                saveButton
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * ========================================================
+         * AMBIL FORM
+         * ========================================================
+         */
+
+        const name =
+            document.getElementById(
+                'barangName'
+            )?.value
+                ?.trim() ||
+            '';
+
+
+        const code =
+            document.getElementById(
+                'barangCode'
+            )?.value
+                ?.trim() ||
+            '';
+
+
+        const group =
+            document.getElementById(
+                'barangFormGolongan'
+            )?.value ||
+            '';
+
+
+        /*
+         * VALIDASI FRONTEND
+         */
+
+        if (!name) {
+
+            showMessage(
+                'Nama barang wajib diisi.',
+                'error'
+            );
+
+            return;
+
+        }
+
+
+        if (!code) {
+
+            showMessage(
+                'Kode barang wajib diisi.',
+                'error'
+            );
+
+            return;
+
+        }
+
+
+        if (!group) {
+
+            showMessage(
+                'Golongan wajib dipilih.',
+                'error'
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * Payload sesuai field Blade/database existing.
+         */
+
+        const payload = {
 
             nama_barang:
                 name,
@@ -3650,57 +3725,248 @@ function submitBarangForm() {
                 code,
 
             golongan:
-                group,
-
-            updated_at:
-                new Date()
-                    .toISOString()
+                group
 
         };
 
 
-        saveBarangStorage(
-            records
-        );
+        /*
+         * ========================================================
+         * CREATE
+         * ========================================================
+         */
+
+        if (
+            modalMode ===
+            'add'
+        ) {
+
+            await createBarang(
+                payload,
+                saveButton
+            );
+
+            return;
+
+        }
 
 
-        closeBarangModal();
+        /*
+         * ========================================================
+         * UPDATE
+         * ========================================================
+         */
 
-        renderBarangPage();
+        if (
+            modalMode ===
+            'edit'
+        ) {
 
+            await updateBarang(
+                payload,
+                saveButton
+            );
 
-        showBarangMessage(
-            'Barang berhasil diperbarui.',
-            'success'
-        );
-
-
-        return;
+        }
 
     }
 
 
-    /*
-     * DELETE.
-     */
+    /* ============================================================
+       CREATE DATABASE
+       ============================================================ */
 
-    if (
-        mode === 'delete'
+    async function createBarang(
+        payload,
+        button
     ) {
 
-        const record =
-            records.find(
-                function (item) {
+        try {
 
-                    return item.id === id;
-
-                }
+            setButtonLoading(
+                button,
+                true,
+                'Menyimpan...'
             );
+
+
+            const url =
+                getCrudUrl(
+                    'store'
+                );
+
+
+            await requestCrud(
+                url,
+                'POST',
+                payload
+            );
+
+
+            closeModal();
+
+
+            showMessage(
+                'Barang berhasil ditambahkan ke database.',
+                'success'
+            );
+
+
+            /*
+             * Reload agar Controller mengambil
+             * ulang data terbaru dari DB.
+             */
+
+            reloadAfterSuccess();
+
+        } catch (error) {
+
+            console.error(
+                'CREATE Barang gagal:',
+                error
+            );
+
+
+            showMessage(
+                error.message ||
+                'Barang gagal ditambahkan.',
+                'error'
+            );
+
+
+            setButtonLoading(
+                button,
+                false,
+                'Simpan Barang'
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       UPDATE DATABASE
+       ============================================================ */
+
+    async function updateBarang(
+        payload,
+        button
+    ) {
+
+        if (!modalRecordId) {
+
+            showMessage(
+                'ID barang tidak ditemukan.',
+                'error'
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            setButtonLoading(
+                button,
+                true,
+                'Menyimpan...'
+            );
+
+
+            const url =
+                getCrudUrl(
+                    'update',
+                    modalRecordId
+                );
+
+
+            await requestCrud(
+                url,
+                'PUT',
+                payload
+            );
+
+
+            closeModal();
+
+
+            showMessage(
+                'Barang berhasil diperbarui di database.',
+                'success'
+            );
+
+
+            reloadAfterSuccess();
+
+        } catch (error) {
+
+            console.error(
+                'UPDATE Barang gagal:',
+                error
+            );
+
+
+            showMessage(
+                error.message ||
+                'Barang gagal diperbarui.',
+                'error'
+            );
+
+
+            setButtonLoading(
+                button,
+                false,
+                'Simpan Perubahan'
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       DELETE DATABASE
+       ============================================================ */
+
+    async function deleteBarang(
+        button
+    ) {
+
+        if (!modalRecordId) {
+
+            showMessage(
+                'ID barang tidak ditemukan.',
+                'error'
+            );
+
+            return;
+
+        }
+
+
+        const record =
+            getBarangData()
+                .find(
+                    function (item) {
+
+                        return (
+                            String(
+                                item.id
+                            ) ===
+                            String(
+                                modalRecordId
+                            )
+                        );
+
+                    }
+                );
 
 
         if (!record) {
 
-            showBarangMessage(
+            showMessage(
                 'Data barang tidak ditemukan.',
                 'error'
             );
@@ -3712,180 +3978,212 @@ function submitBarangForm() {
 
         const confirmed =
             window.confirm(
-                `Hapus barang "${record.nama_barang}"?`
+                `Apakah kamu yakin ingin menghapus "${record.nama_barang}"?`
             );
 
 
         if (!confirmed) {
+            return;
+        }
+
+
+        try {
+
+            setButtonLoading(
+                button,
+                true,
+                'Menghapus...'
+            );
+
+
+            const url =
+                getCrudUrl(
+                    'destroy',
+                    modalRecordId
+                );
+
+
+            await requestCrud(
+                url,
+                'DELETE'
+            );
+
+
+            closeModal();
+
+
+            showMessage(
+                'Barang berhasil dihapus dari database.',
+                'success'
+            );
+
+
+            reloadAfterSuccess();
+
+        } catch (error) {
+
+            console.error(
+                'DELETE Barang gagal:',
+                error
+            );
+
+
+            showMessage(
+                error.message ||
+                'Barang gagal dihapus.',
+                'error'
+            );
+
+
+            setButtonLoading(
+                button,
+                false,
+                'Hapus Barang'
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       BUTTON LOADING
+       ============================================================ */
+
+    function setButtonLoading(
+        button,
+        loading,
+        text
+    ) {
+
+        if (!button) {
+            return;
+        }
+
+
+        button.disabled =
+            loading;
+
+
+        button.textContent =
+            text;
+
+    }
+
+
+    /* ============================================================
+       RELOAD AFTER CRUD
+       ============================================================ */
+
+    function reloadAfterSuccess() {
+
+        /*
+         * Tidak perlu memanipulasi array/frontend
+         * sebagai sumber utama.
+         *
+         * Reload memastikan data yang tampil adalah
+         * data yang benar-benar sudah berada di database.
+         */
+
+        window.setTimeout(
+            function () {
+
+                window.location.reload();
+
+            },
+            450
+        );
+
+    }
+
+
+    /* ============================================================
+       RESET FILTER
+       ============================================================ */
+
+    function resetFilter() {
+
+        const search =
+            document.getElementById(
+                'barangSearch'
+            );
+
+
+        const group =
+            document.getElementById(
+                'barangGolongan'
+            );
+
+
+        if (search) {
+
+            search.value =
+                '';
+
+        }
+
+
+        if (group) {
+
+            group.value =
+                '';
+
+        }
+
+
+        currentPage =
+            1;
+
+
+        renderPage();
+
+    }
+
+
+    /* ============================================================
+       EXPORT CSV
+       ============================================================ */
+
+    function exportCSV() {
+
+        const records =
+            getFilteredData();
+
+
+        if (
+            records.length === 0
+        ) {
+
+            showMessage(
+                'Tidak ada data Barang untuk diekspor.',
+                'error'
+            );
 
             return;
 
         }
 
 
-        const filtered =
-            records.filter(
-                function (item) {
+        const rows = [
 
-                    return item.id !== id;
+            [
+                'No',
+                'Nama Barang',
+                'Kode Barang',
+                'Golongan'
+            ]
 
-                }
-            );
-
-
-        saveBarangStorage(
-            filtered
-        );
+        ];
 
 
-        /*
-         * Jika halaman terakhir
-         * menjadi kosong.
-         */
+        records.forEach(
+            function (
+                item,
+                index
+            ) {
 
-        const pageSize =
-            Number(
-                document.getElementById(
-                    'barangPageSize'
-                )?.value
-            ) || 10;
+                rows.push([
 
-
-        const totalPages =
-            Math.max(
-                1,
-                Math.ceil(
-                    filtered.length /
-                    pageSize
-                )
-            );
-
-
-        barangCurrentPage =
-            Math.min(
-                barangCurrentPage,
-                totalPages
-            );
-
-
-        closeBarangModal();
-
-        renderBarangPage();
-
-
-        showBarangMessage(
-            'Barang berhasil dihapus.',
-            'success'
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   GENERATE ID
-========================================================= */
-
-function generateBarangId() {
-
-    return (
-        'barang-' +
-        Date.now() +
-        '-' +
-        Math.random()
-            .toString(36)
-            .slice(2, 10)
-    );
-
-}
-
-
-/* =========================================================
-   RESET FILTER
-========================================================= */
-
-function resetBarangFilter() {
-
-    const search =
-        document.getElementById(
-            'barangSearch'
-        );
-
-
-    const group =
-        document.getElementById(
-            'barangGolongan'
-        );
-
-
-    if (search) {
-
-        search.value =
-            '';
-
-    }
-
-
-    if (group) {
-
-        group.value =
-            '';
-
-    }
-
-
-    barangCurrentPage =
-        1;
-
-
-    renderBarangPage();
-
-}
-
-
-/* =========================================================
-   FILTER BUTTON
-========================================================= */
-
-function filterBarangTable() {
-
-    barangCurrentPage =
-        1;
-
-
-    renderBarangPage();
-
-}
-
-
-/* =========================================================
-   EXPORT CSV
-========================================================= */
-
-function exportBarangCSV() {
-
-    const records =
-        getFilteredBarangData();
-
-
-    const rows = [
-        [
-            'No',
-            'Nama Barang',
-            'Kode Barang',
-            'Golongan',
-            'Tanggal Ditambahkan',
-            'Terakhir Diubah'
-        ]
-    ];
-
-
-    records.forEach(
-        function (item, index) {
-
-            rows.push(
-                [
                     index + 1,
 
                     item.nama_barang ||
@@ -3894,262 +4192,652 @@ function exportBarangCSV() {
                     item.kode_barang ||
                     '',
 
-                    item.golongan ||
-                    '',
+                    resolveGolonganName(
+                        item
+                    ) || ''
 
-                    formatBarangDate(
-                        item.created_at
-                    ),
+                ]);
 
-                    formatBarangDateTime(
-                        item.updated_at
-                    )
-                ]
-            );
-
-        }
-    );
-
-
-    function escapeCSV(
-        value
-    ) {
-
-        let text =
-            String(
-                value ?? ''
-            );
-
-
-        /*
-         * Cegah formula injection.
-         */
-
-        if (
-            /^[\s]*[=+@-]/.test(
-                text
-            )
-        ) {
-
-            text =
-                "'" + text;
-
-        }
-
-
-        return (
-            '"' +
-            text.replace(
-                /"/g,
-                '""'
-            ) +
-            '"'
-        );
-
-    }
-
-
-    const csv =
-        rows
-            .map(
-                function (row) {
-
-                    return row
-                        .map(
-                            escapeCSV
-                        )
-                        .join(',');
-
-                }
-            )
-            .join('\r\n');
-
-
-    const blob =
-        new Blob(
-            [
-                '\uFEFF' +
-                csv
-            ],
-            {
-                type:
-                    'text/csv;charset=utf-8;'
             }
         );
 
 
-    const url =
-        URL.createObjectURL(
-            blob
-        );
+        const escapeCSV =
+            function (value) {
+
+                let text =
+                    String(
+                        value ??
+                        ''
+                    );
 
 
-    const link =
-        document.createElement(
-            'a'
-        );
+                /*
+                 * Proteksi formula injection spreadsheet.
+                 */
+
+                if (
+                    /^[\s]*[=+@-]/
+                        .test(text)
+                ) {
+
+                    text =
+                        "'" +
+                        text;
+
+                }
 
 
-    link.href =
-        url;
+                return (
+                    '"' +
+                    text.replace(
+                        /"/g,
+                        '""'
+                    ) +
+                    '"'
+                );
+
+            };
 
 
-    link.download =
-        `data-barang-${new Date().toISOString().slice(0, 10)}.csv`;
+        const csv =
+            rows
+                .map(
+                    function (row) {
+
+                        return row
+                            .map(
+                                escapeCSV
+                            )
+                            .join(',');
+
+                    }
+                )
+                .join(
+                    '\r\n'
+                );
 
 
-    document.body.appendChild(
-        link
-    );
+        const blob =
+            new Blob(
+                [
+                    '\uFEFF' +
+                    csv
+                ],
+                {
 
+                    type:
+                        'text/csv;charset=utf-8;'
 
-    link.click();
-
-
-    link.remove();
-
-
-    window.setTimeout(
-        function () {
-
-            URL.revokeObjectURL(
-                url
+                }
             );
 
-        },
-        1000
-    );
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
 
 
-    showBarangMessage(
-        'Data Barang berhasil diekspor.',
-        'success'
-    );
-
-}
+        const link =
+            document.createElement(
+                'a'
+            );
 
 
-/* =========================================================
-   MESSAGE / NOTIFICATION
-========================================================= */
-
-function showBarangMessage(
-    message,
-    type = 'success'
-) {
-
-    /*
-     * Jika project menggunakan
-     * SweetAlert2.
-     */
-
-    if (
-        typeof window.Swal !==
-        'undefined'
-    ) {
-
-        window.Swal.fire({
-
-            icon:
-                type === 'error'
-                    ? 'error'
-                    : 'success',
-
-            title:
-                type === 'error'
-                    ? 'Gagal'
-                    : 'Berhasil',
-
-            text:
-                message,
-
-            timer:
-                1800,
-
-            showConfirmButton:
-                false
-
-        });
+        link.href =
+            url;
 
 
-        return;
+        link.download =
+            `data-barang-${new Date().toISOString().slice(0, 10)}.csv`;
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        window.setTimeout(
+            function () {
+
+                URL.revokeObjectURL(
+                    url
+                );
+
+            },
+            1000
+        );
+
+
+        showMessage(
+            'Data Barang berhasil diekspor.',
+            'success'
+        );
 
     }
 
 
-    /*
-     * Fallback sederhana.
-     */
+    /* ============================================================
+       CURRENT DATE / TIME
+       ============================================================ */
 
-    window.alert(
-        message
-    );
+    function updateCurrentDate() {
 
-}
+        const dateElement =
+            document.getElementById(
+                'barangCurrentDate'
+            );
 
 
-/* =========================================================
-   REFRESH LUCIDE
-========================================================= */
+        const timeElement =
+            document.getElementById(
+                'barangCurrentTime'
+            );
 
-function refreshBarangIcons() {
 
-    if (
-        window.lucide &&
-        typeof window.lucide.createIcons ===
-        'function'
-    ) {
+        if (
+            !dateElement &&
+            !timeElement
+        ) {
+            return;
+        }
 
-        window.lucide.createIcons();
+
+        const now =
+            new Date();
+
+
+        if (dateElement) {
+
+            dateElement.textContent =
+                new Intl.DateTimeFormat(
+                    'id-ID',
+                    {
+
+                        timeZone:
+                            TIMEZONE,
+
+                        weekday:
+                            'long',
+
+                        day:
+                            'numeric',
+
+                        month:
+                            'long',
+
+                        year:
+                            'numeric'
+
+                    }
+                ).format(
+                    now
+                );
+
+        }
+
+
+        if (timeElement) {
+
+            timeElement.textContent =
+                new Intl.DateTimeFormat(
+                    'id-ID',
+                    {
+
+                        timeZone:
+                            TIMEZONE,
+
+                        hour:
+                            '2-digit',
+
+                        minute:
+                            '2-digit',
+
+                        second:
+                            '2-digit',
+
+                        hourCycle:
+                            'h23'
+
+                    }
+                )
+                    .format(
+                        now
+                    )
+                    .replace(
+                        /\./g,
+                        ':'
+                    ) +
+                ' WITA';
+
+        }
 
     }
 
-}
+
+    /* ============================================================
+       FORMAT DATE
+       ============================================================ */
+
+    function formatDate(
+        dateString
+    ) {
+
+        if (!dateString) {
+            return '-';
+        }
 
 
-/* =========================================================
-   DEBUG HELPER
-========================================================= */
-
-/*
- * Fungsi ini bisa dipanggil dari Console:
- *
- * resetBarangDemoData()
- *
- * untuk menghapus data localStorage
- * dan kembali membaca data dari Blade.
- */
-
-function resetBarangDemoData() {
-
-    localStorage.removeItem(
-        BARANG_STORAGE_KEY
-    );
+        const date =
+            new Date(
+                dateString
+            );
 
 
-    window.location.reload();
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return '-';
+        }
 
-}
+
+        return new Intl.DateTimeFormat(
+            'id-ID',
+            {
+
+                timeZone:
+                    TIMEZONE,
+
+                day:
+                    '2-digit',
+
+                month:
+                    'short',
+
+                year:
+                    'numeric'
+
+            }
+        ).format(
+            date
+        );
+
+    }
 
 
-/* =========================================================
-   EXPORT GLOBAL
-========================================================= */
+    function formatDateTime(
+        dateString
+    ) {
 
-window.openBarangModal =
-    openBarangModal;
+        if (!dateString) {
+            return '-';
+        }
 
-window.closeBarangModal =
-    closeBarangModal;
 
-window.filterBarangTable =
-    filterBarangTable;
+        const date =
+            new Date(
+                dateString
+            );
 
-window.resetBarangFilter =
-    resetBarangFilter;
 
-window.exportBarangCSV =
-    exportBarangCSV;
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return '-';
+        }
 
-window.resetBarangDemoData =
-    resetBarangDemoData;
+
+        return (
+            new Intl.DateTimeFormat(
+                'id-ID',
+                {
+
+                    timeZone:
+                        TIMEZONE,
+
+                    day:
+                        '2-digit',
+
+                    month:
+                        'short',
+
+                    year:
+                        'numeric',
+
+                    hour:
+                        '2-digit',
+
+                    minute:
+                        '2-digit',
+
+                    hourCycle:
+                        'h23'
+
+                }
+            )
+                .format(
+                    date
+                )
+                .replace(
+                    /\./g,
+                    ':'
+                ) +
+            ' WITA'
+        );
+
+    }
+
+
+    function formatLastSeen(
+        dateString
+    ) {
+
+        if (!dateString) {
+            return '-';
+        }
+
+
+        const timestamp =
+            new Date(
+                dateString
+            ).getTime();
+
+
+        if (
+            Number.isNaN(
+                timestamp
+            )
+        ) {
+            return '-';
+        }
+
+
+        const difference =
+            Math.max(
+                0,
+                Date.now() -
+                timestamp
+            );
+
+
+        const seconds =
+            Math.floor(
+                difference /
+                1000
+            );
+
+
+        if (
+            seconds < 10
+        ) {
+            return 'Baru saja';
+        }
+
+
+        if (
+            seconds < 60
+        ) {
+            return `${seconds} detik lalu`;
+        }
+
+
+        const minutes =
+            Math.floor(
+                seconds /
+                60
+            );
+
+
+        if (
+            minutes < 60
+        ) {
+            return `${minutes} menit lalu`;
+        }
+
+
+        const hours =
+            Math.floor(
+                minutes /
+                60
+            );
+
+
+        if (
+            hours < 24
+        ) {
+            return `${hours} jam lalu`;
+        }
+
+
+        const days =
+            Math.floor(
+                hours /
+                24
+            );
+
+
+        if (
+            days < 7
+        ) {
+            return `${days} hari lalu`;
+        }
+
+
+        return formatDate(
+            dateString
+        );
+
+    }
+
+
+    /* ============================================================
+       MESSAGE
+       ============================================================ */
+
+    function showMessage(
+        message,
+        type = 'success'
+    ) {
+
+        /*
+         * SweetAlert jika tersedia.
+         */
+
+        if (
+            typeof window.Swal !==
+            'undefined'
+        ) {
+
+            window.Swal.fire({
+
+                icon:
+                    type === 'error'
+                        ? 'error'
+                        : 'success',
+
+                title:
+                    type === 'error'
+                        ? 'Gagal'
+                        : 'Berhasil',
+
+                text:
+                    message,
+
+                timer:
+                    type === 'error'
+                        ? 3000
+                        : 1800,
+
+                showConfirmButton:
+                    type === 'error'
+
+            });
+
+
+            return;
+
+        }
+
+
+        window.alert(
+            message
+        );
+
+    }
+
+
+    /* ============================================================
+       LUCIDE
+       ============================================================ */
+
+    function refreshIcons() {
+
+        if (
+            window.lucide &&
+            typeof window.lucide.createIcons ===
+            'function'
+        ) {
+
+            window.lucide.createIcons();
+
+        }
+
+    }
+
+
+    /* ============================================================
+       GLOBAL FUNCTIONS
+       ============================================================ */
+
+    /*
+     * Dipakai oleh:
+     *
+     * onclick="openBarangModal('add')"
+     */
+
+    window.openBarangModal =
+        function (
+            mode,
+            record = null
+        ) {
+
+            openModal(
+                mode,
+                record
+            );
+
+        };
+
+
+    /*
+     * Dipakai tombol tutup modal.
+     */
+
+    window.closeBarangModal =
+        closeModal;
+
+
+    /*
+     * Dipakai tombol Filter.
+     */
+
+    window.filterBarangTable =
+        function () {
+
+            currentPage =
+                1;
+
+
+            renderTable();
+
+
+            refreshIcons();
+
+        };
+
+
+    /*
+     * Dipakai tombol Reset.
+     */
+
+    window.resetBarangFilter =
+        resetFilter;
+
+
+    /*
+     * Dipakai tombol Export.
+     */
+
+    window.exportBarangCSV =
+        exportCSV;
+
+
+    /*
+     * Debug optional melalui browser console:
+     *
+     * debugBarang()
+     */
+
+    window.debugBarang =
+        function () {
+
+            console.group(
+                'SISTEM ASET - DEBUG BARANG'
+            );
+
+
+            console.log(
+                'BARANG_CRUD:',
+                window.BARANG_CRUD
+            );
+
+
+            console.log(
+                'CSRF:',
+                getCsrfToken()
+                    ? 'tersedia'
+                    : 'tidak tersedia'
+            );
+
+
+            console.log(
+                'Golongan Map:',
+                golonganMap
+            );
+
+
+            console.log(
+                'Barang dari Database/Blade:',
+                getBarangData()
+            );
+
+
+            console.log(
+                'Total Barang:',
+                getBarangData().length
+            );
+
+
+            console.log(
+                'Data Filter:',
+                getFilteredData()
+            );
+
+
+            console.groupEnd();
+
+        };
+
+
+})();

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Models\Barang;
+use App\Http\Controllers\MasterController;
 
 
 Route::get('/', function () {
@@ -53,11 +54,40 @@ Route::get('/arsip', function () {
 // ------------------------------------------------
 // MASTER DATA ROUTES
 // ------------------------------------------------
-Route::get('/master-data/barang', function () {
-    $barangs = Barang::orderBy('nama_barang', 'asc')->get();
+// ========================================================
+// MASTER DATA - BARANG
+// ========================================================
 
-    return view('master.data_barang', compact('barangs'));
-})->name('master.data_barang');
+Route::get(
+    '/master-data/barang',
+    [MasterController::class, 'dataBarang']
+)->name('master.data_barang');
+
+
+Route::post(
+    '/master-data/barang',
+    [MasterController::class, 'storebarang']
+)->name('master.data_barang.store');
+
+
+Route::put(
+    '/master-data/barang/{id}',
+    [MasterController::class, 'updatebarang']
+)
+    ->whereNumber('id')
+    ->name('master.data_barang.update');
+
+
+Route::delete(
+    '/master-data/barang/{id}',
+    [MasterController::class, 'deletebarang']
+)
+    ->whereNumber('id')
+    ->name('master.data_barang.delete');
+    
+// ========================================================
+// MASTER DATA - DEPARTEMEN
+// ========================================================
 
 Route::get('/master-data/departemen', function () {
     return view('master.data_departemen');

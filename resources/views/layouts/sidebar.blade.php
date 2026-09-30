@@ -165,108 +165,67 @@
 
 
         {{-- K.I.B --}}
-        <div class="sidebar-menu-group {{ request()->routeIs('kib.*') ? 'open' : '' }}" id="kibGroup">
+        @php
+            $kibActive = request()->is('kib/*');
+        @endphp
 
-            <button type="button"
-                class="sidebar-menu-item sidebar-parent {{ request()->routeIs('kib.*') ? 'parent-active' : '' }}"
+        <div class="sidebar-menu-group {{ $kibActive ? 'open' : '' }}" id="kibGroup">
+
+            <button type="button" class="sidebar-menu-item sidebar-parent {{ $kibActive ? 'parent-active' : '' }}"
                 onclick="toggleMenu('kibGroup')">
                 <span class="sidebar-menu-icon">
                     <i data-lucide="library"></i>
                 </span>
 
-                <span class="sidebar-menu-text">
-                    K.I.B
-                </span>
+                <span class="sidebar-menu-text">K.I.B</span>
 
                 <span class="sidebar-arrow">
                     <i data-lucide="chevron-down"></i>
                 </span>
             </button>
 
-
             <div class="sidebar-submenu">
 
-                <a href="{{ route('kib.tanah') }}"
-                    class="sidebar-submenu-item"{{ request()->routeIs('kib.tanah') ? 'active' : '' }}>
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="map"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Tanah
-                    </span>
+                <a href="{{ url('/kib/tanah') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/tanah') ? 'active' : '' }}">
+                    <span class="sidebar-submenu-icon"><i data-lucide="map"></i></span>
+                    <span class="sidebar-submenu-text">Tanah</span>
                 </a>
 
-
-                <a href="{{ route('kib.mesin') }}"
-                    class="sidebar-submenu-item {{ request()->routeIs('kib.mesin') ? 'active' : '' }}">
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="settings"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Peralatan &amp; Mesin
-                    </span>
+                <a href="{{ url('/kib/mesin') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/mesin') ? 'active' : '' }}">
+                    <span class="sidebar-submenu-icon"><i data-lucide="settings"></i></span>
+                    <span class="sidebar-submenu-text">Peralatan &amp; Mesin</span>
                 </a>
 
-
-                <a href="{{ route('kib.gedung') }}"
-                    class="sidebar-submenu-item {{ request()->routeIs('kib.gedung') ? 'active' : '' }}">
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="building-2"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Gedung &amp; Bangunan
-                    </span>
+                <a href="{{ url('/kib/gedung') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/gedung') ? 'active' : '' }}">
+                    <span class="sidebar-submenu-icon"><i data-lucide="building-2"></i></span>
+                    <span class="sidebar-submenu-text">Gedung &amp; Bangunan</span>
                 </a>
 
-
-                <a href="{{ route('kib.jalan') }}"
-                    class="sidebar-submenu-item {{ request()->routeIs('kib.jalan') ? 'active' : '' }}">
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="route"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Jalan, Irigasi &amp; Jaringan
-                    </span>
+                <a href="{{ url('/kib/jalan') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/jalan') ? 'active' : '' }}">
+                    <span class="sidebar-submenu-icon"><i data-lucide="route"></i></span>
+                    <span class="sidebar-submenu-text">Jalan, Irigasi &amp; Jaringan</span>
                 </a>
 
-
-                <a href="{{ route('kib.aset_ttp') }}"
-                    class="sidebar-submenu-item {{ request()->routeIs('kib.aset_ttp') ? 'active' : '' }}">
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="package-open"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Aset Tetap Lainnya
-                    </span>
+                <a href="{{ url('/kib/aset-ttp') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/aset-ttp') ? 'active' : '' }}">
+                    <span class="sidebar-submenu-icon"><i data-lucide="package-open"></i></span>
+                    <span class="sidebar-submenu-text">Aset Tetap Lainnya</span>
                 </a>
 
-
-                <a href="{{ route('kib.konstruksi') }}"
-                    class="sidebar-submenu-item {{ request()->routeIs('kib.konstruksi') ? 'active' : '' }}  ">
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="construction"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Konstruksi
-                    </span>
+                <a href="{{ url('/kib/kontruksi') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/kontruksi') ? 'active' : '' }}">
+                    <span class="sidebar-submenu-icon"><i data-lucide="construction"></i></span>
+                    <span class="sidebar-submenu-text">Konstruksi</span>
                 </a>
 
-
-                <a href="{{ route('kib.kir') }}"
-                    class="sidebar-submenu-item {{ request()->routeIs('kib.kir') ? 'active' : '' }}">
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="clipboard-list"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        K.I.R
-                    </span>
+                <a href="{{ url('/kib/kir') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/kir') ? 'active' : '' }}">
+                    <span class="sidebar-submenu-icon"><i data-lucide="clipboard-list"></i></span>
+                    <span class="sidebar-submenu-text">K.I.R</span>
                 </a>
 
             </div>

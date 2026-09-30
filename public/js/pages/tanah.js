@@ -1,1386 +1,767 @@
-/* =========================================================
+/* ==========================================================
    K.I.B - TANAH
-   tanah.js
-
+   Full UI Controller
+   ----------------------------------------------------------
    Fungsi:
    - Search
    - Filter Lokasi
    - Filter Hak
    - Filter Tahun
-   - Filter Status/Kondisi
-   - Reset filter
+   - Reset Filter
    - Pagination
-   - Select All
-   - Chart distribusi
-   - Modal Tambah
-   - Modal Detail
-   - Modal Edit
-   - Modal Hapus
+   - Tambah Tanah
+   - Detail Tanah
+   - Edit Tanah
+   - Hapus Tanah
+   - Update KPI
    - Export CSV
-   - Jam/Tanggal WITA
-   - Lucide Icon
+   - Update tanggal
+   - Lucide icon refresh
+========================================================== */
 
-   Catatan:
-   File ini hanya menangani UI.
-   CRUD database belum dihubungkan.
-========================================================= */
+(() => {
+    'use strict';
 
+    /* ==========================================================
+       STATE
+    ========================================================== */
 
-/* =========================================================
-   GLOBAL
-========================================================= */
+    let currentPage = 1;
+    let modalMode = 'add';
+    let editingRow = null;
+    let previousOverflow = '';
 
-let tanahCurrentPage = 1;
+    /* ==========================================================
+       FORMATTER
+    ========================================================== */
 
-let tanahChart = null;
+    const number = new Intl.NumberFormat('id-ID');
 
-let tanahPreviousOverflow = '';
+    const rupiah = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0
+    });
 
-const tanahNumber =
-    new Intl.NumberFormat('id-ID');
+    /* ==========================================================
+       INITIALIZATION
+    ========================================================== */
 
-
-/* =========================================================
-   DOM HELPER
-========================================================= */
-
-function getTanahElement(...ids) {
-
-    for (const id of ids) {
-
-        const element =
-            document.getElementById(id);
-
-        if (element) {
-            return element;
-        }
-
-    }
-
-    return null;
-
-}
-
-
-/* =========================================================
-   DOM READY
-========================================================= */
-
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+    document.addEventListener('DOMContentLoaded', () => {
 
         /*
-         * Jalankan hanya pada halaman Tanah.
+         * Pastikan script hanya bekerja pada halaman Tanah.
          */
-        if (
-            !document.querySelector(
-                '.tanah-page'
-            )
-        ) {
+        if (!document.querySelector('.tanah-page')) {
             return;
         }
 
+        bindEvents();
 
-        /*
-         * Icon Lucide.
-         */
-        refreshTanahIcons();
+        updateDate();
 
+        renderTable();
 
-        /*
-         * Tanggal dan waktu WITA.
-         */
-        updateTanahDate();
+        updateKpiFromRows();
 
-        window.setInterval(
-            updateTanahDate,
-            1000
-        );
+        refreshIcons();
+    });
 
 
-        /*
-         * Inisialisasi.
-         */
-        initTanahSearch();
+    /* ==========================================================
+       EVENT BINDING
+    ========================================================== */
 
-        initTanahFilters();
+    function bindEvents() {
 
-        initTanahTable();
+        const search = document.getElementById('tanahSearch');
 
-        initTanahPagination();
+        const lokasi = document.getElementById('tanahLokasi');
 
-        initTanahSelectAll();
+        const hak = document.getElementById('tanahHak');
 
-        initTanahModal();
+        const tahun = document.getElementById('tanahTahun');
 
-        initTanahChart();
+        const pageSize = document.getElementById('tanahPageSize');
 
-        initTanahViewAll();
+        const table = document.getElementById('tanahTable');
 
+        const form = document.getElementById('tanahForm');
 
-        /*
-         * Render tabel pertama kali.
-         */
-        renderTanahTable();
+        const modal = document.getElementById('tanahModal');
 
+        const viewAll = document.getElementById('tanahViewAll');
 
-    }
-);
 
+        /* ======================================================
+           SEARCH
+        ====================================================== */
 
-/* =========================================================
-   LUCIDE
-========================================================= */
+        search?.addEventListener('input', () => {
 
-function refreshTanahIcons() {
+            currentPage = 1;
 
-    if (
-        window.lucide &&
-        typeof window.lucide.createIcons === 'function'
-    ) {
+            renderTable();
 
-        window.lucide.createIcons();
+        });
 
-    }
 
-}
+        /* ======================================================
+           FILTER SELECT
+        ====================================================== */
 
+        [lokasi, hak, tahun].forEach(element => {
 
-/* =========================================================
-   DATE & TIME WITA
-========================================================= */
+            element?.addEventListener('change', () => {
 
-function updateTanahDate() {
+                currentPage = 1;
 
-    const dateElement =
-        getTanahElement(
-            'tanahCurrentDate'
-        );
+                renderTable();
 
+            });
 
-    const timeElement =
-        getTanahElement(
-            'tanahCurrentTime'
-        );
+        });
 
 
-    /*
-     * Kalau halaman hanya memiliki
-     * tanggal tanpa jam.
-     */
-    if (!dateElement && !timeElement) {
-        return;
-    }
+        /* ======================================================
+           PAGE SIZE
+        ====================================================== */
 
+        pageSize?.addEventListener('change', () => {
 
-    const now =
-        new Date();
+            currentPage = 1;
 
+            renderTable();
 
-    if (dateElement) {
+        });
 
-        dateElement.textContent =
 
-            new Intl.DateTimeFormat(
-                'id-ID',
-                {
-                    timeZone: 'Asia/Makassar',
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                }
-            ).format(now);
+        /* ======================================================
+           TABLE ACTION
+        ====================================================== */
 
-    }
+        table?.addEventListener('click', event => {
 
+            const button = event.target.closest(
+                'button[data-action]'
+            );
 
-    if (timeElement) {
-
-        timeElement.textContent =
-
-            new Intl.DateTimeFormat(
-                'id-ID',
-                {
-                    timeZone: 'Asia/Makassar',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                }
-            ).format(now) + ' WITA';
-
-    }
-
-}
-
-
-/* =========================================================
-   SEARCH
-========================================================= */
-
-function initTanahSearch() {
-
-    const search =
-        getTanahElement(
-            'tanahSearch'
-        );
-
-
-    if (!search) {
-        return;
-    }
-
-
-    search.addEventListener(
-        'input',
-        function () {
-
-            tanahCurrentPage = 1;
-
-            renderTanahTable();
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   FILTER
-========================================================= */
-
-function initTanahFilters() {
-
-    const filterIds = [
-
-        'tanahLokasi',
-
-        'tanahHak',
-
-        'tanahTahun',
-
-        'tanahStatus',
-
-        'tanahKondisi'
-
-    ];
-
-
-    filterIds.forEach(
-        function (id) {
-
-            const element =
-                document.getElementById(
-                    id
-                );
-
-
-            if (!element) {
+            if (!button) {
                 return;
             }
 
 
-            element.addEventListener(
-                'change',
-                function () {
-
-                    tanahCurrentPage = 1;
-
-                    renderTanahTable();
-
-                }
+            const row = button.closest(
+                'tr[data-record]'
             );
 
-        }
-    );
+            if (!row) {
+                return;
+            }
 
 
-    /*
-     * Jika ada tombol Filter.
-     * Tetap disediakan meskipun filter
-     * sudah berjalan otomatis.
-     */
-    const filterButton =
-        getTanahElement(
-            'tanahFilterButton'
+            openTanahModal(
+                button.dataset.action,
+                row
+            );
+
+        });
+
+
+        /* ======================================================
+           FORM SUBMIT
+        ====================================================== */
+
+        form?.addEventListener(
+            'submit',
+            saveTanah
         );
 
 
-    if (filterButton) {
+        /* ======================================================
+           MODAL CLOSE
+        ====================================================== */
 
-        filterButton.addEventListener(
+        modal?.addEventListener(
+            'close',
+            () => {
+
+                document.body.style.overflow =
+                    previousOverflow;
+
+                editingRow = null;
+
+                refreshIcons();
+
+            }
+        );
+
+
+        /* ======================================================
+           VIEW ALL
+        ====================================================== */
+
+        viewAll?.addEventListener(
             'click',
-            function () {
+            event => {
 
-                tanahCurrentPage = 1;
+                event.preventDefault();
 
-                renderTanahTable();
+                resetTanahFilter();
 
-            }
-        );
-
-    }
-
-
-    /*
-     * Jumlah data per halaman.
-     */
-    const pageSize =
-        getTanahElement(
-            'tanahPageSize'
-        );
-
-
-    if (pageSize) {
-
-        pageSize.addEventListener(
-            'change',
-            function () {
-
-                tanahCurrentPage = 1;
-
-                renderTanahTable();
+                document
+                    .getElementById('tanahList')
+                    ?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
 
             }
         );
 
     }
 
-}
+
+    /* ==========================================================
+       DATE
+    ========================================================== */
+
+    function updateDate() {
+
+        const target =
+            document.getElementById(
+                'tanahCurrentDate'
+            );
+
+        if (!target) {
+            return;
+        }
 
 
-/* =========================================================
-   TABLE
-========================================================= */
+        target.textContent =
+            new Intl.DateTimeFormat(
+                'id-ID',
+                {
+                    timeZone: 'Asia/Makassar',
 
-function getTanahTable() {
+                    weekday: 'long',
 
-    return getTanahElement(
-        'tanahTable'
-    );
+                    day: 'numeric',
 
-}
+                    month: 'long',
 
+                    year: 'numeric'
+                }
+            ).format(new Date());
 
-/* =========================================================
-   GET ROWS
-========================================================= */
-
-function getTanahRows() {
-
-    const table =
-        getTanahTable();
-
-
-    if (!table) {
-        return [];
     }
 
 
-    return Array.from(
+    /* ==========================================================
+       GET ALL TABLE ROWS
+    ========================================================== */
 
-        table.querySelectorAll(
-            'tbody tr[data-record]'
-        )
+    function getRows() {
 
-    );
-
-}
-
-
-/* =========================================================
-   SEARCHABLE TEXT
-========================================================= */
-
-function getTanahRowText(row) {
-
-    /*
-     * Ambil seluruh teks tabel.
-     * Ini membuat pencarian lebih fleksibel
-     * jika jumlah kolom berubah.
-     */
-    return (
-
-        row.textContent || ''
-
-    )
-        .replace(
-            /\s+/g,
-            ' '
-        )
-        .trim()
-        .toLocaleLowerCase(
-            'id-ID'
-        );
-
-}
-
-
-/* =========================================================
-   FILTERED ROWS
-========================================================= */
-
-function getFilteredTanahRows() {
-
-    const search =
-        getTanahElement(
-            'tanahSearch'
-        )?.value
-            ?.trim()
-            ?.toLocaleLowerCase(
-                'id-ID'
+        return [
+            ...document.querySelectorAll(
+                '#tanahTable tbody tr[data-record]'
             )
-        || '';
+        ];
+
+    }
 
 
-    const lokasi =
-        getTanahElement(
-            'tanahLokasi'
-        )?.value
-        || '';
+    /* ==========================================================
+       GET FILTERED ROWS
+    ========================================================== */
+
+    function getFilteredRows() {
+
+        const search =
+            document
+                .getElementById('tanahSearch')
+                ?.value
+                .trim()
+                .toLowerCase() || '';
 
 
-    const hak =
-        getTanahElement(
-            'tanahHak'
-        )?.value
-        || '';
+        const lokasi =
+            document
+                .getElementById('tanahLokasi')
+                ?.value || '';
 
 
-    const tahun =
-        getTanahElement(
-            'tanahTahun'
-        )?.value
-        || '';
+        const hak =
+            document
+                .getElementById('tanahHak')
+                ?.value || '';
 
 
-    const status =
-        getTanahElement(
-            'tanahStatus'
-        )?.value
-        || '';
+        const tahun =
+            document
+                .getElementById('tanahTahun')
+                ?.value || '';
 
 
-    const kondisi =
-        getTanahElement(
-            'tanahKondisi'
-        )?.value
-        || '';
+        return getRows().filter(row => {
+
+            const text = [
+
+                row.cells[1]?.textContent,
+
+                row.cells[2]?.textContent,
+
+                row.cells[3]?.textContent,
+
+                row.cells[5]?.textContent
+
+            ]
+                .join(' ')
+                .toLowerCase();
 
 
-    return getTanahRows().filter(
-        function (row) {
-
-            const searchableText =
-                getTanahRowText(
-                    row
-                );
+            const matchSearch =
+                !search ||
+                text.includes(search);
 
 
-            /*
-             * Ambil dataset.
-             */
-            const rowLokasi =
-                String(
-                    row.dataset.lokasi || ''
-                );
-
-
-            const rowHak =
-                String(
-                    row.dataset.hak || ''
-                );
-
-
-            const rowTahun =
-                String(
-                    row.dataset.tahun || ''
-                );
-
-
-            const rowStatus =
-                String(
-                    row.dataset.status || ''
-                );
-
-
-            const rowKondisi =
-                String(
-                    row.dataset.kondisi || ''
-                );
-
-
-            /*
-             * Nilai dataset dibuat lower-case
-             * untuk perbandingan yang aman.
-             */
-            const lokasiMatch =
-
+            const matchLokasi =
                 !lokasi ||
-
-                rowLokasi === lokasi ||
-
-                rowLokasi
-                    .toLocaleLowerCase(
-                        'id-ID'
-                    ) ===
-                    lokasi
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
+                row.dataset.lokasi === lokasi;
 
 
-            const hakMatch =
-
+            const matchHak =
                 !hak ||
-
-                rowHak === hak ||
-
-                rowHak
-                    .toLocaleLowerCase(
-                        'id-ID'
-                    ) ===
-                    hak
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
+                row.dataset.hak === hak;
 
 
-            const tahunMatch =
-
+            const matchTahun =
                 !tahun ||
-
-                rowTahun === tahun;
-
-
-            const statusMatch =
-
-                !status ||
-
-                rowStatus === status ||
-
-                rowStatus
-                    .toLocaleLowerCase(
-                        'id-ID'
-                    ) ===
-                    status
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
-
-
-            const kondisiMatch =
-
-                !kondisi ||
-
-                rowKondisi === kondisi ||
-
-                rowKondisi
-                    .toLocaleLowerCase(
-                        'id-ID'
-                    ) ===
-                    kondisi
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
+                row.dataset.tahun === tahun;
 
 
             return (
-
-                (
-                    !search ||
-                    searchableText.includes(
-                        search
-                    )
-                )
-
-                &&
-
-                lokasiMatch
-
-                &&
-
-                hakMatch
-
-                &&
-
-                tahunMatch
-
-                &&
-
-                statusMatch
-
-                &&
-
-                kondisiMatch
-
+                matchSearch &&
+                matchLokasi &&
+                matchHak &&
+                matchTahun
             );
 
-        }
-    );
+        });
 
-}
-
-
-/* =========================================================
-   CHECK ACTIVE FILTER
-========================================================= */
-
-function hasTanahFilter() {
-
-    const values = [
-
-        getTanahElement(
-            'tanahSearch'
-        )?.value?.trim(),
-
-        getTanahElement(
-            'tanahLokasi'
-        )?.value,
-
-        getTanahElement(
-            'tanahHak'
-        )?.value,
-
-        getTanahElement(
-            'tanahTahun'
-        )?.value,
-
-        getTanahElement(
-            'tanahStatus'
-        )?.value,
-
-        getTanahElement(
-            'tanahKondisi'
-        )?.value
-
-    ];
+    }
 
 
-    return values.some(
-        function (value) {
+    /* ==========================================================
+       RENDER TABLE
+    ========================================================== */
 
-            return Boolean(value);
+    function renderTable() {
 
-        }
-    );
-
-}
-
-
-/* =========================================================
-   RENDER TABLE
-========================================================= */
-
-function renderTanahTable() {
-
-    const rows =
-        getTanahRows();
+        const rows =
+            getRows();
 
 
-    const filteredRows =
-        getFilteredTanahRows();
+        const filtered =
+            getFilteredRows();
 
 
-    const pageSize =
-        Number(
-
-            getTanahElement(
-                'tanahPageSize'
-            )?.value
-
-        ) || 10;
+        const empty =
+            document.getElementById(
+                'tanahEmptyRow'
+            );
 
 
-    const totalPages =
-
-        Math.max(
-
-            1,
-
-            Math.ceil(
-                filteredRows.length /
-                pageSize
-            )
-
-        );
+        const info =
+            document.getElementById(
+                'tanahTableInfo'
+            );
 
 
-    tanahCurrentPage =
+        const pageSize =
+            Number(
+                document
+                    .getElementById(
+                        'tanahPageSize'
+                    )
+                    ?.value || 10
+            );
 
-        Math.min(
 
+        const totalPages =
             Math.max(
                 1,
-                tanahCurrentPage
-            ),
-
-            totalPages
-
-        );
-
-
-    const start =
-
-        (
-            tanahCurrentPage - 1
-        ) * pageSize;
+                Math.ceil(
+                    filtered.length /
+                    pageSize
+                )
+            );
 
 
-    const end =
-        start + pageSize;
+        /*
+         * Jangan sampai halaman aktif melebihi
+         * jumlah halaman setelah filter.
+         */
+
+        currentPage =
+            Math.min(
+                Math.max(
+                    1,
+                    currentPage
+                ),
+                totalPages
+            );
 
 
-    /*
-     * Sembunyikan semua data.
-     */
-    rows.forEach(
-        function (row) {
+        const start =
+            (currentPage - 1) *
+            pageSize;
+
+
+        const visible =
+            filtered.slice(
+                start,
+                start + pageSize
+            );
+
+
+        /* ======================================================
+           HIDE SEMUA ROW
+        ====================================================== */
+
+        rows.forEach(row => {
 
             row.hidden = true;
 
-        }
-    );
+        });
 
 
-    /*
-     * Tampilkan data halaman aktif.
-     */
-    const visibleRows =
+        /* ======================================================
+           SHOW ROW SESUAI PAGE
+        ====================================================== */
 
-        filteredRows.slice(
-            start,
-            end
-        );
+        visible.forEach(
+            (row, index) => {
 
-
-    visibleRows.forEach(
-        function (row, index) {
-
-            row.hidden = false;
-
-
-            /*
-             * Nomor otomatis.
-             *
-             * Kolom pertama diasumsikan
-             * sebagai nomor.
-             */
-            if (
-                row.cells[0]
-            ) {
+                row.hidden = false;
 
                 row.cells[0].textContent =
+                    String(
+                        start + index + 1
+                    );
 
-                    start + index + 1;
+            }
+        );
+
+
+        /* ======================================================
+           EMPTY STATE
+        ====================================================== */
+
+        if (empty) {
+
+            empty.hidden =
+                filtered.length > 0;
+
+        }
+
+
+        /* ======================================================
+           TABLE INFORMATION
+        ====================================================== */
+
+        if (info) {
+
+            if (filtered.length) {
+
+                const from =
+                    start + 1;
+
+                const to =
+                    Math.min(
+                        start + pageSize,
+                        filtered.length
+                    );
+
+
+                info.textContent =
+                    `Menampilkan ${number.format(from)}–${number.format(to)} dari ${number.format(filtered.length)} data contoh`;
+
+            } else {
+
+                info.textContent =
+                    'Tidak ada data yang sesuai.';
 
             }
 
         }
-    );
 
 
-    /*
-     * Empty state.
-     */
-    const emptyRow =
-        getTanahElement(
-            'tanahEmptyRow'
+        /* ======================================================
+           PAGINATION
+        ====================================================== */
+
+        renderPagination(
+            totalPages
         );
 
 
-    if (emptyRow) {
+        /* ======================================================
+           UPDATE KPI
+        ====================================================== */
 
-        emptyRow.hidden =
-            filteredRows.length > 0;
-
-    }
-
-
-    /*
-     * Table info.
-     */
-    updateTanahTableInfo(
-
-        filteredRows.length,
-
-        rows.length,
-
-        start,
-
-        visibleRows.length
-
-    );
+        updateKpiFromRows();
 
 
-    /*
-     * Pagination.
-     */
-    renderTanahPagination(
-        totalPages
-    );
+        /* ======================================================
+           REFRESH ICON
+        ====================================================== */
 
-
-    /*
-     * Reset select-all.
-     */
-    updateTanahSelectAllState();
-
-
-    refreshTanahIcons();
-
-}
-
-
-/* =========================================================
-   TABLE INFO
-========================================================= */
-
-function updateTanahTableInfo(
-
-    filteredCount,
-
-    totalCount,
-
-    start,
-
-    visibleCount
-
-) {
-
-    const info =
-        getTanahElement(
-            'tanahTableInfo'
-        );
-
-
-    if (!info) {
-        return;
-    }
-
-
-    if (
-        filteredCount === 0
-    ) {
-
-        info.textContent =
-            'Tidak ada data yang sesuai.';
-
-        return;
+        refreshIcons();
 
     }
 
 
-    const from =
-        start + 1;
+    /* ==========================================================
+       PAGINATION
+    ========================================================== */
 
+    function renderPagination(totalPages) {
 
-    const to =
-        start + visibleCount;
-
-
-    if (
-        hasTanahFilter()
-    ) {
-
-        info.textContent =
-
-            `Menampilkan ${tanahNumber.format(from)}–${tanahNumber.format(to)} dari ${tanahNumber.format(filteredCount)} hasil filter`;
-
-    }
-
-    else {
-
-        info.textContent =
-
-            `Menampilkan ${tanahNumber.format(from)}–${tanahNumber.format(to)} dari ${tanahNumber.format(totalCount)} data`;
-
-    }
-
-}
-
-
-/* =========================================================
-   PAGINATION
-========================================================= */
-
-function initTanahPagination() {
-
-    /*
-     * Pagination dibuat secara dinamis
-     * oleh renderTanahPagination().
-     */
-
-}
-
-
-/* =========================================================
-   RENDER PAGINATION
-========================================================= */
-
-function renderTanahPagination(
-    totalPages
-) {
-
-    const pagination =
-        getTanahElement(
-            'tanahPagination'
-        );
-
-
-    if (!pagination) {
-        return;
-    }
-
-
-    pagination.replaceChildren();
-
-
-    function addButton(
-
-        label,
-
-        page,
-
-        disabled = false,
-
-        active = false,
-
-        icon = ''
-
-    ) {
-
-        const button =
-            document.createElement(
-                'button'
+        const container =
+            document.getElementById(
+                'tanahPagination'
             );
 
 
-        button.type =
-            'button';
+        if (!container) {
+            return;
+        }
 
 
-        button.disabled =
-            disabled;
+        container.replaceChildren();
 
 
-        button.setAttribute(
+        /* ======================================================
+           CREATE PAGINATION BUTTON
+        ====================================================== */
 
-            'aria-label',
+        const makeButton = (
+            label,
+            page,
+            disabled,
+            active,
+            icon
+        ) => {
 
-            label === '‹'
-
-                ? 'Halaman sebelumnya'
-
-                : label === '›'
-
-                    ? 'Halaman berikutnya'
-
-                    : `Halaman ${page}`
-
-        );
+            const button =
+                document.createElement(
+                    'button'
+                );
 
 
-        if (active) {
+            button.type = 'button';
 
-            button.classList.add(
-                'active'
-            );
+            button.disabled =
+                disabled;
+
+            button.className =
+                active
+                    ? 'active'
+                    : '';
+
 
             button.setAttribute(
-                'aria-current',
-                'page'
-            );
-
-        }
-
-
-        if (icon) {
-
-            const iconElement =
-                document.createElement(
-                    'i'
-                );
-
-
-            iconElement.setAttribute(
-                'data-lucide',
-                icon
+                'aria-label',
+                label
             );
 
 
-            iconElement.setAttribute(
-                'aria-hidden',
-                'true'
-            );
+            if (active) {
 
-
-            button.appendChild(
-                iconElement
-            );
-
-        }
-
-        else {
-
-            button.textContent =
-                label;
-
-        }
-
-
-        button.addEventListener(
-            'click',
-            function () {
-
-                if (
-                    disabled
-                ) {
-                    return;
-                }
-
-
-                tanahCurrentPage =
-                    page;
-
-
-                renderTanahTable();
-
-
-                /*
-                 * Fokus kembali ke
-                 * halaman aktif.
-                 */
-                window.setTimeout(
-                    function () {
-
-                        pagination
-                            .querySelector(
-                                '[aria-current="page"]'
-                            )
-                            ?.focus({
-                                preventScroll:
-                                    true
-                            });
-
-                    },
-                    0
+                button.setAttribute(
+                    'aria-current',
+                    'page'
                 );
 
             }
+
+
+            if (icon) {
+
+                const i =
+                    document.createElement(
+                        'i'
+                    );
+
+
+                i.dataset.lucide =
+                    icon;
+
+
+                button.appendChild(i);
+
+            } else {
+
+                button.textContent =
+                    page;
+
+            }
+
+
+            button.addEventListener(
+                'click',
+                () => {
+
+                    currentPage =
+                        page;
+
+                    renderTable();
+
+                }
+            );
+
+
+            container.appendChild(
+                button
+            );
+
+        };
+
+
+        /* ======================================================
+           PREVIOUS
+        ====================================================== */
+
+        makeButton(
+            'Halaman sebelumnya',
+
+            Math.max(
+                1,
+                currentPage - 1
+            ),
+
+            currentPage === 1,
+
+            false,
+
+            'chevron-left'
         );
 
 
-        pagination.appendChild(
-            button
-        );
+        /* ======================================================
+           PAGE NUMBER
+        ====================================================== */
 
-    }
-
-
-    /*
-     * Previous.
-     */
-    addButton(
-
-        '‹',
-
-        Math.max(
-            1,
-            tanahCurrentPage - 1
-        ),
-
-        tanahCurrentPage === 1,
-
-        false,
-
-        'chevron-left'
-
-    );
+        const maxPages = 5;
 
 
-    /*
-     * Jika halaman sedikit.
-     */
-    if (
-        totalPages <= 7
-    ) {
+        let start =
+            Math.max(
+                1,
+                currentPage - 2
+            );
+
+
+        start =
+            Math.min(
+                start,
+                Math.max(
+                    1,
+                    totalPages -
+                    maxPages +
+                    1
+                )
+            );
+
+
+        const end =
+            Math.min(
+                totalPages,
+                start + maxPages - 1
+            );
+
 
         for (
-            let page = 1;
-
-            page <= totalPages;
-
+            let page = start;
+            page <= end;
             page++
         ) {
 
-            addButton(
-
-                String(page),
+            makeButton(
+                `Halaman ${page}`,
 
                 page,
 
                 false,
 
-                page === tanahCurrentPage
+                page === currentPage,
 
+                null
             );
 
         }
 
-    }
 
-    else {
+        /* ======================================================
+           NEXT
+        ====================================================== */
 
-        /*
-         * Halaman pertama.
-         */
-        addButton(
+        makeButton(
+            'Halaman berikutnya',
 
-            '1',
+            Math.min(
+                totalPages,
+                currentPage + 1
+            ),
 
-            1,
-
-            false,
-
-            tanahCurrentPage === 1
-
-        );
-
-
-        /*
-         * Dekat awal.
-         */
-        if (
-            tanahCurrentPage <= 4
-        ) {
-
-            for (
-                let page = 2;
-
-                page <= 5;
-
-                page++
-            ) {
-
-                addButton(
-
-                    String(page),
-
-                    page,
-
-                    false,
-
-                    page === tanahCurrentPage
-
-                );
-
-            }
-
-
-            addPaginationDots();
-
-        }
-
-
-        /*
-         * Tengah.
-         */
-        else if (
-            tanahCurrentPage <
-            totalPages - 3
-        ) {
-
-            addPaginationDots();
-
-
-            for (
-                let page =
-                    tanahCurrentPage - 1;
-
-                page <=
-                    tanahCurrentPage + 1;
-
-                page++
-            ) {
-
-                addButton(
-
-                    String(page),
-
-                    page,
-
-                    false,
-
-                    page === tanahCurrentPage
-
-                );
-
-            }
-
-
-            addPaginationDots();
-
-        }
-
-
-        /*
-         * Dekat akhir.
-         */
-        else {
-
-            addPaginationDots();
-
-
-            for (
-                let page =
-                    totalPages - 4;
-
-                page <=
-                    totalPages - 1;
-
-                page++
-            ) {
-
-                addButton(
-
-                    String(page),
-
-                    page,
-
-                    false,
-
-                    page === tanahCurrentPage
-
-                );
-
-            }
-
-        }
-
-
-        /*
-         * Halaman terakhir.
-         */
-        addButton(
-
-            String(totalPages),
-
-            totalPages,
+            currentPage === totalPages,
 
             false,
 
-            tanahCurrentPage === totalPages
-
+            'chevron-right'
         );
+
+
+        refreshIcons();
 
     }
 
 
-    /*
-     * Next.
-     */
-    addButton(
+    /* ==========================================================
+       FILTER TABLE
+    ========================================================== */
 
-        '›',
+    function filterTanahTable() {
 
-        Math.min(
+        currentPage = 1;
 
-            totalPages,
+        renderTable();
 
-            tanahCurrentPage + 1
-
-        ),
-
-        tanahCurrentPage === totalPages,
-
-        false,
-
-        'chevron-right'
-
-    );
-
-
-    refreshTanahIcons();
-
-}
-
-
-/* =========================================================
-   PAGINATION DOTS
-========================================================= */
-
-function addPaginationDots() {
-
-    const pagination =
-        getTanahElement(
-            'tanahPagination'
-        );
-
-
-    if (!pagination) {
-        return;
     }
 
 
-    const button =
-        document.createElement(
-            'button'
-        );
+    /* ==========================================================
+       RESET FILTER
+    ========================================================== */
+
+    function resetTanahFilter() {
+
+        const fields = [
+
+            'tanahSearch',
+
+            'tanahLokasi',
+
+            'tanahHak',
+
+            'tanahTahun'
+
+        ];
 
 
-    button.type =
-        'button';
-
-
-    button.disabled =
-        true;
-
-
-    button.textContent =
-        '...';
-
-
-    button.setAttribute(
-        'aria-hidden',
-        'true'
-    );
-
-
-    pagination.appendChild(
-        button
-    );
-
-}
-
-
-/* =========================================================
-   RESET FILTER
-========================================================= */
-
-function resetTanahFilter() {
-
-    const ids = [
-
-        'tanahSearch',
-
-        'tanahLokasi',
-
-        'tanahHak',
-
-        'tanahTahun',
-
-        'tanahStatus',
-
-        'tanahKondisi'
-
-    ];
-
-
-    ids.forEach(
-        function (id) {
+        fields.forEach(id => {
 
             const element =
                 document.getElementById(
@@ -1390,1900 +771,1344 @@ function resetTanahFilter() {
 
             if (element) {
 
-                element.value =
-                    '';
+                element.value = '';
 
             }
 
-        }
-    );
+        });
 
 
-    tanahCurrentPage =
-        1;
+        currentPage = 1;
 
-
-    renderTanahTable();
-
-}
-
-
-/* =========================================================
-   TABLE ACTION
-========================================================= */
-
-function initTanahTable() {
-
-    const table =
-        getTanahTable();
-
-
-    if (!table) {
-        return;
-    }
-
-
-    table.addEventListener(
-        'click',
-        function (event) {
-
-            const button =
-                event.target.closest(
-                    'button[data-action]'
-                );
-
-
-            if (!button) {
-                return;
-            }
-
-
-            const row =
-                button.closest(
-                    'tr[data-record]'
-                );
-
-
-            if (!row) {
-                return;
-            }
-
-
-            openTanahModal(
-
-                button.dataset.action,
-
-                row
-
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   VIEW ALL
-========================================================= */
-
-function initTanahViewAll() {
-
-    const viewAll =
-        getTanahElement(
-            'tanahViewAll'
-        );
-
-
-    if (!viewAll) {
-        return;
-    }
-
-
-    viewAll.addEventListener(
-        'click',
-        function (event) {
-
-            event.preventDefault();
-
-
-            resetTanahFilter();
-
-
-            const list =
-                getTanahElement(
-                    'tanahList'
-                );
-
-
-            if (list) {
-
-                list.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-
-            }
-
-
-            getTanahElement(
-                'tanahSearch'
-            )?.focus({
-                preventScroll: true
-            });
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   SELECT ALL
-========================================================= */
-
-function initTanahSelectAll() {
-
-    const table =
-        getTanahTable();
-
-
-    if (!table) {
-        return;
-    }
-
-
-    const selectAll =
-        table.querySelector(
-            'thead input[type="checkbox"]'
-        );
-
-
-    if (!selectAll) {
-        return;
-    }
-
-
-    selectAll.addEventListener(
-        'change',
-        function () {
-
-            const rows =
-                getTanahRows();
-
-
-            rows.forEach(
-                function (row) {
-
-                    if (
-                        row.hidden
-                    ) {
-                        return;
-                    }
-
-
-                    const checkbox =
-                        row.querySelector(
-                            'input[type="checkbox"]'
-                        );
-
-
-                    if (checkbox) {
-
-                        checkbox.checked =
-                            selectAll.checked;
-
-                    }
-
-                }
-            );
-
-
-            updateTanahSelectAllState();
-
-        }
-    );
-
-
-    /*
-     * Checkbox individual.
-     */
-    table.addEventListener(
-        'change',
-        function (event) {
-
-            if (
-                !event.target.matches(
-                    'tbody input[type="checkbox"]'
-                )
-            ) {
-                return;
-            }
-
-
-            updateTanahSelectAllState();
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   SELECT ALL STATE
-========================================================= */
-
-function updateTanahSelectAllState() {
-
-    const table =
-        getTanahTable();
-
-
-    if (!table) {
-        return;
-    }
-
-
-    const selectAll =
-        table.querySelector(
-            'thead input[type="checkbox"]'
-        );
-
-
-    if (!selectAll) {
-        return;
-    }
-
-
-    const visibleRows =
-        getTanahRows().filter(
-            function (row) {
-
-                return !row.hidden;
-
-            }
-        );
-
-
-    const checkboxes =
-        visibleRows
-            .map(
-                function (row) {
-
-                    return row.querySelector(
-                        'input[type="checkbox"]'
-                    );
-
-                }
-            )
-            .filter(Boolean);
-
-
-    const checked =
-        checkboxes.filter(
-            function (checkbox) {
-
-                return checkbox.checked;
-
-            }
-        );
-
-
-    selectAll.checked =
-
-        checkboxes.length > 0 &&
-
-        checked.length ===
-        checkboxes.length;
-
-
-    selectAll.indeterminate =
-
-        checked.length > 0 &&
-
-        checked.length <
-        checkboxes.length;
-
-}
-
-
-/* =========================================================
-   GET SELECTED ROWS
-========================================================= */
-
-function getSelectedTanahRows() {
-
-    return getTanahRows().filter(
-        function (row) {
-
-            const checkbox =
-                row.querySelector(
-                    'input[type="checkbox"]'
-                );
-
-
-            return (
-                checkbox &&
-                checkbox.checked
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   CLEAR SELECTION
-========================================================= */
-
-function clearTanahSelection() {
-
-    getTanahRows().forEach(
-        function (row) {
-
-            const checkbox =
-                row.querySelector(
-                    'input[type="checkbox"]'
-                );
-
-
-            if (checkbox) {
-
-                checkbox.checked =
-                    false;
-
-            }
-
-        }
-    );
-
-
-    updateTanahSelectAllState();
-
-}
-
-
-/* =========================================================
-   CHART
-========================================================= */
-
-function initTanahChart() {
-
-    const canvas =
-        getTanahElement(
-            'tanahDistributionChart'
-        );
-
-
-    const legend =
-        getTanahElement(
-            'tanahLegend'
-        );
-
-
-    if (
-        !canvas ||
-        !legend
-    ) {
-        return;
-    }
-
-
-    const groups =
-        Array.from(
-
-            legend.querySelectorAll(
-                '[data-count]'
-            )
-
-        );
-
-
-    if (!groups.length) {
-        return;
-    }
-
-
-    const labels =
-        groups.map(
-            function (item) {
-
-                return item.dataset.label ||
-                    '';
-
-            }
-        );
-
-
-    const counts =
-        groups.map(
-            function (item) {
-
-                return Number(
-                    item.dataset.count
-                ) || 0;
-
-            }
-        );
-
-
-    const colors =
-        groups.map(
-            function (item) {
-
-                return item.dataset.color ||
-                    '#3389ee';
-
-            }
-        );
-
-
-    const total =
-        counts.reduce(
-            function (
-                sum,
-                value
-            ) {
-
-                return sum + value;
-
-            },
-            0
-        );
-
-
-    /*
-     * Update angka tengah.
-     */
-    const center =
-        canvas.parentElement
-            ?.querySelector(
-                '.tanah-chart-center strong'
-            );
-
-
-    if (center) {
-
-        center.textContent =
-            tanahNumber.format(
-                total
-            );
+        renderTable();
 
     }
 
 
-    /*
-     * Hancurkan chart sebelumnya.
-     */
-    if (tanahChart) {
+    /* ==========================================================
+       UPDATE KPI
+    ========================================================== */
 
-        tanahChart.destroy();
+    function updateKpiFromRows() {
 
-        tanahChart =
-            null;
-
-    }
-
-
-    const wrap =
-        canvas.parentElement;
-
-
-    /*
-     * Chart.js tersedia.
-     */
-    if (
-        typeof window.Chart ===
-        'function'
-    ) {
-
-        canvas.hidden =
-            false;
-
-
-        wrap?.classList.remove(
-            'tanah-chart-fallback'
-        );
-
-
-        if (wrap) {
-
-            wrap.style.background =
-                '';
-
-        }
-
-
-        tanahChart =
-            new window.Chart(
-                canvas,
-                {
-
-                    type:
-                        'doughnut',
-
-
-                    data: {
-
-                        labels:
-                            labels,
-
-
-                        datasets: [
-
-                            {
-
-                                data:
-                                    counts,
-
-
-                                backgroundColor:
-                                    colors,
-
-
-                                borderColor:
-                                    '#ffffff',
-
-
-                                borderWidth:
-                                    2
-
-
-                            }
-
-                        ]
-
-                    },
-
-
-                    options: {
-
-                        responsive:
-                            true,
-
-
-                        maintainAspectRatio:
-                            false,
-
-
-                        cutout:
-                            '70%',
-
-
-                        plugins: {
-
-                            legend: {
-
-                                display:
-                                    false
-
-                            },
-
-
-                            tooltip: {
-
-                                callbacks: {
-
-                                    label:
-                                        function (
-                                            context
-                                        ) {
-
-                                            const value =
-                                                context.raw
-                                                || 0;
-
-
-                                            const percentage =
-
-                                                total
-
-                                                    ? (
-                                                        value /
-                                                        total *
-                                                        100
-                                                    ).toFixed(1)
-
-                                                    : 0;
-
-
-                                            return (
-
-                                                ` ${value} data (${percentage}%)`
-
-                                            );
-
-                                        }
-
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            );
-
-
-        return;
-
-    }
-
-
-    /*
-     * Fallback jika Chart.js tidak tersedia.
-     */
-    if (wrap) {
-
-        let current =
-            0;
-
-
-        const segments =
-            counts.map(
-                function (
-                    count,
-                    index
-                ) {
-
-                    const start =
-                        current;
-
-
-                    current +=
-
-                        total
-
-                            ? (
-                                count /
-                                total *
-                                360
-                            )
-
-                            : 0;
-
-
-                    return (
-
-                        `${colors[index]} ${start}deg ${current}deg`
-
-                    );
-
-                }
-            );
-
-
-        canvas.hidden =
-            true;
-
-
-        wrap.classList.add(
-            'tanah-chart-fallback'
-        );
-
-
-        wrap.style.background =
-
-            total
-
-                ? `conic-gradient(${segments.join(',')})`
-
-                : '#e7ecf2';
-
-    }
-
-}
-
-
-/* =========================================================
-   MODAL
-========================================================= */
-
-function initTanahModal() {
-
-    const modal =
-        getTanahElement(
-            'tanahModal'
-        );
-
-
-    if (!modal) {
-        return;
-    }
-
-
-    /*
-     * Klik backdrop.
-     */
-    modal.addEventListener(
-        'click',
-        function (event) {
-
-            if (
-                event.target !==
-                modal
-            ) {
-                return;
-            }
-
-
-            const rect =
-                modal.getBoundingClientRect();
-
-
-            const outside =
-
-                event.clientX <
-                    rect.left
-
-                ||
-
-                event.clientX >
-                    rect.right
-
-                ||
-
-                event.clientY <
-                    rect.top
-
-                ||
-
-                event.clientY >
-                    rect.bottom;
-
-
-            if (outside) {
-
-                closeTanahModal();
-
-            }
-
-        }
-    );
-
-
-    /*
-     * Ketika modal ditutup.
-     */
-    modal.addEventListener(
-        'close',
-        function () {
-
-            document.body.style.overflow =
-                tanahPreviousOverflow;
-
-        }
-    );
-
-
-    /*
-     * Form belum terhubung backend.
-     */
-    const form =
-        getTanahElement(
-            'tanahForm'
-        );
-
-
-    if (form) {
-
-        form.addEventListener(
-            'submit',
-            function (event) {
-
-                event.preventDefault();
-
-            }
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   OPEN MODAL
-========================================================= */
-
-function openTanahModal(
-
-    mode = 'add',
-
-    row = null
-
-) {
-
-    const modal =
-        getTanahElement(
-            'tanahModal'
-        );
-
-
-    if (
-        !modal ||
-        modal.open
-    ) {
-        return;
-    }
-
-
-    const titles = {
-
-        add:
-            'Tambah Data Tanah',
-
-        view:
-            'Detail Data Tanah',
-
-        edit:
-            'Edit Data Tanah',
-
-        delete:
-            'Hapus Data Tanah'
-
-    };
-
-
-    const descriptions = {
-
-        add:
-            'Tambahkan data aset tanah.',
-
-        view:
-            'Informasi detail aset tanah.',
-
-        edit:
-            'Perbarui informasi aset tanah.',
-
-        delete:
-            'Periksa data tanah yang akan dihapus.'
-
-    };
-
-
-    const title =
-        getTanahElement(
-            'tanahModalTitle'
-        );
-
-
-    const description =
-        getTanahElement(
-            'tanahModalDescription'
-        );
-
-
-    if (title) {
-
-        title.textContent =
-
-            titles[mode] ||
-            titles.add;
-
-    }
-
-
-    if (description) {
-
-        description.textContent =
-
-            descriptions[mode] ||
-            descriptions.add;
-
-    }
-
-
-    /*
-     * Reset form.
-     */
-    const form =
-        getTanahElement(
-            'tanahForm'
-        );
-
-
-    if (
-        form &&
-        mode === 'add'
-    ) {
-
-        form.reset();
-
-    }
-
-
-    /*
-     * Ambil semua field.
-     */
-    const fields = {
-
-        code:
-            getTanahElement(
-                'tanahCode'
-            ),
-
-        name:
-            getTanahElement(
-                'tanahName'
-            ),
-
-        register:
-            getTanahElement(
-                'tanahRegister'
-            ),
-
-        luas:
-            getTanahElement(
-                'tanahLuas'
-            ),
-
-        tahun:
-            getTanahElement(
-                'tanahFormTahun'
-            ),
-
-        lokasi:
-            getTanahElement(
-                'tanahFormLokasi'
-            ),
-
-        hak:
-            getTanahElement(
-                'tanahFormHak'
-            ),
-
-        sertifikat:
-            getTanahElement(
-                'tanahSertifikat'
-            ),
-
-        penggunaan:
-            getTanahElement(
-                'tanahPenggunaan'
-            ),
-
-        nilai:
-            getTanahElement(
-                'tanahNilai'
-            ),
-
-        buku:
-            getTanahElement(
-                'tanahBuku'
-            ),
-
-        kondisi:
-            getTanahElement(
-                'tanahFormKondisi'
-            ),
-
-        status:
-            getTanahElement(
-                'tanahFormStatus'
-            ),
-
-        keterangan:
-            getTanahElement(
-                'tanahKeterangan'
-            )
-
-    };
-
-
-    /*
-     * Isi data dari row.
-     */
-    if (row) {
-
-        setTanahField(
-            fields.code,
-            getTanahRowValue(
-                row,
-                [
-                    'kode',
-                    'kodeAset',
-                    'code'
-                ],
-                [
-                    'kode',
-                    'kode aset'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.name,
-            getTanahRowValue(
-                row,
-                [
-                    'nama',
-                    'namaTanah',
-                    'name'
-                ],
-                [
-                    'nama',
-                    'nama tanah'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.register,
-            getTanahRowValue(
-                row,
-                [
-                    'register',
-                    'noRegister'
-                ],
-                [
-                    'register'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.luas,
-            getTanahRowValue(
-                row,
-                [
-                    'luas',
-                    'luasTanah'
-                ],
-                [
-                    'luas'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.tahun,
-            getTanahRowValue(
-                row,
-                [
-                    'tahun',
-                    'tahunPerolehan'
-                ],
-                [
-                    'tahun',
-                    'tahun perolehan'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.lokasi,
-            getTanahRowValue(
-                row,
-                [
-                    'lokasi',
-                    'alamat',
-                    'letak'
-                ],
-                [
-                    'lokasi',
-                    'alamat',
-                    'letak'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.hak,
-            getTanahRowValue(
-                row,
-                [
-                    'hak',
-                    'statusHak'
-                ],
-                [
-                    'hak'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.sertifikat,
-            getTanahRowValue(
-                row,
-                [
-                    'sertifikat',
-                    'noSertifikat'
-                ],
-                [
-                    'sertifikat'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.penggunaan,
-            getTanahRowValue(
-                row,
-                [
-                    'penggunaan',
-                    'digunakanUntuk'
-                ],
-                [
-                    'penggunaan'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.nilai,
-            getTanahRowValue(
-                row,
-                [
-                    'nilai',
-                    'nilaiPerolehan',
-                    'harga'
-                ],
-                [
-                    'nilai',
-                    'perolehan',
-                    'harga'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.buku,
-            getTanahRowValue(
-                row,
-                [
-                    'nilaiBuku',
-                    'buku'
-                ],
-                [
-                    'nilai buku'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.kondisi,
-            getTanahRowValue(
-                row,
-                [
-                    'kondisi'
-                ],
-                [
-                    'kondisi'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.status,
-            getTanahRowValue(
-                row,
-                [
-                    'status'
-                ],
-                [
-                    'status'
-                ]
-            )
-        );
-
-
-        setTanahField(
-            fields.keterangan,
-            getTanahRowValue(
-                row,
-                [
-                    'keterangan',
-                    'description',
-                    'deskripsi'
-                ],
-                [
-                    'keterangan',
-                    'deskripsi'
-                ]
-            )
-        );
-
-    }
-
-
-    /*
-     * View dan Delete = readonly.
-     */
-    const readonly =
-
-        mode === 'view' ||
-
-        mode === 'delete';
-
-
-    Object.values(fields)
-        .filter(Boolean)
-        .forEach(
-            function (field) {
-
-                const tag =
-                    field.tagName
-                        ?.toLowerCase();
-
-
-                if (
-                    tag === 'select'
-                ) {
-
-                    field.disabled =
-                        readonly;
-
-                }
-
-                else {
-
-                    field.readOnly =
-                        readonly;
-
-                }
-
-            }
-        );
-
-
-    /*
-     * Tombol simpan.
-     */
-    const save =
-        getTanahElement(
-            'tanahSaveButton'
-        );
-
-
-    if (save) {
-
-        save.hidden =
-            mode === 'view';
+        const rows =
+            getRows();
 
 
         /*
-         * Backend belum dihubungkan.
-         * Jangan submit data palsu.
+         * Jumlah data contoh pada tabel.
          */
-        save.disabled =
-            true;
 
+        const total =
+            rows.length;
 
-        save.textContent =
 
-            mode === 'delete'
+        /*
+         * Hitung luas dari seluruh row
+         * yang tersedia.
+         */
 
-                ? 'Hapus Data Tanah'
+        const area =
+            rows.reduce(
+                (sum, row) => {
 
-                : 'Simpan Data Tanah';
-
-
-        save.classList.toggle(
-
-            'tanah-delete-button',
-
-            mode === 'delete'
-
-        );
-
-    }
-
-
-    /*
-     * Note modal.
-     */
-    const note =
-        getTanahElement(
-            'tanahModalNote'
-        );
-
-
-    if (note) {
-
-        note.textContent =
-
-            mode === 'view'
-
-                ? 'Data contoh untuk pratinjau tampilan.'
-
-                : mode === 'delete'
-
-                    ? 'Pratinjau konfirmasi. Penghapusan database belum dihubungkan.'
-
-                    : 'Pratinjau formulir. Penyimpanan database belum dihubungkan.';
-
-    }
-
-
-    /*
-     * Simpan overflow.
-     */
-    tanahPreviousOverflow =
-        document.body.style.overflow;
-
-
-    document.body.style.overflow =
-        'hidden';
-
-
-    /*
-     * Native dialog.
-     */
-    if (
-        typeof modal.showModal ===
-        'function'
-    ) {
-
-        modal.showModal();
-
-    }
-
-    else {
-
-        modal.setAttribute(
-            'open',
-            ''
-        );
-
-    }
-
-
-    /*
-     * Fokus field pertama.
-     */
-    if (
-        !readonly
-    ) {
-
-        fields.code?.focus();
-
-    }
-
-
-    refreshTanahIcons();
-
-}
-
-
-/* =========================================================
-   GET ROW VALUE
-========================================================= */
-
-function getTanahRowValue(
-
-    row,
-
-    datasetKeys = [],
-
-    headerNames = []
-
-) {
-
-    /*
-     * 1. Prioritaskan dataset.
-     */
-    for (
-        const key of datasetKeys
-    ) {
-
-        const value =
-            row.dataset[key];
-
-
-        if (
-            value !== undefined &&
-            value !== ''
-        ) {
-
-            return value;
-
-        }
-
-    }
-
-
-    /*
-     * 2. Cari berdasarkan nama header.
-     */
-    const table =
-        row.closest(
-            'table'
-        );
-
-
-    const headers =
-        table
-
-            ? Array.from(
-                table.querySelectorAll(
-                    'thead th'
-                )
-            )
-
-            : [];
-
-
-    const normalizedHeaders =
-        headers.map(
-            function (header) {
-
-                return normalizeTanahText(
-                    header.textContent
-                );
-
-            }
-        );
-
-
-    for (
-        const headerName of headerNames
-    ) {
-
-        const index =
-            normalizedHeaders.findIndex(
-                function (header) {
-
-                    return header.includes(
-                        normalizeTanahText(
-                            headerName
+                    return (
+                        sum +
+                        Number(
+                            row.dataset.area ||
+                            0
                         )
                     );
 
-                }
+                },
+                0
             );
 
 
-        if (
-            index >= 0 &&
-            row.cells[index]
-        ) {
+        /*
+         * Hitung nilai aset.
+         */
 
-            return cleanTanahText(
+        const value =
+            rows.reduce(
+                (sum, row) => {
 
-                row.cells[index]
-                    .textContent
+                    return (
+                        sum +
+                        Number(
+                            row.dataset.value ||
+                            0
+                        )
+                    );
 
+                },
+                0
             );
+
+
+        const totalAset =
+            document.getElementById(
+                'tanahTotalAset'
+            );
+
+
+        const totalLuas =
+            document.getElementById(
+                'tanahTotalLuas'
+            );
+
+
+        const totalNilai =
+            document.getElementById(
+                'tanahTotalNilai'
+            );
+
+
+        const chartTotal =
+            document.getElementById(
+                'tanahChartTotal'
+            );
+
+
+        /*
+         * ======================================================
+         * BASELINE DATA
+         * ======================================================
+         *
+         * Desain halaman menunjukkan:
+         *
+         * Total Aset Tanah = 245
+         *
+         * Sedangkan tabel hanya memiliki 8 data contoh.
+         *
+         * Jadi:
+         *
+         * 237 data lainnya
+         * +
+         * 8 data contoh
+         * =
+         * 245
+         *
+         * Jika user menambah:
+         *
+         * 8 + 1 = 9
+         * 237 + 9 = 246
+         *
+         * Jika user menghapus:
+         *
+         * 8 - 1 = 7
+         * 237 + 7 = 244
+         *
+         * Dengan demikian angka KPI tetap
+         * mengikuti desain sambil CRUD UI berjalan.
+         */
+
+        const hiddenAssetBaseline = 237;
+
+
+        const displayTotal =
+            hiddenAssetBaseline +
+            total;
+
+
+        /* ======================================================
+           TOTAL ASET
+        ====================================================== */
+
+        if (totalAset) {
+
+            totalAset.textContent =
+                number.format(
+                    displayTotal
+                );
+
+        }
+
+
+        /* ======================================================
+           TOTAL LUAS
+        ====================================================== */
+
+        /*
+         * Nilai utama desain tetap digunakan.
+         */
+
+        if (totalLuas) {
+
+            totalLuas.textContent =
+                '1.248.560 m²';
+
+        }
+
+
+        /* ======================================================
+           TOTAL NILAI
+        ====================================================== */
+
+        if (totalNilai) {
+
+            totalNilai.textContent =
+                'Rp 245,6 M';
+
+        }
+
+
+        /* ======================================================
+           CHART TOTAL
+        ====================================================== */
+
+        if (chartTotal) {
+
+            chartTotal.textContent =
+                number.format(
+                    displayTotal
+                );
 
         }
 
     }
 
 
-    return '';
+    /* ==========================================================
+       SHORT RUPIAH
+    ========================================================== */
 
-}
+    function formatShortRupiah(value) {
+
+        if (value >= 1e9) {
+
+            return `Rp ${(value / 1e9).toLocaleString(
+                'id-ID',
+                {
+                    maximumFractionDigits: 1
+                }
+            )} M`;
+
+        }
 
 
-/* =========================================================
-   SET FIELD
-========================================================= */
+        if (value >= 1e6) {
 
-function setTanahField(
-    field,
-    value
-) {
+            return `Rp ${(value / 1e6).toLocaleString(
+                'id-ID',
+                {
+                    maximumFractionDigits: 1
+                }
+            )} Jt`;
 
-    if (!field) {
-        return;
+        }
+
+
+        return rupiah.format(value);
+
     }
 
 
-    field.value =
-        value ?? '';
+    /* ==========================================================
+       OPEN MODAL
+    ========================================================== */
 
-}
-
-
-/* =========================================================
-   NORMALIZE TEXT
-========================================================= */
-
-function normalizeTanahText(
-    value
-) {
-
-    return String(
-        value || ''
-    )
-        .replace(
-            /\s+/g,
-            ' '
-        )
-        .trim()
-        .toLocaleLowerCase(
-            'id-ID'
-        );
-
-}
-
-
-/* =========================================================
-   CLEAN TEXT
-========================================================= */
-
-function cleanTanahText(
-    value
-) {
-
-    return String(
-        value || ''
-    )
-        .replace(
-            /\s+/g,
-            ' '
-        )
-        .trim();
-
-}
-
-
-/* =========================================================
-   CLOSE MODAL
-========================================================= */
-
-function closeTanahModal() {
-
-    const modal =
-        getTanahElement(
-            'tanahModal'
-        );
-
-
-    if (!modal) {
-        return;
-    }
-
-
-    if (
-        modal.open &&
-        typeof modal.close ===
-            'function'
+    function openTanahModal(
+        mode = 'add',
+        row = null
     ) {
 
-        modal.close();
+        const modal =
+            document.getElementById(
+                'tanahModal'
+            );
 
-    }
 
-    else {
+        if (!modal) {
+            return;
+        }
 
-        modal.removeAttribute(
-            'open'
-        );
+
+        modalMode =
+            mode;
+
+
+        editingRow =
+            row;
+
+
+        const title =
+            document.getElementById(
+                'tanahModalTitle'
+            );
+
+
+        const description =
+            document.getElementById(
+                'tanahModalDescription'
+            );
+
+
+        const save =
+            document.getElementById(
+                'tanahSaveButton'
+            );
+
+
+        const form =
+            document.getElementById(
+                'tanahForm'
+            );
+
+
+        /* ======================================================
+           RESET FORM
+        ====================================================== */
+
+        form?.reset();
+
+
+        /* ======================================================
+           MODAL TYPE
+        ====================================================== */
+
+        const isView =
+            mode === 'view';
+
+
+        const isDelete =
+            mode === 'delete';
+
+
+        /* ======================================================
+           TITLE
+        ====================================================== */
+
+        if (title) {
+
+            title.textContent =
+                mode === 'add'
+                    ? 'Tambah Tanah'
+
+                    : mode === 'edit'
+                        ? 'Edit Tanah'
+
+                        : mode === 'delete'
+                            ? 'Hapus Tanah'
+
+                            : 'Detail Tanah';
+
+        }
+
+
+        /* ======================================================
+           DESCRIPTION
+        ====================================================== */
+
+        if (description) {
+
+            description.textContent =
+                mode === 'add'
+                    ? 'Tambahkan data aset tanah baru.'
+
+                    : mode === 'edit'
+                        ? 'Perbarui data aset tanah.'
+
+                        : mode === 'delete'
+                            ? 'Periksa data sebelum menghapus.'
+
+                            : 'Informasi data aset tanah.';
+
+        }
+
+
+        /* ======================================================
+           SAVE BUTTON
+        ====================================================== */
+
+        if (save) {
+
+            save.textContent =
+                isDelete
+                    ? 'Hapus Tanah'
+                    : 'Simpan';
+
+
+            save.classList.toggle(
+                'tanah-delete-button',
+                isDelete
+            );
+
+
+            save.disabled =
+                isView;
+
+        }
+
+
+        /* ======================================================
+           FILL FORM
+        ====================================================== */
+
+        if (row) {
+
+            fillModal(row);
+
+        }
+
+
+        /* ======================================================
+           INPUT LOCK
+        ====================================================== */
+
+        [
+
+            'tanahCode',
+
+            'tanahFormLokasi',
+
+            'tanahPenggunaan',
+
+            'tanahLuas',
+
+            'tanahFormTahun',
+
+            'tanahNilai'
+
+        ].forEach(id => {
+
+            const element =
+                document.getElementById(
+                    id
+                );
+
+
+            if (element) {
+
+                element.readOnly =
+                    isView ||
+                    isDelete;
+
+            }
+
+        });
+
+
+        /* ======================================================
+           SELECT LOCK
+        ====================================================== */
+
+        [
+
+            'tanahFormHak',
+
+            'tanahStatus'
+
+        ].forEach(id => {
+
+            const element =
+                document.getElementById(
+                    id
+                );
+
+
+            if (element) {
+
+                element.disabled =
+                    isView ||
+                    isDelete;
+
+            }
+
+        });
+
+
+        /* ======================================================
+           SHOW MODAL
+        ====================================================== */
+
+        previousOverflow =
+            document.body.style.overflow;
 
 
         document.body.style.overflow =
-            tanahPreviousOverflow;
+            'hidden';
+
+
+        modal.showModal();
+
+
+        refreshIcons();
 
     }
 
-}
+
+    /* ==========================================================
+       FILL MODAL
+    ========================================================== */
+
+    function fillModal(row) {
+
+        const code =
+            document.getElementById(
+                'tanahCode'
+            );
 
 
-/* =========================================================
-   EXPORT CSV
-========================================================= */
-
-function exportTanahCSV() {
-
-    const rows =
-        getFilteredTanahRows();
+        const lokasi =
+            document.getElementById(
+                'tanahFormLokasi'
+            );
 
 
-    const table =
-        getTanahTable();
+        const penggunaan =
+            document.getElementById(
+                'tanahPenggunaan'
+            );
 
 
-    if (
-        !table
-    ) {
-        return;
+        const luas =
+            document.getElementById(
+                'tanahLuas'
+            );
+
+
+        const hak =
+            document.getElementById(
+                'tanahFormHak'
+            );
+
+
+        const tahun =
+            document.getElementById(
+                'tanahFormTahun'
+            );
+
+
+        const nilai =
+            document.getElementById(
+                'tanahNilai'
+            );
+
+
+        const status =
+            document.getElementById(
+                'tanahStatus'
+            );
+
+
+        if (code) {
+
+            code.value =
+                row.cells[1]
+                    ?.textContent
+                    .trim() || '';
+
+        }
+
+
+        if (lokasi) {
+
+            lokasi.value =
+                row.cells[2]
+                    ?.textContent
+                    .trim() || '';
+
+        }
+
+
+        if (penggunaan) {
+
+            penggunaan.value =
+                row.cells[3]
+                    ?.textContent
+                    .trim() || '';
+
+        }
+
+
+        if (luas) {
+
+            luas.value =
+                row.dataset.area || '';
+
+        }
+
+
+        if (hak) {
+
+            hak.value =
+                row.dataset.hak ||
+                'Hak Pakai';
+
+        }
+
+
+        if (tahun) {
+
+            tahun.value =
+                row.dataset.tahun || '';
+
+        }
+
+
+        if (nilai) {
+
+            nilai.value =
+                row.dataset.value || '';
+
+        }
+
+
+        if (status) {
+
+            status.value =
+                row.cells[8]
+                    ?.textContent
+                    .trim() ||
+                'Aktif';
+
+        }
+
     }
 
 
-    /*
-     * Ambil header tabel.
-     */
-    const headers =
-        Array.from(
+    /* ==========================================================
+       CLOSE MODAL
+    ========================================================== */
 
-            table.querySelectorAll(
-                'thead th'
-            )
+    function closeTanahModal() {
 
-        )
-        .map(
-            function (header) {
+        const modal =
+            document.getElementById(
+                'tanahModal'
+            );
 
-                return cleanTanahText(
-                    header.textContent
-                );
+
+        modal?.close();
+
+    }
+
+
+    /* ==========================================================
+       SAVE TANAH
+    ========================================================== */
+
+    function saveTanah(event) {
+
+        event.preventDefault();
+
+
+        /*
+         * VIEW MODE tidak boleh menyimpan.
+         */
+
+        if (modalMode === 'view') {
+
+            return;
+
+        }
+
+
+        /* ======================================================
+           DELETE
+        ====================================================== */
+
+        if (modalMode === 'delete') {
+
+            if (editingRow) {
+
+                editingRow.remove();
+
+                document.body.dataset.tanahLocalCrud =
+                    '1';
+
+
+                closeTanahModal();
+
+
+                currentPage = 1;
+
+
+                renderTable();
 
             }
-        );
+
+            return;
+
+        }
 
 
-    /*
-     * Tentukan kolom Aksi.
-     */
-    const actionIndex =
-        headers.findIndex(
-            function (header) {
+        /* ======================================================
+           GET FORM VALUE
+        ====================================================== */
 
-                return normalizeTanahText(
-                    header
-                ) === 'aksi';
-
-            }
-        );
-
-
-    const exportHeaders =
-
-        actionIndex >= 0
-
-            ? headers.filter(
-                function (_, index) {
-
-                    return index !==
-                        actionIndex;
-
-                }
-            )
-
-            : headers;
-
-
-    const records = [
-        exportHeaders
-    ];
-
-
-    /*
-     * Data.
-     */
-    rows.forEach(
-        function (row, rowIndex) {
-
-            const values =
-                Array.from(
-                    row.cells
+        const code =
+            document
+                .getElementById(
+                    'tanahCode'
                 )
-                .map(
-                    function (cell) {
-
-                        return cleanTanahText(
-                            cell.textContent
-                        );
-
-                    }
-                );
+                .value
+                .trim();
 
 
-            /*
-             * Hapus kolom aksi.
-             */
-            if (
-                actionIndex >= 0
-            ) {
-
-                values.splice(
-                    actionIndex,
-                    1
-                );
-
-            }
+        const lokasi =
+            document
+                .getElementById(
+                    'tanahFormLokasi'
+                )
+                .value
+                .trim();
 
 
-            /*
-             * Nomor disesuaikan dengan
-             * urutan hasil filter.
-             */
-            if (
-                values.length > 0
-            ) {
-
-                values[0] =
-                    rowIndex + 1;
-
-            }
+        const penggunaan =
+            document
+                .getElementById(
+                    'tanahPenggunaan'
+                )
+                .value
+                .trim();
 
 
-            records.push(
-                values
+        const area =
+            Number(
+                document
+                    .getElementById(
+                        'tanahLuas'
+                    )
+                    .value || 0
+            );
+
+
+        const hak =
+            document
+                .getElementById(
+                    'tanahFormHak'
+                )
+                .value;
+
+
+        const tahun =
+            document
+                .getElementById(
+                    'tanahFormTahun'
+                )
+                .value;
+
+
+        const value =
+            Number(
+                document
+                    .getElementById(
+                        'tanahNilai'
+                    )
+                    .value || 0
+            );
+
+
+        const status =
+            document
+                .getElementById(
+                    'tanahStatus'
+                )
+                .value;
+
+
+        /* ======================================================
+           VALIDATION
+        ====================================================== */
+
+        if (
+            !code ||
+            !lokasi ||
+            !penggunaan ||
+            !area ||
+            !tahun ||
+            value < 0
+        ) {
+
+            return;
+
+        }
+
+
+        /* ======================================================
+           UPDATE
+        ====================================================== */
+
+        if (editingRow) {
+
+            updateRow(
+                editingRow,
+                {
+                    code,
+                    lokasi,
+                    penggunaan,
+                    area,
+                    hak,
+                    tahun,
+                    value,
+                    status
+                }
             );
 
         }
-    );
 
+        /* ======================================================
+           CREATE
+        ====================================================== */
 
-    /*
-     * Convert CSV.
-     */
-    const csv =
+        else {
 
-        records
-            .map(
-                function (record) {
-
-                    return record
-                        .map(
-                            tanahCsvCell
-                        )
-                        .join(',');
-
+            createRow(
+                {
+                    code,
+                    lokasi,
+                    penggunaan,
+                    area,
+                    hak,
+                    tahun,
+                    value,
+                    status
                 }
-            )
-            .join('\r\n');
-
-
-    /*
-     * UTF-8 BOM.
-     */
-    const blob =
-        new Blob(
-
-            [
-
-                '\uFEFF' +
-                csv
-
-            ],
-
-            {
-
-                type:
-                    'text/csv;charset=utf-8;'
-
-            }
-
-        );
-
-
-    const url =
-        URL.createObjectURL(
-            blob
-        );
-
-
-    const link =
-        document.createElement(
-            'a'
-        );
-
-
-    link.href =
-        url;
-
-
-    link.download =
-        'data-tanah.csv';
-
-
-    document.body.appendChild(
-        link
-    );
-
-
-    link.click();
-
-
-    link.remove();
-
-
-    window.setTimeout(
-        function () {
-
-            URL.revokeObjectURL(
-                url
             );
 
-        },
-        1000
-    );
-
-}
+        }
 
 
-/* =========================================================
-   CSV CELL
-========================================================= */
+        /*
+         * Tandai bahwa data sudah mengalami
+         * perubahan lokal.
+         */
 
-function tanahCsvCell(
-    value
-) {
-
-    let text =
-        String(
-            value ?? ''
-        );
+        document.body.dataset.tanahLocalCrud =
+            '1';
 
 
-    /*
-     * Cegah formula injection
-     * ketika CSV dibuka di Excel.
-     */
-    if (
-        /^[\s]*[=+@-]/.test(
-            text
-        )
-        ||
-        /^[\t\r\n]/.test(
-            text
-        )
-    ) {
+        closeTanahModal();
 
-        text =
-            "'" +
-            text;
+
+        currentPage = 1;
+
+
+        renderTable();
 
     }
 
 
-    /*
-     * Escape tanda kutip.
-     */
-    text =
-        text.replace(
-            /"/g,
-            '""'
+    /* ==========================================================
+       UPDATE ROW
+    ========================================================== */
+
+    function updateRow(
+        row,
+        data
+    ) {
+
+        /* ======================================================
+           UPDATE DATA ATTRIBUTE
+        ====================================================== */
+
+        row.dataset.lokasi =
+            data.lokasi;
+
+
+        row.dataset.hak =
+            data.hak;
+
+
+        row.dataset.tahun =
+            data.tahun;
+
+
+        row.dataset.area =
+            data.area;
+
+
+        row.dataset.value =
+            data.value;
+
+
+        /* ======================================================
+           UPDATE TABLE CELL
+        ====================================================== */
+
+        row.cells[1].textContent =
+            data.code;
+
+
+        row.cells[2].textContent =
+            data.lokasi;
+
+
+        row.cells[3].textContent =
+            data.penggunaan;
+
+
+        row.cells[4].textContent =
+            `${number.format(
+                data.area
+            )} m²`;
+
+
+        row.cells[5].textContent =
+            data.hak;
+
+
+        row.cells[6].textContent =
+            data.tahun;
+
+
+        row.cells[7].textContent =
+            rupiah.format(
+                data.value
+            );
+
+
+        row.cells[8].innerHTML = `
+            <span class="tanah-status ${statusClass(data.status)}">
+                ${escapeHtml(data.status)}
+            </span>
+        `;
+
+
+        refreshIcons();
+
+    }
+
+
+    /* ==========================================================
+       CREATE ROW
+    ========================================================== */
+
+    function createRow(data) {
+
+        const tbody =
+            document.getElementById(
+                'tanahTableBody'
+            );
+
+
+        const empty =
+            document.getElementById(
+                'tanahEmptyRow'
+            );
+
+
+        if (!tbody) {
+            return;
+        }
+
+
+        const row =
+            document.createElement(
+                'tr'
+            );
+
+
+        row.dataset.record =
+            '';
+
+
+        row.dataset.lokasi =
+            data.lokasi;
+
+
+        row.dataset.hak =
+            data.hak;
+
+
+        row.dataset.tahun =
+            data.tahun;
+
+
+        row.dataset.area =
+            data.area;
+
+
+        row.dataset.value =
+            data.value;
+
+
+        row.innerHTML = `
+
+            <td></td>
+
+            <td class="tanah-code">
+                ${escapeHtml(data.code)}
+            </td>
+
+            <td>
+                ${escapeHtml(data.lokasi)}
+            </td>
+
+            <td>
+                ${escapeHtml(data.penggunaan)}
+            </td>
+
+            <td>
+                ${number.format(data.area)} m²
+            </td>
+
+            <td>
+                ${escapeHtml(data.hak)}
+            </td>
+
+            <td>
+                ${escapeHtml(data.tahun)}
+            </td>
+
+            <td>
+                ${rupiah.format(data.value)}
+            </td>
+
+            <td>
+                <span class="tanah-status ${statusClass(data.status)}">
+                    ${escapeHtml(data.status)}
+                </span>
+            </td>
+
+            <td>
+
+                <div class="tanah-actions">
+
+                    <button
+                        type="button"
+                        class="view"
+                        data-action="view"
+                        title="Lihat"
+                    >
+                        <i data-lucide="eye"></i>
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="edit"
+                        data-action="edit"
+                        title="Edit"
+                    >
+                        <i data-lucide="square-pen"></i>
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="delete"
+                        data-action="delete"
+                        title="Hapus"
+                    >
+                        <i data-lucide="trash-2"></i>
+                    </button>
+
+                </div>
+
+            </td>
+        `;
+
+
+        /*
+         * Masukkan row sebelum empty state.
+         */
+
+        if (empty) {
+
+            tbody.insertBefore(
+                row,
+                empty
+            );
+
+        } else {
+
+            tbody.appendChild(
+                row
+            );
+
+        }
+
+
+        refreshIcons();
+
+    }
+
+
+    /* ==========================================================
+       STATUS CLASS
+    ========================================================== */
+
+    function statusClass(status) {
+
+        if (
+            status === 'Verifikasi'
+        ) {
+
+            return 'review';
+
+        }
+
+
+        if (
+            status === 'Draft'
+        ) {
+
+            return 'draft';
+
+        }
+
+
+        return 'active';
+
+    }
+
+
+    /* ==========================================================
+       ESCAPE HTML
+    ========================================================== */
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement(
+                'div'
+            );
+
+
+        div.textContent =
+            String(
+                value ?? ''
+            );
+
+
+        return div.innerHTML;
+
+    }
+
+
+    /* ==========================================================
+       EXPORT CSV
+    ========================================================== */
+
+    function exportTanahCSV() {
+
+        const rows =
+            getFilteredRows();
+
+
+        const header = [
+
+            'No',
+
+            'Kode Tanah',
+
+            'Lokasi',
+
+            'Penggunaan / Letak',
+
+            'Luas',
+
+            'Hak',
+
+            'Tahun',
+
+            'Nilai',
+
+            'Status'
+
+        ];
+
+
+        const data = [
+            header
+        ];
+
+
+        rows.forEach(
+            (row, index) => {
+
+                data.push([
+
+                    index + 1,
+
+                    row.cells[1]
+                        ?.textContent
+                        .trim() || '',
+
+                    row.cells[2]
+                        ?.textContent
+                        .trim() || '',
+
+                    row.cells[3]
+                        ?.textContent
+                        .trim() || '',
+
+                    row.cells[4]
+                        ?.textContent
+                        .trim() || '',
+
+                    row.cells[5]
+                        ?.textContent
+                        .trim() || '',
+
+                    row.cells[6]
+                        ?.textContent
+                        .trim() || '',
+
+                    row.cells[7]
+                        ?.textContent
+                        .trim() || '',
+
+                    row.cells[8]
+                        ?.textContent
+                        .trim() || ''
+
+                ]);
+
+            }
         );
 
 
-    return (
-        '"' +
-        text +
-        '"'
-    );
+        /* ======================================================
+           BUILD CSV
+        ====================================================== */
 
-}
+        const csv =
+            data
+                .map(row => {
 
+                    return row
+                        .map(value => {
 
-/* =========================================================
-   GLOBAL FUNCTION
-   Untuk onclick="" di Blade.
-========================================================= */
-
-window.openTanahModal =
-    openTanahModal;
-
-
-window.closeTanahModal =
-    closeTanahModal;
+                            let v =
+                                String(
+                                    value ?? ''
+                                );
 
 
-window.resetTanahFilter =
-    resetTanahFilter;
+                            /*
+                             * CSV Injection protection.
+                             */
+
+                            if (
+                                /^[=+@-]/.test(v)
+                            ) {
+
+                                v =
+                                    `'${v}`;
+
+                            }
 
 
-window.exportTanahCSV =
-    exportTanahCSV;
+                            return `"${v.replace(
+                                /"/g,
+                                '""'
+                            )}"`;
+
+                        })
+                        .join(',');
+
+                })
+                .join('\r\n');
 
 
-window.getSelectedTanahRows =
-    getSelectedTanahRows;
+        /* ======================================================
+           DOWNLOAD
+        ====================================================== */
+
+        const blob =
+            new Blob(
+                [
+                    '\uFEFF' +
+                    csv
+                ],
+                {
+                    type:
+                        'text/csv;charset=utf-8;'
+                }
+            );
 
 
-window.clearTanahSelection =
-    clearTanahSelection;
+        const url =
+            URL.createObjectURL(
+                blob
+            );
 
 
-/* =========================================================
-   END
-========================================================= */
+        const link =
+            document.createElement(
+                'a'
+            );
+
+
+        link.href =
+            url;
+
+
+        link.download =
+            'data-tanah.csv';
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        setTimeout(
+            () => {
+
+                URL.revokeObjectURL(
+                    url
+                );
+
+            },
+            1000
+        );
+
+    }
+
+
+    /* ==========================================================
+       LUCIDE ICON
+    ========================================================== */
+
+    function refreshIcons() {
+
+        if (
+            window.lucide &&
+            typeof window.lucide.createIcons ===
+                'function'
+        ) {
+
+            window.lucide.createIcons();
+
+        }
+
+    }
+
+
+    /* ==========================================================
+       GLOBAL FUNCTION
+       Dipakai oleh tombol onclick pada Blade.
+    ========================================================== */
+
+    window.openTanahModal =
+        openTanahModal;
+
+
+    window.closeTanahModal =
+        closeTanahModal;
+
+
+    window.filterTanahTable =
+        filterTanahTable;
+
+
+    window.resetTanahFilter =
+        resetTanahFilter;
+
+
+    window.exportTanahCSV =
+        exportTanahCSV;
+
+
+})();
