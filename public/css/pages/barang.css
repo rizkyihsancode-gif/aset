@@ -861,3 +861,253 @@
     .barang-pagination { margin-left: 0; }
 }
 
+/* =========================================================
+   BARANG KPI ACTIVITY
+========================================================= */
+
+.barang-kpi-card-clickable {
+    cursor: pointer;
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.barang-kpi-card-clickable:hover {
+    transform: translateY(-2px);
+    border-color: #bcd7f6;
+    box-shadow: 0 12px 30px rgba(28,67,105,.10);
+}
+
+.barang-kpi-card-clickable:focus-visible {
+    outline: 3px solid rgba(11,99,206,.25);
+    outline-offset: 3px;
+}
+
+
+.barang-delta-up {
+    color: #16a34a !important;
+}
+
+.barang-delta-down {
+    color: #dc2626 !important;
+}
+
+.barang-delta-neutral {
+    color: #718096 !important;
+}
+
+
+/* =========================================================
+   HISTORY MODAL
+========================================================= */
+
+.barang-history-modal {
+    width: min(1050px, calc(100% - 32px));
+}
+
+.barang-history-dialog {
+    max-width: 1050px;
+}
+
+
+.barang-history-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+
+    padding: 18px 20px 8px;
+}
+
+.barang-history-summary-item {
+    padding: 13px 15px;
+
+    border: 1px solid #e2eaf3;
+    border-radius: 9px;
+
+    background: #f8fbff;
+}
+
+.barang-history-summary-item span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #70829b;
+    font-size: 12px;
+}
+
+.barang-history-summary-item strong {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    color: #10264d;
+    font-size: 20px;
+}
+
+.barang-history-summary-item strong svg {
+    width: 16px;
+    height: 16px;
+}
+
+.barang-history-summary-item .is-created {
+    color: #16a34a;
+}
+
+.barang-history-summary-item .is-deleted {
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   HISTORY FILTER
+========================================================= */
+
+.barang-history-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 12px 20px;
+}
+
+.barang-history-toolbar button {
+    min-height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    padding: 0 13px;
+
+    border: 1px solid #d8e3ef;
+    border-radius: 7px;
+
+    background: white;
+    color: #49617f;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.barang-history-toolbar button svg {
+    width: 14px;
+    height: 14px;
+}
+
+.barang-history-toolbar button.active {
+    border-color: var(--barang-primary);
+    background: var(--barang-primary);
+    color: white;
+}
+
+
+/* =========================================================
+   HISTORY TABLE
+========================================================= */
+
+.barang-history-body {
+    padding: 0 20px 20px;
+}
+
+.barang-history-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    white-space: nowrap;
+}
+
+.barang-history-table th {
+    padding: 11px 12px;
+
+    border: 1px solid #dfe7f0;
+
+    background: #edf5ff;
+
+    color: #17325a;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: left;
+}
+
+.barang-history-table td {
+    padding: 11px 12px;
+
+    border: 1px solid #e5ebf2;
+
+    color: #354f73;
+
+    font-size: 12px;
+}
+
+.barang-history-table tbody tr:hover {
+    background: #f7fbff;
+}
+
+
+/* =========================================================
+   HISTORY STATUS
+========================================================= */
+
+.barang-history-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    padding: 5px 8px;
+
+    border-radius: 6px;
+
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.barang-history-status svg {
+    width: 12px;
+    height: 12px;
+}
+
+.barang-history-status.is-created {
+    background: #eaf8ef;
+    color: #15803d;
+}
+
+.barang-history-status.is-deleted {
+    background: #fff0f1;
+    color: #dc2626;
+}
+
+
+.barang-history-empty {
+    padding: 28px 15px;
+
+    text-align: center;
+
+    color: #71839d;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE HISTORY
+========================================================= */
+
+@media (max-width: 760px) {
+
+    .barang-history-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .barang-history-toolbar {
+        flex-wrap: wrap;
+    }
+
+}

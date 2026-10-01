@@ -4839,5 +4839,330 @@
 
         };
 
+        /* ========================================================
+   BARANG ACTIVITY HISTORY
+   ======================================================== */
+
+function bindBarangActivityHistory() {
+
+    const card =
+        document.getElementById(
+            'barangTotalActivityCard'
+        );
+
+
+    const modal =
+        document.getElementById(
+            'barangActivityModal'
+        );
+
+
+    if (
+        !card ||
+        !modal
+    ) {
+        return;
+    }
+
+
+    /*
+     * Klik card.
+     */
+
+    card.addEventListener(
+        'click',
+        function () {
+
+            openBarangActivityModal();
+
+        }
+    );
+
+
+    /*
+     * Keyboard accessibility.
+     */
+
+    card.addEventListener(
+        'keydown',
+        function (event) {
+
+            if (
+                event.key === 'Enter' ||
+                event.key === ' '
+            ) {
+
+                event.preventDefault();
+
+                openBarangActivityModal();
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Klik backdrop.
+     */
+
+    modal.addEventListener(
+        'click',
+        function (event) {
+
+            if (
+                event.target ===
+                modal
+            ) {
+
+                closeBarangActivityModal();
+
+            }
+
+        }
+    );
+
+
+    /*
+     * Filter.
+     */
+
+    document
+        .querySelectorAll(
+            '[data-barang-history-filter]'
+        )
+        .forEach(
+            function (button) {
+
+                button.addEventListener(
+                    'click',
+                    function () {
+
+                        setBarangActivityFilter(
+                            button.dataset
+                                .barangHistoryFilter
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+/* ========================================================
+   OPEN HISTORY
+   ======================================================== */
+
+function openBarangActivityModal() {
+
+    const modal =
+        document.getElementById(
+            'barangActivityModal'
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    setBarangActivityFilter(
+        'all'
+    );
+
+
+    if (
+        typeof modal.showModal ===
+        'function'
+    ) {
+
+        if (!modal.open) {
+
+            modal.showModal();
+
+        }
+
+    } else {
+
+        modal.setAttribute(
+            'open',
+            ''
+        );
+
+    }
+
+
+    refreshIcons();
+
+}
+
+
+/* ========================================================
+   CLOSE HISTORY
+   ======================================================== */
+
+function closeBarangActivityModal() {
+
+    const modal =
+        document.getElementById(
+            'barangActivityModal'
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    if (
+        typeof modal.close ===
+        'function' &&
+        modal.open
+    ) {
+
+        modal.close();
+
+    } else {
+
+        modal.removeAttribute(
+            'open'
+        );
+
+    }
+
+}
+
+
+/* ========================================================
+   FILTER HISTORY
+   ======================================================== */
+
+function setBarangActivityFilter(
+    filter
+) {
+
+    const buttons =
+        document.querySelectorAll(
+            '[data-barang-history-filter]'
+        );
+
+
+    const rows =
+        Array.from(
+            document.querySelectorAll(
+                '[data-barang-history-row]'
+            )
+        );
+
+
+    const empty =
+        document.getElementById(
+            'barangHistoryFilteredEmpty'
+        );
+
+
+    /*
+     * Active button.
+     */
+
+    buttons.forEach(
+        function (button) {
+
+            button.classList.toggle(
+                'active',
+
+                button.dataset
+                    .barangHistoryFilter ===
+                    filter
+            );
+
+        }
+    );
+
+
+    let visibleCount =
+        0;
+
+
+    rows.forEach(
+        function (row) {
+
+            const visible =
+                filter ===
+                    'all' ||
+                row.dataset.action ===
+                    filter;
+
+
+            row.hidden =
+                !visible;
+
+
+            if (visible) {
+
+                visibleCount++;
+
+
+                const number =
+                    row.querySelector(
+                        '.barang-history-number'
+                    );
+
+
+                if (number) {
+
+                    number.textContent =
+                        visibleCount;
+
+                }
+
+            }
+
+        }
+    );
+
+
+    if (empty) {
+
+        empty.hidden =
+            !(
+                rows.length >
+                0 &&
+                visibleCount ===
+                0
+            );
+
+    }
+
+
+    refreshIcons();
+
+}
+
+
+/* ========================================================
+   GLOBAL HISTORY FUNCTIONS
+   ======================================================== */
+
+window.openBarangActivityModal =
+    openBarangActivityModal;
+
+
+window.closeBarangActivityModal =
+    closeBarangActivityModal;
+
+
+/*
+ * Karena DOMContentLoaded utama sudah ada di file,
+ * event kedua ini aman.
+ */
+
+document.addEventListener(
+    'DOMContentLoaded',
+    bindBarangActivityHistory
+);
 
 })();

@@ -88,16 +88,20 @@
             <div class="barang-kpi-grid">
 
                 {{-- TOTAL BARANG --}}
-
-                <div class="barang-kpi-card">
+                <div class="barang-kpi-card barang-kpi-card-clickable" id="barangTotalActivityCard" role="button"
+                    tabindex="0" aria-label="Lihat riwayat perubahan Barang">
 
                     <div class="barang-kpi-icon">
                         <i data-lucide="package"></i>
                     </div>
 
+
                     <div class="barang-kpi-content">
 
-                        <span>Total Barang</span>
+                        <span>
+                            Total Barang
+                        </span>
+
 
                         <div class="barang-kpi-value">
 
@@ -105,23 +109,50 @@
                                 {{ number_format($totalBarang, 0, ',', '.') }}
                             </strong>
 
-                            <small>
-                                <i data-lucide="database"></i>
-                                DB
-                            </small>
+
+                            {{-- DELTA --}}
+                            @if ($barangDelta > 0)
+                                <small class="barang-delta barang-delta-up">
+
+                                    <i data-lucide="arrow-up"></i>
+
+                                    +{{ number_format($barangDelta, 0, ',', '.') }}
+
+                                </small>
+                            @elseif ($barangDelta < 0)
+                                <small class="barang-delta barang-delta-down">
+
+                                    <i data-lucide="arrow-down"></i>
+
+                                    {{ number_format($barangDelta, 0, ',', '.') }}
+
+                                </small>
+                            @else
+                                <small class="barang-delta barang-delta-neutral">
+
+                                    <i data-lucide="minus"></i>
+
+                                    0
+
+                                </small>
+                            @endif
 
                         </div>
 
+
                         <p>
-                            data master barang
+                            perubahan tercatat
                         </p>
 
                     </div>
 
+
                     <div class="barang-sparkline">
 
                         <svg viewBox="0 0 100 45">
+
                             <polyline points="3,35 17,20 31,25 45,10 59,17 72,26 88,7 98,4" />
+
                         </svg>
 
                     </div>
@@ -187,6 +218,265 @@
                 </div>
 
             </div>
+
+            {{-- ============================================================
+     ACTIVITY HISTORY MODAL
+============================================================= --}}
+
+            <dialog class="barang-modal barang-history-modal" id="barangActivityModal"
+                aria-labelledby="barangActivityModalTitle">
+
+                <div class="barang-modal-dialog barang-history-dialog">
+
+                    {{-- ========================================================
+             HEADER
+        ========================================================= --}}
+                    <div class="barang-modal-header">
+
+                        <div>
+
+                            <h3 id="barangActivityModalTitle">
+                                Riwayat Perubahan Barang
+                            </h3>
+
+                            <p>
+                                Riwayat penambahan dan penghapusan data master Barang.
+                            </p>
+
+                        </div>
+
+
+                        <button type="button" onclick="closeBarangActivityModal()"
+                            aria-label="Tutup riwayat perubahan Barang">
+
+                            <i data-lucide="x"></i>
+
+                        </button>
+
+                    </div>
+
+
+                    {{-- ========================================================
+             SUMMARY
+        ========================================================= --}}
+                    <div class="barang-history-summary">
+
+                        <div class="barang-history-summary-item">
+
+                            <span>
+                                Ditambahkan
+                            </span>
+
+                            <strong class="is-created">
+
+                                <i data-lucide="arrow-up"></i>
+
+                                {{ number_format($barangTambah, 0, ',', '.') }}
+
+                            </strong>
+
+                        </div>
+
+
+                        <div class="barang-history-summary-item">
+
+                            <span>
+                                Dihapus
+                            </span>
+
+                            <strong class="is-deleted">
+
+                                <i data-lucide="arrow-down"></i>
+
+                                {{ number_format($barangHapus, 0, ',', '.') }}
+
+                            </strong>
+
+                        </div>
+
+
+                        <div class="barang-history-summary-item">
+
+                            <span>
+                                Perubahan Bersih
+                            </span>
+
+                            <strong>
+
+                                @if ($barangDelta > 0)
+                                    +{{ number_format($barangDelta, 0, ',', '.') }}
+                                @else
+                                    {{ number_format($barangDelta, 0, ',', '.') }}
+                                @endif
+
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    {{-- ========================================================
+             FILTER
+        ========================================================= --}}
+                    <div class="barang-history-toolbar">
+
+                        <button type="button" class="active" data-barang-history-filter="all">
+                            Semua
+                        </button>
+
+
+                        <button type="button" data-barang-history-filter="created">
+                            <i data-lucide="plus"></i>
+
+                            Ditambahkan
+                        </button>
+
+
+                        <button type="button" data-barang-history-filter="deleted">
+                            <i data-lucide="trash-2"></i>
+
+                            Dihapus
+                        </button>
+
+                    </div>
+
+
+                    {{-- ========================================================
+             TABLE
+        ========================================================= --}}
+                    <div class="barang-history-body">
+
+                        <div class="table-responsive">
+
+                            <table class="barang-history-table" id="barangHistoryTable">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            No
+                                        </th>
+
+                                        <th>
+                                            Nama Barang
+                                        </th>
+
+                                        <th>
+                                            Kode Barang
+                                        </th>
+
+                                        <th>
+                                            Status
+                                        </th>
+
+                                        <th>
+                                            Tanggal Data
+                                        </th>
+
+                                        <th>
+                                            Waktu Aktivitas
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    @forelse ($barangActivityLogs as $log)
+                                        <tr data-barang-history-row data-action="{{ $log->action }}">
+
+                                            <td class="barang-history-number">
+                                                {{ $loop->iteration }}
+                                            </td>
+
+
+                                            <td>
+                                                {{ $log->record_name }}
+                                            </td>
+
+
+                                            <td>
+                                                {{ $log->record_code ?: '—' }}
+                                            </td>
+
+
+                                            <td>
+
+                                                @if ($log->action === 'created')
+                                                    <span class="barang-history-status is-created">
+
+                                                        <i data-lucide="arrow-up"></i>
+
+                                                        Ditambahkan
+
+                                                    </span>
+                                                @else
+                                                    <span class="barang-history-status is-deleted">
+
+                                                        <i data-lucide="arrow-down"></i>
+
+                                                        Dihapus
+
+                                                    </span>
+                                                @endif
+
+                                            </td>
+
+
+                                            <td>
+
+                                                @if (!empty($log->record_created_at))
+                                                    {{ \Carbon\Carbon::parse($log->record_created_at)->locale('id')->translatedFormat('d M Y') }}
+                                                @else
+                                                    —
+                                                @endif
+
+                                            </td>
+
+
+                                            <td>
+
+                                                @if (!empty($log->created_at))
+                                                    {{ \Carbon\Carbon::parse($log->created_at)->locale('id')->translatedFormat('d M Y, H:i') }}
+                                                @else
+                                                    —
+                                                @endif
+
+                                            </td>
+
+                                        </tr>
+
+                                    @empty
+
+                                        <tr id="barangHistoryEmptyInitial">
+
+                                            <td colspan="6" class="barang-history-empty">
+                                                Belum ada riwayat perubahan Barang.
+                                            </td>
+
+                                        </tr>
+                                    @endforelse
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+
+                        <div class="barang-history-empty" id="barangHistoryFilteredEmpty" hidden>
+                            Tidak ada riwayat pada kategori ini.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </dialog>
 
         </section>
 
@@ -503,7 +793,7 @@
 
 
                         @forelse ($distribusiGolongan
-                                                                        as $index => $group)
+                                                                                                as $index => $group)
                             @php
 
                                 $count = (int) $group->total;
@@ -610,7 +900,7 @@
                         <tbody>
 
                             @forelse ($barangTerbaru
-                                                                            as $index => $item)
+                                                                                                    as $index => $item)
                                 <tr>
 
                                     <td>

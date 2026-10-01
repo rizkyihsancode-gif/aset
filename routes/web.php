@@ -84,18 +84,73 @@ Route::delete(
 )
     ->whereNumber('id')
     ->name('master.data_barang.delete');
-    
-// ========================================================
-// MASTER DATA - DEPARTEMEN
-// ========================================================
 
-Route::get('/master-data/departemen', function () {
-    return view('master.data_departemen');
-})->name('master.data_departemen');
+/*
+|--------------------------------------------------------------------------
+| MASTER DATA - DEPARTEMEN
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/master-data/divisi', function () {
-    return view('master.data_divisi');
-})->name('master.data_divisi');
+Route::get(
+    '/master-data/departemen',
+    [MasterController::class, 'dataDepartemen']
+)->name('master.data_departemen');
+
+
+Route::post(
+    '/master-data/departemen',
+    [MasterController::class, 'storeDepartemen']
+)->name('master.data_departemen.store');
+
+
+Route::put(
+    '/master-data/departemen/{id}',
+    [MasterController::class, 'updateDepartemen']
+)
+    ->whereNumber('id')
+    ->name('master.data_departemen.update');
+
+
+Route::delete(
+    '/master-data/departemen/{id}',
+    [MasterController::class, 'deleteDepartemen']
+)
+    ->whereNumber('id')
+    ->name('master.data_departemen.delete');
+
+
+/*
+|--------------------------------------------------------------------------
+| MASTER DATA - DIVISI
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/master-data/divisi',
+    [MasterController::class, 'dataDivisi']
+)->name('master.data_divisi');
+
+
+Route::post(
+    '/master-data/divisi',
+    [MasterController::class, 'storeDivisi']
+)->name('master.data_divisi.store');
+
+
+Route::put(
+    '/master-data/divisi/{id}',
+    [MasterController::class, 'updateDivisi']
+)
+    ->whereNumber('id')
+    ->name('master.data_divisi.update');
+
+
+Route::delete(
+    '/master-data/divisi/{id}',
+    [MasterController::class, 'deleteDivisi']
+)
+    ->whereNumber('id')
+    ->name('master.data_divisi.delete');
 
 Route::get('/master-data/ruangan', function () {
     return view('master.data_ruangan');
