@@ -152,25 +152,167 @@ Route::delete(
     ->whereNumber('id')
     ->name('master.data_divisi.delete');
 
-Route::get('/master-data/ruangan', function () {
-    return view('master.data_ruangan');
-})->name('master.data_ruangan');
+/*
+|--------------------------------------------------------------------------
+| MASTER DATA - RUANGAN
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/master-data/sdm', function () {
-    return view('master.data_sdm');
-})->name('master.data_sdm');
+Route::get(
+    '/master-data/ruangan',
+    [MasterController::class, 'dataRuangan']
+)->name('master.data_ruangan');
 
-Route::get('/master-data/lokasi', function () {
-    return view('master.data_lokasi');
-})->name('master.data_lokasi');
 
-Route::get('/master-data/bahan', function () {
-    return view('master.data_bahan');
-})->name('master.data_bahan');
+Route::post(
+    '/master-data/ruangan',
+    [MasterController::class, 'storeRuangan']
+)->name('master.data_ruangan.store');
 
-Route::get('/master-data/aktiva', function () {
-    return view('master.data_aktiva');
-})->name('master.data_aktiva');
+
+Route::put(
+    '/master-data/ruangan/{id}',
+    [MasterController::class, 'updateRuangan']
+)
+    ->whereNumber('id')
+    ->name('master.data_ruangan.update');
+
+
+Route::delete(
+    '/master-data/ruangan/{id}',
+    [MasterController::class, 'deleteRuangan']
+)
+    ->whereNumber('id')
+    ->name('master.data_ruangan.delete');
+
+/*
+|--------------------------------------------------------------------------
+| MASTER DATA - SDM PENDUKUNG
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/master-data/sdm-pendukung',
+    [MasterController::class, 'dataSdm']
+)->name('master.data_sdm');
+
+
+Route::post(
+    '/master-data/sdm-pendukung',
+    [MasterController::class, 'storeSdm']
+)->name('master.data_sdm.store');
+
+
+Route::put(
+    '/master-data/sdm-pendukung/{id}',
+    [MasterController::class, 'updateSdm']
+)
+    ->whereNumber('id')
+    ->name('master.data_sdm.update');
+
+
+Route::delete(
+    '/master-data/sdm-pendukung/{id}',
+    [MasterController::class, 'deleteSdm']
+)
+    ->whereNumber('id')
+    ->name('master.data_sdm.delete');
+
+// ============================================================
+// MASTER DATA - LOKASI
+// ============================================================
+
+Route::get(
+    '/master-data/lokasi',
+    [MasterController::class, 'dataLokasi']
+)->name('master.data_lokasi');
+
+
+Route::post(
+    '/master-data/lokasi',
+    [MasterController::class, 'storeLokasi']
+)->name('master.data_lokasi.store');
+
+
+Route::put(
+    '/master-data/lokasi/{id}',
+    [MasterController::class, 'updateLokasi']
+)
+    ->whereNumber('id')
+    ->name('master.data_lokasi.update');
+
+
+Route::delete(
+    '/master-data/lokasi/{id}',
+    [MasterController::class, 'deleteLokasi']
+)
+    ->whereNumber('id')
+    ->name('master.data_lokasi.delete');
+
+
+// ============================================================
+// MASTER DATA - BAHAN
+// ============================================================
+
+Route::get(
+    '/master-data/bahan',
+    [MasterController::class, 'dataBahan']
+)->name('master.data_bahan');
+
+
+Route::post(
+    '/master-data/bahan',
+    [MasterController::class, 'storeBahan']
+)->name('master.data_bahan.store');
+
+
+Route::put(
+    '/master-data/bahan/{id}',
+    [MasterController::class, 'updateBahan']
+)
+    ->whereNumber('id')
+    ->name('master.data_bahan.update');
+
+
+Route::delete(
+    '/master-data/bahan/{id}',
+    [MasterController::class, 'deleteBahan']
+)
+    ->whereNumber('id')
+    ->name('master.data_bahan.delete');
+
+
+
+// =========================================================
+// MASTER DATA - KODE AKTIVA
+// =========================================================
+
+Route::get(
+    '/master-data/aktiva',
+    [MasterController::class, 'dataAktiva']
+)->name('master.data_aktiva');
+
+
+Route::post(
+    '/master-data/aktiva',
+    [MasterController::class, 'storeAktiva']
+)->name('master.data_aktiva.store');
+
+
+Route::put(
+    '/master-data/aktiva/{id}',
+    [MasterController::class, 'updateAktiva']
+)
+    ->whereNumber('id')
+    ->name('master.data_aktiva.update');
+
+
+Route::delete(
+    '/master-data/aktiva/{id}',
+    [MasterController::class, 'deleteAktiva']
+)
+    ->whereNumber('id')
+    ->name('master.data_aktiva.delete');
 
 // ------------------------------------------------
 // K.I.B ROUTES

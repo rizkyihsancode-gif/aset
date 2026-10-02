@@ -2,544 +2,1654 @@
 
 @section('title', 'Ruangan')
 
+
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/ruangan.css') }}">
+
+<link
+    rel="stylesheet"
+    href="{{ asset('css/pages/ruangan.css') }}"
+>
+
 @endpush
+
+
 
 @section('content')
 
-    {{-- UI contoh: angka KPI, chart, dan tabel belum mengambil data PostgreSQL. --}}
-    <section class="content ruangan-page">
+<section class="content ruangan-page">
 
-        {{-- ============================================================
+
+    {{-- ============================================================
          HERO
     ============================================================= --}}
-        <section class="ruangan-hero">
+    <section class="ruangan-hero">
 
-            <div class="ruangan-hero-overlay"></div>
+        <div class="ruangan-hero-overlay"></div>
+
+
+        <div class="ruangan-hero-content">
+
 
             <div class="ruangan-hero-top">
 
+
                 <div>
 
-                    <nav class="ruangan-breadcrumb" aria-label="Breadcrumb">
 
-                        <a href="{{ route('dashboard') }}" aria-label="Home">
+                    {{-- BREADCRUMB --}}
+                    <nav class="ruangan-breadcrumb">
+
+                        <a
+                            href="{{ route('dashboard') }}"
+                            aria-label="Dashboard"
+                        >
                             <i data-lucide="house"></i>
                         </a>
 
-                        <i data-lucide="chevron-right"></i>
-
-                        <span>Master Data</span>
 
                         <i data-lucide="chevron-right"></i>
 
-                        <strong aria-current="page">Ruangan</strong>
+
+                        <span>
+                            Master Data
+                        </span>
+
+
+                        <i data-lucide="chevron-right"></i>
+
+
+                        <strong>
+                            Ruangan
+                        </strong>
 
                     </nav>
 
+
+
+                    {{-- TITLE --}}
                     <div class="ruangan-heading">
 
-                        <h1>Ruangan</h1>
+                        <h1>
+                            Ruangan
+                        </h1>
 
                         <p>
-                            Kelola data ruangan yang digunakan sebagai referensi penempatan aset perusahaan.
+                            Kelola data master ruangan yang digunakan
+                            sebagai referensi pada sistem aset perusahaan.
                         </p>
 
                     </div>
 
+
                 </div>
 
+
+
+                {{-- DATE --}}
                 <div class="ruangan-date-card">
 
+
                     <div class="ruangan-date-icon">
+
                         <i data-lucide="calendar-days"></i>
+
                     </div>
+
 
                     <div>
-                        <strong id="ruanganCurrentDate">-</strong>
-                        <span id="ruanganCurrentTime">-</span>
-                    </div>
 
-                </div>
-
-            </div>
-
-            {{-- KPI --}}
-            <div class="ruangan-kpi-grid">
-
-                <div class="ruangan-kpi-card">
-
-                    <div class="ruangan-kpi-icon">
-                        <i data-lucide="door-open"></i>
-                    </div>
-
-                    <div class="ruangan-kpi-content">
-
-                        <span>Total Ruangan</span>
-
-                        <div class="ruangan-kpi-value">
-                            <strong>186</strong>
-
-                            <small>
-                                <i data-lucide="arrow-up"></i>
-                                +12
-                            </small>
-                        </div>
-
-                        <p>dari tahun lalu</p>
-
-                    </div>
-
-                    <div class="ruangan-sparkline">
-                        <svg viewBox="0 0 100 45">
-                            <polyline points="3,35 17,20 31,25 45,10 59,17 72,26 88,7 98,4" />
-                        </svg>
-                    </div>
-
-                </div>
-
-                <div class="ruangan-kpi-card">
-
-                    <div class="ruangan-kpi-icon">
-                        <i data-lucide="network"></i>
-                    </div>
-
-                    <div class="ruangan-kpi-content">
-                        <span>Total Divisi Terkait</span>
-                        <strong>36</strong>
-                    </div>
-
-                    <div class="ruangan-kpi-watermark">
-                        <i data-lucide="chart-no-axes-column-increasing"></i>
-                    </div>
-
-                </div>
-
-                <div class="ruangan-kpi-card">
-
-                    <div class="ruangan-kpi-icon">
-                        <i data-lucide="clock-3"></i>
-                    </div>
-
-                    <div class="ruangan-kpi-content">
-
-                        <span>Update Terakhir</span>
-
-                        <strong class="ruangan-kpi-text">
-                            Hari Ini
+                        <strong id="ruanganCurrentDate">
+                            -
                         </strong>
 
-                        <p>data master terbaru</p>
+                        <span id="ruanganCurrentTime">
+                            -
+                        </span>
 
                     </div>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            {{-- ========================================================
+                 KPI
+            ========================================================= --}}
+            <div class="ruangan-kpi-grid">
+
+
+                {{-- TOTAL RUANGAN --}}
+                <div
+                    class="ruangan-kpi-card ruangan-kpi-clickable"
+                    id="ruanganTotalActivityCard"
+                    role="button"
+                    tabindex="0"
+                    title="Klik untuk melihat riwayat perubahan Ruangan"
+                >
+
+
+                    <div class="ruangan-kpi-icon">
+
+                        <i data-lucide="door-open"></i>
+
+                    </div>
+
+
+                    <div class="ruangan-kpi-content">
+
+                        <span>
+                            Total Ruangan
+                        </span>
+
+
+                        <div class="ruangan-kpi-value">
+
+                            <strong>
+
+                                {{ number_format(
+                                    $totalRuangan,
+                                    0,
+                                    ',',
+                                    '.'
+                                ) }}
+
+                            </strong>
+
+
+                            @if ($ruanganDelta > 0)
+
+                                <small class="ruangan-delta ruangan-delta-up">
+
+                                    <i data-lucide="arrow-up"></i>
+
+                                    +{{ $ruanganDelta }}
+
+                                </small>
+
+
+                            @elseif ($ruanganDelta < 0)
+
+                                <small class="ruangan-delta ruangan-delta-down">
+
+                                    <i data-lucide="arrow-down"></i>
+
+                                    {{ $ruanganDelta }}
+
+                                </small>
+
+
+                            @else
+
+                                <small class="ruangan-delta ruangan-delta-neutral">
+
+                                    <i data-lucide="minus"></i>
+
+                                    0
+
+                                </small>
+
+                            @endif
+
+                        </div>
+
+
+                        <p>
+                            perubahan tercatat
+                        </p>
+
+                    </div>
+
+
+                    <div class="ruangan-sparkline">
+
+                        <svg viewBox="0 0 100 45">
+
+                            <polyline
+                                points="3,35 17,20 31,25 45,10 59,17 72,26 88,7 98,4"
+                            />
+
+                        </svg>
+
+                    </div>
+
+
+                </div>
+
+
+
+                {{-- DITAMBAHKAN --}}
+                <div class="ruangan-kpi-card">
+
+
+                    <div class="ruangan-kpi-icon">
+
+                        <i data-lucide="circle-plus"></i>
+
+                    </div>
+
+
+                    <div class="ruangan-kpi-content">
+
+                        <span>
+                            Ruangan Ditambahkan
+                        </span>
+
+
+                        <strong>
+
+                            {{ number_format(
+                                $ruanganTambah,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+
+                        </strong>
+
+
+                        <p>
+                            aktivitas penambahan tercatat
+                        </p>
+
+                    </div>
+
 
                     <div class="ruangan-kpi-watermark">
+
+                        <i data-lucide="database"></i>
+
+                    </div>
+
+
+                </div>
+
+
+
+                {{-- UPDATE TERAKHIR --}}
+                <div class="ruangan-kpi-card">
+
+
+                    <div class="ruangan-kpi-icon">
+
+                        <i data-lucide="clock-3"></i>
+
+                    </div>
+
+
+                    <div class="ruangan-kpi-content">
+
+                        <span>
+                            Update Terakhir
+                        </span>
+
+
+                        <strong class="ruangan-kpi-text">
+
+                            {{ $updateTerakhirLabel }}
+
+                        </strong>
+
+
+                        <p>
+
+                            {{ $updateTerakhirDetail }}
+
+                        </p>
+
+                    </div>
+
+
+                    <div class="ruangan-kpi-watermark">
+
                         <i data-lucide="calendar-days"></i>
+
                     </div>
 
+
                 </div>
+
 
             </div>
 
-        </section>
 
-        {{-- FILTER --}}
-        <section class="ruangan-card ruangan-filter-card">
-            <div class="ruangan-filter-header">
-                <h3>Filter Data Ruangan</h3>
-                <button type="button" class="ruangan-add-button" onclick="openRuanganModal()"><i data-lucide="plus"
-                        aria-hidden="true"></i>Tambah Ruangan</button>
-            </div>
-            <div class="ruangan-filter-grid">
-                <div class="ruangan-search">
-                    <i data-lucide="search" aria-hidden="true"></i>
-                    <input id="ruanganSearch" type="search" placeholder="Cari nama ruangan atau kode ruangan..."
-                        aria-label="Cari nama ruangan atau kode ruangan...">
-                </div>
-                <div class="ruangan-select-group">
-                    <label for="ruanganDivisi">Divisi</label>
-                    <select id="ruanganDivisi">
-                        <option value="">Semua Divisi</option>
-                        <option value="Direksi">Direksi</option>
-                        <option value="Sekretariat Perusahaan">Sekretariat Perusahaan</option>
-                        <option value="Umum dan SDM">Umum dan SDM</option>
-                        <option value="IT dan Sistem Informasi">IT dan Sistem Informasi</option>
-                        <option value="Departemen Teknik">Departemen Teknik</option>
-                        <option value="Produksi">Produksi</option>
-                        <option value="Humas dan Pelayanan">Humas dan Pelayanan</option>
-                        <option value="Distribusi">Distribusi</option>
-                    </select>
-                </div>
-                <button type="button" class="ruangan-filter-button" onclick="filterRuanganTable()"><i
-                        data-lucide="list-filter" aria-hidden="true"></i>Filter</button>
-                <button type="button" class="ruangan-reset-button" onclick="resetRuanganFilter()"><i
-                        data-lucide="refresh-cw" aria-hidden="true"></i>Reset</button>
-                <button type="button" class="ruangan-export-button" onclick="exportRuanganCSV()"><i data-lucide="download"
-                        aria-hidden="true"></i>Ekspor</button>
-            </div>
-        </section>
-
-        {{-- TABEL --}}
-        <section class="ruangan-card ruangan-table-card" id="ruanganList" aria-labelledby="ruanganListTitle">
-            <div class="ruangan-table-header">
-                <h3 id="ruanganListTitle">Daftar Ruangan</h3>
-                <span class="ruangan-demo-badge" title="Seluruh angka dan daftar pada halaman ini adalah data contoh.">Data
-                    contoh</span>
-            </div>
-            <div class="table-responsive" tabindex="0" aria-label="Daftar Ruangan, geser untuk melihat kolom lainnya">
-                <table class="ruangan-table" id="ruanganTable">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="ruangan-col-no">No</th>
-                            <th scope="col">Nama Ruangan</th>
-                            <th scope="col">Kode Ruangan</th>
-                            <th scope="col">Divisi</th>
-                            <th scope="col">Keterangan</th>
-                            <th scope="col" class="ruangan-col-action">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr data-divisi="Direksi">
-                            <td>1</td>
-                            <td>Ruang Direksi</td>
-                            <td>RGN-001</td>
-                            <td>Direksi</td>
-                            <td class="ruangan-description">Ruang kerja direksi</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Ruang Direksi"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Ruang Direksi"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Ruang Direksi"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-divisi="Sekretariat Perusahaan">
-                            <td>2</td>
-                            <td>Ruang Rapat Utama</td>
-                            <td>RGN-002</td>
-                            <td>Sekretariat Perusahaan</td>
-                            <td class="ruangan-description">Ruang rapat utama perusahaan</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Ruang Rapat Utama"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Ruang Rapat Utama"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Ruang Rapat Utama"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-divisi="Umum dan SDM">
-                            <td>3</td>
-                            <td>Ruang Arsip</td>
-                            <td>RGN-003</td>
-                            <td>Umum dan SDM</td>
-                            <td class="ruangan-description">Penyimpanan dokumen fisik</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Ruang Arsip"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Ruang Arsip"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Ruang Arsip"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-divisi="IT dan Sistem Informasi">
-                            <td>4</td>
-                            <td>Ruang Server</td>
-                            <td>RGN-004</td>
-                            <td>IT dan Sistem Informasi</td>
-                            <td class="ruangan-description">Infrastruktur server dan jaringan</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Ruang Server"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Ruang Server"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Ruang Server"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-divisi="Departemen Teknik">
-                            <td>5</td>
-                            <td>Gudang Teknik</td>
-                            <td>RGN-005</td>
-                            <td>Departemen Teknik</td>
-                            <td class="ruangan-description">Penyimpanan peralatan teknik</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Gudang Teknik"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Gudang Teknik"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Gudang Teknik"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-divisi="Produksi">
-                            <td>6</td>
-                            <td>Lab Kualitas Air</td>
-                            <td>RGN-006</td>
-                            <td>Produksi</td>
-                            <td class="ruangan-description">Pemeriksaan kualitas air</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Lab Kualitas Air"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Lab Kualitas Air"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Lab Kualitas Air"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-divisi="Humas dan Pelayanan">
-                            <td>7</td>
-                            <td>Ruang Pelayanan</td>
-                            <td>RGN-007</td>
-                            <td>Humas dan Pelayanan</td>
-                            <td class="ruangan-description">Area pelayanan pelanggan</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Ruang Pelayanan"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Ruang Pelayanan"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Ruang Pelayanan"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-divisi="Distribusi">
-                            <td>8</td>
-                            <td>Ruang Distribusi</td>
-                            <td>RGN-008</td>
-                            <td>Distribusi</td>
-                            <td class="ruangan-description">Koordinasi operasional distribusi</td>
-                            <td>
-                                <div class="ruangan-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Ruang Distribusi"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Ruang Distribusi"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Ruang Distribusi"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr id="ruanganEmptyRow" hidden>
-                            <td colspan="6" class="ruangan-empty">Tidak ada data yang sesuai. Coba kata kunci atau
-                                filter lain.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="ruangan-table-footer">
-                <div class="ruangan-table-info" id="ruanganTableInfo" role="status" aria-live="polite">Menampilkan 1–8
-                    dari 8 data contoh</div>
-                <div class="ruangan-pagination-area">
-                    <select id="ruanganPageSize" aria-label="Jumlah data per halaman">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                    </select>
-                    <span>data per halaman</span>
-                    <nav class="ruangan-pagination" id="ruanganPagination" aria-label="Halaman daftar Ruangan"></nav>
-                </div>
-            </div>
-        </section>
-
-        {{-- DISTRIBUSI DAN DATA TERBARU --}}
-        <div class="ruangan-bottom-grid">
-            <section class="ruangan-card">
-                <div class="ruangan-bottom-header">
-                    <h3>Distribusi Ruangan per Divisi</h3>
-                </div>
-                <div class="ruangan-distribution-content">
-                    <div class="ruangan-chart-wrap">
-                        <canvas id="ruanganDistributionChart" role="img"
-                            aria-label="Distribusi contoh 186 Ruangan. Rincian tersedia pada legenda."></canvas>
-                        <div class="ruangan-chart-center"><strong>186</strong><span>Ruangan</span></div>
-                    </div>
-                    <div class="ruangan-legend" id="ruanganLegend">
-                        <div data-label="Direksi" data-count="12" data-color="#3389ee">
-                            <span class="ruangan-dot c1"></span>
-                            <p>Direksi</p><strong>12</strong><small>6,5%</small>
-                        </div>
-                        <div data-label="Sekretariat Perusahaan" data-count="18" data-color="#55a8f1">
-                            <span class="ruangan-dot c2"></span>
-                            <p>Sekretariat Perusahaan</p><strong>18</strong><small>9,7%</small>
-                        </div>
-                        <div data-label="Umum dan SDM" data-count="28" data-color="#4fc184">
-                            <span class="ruangan-dot c3"></span>
-                            <p>Umum dan SDM</p><strong>28</strong><small>15,1%</small>
-                        </div>
-                        <div data-label="IT dan Sistem Informasi" data-count="14" data-color="#ffc85c">
-                            <span class="ruangan-dot c4"></span>
-                            <p>IT dan Sistem Informasi</p><strong>14</strong><small>7,5%</small>
-                        </div>
-                        <div data-label="Departemen Teknik" data-count="32" data-color="#ff9024">
-                            <span class="ruangan-dot c5"></span>
-                            <p>Departemen Teknik</p><strong>32</strong><small>17,2%</small>
-                        </div>
-                        <div data-label="Produksi" data-count="26" data-color="#ef6b73">
-                            <span class="ruangan-dot c6"></span>
-                            <p>Produksi</p><strong>26</strong><small>14,0%</small>
-                        </div>
-                        <div data-label="Humas dan Pelayanan" data-count="30" data-color="#8558e8">
-                            <span class="ruangan-dot c7"></span>
-                            <p>Humas dan Pelayanan</p><strong>30</strong><small>16,1%</small>
-                        </div>
-                        <div data-label="Distribusi" data-count="26" data-color="#5865e8">
-                            <span class="ruangan-dot c8"></span>
-                            <p>Distribusi</p><strong>26</strong><small>14,0%</small>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="ruangan-card">
-                <div class="ruangan-bottom-header">
-                    <h3>Ruangan Terbaru</h3><a href="#ruanganList" id="ruanganViewAll">Lihat Semua</a>
-                </div>
-                <div class="table-responsive" tabindex="0"
-                    aria-label="Ruangan terbaru, geser untuk melihat kolom lainnya">
-                    <table class="ruangan-latest-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">No</th>
-                                <th scope="col">Nama Ruangan</th>
-                                <th scope="col">Divisi</th>
-                                <th scope="col">Tanggal Ditambahkan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>Ruang Monitoring Produksi</td>
-                                <td>Produksi</td>
-                                <td>15 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>Ruang Rapat Distribusi</td>
-                                <td>Distribusi</td>
-                                <td>14 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>Ruang Pelayanan Pelanggan 2</td>
-                                <td>Humas dan Pelayanan</td>
-                                <td>13 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>4</td>
-                                <td>Ruang Arsip Digital</td>
-                                <td>Umum dan SDM</td>
-                                <td>12 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>5</td>
-                                <td>Ruang Training</td>
-                                <td>Umum dan SDM</td>
-                                <td>10 Jan 2025</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
         </div>
 
-        {{-- DIALOG UI: BELUM TERHUBUNG KE ENDPOINT CRUD --}}
-        <dialog class="ruangan-modal" id="ruanganModal" aria-labelledby="ruanganModalTitle"
-            aria-describedby="ruanganModalNote">
-            <div class="ruangan-modal-dialog">
-                <div class="ruangan-modal-header">
-                    <div>
-                        <h3 id="ruanganModalTitle">Tambah Ruangan</h3>
-                        <p id="ruanganModalDescription">Tambahkan data master Ruangan.</p>
-                    </div>
-                    <button type="button" onclick="closeRuanganModal()" aria-label="Tutup dialog"><i data-lucide="x"
-                            aria-hidden="true"></i></button>
-                </div>
-                <form id="ruanganForm">
-                    <div class="ruangan-modal-body">
-                        <p class="ruangan-modal-note" id="ruanganModalNote">Pratinjau formulir. Penyimpanan ke database
-                            belum dihubungkan.</p>
-                        <div class="ruangan-form-group">
-                            <label for="ruanganName">Nama Ruangan</label>
-                            <input id="ruanganName" name="nama_ruangan" type="text" maxlength="150"
-                                placeholder="Masukkan nama ruangan" required>
-                        </div>
-                        <div class="ruangan-form-group">
-                            <label for="ruanganCode">Kode Ruangan</label>
-                            <input id="ruanganCode" name="kode_ruangan" type="text" maxlength="50"
-                                placeholder="Contoh: RGN-009" required>
-                        </div>
-                        <div class="ruangan-form-group">
-                            <label for="ruanganFormDivisi">Divisi</label>
-                            <select id="ruanganFormDivisi" name="divisi" required>
-                                <option value="">Pilih Divisi</option>
-                                <option value="Direksi">Direksi</option>
-                                <option value="Sekretariat Perusahaan">Sekretariat Perusahaan</option>
-                                <option value="Umum dan SDM">Umum dan SDM</option>
-                                <option value="IT dan Sistem Informasi">IT dan Sistem Informasi</option>
-                                <option value="Departemen Teknik">Departemen Teknik</option>
-                                <option value="Produksi">Produksi</option>
-                                <option value="Humas dan Pelayanan">Humas dan Pelayanan</option>
-                                <option value="Distribusi">Distribusi</option>
-                            </select>
-                        </div>
-                        <div class="ruangan-form-group">
-                            <label for="ruanganDescription">Keterangan</label>
-                            <textarea id="ruanganDescription" name="keterangan" rows="3" maxlength="500"
-                                placeholder="Keterangan penggunaan ruangan"></textarea>
-                        </div>
-                    </div>
-                    <div class="ruangan-modal-footer">
-                        <button type="button" class="ruangan-cancel-button" onclick="closeRuanganModal()">Tutup</button>
-                        <button type="submit" class="ruangan-save-button" id="ruanganSaveButton" disabled
-                            title="Tersedia setelah penyimpanan database dihubungkan.">Simpan Ruangan</button>
-                    </div>
-                </form>
-            </div>
-        </dialog>
     </section>
+
+
+
+    {{-- ============================================================
+         FILTER
+    ============================================================= --}}
+    <section class="ruangan-card ruangan-filter-card">
+
+
+        <div class="ruangan-filter-header">
+
+
+            <h3>
+                Filter Data Ruangan
+            </h3>
+
+
+            <button
+                type="button"
+                class="ruangan-add-button"
+                onclick="openRuanganModal()"
+            >
+
+                <i data-lucide="plus"></i>
+
+                Tambah Ruangan
+
+            </button>
+
+
+        </div>
+
+
+
+        <div class="ruangan-filter-grid">
+
+
+            <div class="ruangan-search">
+
+                <i data-lucide="search"></i>
+
+
+                <input
+                    type="search"
+                    id="ruanganSearch"
+                    placeholder="Cari nama ruangan atau kode ruangan..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+
+            <button
+                type="button"
+                class="ruangan-filter-button"
+                onclick="filterRuanganTable()"
+            >
+
+                <i data-lucide="list-filter"></i>
+
+                Filter
+
+            </button>
+
+
+
+            <button
+                type="button"
+                class="ruangan-reset-button"
+                onclick="resetRuanganFilter()"
+            >
+
+                <i data-lucide="refresh-cw"></i>
+
+                Reset
+
+            </button>
+
+
+
+            <div class="ruangan-filter-spacer"></div>
+
+
+
+            <button
+                type="button"
+                class="ruangan-export-button"
+                onclick="exportRuanganCSV()"
+            >
+
+                <i data-lucide="download"></i>
+
+                Ekspor
+
+                <i data-lucide="chevron-down"></i>
+
+            </button>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    {{-- ============================================================
+         TABLE
+    ============================================================= --}}
+    <section class="ruangan-card ruangan-table-card">
+
+
+        <div class="ruangan-table-header">
+
+
+            <div>
+
+                <h3>
+                    Daftar Ruangan
+                </h3>
+
+                <span>
+                    Data langsung dari tabel ruangans
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="table-responsive">
+
+
+            <table
+                class="ruangan-table"
+                id="ruanganTable"
+            >
+
+
+                <thead>
+
+                    <tr>
+
+                        <th class="ruangan-col-no">
+                            No
+                        </th>
+
+                        <th>
+                            Kode Ruangan
+                        </th>
+
+                        <th>
+                            Nama Ruangan
+                        </th>
+
+                        <th>
+                            Dibuat
+                        </th>
+
+                        <th class="ruangan-col-action">
+                            Aksi
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+
+                <tbody>
+
+
+                    @forelse ($ruangans as $item)
+
+                        <tr
+                            data-record
+                            data-id="{{ $item->id }}"
+                            data-kode="{{ $item->kode }}"
+                            data-nama="{{ $item->nama_ruang }}"
+                            data-created-at="{{ $item->created_at ?? '' }}"
+                            data-updated-at="{{ $item->updated_at ?? '' }}"
+                        >
+
+
+                            {{-- NO --}}
+                            <td class="ruangan-number"></td>
+
+
+
+                            {{-- KODE --}}
+                            <td>
+
+                                @if (
+                                    !empty($item->kode) &&
+                                    $item->kode !== '-'
+                                )
+
+                                    <span class="ruangan-code">
+
+                                        {{ $item->kode }}
+
+                                    </span>
+
+                                @else
+
+                                    <span class="ruangan-code-empty">
+
+                                        —
+
+                                    </span>
+
+                                @endif
+
+                            </td>
+
+
+
+                            {{-- NAMA --}}
+                            <td>
+
+                                <div class="ruangan-name-cell">
+
+
+                                    <div class="ruangan-name-icon">
+
+                                        <i data-lucide="door-open"></i>
+
+                                    </div>
+
+
+                                    <strong>
+
+                                        {{ $item->nama_ruang ?: '—' }}
+
+                                    </strong>
+
+
+                                </div>
+
+                            </td>
+
+
+
+                            {{-- CREATED --}}
+                            <td>
+
+                                @if (!empty($item->created_at))
+
+                                    {{
+                                        \Carbon\Carbon::parse(
+                                            $item->created_at
+                                        )
+                                            ->locale('id')
+                                            ->translatedFormat(
+                                                'd M Y'
+                                            )
+                                    }}
+
+                                @else
+
+                                    —
+
+                                @endif
+
+                            </td>
+
+
+
+                            {{-- ACTION --}}
+                            <td>
+
+                                <div class="ruangan-actions">
+
+
+                                    <button
+                                        type="button"
+                                        class="view"
+                                        data-action="view"
+                                        title="Lihat Ruangan"
+                                    >
+
+                                        <i data-lucide="eye"></i>
+
+                                    </button>
+
+
+
+                                    <button
+                                        type="button"
+                                        class="edit"
+                                        data-action="edit"
+                                        title="Edit Ruangan"
+                                    >
+
+                                        <i data-lucide="square-pen"></i>
+
+                                    </button>
+
+
+
+                                    <button
+                                        type="button"
+                                        class="delete"
+                                        data-action="delete"
+                                        title="Hapus Ruangan"
+                                    >
+
+                                        <i data-lucide="trash-2"></i>
+
+                                    </button>
+
+
+                                </div>
+
+                            </td>
+
+
+                        </tr>
+
+
+                    @empty
+
+                        <tr id="ruanganServerEmpty">
+
+                            <td
+                                colspan="5"
+                                class="ruangan-empty"
+                            >
+
+                                Belum ada data Ruangan.
+
+                            </td>
+
+                        </tr>
+
+                    @endforelse
+
+
+
+                    <tr
+                        id="ruanganEmptyRow"
+                        hidden
+                    >
+
+                        <td
+                            colspan="5"
+                            class="ruangan-empty"
+                        >
+
+                            Data Ruangan tidak ditemukan.
+
+                        </td>
+
+                    </tr>
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+
+        {{-- ========================================================
+             FOOTER
+        ========================================================= --}}
+        <div class="ruangan-table-footer">
+
+
+            <div
+                class="ruangan-table-info"
+                id="ruanganTableInfo"
+            >
+                -
+            </div>
+
+
+
+            <div class="ruangan-pagination-area">
+
+
+                <select id="ruanganPageSize">
+
+                    <option value="10">
+                        10
+                    </option>
+
+                    <option value="25">
+                        25
+                    </option>
+
+                    <option value="50">
+                        50
+                    </option>
+
+                </select>
+
+
+                <span>
+                    data per halaman
+                </span>
+
+
+                <nav
+                    class="ruangan-pagination"
+                    id="ruanganPagination"
+                ></nav>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    {{-- ============================================================
+         BOTTOM
+    ============================================================= --}}
+    <div class="ruangan-bottom-grid">
+
+
+        {{-- RINGKASAN --}}
+        <section class="ruangan-card ruangan-summary-card">
+
+
+            <div class="ruangan-bottom-header">
+
+                <h3>
+                    Ringkasan Data Ruangan
+                </h3>
+
+            </div>
+
+
+
+            <div class="ruangan-summary-content">
+
+
+                <div class="ruangan-summary-item">
+
+
+                    <div class="ruangan-summary-icon">
+
+                        <i data-lucide="door-open"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Total Data
+                        </span>
+
+                        <strong>
+
+                            {{ number_format(
+                                $totalRuangan,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="ruangan-summary-item">
+
+
+                    <div class="ruangan-summary-icon success">
+
+                        <i data-lucide="badge-check"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Kode Terisi
+                        </span>
+
+                        <strong>
+
+                            {{ number_format(
+                                $totalKodeTerisi,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="ruangan-summary-item">
+
+
+                    <div class="ruangan-summary-icon warning">
+
+                        <i data-lucide="circle-help"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Belum Memiliki Kode
+                        </span>
+
+                        <strong>
+
+                            {{ number_format(
+                                $totalTanpaKode,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        {{-- ========================================================
+             RUANGAN TERBARU
+        ========================================================= --}}
+        <section class="ruangan-card ruangan-latest-card">
+
+
+            <div class="ruangan-bottom-header">
+
+
+                <h3>
+                    Ruangan Terbaru
+                </h3>
+
+
+                <button
+                    type="button"
+                    class="ruangan-see-all"
+                    onclick="scrollToRuanganTable()"
+                >
+
+                    Lihat Semua
+
+                </button>
+
+
+            </div>
+
+
+
+            <div class="table-responsive">
+
+
+                <table class="ruangan-latest-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                No
+                            </th>
+
+                            <th>
+                                Nama Ruangan
+                            </th>
+
+                            <th>
+                                Kode
+                            </th>
+
+                            <th>
+                                Tanggal Dibuat
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+
+                    <tbody>
+
+
+                        @forelse ($ruanganTerbaru as $item)
+
+                            <tr>
+
+                                <td>
+                                    {{ $loop->iteration }}
+                                </td>
+
+
+                                <td>
+
+                                    {{ $item->nama_ruang ?: '—' }}
+
+                                </td>
+
+
+                                <td>
+
+                                    {{ $item->kode ?: '—' }}
+
+                                </td>
+
+
+                                <td>
+
+                                    @if (!empty($item->created_at))
+
+                                        {{
+                                            \Carbon\Carbon::parse(
+                                                $item->created_at
+                                            )
+                                                ->locale('id')
+                                                ->translatedFormat(
+                                                    'd M Y'
+                                                )
+                                        }}
+
+                                    @else
+
+                                        —
+
+                                    @endif
+
+                                </td>
+
+                            </tr>
+
+
+                        @empty
+
+                            <tr>
+
+                                <td
+                                    colspan="4"
+                                    class="ruangan-empty"
+                                >
+
+                                    Belum ada data Ruangan.
+
+                                </td>
+
+                            </tr>
+
+                        @endforelse
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        </section>
+
+
+    </div>
+
+
+
+    {{-- ============================================================
+         CRUD MODAL
+    ============================================================= --}}
+    <dialog
+        class="ruangan-dialog"
+        id="ruanganModal"
+    >
+
+
+        <div class="ruangan-modal-dialog">
+
+
+            <div class="ruangan-modal-header">
+
+
+                <div class="ruangan-modal-heading">
+
+
+                    <div class="ruangan-modal-icon">
+
+                        <i data-lucide="door-open"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <h3 id="ruanganModalTitle">
+
+                            Tambah Ruangan
+
+                        </h3>
+
+
+                        <p id="ruanganModalDescription">
+
+                            Tambahkan data master Ruangan.
+
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <button
+                    type="button"
+                    class="ruangan-modal-close"
+                    onclick="closeRuanganModal()"
+                >
+
+                    <i data-lucide="x"></i>
+
+                </button>
+
+
+            </div>
+
+
+
+            <form id="ruanganForm">
+
+                @csrf
+
+
+                <input
+                    type="hidden"
+                    id="ruanganId"
+                >
+
+
+
+                <div
+                    class="ruangan-form-alert"
+                    id="ruanganFormAlert"
+                    hidden
+                ></div>
+
+
+
+                <div class="ruangan-modal-body">
+
+
+                    {{-- NAMA --}}
+                    <div class="ruangan-form-group">
+
+                        <label for="ruanganName">
+
+                            Nama Ruangan
+
+                            <span>*</span>
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="ruanganName"
+                            name="nama_ruang"
+                            maxlength="255"
+                            placeholder="Contoh: Ruang Server"
+                            required
+                        >
+
+                    </div>
+
+
+
+                    {{-- KODE --}}
+                    <div class="ruangan-form-group">
+
+                        <label for="ruanganCode">
+
+                            Kode Ruangan
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="ruanganCode"
+                            name="kode"
+                            maxlength="255"
+                            placeholder="Contoh: RGN-001"
+                        >
+
+
+                        <small>
+                            Opsional. Jika kosong akan disimpan sebagai "-".
+                        </small>
+
+                    </div>
+
+
+
+                    <div class="ruangan-modal-note">
+
+                        <i data-lucide="database"></i>
+
+
+                        <div>
+
+                            <strong>
+                                Database Ruangan
+                            </strong>
+
+
+                            <span>
+                                Data akan langsung disimpan ke tabel
+                                <code>ruangans</code>.
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="ruangan-modal-footer">
+
+
+                    <button
+                        type="button"
+                        class="ruangan-cancel-button"
+                        onclick="closeRuanganModal()"
+                    >
+
+                        Batal
+
+                    </button>
+
+
+
+                    <button
+                        type="submit"
+                        class="ruangan-save-button"
+                        id="ruanganSaveButton"
+                    >
+
+                        <i data-lucide="save"></i>
+
+
+                        <span id="ruanganSaveText">
+
+                            Simpan Ruangan
+
+                        </span>
+
+                    </button>
+
+
+                </div>
+
+
+            </form>
+
+
+        </div>
+
+
+    </dialog>
+
+
+
+    {{-- ============================================================
+         ACTIVITY MODAL
+    ============================================================= --}}
+    <dialog
+        class="ruangan-dialog ruangan-history-dialog"
+        id="ruanganActivityModal"
+    >
+
+
+        <div class="ruangan-modal-dialog">
+
+
+            <div class="ruangan-modal-header">
+
+
+                <div class="ruangan-modal-heading">
+
+
+                    <div class="ruangan-modal-icon">
+
+                        <i data-lucide="history"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <h3>
+                            Riwayat Perubahan Ruangan
+                        </h3>
+
+
+                        <p>
+                            Riwayat penambahan dan penghapusan
+                            data master Ruangan.
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <button
+                    type="button"
+                    class="ruangan-modal-close"
+                    onclick="closeRuanganActivityModal()"
+                >
+
+                    <i data-lucide="x"></i>
+
+                </button>
+
+
+            </div>
+
+
+
+            {{-- SUMMARY --}}
+            <div class="ruangan-history-summary">
+
+
+                <div class="ruangan-history-stat">
+
+                    <span>
+                        Ditambahkan
+                    </span>
+
+
+                    <strong class="created">
+
+                        <i data-lucide="arrow-up"></i>
+
+                        {{ $ruanganTambah }}
+
+                    </strong>
+
+                </div>
+
+
+
+                <div class="ruangan-history-stat">
+
+                    <span>
+                        Dihapus
+                    </span>
+
+
+                    <strong class="deleted">
+
+                        <i data-lucide="arrow-down"></i>
+
+                        {{ $ruanganHapus }}
+
+                    </strong>
+
+                </div>
+
+
+
+                <div class="ruangan-history-stat">
+
+                    <span>
+                        Perubahan Bersih
+                    </span>
+
+
+                    <strong>
+
+                        @if ($ruanganDelta > 0)
+
+                            +{{ $ruanganDelta }}
+
+                        @else
+
+                            {{ $ruanganDelta }}
+
+                        @endif
+
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+
+            {{-- FILTER --}}
+            <div class="ruangan-history-toolbar">
+
+
+                <button
+                    type="button"
+                    class="active"
+                    data-ruangan-history-filter="all"
+                >
+
+                    Semua
+
+                </button>
+
+
+                <button
+                    type="button"
+                    data-ruangan-history-filter="created"
+                >
+
+                    <i data-lucide="plus"></i>
+
+                    Ditambahkan
+
+                </button>
+
+
+                <button
+                    type="button"
+                    data-ruangan-history-filter="deleted"
+                >
+
+                    <i data-lucide="trash-2"></i>
+
+                    Dihapus
+
+                </button>
+
+
+            </div>
+
+
+
+            <div class="ruangan-history-body">
+
+
+                <div class="table-responsive">
+
+
+                    <table class="ruangan-history-table">
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    No
+                                </th>
+
+                                <th>
+                                    Nama Ruangan
+                                </th>
+
+                                <th>
+                                    Kode
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Tanggal Data
+                                </th>
+
+                                <th>
+                                    Waktu Aktivitas
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+
+                        <tbody>
+
+
+                            @forelse ($ruanganActivityLogs as $log)
+
+                                <tr
+                                    data-ruangan-history-row
+                                    data-action="{{ $log->action }}"
+                                >
+
+
+                                    <td class="ruangan-history-number">
+
+                                        {{ $loop->iteration }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ $log->record_name ?: '—' }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ $log->record_code ?: '—' }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        @if ($log->action === 'created')
+
+                                            <span class="ruangan-history-status created">
+
+                                                <i data-lucide="arrow-up"></i>
+
+                                                Ditambahkan
+
+                                            </span>
+
+                                        @else
+
+                                            <span class="ruangan-history-status deleted">
+
+                                                <i data-lucide="arrow-down"></i>
+
+                                                Dihapus
+
+                                            </span>
+
+                                        @endif
+
+                                    </td>
+
+
+                                    <td>
+
+                                        @if (!empty($log->record_created_at))
+
+                                            {{
+                                                \Carbon\Carbon::parse(
+                                                    $log->record_created_at
+                                                )
+                                                    ->locale('id')
+                                                    ->translatedFormat(
+                                                        'd M Y'
+                                                    )
+                                            }}
+
+                                        @else
+
+                                            —
+
+                                        @endif
+
+                                    </td>
+
+
+                                    <td>
+
+                                        @if (!empty($log->created_at))
+
+                                            {{
+                                                \Carbon\Carbon::parse(
+                                                    $log->created_at
+                                                )
+                                                    ->locale('id')
+                                                    ->translatedFormat(
+                                                        'd M Y, H:i'
+                                                    )
+                                            }}
+
+                                        @else
+
+                                            —
+
+                                        @endif
+
+                                    </td>
+
+
+                                </tr>
+
+
+                            @empty
+
+                                <tr>
+
+                                    <td
+                                        colspan="6"
+                                        class="ruangan-empty"
+                                    >
+
+                                        Belum ada riwayat perubahan Ruangan.
+
+                                    </td>
+
+                                </tr>
+
+                            @endforelse
+
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+
+                <div
+                    id="ruanganHistoryFilteredEmpty"
+                    class="ruangan-empty"
+                    hidden
+                >
+
+                    Tidak ada riwayat pada kategori ini.
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </dialog>
+
+
+
+    {{-- ============================================================
+         TOAST
+    ============================================================= --}}
+    <div
+        class="ruangan-toast-container"
+        id="ruanganToastContainer"
+    ></div>
+
+
+</section>
+
 @endsection
 
+
+
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    <script src="{{ asset('js/pages/ruangan.js') }}"></script>
+
+<script>
+
+window.RUANGAN_CRUD = {
+
+    store:
+        @json(
+            route(
+                'master.data_ruangan.store'
+            )
+        ),
+
+    update:
+        @json(
+            url(
+                '/master-data/ruangan/__ID__'
+            )
+        ),
+
+    destroy:
+        @json(
+            url(
+                '/master-data/ruangan/__ID__'
+            )
+        )
+
+};
+
+</script>
+
+
+<script src="{{ asset('js/pages/ruangan.js') }}"></script>
+
 @endpush

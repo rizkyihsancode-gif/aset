@@ -4126,4 +4126,4755 @@ class MasterController extends Controller
                 'Divisi berhasil dihapus.'
             );
     }
+
+    /*
+|--------------------------------------------------------------------------
+| MASTER DATA - RUANGAN
+|--------------------------------------------------------------------------
+*/
+
+
+    /*
+|--------------------------------------------------------------------------
+| PAGE RUANGAN
+|--------------------------------------------------------------------------
+*/
+
+    public function dataRuangan()
+    {
+        if (!Schema::hasTable('ruangans')) {
+
+            abort(
+                500,
+                'Tabel ruangans tidak ditemukan pada database.'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CEK KOLOM
+    |--------------------------------------------------------------------------
+    */
+
+        $hasCreatedAt =
+            Schema::hasColumn(
+                'ruangans',
+                'created_at'
+            );
+
+
+        $hasUpdatedAt =
+            Schema::hasColumn(
+                'ruangans',
+                'updated_at'
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | QUERY RUANGAN
+    |--------------------------------------------------------------------------
+    */
+
+        $query =
+            DB::table('ruangans')
+            ->select(
+                'ruangans.id',
+                'ruangans.kode',
+                'ruangans.nama_ruang'
+            );
+
+
+        if ($hasCreatedAt) {
+
+            $query->addSelect(
+                'ruangans.created_at'
+            );
+        }
+
+
+        if ($hasUpdatedAt) {
+
+            $query->addSelect(
+                'ruangans.updated_at'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | SORTING
+    |--------------------------------------------------------------------------
+    |
+    | Data yang dibuat melalui web modern:
+    | created_at terisi → tampil paling atas.
+    |
+    | Data legacy:
+    | created_at NULL → berada setelah data modern.
+    |
+    */
+
+        if ($hasCreatedAt) {
+
+            $query
+                ->orderByRaw(
+                    "
+                CASE
+                    WHEN ruangans.created_at IS NULL
+                    THEN 1
+                    ELSE 0
+                END ASC
+                "
+                )
+                ->orderByDesc(
+                    'ruangans.created_at'
+                )
+                ->orderByDesc(
+                    'ruangans.id'
+                );
+        } else {
+
+            $query
+                ->orderByDesc(
+                    'ruangans.id'
+                );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | GET
+    |--------------------------------------------------------------------------
+    */
+
+        $ruangans =
+            $query
+            ->get()
+            ->map(
+                function ($item) {
+
+                    $item->kode =
+                        !empty($item->kode)
+                        ? trim(
+                            (string) $item->kode
+                        )
+                        : '-';
+
+
+                    $item->nama_ruang =
+                        trim(
+                            (string) $item->nama_ruang
+                        );
+
+
+                    if (
+                        !property_exists(
+                            $item,
+                            'created_at'
+                        )
+                    ) {
+
+                        $item->created_at =
+                            null;
+                    }
+
+
+                    if (
+                        !property_exists(
+                            $item,
+                            'updated_at'
+                        )
+                    ) {
+
+                        $item->updated_at =
+                            null;
+                    }
+
+
+                    return $item;
+                }
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+        $totalRuangan =
+            $ruangans->count();
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | KODE TERISI
+    |--------------------------------------------------------------------------
+    */
+
+        $totalKodeTerisi =
+            $ruangans
+            ->filter(
+                function ($item) {
+
+                    $kode =
+                        trim(
+                            (string) $item->kode
+                        );
+
+
+                    return (
+                        $kode !== '' &&
+                        $kode !== '-'
+                    );
+                }
+            )
+            ->count();
+
+
+        $totalTanpaKode =
+            $totalRuangan -
+            $totalKodeTerisi;
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE TERAKHIR
+    |--------------------------------------------------------------------------
+    */
+
+        $updateTerakhirLabel =
+            'Belum ada data';
+
+
+        $updateTerakhirDetail =
+            'Belum ada perubahan';
+
+
+        $latestTimestamp =
+            null;
+
+
+        if ($hasUpdatedAt) {
+
+            $latestUpdated =
+                DB::table('ruangans')
+                ->whereNotNull(
+                    'updated_at'
+                )
+                ->orderByDesc(
+                    'updated_at'
+                )
+                ->value(
+                    'updated_at'
+                );
+
+
+            if ($latestUpdated) {
+
+                $latestTimestamp =
+                    $latestUpdated;
+            }
+        }
+
+
+        if (
+            !$latestTimestamp &&
+            $hasCreatedAt
+        ) {
+
+            $latestCreated =
+                DB::table('ruangans')
+                ->whereNotNull(
+                    'created_at'
+                )
+                ->orderByDesc(
+                    'created_at'
+                )
+                ->value(
+                    'created_at'
+                );
+
+
+            if ($latestCreated) {
+
+                $latestTimestamp =
+                    $latestCreated;
+            }
+        }
+
+
+        if ($latestTimestamp) {
+
+            $latestDate =
+                Carbon::parse(
+                    $latestTimestamp
+                )
+                ->locale('id');
+
+
+            if ($latestDate->isToday()) {
+
+                $updateTerakhirLabel =
+                    'Hari Ini';
+            } elseif (
+                $latestDate->isYesterday()
+            ) {
+
+                $updateTerakhirLabel =
+                    'Kemarin';
+            } else {
+
+                $updateTerakhirLabel =
+                    $latestDate
+                    ->diffForHumans();
+            }
+
+
+            $updateTerakhirDetail =
+                $latestDate
+                ->translatedFormat(
+                    'd M Y, H:i'
+                )
+                .
+                ' WITA';
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | RUANGAN TERBARU
+    |--------------------------------------------------------------------------
+    */
+
+        $ruanganTerbaru =
+            $ruangans
+            ->take(5)
+            ->values();
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | ACTIVITY LOG
+    |--------------------------------------------------------------------------
+    */
+
+        $ruanganActivityLogs =
+            collect();
+
+
+        $ruanganTambah = 0;
+
+        $ruanganHapus = 0;
+
+        $ruanganDelta = 0;
+
+
+        if (
+            Schema::hasTable(
+                'master_data_activity_logs'
+            )
+        ) {
+
+            $ruanganActivityLogs =
+                DB::table(
+                    'master_data_activity_logs'
+                )
+                ->where(
+                    'module',
+                    'ruangan'
+                )
+                ->whereIn(
+                    'action',
+                    [
+                        'created',
+                        'deleted',
+                    ]
+                )
+                ->orderByDesc(
+                    'created_at'
+                )
+                ->orderByDesc(
+                    'id'
+                )
+                ->get();
+
+
+            $ruanganTambah =
+                $ruanganActivityLogs
+                ->where(
+                    'action',
+                    'created'
+                )
+                ->count();
+
+
+            $ruanganHapus =
+                $ruanganActivityLogs
+                ->where(
+                    'action',
+                    'deleted'
+                )
+                ->count();
+
+
+            $ruanganDelta =
+                $ruanganTambah -
+                $ruanganHapus;
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | VIEW
+    |--------------------------------------------------------------------------
+    */
+
+        return view(
+            'master.data_ruangan',
+            compact(
+                'ruangans',
+                'totalRuangan',
+                'totalKodeTerisi',
+                'totalTanpaKode',
+                'ruanganTerbaru',
+                'hasCreatedAt',
+                'hasUpdatedAt',
+                'updateTerakhirLabel',
+                'updateTerakhirDetail',
+                'ruanganActivityLogs',
+                'ruanganTambah',
+                'ruanganHapus',
+                'ruanganDelta'
+            )
+        );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| STORE RUANGAN
+|--------------------------------------------------------------------------
+*/
+
+    public function storeRuangan(
+        Request $request
+    ) {
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    |
+    | Kode sengaja optional.
+    |
+    | Database legacy mempunyai banyak kode "-"
+    | dan web lama hanya berfokus pada nama Ruangan.
+    |
+    */
+
+        $validated =
+            $request->validate(
+                [
+
+                    'nama_ruang' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+
+
+                    'kode' => [
+                        'nullable',
+                        'string',
+                        'max:255',
+                    ],
+
+                ],
+                [
+
+                    'nama_ruang.required' =>
+                    'Nama Ruangan wajib diisi.',
+
+                    'nama_ruang.max' =>
+                    'Nama Ruangan maksimal 255 karakter.',
+
+                    'kode.max' =>
+                    'Kode Ruangan maksimal 255 karakter.',
+
+                ]
+            );
+
+
+        $kode =
+            trim(
+                (string)
+                (
+                    $validated['kode']
+                    ?? ''
+                )
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | INSERT DATA
+    |--------------------------------------------------------------------------
+    */
+
+        $data = [
+
+            'nama_ruang' =>
+            trim(
+                $validated['nama_ruang']
+            ),
+
+            'kode' =>
+            $kode !== ''
+                ? $kode
+                : '-',
+
+        ];
+
+
+        if (
+            Schema::hasColumn(
+                'ruangans',
+                'created_at'
+            )
+        ) {
+
+            $data['created_at'] =
+                now();
+        }
+
+
+        if (
+            Schema::hasColumn(
+                'ruangans',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | INSERT + ACTIVITY LOG
+    |--------------------------------------------------------------------------
+    */
+
+        $id =
+            DB::transaction(
+                function () use (
+                    $data
+                ) {
+
+                    $id =
+                        DB::table(
+                            'ruangans'
+                        )
+                        ->insertGetId(
+                            $data
+                        );
+
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+
+                        DB::table(
+                            'master_data_activity_logs'
+                        )
+                            ->insert(
+                                [
+
+                                    'module' =>
+                                    'ruangan',
+
+                                    'record_id' =>
+                                    $id,
+
+                                    'record_name' =>
+                                    $data['nama_ruang'],
+
+                                    'record_code' =>
+                                    $data['kode'],
+
+                                    'action' =>
+                                    'created',
+
+                                    'record_created_at' =>
+                                    $data['created_at']
+                                        ??
+                                        now(),
+
+                                    'created_at' =>
+                                    now(),
+
+                                    'updated_at' =>
+                                    now(),
+
+                                ]
+                            );
+                    }
+
+
+                    return $id;
+                }
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()
+                ->json(
+                    [
+
+                        'success' =>
+                        true,
+
+                        'message' =>
+                        'Ruangan berhasil ditambahkan.',
+
+                        'id' =>
+                        $id,
+
+                    ],
+                    201
+                );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_ruangan'
+            )
+            ->with(
+                'success',
+                'Ruangan berhasil ditambahkan.'
+            );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| UPDATE RUANGAN
+|--------------------------------------------------------------------------
+*/
+
+    public function updateRuangan(
+        Request $request,
+        int $id
+    ) {
+
+        /*
+    |--------------------------------------------------------------------------
+    | FIND
+    |--------------------------------------------------------------------------
+    */
+
+        $ruangan =
+            DB::table(
+                'ruangans'
+            )
+            ->where(
+                'id',
+                $id
+            )
+            ->first();
+
+
+        if (!$ruangan) {
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()
+                    ->json(
+                        [
+
+                            'success' =>
+                            false,
+
+                            'message' =>
+                            'Data Ruangan tidak ditemukan.',
+
+                        ],
+                        404
+                    );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_ruangan'
+                )
+                ->with(
+                    'error',
+                    'Data Ruangan tidak ditemukan.'
+                );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+        $validated =
+            $request->validate(
+                [
+
+                    'nama_ruang' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+
+
+                    'kode' => [
+                        'nullable',
+                        'string',
+                        'max:255',
+                    ],
+
+                ]
+            );
+
+
+        $kode =
+            trim(
+                (string)
+                (
+                    $validated['kode']
+                    ?? ''
+                )
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE DATA
+    |--------------------------------------------------------------------------
+    */
+
+        $data = [
+
+            'nama_ruang' =>
+            trim(
+                $validated['nama_ruang']
+            ),
+
+            'kode' =>
+            $kode !== ''
+                ? $kode
+                : '-',
+
+        ];
+
+
+        /*
+     * Jangan ubah created_at.
+     *
+     * Edit bukan berarti data baru.
+     */
+
+        if (
+            Schema::hasColumn(
+                'ruangans',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+        DB::table(
+            'ruangans'
+        )
+            ->where(
+                'id',
+                $id
+            )
+            ->update(
+                $data
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()
+                ->json(
+                    [
+
+                        'success' =>
+                        true,
+
+                        'message' =>
+                        'Ruangan berhasil diperbarui.',
+
+                        'id' =>
+                        $id,
+
+                    ]
+                );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_ruangan'
+            )
+            ->with(
+                'success',
+                'Ruangan berhasil diperbarui.'
+            );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| DELETE RUANGAN
+|--------------------------------------------------------------------------
+*/
+
+    public function deleteRuangan(
+        Request $request,
+        int $id
+    ) {
+
+        /*
+    |--------------------------------------------------------------------------
+    | FIND
+    |--------------------------------------------------------------------------
+    */
+
+        $ruangan =
+            DB::table(
+                'ruangans'
+            )
+            ->where(
+                'id',
+                $id
+            )
+            ->first();
+
+
+        if (!$ruangan) {
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()
+                    ->json(
+                        [
+
+                            'success' =>
+                            false,
+
+                            'message' =>
+                            'Data Ruangan tidak ditemukan.',
+
+                        ],
+                        404
+                    );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_ruangan'
+                )
+                ->with(
+                    'error',
+                    'Data Ruangan tidak ditemukan.'
+                );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | SNAPSHOT
+    |--------------------------------------------------------------------------
+    */
+
+        $recordName =
+            trim(
+                (string)
+                $ruangan->nama_ruang
+            );
+
+
+        $recordCode =
+            !empty($ruangan->kode)
+            ? trim(
+                (string)
+                $ruangan->kode
+            )
+            : '-';
+
+
+        $recordCreatedAt =
+            $ruangan->created_at
+            ??
+            null;
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | ACTIVITY + DELETE
+    |--------------------------------------------------------------------------
+    */
+
+        try {
+
+            DB::transaction(
+                function () use (
+                    $id,
+                    $recordName,
+                    $recordCode,
+                    $recordCreatedAt
+                ) {
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+
+                        DB::table(
+                            'master_data_activity_logs'
+                        )
+                            ->insert(
+                                [
+
+                                    'module' =>
+                                    'ruangan',
+
+                                    'record_id' =>
+                                    $id,
+
+                                    'record_name' =>
+                                    $recordName,
+
+                                    'record_code' =>
+                                    $recordCode,
+
+                                    'action' =>
+                                    'deleted',
+
+                                    'record_created_at' =>
+                                    $recordCreatedAt,
+
+                                    'created_at' =>
+                                    now(),
+
+                                    'updated_at' =>
+                                    now(),
+
+                                ]
+                            );
+                    }
+
+
+                    DB::table(
+                        'ruangans'
+                    )
+                        ->where(
+                            'id',
+                            $id
+                        )
+                        ->delete();
+                }
+            );
+        } catch (\Throwable $error) {
+
+            report(
+                $error
+            );
+
+
+            /*
+         * Jika ternyata Ruangan dipakai tabel lain
+         * melalui foreign key, jangan paksa delete.
+         */
+
+            $message =
+                'Ruangan tidak dapat dihapus karena masih digunakan oleh data lain.';
+
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()
+                    ->json(
+                        [
+
+                            'success' =>
+                            false,
+
+                            'message' =>
+                            $message,
+
+                        ],
+                        409
+                    );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_ruangan'
+                )
+                ->with(
+                    'error',
+                    $message
+                );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()
+                ->json(
+                    [
+
+                        'success' =>
+                        true,
+
+                        'message' =>
+                        'Ruangan berhasil dihapus.',
+
+                        'id' =>
+                        $id,
+
+                    ]
+                );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_ruangan'
+            )
+            ->with(
+                'success',
+                'Ruangan berhasil dihapus.'
+            );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| MASTER DATA - SDM PENDUKUNG
+|--------------------------------------------------------------------------
+*/
+
+    public function dataSdm()
+    {
+        if (!Schema::hasTable('sdms')) {
+            abort(500, 'Tabel sdms tidak ditemukan pada database.');
+        }
+
+        if (!Schema::hasTable('divisis')) {
+            abort(500, 'Tabel divisis tidak ditemukan pada database.');
+        }
+
+        if (!Schema::hasTable('jabatans')) {
+            abort(500, 'Tabel jabatans tidak ditemukan pada database.');
+        }
+
+
+        $hasCreatedAt =
+            Schema::hasColumn('sdms', 'created_at');
+
+        $hasUpdatedAt =
+            Schema::hasColumn('sdms', 'updated_at');
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | MASTER JABATAN
+    |--------------------------------------------------------------------------
+    */
+
+        $jabatans =
+            DB::table('jabatans')
+            ->select(
+                'id',
+                'jabat'
+            )
+            ->orderBy('jabat')
+            ->get()
+            ->map(function ($item) {
+
+                $item->jabat =
+                    trim((string) $item->jabat);
+
+                return $item;
+            });
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | MASTER DEPARTEMEN
+    |--------------------------------------------------------------------------
+    */
+
+        $departemens =
+            collect();
+
+        if (Schema::hasTable('departemens')) {
+
+            $departemens =
+                DB::table('departemens')
+                ->select(
+                    'id',
+                    'nama_dep',
+                    'kode_dep'
+                )
+                ->orderBy('kode_dep')
+                ->get()
+                ->map(function ($item) {
+
+                    /*
+                     * Legacy:
+                     * nama_dep = kode
+                     * kode_dep = nama
+                     */
+
+                    $item->nama_dep =
+                        trim((string) $item->nama_dep);
+
+                    $item->kode_dep =
+                        trim((string) $item->kode_dep);
+
+                    return $item;
+                });
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | MASTER DIVISI
+    |--------------------------------------------------------------------------
+    */
+
+        $divisis =
+            DB::table('divisis')
+
+            ->leftJoin(
+                'departemens',
+                'divisis.id_dep',
+                '=',
+                'departemens.id'
+            )
+
+            ->select(
+                'divisis.id',
+                'divisis.id_dep',
+                'divisis.kode_div',
+                'divisis.nama_div',
+                'departemens.kode_dep as nama_departemen'
+            )
+
+            ->orderBy('divisis.nama_div')
+
+            ->get()
+
+            ->map(function ($item) {
+
+                $item->kode_div =
+                    trim((string) $item->kode_div);
+
+                $item->nama_div =
+                    trim((string) $item->nama_div);
+
+                $item->nama_departemen =
+                    !empty($item->nama_departemen)
+                    ? trim((string) $item->nama_departemen)
+                    : 'Belum terhubung';
+
+                return $item;
+            });
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | SDM
+    |--------------------------------------------------------------------------
+    |
+    | LEFT JOIN dipakai agar data legacy yang id_jabat / id_div
+    | tidak valid tetap terlihat.
+    |
+    */
+
+        $query =
+            DB::table('sdms')
+
+            ->leftJoin(
+                'jabatans',
+                'sdms.id_jabat',
+                '=',
+                'jabatans.id'
+            )
+
+            ->leftJoin(
+                'divisis',
+                'sdms.id_div',
+                '=',
+                'divisis.id'
+            )
+
+            ->leftJoin(
+                'departemens',
+                'divisis.id_dep',
+                '=',
+                'departemens.id'
+            )
+
+            ->select(
+                'sdms.id',
+                'sdms.nama_sdm',
+                'sdms.nip',
+                'sdms.id_jabat',
+                'sdms.id_div',
+
+                'jabatans.jabat',
+
+                'divisis.nama_div',
+                'divisis.id_dep',
+
+                'departemens.kode_dep as nama_departemen'
+            );
+
+
+        if ($hasCreatedAt) {
+            $query->addSelect('sdms.created_at');
+        }
+
+
+        if ($hasUpdatedAt) {
+            $query->addSelect('sdms.updated_at');
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | DATA BARU PALING ATAS
+    |--------------------------------------------------------------------------
+    */
+
+        if ($hasCreatedAt) {
+
+            $query
+                ->orderByRaw("
+                CASE
+                    WHEN sdms.created_at IS NULL THEN 1
+                    ELSE 0
+                END ASC
+            ")
+                ->orderByDesc('sdms.created_at')
+                ->orderByDesc('sdms.id');
+        } else {
+
+            $query
+                ->orderByDesc('sdms.id');
+        }
+
+
+        $sdms =
+            $query
+            ->get()
+            ->map(function ($item) {
+
+                $item->nama_sdm =
+                    trim((string) $item->nama_sdm);
+
+                $item->nip =
+                    !empty($item->nip)
+                    ? trim((string) $item->nip)
+                    : '-';
+
+                $item->jabat =
+                    !empty($item->jabat)
+                    ? trim((string) $item->jabat)
+                    : 'Belum terhubung';
+
+                $item->nama_div =
+                    !empty($item->nama_div)
+                    ? trim((string) $item->nama_div)
+                    : 'Belum terhubung';
+
+                $item->nama_departemen =
+                    !empty($item->nama_departemen)
+                    ? trim((string) $item->nama_departemen)
+                    : 'Belum terhubung';
+
+                if (!property_exists($item, 'created_at')) {
+                    $item->created_at = null;
+                }
+
+                if (!property_exists($item, 'updated_at')) {
+                    $item->updated_at = null;
+                }
+
+                return $item;
+            });
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | KPI
+    |--------------------------------------------------------------------------
+    */
+
+        $totalSdm =
+            $sdms->count();
+
+
+        $totalDepartemen =
+            Schema::hasTable('departemens')
+            ? DB::table('departemens')->count()
+            : 0;
+
+
+        $totalDivisi =
+            DB::table('divisis')
+            ->count();
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE TERAKHIR
+    |--------------------------------------------------------------------------
+    */
+
+        $updateTerakhirLabel =
+            'Belum ada data';
+
+        $updateTerakhirDetail =
+            'Belum ada perubahan';
+
+        $latestTimestamp =
+            null;
+
+
+        if ($hasUpdatedAt) {
+
+            $latestTimestamp =
+                DB::table('sdms')
+                ->whereNotNull('updated_at')
+                ->orderByDesc('updated_at')
+                ->value('updated_at');
+        }
+
+
+        if (
+            !$latestTimestamp &&
+            $hasCreatedAt
+        ) {
+
+            $latestTimestamp =
+                DB::table('sdms')
+                ->whereNotNull('created_at')
+                ->orderByDesc('created_at')
+                ->value('created_at');
+        }
+
+
+        if ($latestTimestamp) {
+
+            $date =
+                Carbon::parse($latestTimestamp)
+                ->locale('id');
+
+
+            if ($date->isToday()) {
+
+                $updateTerakhirLabel =
+                    'Hari Ini';
+            } elseif ($date->isYesterday()) {
+
+                $updateTerakhirLabel =
+                    'Kemarin';
+            } else {
+
+                $updateTerakhirLabel =
+                    $date->diffForHumans();
+            }
+
+
+            $updateTerakhirDetail =
+                $date->translatedFormat(
+                    'd M Y, H:i'
+                )
+                .
+                ' WITA';
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | DISTRIBUSI PER DIVISI
+    |--------------------------------------------------------------------------
+    */
+
+        $distribusiSdm =
+            DB::table('sdms')
+
+            ->leftJoin(
+                'divisis',
+                'sdms.id_div',
+                '=',
+                'divisis.id'
+            )
+
+            ->select(
+                'sdms.id_div',
+                'divisis.nama_div',
+                DB::raw(
+                    'COUNT(sdms.id) AS total'
+                )
+            )
+
+            ->groupBy(
+                'sdms.id_div',
+                'divisis.nama_div'
+            )
+
+            ->orderByDesc('total')
+
+            ->get()
+
+            ->map(function ($item) use ($totalSdm) {
+
+                $item->nama_div =
+                    !empty($item->nama_div)
+                    ? trim((string) $item->nama_div)
+                    : 'Belum terhubung';
+
+                $item->total =
+                    (int) $item->total;
+
+                $item->persentase =
+                    $totalSdm > 0
+                    ? round(
+                        ($item->total / $totalSdm) * 100,
+                        1
+                    )
+                    : 0;
+
+                return $item;
+            });
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | SDM TERBARU
+    |--------------------------------------------------------------------------
+    */
+
+        $sdmTerbaru =
+            $sdms
+            ->take(5)
+            ->values();
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | ACTIVITY LOG
+    |--------------------------------------------------------------------------
+    */
+
+        $sdmActivityLogs =
+            collect();
+
+        $sdmTambah = 0;
+        $sdmHapus = 0;
+        $sdmDelta = 0;
+
+
+        if (
+            Schema::hasTable(
+                'master_data_activity_logs'
+            )
+        ) {
+
+            $sdmActivityLogs =
+                DB::table(
+                    'master_data_activity_logs'
+                )
+                ->where(
+                    'module',
+                    'sdm'
+                )
+                ->whereIn(
+                    'action',
+                    [
+                        'created',
+                        'deleted',
+                    ]
+                )
+                ->orderByDesc(
+                    'created_at'
+                )
+                ->orderByDesc('id')
+                ->get();
+
+
+            $sdmTambah =
+                $sdmActivityLogs
+                ->where(
+                    'action',
+                    'created'
+                )
+                ->count();
+
+
+            $sdmHapus =
+                $sdmActivityLogs
+                ->where(
+                    'action',
+                    'deleted'
+                )
+                ->count();
+
+
+            $sdmDelta =
+                $sdmTambah -
+                $sdmHapus;
+        }
+
+
+        return view(
+            'master.data_sdm',
+            compact(
+                'sdms',
+                'jabatans',
+                'divisis',
+                'departemens',
+                'totalSdm',
+                'totalDepartemen',
+                'totalDivisi',
+                'updateTerakhirLabel',
+                'updateTerakhirDetail',
+                'distribusiSdm',
+                'sdmTerbaru',
+                'sdmActivityLogs',
+                'sdmTambah',
+                'sdmHapus',
+                'sdmDelta',
+                'hasCreatedAt',
+                'hasUpdatedAt'
+            )
+        );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| STORE SDM
+|--------------------------------------------------------------------------
+*/
+
+    public function storeSdm(
+        Request $request
+    ) {
+
+        $validated =
+            $request->validate(
+                [
+
+                    'nama_sdm' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+
+                    'nip' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+
+                    'id_jabat' => [
+                        'required',
+                        'integer',
+                        'exists:jabatans,id',
+                    ],
+
+                    'id_div' => [
+                        'required',
+                        'integer',
+                        'exists:divisis,id',
+                    ],
+
+                ],
+                [
+
+                    'nama_sdm.required' =>
+                    'Nama SDM wajib diisi.',
+
+                    'nip.required' =>
+                    'NIP/NIPP wajib diisi.',
+
+                    'id_jabat.required' =>
+                    'Jabatan wajib dipilih.',
+
+                    'id_jabat.exists' =>
+                    'Jabatan tidak valid.',
+
+                    'id_div.required' =>
+                    'Divisi wajib dipilih.',
+
+                    'id_div.exists' =>
+                    'Divisi tidak valid.',
+
+                ]
+            );
+
+
+        $data = [
+
+            'nama_sdm' =>
+            trim(
+                $validated['nama_sdm']
+            ),
+
+            'nip' =>
+            trim(
+                $validated['nip']
+            ),
+
+            'id_jabat' =>
+            (int)
+            $validated['id_jabat'],
+
+            'id_div' =>
+            (int)
+            $validated['id_div'],
+
+        ];
+
+
+        if (
+            Schema::hasColumn(
+                'sdms',
+                'created_at'
+            )
+        ) {
+
+            $data['created_at'] =
+                now();
+        }
+
+
+        if (
+            Schema::hasColumn(
+                'sdms',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+        $id =
+            DB::transaction(
+                function () use ($data) {
+
+                    $id =
+                        DB::table('sdms')
+                        ->insertGetId(
+                            $data
+                        );
+
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+
+                        DB::table(
+                            'master_data_activity_logs'
+                        )
+                            ->insert(
+                                [
+
+                                    'module' =>
+                                    'sdm',
+
+                                    'record_id' =>
+                                    $id,
+
+                                    'record_name' =>
+                                    $data['nama_sdm'],
+
+                                    'record_code' =>
+                                    $data['nip'],
+
+                                    'action' =>
+                                    'created',
+
+                                    'record_created_at' =>
+                                    $data['created_at']
+                                        ??
+                                        now(),
+
+                                    'created_at' =>
+                                    now(),
+
+                                    'updated_at' =>
+                                    now(),
+
+                                ]
+                            );
+                    }
+
+
+                    return $id;
+                }
+            );
+
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()->json(
+                [
+
+                    'success' =>
+                    true,
+
+                    'message' =>
+                    'SDM Pendukung berhasil ditambahkan.',
+
+                    'id' =>
+                    $id,
+
+                ],
+                201
+            );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_sdm'
+            )
+            ->with(
+                'success',
+                'SDM Pendukung berhasil ditambahkan.'
+            );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| UPDATE SDM
+|--------------------------------------------------------------------------
+*/
+
+    public function updateSdm(
+        Request $request,
+        int $id
+    ) {
+
+        $sdm =
+            DB::table('sdms')
+            ->where(
+                'id',
+                $id
+            )
+            ->first();
+
+
+        if (!$sdm) {
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()->json(
+                    [
+
+                        'success' =>
+                        false,
+
+                        'message' =>
+                        'Data SDM Pendukung tidak ditemukan.',
+
+                    ],
+                    404
+                );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_sdm'
+                )
+                ->with(
+                    'error',
+                    'Data SDM Pendukung tidak ditemukan.'
+                );
+        }
+
+
+        $validated =
+            $request->validate(
+                [
+
+                    'nama_sdm' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+
+                    'nip' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+
+                    'id_jabat' => [
+                        'required',
+                        'integer',
+                        'exists:jabatans,id',
+                    ],
+
+                    'id_div' => [
+                        'required',
+                        'integer',
+                        'exists:divisis,id',
+                    ],
+
+                ]
+            );
+
+
+        $data = [
+
+            'nama_sdm' =>
+            trim(
+                $validated['nama_sdm']
+            ),
+
+            'nip' =>
+            trim(
+                $validated['nip']
+            ),
+
+            'id_jabat' =>
+            (int)
+            $validated['id_jabat'],
+
+            'id_div' =>
+            (int)
+            $validated['id_div'],
+
+        ];
+
+
+        /*
+     * created_at TIDAK DIUBAH.
+     *
+     * Edit bukan data baru.
+     */
+
+        if (
+            Schema::hasColumn(
+                'sdms',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+        DB::table('sdms')
+            ->where(
+                'id',
+                $id
+            )
+            ->update(
+                $data
+            );
+
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()->json(
+                [
+
+                    'success' =>
+                    true,
+
+                    'message' =>
+                    'SDM Pendukung berhasil diperbarui.',
+
+                    'id' =>
+                    $id,
+
+                ]
+            );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_sdm'
+            )
+            ->with(
+                'success',
+                'SDM Pendukung berhasil diperbarui.'
+            );
+    }
+
+
+    /*
+|--------------------------------------------------------------------------
+| DELETE SDM
+|--------------------------------------------------------------------------
+*/
+
+    public function deleteSdm(
+        Request $request,
+        int $id
+    ) {
+
+        $sdm =
+            DB::table('sdms')
+            ->where(
+                'id',
+                $id
+            )
+            ->first();
+
+
+        if (!$sdm) {
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()->json(
+                    [
+
+                        'success' =>
+                        false,
+
+                        'message' =>
+                        'Data SDM Pendukung tidak ditemukan.',
+
+                    ],
+                    404
+                );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_sdm'
+                )
+                ->with(
+                    'error',
+                    'Data SDM Pendukung tidak ditemukan.'
+                );
+        }
+
+
+        $recordName =
+            trim(
+                (string)
+                $sdm->nama_sdm
+            );
+
+
+        $recordCode =
+            !empty($sdm->nip)
+            ? trim(
+                (string)
+                $sdm->nip
+            )
+            : '-';
+
+
+        $recordCreatedAt =
+            $sdm->created_at
+            ??
+            null;
+
+
+        try {
+
+            DB::transaction(
+                function () use (
+                    $id,
+                    $recordName,
+                    $recordCode,
+                    $recordCreatedAt
+                ) {
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+
+                        DB::table(
+                            'master_data_activity_logs'
+                        )
+                            ->insert(
+                                [
+
+                                    'module' =>
+                                    'sdm',
+
+                                    'record_id' =>
+                                    $id,
+
+                                    'record_name' =>
+                                    $recordName,
+
+                                    'record_code' =>
+                                    $recordCode,
+
+                                    'action' =>
+                                    'deleted',
+
+                                    'record_created_at' =>
+                                    $recordCreatedAt,
+
+                                    'created_at' =>
+                                    now(),
+
+                                    'updated_at' =>
+                                    now(),
+
+                                ]
+                            );
+                    }
+
+
+                    DB::table('sdms')
+                        ->where(
+                            'id',
+                            $id
+                        )
+                        ->delete();
+                }
+            );
+        } catch (\Throwable $error) {
+
+            report($error);
+
+
+            $message =
+                'SDM Pendukung tidak dapat dihapus karena masih digunakan oleh data lain.';
+
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()->json(
+                    [
+
+                        'success' =>
+                        false,
+
+                        'message' =>
+                        $message,
+
+                    ],
+                    409
+                );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_sdm'
+                )
+                ->with(
+                    'error',
+                    $message
+                );
+        }
+
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()->json(
+                [
+
+                    'success' =>
+                    true,
+
+                    'message' =>
+                    'SDM Pendukung berhasil dihapus.',
+
+                    'id' =>
+                    $id,
+
+                ]
+            );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_sdm'
+            )
+            ->with(
+                'success',
+                'SDM Pendukung berhasil dihapus.'
+            );
+    }
+
+    // ============================================================
+    // DATA BAHAN
+    // ============================================================
+
+    public function dataBahan()
+    {
+        if (!Schema::hasTable('bahans')) {
+            abort(
+                500,
+                'Tabel bahans tidak ditemukan pada database.'
+            );
+        }
+
+
+        $hasCreatedAt =
+            Schema::hasColumn(
+                'bahans',
+                'created_at'
+            );
+
+
+        $hasUpdatedAt =
+            Schema::hasColumn(
+                'bahans',
+                'updated_at'
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | QUERY BAHAN
+    |--------------------------------------------------------------------------
+    */
+
+        $query =
+            DB::table('bahans')
+            ->select(
+                'bahans.id',
+                'bahans.nama'
+            );
+
+
+        if ($hasCreatedAt) {
+
+            $query->addSelect(
+                'bahans.created_at'
+            );
+        }
+
+
+        if ($hasUpdatedAt) {
+
+            $query->addSelect(
+                'bahans.updated_at'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | DATA BARU DI ATAS
+    |--------------------------------------------------------------------------
+    |
+    | Data baru memiliki created_at.
+    | Data legacy yang created_at NULL tetap ditampilkan,
+    | tetapi berada setelah data baru.
+    |
+    */
+
+        if ($hasCreatedAt) {
+
+            $query
+                ->orderByRaw("
+                CASE
+                    WHEN bahans.created_at IS NULL
+                    THEN 1
+                    ELSE 0
+                END ASC
+            ")
+                ->orderByDesc(
+                    'bahans.created_at'
+                )
+                ->orderByDesc(
+                    'bahans.id'
+                );
+        } else {
+
+            $query
+                ->orderByDesc(
+                    'bahans.id'
+                );
+        }
+
+
+        $bahans =
+            $query
+            ->get()
+            ->map(
+                function ($item) {
+
+                    $item->nama =
+                        trim(
+                            (string) $item->nama
+                        );
+
+
+                    if (
+                        !property_exists(
+                            $item,
+                            'created_at'
+                        )
+                    ) {
+
+                        $item->created_at =
+                            null;
+                    }
+
+
+                    if (
+                        !property_exists(
+                            $item,
+                            'updated_at'
+                        )
+                    ) {
+
+                        $item->updated_at =
+                            null;
+                    }
+
+
+                    return $item;
+                }
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | KPI
+    |--------------------------------------------------------------------------
+    */
+
+        $totalBahan =
+            $bahans->count();
+
+
+        $totalBahanModern =
+            $bahans
+            ->filter(
+                fn($item) =>
+                !empty($item->created_at)
+            )
+            ->count();
+
+
+        $totalBahanLegacy =
+            $totalBahan -
+            $totalBahanModern;
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE TERAKHIR
+    |--------------------------------------------------------------------------
+    */
+
+        $updateTerakhirLabel =
+            'Belum ada data';
+
+
+        $updateTerakhirDetail =
+            'Belum ada perubahan';
+
+
+        $latestTimestamp =
+            null;
+
+
+        if ($hasUpdatedAt) {
+
+            $latestTimestamp =
+                DB::table('bahans')
+                ->whereNotNull(
+                    'updated_at'
+                )
+                ->orderByDesc(
+                    'updated_at'
+                )
+                ->value(
+                    'updated_at'
+                );
+        }
+
+
+        if (
+            !$latestTimestamp
+            &&
+            $hasCreatedAt
+        ) {
+
+            $latestTimestamp =
+                DB::table('bahans')
+                ->whereNotNull(
+                    'created_at'
+                )
+                ->orderByDesc(
+                    'created_at'
+                )
+                ->value(
+                    'created_at'
+                );
+        }
+
+
+        if ($latestTimestamp) {
+
+            $latestDate =
+                Carbon::parse(
+                    $latestTimestamp
+                )
+                ->locale('id');
+
+
+            if (
+                $latestDate->isToday()
+            ) {
+
+                $updateTerakhirLabel =
+                    'Hari Ini';
+            } elseif (
+                $latestDate->isYesterday()
+            ) {
+
+                $updateTerakhirLabel =
+                    'Kemarin';
+            } else {
+
+                $updateTerakhirLabel =
+                    $latestDate
+                    ->diffForHumans();
+            }
+
+
+            $updateTerakhirDetail =
+                $latestDate
+                ->translatedFormat(
+                    'd M Y, H:i'
+                )
+                .
+                ' WITA';
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | BAHAN TERBARU
+    |--------------------------------------------------------------------------
+    */
+
+        $bahanTerbaru =
+            $bahans
+            ->take(5)
+            ->values();
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | ACTIVITY LOG
+    |--------------------------------------------------------------------------
+    */
+
+        $bahanActivityLogs =
+            collect();
+
+
+        $bahanTambah =
+            0;
+
+
+        $bahanHapus =
+            0;
+
+
+        $bahanDelta =
+            0;
+
+
+        if (
+            Schema::hasTable(
+                'master_data_activity_logs'
+            )
+        ) {
+
+            $bahanActivityLogs =
+                DB::table(
+                    'master_data_activity_logs'
+                )
+                ->where(
+                    'module',
+                    'bahan'
+                )
+                ->whereIn(
+                    'action',
+                    [
+                        'created',
+                        'deleted',
+                    ]
+                )
+                ->orderByDesc(
+                    'created_at'
+                )
+                ->orderByDesc(
+                    'id'
+                )
+                ->get();
+
+
+            $bahanTambah =
+                $bahanActivityLogs
+                ->where(
+                    'action',
+                    'created'
+                )
+                ->count();
+
+
+            $bahanHapus =
+                $bahanActivityLogs
+                ->where(
+                    'action',
+                    'deleted'
+                )
+                ->count();
+
+
+            $bahanDelta =
+                $bahanTambah -
+                $bahanHapus;
+        }
+
+
+        return view(
+            'master.data_bahan',
+            compact(
+                'bahans',
+                'totalBahan',
+                'totalBahanModern',
+                'totalBahanLegacy',
+                'bahanTerbaru',
+                'bahanActivityLogs',
+                'bahanTambah',
+                'bahanHapus',
+                'bahanDelta',
+                'hasCreatedAt',
+                'hasUpdatedAt',
+                'updateTerakhirLabel',
+                'updateTerakhirDetail'
+            )
+        );
+    }
+
+
+
+    // ============================================================
+    // STORE BAHAN
+    // ============================================================
+
+    public function storeBahan(
+        Request $request
+    ) {
+
+        $validated =
+            $request->validate(
+                [
+                    'nama' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+                ],
+                [
+                    'nama.required' =>
+                    'Nama Bahan wajib diisi.',
+
+                    'nama.max' =>
+                    'Nama Bahan maksimal 255 karakter.',
+                ]
+            );
+
+
+        $data = [
+
+            'nama' =>
+            trim(
+                $validated['nama']
+            ),
+
+        ];
+
+
+        if (
+            Schema::hasColumn(
+                'bahans',
+                'created_at'
+            )
+        ) {
+
+            $data['created_at'] =
+                now();
+        }
+
+
+        if (
+            Schema::hasColumn(
+                'bahans',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+        $id =
+            DB::transaction(
+                function () use (
+                    $data
+                ) {
+
+                    $id =
+                        DB::table(
+                            'bahans'
+                        )
+                        ->insertGetId(
+                            $data
+                        );
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | ACTIVITY LOG
+                |--------------------------------------------------------------------------
+                */
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+
+                        DB::table(
+                            'master_data_activity_logs'
+                        )
+                            ->insert(
+                                [
+                                    'module' =>
+                                    'bahan',
+
+                                    'record_id' =>
+                                    $id,
+
+                                    'record_name' =>
+                                    $data['nama'],
+
+                                    'record_code' =>
+                                    '-',
+
+                                    'action' =>
+                                    'created',
+
+                                    'record_created_at' =>
+                                    $data['created_at']
+                                        ??
+                                        now(),
+
+                                    'created_at' =>
+                                    now(),
+
+                                    'updated_at' =>
+                                    now(),
+                                ]
+                            );
+                    }
+
+
+                    return $id;
+                }
+            );
+
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()->json(
+                [
+                    'success' =>
+                    true,
+
+                    'message' =>
+                    'Bahan berhasil ditambahkan.',
+
+                    'id' =>
+                    $id,
+                ],
+                201
+            );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_bahan'
+            )
+            ->with(
+                'success',
+                'Bahan berhasil ditambahkan.'
+            );
+    }
+
+
+
+    // ============================================================
+    // UPDATE BAHAN
+    // ============================================================
+
+    public function updateBahan(
+        Request $request,
+        int $id
+    ) {
+
+        $bahan =
+            DB::table('bahans')
+            ->where(
+                'id',
+                $id
+            )
+            ->first();
+
+
+        if (!$bahan) {
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()->json(
+                    [
+                        'success' =>
+                        false,
+
+                        'message' =>
+                        'Data Bahan tidak ditemukan.',
+                    ],
+                    404
+                );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_bahan'
+                )
+                ->with(
+                    'error',
+                    'Data Bahan tidak ditemukan.'
+                );
+        }
+
+
+        $validated =
+            $request->validate(
+                [
+                    'nama' => [
+                        'required',
+                        'string',
+                        'max:255',
+                    ],
+                ],
+                [
+                    'nama.required' =>
+                    'Nama Bahan wajib diisi.',
+                ]
+            );
+
+
+        $data = [
+
+            'nama' =>
+            trim(
+                $validated['nama']
+            ),
+
+        ];
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | JANGAN UBAH CREATED_AT SAAT EDIT
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            Schema::hasColumn(
+                'bahans',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+        DB::table('bahans')
+            ->where(
+                'id',
+                $id
+            )
+            ->update(
+                $data
+            );
+
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()->json(
+                [
+                    'success' =>
+                    true,
+
+                    'message' =>
+                    'Bahan berhasil diperbarui.',
+
+                    'id' =>
+                    $id,
+                ]
+            );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_bahan'
+            )
+            ->with(
+                'success',
+                'Bahan berhasil diperbarui.'
+            );
+    }
+
+
+
+    // ============================================================
+    // DELETE BAHAN
+    // ============================================================
+
+    public function deleteBahan(
+        Request $request,
+        int $id
+    ) {
+
+        $bahan =
+            DB::table('bahans')
+            ->where(
+                'id',
+                $id
+            )
+            ->first();
+
+
+        if (!$bahan) {
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()->json(
+                    [
+                        'success' =>
+                        false,
+
+                        'message' =>
+                        'Data Bahan tidak ditemukan.',
+                    ],
+                    404
+                );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_bahan'
+                )
+                ->with(
+                    'error',
+                    'Data Bahan tidak ditemukan.'
+                );
+        }
+
+
+        $recordName =
+            trim(
+                (string) $bahan->nama
+            );
+
+
+        $recordCreatedAt =
+            $bahan->created_at
+            ??
+            null;
+
+
+        try {
+
+            DB::transaction(
+                function () use (
+                    $id,
+                    $recordName,
+                    $recordCreatedAt
+                ) {
+
+                    /*
+                |--------------------------------------------------------------------------
+                | SIMPAN HISTORY SEBELUM DELETE
+                |--------------------------------------------------------------------------
+                */
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+
+                        DB::table(
+                            'master_data_activity_logs'
+                        )
+                            ->insert(
+                                [
+                                    'module' =>
+                                    'bahan',
+
+                                    'record_id' =>
+                                    $id,
+
+                                    'record_name' =>
+                                    $recordName,
+
+                                    'record_code' =>
+                                    '-',
+
+                                    'action' =>
+                                    'deleted',
+
+                                    'record_created_at' =>
+                                    $recordCreatedAt,
+
+                                    'created_at' =>
+                                    now(),
+
+                                    'updated_at' =>
+                                    now(),
+                                ]
+                            );
+                    }
+
+
+                    DB::table('bahans')
+                        ->where(
+                            'id',
+                            $id
+                        )
+                        ->delete();
+                }
+            );
+        } catch (\Throwable $error) {
+
+            report($error);
+
+
+            $message =
+                'Bahan tidak dapat dihapus karena masih digunakan oleh data lain.';
+
+
+            if (
+                $request->expectsJson()
+                ||
+                $request->ajax()
+            ) {
+
+                return response()->json(
+                    [
+                        'success' =>
+                        false,
+
+                        'message' =>
+                        $message,
+                    ],
+                    409
+                );
+            }
+
+
+            return redirect()
+                ->route(
+                    'master.data_bahan'
+                )
+                ->with(
+                    'error',
+                    $message
+                );
+        }
+
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+
+            return response()->json(
+                [
+                    'success' =>
+                    true,
+
+                    'message' =>
+                    'Bahan berhasil dihapus.',
+
+                    'id' =>
+                    $id,
+                ]
+            );
+        }
+
+
+        return redirect()
+            ->route(
+                'master.data_bahan'
+            )
+            ->with(
+                'success',
+                'Bahan berhasil dihapus.'
+            );
+    }
+    // ============================================================
+    // DATA LOKASI
+    // ============================================================
+
+    public function dataLokasi()
+    {
+        if (!Schema::hasTable('lokasis')) {
+            abort(500, 'Tabel lokasis tidak ditemukan pada database.');
+        }
+
+        $hasCreatedAt = Schema::hasColumn('lokasis', 'created_at');
+        $hasUpdatedAt = Schema::hasColumn('lokasis', 'updated_at');
+
+        /*
+    |--------------------------------------------------------------------------
+    | WILAYAH
+    |--------------------------------------------------------------------------
+    | Web lama memakai:
+    | lokasis.wilayah -> aset_wilayah.id
+    */
+
+        $wilayahs = collect();
+
+        if (Schema::hasTable('aset_wilayah')) {
+            $wilayahs = DB::table('aset_wilayah')
+                ->select('id', 'wilayah')
+                ->orderBy('wilayah')
+                ->get();
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | DATA LOKASI
+    |--------------------------------------------------------------------------
+    */
+
+        $query = DB::table('lokasis')
+            ->leftJoin(
+                'aset_wilayah',
+                'lokasis.wilayah',
+                '=',
+                'aset_wilayah.id'
+            )
+            ->select(
+                'lokasis.id',
+                'lokasis.lokasi',
+                'lokasis.alamat',
+                'lokasis.lat',
+                'lokasis.long',
+                'lokasis.img',
+                'lokasis.cat',
+                'lokasis.wilayah as wilayah_id',
+                'aset_wilayah.wilayah as nama_wilayah'
+            );
+
+        if ($hasCreatedAt) {
+            $query->addSelect('lokasis.created_at');
+        }
+
+        if ($hasUpdatedAt) {
+            $query->addSelect('lokasis.updated_at');
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | DATA BARU PALING ATAS
+    |--------------------------------------------------------------------------
+    */
+
+        if ($hasCreatedAt) {
+            $query
+                ->orderByRaw("
+                CASE
+                    WHEN lokasis.created_at IS NULL THEN 1
+                    ELSE 0
+                END ASC
+            ")
+                ->orderByDesc('lokasis.created_at')
+                ->orderByDesc('lokasis.id');
+        } else {
+            $query->orderByDesc('lokasis.id');
+        }
+
+        $lokasis = $query->get();
+
+        /*
+    |--------------------------------------------------------------------------
+    | TOTAL
+    |--------------------------------------------------------------------------
+    */
+
+        $totalLokasi = $lokasis->count();
+
+        $totalWilayah = $lokasis
+            ->pluck('wilayah_id')
+            ->filter()
+            ->unique()
+            ->count();
+
+        $lokasiDenganKoordinat = $lokasis
+            ->filter(function ($item) {
+                $lat = trim((string) ($item->lat ?? ''));
+                $long = trim((string) ($item->long ?? ''));
+
+                return $lat !== ''
+                    && $long !== ''
+                    && !($lat === '0' && $long === '0')
+                    && !($lat === '-0' && $long === '0');
+            })
+            ->count();
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE TERAKHIR
+    |--------------------------------------------------------------------------
+    */
+
+        $updateTerakhirLabel = 'Belum ada data';
+        $updateTerakhirDetail = 'Belum ada perubahan';
+
+        $latestTimestamp = null;
+
+        if ($hasUpdatedAt) {
+            $latestTimestamp = DB::table('lokasis')
+                ->whereNotNull('updated_at')
+                ->orderByDesc('updated_at')
+                ->value('updated_at');
+        }
+
+        if (!$latestTimestamp && $hasCreatedAt) {
+            $latestTimestamp = DB::table('lokasis')
+                ->whereNotNull('created_at')
+                ->orderByDesc('created_at')
+                ->value('created_at');
+        }
+
+        if ($latestTimestamp) {
+            $latest = Carbon::parse($latestTimestamp)
+                ->locale('id');
+
+            if ($latest->isToday()) {
+                $updateTerakhirLabel = 'Hari Ini';
+            } elseif ($latest->isYesterday()) {
+                $updateTerakhirLabel = 'Kemarin';
+            } else {
+                $updateTerakhirLabel = $latest->diffForHumans();
+            }
+
+            $updateTerakhirDetail =
+                $latest->translatedFormat('d M Y, H:i') . ' WITA';
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | LOKASI TERBARU
+    |--------------------------------------------------------------------------
+    */
+
+        $lokasiTerbaru = $lokasis
+            ->take(5)
+            ->values();
+
+        /*
+    |--------------------------------------------------------------------------
+    | ACTIVITY LOG
+    |--------------------------------------------------------------------------
+    */
+
+        $lokasiActivityLogs = collect();
+        $lokasiTambah = 0;
+        $lokasiHapus = 0;
+        $lokasiDelta = 0;
+
+        if (Schema::hasTable('master_data_activity_logs')) {
+            $lokasiActivityLogs =
+                DB::table('master_data_activity_logs')
+                ->where('module', 'lokasi')
+                ->whereIn(
+                    'action',
+                    ['created', 'deleted']
+                )
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->get();
+
+            $lokasiTambah =
+                $lokasiActivityLogs
+                ->where('action', 'created')
+                ->count();
+
+            $lokasiHapus =
+                $lokasiActivityLogs
+                ->where('action', 'deleted')
+                ->count();
+
+            $lokasiDelta =
+                $lokasiTambah - $lokasiHapus;
+        }
+
+        return view(
+            'master.data_lokasi',
+            compact(
+                'lokasis',
+                'wilayahs',
+                'totalLokasi',
+                'totalWilayah',
+                'lokasiDenganKoordinat',
+                'lokasiTerbaru',
+                'lokasiActivityLogs',
+                'lokasiTambah',
+                'lokasiHapus',
+                'lokasiDelta',
+                'updateTerakhirLabel',
+                'updateTerakhirDetail',
+                'hasCreatedAt',
+                'hasUpdatedAt'
+            )
+        );
+    }
+
+
+
+    // ============================================================
+    // STORE LOKASI
+    // ============================================================
+
+    public function storeLokasi(Request $request)
+    {
+        $validated = $request->validate([
+            'lokasi' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'alamat' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'wilayah' => [
+                'nullable',
+                'integer',
+            ],
+
+            'lat' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'long' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'img' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
+        ], [
+            'lokasi.required' =>
+            'Nama Lokasi wajib diisi.',
+
+            'img.image' =>
+            'File gambar tidak valid.',
+
+            'img.max' =>
+            'Ukuran gambar maksimal 4 MB.',
+        ]);
+
+        if (
+            !empty($validated['wilayah'])
+            &&
+            Schema::hasTable('aset_wilayah')
+            &&
+            !DB::table('aset_wilayah')
+                ->where('id', $validated['wilayah'])
+                ->exists()
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wilayah yang dipilih tidak ditemukan.',
+            ], 422);
+        }
+
+        $imageName = null;
+
+        /*
+    |--------------------------------------------------------------------------
+    | IMAGE
+    |--------------------------------------------------------------------------
+    */
+
+        if ($request->hasFile('img')) {
+            $directory =
+                public_path('uploads/lokasi');
+
+            if (!File::isDirectory($directory)) {
+                File::makeDirectory(
+                    $directory,
+                    0755,
+                    true
+                );
+            }
+
+            $file =
+                $request->file('img');
+
+            $imageName =
+                now()->format('YmdHis')
+                . '_'
+                . bin2hex(random_bytes(5))
+                . '.'
+                . $file->getClientOriginalExtension();
+
+            $file->move(
+                $directory,
+                $imageName
+            );
+        }
+
+        $data = [
+            'lokasi' =>
+            trim($validated['lokasi']),
+
+            'alamat' =>
+            isset($validated['alamat'])
+                ? trim($validated['alamat'])
+                : null,
+
+            'wilayah' =>
+            $validated['wilayah']
+                ?? null,
+
+            'lat' =>
+            isset($validated['lat'])
+                ? trim($validated['lat'])
+                : null,
+
+            'long' =>
+            isset($validated['long'])
+                ? trim($validated['long'])
+                : null,
+
+            'img' =>
+            $imageName,
+        ];
+
+        /*
+    |--------------------------------------------------------------------------
+    | CAT
+    |--------------------------------------------------------------------------
+    | Tidak kita sentuh karena fungsi bisnisnya belum digunakan halaman lama.
+    */
+
+        if (Schema::hasColumn('lokasis', 'created_at')) {
+            $data['created_at'] = now();
+        }
+
+        if (Schema::hasColumn('lokasis', 'updated_at')) {
+            $data['updated_at'] = now();
+        }
+
+        try {
+            $id = DB::transaction(
+                function () use ($data) {
+
+                    $id =
+                        DB::table('lokasis')
+                        ->insertGetId($data);
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+                        DB::table(
+                            'master_data_activity_logs'
+                        )->insert([
+                            'module' =>
+                            'lokasi',
+
+                            'record_id' =>
+                            $id,
+
+                            'record_name' =>
+                            $data['lokasi'],
+
+                            'record_code' =>
+                            '-',
+
+                            'action' =>
+                            'created',
+
+                            'record_created_at' =>
+                            $data['created_at']
+                                ?? now(),
+
+                            'created_at' =>
+                            now(),
+
+                            'updated_at' =>
+                            now(),
+                        ]);
+                    }
+
+                    return $id;
+                }
+            );
+        } catch (\Throwable $error) {
+
+            if (
+                $imageName
+                &&
+                File::exists(
+                    public_path(
+                        'uploads/lokasi/'
+                            . $imageName
+                    )
+                )
+            ) {
+                File::delete(
+                    public_path(
+                        'uploads/lokasi/'
+                            . $imageName
+                    )
+                );
+            }
+
+            throw $error;
+        }
+
+        if (
+            $request->expectsJson()
+            ||
+            $request->ajax()
+        ) {
+            return response()->json([
+                'success' => true,
+                'message' =>
+                'Lokasi berhasil ditambahkan.',
+                'id' => $id,
+            ], 201);
+        }
+
+        return redirect()
+            ->route('master.data_lokasi')
+            ->with(
+                'success',
+                'Lokasi berhasil ditambahkan.'
+            );
+    }
+
+
+
+    // ============================================================
+    // UPDATE LOKASI
+    // ============================================================
+
+    public function updateLokasi(
+        Request $request,
+        int $id
+    ) {
+        $lokasi =
+            DB::table('lokasis')
+            ->where('id', $id)
+            ->first();
+
+        if (!$lokasi) {
+            return response()->json([
+                'success' => false,
+                'message' =>
+                'Data Lokasi tidak ditemukan.',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'lokasi' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'alamat' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'wilayah' => [
+                'nullable',
+                'integer',
+            ],
+
+            'lat' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'long' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'img' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:4096',
+            ],
+        ]);
+
+        if (
+            !empty($validated['wilayah'])
+            &&
+            Schema::hasTable('aset_wilayah')
+            &&
+            !DB::table('aset_wilayah')
+                ->where('id', $validated['wilayah'])
+                ->exists()
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' =>
+                'Wilayah yang dipilih tidak ditemukan.',
+            ], 422);
+        }
+
+        $data = [
+            'lokasi' =>
+            trim($validated['lokasi']),
+
+            'alamat' =>
+            isset($validated['alamat'])
+                ? trim($validated['alamat'])
+                : null,
+
+            'wilayah' =>
+            $validated['wilayah']
+                ?? null,
+
+            'lat' =>
+            isset($validated['lat'])
+                ? trim($validated['lat'])
+                : null,
+
+            'long' =>
+            isset($validated['long'])
+                ? trim($validated['long'])
+                : null,
+        ];
+
+        $newImageName = null;
+
+        if ($request->hasFile('img')) {
+
+            $directory =
+                public_path(
+                    'uploads/lokasi'
+                );
+
+            if (!File::isDirectory($directory)) {
+                File::makeDirectory(
+                    $directory,
+                    0755,
+                    true
+                );
+            }
+
+            $file =
+                $request->file('img');
+
+            $newImageName =
+                now()->format('YmdHis')
+                . '_'
+                . bin2hex(random_bytes(5))
+                . '.'
+                . $file->getClientOriginalExtension();
+
+            $file->move(
+                $directory,
+                $newImageName
+            );
+
+            $data['img'] =
+                $newImageName;
+        }
+
+        if (Schema::hasColumn('lokasis', 'updated_at')) {
+            $data['updated_at'] = now();
+        }
+
+        try {
+
+            DB::table('lokasis')
+                ->where('id', $id)
+                ->update($data);
+        } catch (\Throwable $error) {
+
+            if (
+                $newImageName
+                &&
+                File::exists(
+                    public_path(
+                        'uploads/lokasi/'
+                            . $newImageName
+                    )
+                )
+            ) {
+                File::delete(
+                    public_path(
+                        'uploads/lokasi/'
+                            . $newImageName
+                    )
+                );
+            }
+
+            throw $error;
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | DELETE IMAGE BARU-LAMA
+    |--------------------------------------------------------------------------
+    | Hanya hapus file yang memang dikelola aplikasi modern.
+    | Jangan menghapus file legacy secara sembarangan.
+    */
+
+        if (
+            $newImageName
+            &&
+            !empty($lokasi->img)
+        ) {
+            $oldModernImage =
+                public_path(
+                    'uploads/lokasi/'
+                        . basename($lokasi->img)
+                );
+
+            if (File::exists($oldModernImage)) {
+                File::delete($oldModernImage);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Lokasi berhasil diperbarui.',
+            'id' => $id,
+        ]);
+    }
+
+
+
+    // ============================================================
+    // DELETE LOKASI
+    // ============================================================
+
+    public function deleteLokasi(
+        Request $request,
+        int $id
+    ) {
+        $lokasi =
+            DB::table('lokasis')
+            ->where('id', $id)
+            ->first();
+
+        if (!$lokasi) {
+            return response()->json([
+                'success' => false,
+                'message' =>
+                'Data Lokasi tidak ditemukan.',
+            ], 404);
+        }
+
+        try {
+
+            DB::transaction(
+                function () use ($lokasi, $id) {
+
+                    if (
+                        Schema::hasTable(
+                            'master_data_activity_logs'
+                        )
+                    ) {
+                        DB::table(
+                            'master_data_activity_logs'
+                        )->insert([
+                            'module' =>
+                            'lokasi',
+
+                            'record_id' =>
+                            $id,
+
+                            'record_name' =>
+                            $lokasi->lokasi,
+
+                            'record_code' =>
+                            '-',
+
+                            'action' =>
+                            'deleted',
+
+                            'record_created_at' =>
+                            $lokasi->created_at
+                                ?? null,
+
+                            'created_at' =>
+                            now(),
+
+                            'updated_at' =>
+                            now(),
+                        ]);
+                    }
+
+                    DB::table('lokasis')
+                        ->where('id', $id)
+                        ->delete();
+                }
+            );
+        } catch (\Throwable $error) {
+
+            report($error);
+
+            return response()->json([
+                'success' => false,
+                'message' =>
+                'Lokasi tidak dapat dihapus karena kemungkinan masih digunakan oleh data aset lain.',
+            ], 409);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | DELETE IMAGE MODERN
+    |--------------------------------------------------------------------------
+    */
+
+        if (!empty($lokasi->img)) {
+
+            $image =
+                public_path(
+                    'uploads/lokasi/'
+                        . basename($lokasi->img)
+                );
+
+            if (File::exists($image)) {
+                File::delete($image);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Lokasi berhasil dihapus.',
+            'id' => $id,
+        ]);
+    }
+
+    // =========================================================
+    // KODE AKTIVA
+    // =========================================================
+
+    public function dataAktiva()
+    {
+        if (!Schema::hasTable('aktivas')) {
+            throw new \RuntimeException(
+                'Tabel aktivas tidak ditemukan pada database.'
+            );
+        }
+
+
+        $hasCreatedAt =
+            Schema::hasColumn(
+                'aktivas',
+                'created_at'
+            );
+
+
+        $hasUpdatedAt =
+            Schema::hasColumn(
+                'aktivas',
+                'updated_at'
+            );
+
+
+        // =====================================================
+        // DATA UTAMA
+        // =====================================================
+
+        $aktivaQuery =
+            DB::table('aktivas')
+            ->select(
+                'id',
+                'kode',
+                'aktiva',
+                'gol',
+                'kib'
+            );
+
+
+        if ($hasCreatedAt) {
+            $aktivaQuery->addSelect(
+                'created_at'
+            );
+        }
+
+
+        if ($hasUpdatedAt) {
+            $aktivaQuery->addSelect(
+                'updated_at'
+            );
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | DATA TERBARU DI ATAS
+    |--------------------------------------------------------------------------
+    |
+    | Data legacy banyak created_at = NULL.
+    | Maka:
+    |
+    | 1. created_at yang tidak NULL ditampilkan dulu
+    | 2. tanggal terbaru di atas
+    | 3. ID terbesar sebagai fallback
+    |
+    */
+
+        if ($hasCreatedAt) {
+
+            $aktivaQuery
+
+                ->orderByRaw(
+                    '
+                CASE
+                    WHEN created_at IS NULL
+                    THEN 1
+                    ELSE 0
+                END ASC
+                '
+                )
+
+                ->orderByDesc(
+                    'created_at'
+                )
+
+                ->orderByDesc(
+                    'id'
+                );
+        } else {
+
+            $aktivaQuery
+                ->orderByDesc('id');
+        }
+
+
+        $aktivas =
+            $aktivaQuery->get();
+
+
+
+        // =====================================================
+        // KPI
+        // =====================================================
+
+        $totalAktiva =
+            DB::table('aktivas')
+            ->count();
+
+
+        $totalGolongan =
+            DB::table('aktivas')
+
+            ->whereNotNull('gol')
+
+            ->where(
+                'gol',
+                '<>',
+                ''
+            )
+
+            ->distinct()
+
+            ->count('gol');
+
+
+        $totalKib =
+            DB::table('aktivas')
+
+            ->whereNotNull('kib')
+
+            ->where(
+                'kib',
+                '<>',
+                ''
+            )
+
+            ->distinct()
+
+            ->count('kib');
+
+
+
+        // =====================================================
+        // FILTER OPTIONS
+        // =====================================================
+
+        $golonganAktiva =
+            DB::table('aktivas')
+
+            ->whereNotNull('gol')
+
+            ->where(
+                'gol',
+                '<>',
+                ''
+            )
+
+            ->select('gol')
+
+            ->distinct()
+
+            ->orderBy('gol')
+
+            ->pluck('gol');
+
+
+        $kibAktiva =
+            DB::table('aktivas')
+
+            ->whereNotNull('kib')
+
+            ->where(
+                'kib',
+                '<>',
+                ''
+            )
+
+            ->select('kib')
+
+            ->distinct()
+
+            ->orderBy('kib')
+
+            ->pluck('kib');
+
+
+
+        // =====================================================
+        // UPDATE TERAKHIR
+        // =====================================================
+
+        $updateTerakhirLabel =
+            'Belum ada data';
+
+
+        $updateTerakhirDetail =
+            'Belum ada perubahan';
+
+
+        $latestQuery =
+            DB::table('aktivas');
+
+
+        if (
+            $hasCreatedAt
+            &&
+            $hasUpdatedAt
+        ) {
+
+            $latestData =
+                $latestQuery
+
+                ->where(
+                    function ($query) {
+
+                        $query
+                            ->whereNotNull(
+                                'created_at'
+                            )
+
+                            ->orWhereNotNull(
+                                'updated_at'
+                            );
+                    }
+                )
+
+                ->orderByRaw(
+                    '
+                    COALESCE(
+                        updated_at,
+                        created_at
+                    )
+                    DESC NULLS LAST
+                    '
+                )
+
+                ->orderByDesc('id')
+
+                ->first();
+
+
+            if ($latestData) {
+
+                $latestDate =
+                    $latestData->updated_at
+                    ??
+                    $latestData->created_at;
+
+
+                if ($latestDate) {
+
+                    $carbon =
+                        \Carbon\Carbon::parse(
+                            $latestDate
+                        );
+
+
+                    $updateTerakhirLabel =
+                        $carbon
+                        ->locale('id')
+                        ->diffForHumans();
+
+
+                    $updateTerakhirDetail =
+                        $carbon
+                        ->locale('id')
+                        ->translatedFormat(
+                            'd M Y, H:i'
+                        );
+                }
+            }
+        }
+
+
+
+        // =====================================================
+        // ACTIVITY LOG
+        // =====================================================
+
+        $aktivaActivityLogs =
+            collect();
+
+
+        $aktivaTambah = 0;
+
+        $aktivaHapus = 0;
+
+        $aktivaDelta = 0;
+
+
+        if (
+            Schema::hasTable(
+                'master_data_activity_logs'
+            )
+        ) {
+
+            $aktivaActivityLogs =
+                DB::table(
+                    'master_data_activity_logs'
+                )
+
+                ->where(
+                    'module',
+                    'kode_aktiva'
+                )
+
+                ->whereIn(
+                    'action',
+                    [
+                        'created',
+                        'deleted'
+                    ]
+                )
+
+                ->orderByDesc(
+                    'created_at'
+                )
+
+                ->orderByDesc(
+                    'id'
+                )
+
+                ->get();
+
+
+            $aktivaTambah =
+                $aktivaActivityLogs
+
+                ->where(
+                    'action',
+                    'created'
+                )
+
+                ->count();
+
+
+            $aktivaHapus =
+                $aktivaActivityLogs
+
+                ->where(
+                    'action',
+                    'deleted'
+                )
+
+                ->count();
+
+
+            $aktivaDelta =
+                $aktivaTambah
+                -
+                $aktivaHapus;
+        }
+
+
+
+        return view(
+            'master.data_aktiva',
+
+            compact(
+
+                'aktivas',
+
+                'totalAktiva',
+
+                'totalGolongan',
+
+                'totalKib',
+
+                'golonganAktiva',
+
+                'kibAktiva',
+
+                'updateTerakhirLabel',
+
+                'updateTerakhirDetail',
+
+                'aktivaActivityLogs',
+
+                'aktivaTambah',
+
+                'aktivaHapus',
+
+                'aktivaDelta',
+
+                'hasCreatedAt',
+
+                'hasUpdatedAt'
+
+            )
+        );
+    }
+
+
+
+    // =========================================================
+    // STORE KODE AKTIVA
+    // =========================================================
+
+    public function storeAktiva(
+        Request $request
+    ) {
+        $validated =
+            $request->validate([
+
+                'kode' => [
+
+                    'required',
+
+                    'string',
+
+                    'max:255',
+
+                    Rule::unique(
+                        'aktivas',
+                        'kode'
+                    )
+
+                ],
+
+
+                'aktiva' => [
+
+                    'required',
+
+                    'string',
+
+                    'max:255'
+
+                ],
+
+
+                'gol' => [
+
+                    'nullable',
+
+                    'string',
+
+                    'max:255'
+
+                ],
+
+
+                'kib' => [
+
+                    'nullable',
+
+                    'string',
+
+                    'max:255'
+
+                ],
+
+            ]);
+
+
+
+        $data = [
+
+            'kode' =>
+            trim(
+                $validated['kode']
+            ),
+
+            'aktiva' =>
+            trim(
+                $validated['aktiva']
+            ),
+
+            'gol' =>
+            isset(
+                $validated['gol']
+            )
+
+                ? trim(
+                    $validated['gol']
+                )
+
+                : null,
+
+            'kib' =>
+            isset(
+                $validated['kib']
+            )
+
+                ? trim(
+                    $validated['kib']
+                )
+
+                : null,
+
+        ];
+
+
+
+        if (
+            Schema::hasColumn(
+                'aktivas',
+                'created_at'
+            )
+        ) {
+
+            $data['created_at'] =
+                now();
+        }
+
+
+        if (
+            Schema::hasColumn(
+                'aktivas',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+
+        $id =
+            DB::table('aktivas')
+            ->insertGetId(
+                $data
+            );
+
+
+
+        $this->logAktivaActivity(
+
+            'created',
+
+            $id,
+
+            $data['aktiva']
+
+        );
+
+
+
+        if ($request->expectsJson()) {
+
+            return response()->json([
+
+                'success' =>
+                true,
+
+                'message' =>
+                'Kode Aktiva berhasil ditambahkan.',
+
+                'id' =>
+                $id
+
+            ]);
+        }
+
+
+        return redirect()
+
+            ->route(
+                'master.data_aktiva'
+            )
+
+            ->with(
+                'success',
+                'Kode Aktiva berhasil ditambahkan.'
+            );
+    }
+
+
+
+    // =========================================================
+    // UPDATE KODE AKTIVA
+    // =========================================================
+
+    public function updateAktiva(
+        Request $request,
+        int $id
+    ) {
+        $aktiva =
+            DB::table('aktivas')
+            ->where(
+                'id',
+                $id
+            )
+            ->first();
+
+
+        if (!$aktiva) {
+
+            if ($request->expectsJson()) {
+
+                return response()->json([
+
+                    'success' =>
+                    false,
+
+                    'message' =>
+                    'Data Kode Aktiva tidak ditemukan.'
+
+                ], 404);
+            }
+
+
+            abort(404);
+        }
+
+
+
+        $validated =
+            $request->validate([
+
+                'kode' => [
+
+                    'required',
+
+                    'string',
+
+                    'max:255',
+
+                    Rule::unique(
+                        'aktivas',
+                        'kode'
+                    )
+                        ->ignore(
+                            $id
+                        )
+
+                ],
+
+
+                'aktiva' => [
+
+                    'required',
+
+                    'string',
+
+                    'max:255'
+
+                ],
+
+
+                'gol' => [
+
+                    'nullable',
+
+                    'string',
+
+                    'max:255'
+
+                ],
+
+
+                'kib' => [
+
+                    'nullable',
+
+                    'string',
+
+                    'max:255'
+
+                ],
+
+            ]);
+
+
+
+        $data = [
+
+            'kode' =>
+            trim(
+                $validated['kode']
+            ),
+
+            'aktiva' =>
+            trim(
+                $validated['aktiva']
+            ),
+
+            'gol' =>
+            isset(
+                $validated['gol']
+            )
+
+                ? trim(
+                    $validated['gol']
+                )
+
+                : null,
+
+            'kib' =>
+            isset(
+                $validated['kib']
+            )
+
+                ? trim(
+                    $validated['kib']
+                )
+
+                : null,
+
+        ];
+
+
+
+        if (
+            Schema::hasColumn(
+                'aktivas',
+                'updated_at'
+            )
+        ) {
+
+            $data['updated_at'] =
+                now();
+        }
+
+
+
+        DB::table('aktivas')
+
+            ->where(
+                'id',
+                $id
+            )
+
+            ->update(
+                $data
+            );
+
+
+
+        if ($request->expectsJson()) {
+
+            return response()->json([
+
+                'success' =>
+                true,
+
+                'message' =>
+                'Kode Aktiva berhasil diperbarui.',
+
+                'id' =>
+                $id
+
+            ]);
+        }
+
+
+        return redirect()
+
+            ->route(
+                'master.data_aktiva'
+            )
+
+            ->with(
+                'success',
+                'Kode Aktiva berhasil diperbarui.'
+            );
+    }
+
+
+
+    // =========================================================
+    // DELETE KODE AKTIVA
+    // =========================================================
+
+    public function deleteAktiva(
+        Request $request,
+        int $id
+    ) {
+        $aktiva =
+            DB::table('aktivas')
+
+            ->where(
+                'id',
+                $id
+            )
+
+            ->first();
+
+
+        if (!$aktiva) {
+
+            if ($request->expectsJson()) {
+
+                return response()->json([
+
+                    'success' =>
+                    false,
+
+                    'message' =>
+                    'Data Kode Aktiva tidak ditemukan.'
+
+                ], 404);
+            }
+
+
+            abort(404);
+        }
+
+
+
+        try {
+
+
+            DB::table('aktivas')
+
+                ->where(
+                    'id',
+                    $id
+                )
+
+                ->delete();
+
+
+
+            $this->logAktivaActivity(
+
+                'deleted',
+
+                $id,
+
+                $aktiva->aktiva
+                    ?? '-'
+
+            );
+        } catch (
+            \Illuminate\Database\QueryException
+            $exception
+        ) {
+
+
+            if ($request->expectsJson()) {
+
+                return response()->json([
+
+                    'success' =>
+                    false,
+
+                    'message' =>
+                    'Kode Aktiva tidak dapat dihapus karena masih digunakan oleh data lain.'
+
+                ], 409);
+            }
+
+
+            throw $exception;
+        }
+
+
+
+        if ($request->expectsJson()) {
+
+            return response()->json([
+
+                'success' =>
+                true,
+
+                'message' =>
+                'Kode Aktiva berhasil dihapus.',
+
+                'id' =>
+                $id
+
+            ]);
+        }
+
+
+        return redirect()
+
+            ->route(
+                'master.data_aktiva'
+            )
+
+            ->with(
+                'success',
+                'Kode Aktiva berhasil dihapus.'
+            );
+    }
+
+
+
+    // =========================================================
+    // ACTIVITY LOGGER KODE AKTIVA
+    // =========================================================
+
+    private function logAktivaActivity(
+        string $action,
+        int $recordId,
+        string $recordName
+    ): void {
+        if (
+            !Schema::hasTable(
+                'master_data_activity_logs'
+            )
+        ) {
+
+            return;
+        }
+
+
+        $columns =
+            Schema::getColumnListing(
+                'master_data_activity_logs'
+            );
+
+
+        $payload = [
+
+            'module' =>
+            'kode_aktiva',
+
+            'action' =>
+            $action,
+
+            'record_id' =>
+            $recordId,
+
+            'record_name' =>
+            $recordName,
+
+            'created_at' =>
+            now(),
+
+            'updated_at' =>
+            now(),
+
+        ];
+
+
+        $payload =
+            array_intersect_key(
+
+                $payload,
+
+                array_flip(
+                    $columns
+                )
+
+            );
+
+
+        if (!empty($payload)) {
+
+            DB::table(
+                'master_data_activity_logs'
+            )
+                ->insert(
+                    $payload
+                );
+        }
+    }
 }

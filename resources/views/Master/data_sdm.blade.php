@@ -2,14 +2,17 @@
 
 @section('title', 'SDM Pendukung')
 
+
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/pages/sdm.css') }}">
 @endpush
 
+
+
 @section('content')
 
-    {{-- UI contoh: angka KPI, chart, dan tabel belum mengambil data PostgreSQL. --}}
     <section class="content sdm-page">
+
 
         {{-- ============================================================
          HERO
@@ -18,634 +21,1257 @@
 
             <div class="sdm-hero-overlay"></div>
 
-            <div class="sdm-hero-top">
 
-                <div>
+            <div class="sdm-hero-content">
 
-                    <nav class="sdm-breadcrumb" aria-label="Breadcrumb">
 
-                        <a href="{{ route('dashboard') }}" aria-label="Home">
-                            <i data-lucide="house"></i>
-                        </a>
+                <div class="sdm-hero-top">
 
-                        <i data-lucide="chevron-right"></i>
 
-                        <span>Master Data</span>
+                    <div>
 
-                        <i data-lucide="chevron-right"></i>
 
-                        <strong aria-current="page">SDM Pendukung</strong>
+                        <nav class="sdm-breadcrumb">
 
-                    </nav>
+                            <a href="{{ route('dashboard') }}" aria-label="Dashboard">
+                                <i data-lucide="house"></i>
+                            </a>
 
-                    <div class="sdm-heading">
 
-                        <h1>SDM Pendukung</h1>
+                            <i data-lucide="chevron-right"></i>
 
-                        <p>
-                            Kelola data SDM pendukung yang terlibat dalam pengelolaan aset di Perumdam Tirta Kencana Kota
-                            Samarinda.
+
+                            <span>
+                                Master Data
+                            </span>
+
+
+                            <i data-lucide="chevron-right"></i>
+
+
+                            <strong>
+                                SDM Pendukung
+                            </strong>
+
+                        </nav>
+
+
+
+                        <div class="sdm-heading">
+
+                            <h1>
+                                SDM Pendukung
+                            </h1>
+
+
+                            <p>
+                                Kelola data SDM pendukung yang terlibat
+                                dalam pengelolaan aset Perumda Tirta Kencana
+                                Kota Samarinda.
+                            </p>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="sdm-date-card">
+
+
+                        <div class="sdm-date-icon">
+
+                            <i data-lucide="calendar-days"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong id="sdmCurrentDate">
+                                -
+                            </strong>
+
+                            <span id="sdmCurrentTime">
+                                -
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                {{-- KPI --}}
+                <div class="sdm-kpi-grid">
+
+
+                    {{-- TOTAL SDM --}}
+                    <div class="sdm-kpi-card sdm-kpi-clickable" id="sdmTotalActivityCard" role="button" tabindex="0">
+
+
+                        <div class="sdm-kpi-icon">
+
+                            <i data-lucide="users-round"></i>
+
+                        </div>
+
+
+                        <div class="sdm-kpi-content">
+
+                            <span>
+                                Total SDM Pendukung
+                            </span>
+
+
+                            <div class="sdm-kpi-value">
+
+                                <strong>
+
+                                    {{ number_format($totalSdm, 0, ',', '.') }}
+
+                                </strong>
+
+
+                                @if ($sdmDelta > 0)
+                                    <small class="sdm-delta sdm-delta-up">
+
+                                        <i data-lucide="arrow-up"></i>
+
+                                        +{{ $sdmDelta }}
+
+                                    </small>
+                                @elseif ($sdmDelta < 0)
+                                    <small class="sdm-delta sdm-delta-down">
+
+                                        <i data-lucide="arrow-down"></i>
+
+                                        {{ $sdmDelta }}
+
+                                    </small>
+                                @else
+                                    <small class="sdm-delta sdm-delta-neutral">
+
+                                        <i data-lucide="minus"></i>
+
+                                        0
+
+                                    </small>
+                                @endif
+
+                            </div>
+
+
+                            <p>
+                                perubahan tercatat
+                            </p>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    {{-- DEPARTEMEN --}}
+                    <div class="sdm-kpi-card">
+
+                        <div class="sdm-kpi-icon">
+
+                            <i data-lucide="building-2"></i>
+
+                        </div>
+
+
+                        <div class="sdm-kpi-content">
+
+                            <span>
+                                Total Departemen
+                            </span>
+
+
+                            <strong>
+
+                                {{ number_format($totalDepartemen, 0, ',', '.') }}
+
+                            </strong>
+
+
+                            <p>
+                                master departemen
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    {{-- DIVISI --}}
+                    <div class="sdm-kpi-card">
+
+                        <div class="sdm-kpi-icon">
+
+                            <i data-lucide="network"></i>
+
+                        </div>
+
+
+                        <div class="sdm-kpi-content">
+
+                            <span>
+                                Total Divisi
+                            </span>
+
+
+                            <strong>
+
+                                {{ number_format($totalDivisi, 0, ',', '.') }}
+
+                            </strong>
+
+
+                            <p>
+                                master divisi
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    {{-- UPDATE --}}
+                    <div class="sdm-kpi-card">
+
+                        <div class="sdm-kpi-icon">
+
+                            <i data-lucide="clock-3"></i>
+
+                        </div>
+
+
+                        <div class="sdm-kpi-content">
+
+                            <span>
+                                Update Terakhir
+                            </span>
+
+
+                            <strong class="sdm-kpi-text">
+
+                                {{ $updateTerakhirLabel }}
+
+                            </strong>
+
+
+                            <p>
+                                {{ $updateTerakhirDetail }}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        {{-- ============================================================
+         FILTER
+    ============================================================= --}}
+        <section class="sdm-card sdm-filter-card">
+
+
+            <div class="sdm-filter-header">
+
+
+                <h3>
+                    Daftar SDM Pendukung
+                </h3>
+
+
+                <button type="button" class="sdm-add-button" onclick="openSdmModal()">
+
+                    <i data-lucide="plus"></i>
+
+                    Tambah SDM Pendukung
+
+                </button>
+
+
+            </div>
+
+
+
+            <div class="sdm-filter-grid">
+
+
+                <div class="sdm-search">
+
+                    <i data-lucide="search"></i>
+
+
+                    <input type="search" id="sdmSearch" placeholder="Cari nama, NIP, jabatan, departemen, atau divisi...">
+
+                </div>
+
+
+
+                <select id="sdmDepartemen">
+
+                    <option value="">
+                        Semua Departemen
+                    </option>
+
+
+                    @foreach ($departemens as $departemen)
+                        <option value="{{ $departemen->id }}">
+
+                            {{ $departemen->kode_dep }}
+
+                        </option>
+                    @endforeach
+
+                </select>
+
+
+
+                <select id="sdmDivisi">
+
+                    <option value="">
+                        Semua Divisi
+                    </option>
+
+
+                    @foreach ($divisis as $divisi)
+                        <option value="{{ $divisi->id }}" data-id-dep="{{ $divisi->id_dep }}">
+
+                            {{ $divisi->nama_div }}
+
+                        </option>
+                    @endforeach
+
+                </select>
+
+
+
+                <button type="button" class="sdm-reset-button" onclick="resetSdmFilter()">
+
+                    <i data-lucide="refresh-cw"></i>
+
+                    Reset
+
+                </button>
+
+
+
+                <button type="button" class="sdm-export-button" onclick="exportSdmCSV()">
+
+                    <i data-lucide="download"></i>
+
+                    Export
+
+                </button>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        {{-- ============================================================
+         TABLE
+    ============================================================= --}}
+        <section class="sdm-card sdm-table-card">
+
+
+            <div class="table-responsive">
+
+
+                <table class="sdm-table" id="sdmTable">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>No</th>
+
+                            <th>Nama Lengkap</th>
+
+                            <th>NIP / NIPP</th>
+
+                            <th>Jabatan</th>
+
+                            <th>Departemen</th>
+
+                            <th>Divisi</th>
+
+                            <th>Dibuat</th>
+
+                            <th>Aksi</th>
+
+                        </tr>
+
+                    </thead>
+
+
+
+                    <tbody>
+
+
+                        @forelse ($sdms as $item)
+                            <tr data-record data-id="{{ $item->id }}" data-nama="{{ $item->nama_sdm }}"
+                                data-nip="{{ $item->nip }}" data-id-jabat="{{ $item->id_jabat }}"
+                                data-jabatan="{{ $item->jabat }}" data-id-div="{{ $item->id_div }}"
+                                data-id-dep="{{ $item->id_dep ?? '' }}" data-divisi="{{ $item->nama_div }}"
+                                data-departemen="{{ $item->nama_departemen }}"
+                                data-created-at="{{ $item->created_at ?? '' }}"
+                                data-updated-at="{{ $item->updated_at ?? '' }}">
+
+
+                                <td class="sdm-number"></td>
+
+
+                                <td>
+
+                                    <div class="sdm-name-cell">
+
+                                        <div class="sdm-avatar">
+
+                                            {{ strtoupper(mb_substr($item->nama_sdm, 0, 1)) }}
+
+                                        </div>
+
+
+                                        <strong>
+
+                                            {{ $item->nama_sdm }}
+
+                                        </strong>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td class="sdm-nip">
+
+                                    {{ $item->nip }}
+
+                                </td>
+
+
+                                <td>
+
+                                    {{ $item->jabat }}
+
+                                </td>
+
+
+                                <td>
+
+                                    {{ $item->nama_departemen }}
+
+                                </td>
+
+
+                                <td>
+
+                                    {{ $item->nama_div }}
+
+                                </td>
+
+
+                                <td>
+
+                                    @if (!empty($item->created_at))
+                                        {{ \Carbon\Carbon::parse($item->created_at)->locale('id')->translatedFormat('d M Y') }}
+                                    @else
+                                        —
+                                    @endif
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="sdm-actions">
+
+
+                                        <button type="button" class="view" data-action="view">
+
+                                            <i data-lucide="eye"></i>
+
+                                        </button>
+
+
+                                        <button type="button" class="edit" data-action="edit">
+
+                                            <i data-lucide="square-pen"></i>
+
+                                        </button>
+
+
+                                        <button type="button" class="delete" data-action="delete">
+
+                                            <i data-lucide="trash-2"></i>
+
+                                        </button>
+
+
+                                    </div>
+
+                                </td>
+
+
+                            </tr>
+
+
+                        @empty
+
+                            <tr id="sdmServerEmpty">
+
+                                <td colspan="8" class="sdm-empty">
+
+                                    Belum ada data SDM Pendukung.
+
+                                </td>
+
+                            </tr>
+                        @endforelse
+
+
+
+                        <tr id="sdmEmptyRow" hidden>
+
+                            <td colspan="8" class="sdm-empty">
+
+                                Data SDM Pendukung tidak ditemukan.
+
+                            </td>
+
+                        </tr>
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+
+            <div class="sdm-table-footer">
+
+
+                <span id="sdmTableInfo">
+                    -
+                </span>
+
+
+                <div class="sdm-pagination-area">
+
+
+                    <select id="sdmPageSize">
+
+                        <option value="10">
+                            10
+                        </option>
+
+                        <option value="25">
+                            25
+                        </option>
+
+                        <option value="50">
+                            50
+                        </option>
+
+                    </select>
+
+
+                    <span>
+                        data per halaman
+                    </span>
+
+
+                    <nav class="sdm-pagination" id="sdmPagination"></nav>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        {{-- ============================================================
+         BOTTOM
+    ============================================================= --}}
+        <div class="sdm-bottom-grid">
+
+
+            {{-- DISTRIBUSI --}}
+            <section class="sdm-card">
+
+
+                <div class="sdm-bottom-header">
+
+                    <h3>
+                        Distribusi SDM per Divisi
+                    </h3>
+
+                </div>
+
+
+                <div class="sdm-distribution-content">
+
+
+                    <div class="sdm-chart-wrap">
+
+                        <canvas id="sdmDistributionChart"></canvas>
+
+
+                        <div class="sdm-chart-center">
+
+                            <strong>
+                                {{ $totalSdm }}
+                            </strong>
+
+                            <span>
+                                SDM
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="sdm-legend" id="sdmLegend">
+
+                        @php
+                            $colors = [
+                                '#3389ee',
+                                '#55a8f1',
+                                '#4fc184',
+                                '#f6c85f',
+                                '#ff9024',
+                                '#ef6b73',
+                                '#7c63e8',
+                                '#9aa9bb',
+                            ];
+                        @endphp
+
+
+                        @foreach ($distribusiSdm as $index => $item)
+                            @php
+
+                                $color = $colors[$index % count($colors)];
+
+                            @endphp
+
+
+                            <div data-count="{{ $item->total }}" data-label="{{ $item->nama_div }}"
+                                data-color="{{ $color }}">
+
+                                <span class="sdm-dot" style="--sdm-dot: {{ $color }}"></span>
+
+
+                                <span class="sdm-legend-name">
+
+                                    {{ $item->nama_div }}
+
+                                </span>
+
+
+                                <strong>
+
+                                    {{ $item->total }}
+
+                                </strong>
+
+
+                                <small>
+
+                                    {{ number_format($item->persentase, 1, ',', '.') }}%
+
+                                </small>
+
+                            </div>
+                        @endforeach
+
+
+                    </div>
+
+
+                </div>
+
+
+            </section>
+
+
+
+            {{-- TERBARU --}}
+            <section class="sdm-card">
+
+
+                <div class="sdm-bottom-header">
+
+                    <h3>
+                        SDM Pendukung Terbaru
+                    </h3>
+
+
+                    <button type="button" class="sdm-see-all" onclick="scrollToSdmTable()">
+
+                        Lihat Semua
+
+                    </button>
+
+                </div>
+
+
+
+                <div class="table-responsive">
+
+
+                    <table class="sdm-latest-table">
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>No</th>
+
+                                <th>Nama</th>
+
+                                <th>Jabatan</th>
+
+                                <th>Divisi</th>
+
+                                <th>Tanggal Dibuat</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                            @forelse ($sdmTerbaru as $item)
+                                <tr>
+
+                                    <td>
+                                        {{ $loop->iteration }}
+                                    </td>
+
+                                    <td>
+                                        {{ $item->nama_sdm }}
+                                    </td>
+
+                                    <td>
+                                        {{ $item->jabat }}
+                                    </td>
+
+                                    <td>
+                                        {{ $item->nama_div }}
+                                    </td>
+
+                                    <td>
+
+                                        @if (!empty($item->created_at))
+                                            {{ \Carbon\Carbon::parse($item->created_at)->locale('id')->translatedFormat('d M Y') }}
+                                        @else
+                                            —
+                                        @endif
+
+                                    </td>
+
+                                </tr>
+
+
+                            @empty
+
+                                <tr>
+
+                                    <td colspan="5" class="sdm-empty">
+
+                                        Belum ada data SDM terbaru.
+
+                                    </td>
+
+                                </tr>
+                            @endforelse
+
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+            </section>
+
+
+        </div>
+
+
+
+        {{-- ============================================================
+         CRUD MODAL
+    ============================================================= --}}
+        <dialog class="sdm-dialog" id="sdmModal">
+
+
+            <div class="sdm-modal-dialog">
+
+
+                <div class="sdm-modal-header">
+
+
+                    <div>
+
+                        <h3 id="sdmModalTitle">
+                            Tambah SDM Pendukung
+                        </h3>
+
+                        <p id="sdmModalDescription">
+                            Tambahkan data SDM Pendukung.
                         </p>
 
                     </div>
 
-                </div>
 
-                <div class="sdm-date-card">
+                    <button type="button" onclick="closeSdmModal()">
 
-                    <div class="sdm-date-icon">
-                        <i data-lucide="calendar-days"></i>
-                    </div>
+                        <i data-lucide="x"></i>
 
-                    <div>
-                        <strong id="sdmCurrentDate">-</strong>
-                        <span id="sdmCurrentTime">-</span>
-                    </div>
+                    </button>
+
 
                 </div>
 
-            </div>
 
-            {{-- KPI --}}
-            <div class="sdm-kpi-grid">
 
-                <div class="sdm-kpi-card">
-
-                    <div class="sdm-kpi-icon">
-                        <i data-lucide="users-round"></i>
-                    </div>
-
-                    <div class="sdm-kpi-content">
-
-                        <span>Total SDM Pendukung</span>
-
-                        <div class="sdm-kpi-value">
-                            <strong>128</strong>
-
-                            <small>
-                                <i data-lucide="arrow-up"></i>
-                                +6
-                            </small>
-                        </div>
-
-                        <p>dari tahun lalu</p>
-
-                    </div>
-
-                    <div class="sdm-sparkline">
-                        <svg viewBox="0 0 100 45">
-                            <polyline points="3,35 17,20 31,25 45,10 59,17 72,26 88,7 98,4" />
-                        </svg>
-                    </div>
-
-                </div>
-
-                <div class="sdm-kpi-card">
-
-                    <div class="sdm-kpi-icon">
-                        <i data-lucide="building-2"></i>
-                    </div>
-
-                    <div class="sdm-kpi-content">
-                        <span>Total Departemen</span>
-                        <strong>10</strong>
-                    </div>
-
-                    <div class="sdm-kpi-watermark">
-                        <i data-lucide="chart-no-axes-column-increasing"></i>
-                    </div>
-
-                </div>
-
-                <div class="sdm-kpi-card">
-
-                    <div class="sdm-kpi-icon">
-                        <i data-lucide="network"></i>
-                    </div>
-
-                    <div class="sdm-kpi-content">
-
-                        <span>Total Divisi</span>
-
-                        <strong>36</strong>
-
-                        <p>divisi terkait</p>
-
-                    </div>
-
-                    <div class="sdm-kpi-watermark">
-                        <i data-lucide="layers-3"></i>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-        {{-- FILTER --}}
-        <section class="sdm-card sdm-filter-card">
-            <div class="sdm-filter-header">
-                <h3>Filter Data SDM Pendukung</h3>
-                <button type="button" class="sdm-add-button" onclick="openSdmModal()"><i data-lucide="plus"
-                        aria-hidden="true"></i>Tambah SDM Pendukung</button>
-            </div>
-            <div class="sdm-filter-grid">
-                <div class="sdm-search">
-                    <i data-lucide="search" aria-hidden="true"></i>
-                    <input id="sdmSearch" type="search" placeholder="Cari nama, NIP, email, atau jabatan..."
-                        aria-label="Cari nama, NIP, email, atau jabatan...">
-                </div>
-                <div class="sdm-select-group">
-                    <label for="sdmDepartemen">Departemen</label>
-                    <select id="sdmDepartemen">
-                        <option value="">Semua Departemen</option>
-                        <option value="Departemen Teknik">Departemen Teknik</option>
-                        <option value="Departemen Umum dan SDM">Departemen Umum dan SDM</option>
-                        <option value="Departemen Produksi">Departemen Produksi</option>
-                        <option value="Departemen Keuangan">Departemen Keuangan</option>
-                        <option value="Departemen Distribusi">Departemen Distribusi</option>
-                        <option value="Departemen Perencanaan">Departemen Perencanaan</option>
-                    </select>
-                </div>
-                <div class="sdm-select-group">
-                    <label for="sdmDivisi">Divisi</label>
-                    <select id="sdmDivisi">
-                        <option value="">Semua Divisi</option>
-                        <option value="Divisi Pemeliharaan" data-departemen="Departemen Teknik">Divisi Pemeliharaan</option>
-                        <option value="Divisi SDM" data-departemen="Departemen Umum dan SDM">Divisi SDM</option>
-                        <option value="Divisi Operasional" data-departemen="Departemen Produksi">Divisi Operasional</option>
-                        <option value="Divisi Akuntansi" data-departemen="Departemen Keuangan">Divisi Akuntansi</option>
-                        <option value="Divisi Teknologi Informasi" data-departemen="Departemen Umum dan SDM">Divisi
-                            Teknologi Informasi</option>
-                        <option value="Divisi Logistik" data-departemen="Departemen Distribusi">Divisi Logistik</option>
-                        <option value="Divisi Pengembangan" data-departemen="Departemen Perencanaan">Divisi Pengembangan
-                        </option>
-                        <option value="Divisi Aset" data-departemen="Departemen Umum dan SDM">Divisi Aset</option>
-                    </select>
-                </div>
-                <button type="button" class="sdm-filter-button" onclick="filterSdmTable()"><i data-lucide="list-filter"
-                        aria-hidden="true"></i>Filter</button>
-                <button type="button" class="sdm-reset-button" onclick="resetSdmFilter()"><i data-lucide="refresh-cw"
-                        aria-hidden="true"></i>Reset</button>
-                <button type="button" class="sdm-export-button" onclick="exportSdmCSV()"><i data-lucide="download"
-                        aria-hidden="true"></i>Ekspor</button>
-            </div>
-        </section>
-
-        {{-- TABEL --}}
-        <section class="sdm-card sdm-table-card" id="sdmList" aria-labelledby="sdmListTitle">
-            <div class="sdm-table-header">
-                <h3 id="sdmListTitle">Daftar SDM Pendukung</h3>
-                <span class="sdm-demo-badge" title="Seluruh angka dan daftar pada halaman ini adalah data contoh.">Data
-                    contoh</span>
-            </div>
-            <div class="table-responsive" tabindex="0"
-                aria-label="Daftar SDM Pendukung, geser untuk melihat kolom lainnya">
-                <table class="sdm-table" id="sdmTable">
-                    <thead>
-                        <tr>
-                            <th scope="col" class="sdm-col-no">No</th>
-                            <th scope="col">Nama Lengkap</th>
-                            <th scope="col">NIP</th>
-                            <th scope="col">Jabatan</th>
-                            <th scope="col">Departemen</th>
-                            <th scope="col">Divisi</th>
-                            <th scope="col">Status</th>
-                            <th scope="col" class="sdm-col-action">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr data-departemen="Departemen Teknik" data-divisi="Divisi Pemeliharaan"
-                            data-email="andi.pratama@example.com">
-                            <td>1</td>
-                            <td>Andi Pratama</td>
-                            <td class="sdm-nip">198805152010011012</td>
-                            <td>Staf Teknik</td>
-                            <td>Departemen Teknik</td>
-                            <td>Divisi Pemeliharaan</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Andi Pratama"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Andi Pratama"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Andi Pratama"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Umum dan SDM" data-divisi="Divisi SDM"
-                            data-email="siti.rahmawati@example.com">
-                            <td>2</td>
-                            <td>Siti Rahmawati</td>
-                            <td class="sdm-nip">199203112015032001</td>
-                            <td>Staf Administrasi</td>
-                            <td>Departemen Umum dan SDM</td>
-                            <td>Divisi SDM</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Siti Rahmawati"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Siti Rahmawati"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Siti Rahmawati"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Produksi" data-divisi="Divisi Operasional"
-                            data-email="budi.santoso@example.com">
-                            <td>3</td>
-                            <td>Budi Santoso</td>
-                            <td class="sdm-nip">197809202008121004</td>
-                            <td>Pengawas</td>
-                            <td>Departemen Produksi</td>
-                            <td>Divisi Operasional</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Budi Santoso"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Budi Santoso"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Budi Santoso"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Keuangan" data-divisi="Divisi Akuntansi"
-                            data-email="dewi.lestari@example.com">
-                            <td>4</td>
-                            <td>Dewi Lestari</td>
-                            <td class="sdm-nip">199006172014062003</td>
-                            <td>Analis Aset</td>
-                            <td>Departemen Keuangan</td>
-                            <td>Divisi Akuntansi</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Dewi Lestari"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Dewi Lestari"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Dewi Lestari"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Umum dan SDM" data-divisi="Divisi Teknologi Informasi"
-                            data-email="rizky.maulana@example.com">
-                            <td>5</td>
-                            <td>Rizky Maulana</td>
-                            <td class="sdm-nip">199501082016031007</td>
-                            <td>Staf IT</td>
-                            <td>Departemen Umum dan SDM</td>
-                            <td>Divisi Teknologi Informasi</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Rizky Maulana"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Rizky Maulana"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Rizky Maulana"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Distribusi" data-divisi="Divisi Logistik"
-                            data-email="maya.sari@example.com">
-                            <td>6</td>
-                            <td>Maya Sari</td>
-                            <td class="sdm-nip">198712302011022006</td>
-                            <td>Staf Gudang</td>
-                            <td>Departemen Distribusi</td>
-                            <td>Divisi Logistik</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Maya Sari"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Maya Sari"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Maya Sari"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Produksi" data-divisi="Divisi Operasional"
-                            data-email="fahrul.hidayat@example.com">
-                            <td>7</td>
-                            <td>Fahrul Hidayat</td>
-                            <td class="sdm-nip">199303272017041005</td>
-                            <td>Teknisi</td>
-                            <td>Departemen Produksi</td>
-                            <td>Divisi Operasional</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Fahrul Hidayat"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Fahrul Hidayat"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Fahrul Hidayat"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Perencanaan" data-divisi="Divisi Pengembangan"
-                            data-email="nur.aini@example.com">
-                            <td>8</td>
-                            <td>Nur Aini</td>
-                            <td class="sdm-nip">199104112018022009</td>
-                            <td>Staf Perencanaan</td>
-                            <td>Departemen Perencanaan</td>
-                            <td>Divisi Pengembangan</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Nur Aini"><i data-lucide="eye" aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Nur Aini"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Nur Aini"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Umum dan SDM" data-divisi="Divisi Teknologi Informasi"
-                            data-email="agus.setiawan@example.com">
-                            <td>9</td>
-                            <td>Agus Setiawan</td>
-                            <td class="sdm-nip">198605201209011003</td>
-                            <td>Pranata Komputer</td>
-                            <td>Departemen Umum dan SDM</td>
-                            <td>Divisi Teknologi Informasi</td>
-                            <td><span class="sdm-status is-inactive">Nonaktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Agus Setiawan"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Agus Setiawan"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Agus Setiawan"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr data-departemen="Departemen Umum dan SDM" data-divisi="Divisi Aset"
-                            data-email="wulan.sari@example.com">
-                            <td>10</td>
-                            <td>Wulan Sari</td>
-                            <td class="sdm-nip">199707152020122008</td>
-                            <td>Staf Inventaris</td>
-                            <td>Departemen Umum dan SDM</td>
-                            <td>Divisi Aset</td>
-                            <td><span class="sdm-status is-active">Aktif</span></td>
-                            <td>
-                                <div class="sdm-actions">
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat Wulan Sari"><i data-lucide="eye"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="edit" data-action="edit" title="Edit"
-                                        aria-label="Edit Wulan Sari"><i data-lucide="square-pen"
-                                            aria-hidden="true"></i></button>
-                                    <button type="button" class="delete" data-action="delete" title="Hapus"
-                                        aria-label="Hapus Wulan Sari"><i data-lucide="trash-2"
-                                            aria-hidden="true"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr id="sdmEmptyRow" hidden>
-                            <td colspan="8" class="sdm-empty">Tidak ada data yang sesuai. Coba kata kunci atau filter
-                                lain.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="sdm-table-footer">
-                <div class="sdm-table-info" id="sdmTableInfo" role="status" aria-live="polite">Menampilkan 1–10 dari 10
-                    data contoh</div>
-                <div class="sdm-pagination-area">
-                    <select id="sdmPageSize" aria-label="Jumlah data per halaman">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                    </select>
-                    <span>data per halaman</span>
-                    <nav class="sdm-pagination" id="sdmPagination" aria-label="Halaman daftar SDM Pendukung"></nav>
-                </div>
-            </div>
-        </section>
-
-        {{-- DISTRIBUSI DAN DATA TERBARU --}}
-        <div class="sdm-bottom-grid">
-            <section class="sdm-card">
-                <div class="sdm-bottom-header">
-                    <h3>Distribusi SDM per Departemen</h3>
-                </div>
-                <div class="sdm-distribution-content">
-                    <div class="sdm-chart-wrap">
-                        <canvas id="sdmDistributionChart" role="img"
-                            aria-label="Distribusi contoh 128 SDM Pendukung. Rincian tersedia pada legenda."></canvas>
-                        <div class="sdm-chart-center"><strong>128</strong><span>SDM</span></div>
-                    </div>
-                    <div class="sdm-legend" id="sdmLegend">
-                        <div data-label="Departemen Teknik" data-count="24" data-color="#3389ee">
-                            <span class="sdm-dot c1"></span>
-                            <p>Departemen Teknik</p><strong>24</strong><small>18,8%</small>
-                        </div>
-                        <div data-label="Departemen Umum dan SDM" data-count="32" data-color="#55a8f1">
-                            <span class="sdm-dot c2"></span>
-                            <p>Departemen Umum dan SDM</p><strong>32</strong><small>25,0%</small>
-                        </div>
-                        <div data-label="Departemen Produksi" data-count="26" data-color="#4fc184">
-                            <span class="sdm-dot c3"></span>
-                            <p>Departemen Produksi</p><strong>26</strong><small>20,3%</small>
-                        </div>
-                        <div data-label="Departemen Keuangan" data-count="18" data-color="#ffc85c">
-                            <span class="sdm-dot c4"></span>
-                            <p>Departemen Keuangan</p><strong>18</strong><small>14,1%</small>
-                        </div>
-                        <div data-label="Departemen Distribusi" data-count="16" data-color="#ff9024">
-                            <span class="sdm-dot c5"></span>
-                            <p>Departemen Distribusi</p><strong>16</strong><small>12,5%</small>
-                        </div>
-                        <div data-label="Lainnya" data-count="12" data-color="#ef6b73">
-                            <span class="sdm-dot c6"></span>
-                            <p>Lainnya</p><strong>12</strong><small>9,4%</small>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="sdm-card">
-                <div class="sdm-bottom-header">
-                    <h3>SDM Pendukung Terbaru</h3><a href="#sdmList" id="sdmViewAll">Lihat Semua</a>
-                </div>
-                <div class="table-responsive" tabindex="0"
-                    aria-label="SDM Pendukung terbaru, geser untuk melihat kolom lainnya">
-                    <table class="sdm-latest-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">No</th>
-                                <th scope="col">Nama Lengkap</th>
-                                <th scope="col">Divisi</th>
-                                <th scope="col">Tanggal Ditambahkan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>Wulan Sari</td>
-                                <td>Divisi Aset</td>
-                                <td>15 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>Nur Aini</td>
-                                <td>Divisi Pengembangan</td>
-                                <td>14 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>Fahrul Hidayat</td>
-                                <td>Divisi Operasional</td>
-                                <td>13 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>4</td>
-                                <td>Rizky Maulana</td>
-                                <td>Divisi Teknologi Informasi</td>
-                                <td>12 Jan 2025</td>
-                            </tr>
-                            <tr>
-                                <td>5</td>
-                                <td>Dewi Lestari</td>
-                                <td>Divisi Akuntansi</td>
-                                <td>10 Jan 2025</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-
-        {{-- DIALOG UI: BELUM TERHUBUNG KE ENDPOINT CRUD --}}
-        <dialog class="sdm-modal" id="sdmModal" aria-labelledby="sdmModalTitle" aria-describedby="sdmModalNote">
-            <div class="sdm-modal-dialog">
-                <div class="sdm-modal-header">
-                    <div>
-                        <h3 id="sdmModalTitle">Tambah SDM Pendukung</h3>
-                        <p id="sdmModalDescription">Tambahkan data master SDM Pendukung.</p>
-                    </div>
-                    <button type="button" onclick="closeSdmModal()" aria-label="Tutup dialog"><i data-lucide="x"
-                            aria-hidden="true"></i></button>
-                </div>
                 <form id="sdmForm">
+
+                    @csrf
+
+
+                    <div class="sdm-form-alert" id="sdmFormAlert" hidden></div>
+
+
                     <div class="sdm-modal-body">
-                        <p class="sdm-modal-note" id="sdmModalNote">Pratinjau formulir. Penyimpanan ke database belum
-                            dihubungkan.</p>
+
+
                         <div class="sdm-form-group">
-                            <label for="sdmName">Nama Lengkap</label>
-                            <input id="sdmName" name="nama_lengkap" type="text" maxlength="150"
-                                placeholder="Masukkan nama lengkap" required>
+
+                            <label>
+                                Nama Lengkap
+                            </label>
+
+                            <input type="text" id="sdmName" name="nama_sdm" maxlength="255" required>
+
                         </div>
+
+
+
                         <div class="sdm-form-group">
-                            <label for="sdmNip">NIP</label>
-                            <input id="sdmNip" name="nip" type="text" inputmode="numeric" pattern="[0-9]{18}"
-                                maxlength="18" placeholder="18 digit NIP" required>
+
+                            <label>
+                                NIP / NIPP
+                            </label>
+
+                            <input type="text" id="sdmNip" name="nip" maxlength="255" required>
+
                         </div>
+
+
+
                         <div class="sdm-form-group">
-                            <label for="sdmEmail">Email</label>
-                            <input id="sdmEmail" name="email" type="email" maxlength="254"
-                                placeholder="nama@example.com">
-                        </div>
-                        <div class="sdm-form-group">
-                            <label for="sdmJabatan">Jabatan</label>
-                            <input id="sdmJabatan" name="jabatan" type="text" maxlength="150"
-                                placeholder="Masukkan jabatan" required>
-                        </div>
-                        <div class="sdm-form-group">
-                            <label for="sdmFormDepartemen">Departemen</label>
-                            <select id="sdmFormDepartemen" name="departemen" required>
-                                <option value="">Pilih Departemen</option>
-                                <option value="Departemen Teknik">Departemen Teknik</option>
-                                <option value="Departemen Umum dan SDM">Departemen Umum dan SDM</option>
-                                <option value="Departemen Produksi">Departemen Produksi</option>
-                                <option value="Departemen Keuangan">Departemen Keuangan</option>
-                                <option value="Departemen Distribusi">Departemen Distribusi</option>
-                                <option value="Departemen Perencanaan">Departemen Perencanaan</option>
-                            </select>
-                        </div>
-                        <div class="sdm-form-group">
-                            <label for="sdmFormDivisi">Divisi</label>
-                            <select id="sdmFormDivisi" name="divisi" required>
-                                <option value="">Pilih Divisi</option>
-                                <option value="Divisi Pemeliharaan" data-departemen="Departemen Teknik">Divisi
-                                    Pemeliharaan</option>
-                                <option value="Divisi SDM" data-departemen="Departemen Umum dan SDM">Divisi SDM</option>
-                                <option value="Divisi Operasional" data-departemen="Departemen Produksi">Divisi
-                                    Operasional</option>
-                                <option value="Divisi Akuntansi" data-departemen="Departemen Keuangan">Divisi Akuntansi
+
+                            <label>
+                                Jabatan
+                            </label>
+
+
+                            <select id="sdmJabatan" name="id_jabat" required>
+
+                                <option value="">
+                                    Pilih Jabatan
                                 </option>
-                                <option value="Divisi Teknologi Informasi" data-departemen="Departemen Umum dan SDM">
-                                    Divisi Teknologi Informasi</option>
-                                <option value="Divisi Logistik" data-departemen="Departemen Distribusi">Divisi Logistik
-                                </option>
-                                <option value="Divisi Pengembangan" data-departemen="Departemen Perencanaan">Divisi
-                                    Pengembangan</option>
-                                <option value="Divisi Aset" data-departemen="Departemen Umum dan SDM">Divisi Aset</option>
+
+
+                                @foreach ($jabatans as $jabatan)
+                                    <option value="{{ $jabatan->id }}">
+
+                                        {{ $jabatan->jabat }}
+
+                                    </option>
+                                @endforeach
+
                             </select>
+
                         </div>
+
+
+
                         <div class="sdm-form-group">
-                            <label for="sdmStatus">Status</label>
-                            <select id="sdmStatus" name="status" required>
-                                <option value="Aktif">Aktif</option>
-                                <option value="Nonaktif">Nonaktif</option>
+
+                            <label>
+                                Departemen
+                            </label>
+
+
+                            <select id="sdmFormDepartemen">
+
+                                <option value="">
+                                    Pilih Departemen
+                                </option>
+
+
+                                @foreach ($departemens as $departemen)
+                                    <option value="{{ $departemen->id }}">
+
+                                        {{ $departemen->kode_dep }}
+
+                                    </option>
+                                @endforeach
+
                             </select>
+
                         </div>
+
+
+
+                        <div class="sdm-form-group">
+
+                            <label>
+                                Divisi
+                            </label>
+
+
+                            <select id="sdmFormDivisi" name="id_div" required>
+
+                                <option value="">
+                                    Pilih Divisi
+                                </option>
+
+
+                                @foreach ($divisis as $divisi)
+                                    <option value="{{ $divisi->id }}" data-id-dep="{{ $divisi->id_dep }}">
+
+                                        {{ $divisi->nama_div }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+
+                        <div class="sdm-modal-note">
+
+                            <i data-lucide="database"></i>
+
+                            <span>
+                                Data disimpan langsung ke tabel
+                                <code>sdms</code>.
+                                Departemen ditentukan melalui Divisi.
+                            </span>
+
+                        </div>
+
+
                     </div>
+
+
+
                     <div class="sdm-modal-footer">
-                        <button type="button" class="sdm-cancel-button" onclick="closeSdmModal()">Tutup</button>
-                        <button type="submit" class="sdm-save-button" id="sdmSaveButton" disabled
-                            title="Tersedia setelah penyimpanan database dihubungkan.">Simpan SDM Pendukung</button>
+
+
+                        <button type="button" class="sdm-cancel-button" onclick="closeSdmModal()">
+
+                            Batal
+
+                        </button>
+
+
+                        <button type="submit" class="sdm-save-button" id="sdmSaveButton">
+
+                            <i data-lucide="save"></i>
+
+                            <span id="sdmSaveText">
+                                Simpan SDM
+                            </span>
+
+                        </button>
+
+
                     </div>
+
+
                 </form>
+
+
             </div>
+
+
         </dialog>
+
+
+
+        {{-- ============================================================
+         HISTORY MODAL
+    ============================================================= --}}
+        <dialog class="sdm-dialog sdm-history-dialog" id="sdmActivityModal">
+
+
+            <div class="sdm-modal-dialog">
+
+
+                <div class="sdm-modal-header">
+
+
+                    <div>
+
+                        <h3>
+                            Riwayat Perubahan SDM Pendukung
+                        </h3>
+
+                        <p>
+                            Riwayat penambahan dan penghapusan SDM.
+                        </p>
+
+                    </div>
+
+
+                    <button type="button" onclick="closeSdmActivityModal()">
+
+                        <i data-lucide="x"></i>
+
+                    </button>
+
+
+                </div>
+
+
+
+                <div class="sdm-history-summary">
+
+
+                    <div>
+
+                        <span>
+                            Ditambahkan
+                        </span>
+
+                        <strong class="created">
+                            ↑ {{ $sdmTambah }}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Dihapus
+                        </span>
+
+                        <strong class="deleted">
+                            ↓ {{ $sdmHapus }}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Perubahan Bersih
+                        </span>
+
+                        <strong>
+
+                            @if ($sdmDelta > 0)
+                                +{{ $sdmDelta }}
+                            @else
+                                {{ $sdmDelta }}
+                            @endif
+
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="sdm-history-toolbar">
+
+                    <button class="active" data-sdm-history-filter="all" type="button">
+                        Semua
+                    </button>
+
+                    <button data-sdm-history-filter="created" type="button">
+                        Ditambahkan
+                    </button>
+
+                    <button data-sdm-history-filter="deleted" type="button">
+                        Dihapus
+                    </button>
+
+                </div>
+
+
+
+                <div class="table-responsive">
+
+
+                    <table class="sdm-history-table">
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>No</th>
+                                <th>Nama SDM</th>
+                                <th>NIP</th>
+                                <th>Status</th>
+                                <th>Tanggal Data</th>
+                                <th>Waktu Aktivitas</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                            @foreach ($sdmActivityLogs as $log)
+                                <tr data-sdm-history-row data-action="{{ $log->action }}">
+
+                                    <td class="sdm-history-number">
+                                        {{ $loop->iteration }}
+                                    </td>
+
+                                    <td>
+                                        {{ $log->record_name ?: '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $log->record_code ?: '—' }}
+                                    </td>
+
+                                    <td>
+
+                                        <span
+                                            class="
+                                            sdm-history-status
+                                            {{ $log->action === 'created' ? 'created' : 'deleted' }}
+                                        ">
+
+                                            {{ $log->action === 'created' ? 'Ditambahkan' : 'Dihapus' }}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        @if (!empty($log->record_created_at))
+                                            {{ \Carbon\Carbon::parse($log->record_created_at)->locale('id')->translatedFormat('d M Y') }}
+                                        @else
+                                            —
+                                        @endif
+
+                                    </td>
+
+                                    <td>
+
+                                        @if (!empty($log->created_at))
+                                            {{ \Carbon\Carbon::parse($log->created_at)->locale('id')->translatedFormat('d M Y, H:i') }}
+                                        @else
+                                            —
+                                        @endif
+
+                                    </td>
+
+                                </tr>
+                            @endforeach
+
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+            </div>
+
+
+        </dialog>
+
+
+
+        <div class="sdm-toast-container" id="sdmToastContainer"></div>
+
+
     </section>
+
 @endsection
 
+
+
 @push('scripts')
+    <script>
+        window.SDM_CRUD = {
+
+            store: @json(route('master.data_sdm.store')),
+
+            update: @json(url('/master-data/sdm-pendukung/__ID__')),
+
+            destroy: @json(url('/master-data/sdm-pendukung/__ID__'))
+
+        };
+    </script>
+
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
     <script src="{{ asset('js/pages/sdm.js') }}"></script>
 @endpush

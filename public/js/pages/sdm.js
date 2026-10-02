@@ -1,279 +1,1646 @@
-/* Master SDM Pendukung: khusus halaman SDM Pendukung, tidak mengubah layout global. */
-let sdmCurrentPage = 1;
-let sdmChart = null;
-let sdmPreviousOverflow = '';
-const sdmNumber = new Intl.NumberFormat('id-ID');
+(function () {
 
-document.addEventListener('DOMContentLoaded', function () {
-    if (!document.querySelector('.sdm-page')) return;
-    updateSdmDate();
-    window.setInterval(updateSdmDate, 1000);
-    initSdmChart();
-    filterSdmTable();
-    if (window.lucide) window.lucide.createIcons();
+    'use strict';
 
-    document.getElementById('sdmSearch').addEventListener('input', filterSdmTable);
-    document.getElementById('sdmDepartemen').addEventListener('change', function () {
-        syncSdmDivisiOptions('sdmDepartemen', 'sdmDivisi');
-        filterSdmTable();
-    });
-    document.getElementById('sdmDivisi').addEventListener('change', filterSdmTable);
-    document.getElementById('sdmFormDepartemen').addEventListener('change', function () {
-        syncSdmDivisiOptions('sdmFormDepartemen', 'sdmFormDivisi');
-    });
-    document.getElementById('sdmPageSize').addEventListener('change', filterSdmTable);
-    document.getElementById('sdmTable').addEventListener('click', function (event) {
-        const button = event.target.closest('button[data-action]');
-        if (button) openSdmModal(button.dataset.action, button.closest('tr'));
-    });
-    document.getElementById('sdmViewAll').addEventListener('click', function (event) {
-        event.preventDefault();
-        resetSdmFilter();
-        document.getElementById('sdmList').scrollIntoView({ block: 'start' });
-        document.getElementById('sdmSearch').focus({ preventScroll: true });
-    });
-    const modal = document.getElementById('sdmModal');
-    modal.addEventListener('click', function (event) {
-        const box = modal.getBoundingClientRect();
-        const outside = event.clientX < box.left || event.clientX > box.right
-            || event.clientY < box.top || event.clientY > box.bottom;
-        if (event.target === modal && outside) closeSdmModal();
-    });
-    modal.addEventListener('close', function () {
-        document.body.style.overflow = sdmPreviousOverflow;
-    });
-    // Belum ada endpoint CRUD pada proyek. Form tidak mengirim data semu.
-    document.getElementById('sdmForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-    });
-});
 
-/* WITA, walaupun komputer pengguna berada di zona waktu lain. */
-function updateSdmDate() {
-    const date = document.getElementById('sdmCurrentDate');
-    const time = document.getElementById('sdmCurrentTime');
-    if (!date || !time) return;
-    const now = new Date();
-    date.textContent = new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Makassar', weekday: 'long', day: 'numeric',
-        month: 'long', year: 'numeric'
-    }).format(now);
-    time.textContent = new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit',
-        second: '2-digit', hourCycle: 'h23'
-    }).format(now).replace(/\./g, ':') + ' WITA';
-}
+    let currentPage = 1;
+    let modalMode = 'add';
+    let currentRow = null;
+    let currentId = null;
+    let chart = null;
 
-/* Data berasal dari baris Blade, tidak diduplikasi di JavaScript. */
-function getSdmRows() {
-    return Array.from(document.querySelectorAll('#sdmTable tbody tr[data-divisi]'));
-}
 
-function getFilteredSdmRows() {
-    const search = document.getElementById('sdmSearch').value.trim().toLocaleLowerCase('id-ID');
-    const departemen = document.getElementById('sdmDepartemen').value;
-    const divisi = document.getElementById('sdmDivisi').value;
-    return getSdmRows().filter(function (row) {
-        const searchable = [row.cells[1].textContent, row.cells[2].textContent,
-            row.cells[3].textContent, row.dataset.email || ''].join(' ').toLocaleLowerCase('id-ID');
-        return (!search || searchable.includes(search))
-            && (!departemen || row.dataset.departemen === departemen)
-            && (!divisi || row.dataset.divisi === divisi);
-    });
-}
+    const numberFormat =
+        new Intl.NumberFormat('id-ID');
 
-/* Divisi yang dipilih selalu sesuai departemen, pada filter dan formulir. */
-function syncSdmDivisiOptions(departemenId, divisiId) {
-    const departemen = document.getElementById(departemenId).value;
-    const select = document.getElementById(divisiId);
-    Array.from(select.options).forEach(function (option) {
-        const allowed = !option.value || !departemen || option.dataset.departemen === departemen;
-        option.hidden = !allowed;
-        option.disabled = !allowed;
-    });
-    if (select.selectedOptions[0] && select.selectedOptions[0].disabled) select.value = '';
-}
 
-function filterSdmTable() {
-    sdmCurrentPage = 1;
-    renderSdmTable();
-}
+    function qs(selector, parent = document) {
+        return parent.querySelector(selector);
+    }
 
-function resetSdmFilter() {
-    document.getElementById('sdmSearch').value = '';
-    document.getElementById('sdmDepartemen').value = '';
-    document.getElementById('sdmDivisi').value = '';
-    syncSdmDivisiOptions('sdmDepartemen', 'sdmDivisi');
-    filterSdmTable();
-}
 
-function renderSdmTable() {
-    const allRows = getSdmRows();
-    const filtered = getFilteredSdmRows();
-    const size = Number(document.getElementById('sdmPageSize').value) || 10;
-    const pages = Math.max(1, Math.ceil(filtered.length / size));
-    sdmCurrentPage = Math.min(Math.max(1, sdmCurrentPage), pages);
-    const start = (sdmCurrentPage - 1) * size;
-    allRows.forEach(function (row) { row.hidden = true; });
-    filtered.slice(start, start + size).forEach(function (row, index) {
-        row.hidden = false;
-        row.cells[0].textContent = start + index + 1;
-    });
-    document.getElementById('sdmEmptyRow').hidden = filtered.length > 0;
-    const from = filtered.length ? start + 1 : 0;
-    const to = Math.min(start + size, filtered.length);
-    let info = `Menampilkan ${from}–${to} dari ${sdmNumber.format(filtered.length)} data contoh`;
-    if (filtered.length !== allRows.length) info += ` (total ${sdmNumber.format(allRows.length)})`;
-    document.getElementById('sdmTableInfo').textContent = info;
-    const pagination = document.getElementById('sdmPagination');
-    pagination.replaceChildren();
-    function addPageButton(label, page, disabled, current) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = label;
-        button.disabled = disabled;
-        button.setAttribute('aria-label', label === '‹' ? 'Halaman sebelumnya'
-            : label === '›' ? 'Halaman berikutnya' : `Halaman ${page}`);
-        if (current) {
-            button.className = 'active';
-            button.setAttribute('aria-current', 'page');
+    function qsa(selector, parent = document) {
+        return Array.from(
+            parent.querySelectorAll(selector)
+        );
+    }
+
+
+    function icons() {
+
+        if (
+            window.lucide &&
+            typeof window.lucide.createIcons === 'function'
+        ) {
+
+            window.lucide.createIcons();
         }
-        button.addEventListener('click', function () {
-            sdmCurrentPage = page;
-            renderSdmTable();
-            const active = pagination.querySelector('[aria-current="page"]');
-            if (active) active.focus({ preventScroll: true });
-        });
-        pagination.appendChild(button);
     }
-    addPageButton('‹', sdmCurrentPage - 1, sdmCurrentPage === 1, false);
-    const first = Math.max(1, Math.min(sdmCurrentPage - 2, pages - 4));
-    for (let page = first; page <= Math.min(pages, first + 4); page++) {
-        addPageButton(String(page), page, false, page === sdmCurrentPage);
-    }
-    addPageButton('›', sdmCurrentPage + 1, sdmCurrentPage === pages, false);
-}
 
-/* Chart dan legenda memakai angka yang sama dari Blade. */
-function initSdmChart() {
-    const canvas = document.getElementById('sdmDistributionChart');
-    if (!canvas) return;
-    const groups = Array.from(document.querySelectorAll('#sdmLegend [data-count]'));
-    const labels = groups.map(function (item) { return item.dataset.label; });
-    const counts = groups.map(function (item) { return Number(item.dataset.count); });
-    const colors = groups.map(function (item) { return item.dataset.color; });
-    const total = counts.reduce(function (sum, count) { return sum + count; }, 0);
-    const wrap = canvas.parentElement;
-    wrap.querySelector('.sdm-chart-center strong').textContent = sdmNumber.format(total);
-    if (sdmChart) { sdmChart.destroy(); sdmChart = null; }
-    // Diagram tetap muncul jika CDN Chart.js gagal dimuat.
-    if (typeof window.Chart !== 'function') {
-        let angle = 0;
-        const segments = counts.map(function (count, index) {
-            const start = angle;
-            angle += total ? count / total * 360 : 0;
-            return `${colors[index]} ${start}deg ${angle}deg`;
-        });
-        canvas.hidden = true;
-        wrap.classList.add('sdm-chart-fallback');
-        wrap.style.background = total ? `conic-gradient(${segments.join(',')})` : '#e7ecf2';
-        return;
+
+    function csrf() {
+
+        return (
+            qs('meta[name="csrf-token"]')
+                ?.getAttribute('content')
+            ||
+            qs('#sdmForm input[name="_token"]')
+                ?.value
+            ||
+            ''
+        );
     }
-    canvas.hidden = false;
-    wrap.classList.remove('sdm-chart-fallback');
-    wrap.style.background = '';
-    sdmChart = new window.Chart(canvas, {
-        type: 'doughnut',
-        data: { labels: labels, datasets: [{
-            data: counts, backgroundColor: colors, borderColor: '#ffffff',
-            borderWidth: 2, hoverOffset: 4
-        }] },
-        options: {
-            responsive: true, maintainAspectRatio: false, cutout: '68%',
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: function (context) {
-                    return `${context.label}: ${sdmNumber.format(context.raw)} orang`;
-                } } }
+
+
+    /* =========================================================
+       DATE
+    ========================================================= */
+
+    function updateDateTime() {
+
+        const date =
+            qs('#sdmCurrentDate');
+
+        const time =
+            qs('#sdmCurrentTime');
+
+
+        if (!date || !time) {
+            return;
+        }
+
+
+        const now =
+            new Date();
+
+
+        date.textContent =
+            new Intl.DateTimeFormat(
+                'id-ID',
+                {
+                    timeZone: 'Asia/Makassar',
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                }
+            ).format(now);
+
+
+        time.textContent =
+            new Intl.DateTimeFormat(
+                'id-ID',
+                {
+                    timeZone: 'Asia/Makassar',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hourCycle: 'h23'
+                }
+            )
+                .format(now)
+                .replace(/\./g, ':')
+            +
+            ' WITA';
+    }
+
+
+    /* =========================================================
+       DATA
+    ========================================================= */
+
+    function rows() {
+
+        return qsa(
+            '#sdmTable tbody tr[data-record]'
+        );
+    }
+
+
+    function filteredRows() {
+
+        const keyword =
+            String(
+                qs('#sdmSearch')?.value || ''
+            )
+                .trim()
+                .toLocaleLowerCase('id-ID');
+
+
+        const dep =
+            String(
+                qs('#sdmDepartemen')?.value || ''
+            );
+
+
+        const div =
+            String(
+                qs('#sdmDivisi')?.value || ''
+            );
+
+
+        return rows().filter(function (row) {
+
+            const haystack =
+                [
+                    row.dataset.nama,
+                    row.dataset.nip,
+                    row.dataset.jabatan,
+                    row.dataset.departemen,
+                    row.dataset.divisi
+                ]
+                    .join(' ')
+                    .toLocaleLowerCase('id-ID');
+
+
+            return (
+                (
+                    !keyword ||
+                    haystack.includes(keyword)
+                )
+                &&
+                (
+                    !dep ||
+                    row.dataset.idDep === dep
+                )
+                &&
+                (
+                    !div ||
+                    row.dataset.idDiv === div
+                )
+            );
+        });
+    }
+
+
+    /* =========================================================
+       TABLE
+    ========================================================= */
+
+    function renderTable() {
+
+        const all =
+            rows();
+
+
+        const filtered =
+            filteredRows();
+
+
+        const size =
+            Number(
+                qs('#sdmPageSize')?.value
+            ) || 10;
+
+
+        const pages =
+            Math.max(
+                1,
+                Math.ceil(
+                    filtered.length / size
+                )
+            );
+
+
+        currentPage =
+            Math.min(
+                Math.max(currentPage, 1),
+                pages
+            );
+
+
+        const start =
+            (currentPage - 1) * size;
+
+
+        all.forEach(function (row) {
+            row.hidden = true;
+        });
+
+
+        filtered
+            .slice(
+                start,
+                start + size
+            )
+            .forEach(
+                function (row, index) {
+
+                    row.hidden =
+                        false;
+
+
+                    const number =
+                        row.querySelector(
+                            '.sdm-number'
+                        );
+
+
+                    if (number) {
+
+                        number.textContent =
+                            start +
+                            index +
+                            1;
+                    }
+                }
+            );
+
+
+        const empty =
+            qs('#sdmEmptyRow');
+
+
+        if (empty) {
+
+            empty.hidden =
+                filtered.length !== 0;
+        }
+
+
+        const info =
+            qs('#sdmTableInfo');
+
+
+        if (info) {
+
+            if (!filtered.length) {
+
+                info.textContent =
+                    'Menampilkan 0 dari 0 data';
+
+            } else {
+
+                info.textContent =
+                    `Menampilkan ${start + 1}–${Math.min(start + size, filtered.length)} dari ${filtered.length} data`;
             }
         }
-    });
-}
 
-/* Dialog native mendukung Escape dan fokus keyboard. */
-function openSdmModal(mode = 'add', row = null) {
-    const modal = document.getElementById('sdmModal');
-    if (!modal || modal.open) return;
-    const titles = { add: 'Tambah SDM Pendukung', view: 'Detail SDM Pendukung', edit: 'Edit SDM Pendukung', delete: 'Hapus SDM Pendukung' };
-    const descriptions = {
-        add: 'Tambahkan data master SDM pendukung baru.', view: 'Informasi data master SDM pendukung.',
-        edit: 'Perbarui informasi data master SDM pendukung.', delete: 'Periksa data SDM yang akan dihapus.'
-    };
-    const readonly = mode === 'view' || mode === 'delete';
-    document.getElementById('sdmForm').reset();
-    document.getElementById('sdmModalTitle').textContent = titles[mode] || titles.add;
-    document.getElementById('sdmModalDescription').textContent = descriptions[mode] || descriptions.add;
-    const name = document.getElementById('sdmName');
-    const nip = document.getElementById('sdmNip');
-    const email = document.getElementById('sdmEmail');
-    const jabatan = document.getElementById('sdmJabatan');
-    const departemen = document.getElementById('sdmFormDepartemen');
-    const divisi = document.getElementById('sdmFormDivisi');
-    const status = document.getElementById('sdmStatus');
-    name.value = row ? row.cells[1].textContent.trim() : '';
-    nip.value = row ? row.cells[2].textContent.trim() : '';
-    email.value = row ? row.dataset.email : '';
-    jabatan.value = row ? row.cells[3].textContent.trim() : '';
-    departemen.value = row ? row.dataset.departemen : '';
-    syncSdmDivisiOptions('sdmFormDepartemen', 'sdmFormDivisi');
-    divisi.value = row ? row.dataset.divisi : '';
-    status.value = row ? row.cells[6].textContent.trim() : 'Aktif';
-    [name, nip, email, jabatan].forEach(function (input) { input.readOnly = readonly; });
-    [departemen, divisi, status].forEach(function (select) { select.disabled = readonly; });
-    const save = document.getElementById('sdmSaveButton');
-    save.hidden = mode === 'view';
-    save.disabled = true;
-    save.textContent = mode === 'delete' ? 'Hapus SDM Pendukung' : 'Simpan SDM Pendukung';
-    save.classList.toggle('sdm-delete-button', mode === 'delete');
-    document.getElementById('sdmModalNote').textContent = mode === 'view'
-        ? 'Data contoh untuk pratinjau tampilan.'
-        : mode === 'delete' ? 'Pratinjau konfirmasi. Penghapusan ke database belum dihubungkan.'
-        : 'Pratinjau formulir. Penyimpanan ke database belum dihubungkan.';
-    sdmPreviousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    modal.showModal();
-    if (!readonly) name.focus();
-}
 
-function closeSdmModal() {
-    const modal = document.getElementById('sdmModal');
-    if (modal && modal.open) modal.close();
-}
-
-/* Ekspor seluruh hasil filter, termasuk halaman lain; tanpa kolom Aksi. */
-function exportSdmCSV() {
-    const records = [['No', 'Nama Lengkap', 'NIP', 'Jabatan', 'Departemen', 'Divisi', 'Status', 'Email']];
-    getFilteredSdmRows().forEach(function (row, index) {
-        // NIP tetap teks: awalan apostrof mencegah pembulatan nomor panjang di Excel.
-        records.push([index + 1, row.cells[1].textContent.trim(), "'" + row.cells[2].textContent.trim(),
-            row.cells[3].textContent.trim(), row.dataset.departemen, row.dataset.divisi,
-            row.cells[6].textContent.trim(), row.dataset.email || '']);
-    });
-    function csvCell(value) {
-        let text = String(value);
-        // Cegah teks dibaca sebagai rumus saat CSV dibuka di Excel.
-        if (/^[\s]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text)) text = "'" + text;
-        return '"' + text.replace(/"/g, '""') + '"';
+        renderPagination(pages);
     }
-    const csv = records.map(function (record) { return record.map(csvCell).join(','); }).join('\r\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'data-sdm-pendukung.csv';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-}
 
+
+    function renderPagination(pages) {
+
+        const element =
+            qs('#sdmPagination');
+
+
+        if (!element) {
+            return;
+        }
+
+
+        element.innerHTML = '';
+
+
+        function add(
+            text,
+            page,
+            disabled = false,
+            active = false
+        ) {
+
+            const button =
+                document.createElement('button');
+
+
+            button.type =
+                'button';
+
+
+            button.textContent =
+                text;
+
+
+            button.disabled =
+                disabled;
+
+
+            if (active) {
+
+                button.classList.add(
+                    'active'
+                );
+            }
+
+
+            button.addEventListener(
+                'click',
+                function () {
+
+                    if (disabled) {
+                        return;
+                    }
+
+
+                    currentPage =
+                        page;
+
+
+                    renderTable();
+                }
+            );
+
+
+            element.appendChild(
+                button
+            );
+        }
+
+
+        add(
+            '‹',
+            currentPage - 1,
+            currentPage <= 1
+        );
+
+
+        let first =
+            Math.max(
+                1,
+                currentPage - 2
+            );
+
+
+        let last =
+            Math.min(
+                pages,
+                first + 4
+            );
+
+
+        first =
+            Math.max(
+                1,
+                last - 4
+            );
+
+
+        for (
+            let page = first;
+            page <= last;
+            page++
+        ) {
+
+            add(
+                String(page),
+                page,
+                false,
+                page === currentPage
+            );
+        }
+
+
+        add(
+            '›',
+            currentPage + 1,
+            currentPage >= pages
+        );
+    }
+
+
+    /* =========================================================
+       DEPARTEMEN → DIVISI
+    ========================================================= */
+
+    function filterDivisiOptions(
+        depSelectId,
+        divSelectId
+    ) {
+
+        const dep =
+            qs(`#${depSelectId}`);
+
+
+        const div =
+            qs(`#${divSelectId}`);
+
+
+        if (!dep || !div) {
+            return;
+        }
+
+
+        const depId =
+            String(dep.value || '');
+
+
+        qsa(
+            'option[data-id-dep]',
+            div
+        )
+            .forEach(function (option) {
+
+                option.hidden =
+                    !!depId &&
+                    option.dataset.idDep !== depId;
+            });
+
+
+        const selected =
+            div.selectedOptions[0];
+
+
+        if (
+            selected &&
+            selected.hidden
+        ) {
+
+            div.value =
+                '';
+        }
+    }
+
+
+    /* =========================================================
+       MODAL
+    ========================================================= */
+
+    function openModal(
+        mode = 'add',
+        row = null
+    ) {
+
+        const modal =
+            qs('#sdmModal');
+
+
+        if (!modal) {
+            return;
+        }
+
+
+        modalMode =
+            mode;
+
+
+        currentRow =
+            row;
+
+
+        currentId =
+            row?.dataset.id || null;
+
+
+        qs('#sdmForm')?.reset();
+
+
+        hideError();
+
+
+        const name =
+            qs('#sdmName');
+
+        const nip =
+            qs('#sdmNip');
+
+        const jabatan =
+            qs('#sdmJabatan');
+
+        const dep =
+            qs('#sdmFormDepartemen');
+
+        const div =
+            qs('#sdmFormDivisi');
+
+
+        if (row) {
+
+            name.value =
+                row.dataset.nama || '';
+
+            nip.value =
+                row.dataset.nip === '-'
+                    ? ''
+                    : (
+                        row.dataset.nip || ''
+                    );
+
+            jabatan.value =
+                row.dataset.idJabat || '';
+
+            dep.value =
+                row.dataset.idDep || '';
+
+
+            filterDivisiOptions(
+                'sdmFormDepartemen',
+                'sdmFormDivisi'
+            );
+
+
+            div.value =
+                row.dataset.idDiv || '';
+        }
+
+
+        const readonly =
+            mode === 'view' ||
+            mode === 'delete';
+
+
+        name.readOnly =
+            readonly;
+
+        nip.readOnly =
+            readonly;
+
+        jabatan.disabled =
+            readonly;
+
+        dep.disabled =
+            readonly;
+
+        div.disabled =
+            readonly;
+
+
+        const title =
+            qs('#sdmModalTitle');
+
+        const desc =
+            qs('#sdmModalDescription');
+
+        const save =
+            qs('#sdmSaveButton');
+
+        const saveText =
+            qs('#sdmSaveText');
+
+
+        save.hidden =
+            mode === 'view';
+
+
+        save.classList.toggle(
+            'sdm-delete-button',
+            mode === 'delete'
+        );
+
+
+        if (mode === 'add') {
+
+            title.textContent =
+                'Tambah SDM Pendukung';
+
+            desc.textContent =
+                'Tambahkan data SDM Pendukung baru.';
+
+            saveText.textContent =
+                'Simpan SDM';
+        }
+
+
+        if (mode === 'view') {
+
+            title.textContent =
+                'Detail SDM Pendukung';
+
+            desc.textContent =
+                'Informasi lengkap SDM Pendukung.';
+        }
+
+
+        if (mode === 'edit') {
+
+            title.textContent =
+                'Edit SDM Pendukung';
+
+            desc.textContent =
+                'Perbarui data SDM Pendukung.';
+
+            saveText.textContent =
+                'Simpan Perubahan';
+        }
+
+
+        if (mode === 'delete') {
+
+            title.textContent =
+                'Hapus SDM Pendukung';
+
+            desc.textContent =
+                'Periksa data sebelum dihapus.';
+
+            saveText.textContent =
+                'Hapus SDM';
+        }
+
+
+        if (!modal.open) {
+            modal.showModal();
+        }
+
+
+        icons();
+    }
+
+
+    function closeModal() {
+
+        const modal =
+            qs('#sdmModal');
+
+
+        if (modal?.open) {
+
+            modal.close();
+        }
+
+
+        currentId =
+            null;
+
+        currentRow =
+            null;
+
+        modalMode =
+            'add';
+    }
+
+
+    /* =========================================================
+       REQUEST
+    ========================================================= */
+
+    async function request(
+        url,
+        method,
+        payload = null
+    ) {
+
+        const options = {
+
+            method,
+
+            credentials:
+                'same-origin',
+
+            headers: {
+
+                'Accept':
+                    'application/json',
+
+                'Content-Type':
+                    'application/json',
+
+                'X-Requested-With':
+                    'XMLHttpRequest',
+
+                'X-CSRF-TOKEN':
+                    csrf()
+
+            }
+
+        };
+
+
+        if (payload !== null) {
+
+            options.body =
+                JSON.stringify(payload);
+        }
+
+
+        const response =
+            await fetch(
+                url,
+                options
+            );
+
+
+        const data =
+            await response
+                .json()
+                .catch(function () {
+
+                    return {};
+                });
+
+
+        if (!response.ok) {
+
+            let message =
+                data.message ||
+                `Request gagal (${response.status}).`;
+
+
+            if (
+                response.status === 422 &&
+                data.errors
+            ) {
+
+                const first =
+                    Object.values(
+                        data.errors
+                    )
+                        .flat()[0];
+
+
+                if (first) {
+
+                    message =
+                        first;
+                }
+            }
+
+
+            throw new Error(
+                message
+            );
+        }
+
+
+        return data;
+    }
+
+
+    /* =========================================================
+       SUBMIT
+    ========================================================= */
+
+    async function submit(
+        event
+    ) {
+
+        event.preventDefault();
+
+
+        hideError();
+
+
+        if (modalMode === 'view') {
+
+            closeModal();
+
+            return;
+        }
+
+
+        if (modalMode === 'delete') {
+
+            await remove();
+
+            return;
+        }
+
+
+        const payload = {
+
+            nama_sdm:
+                String(
+                    qs('#sdmName')?.value || ''
+                ).trim(),
+
+            nip:
+                String(
+                    qs('#sdmNip')?.value || ''
+                ).trim(),
+
+            id_jabat:
+                Number(
+                    qs('#sdmJabatan')?.value || 0
+                ),
+
+            id_div:
+                Number(
+                    qs('#sdmFormDivisi')?.value || 0
+                )
+
+        };
+
+
+        if (!payload.nama_sdm) {
+
+            showError(
+                'Nama SDM wajib diisi.'
+            );
+
+            return;
+        }
+
+
+        if (!payload.nip) {
+
+            showError(
+                'NIP/NIPP wajib diisi.'
+            );
+
+            return;
+        }
+
+
+        if (!payload.id_jabat) {
+
+            showError(
+                'Jabatan wajib dipilih.'
+            );
+
+            return;
+        }
+
+
+        if (!payload.id_div) {
+
+            showError(
+                'Divisi wajib dipilih.'
+            );
+
+            return;
+        }
+
+
+        let url =
+            window.SDM_CRUD.store;
+
+
+        let method =
+            'POST';
+
+
+        if (modalMode === 'edit') {
+
+            url =
+                window.SDM_CRUD.update
+                    .replace(
+                        '__ID__',
+                        encodeURIComponent(
+                            currentId
+                        )
+                    );
+
+
+            method =
+                'PUT';
+        }
+
+
+        const button =
+            qs('#sdmSaveButton');
+
+
+        button.disabled =
+            true;
+
+
+        try {
+
+            const result =
+                await request(
+                    url,
+                    method,
+                    payload
+                );
+
+
+            toast(
+                result.message ||
+                'Data berhasil disimpan.',
+                'success'
+            );
+
+
+            closeModal();
+
+
+            setTimeout(
+                function () {
+
+                    window.location.reload();
+                },
+                400
+            );
+
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+
+
+        } finally {
+
+            button.disabled =
+                false;
+        }
+    }
+
+
+    async function remove() {
+
+        if (!currentId) {
+            return;
+        }
+
+
+        const confirmed =
+            window.confirm(
+                `Hapus SDM "${currentRow?.dataset.nama || ''}"?`
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        const url =
+            window.SDM_CRUD.destroy
+                .replace(
+                    '__ID__',
+                    encodeURIComponent(
+                        currentId
+                    )
+                );
+
+
+        try {
+
+            const result =
+                await request(
+                    url,
+                    'DELETE'
+                );
+
+
+            toast(
+                result.message,
+                'success'
+            );
+
+
+            closeModal();
+
+
+            setTimeout(
+                function () {
+
+                    window.location.reload();
+                },
+                400
+            );
+
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+        }
+    }
+
+
+    /* =========================================================
+       HISTORY
+    ========================================================= */
+
+    function openHistory() {
+
+        const modal =
+            qs('#sdmActivityModal');
+
+
+        if (modal && !modal.open) {
+
+            modal.showModal();
+        }
+    }
+
+
+    function closeHistory() {
+
+        const modal =
+            qs('#sdmActivityModal');
+
+
+        if (modal?.open) {
+
+            modal.close();
+        }
+    }
+
+
+    function historyFilter(
+        type
+    ) {
+
+        let number =
+            0;
+
+
+        qsa(
+            '[data-sdm-history-row]'
+        )
+            .forEach(function (row) {
+
+                const show =
+                    type === 'all' ||
+                    row.dataset.action === type;
+
+
+                row.hidden =
+                    !show;
+
+
+                if (show) {
+
+                    number++;
+
+
+                    const no =
+                        row.querySelector(
+                            '.sdm-history-number'
+                        );
+
+
+                    if (no) {
+
+                        no.textContent =
+                            number;
+                    }
+                }
+            });
+
+
+        qsa(
+            '[data-sdm-history-filter]'
+        )
+            .forEach(function (button) {
+
+                button.classList.toggle(
+                    'active',
+                    button.dataset.sdmHistoryFilter === type
+                );
+            });
+    }
+
+
+    /* =========================================================
+       CHART
+    ========================================================= */
+
+    function initChart() {
+
+        const canvas =
+            qs('#sdmDistributionChart');
+
+
+        if (
+            !canvas ||
+            typeof window.Chart !== 'function'
+        ) {
+
+            return;
+        }
+
+
+        const groups =
+            qsa(
+                '#sdmLegend [data-count]'
+            );
+
+
+        if (!groups.length) {
+            return;
+        }
+
+
+        chart =
+            new Chart(
+                canvas,
+                {
+
+                    type:
+                        'doughnut',
+
+                    data: {
+
+                        labels:
+                            groups.map(
+                                item =>
+                                    item.dataset.label
+                            ),
+
+                        datasets: [
+
+                            {
+
+                                data:
+                                    groups.map(
+                                        item =>
+                                            Number(
+                                                item.dataset.count
+                                            )
+                                    ),
+
+                                backgroundColor:
+                                    groups.map(
+                                        item =>
+                                            item.dataset.color
+                                    ),
+
+                                borderWidth:
+                                    2,
+
+                                borderColor:
+                                    '#ffffff'
+
+                            }
+
+                        ]
+
+                    },
+
+                    options: {
+
+                        responsive:
+                            true,
+
+                        maintainAspectRatio:
+                            false,
+
+                        cutout:
+                            '68%',
+
+                        plugins: {
+
+                            legend: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+    }
+
+
+    /* =========================================================
+       EXPORT
+    ========================================================= */
+
+    function exportCsv() {
+
+        const data =
+            filteredRows();
+
+
+        if (!data.length) {
+            return;
+        }
+
+
+        const lines = [
+
+            [
+                'No',
+                'Nama',
+                'NIP',
+                'Jabatan',
+                'Departemen',
+                'Divisi',
+                'Created At'
+            ]
+
+        ];
+
+
+        data.forEach(
+            function (row, index) {
+
+                lines.push(
+                    [
+
+                        index + 1,
+                        row.dataset.nama || '',
+                        row.dataset.nip || '',
+                        row.dataset.jabatan || '',
+                        row.dataset.departemen || '',
+                        row.dataset.divisi || '',
+                        row.dataset.createdAt || ''
+
+                    ]
+                );
+            }
+        );
+
+
+        const csv =
+            lines
+                .map(function (line) {
+
+                    return line
+                        .map(function (value) {
+
+                            let text =
+                                String(value ?? '');
+
+
+                            if (
+                                /^[\s]*[=+@-]/
+                                    .test(text)
+                            ) {
+
+                                text =
+                                    "'" + text;
+                            }
+
+
+                            return (
+                                '"' +
+                                text.replace(
+                                    /"/g,
+                                    '""'
+                                )
+                                +
+                                '"'
+                            );
+                        })
+                        .join(',');
+                })
+                .join('\r\n');
+
+
+        const blob =
+            new Blob(
+                [
+                    '\uFEFF' +
+                    csv
+                ],
+                {
+                    type:
+                        'text/csv;charset=utf-8;'
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(blob);
+
+
+        const link =
+            document.createElement('a');
+
+
+        link.href =
+            url;
+
+
+        link.download =
+            'data-sdm-pendukung.csv';
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        URL.revokeObjectURL(
+            url
+        );
+    }
+
+
+    /* =========================================================
+       MESSAGES
+    ========================================================= */
+
+    function showError(
+        message
+    ) {
+
+        const box =
+            qs('#sdmFormAlert');
+
+
+        if (!box) {
+            return;
+        }
+
+
+        box.textContent =
+            message;
+
+
+        box.hidden =
+            false;
+    }
+
+
+    function hideError() {
+
+        const box =
+            qs('#sdmFormAlert');
+
+
+        if (!box) {
+            return;
+        }
+
+
+        box.hidden =
+            true;
+
+
+        box.textContent =
+            '';
+    }
+
+
+    function toast(
+        message,
+        type = 'success'
+    ) {
+
+        const container =
+            qs('#sdmToastContainer');
+
+
+        if (!container) {
+            return;
+        }
+
+
+        const box =
+            document.createElement(
+                'div'
+            );
+
+
+        box.className =
+            `sdm-toast ${type}`;
+
+
+        box.textContent =
+            message;
+
+
+        container.appendChild(
+            box
+        );
+
+
+        requestAnimationFrame(
+            function () {
+
+                box.classList.add(
+                    'show'
+                );
+            }
+        );
+
+
+        setTimeout(
+            function () {
+
+                box.remove();
+            },
+            3000
+        );
+    }
+
+
+    /* =========================================================
+       INIT
+    ========================================================= */
+
+    function init() {
+
+        updateDateTime();
+
+
+        setInterval(
+            updateDateTime,
+            1000
+        );
+
+
+        qs('#sdmSearch')
+            ?.addEventListener(
+                'input',
+                function () {
+
+                    currentPage =
+                        1;
+
+                    renderTable();
+                }
+            );
+
+
+        qs('#sdmDepartemen')
+            ?.addEventListener(
+                'change',
+                function () {
+
+                    filterDivisiOptions(
+                        'sdmDepartemen',
+                        'sdmDivisi'
+                    );
+
+
+                    currentPage =
+                        1;
+
+
+                    renderTable();
+                }
+            );
+
+
+        qs('#sdmDivisi')
+            ?.addEventListener(
+                'change',
+                function () {
+
+                    currentPage =
+                        1;
+
+                    renderTable();
+                }
+            );
+
+
+        qs('#sdmFormDepartemen')
+            ?.addEventListener(
+                'change',
+                function () {
+
+                    filterDivisiOptions(
+                        'sdmFormDepartemen',
+                        'sdmFormDivisi'
+                    );
+                }
+            );
+
+
+        qs('#sdmPageSize')
+            ?.addEventListener(
+                'change',
+                function () {
+
+                    currentPage =
+                        1;
+
+                    renderTable();
+                }
+            );
+
+
+        qs('#sdmForm')
+            ?.addEventListener(
+                'submit',
+                submit
+            );
+
+
+        qs('#sdmTable')
+            ?.addEventListener(
+                'click',
+                function (event) {
+
+                    const button =
+                        event.target.closest(
+                            'button[data-action]'
+                        );
+
+
+                    if (!button) {
+                        return;
+                    }
+
+
+                    const row =
+                        button.closest(
+                            'tr[data-record]'
+                        );
+
+
+                    openModal(
+                        button.dataset.action,
+                        row
+                    );
+                }
+            );
+
+
+        qs('#sdmTotalActivityCard')
+            ?.addEventListener(
+                'click',
+                openHistory
+            );
+
+
+        qsa(
+            '[data-sdm-history-filter]'
+        )
+            .forEach(function (button) {
+
+                button.addEventListener(
+                    'click',
+                    function () {
+
+                        historyFilter(
+                            button.dataset.sdmHistoryFilter
+                        );
+                    }
+                );
+            });
+
+
+        renderTable();
+
+        initChart();
+
+        icons();
+    }
+
+
+    window.openSdmModal =
+        () =>
+            openModal('add');
+
+
+    window.closeSdmModal =
+        closeModal;
+
+
+    window.closeSdmActivityModal =
+        closeHistory;
+
+
+    window.resetSdmFilter =
+        function () {
+
+            qs('#sdmSearch').value =
+                '';
+
+            qs('#sdmDepartemen').value =
+                '';
+
+            qs('#sdmDivisi').value =
+                '';
+
+
+            qsa(
+                '#sdmDivisi option'
+            )
+                .forEach(function (option) {
+
+                    option.hidden =
+                        false;
+                });
+
+
+            currentPage =
+                1;
+
+
+            renderTable();
+        };
+
+
+    window.exportSdmCSV =
+        exportCsv;
+
+
+    window.scrollToSdmTable =
+        function () {
+
+            qs('.sdm-table-card')
+                ?.scrollIntoView(
+                    {
+                        behavior:
+                            'smooth'
+                    }
+                );
+        };
+
+
+    if (
+        document.readyState ===
+        'loading'
+    ) {
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            init
+        );
+
+    } else {
+
+        init();
+    }
+
+})();

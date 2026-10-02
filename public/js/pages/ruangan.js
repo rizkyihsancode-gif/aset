@@ -1,249 +1,2023 @@
-/* Master Ruangan: khusus halaman Ruangan, tidak mengubah layout global. */
-let ruanganCurrentPage = 1;
-let ruanganChart = null;
-let ruanganPreviousOverflow = '';
-const ruanganNumber = new Intl.NumberFormat('id-ID');
+(function () {
 
-document.addEventListener('DOMContentLoaded', function () {
-    if (!document.querySelector('.ruangan-page')) return;
-    updateRuanganDate();
-    window.setInterval(updateRuanganDate, 1000);
-    initRuanganChart();
-    filterRuanganTable();
-    if (window.lucide) window.lucide.createIcons();
+    'use strict';
 
-    document.getElementById('ruanganSearch').addEventListener('input', filterRuanganTable);
-    document.getElementById('ruanganDivisi').addEventListener('change', filterRuanganTable);
-    document.getElementById('ruanganPageSize').addEventListener('change', filterRuanganTable);
-    document.getElementById('ruanganTable').addEventListener('click', function (event) {
-        const button = event.target.closest('button[data-action]');
-        if (button) openRuanganModal(button.dataset.action, button.closest('tr'));
-    });
-    document.getElementById('ruanganViewAll').addEventListener('click', function (event) {
-        event.preventDefault();
-        resetRuanganFilter();
-        document.getElementById('ruanganList').scrollIntoView({ block: 'start' });
-        document.getElementById('ruanganSearch').focus({ preventScroll: true });
-    });
-    const modal = document.getElementById('ruanganModal');
-    modal.addEventListener('click', function (event) {
-        const box = modal.getBoundingClientRect();
-        const outside = event.clientX < box.left || event.clientX > box.right
-            || event.clientY < box.top || event.clientY > box.bottom;
-        if (event.target === modal && outside) closeRuanganModal();
-    });
-    modal.addEventListener('close', function () {
-        document.body.style.overflow = ruanganPreviousOverflow;
-    });
-    // Belum ada endpoint CRUD pada proyek. Form tidak mengirim data semu.
-    document.getElementById('ruanganForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-    });
-});
 
-/* WITA, walaupun komputer pengguna berada di zona waktu lain. */
-function updateRuanganDate() {
-    const date = document.getElementById('ruanganCurrentDate');
-    const time = document.getElementById('ruanganCurrentTime');
-    if (!date || !time) return;
-    const now = new Date();
-    date.textContent = new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Makassar', weekday: 'long', day: 'numeric',
-        month: 'long', year: 'numeric'
-    }).format(now);
-    time.textContent = new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit',
-        second: '2-digit', hourCycle: 'h23'
-    }).format(now).replace(/\./g, ':') + ' WITA';
-}
+    let currentPage = 1;
 
-/* Data berasal dari baris Blade, tidak diduplikasi di JavaScript. */
-function getRuanganRows() {
-    return Array.from(document.querySelectorAll('#ruanganTable tbody tr[data-divisi]'));
-}
+    let modalMode = 'add';
 
-function getFilteredRuanganRows() {
-    const search = document.getElementById('ruanganSearch').value.trim().toLocaleLowerCase('id-ID');
-    const divisi = document.getElementById('ruanganDivisi').value;
-    return getRuanganRows().filter(function (row) {
-        const name = row.cells[1].textContent.toLocaleLowerCase('id-ID');
-        const code = row.cells[2].textContent.toLocaleLowerCase('id-ID');
-        return (!search || name.includes(search) || code.includes(search))
-            && (!divisi || row.dataset.divisi === divisi);
-    });
-}
+    let currentRow = null;
 
-function filterRuanganTable() {
-    ruanganCurrentPage = 1;
-    renderRuanganTable();
-}
+    let currentId = null;
 
-function resetRuanganFilter() {
-    document.getElementById('ruanganSearch').value = '';
-    document.getElementById('ruanganDivisi').value = '';
-    filterRuanganTable();
-}
 
-function renderRuanganTable() {
-    const allRows = getRuanganRows();
-    const filtered = getFilteredRuanganRows();
-    const size = Number(document.getElementById('ruanganPageSize').value) || 10;
-    const pages = Math.max(1, Math.ceil(filtered.length / size));
-    ruanganCurrentPage = Math.min(Math.max(1, ruanganCurrentPage), pages);
-    const start = (ruanganCurrentPage - 1) * size;
-    allRows.forEach(function (row) { row.hidden = true; });
-    filtered.slice(start, start + size).forEach(function (row, index) {
-        row.hidden = false;
-        row.cells[0].textContent = start + index + 1;
-    });
-    document.getElementById('ruanganEmptyRow').hidden = filtered.length > 0;
-    const from = filtered.length ? start + 1 : 0;
-    const to = Math.min(start + size, filtered.length);
-    let info = `Menampilkan ${from}–${to} dari ${ruanganNumber.format(filtered.length)} data contoh`;
-    if (filtered.length !== allRows.length) info += ` (total ${ruanganNumber.format(allRows.length)})`;
-    document.getElementById('ruanganTableInfo').textContent = info;
-    const pagination = document.getElementById('ruanganPagination');
-    pagination.replaceChildren();
-    function addPageButton(label, page, disabled, current) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.textContent = label;
-        button.disabled = disabled;
-        button.setAttribute('aria-label', label === '‹' ? 'Halaman sebelumnya'
-            : label === '›' ? 'Halaman berikutnya' : `Halaman ${page}`);
-        if (current) {
-            button.className = 'active';
-            button.setAttribute('aria-current', 'page');
+
+    /* =========================================================
+       HELPERS
+    ========================================================= */
+
+    function qs(
+        selector,
+        parent = document
+    ) {
+
+        return parent.querySelector(
+            selector
+        );
+
+    }
+
+
+    function qsa(
+        selector,
+        parent = document
+    ) {
+
+        return Array.from(
+            parent.querySelectorAll(
+                selector
+            )
+        );
+
+    }
+
+
+    function refreshIcons() {
+
+        if (
+            window.lucide &&
+            typeof window.lucide.createIcons ===
+                'function'
+        ) {
+
+            window.lucide.createIcons();
+
         }
-        button.addEventListener('click', function () {
-            ruanganCurrentPage = page;
-            renderRuanganTable();
-            const active = pagination.querySelector('[aria-current="page"]');
-            if (active) active.focus({ preventScroll: true });
-        });
-        pagination.appendChild(button);
-    }
-    addPageButton('‹', ruanganCurrentPage - 1, ruanganCurrentPage === 1, false);
-    const first = Math.max(1, Math.min(ruanganCurrentPage - 2, pages - 4));
-    for (let page = first; page <= Math.min(pages, first + 4); page++) {
-        addPageButton(String(page), page, false, page === ruanganCurrentPage);
-    }
-    addPageButton('›', ruanganCurrentPage + 1, ruanganCurrentPage === pages, false);
-}
 
-/* Chart dan legenda memakai angka yang sama dari Blade. */
-function initRuanganChart() {
-    const canvas = document.getElementById('ruanganDistributionChart');
-    if (!canvas) return;
-    const groups = Array.from(document.querySelectorAll('#ruanganLegend [data-count]'));
-    const labels = groups.map(function (item) { return item.dataset.label; });
-    const counts = groups.map(function (item) { return Number(item.dataset.count); });
-    const colors = groups.map(function (item) { return item.dataset.color; });
-    const total = counts.reduce(function (sum, count) { return sum + count; }, 0);
-    const wrap = canvas.parentElement;
-    wrap.querySelector('.ruangan-chart-center strong').textContent = ruanganNumber.format(total);
-    if (ruanganChart) { ruanganChart.destroy(); ruanganChart = null; }
-    // Diagram tetap muncul jika CDN Chart.js gagal dimuat.
-    if (typeof window.Chart !== 'function') {
-        let angle = 0;
-        const segments = counts.map(function (count, index) {
-            const start = angle;
-            angle += total ? count / total * 360 : 0;
-            return `${colors[index]} ${start}deg ${angle}deg`;
-        });
-        canvas.hidden = true;
-        wrap.classList.add('ruangan-chart-fallback');
-        wrap.style.background = total ? `conic-gradient(${segments.join(',')})` : '#e7ecf2';
-        return;
     }
-    canvas.hidden = false;
-    wrap.classList.remove('ruangan-chart-fallback');
-    wrap.style.background = '';
-    ruanganChart = new window.Chart(canvas, {
-        type: 'doughnut',
-        data: { labels: labels, datasets: [{
-            data: counts, backgroundColor: colors, borderColor: '#ffffff',
-            borderWidth: 2, hoverOffset: 4
-        }] },
-        options: {
-            responsive: true, maintainAspectRatio: false, cutout: '68%',
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: function (context) {
-                    return `${context.label}: ${ruanganNumber.format(context.raw)} ruangan`;
-                } } }
+
+
+    function csrfToken() {
+
+        return (
+            qs(
+                'meta[name="csrf-token"]'
+            )
+                ?.getAttribute(
+                    'content'
+                )
+            ||
+            qs(
+                '#ruanganForm input[name="_token"]'
+            )
+                ?.value
+            ||
+            ''
+        );
+
+    }
+
+
+
+    /* =========================================================
+       DATE
+    ========================================================= */
+
+    function updateDateTime() {
+
+        const date =
+            qs('#ruanganCurrentDate');
+
+
+        const time =
+            qs('#ruanganCurrentTime');
+
+
+        if (
+            !date ||
+            !time
+        ) {
+
+            return;
+
+        }
+
+
+        const now =
+            new Date();
+
+
+        date.textContent =
+            new Intl.DateTimeFormat(
+                'id-ID',
+                {
+
+                    timeZone:
+                        'Asia/Makassar',
+
+                    weekday:
+                        'long',
+
+                    day:
+                        'numeric',
+
+                    month:
+                        'long',
+
+                    year:
+                        'numeric'
+
+                }
+            ).format(
+                now
+            );
+
+
+        time.textContent =
+            new Intl.DateTimeFormat(
+                'id-ID',
+                {
+
+                    timeZone:
+                        'Asia/Makassar',
+
+                    hour:
+                        '2-digit',
+
+                    minute:
+                        '2-digit',
+
+                    second:
+                        '2-digit',
+
+                    hourCycle:
+                        'h23'
+
+                }
+            )
+                .format(
+                    now
+                )
+                .replace(
+                    /\./g,
+                    ':'
+                )
+            +
+            ' WITA';
+
+    }
+
+
+
+    /* =========================================================
+       ROWS
+    ========================================================= */
+
+    function rows() {
+
+        return qsa(
+            '#ruanganTable tbody tr[data-record]'
+        );
+
+    }
+
+
+
+    /* =========================================================
+       FILTER
+    ========================================================= */
+
+    function filteredRows() {
+
+        const keyword =
+            String(
+                qs('#ruanganSearch')
+                    ?.value
+                ||
+                ''
+            )
+                .trim()
+                .toLocaleLowerCase(
+                    'id-ID'
+                );
+
+
+        return rows()
+            .filter(
+                function (row) {
+
+                    const text =
+                        [
+                            row.dataset.kode,
+                            row.dataset.nama
+                        ]
+                            .join(' ')
+                            .toLocaleLowerCase(
+                                'id-ID'
+                            );
+
+
+                    return (
+                        !keyword ||
+                        text.includes(
+                            keyword
+                        )
+                    );
+
+                }
+            );
+
+    }
+
+
+
+    /* =========================================================
+       TABLE
+    ========================================================= */
+
+    function renderTable() {
+
+        const all =
+            rows();
+
+
+        const filtered =
+            filteredRows();
+
+
+        const pageSize =
+            Number(
+                qs('#ruanganPageSize')
+                    ?.value
+            )
+            ||
+            10;
+
+
+        const totalPages =
+            Math.max(
+                1,
+                Math.ceil(
+                    filtered.length /
+                    pageSize
+                )
+            );
+
+
+        currentPage =
+            Math.min(
+                Math.max(
+                    currentPage,
+                    1
+                ),
+                totalPages
+            );
+
+
+        const start =
+            (
+                currentPage -
+                1
+            )
+            *
+            pageSize;
+
+
+        all.forEach(
+            function (row) {
+
+                row.hidden =
+                    true;
+
             }
+        );
+
+
+        filtered
+            .slice(
+                start,
+                start +
+                    pageSize
+            )
+            .forEach(
+                function (
+                    row,
+                    index
+                ) {
+
+                    row.hidden =
+                        false;
+
+
+                    const no =
+                        row.querySelector(
+                            '.ruangan-number'
+                        );
+
+
+                    if (no) {
+
+                        no.textContent =
+                            start +
+                            index +
+                            1;
+
+                    }
+
+                }
+            );
+
+
+        const empty =
+            qs('#ruanganEmptyRow');
+
+
+        if (empty) {
+
+            empty.hidden =
+                filtered.length !==
+                0;
+
         }
-    });
-}
 
-/* Dialog native mendukung Escape dan fokus keyboard. */
-function openRuanganModal(mode = 'add', row = null) {
-    const modal = document.getElementById('ruanganModal');
-    if (!modal || modal.open) return;
-    const titles = { add: 'Tambah Ruangan', view: 'Detail Ruangan', edit: 'Edit Ruangan', delete: 'Hapus Ruangan' };
-    const descriptions = {
-        add: 'Tambahkan data master ruangan baru.', view: 'Informasi data master ruangan.',
-        edit: 'Perbarui informasi data master ruangan.', delete: 'Periksa ruangan yang akan dihapus.'
-    };
-    const readonly = mode === 'view' || mode === 'delete';
-    document.getElementById('ruanganForm').reset();
-    document.getElementById('ruanganModalTitle').textContent = titles[mode] || titles.add;
-    document.getElementById('ruanganModalDescription').textContent = descriptions[mode] || descriptions.add;
-    const name = document.getElementById('ruanganName');
-    const code = document.getElementById('ruanganCode');
-    const group = document.getElementById('ruanganFormDivisi');
-    name.value = row ? row.cells[1].textContent.trim() : '';
-    code.value = row ? row.cells[2].textContent.trim() : '';
-    group.value = row ? row.dataset.divisi : '';
-    name.readOnly = readonly;
-    code.readOnly = readonly;
-    group.disabled = readonly;
-    const description = document.getElementById('ruanganDescription');
-    description.value = row ? row.cells[4].textContent.trim() : '';
-    description.readOnly = readonly;
-    const save = document.getElementById('ruanganSaveButton');
-    save.hidden = mode === 'view';
-    save.disabled = true;
-    save.textContent = mode === 'delete' ? 'Hapus Ruangan' : 'Simpan Ruangan';
-    save.classList.toggle('ruangan-delete-button', mode === 'delete');
-    document.getElementById('ruanganModalNote').textContent = mode === 'view'
-        ? 'Data contoh untuk pratinjau tampilan.'
-        : mode === 'delete' ? 'Pratinjau konfirmasi. Penghapusan ke database belum dihubungkan.'
-        : 'Pratinjau formulir. Penyimpanan ke database belum dihubungkan.';
-    ruanganPreviousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    modal.showModal();
-    if (!readonly) name.focus();
-}
 
-function closeRuanganModal() {
-    const modal = document.getElementById('ruanganModal');
-    if (modal && modal.open) modal.close();
-}
+        const serverEmpty =
+            qs('#ruanganServerEmpty');
 
-/* Ekspor seluruh hasil filter, termasuk halaman lain; tanpa kolom Aksi. */
-function exportRuanganCSV() {
-    const records = [['No', 'Nama Ruangan', 'Kode Ruangan', 'Divisi', 'Keterangan']];
-    getFilteredRuanganRows().forEach(function (row, index) {
-        records.push([index + 1, row.cells[1].textContent.trim(),
-            row.cells[2].textContent.trim(), row.dataset.divisi, row.cells[4].textContent.trim()]);
-    });
-    function csvCell(value) {
-        let text = String(value);
-        // Cegah teks dibaca sebagai rumus saat CSV dibuka di Excel.
-        if (/^[\s]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text)) text = "'" + text;
-        return '"' + text.replace(/"/g, '""') + '"';
+
+        if (serverEmpty) {
+
+            serverEmpty.hidden =
+                all.length !==
+                0;
+
+        }
+
+
+        updateTableInfo(
+            filtered.length,
+            start,
+            pageSize
+        );
+
+
+        renderPagination(
+            totalPages
+        );
+
     }
-    const csv = records.map(function (record) { return record.map(csvCell).join(','); }).join('\r\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'data-ruangan.csv';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-}
 
+
+
+    function updateTableInfo(
+        total,
+        start,
+        size
+    ) {
+
+        const element =
+            qs('#ruanganTableInfo');
+
+
+        if (!element) {
+
+            return;
+
+        }
+
+
+        if (!total) {
+
+            element.textContent =
+                'Menampilkan 0 dari 0 data';
+
+            return;
+
+        }
+
+
+        element.textContent =
+            `Menampilkan ${start + 1}–${Math.min(start + size, total)} dari ${total} data`;
+
+    }
+
+
+
+    /* =========================================================
+       PAGINATION
+    ========================================================= */
+
+    function renderPagination(
+        totalPages
+    ) {
+
+        const container =
+            qs('#ruanganPagination');
+
+
+        if (!container) {
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            '';
+
+
+        container.appendChild(
+            pageButton(
+                '‹',
+                currentPage -
+                    1,
+                currentPage ===
+                    1
+            )
+        );
+
+
+        let first =
+            Math.max(
+                1,
+                currentPage -
+                    2
+            );
+
+
+        let last =
+            Math.min(
+                totalPages,
+                first +
+                    4
+            );
+
+
+        first =
+            Math.max(
+                1,
+                last -
+                    4
+            );
+
+
+        for (
+            let page =
+                first;
+            page <=
+                last;
+            page++
+        ) {
+
+            container.appendChild(
+                pageButton(
+                    String(page),
+                    page,
+                    false,
+                    page ===
+                        currentPage
+                )
+            );
+
+        }
+
+
+        container.appendChild(
+            pageButton(
+                '›',
+                currentPage +
+                    1,
+                currentPage >=
+                    totalPages
+            )
+        );
+
+    }
+
+
+
+    function pageButton(
+        label,
+        page,
+        disabled,
+        active = false
+    ) {
+
+        const button =
+            document.createElement(
+                'button'
+            );
+
+
+        button.type =
+            'button';
+
+
+        button.textContent =
+            label;
+
+
+        button.disabled =
+            disabled;
+
+
+        if (active) {
+
+            button.classList.add(
+                'active'
+            );
+
+        }
+
+
+        if (!disabled) {
+
+            button.addEventListener(
+                'click',
+                function () {
+
+                    currentPage =
+                        page;
+
+
+                    renderTable();
+
+                }
+            );
+
+        }
+
+
+        return button;
+
+    }
+
+
+
+    /* =========================================================
+       FILTER GLOBAL
+    ========================================================= */
+
+    function filterTable() {
+
+        currentPage =
+            1;
+
+
+        renderTable();
+
+    }
+
+
+
+    function resetFilter() {
+
+        const input =
+            qs('#ruanganSearch');
+
+
+        if (input) {
+
+            input.value =
+                '';
+
+        }
+
+
+        currentPage =
+            1;
+
+
+        renderTable();
+
+    }
+
+
+
+    /* =========================================================
+       MODAL CRUD
+    ========================================================= */
+
+    function openModal(
+        mode = 'add',
+        row = null
+    ) {
+
+        const dialog =
+            qs('#ruanganModal');
+
+
+        if (!dialog) {
+
+            return;
+
+        }
+
+
+        modalMode =
+            mode;
+
+
+        currentRow =
+            row;
+
+
+        currentId =
+            row
+                ? row.dataset.id
+                : null;
+
+
+        qs('#ruanganForm')
+            ?.reset();
+
+
+        hideFormError();
+
+
+        const name =
+            qs('#ruanganName');
+
+
+        const code =
+            qs('#ruanganCode');
+
+
+        const title =
+            qs('#ruanganModalTitle');
+
+
+        const description =
+            qs(
+                '#ruanganModalDescription'
+            );
+
+
+        const button =
+            qs('#ruanganSaveButton');
+
+
+        const buttonText =
+            qs('#ruanganSaveText');
+
+
+        if (name) {
+
+            name.value =
+                row?.dataset.nama
+                ||
+                '';
+
+        }
+
+
+        if (code) {
+
+            code.value =
+                row?.dataset.kode ===
+                    '-'
+                    ? ''
+                    : (
+                        row?.dataset.kode
+                        ||
+                        ''
+                    );
+
+        }
+
+
+        const readonly =
+            mode ===
+                'view'
+            ||
+            mode ===
+                'delete';
+
+
+        if (name) {
+
+            name.readOnly =
+                readonly;
+
+        }
+
+
+        if (code) {
+
+            code.readOnly =
+                readonly;
+
+        }
+
+
+        if (button) {
+
+            button.hidden =
+                mode ===
+                    'view';
+
+
+            button.disabled =
+                false;
+
+
+            button
+                .classList
+                .toggle(
+                    'ruangan-delete-button',
+                    mode ===
+                        'delete'
+                );
+
+        }
+
+
+        if (
+            mode ===
+            'add'
+        ) {
+
+            title.textContent =
+                'Tambah Ruangan';
+
+
+            description.textContent =
+                'Tambahkan data master Ruangan baru.';
+
+
+            buttonText.textContent =
+                'Simpan Ruangan';
+
+        }
+
+
+        if (
+            mode ===
+            'view'
+        ) {
+
+            title.textContent =
+                'Detail Ruangan';
+
+
+            description.textContent =
+                'Informasi lengkap data Ruangan.';
+
+        }
+
+
+        if (
+            mode ===
+            'edit'
+        ) {
+
+            title.textContent =
+                'Edit Ruangan';
+
+
+            description.textContent =
+                'Perbarui data master Ruangan.';
+
+
+            buttonText.textContent =
+                'Simpan Perubahan';
+
+        }
+
+
+        if (
+            mode ===
+            'delete'
+        ) {
+
+            title.textContent =
+                'Hapus Ruangan';
+
+
+            description.textContent =
+                'Periksa data sebelum menghapus Ruangan.';
+
+
+            buttonText.textContent =
+                'Hapus Ruangan';
+
+        }
+
+
+        if (!dialog.open) {
+
+            dialog.showModal();
+
+        }
+
+
+        refreshIcons();
+
+    }
+
+
+
+    function closeModal() {
+
+        const dialog =
+            qs('#ruanganModal');
+
+
+        if (
+            dialog &&
+            dialog.open
+        ) {
+
+            dialog.close();
+
+        }
+
+
+        modalMode =
+            'add';
+
+
+        currentRow =
+            null;
+
+
+        currentId =
+            null;
+
+
+        hideFormError();
+
+    }
+
+
+
+    /* =========================================================
+       SUBMIT
+    ========================================================= */
+
+    async function submitForm(
+        event
+    ) {
+
+        event.preventDefault();
+
+
+        hideFormError();
+
+
+        if (
+            modalMode ===
+            'view'
+        ) {
+
+            closeModal();
+
+            return;
+
+        }
+
+
+        if (
+            modalMode ===
+            'delete'
+        ) {
+
+            await deleteRecord();
+
+            return;
+
+        }
+
+
+        const nama =
+            String(
+                qs('#ruanganName')
+                    ?.value
+                ||
+                ''
+            ).trim();
+
+
+        const kode =
+            String(
+                qs('#ruanganCode')
+                    ?.value
+                ||
+                ''
+            ).trim();
+
+
+        if (!nama) {
+
+            showFormError(
+                'Nama Ruangan wajib diisi.'
+            );
+
+
+            qs('#ruanganName')
+                ?.focus();
+
+
+            return;
+
+        }
+
+
+        const payload = {
+
+            nama_ruang:
+                nama,
+
+            kode:
+                kode
+
+        };
+
+
+        let url =
+            window
+                .RUANGAN_CRUD
+                .store;
+
+
+        let method =
+            'POST';
+
+
+        if (
+            modalMode ===
+            'edit'
+        ) {
+
+            url =
+                window
+                    .RUANGAN_CRUD
+                    .update
+                    .replace(
+                        '__ID__',
+                        encodeURIComponent(
+                            currentId
+                        )
+                    );
+
+
+            method =
+                'PUT';
+
+        }
+
+
+        const button =
+            qs('#ruanganSaveButton');
+
+
+        const text =
+            qs('#ruanganSaveText');
+
+
+        const original =
+            text.textContent;
+
+
+        button.disabled =
+            true;
+
+
+        text.textContent =
+            'Menyimpan...';
+
+
+        try {
+
+            const result =
+                await request(
+                    url,
+                    method,
+                    payload
+                );
+
+
+            showToast(
+                result.message
+                ||
+                'Data berhasil disimpan.',
+                'success'
+            );
+
+
+            closeModal();
+
+
+            /*
+             * Reload agar database kembali
+             * menjadi source of truth.
+             */
+
+            setTimeout(
+                function () {
+
+                    window.location.reload();
+
+                },
+                400
+            );
+
+
+        } catch (error) {
+
+            showFormError(
+                error.message
+            );
+
+
+        } finally {
+
+            button.disabled =
+                false;
+
+
+            text.textContent =
+                original;
+
+        }
+
+    }
+
+
+
+    /* =========================================================
+       REQUEST
+    ========================================================= */
+
+    async function request(
+        url,
+        method,
+        payload = null
+    ) {
+
+        const options = {
+
+            method:
+                method,
+
+            credentials:
+                'same-origin',
+
+            headers: {
+
+                'Accept':
+                    'application/json',
+
+                'Content-Type':
+                    'application/json',
+
+                'X-Requested-With':
+                    'XMLHttpRequest',
+
+                'X-CSRF-TOKEN':
+                    csrfToken()
+
+            }
+
+        };
+
+
+        if (
+            payload !==
+            null
+        ) {
+
+            options.body =
+                JSON.stringify(
+                    payload
+                );
+
+        }
+
+
+        const response =
+            await fetch(
+                url,
+                options
+            );
+
+
+        const data =
+            await response
+                .json()
+                .catch(
+                    function () {
+
+                        return {};
+
+                    }
+                );
+
+
+        if (!response.ok) {
+
+            let message =
+                data.message
+                ||
+                `Request gagal (${response.status}).`;
+
+
+            if (
+                response.status ===
+                    422
+                &&
+                data.errors
+            ) {
+
+                const first =
+                    Object.values(
+                        data.errors
+                    )
+                        .flat()[0];
+
+
+                if (first) {
+
+                    message =
+                        first;
+
+                }
+
+            }
+
+
+            throw new Error(
+                message
+            );
+
+        }
+
+
+        return data;
+
+    }
+
+
+
+    /* =========================================================
+       DELETE
+    ========================================================= */
+
+    async function deleteRecord() {
+
+        if (!currentId) {
+
+            showFormError(
+                'ID Ruangan tidak ditemukan.'
+            );
+
+
+            return;
+
+        }
+
+
+        const confirmed =
+            window.confirm(
+                `Apakah Anda yakin ingin menghapus "${currentRow?.dataset.nama || 'Ruangan'}"?`
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        const button =
+            qs('#ruanganSaveButton');
+
+
+        const text =
+            qs('#ruanganSaveText');
+
+
+        button.disabled =
+            true;
+
+
+        text.textContent =
+            'Menghapus...';
+
+
+        try {
+
+            const url =
+                window
+                    .RUANGAN_CRUD
+                    .destroy
+                    .replace(
+                        '__ID__',
+                        encodeURIComponent(
+                            currentId
+                        )
+                    );
+
+
+            const result =
+                await request(
+                    url,
+                    'DELETE'
+                );
+
+
+            showToast(
+                result.message
+                ||
+                'Ruangan berhasil dihapus.',
+                'success'
+            );
+
+
+            closeModal();
+
+
+            setTimeout(
+                function () {
+
+                    window.location.reload();
+
+                },
+                400
+            );
+
+
+        } catch (error) {
+
+            showFormError(
+                error.message
+            );
+
+
+        } finally {
+
+            button.disabled =
+                false;
+
+
+            text.textContent =
+                'Hapus Ruangan';
+
+        }
+
+    }
+
+
+
+    /* =========================================================
+       HISTORY MODAL
+    ========================================================= */
+
+    function openActivityModal() {
+
+        const dialog =
+            qs(
+                '#ruanganActivityModal'
+            );
+
+
+        if (!dialog) {
+
+            return;
+
+        }
+
+
+        filterHistory(
+            'all'
+        );
+
+
+        if (!dialog.open) {
+
+            dialog.showModal();
+
+        }
+
+
+        refreshIcons();
+
+    }
+
+
+
+    function closeActivityModal() {
+
+        const dialog =
+            qs(
+                '#ruanganActivityModal'
+            );
+
+
+        if (
+            dialog &&
+            dialog.open
+        ) {
+
+            dialog.close();
+
+        }
+
+    }
+
+
+
+    function filterHistory(
+        filter
+    ) {
+
+        qsa(
+            '[data-ruangan-history-filter]'
+        )
+            .forEach(
+                function (button) {
+
+                    button
+                        .classList
+                        .toggle(
+                            'active',
+                            button
+                                .dataset
+                                .ruanganHistoryFilter
+                                ===
+                                filter
+                        );
+
+                }
+            );
+
+
+        let visible =
+            0;
+
+
+        qsa(
+            '[data-ruangan-history-row]'
+        )
+            .forEach(
+                function (row) {
+
+                    const show =
+                        filter ===
+                            'all'
+                        ||
+                        row.dataset.action ===
+                            filter;
+
+
+                    row.hidden =
+                        !show;
+
+
+                    if (show) {
+
+                        visible++;
+
+
+                        const number =
+                            row.querySelector(
+                                '.ruangan-history-number'
+                            );
+
+
+                        if (number) {
+
+                            number.textContent =
+                                visible;
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+        const empty =
+            qs(
+                '#ruanganHistoryFilteredEmpty'
+            );
+
+
+        if (empty) {
+
+            empty.hidden =
+                visible !==
+                0;
+
+        }
+
+
+        refreshIcons();
+
+    }
+
+
+
+    /* =========================================================
+       EXPORT
+    ========================================================= */
+
+    function exportCSV() {
+
+        const data =
+            filteredRows();
+
+
+        if (!data.length) {
+
+            showToast(
+                'Tidak ada data untuk diekspor.',
+                'error'
+            );
+
+
+            return;
+
+        }
+
+
+        const lines = [
+
+            [
+                'No',
+                'Kode Ruangan',
+                'Nama Ruangan',
+                'Created At',
+                'Updated At'
+            ]
+
+        ];
+
+
+        data.forEach(
+            function (
+                row,
+                index
+            ) {
+
+                lines.push(
+                    [
+
+                        index + 1,
+
+                        row.dataset.kode
+                        ||
+                        '',
+
+                        row.dataset.nama
+                        ||
+                        '',
+
+                        row.dataset.createdAt
+                        ||
+                        '',
+
+                        row.dataset.updatedAt
+                        ||
+                        ''
+
+                    ]
+                );
+
+            }
+        );
+
+
+        const csv =
+            lines
+                .map(
+                    function (line) {
+
+                        return line
+                            .map(
+                                function (value) {
+
+                                    let text =
+                                        String(
+                                            value
+                                            ??
+                                            ''
+                                        );
+
+
+                                    /*
+                                     * CSV Injection protection.
+                                     */
+
+                                    if (
+                                        /^[\s]*[=+@-]/
+                                            .test(
+                                                text
+                                            )
+                                    ) {
+
+                                        text =
+                                            "'" +
+                                            text;
+
+                                    }
+
+
+                                    return (
+                                        '"' +
+                                        text.replace(
+                                            /"/g,
+                                            '""'
+                                        ) +
+                                        '"'
+                                    );
+
+                                }
+                            )
+                            .join(',');
+
+                    }
+                )
+                .join(
+                    '\r\n'
+                );
+
+
+        const blob =
+            new Blob(
+                [
+                    '\uFEFF' +
+                    csv
+                ],
+                {
+                    type:
+                        'text/csv;charset=utf-8;'
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const link =
+            document.createElement(
+                'a'
+            );
+
+
+        link.href =
+            url;
+
+
+        link.download =
+            `data-ruangan-${new Date().toISOString().slice(0, 10)}.csv`;
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        URL.revokeObjectURL(
+            url
+        );
+
+
+        showToast(
+            'Data Ruangan berhasil diekspor.',
+            'success'
+        );
+
+    }
+
+
+
+    /* =========================================================
+       FORM ERROR
+    ========================================================= */
+
+    function showFormError(
+        message
+    ) {
+
+        const element =
+            qs('#ruanganFormAlert');
+
+
+        if (!element) {
+
+            return;
+
+        }
+
+
+        element.textContent =
+            message;
+
+
+        element.hidden =
+            false;
+
+    }
+
+
+
+    function hideFormError() {
+
+        const element =
+            qs('#ruanganFormAlert');
+
+
+        if (!element) {
+
+            return;
+
+        }
+
+
+        element.textContent =
+            '';
+
+
+        element.hidden =
+            true;
+
+    }
+
+
+
+    /* =========================================================
+       TOAST
+    ========================================================= */
+
+    function showToast(
+        message,
+        type = 'success'
+    ) {
+
+        const container =
+            qs('#ruanganToastContainer');
+
+
+        if (!container) {
+
+            window.alert(
+                message
+            );
+
+
+            return;
+
+        }
+
+
+        const toast =
+            document.createElement(
+                'div'
+            );
+
+
+        toast.className =
+            `ruangan-toast ${type}`;
+
+
+        toast.textContent =
+            message;
+
+
+        container.appendChild(
+            toast
+        );
+
+
+        requestAnimationFrame(
+            function () {
+
+                toast.classList.add(
+                    'show'
+                );
+
+            }
+        );
+
+
+        setTimeout(
+            function () {
+
+                toast.classList.remove(
+                    'show'
+                );
+
+
+                setTimeout(
+                    function () {
+
+                        toast.remove();
+
+                    },
+                    250
+                );
+
+            },
+            3000
+        );
+
+    }
+
+
+
+    /* =========================================================
+       TABLE ACTION
+    ========================================================= */
+
+    function bindTableActions() {
+
+        qs('#ruanganTable')
+            ?.addEventListener(
+                'click',
+                function (event) {
+
+                    const button =
+                        event
+                            .target
+                            .closest(
+                                'button[data-action]'
+                            );
+
+
+                    if (!button) {
+
+                        return;
+
+                    }
+
+
+                    const row =
+                        button
+                            .closest(
+                                'tr[data-record]'
+                            );
+
+
+                    if (!row) {
+
+                        return;
+
+                    }
+
+
+                    openModal(
+                        button.dataset.action,
+                        row
+                    );
+
+                }
+            );
+
+    }
+
+
+
+    /* =========================================================
+       ACTIVITY
+    ========================================================= */
+
+    function bindActivity() {
+
+        const card =
+            qs(
+                '#ruanganTotalActivityCard'
+            );
+
+
+        card?.addEventListener(
+            'click',
+            openActivityModal
+        );
+
+
+        card?.addEventListener(
+            'keydown',
+            function (event) {
+
+                if (
+                    event.key ===
+                        'Enter'
+                    ||
+                    event.key ===
+                        ' '
+                ) {
+
+                    event.preventDefault();
+
+
+                    openActivityModal();
+
+                }
+
+            }
+        );
+
+
+        qsa(
+            '[data-ruangan-history-filter]'
+        )
+            .forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            filterHistory(
+                                button
+                                    .dataset
+                                    .ruanganHistoryFilter
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+    }
+
+
+
+    /* =========================================================
+       SCROLL
+    ========================================================= */
+
+    function scrollToTable() {
+
+        qs('.ruangan-table-card')
+            ?.scrollIntoView(
+                {
+
+                    behavior:
+                        'smooth',
+
+                    block:
+                        'start'
+
+                }
+            );
+
+    }
+
+
+
+    /* =========================================================
+       INIT
+    ========================================================= */
+
+    function init() {
+
+        /*
+         * Date.
+         */
+
+        updateDateTime();
+
+
+        setInterval(
+            updateDateTime,
+            1000
+        );
+
+
+        /*
+         * Search.
+         */
+
+        qs('#ruanganSearch')
+            ?.addEventListener(
+                'input',
+                function () {
+
+                    currentPage =
+                        1;
+
+
+                    renderTable();
+
+                }
+            );
+
+
+        /*
+         * Page size.
+         */
+
+        qs('#ruanganPageSize')
+            ?.addEventListener(
+                'change',
+                function () {
+
+                    currentPage =
+                        1;
+
+
+                    renderTable();
+
+                }
+            );
+
+
+        /*
+         * Form.
+         */
+
+        qs('#ruanganForm')
+            ?.addEventListener(
+                'submit',
+                submitForm
+            );
+
+
+        bindTableActions();
+
+        bindActivity();
+
+
+        renderTable();
+
+        refreshIcons();
+
+    }
+
+
+
+    /* =========================================================
+       GLOBAL
+    ========================================================= */
+
+    window.openRuanganModal =
+        function () {
+
+            openModal(
+                'add'
+            );
+
+        };
+
+
+    window.closeRuanganModal =
+        closeModal;
+
+
+    window.filterRuanganTable =
+        filterTable;
+
+
+    window.resetRuanganFilter =
+        resetFilter;
+
+
+    window.exportRuanganCSV =
+        exportCSV;
+
+
+    window.closeRuanganActivityModal =
+        closeActivityModal;
+
+
+    window.scrollToRuanganTable =
+        scrollToTable;
+
+
+
+    /* =========================================================
+       START
+    ========================================================= */
+
+    if (
+        document.readyState ===
+        'loading'
+    ) {
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            init
+        );
+
+    } else {
+
+        init();
+
+    }
+
+})();
