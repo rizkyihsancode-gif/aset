@@ -3,7 +3,7 @@
 @section('title', 'Aset Tetap Lainnya')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/aset_ttp.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/kib/aset_ttp.css') }}">
 @endpush
 
 @section('content')
@@ -1350,7 +1350,7 @@
 
 
     @push('scripts')
-        <script src="{{ asset('js/pages/aset_ttp.js') }}"></script>
+        <script src="{{ asset('js/pages/kib/aset_ttp.js') }}"></script>
     @endpush
 
 @endsection

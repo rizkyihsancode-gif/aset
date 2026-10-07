@@ -2,1165 +2,1467 @@
 
 @section('title', 'Dashboard')
 
-@section('page-title', 'Dashboard')
-
-@section('page-description', 'Ringkasan dan monitoring aset perusahaan')
-
-
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/pages/dashboard.css') }}">
 @endpush
 
 
-
 @section('content')
+
+    @php
+
+        $formatNumber = fn($value) => number_format((float) $value, 0, ',', '.');
+
+        $formatCurrencyCompact = function ($value) {
+            $value = (float) $value;
+
+            if ($value >= 1000000000000) {
+                return 'Rp ' . number_format($value / 1000000000000, 1, ',', '.') . ' T';
+            }
+
+            if ($value >= 1000000000) {
+                return 'Rp ' . number_format($value / 1000000000, 1, ',', '.') . ' M';
+            }
+
+            if ($value >= 1000000) {
+                return 'Rp ' . number_format($value / 1000000, 1, ',', '.') . ' Jt';
+            }
+
+            return 'Rp ' . number_format($value, 0, ',', '.');
+        };
+
+        $kibColors = ['#2583f3', '#ff9f1a', '#f5bc28', '#7559d8', '#ef5350', '#537dd7', '#18a999'];
+
+        $kibSegments = [];
+
+        $cursor = 0;
+
+        if ($totalAset > 0) {
+            foreach ($kibStats as $index => $item) {
+                $start = $cursor;
+
+                $size = (((float) ($item['jumlah'] ?? 0)) / (float) $totalAset) * 360;
+
+                $end = $start + $size;
+
+                $color = $kibColors[$index % count($kibColors)];
+
+                $kibSegments[] = $color . ' ' . $start . 'deg ' . $end . 'deg';
+
+                $cursor = $end;
+            }
+        }
+
+        $kibGradient = count($kibSegments) ? implode(', ', $kibSegments) : '#e7eef7 0deg 360deg';
+
+        $conditionKnownTotal = (int) ($conditionStats['total'] ?? 0);
+
+        $conditionAvailable = (bool) ($conditionStats['available'] ?? false);
+
+        $baikPercent = $conditionKnownTotal > 0 ? (($conditionStats['baik'] ?? 0) / $conditionKnownTotal) * 100 : 0;
+
+        $maintenancePercent =
+            $conditionKnownTotal > 0 ? (($conditionStats['maintenance'] ?? 0) / $conditionKnownTotal) * 100 : 0;
+
+        $baikEnd = $baikPercent * 3.6;
+
+        $maintenanceEnd = $baikEnd + $maintenancePercent * 3.6;
+
+        $conditionGradient = $conditionAvailable
+            ? "#21b66f 0deg {$baikEnd}deg,
+            #f6ad19 {$baikEnd}deg {$maintenanceEnd}deg,
+            #ef4444 {$maintenanceEnd}deg 360deg"
+            : '#e5edf6 0deg 360deg';
+
+        $masters = [
+            [
+                'icon' => 'package',
+
+                'label' => 'Barang',
+
+                'value' => $masterStats['barang'] ?? 0,
+            ],
+
+            [
+                'icon' => 'map-pin',
+
+                'label' => 'Lokasi',
+
+                'value' => $masterStats['lokasi'] ?? 0,
+            ],
+
+            [
+                'icon' => 'door-open',
+
+                'label' => 'Ruangan',
+
+                'value' => $masterStats['ruangan'] ?? 0,
+            ],
+
+            [
+                'icon' => 'network',
+
+                'label' => 'Departemen',
+
+                'value' => $masterStats['departemen'] ?? 0,
+            ],
+
+            [
+                'icon' => 'users',
+
+                'label' => 'Divisi',
+
+                'value' => $masterStats['divisi'] ?? 0,
+            ],
+
+            [
+                'icon' => 'contact',
+
+                'label' => 'SDM Pendukung',
+
+                'value' => $masterStats['sdm'] ?? 0,
+            ],
+
+            [
+                'icon' => 'badge-check',
+
+                'label' => 'Kode Aktiva',
+
+                'value' => $masterStats['kode_aktiva'] ?? 0,
+            ],
+        ];
+
+        $topLocations = array_slice($locations ?? [], 0, 7);
+
+        $safeRecentActivities = $recentActivities ?? [];
+    @endphp
+
 
     <section class="content dashboard-page">
 
+        {{-- HEADER --}}
+        <header class="dashboard-page-header">
 
-        {{-- ============================================================
-         DASHBOARD TOP
-    ============================================================= --}}
-        <div class="dashboard-top">
-
-
-            <div class="dashboard-heading">
+            <div class="dashboard-page-heading">
 
                 <span class="dashboard-eyebrow">
                     Overview
                 </span>
 
-                <h2>
-                    Dashboard
-                </h2>
 
-                <p>
-                    Ringkasan dan monitoring aset perusahaan
-                </p>
+                <div class="dashboard-title-line">
+
+                    <div>
+
+                        <h1>
+                            Dashboard
+                        </h1>
+
+                        <p>
+                            Ringkasan dan monitoring aset perusahaan
+                        </p>
+
+                    </div>
+
+
+                    <button type="button" class="dashboard-presentation-button" id="dashboardPresentationButton"
+                        aria-pressed="false">
+
+                        <i data-lucide="maximize-2"></i>
+
+                        <span>
+                            Mode Presentasi
+                        </span>
+
+                    </button>
+
+                </div>
 
             </div>
 
 
+            <div class="dashboard-date-card">
 
-            {{-- DATE CARD --}}
-            <div class="dashboard-date">
+                <span class="dashboard-date-icon">
 
-                <div class="dashboard-date-icon">
                     <i data-lucide="calendar-days"></i>
-                </div>
 
-
-                <div>
-
-                    <strong id="dashboardDate">
-                        Kamis, 24 September 2026
-                    </strong>
-
-                    <span id="dashboardTime">
-                        11:07 WIB
-                    </span>
-
-                </div>
-
-            </div>
-
-
-        </div>
-
-
-
-        {{-- ============================================================
-         HERO BANNER
-    ============================================================= --}}
-        <div class="dashboard-hero">
-
-
-            <div class="dashboard-hero-overlay"></div>
-
-
-            <div class="dashboard-hero-content">
-
-
-                <span>
-                    Sistem Informasi
                 </span>
 
 
-                <h1>
-                    Manajemen Aset
-                </h1>
+                <span>
 
-
-                <h3>
-                    Perumdam Tirta Kencana
-                </h3>
-
-
-                <div class="dashboard-welcome">
-
-                    <strong>
-                        Selamat datang, Administrator
+                    <strong id="dashboardCurrentDate">
+                        -
                     </strong>
 
-                    <p>
-                        Pantau, kelola, dan optimalkan aset perusahaan
-                        untuk mendukung pelayanan air bersih yang lebih baik.
-                    </p>
-
-                </div>
-
-
-            </div>
-
-
-
-            <div class="dashboard-hero-quote">
-
-                <p>
-                    “Aset yang terkelola dengan baik
-                    <br>
-                    untuk pelayanan air yang lebih baik”
-                </p>
-
-                <span></span>
-
-            </div>
-
-
-        </div>
-
-
-
-        {{-- ============================================================
-         KPI
-    ============================================================= --}}
-        <div class="dashboard-kpi-grid">
-
-
-            {{-- TOTAL ASET --}}
-            <div class="dashboard-kpi-card">
-
-                <div class="kpi-icon blue">
-
-                    <i data-lucide="box"></i>
-
-                </div>
-
-
-                <div class="kpi-main">
-
-                    <span>
-                        Total Aset
-                    </span>
-
-                    <strong>
-                        2.485
-                    </strong>
-
-                    <small class="positive">
-
-                        <i data-lucide="arrow-up"></i>
-
-                        +5,2% dari tahun lalu
-
+                    <small id="dashboardCurrentTime">
+                        -
                     </small>
 
-                </div>
-
-
-                <div class="kpi-mini-chart">
-
-                    <svg viewBox="0 0 100 45">
-
-                        <polyline points="2,35 17,22 31,27 47,12 62,17 78,9 98,2" />
-
-                    </svg>
-
-                </div>
+                </span>
 
             </div>
 
+        </header>
 
 
-            {{-- TOTAL NILAI --}}
-            <div class="dashboard-kpi-card">
+        {{-- DECK --}}
+        <section class="dashboard-deck" id="dashboardDeck" tabindex="0">
 
-                <div class="kpi-icon blue">
+            <div class="dashboard-deck-viewport">
 
-                    <i data-lucide="coins"></i>
+                <div class="dashboard-slide-stage">
 
-                </div>
 
+                    {{-- =====================================================
+                     SLIDE 1
+                ====================================================== --}}
+                    <article
+                        class="
+                        dashboard-slide
+                        dashboard-slide-profile
+                        is-active
+                    "
+                        data-slide="0"
+                        style="
+                        --dashboard-profile-image:
+                        url('{{ asset('images/dashboard/pdam2.jpeg') }}');
+                    ">
 
-                <div class="kpi-main">
+                        <div
+                            class="
+                            dashboard-slide-number
+                            dashboard-slide-number-light
+                        ">
+                            Slide 1 dari 6
+                        </div>
 
-                    <span>
-                        Total Nilai Aset
-                    </span>
 
-                    <strong class="kpi-money">
-                        Rp 928,7 M
-                    </strong>
+                        <div class="profile-copy">
 
-                    <small class="positive">
-
-                        <i data-lucide="arrow-up"></i>
-
-                        +6,1% dari tahun lalu
-
-                    </small>
-
-                </div>
-
-
-                <div class="kpi-mini-chart">
-
-                    <svg viewBox="0 0 100 45">
-
-                        <polyline points="2,36 14,24 28,29 42,13 57,17 73,7 98,11" />
-
-                    </svg>
-
-                </div>
-
-            </div>
-
-
-
-            {{-- KONDISI BAIK --}}
-            <div class="dashboard-kpi-card kpi-green-card">
-
-                <div class="kpi-icon green">
-
-                    <i data-lucide="check"></i>
-
-                </div>
-
-
-                <div class="kpi-main">
-
-                    <span>
-                        Kondisi Baik
-                    </span>
-
-                    <strong>
-                        2.215
-                    </strong>
-
-                    <small>
-                        89,1% dari total aset
-                    </small>
-
-                </div>
-
-
-                <div class="kpi-circle good">
-
-                    <div>
-
-                        <strong>
-                            89,1%
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-
-            {{-- PERLU PERHATIAN --}}
-            <div class="dashboard-kpi-card kpi-warning-card">
-
-                <div class="kpi-icon orange">
-
-                    <i data-lucide="triangle-alert"></i>
-
-                </div>
-
-
-                <div class="kpi-main">
-
-                    <span>
-                        Perlu Perhatian
-                    </span>
-
-                    <strong>
-                        270
-                    </strong>
-
-                    <small>
-                        10,9% dari total aset
-                    </small>
-
-                </div>
-
-
-                <div class="kpi-circle warning">
-
-                    <div>
-
-                        <strong>
-                            10,9%
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-        </div>
-
-
-
-        {{-- ============================================================
-         CHART ROW
-    ============================================================= --}}
-        <div class="dashboard-chart-grid">
-
-
-            {{-- GROWTH --}}
-            <div class="dashboard-card growth-card">
-
-                <div class="dashboard-card-header">
-
-                    <div>
-
-                        <h3>
-                            Pertumbuhan Nilai Aset
-                        </h3>
-
-                        <p>
-                            Dalam Miliar Rupiah (Rp)
-                        </p>
-
-                    </div>
-
-
-                    <select class="dashboard-period">
-
-                        <option>
-                            5 Tahun Terakhir
-                        </option>
-
-                        <option>
-                            3 Tahun Terakhir
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="dashboard-card-body chart-area">
-
-                    <canvas id="assetGrowthChart"></canvas>
-
-                </div>
-
-            </div>
-
-
-
-            {{-- DONUT KIB --}}
-            <div class="dashboard-card kib-card">
-
-                <div class="dashboard-card-header">
-
-                    <div>
-
-                        <h3>
-                            Komposisi Aset per KIB
-                        </h3>
-
-                        <p>
-                            Jumlah aset berdasarkan kategori
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="dashboard-card-body kib-content">
-
-
-                    <div class="kib-chart-wrap">
-
-                        <canvas id="kibCompositionChart"></canvas>
-
-
-                        <div class="donut-center">
-
-                            <strong>
-                                2.485
-                            </strong>
-
-                            <span>
-                                Aset
+                            <span class="profile-kicker">
+                                Sistem Informasi
                             </span>
 
-                        </div>
 
-                    </div>
+                            <h2>
+                                Manajemen Aset
+                            </h2>
 
 
+                            <h3>
+                                Perumda Tirta Kencana
+                            </h3>
 
-                    <div class="kib-legend">
-
-
-                        <div>
-                            <span class="legend-dot blue"></span>
-                            <p>Tanah</p>
-                            <strong>245</strong>
-                        </div>
-
-
-                        <div>
-                            <span class="legend-dot orange"></span>
-                            <p>Peralatan & Mesin</p>
-                            <strong>1.020</strong>
-                        </div>
-
-
-                        <div>
-                            <span class="legend-dot yellow"></span>
-                            <p>Gedung & Bangunan</p>
-                            <strong>380</strong>
-                        </div>
-
-
-                        <div>
-                            <span class="legend-dot purple"></span>
-                            <p>Jalan & Jaringan</p>
-                            <strong>510</strong>
-                        </div>
-
-
-                        <div>
-                            <span class="legend-dot red"></span>
-                            <p>Aset Tetap Lainnya</p>
-                            <strong>260</strong>
-                        </div>
-
-
-                        <div>
-                            <span class="legend-dot indigo"></span>
-                            <p>Konstruksi</p>
-                            <strong>70</strong>
-                        </div>
-
-
-                    </div>
-
-
-                </div>
-
-            </div>
-
-
-
-            {{-- CATEGORY --}}
-            <div class="dashboard-card category-card">
-
-                <div class="dashboard-card-header">
-
-                    <div>
-
-                        <h3>
-                            Jumlah Aset per Kategori
-                        </h3>
-
-                        <p>
-                            Perbandingan jumlah aset setiap kategori
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="dashboard-card-body category-list">
-
-
-                    <div class="category-item">
-
-                        <span>
-                            Peralatan & Mesin
-                        </span>
-
-                        <div class="category-progress">
-
-                            <div style="width:100%"></div>
-
-                        </div>
-
-                        <strong>
-                            1.020
-                        </strong>
-
-                    </div>
-
-
-
-                    <div class="category-item">
-
-                        <span>
-                            Jalan & Jaringan
-                        </span>
-
-                        <div class="category-progress">
-
-                            <div style="width:50%"></div>
-
-                        </div>
-
-                        <strong>
-                            510
-                        </strong>
-
-                    </div>
-
-
-
-                    <div class="category-item">
-
-                        <span>
-                            Gedung & Bangunan
-                        </span>
-
-                        <div class="category-progress">
-
-                            <div style="width:37%"></div>
-
-                        </div>
-
-                        <strong>
-                            380
-                        </strong>
-
-                    </div>
-
-
-
-                    <div class="category-item">
-
-                        <span>
-                            Aset Lainnya
-                        </span>
-
-                        <div class="category-progress">
-
-                            <div style="width:25%"></div>
-
-                        </div>
-
-                        <strong>
-                            260
-                        </strong>
-
-                    </div>
-
-
-
-                    <div class="category-item">
-
-                        <span>
-                            Tanah
-                        </span>
-
-                        <div class="category-progress">
-
-                            <div style="width:24%"></div>
-
-                        </div>
-
-                        <strong>
-                            245
-                        </strong>
-
-                    </div>
-
-
-
-                    <div class="category-item">
-
-                        <span>
-                            Konstruksi
-                        </span>
-
-                        <div class="category-progress">
-
-                            <div style="width:7%"></div>
-
-                        </div>
-
-                        <strong>
-                            70
-                        </strong>
-
-                    </div>
-
-
-                </div>
-
-            </div>
-
-
-        </div>
-
-
-
-        {{-- ============================================================
-         BOTTOM ROW
-    ============================================================= --}}
-        <div class="dashboard-bottom-grid">
-
-
-            {{-- CONDITION --}}
-            <div class="dashboard-card condition-card">
-
-                <div class="dashboard-card-header">
-
-                    <div>
-
-                        <h3>
-                            Kondisi Aset
-                        </h3>
-
-                        <p>
-                            Distribusi kondisi aset saat ini
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="dashboard-card-body condition-content">
-
-
-                    <div class="condition-chart-wrap">
-
-                        <canvas id="assetConditionChart"></canvas>
-
-
-                        <div class="donut-center condition-center">
-
-                            <strong>
-                                2.485
-                            </strong>
-
-                            <span>
-                                Aset
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="condition-legend">
-
-
-                        <div>
-
-                            <span class="condition-dot good"></span>
 
                             <p>
-                                Baik
+                                Pengelolaan aset yang terintegrasi,
+                                akurat, dan mendukung pelayanan air
+                                bersih yang lebih baik bagi masyarakat.
                             </p>
 
-                            <strong>
-                                2.215
-                            </strong>
 
-                            <small>
-                                89,1%
-                            </small>
+                            <span class="profile-line"></span>
 
                         </div>
 
 
-                        <div>
+                        <blockquote class="profile-quote">
+                            “Aset yang terkelola dengan baik
+                            <br>
+                            untuk pelayanan air yang lebih baik”
+                        </blockquote>
 
-                            <span class="condition-dot maintenance"></span>
 
-                            <p>
-                                Maintenance
-                            </p>
+                        <div class="profile-kpi-grid">
 
-                            <strong>
-                                180
-                            </strong>
+                            <article class="profile-kpi-card">
 
-                            <small>
-                                7,2%
-                            </small>
+                                <span
+                                    class="
+                                    profile-kpi-icon
+                                    is-blue
+                                ">
+
+                                    <i data-lucide="box"></i>
+
+                                </span>
+
+
+                                <span>
+
+                                    <small>
+                                        Total Aset
+                                    </small>
+
+                                    <strong>
+                                        {{ $formatNumber($totalAset) }}
+                                    </strong>
+
+                                    <em>
+                                        K.I.B & K.I.R tercatat
+                                    </em>
+
+                                </span>
+
+                            </article>
+
+
+                            <article class="profile-kpi-card">
+
+                                <span
+                                    class="
+                                    profile-kpi-icon
+                                    is-green
+                                ">
+
+                                    <i data-lucide="coins"></i>
+
+                                </span>
+
+
+                                <span>
+
+                                    <small>
+                                        Total Nilai Aset
+                                    </small>
+
+                                    <strong>
+                                        {{ $formatCurrencyCompact($totalNilai) }}
+                                    </strong>
+
+                                    <em>
+                                        berdasarkan nilai aktiva
+                                    </em>
+
+                                </span>
+
+                            </article>
+
+
+                            <article class="profile-kpi-card">
+
+                                <span
+                                    class="
+                                    profile-kpi-icon
+                                    is-orange
+                                ">
+
+                                    <i data-lucide="map-pin"></i>
+
+                                </span>
+
+
+                                <span>
+
+                                    <small>
+                                        Lokasi Aset
+                                    </small>
+
+                                    <strong>
+                                        {{ $formatNumber($totalLokasiAset) }}
+                                    </strong>
+
+                                    <em>
+                                        lokasi memiliki aset
+                                    </em>
+
+                                </span>
+
+                            </article>
+
+
+                            <article class="profile-kpi-card">
+
+                                <span
+                                    class="
+                                    profile-kpi-icon
+                                    is-violet
+                                ">
+
+                                    <i data-lucide="building-2"></i>
+
+                                </span>
+
+
+                                <span>
+
+                                    <small>
+                                        Unit Kerja
+                                    </small>
+
+                                    <strong>
+                                        {{ $formatNumber($unitKerja) }}
+                                    </strong>
+
+                                    <em>
+                                        departemen & divisi
+                                    </em>
+
+                                </span>
+
+                            </article>
 
                         </div>
 
+                    </article>
 
-                        <div>
 
-                            <span class="condition-dot broken"></span>
+                    {{-- =====================================================
+                     SLIDE 2
+                ====================================================== --}}
+                    <article
+                        class="
+                        dashboard-slide
+                        dashboard-slide-data
+                    "
+                        data-slide="1"
+                        style="
+                        --slide-background:
+                        url('{{ asset('images/dashboard/pdam1.jpeg') }}');
+                    ">
 
-                            <p>
-                                Rusak
-                            </p>
-
-                            <strong>
-                                90
-                            </strong>
-
-                            <small>
-                                3,6%
-                            </small>
-
+                        <div class="dashboard-slide-number">
+                            Slide 2 dari 6
                         </div>
 
 
-                    </div>
+                        <header class="slide-heading-row">
 
+                            <div>
+
+                                <span class="slide-eyebrow">
+                                    Kartu Inventaris Barang & Ruangan
+                                </span>
+
+
+                                <h2>
+                                    Komposisi Aset per K.I.B
+                                </h2>
+
+
+                                <p>
+                                    Ringkasan jumlah dan nilai aset
+                                    berdasarkan klasifikasi.
+                                </p>
+
+                            </div>
+
+
+                            <div class="slide-summary-card">
+
+                                <small>
+                                    Total Aset
+                                </small>
+
+                                <strong>
+                                    {{ $formatNumber($totalAset) }}
+                                </strong>
+
+                            </div>
+
+                        </header>
+
+
+                        <div class="kib-layout">
+
+                            <section class="kib-chart-panel">
+
+                                <div class="kib-donut"
+                                    style="
+                                    background:
+                                    conic-gradient(
+                                        {{ $kibGradient }}
+                                    );
+                                ">
+
+                                    <div class="kib-donut-hole">
+
+                                        <strong>
+                                            {{ $formatNumber($totalAset) }}
+                                        </strong>
+
+                                        <span>
+                                            Aset
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="kib-legend">
+
+                                    @foreach ($kibStats as $index => $item)
+                                        <div class="kib-legend-row">
+
+                                            <span class="kib-legend-color"
+                                                style="
+                                                background:
+                                                {{ $kibColors[$index % count($kibColors)] }};
+                                            "></span>
+
+
+                                            <span class="kib-legend-name">
+                                                {{ $item['label'] ?? '-' }}
+                                            </span>
+
+
+                                            <strong>
+                                                {{ $formatNumber($item['jumlah'] ?? 0) }}
+                                            </strong>
+
+                                        </div>
+                                    @endforeach
+
+                                </div>
+
+                            </section>
+
+
+                            <section class="kib-card-grid">
+
+                                @foreach ($kibStats as $item)
+                                    <article class="kib-card">
+
+                                        <span class="kib-card-icon">
+
+                                            <i data-lucide="{{ $item['icon'] ?? 'box' }}"></i>
+
+                                        </span>
+
+
+                                        <span class="kib-card-copy">
+
+                                            <small>
+                                                {{ $item['label'] ?? '-' }}
+                                            </small>
+
+
+                                            <strong>
+                                                {{ $formatNumber($item['jumlah'] ?? 0) }}
+                                            </strong>
+
+
+                                            <em>
+                                                {{ $formatCurrencyCompact($item['nilai'] ?? 0) }}
+                                            </em>
+
+                                        </span>
+
+                                    </article>
+                                @endforeach
+
+                            </section>
+
+                        </div>
+
+                    </article>
+
+
+                    {{-- =====================================================
+                     SLIDE 3 - FIXED LINE CHART
+                ====================================================== --}}
+                    <article
+                        class="
+                        dashboard-slide
+                        dashboard-slide-data
+                    "
+                        data-slide="2"
+                        style="
+                        --slide-background:
+                        url('{{ asset('images/dashboard/pdam5.jpg') }}');
+                    ">
+
+                        <div class="dashboard-slide-number">
+                            Slide 3 dari 6
+                        </div>
+
+
+                        <header class="slide-heading-row">
+
+                            <div>
+
+                                <span class="slide-eyebrow">
+                                    Nilai Aset
+                                </span>
+
+
+                                <h2>
+                                    Nilai & Pertumbuhan Aset
+                                </h2>
+
+
+                                <p>
+                                    Perkembangan total nilai aset
+                                    berdasarkan periode pencatatan.
+                                </p>
+
+                            </div>
+
+
+                            <div class="slide-summary-card">
+
+                                <small>
+                                    Nilai Keseluruhan
+                                </small>
+
+                                <strong>
+                                    {{ $formatCurrencyCompact($totalNilai) }}
+                                </strong>
+
+                            </div>
+
+                        </header>
+
+
+                        <div class="growth-layout">
+
+                            <section class="growth-chart-card">
+
+                                <div class="growth-chart-heading">
+
+                                    <div class="panel-heading">
+
+                                        <div>
+
+                                            <h3>
+                                                Pertumbuhan Nilai Aset
+                                            </h3>
+
+                                            <span>
+                                                total nilai aset kumulatif
+                                                berdasarkan periode pencatatan
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="growth-change-badge" id="dashboardGrowthBadge" hidden>
+
+                                        <i data-lucide="trending-up"></i>
+
+                                        <span>
+
+                                            <small>
+                                                Pertumbuhan
+                                            </small>
+
+                                            <strong id="dashboardGrowthChange">
+                                                -
+                                            </strong>
+
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="growth-chart-stage">
+
+                                    <svg id="dashboardGrowthChart" viewBox="0 0 900 360" preserveAspectRatio="xMidYMid meet"
+                                        role="img" aria-label="Grafik pertumbuhan nilai aset"></svg>
+
+
+                                    <div class="growth-chart-tooltip" id="dashboardGrowthTooltip" hidden>
+
+                                        <small id="dashboardGrowthTooltipYear">
+                                            -
+                                        </small>
+
+
+                                        <strong id="dashboardGrowthTooltipValue">
+                                            -
+                                        </strong>
+
+
+                                        <span id="dashboardGrowthTooltipChange"></span>
+
+                                    </div>
+
+
+                                    <div class="chart-empty" id="dashboardGrowthEmpty" hidden>
+
+                                        <i data-lucide="chart-no-axes-combined"></i>
+
+
+                                        <strong>
+                                            Data pertumbuhan belum tersedia
+                                        </strong>
+
+
+                                        <span>
+                                            Sistem memerlukan informasi tahun
+                                            atau periode pada nilai aktiva.
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+
+                            <section class="growth-value-card">
+
+                                <h3>
+                                    Nilai per K.I.B & K.I.R
+                                </h3>
+
+
+                                <div class="growth-value-list">
+
+                                    @foreach ($kibStats as $index => $item)
+                                        @php
+
+                                            $nilaiPercentage =
+                                                $totalNilai > 0
+                                                    ? min(100, (($item['nilai'] ?? 0) / $totalNilai) * 100)
+                                                    : 0;
+                                        @endphp
+
+
+                                        <div class="growth-value-item">
+
+                                            <div>
+
+                                                <span>
+                                                    {{ $item['label'] ?? '-' }}
+                                                </span>
+
+
+                                                <strong>
+                                                    {{ $formatCurrencyCompact($item['nilai'] ?? 0) }}
+                                                </strong>
+
+                                            </div>
+
+
+                                            <div class="growth-value-track">
+
+                                                <span
+                                                    style="
+                                                    width:
+                                                    {{ $nilaiPercentage }}%;
+
+                                                    background:
+                                                    {{ $kibColors[$index % count($kibColors)] }};
+                                                "></span>
+
+                                            </div>
+
+                                        </div>
+                                    @endforeach
+
+                                </div>
+
+                            </section>
+
+                        </div>
+
+                    </article>
+
+
+                    {{-- =====================================================
+                     SLIDE 4
+                ====================================================== --}}
+                    <article
+                        class="
+                        dashboard-slide
+                        dashboard-slide-data
+                    "
+                        data-slide="3"
+                        style="
+                        --slide-background:
+                        url('{{ asset('images/dashboard/pdam6.jpg') }}');
+                    ">
+
+                        <div class="dashboard-slide-number">
+                            Slide 4 dari 6
+                        </div>
+
+
+                        <header class="slide-heading-row">
+
+                            <div>
+
+                                <span class="slide-eyebrow">
+                                    Monitoring Kondisi
+                                </span>
+
+                                <h2>
+                                    Kondisi Aset
+                                </h2>
+
+                                <p>
+                                    Kondisi aset berdasarkan data kondisi
+                                    K.I.B dan K.I.R.
+                                </p>
+
+                            </div>
+
+
+                            <div class="slide-summary-card">
+
+                                <small>
+                                    Data Kondisi
+                                </small>
+
+                                <strong>
+                                    {{ $formatNumber($conditionKnownTotal) }}
+                                </strong>
+
+                            </div>
+
+                        </header>
+
+
+                        <div class="condition-layout">
+
+                            <section class="condition-chart-card">
+
+                                <div class="condition-donut"
+                                    style="
+                                    background:
+                                    conic-gradient(
+                                        {{ $conditionGradient }}
+                                    );
+                                ">
+
+                                    <div class="condition-donut-hole">
+
+                                        @if ($conditionAvailable)
+                                            <strong>
+                                                {{ number_format($baikPercent, 1, ',', '.') }}%
+                                            </strong>
+
+                                            <span>
+                                                Kondisi Baik
+                                            </span>
+                                        @else
+                                            <strong>
+                                                —
+                                            </strong>
+
+                                            <span>
+                                                Belum tersedia
+                                            </span>
+                                        @endif
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="condition-note">
+
+                                    <strong>
+                                        Ringkasan Kondisi
+                                    </strong>
+
+
+                                    <span>
+                                        Berdasarkan data kondisi yang
+                                        berhasil dikenali oleh sistem.
+                                    </span>
+
+                                </div>
+
+                            </section>
+
+
+                            <section class="condition-stat-grid">
+
+                                <article
+                                    class="
+                                    condition-stat-card
+                                    is-good
+                                ">
+
+                                    <span class="condition-stat-icon">
+
+                                        <i data-lucide="circle-check-big"></i>
+
+                                    </span>
+
+                                    <span>
+
+                                        <small>
+                                            Baik
+                                        </small>
+
+                                        <strong>
+                                            {{ $formatNumber($conditionStats['baik'] ?? 0) }}
+                                        </strong>
+
+                                        <em>
+                                            Aset siap digunakan
+                                        </em>
+
+                                    </span>
+
+                                </article>
+
+
+                                <article
+                                    class="
+                                    condition-stat-card
+                                    is-warning
+                                ">
+
+                                    <span class="condition-stat-icon">
+
+                                        <i data-lucide="wrench"></i>
+
+                                    </span>
+
+                                    <span>
+
+                                        <small>
+                                            Perlu Perhatian
+                                        </small>
+
+                                        <strong>
+                                            {{ $formatNumber($conditionStats['maintenance'] ?? 0) }}
+                                        </strong>
+
+                                        <em>
+                                            Ringan / maintenance
+                                        </em>
+
+                                    </span>
+
+                                </article>
+
+
+                                <article
+                                    class="
+                                    condition-stat-card
+                                    is-danger
+                                ">
+
+                                    <span class="condition-stat-icon">
+
+                                        <i data-lucide="triangle-alert"></i>
+
+                                    </span>
+
+                                    <span>
+
+                                        <small>
+                                            Rusak
+                                        </small>
+
+                                        <strong>
+                                            {{ $formatNumber($conditionStats['rusak'] ?? 0) }}
+                                        </strong>
+
+                                        <em>
+                                            Perlu tindak lanjut
+                                        </em>
+
+                                    </span>
+
+                                </article>
+
+
+                                <article
+                                    class="
+                                    condition-stat-card
+                                    is-neutral
+                                ">
+
+                                    <span class="condition-stat-icon">
+
+                                        <i data-lucide="circle-help"></i>
+
+                                    </span>
+
+                                    <span>
+
+                                        <small>
+                                            Belum Terklasifikasi
+                                        </small>
+
+                                        <strong>
+                                            {{ $formatNumber($conditionStats['unknown'] ?? 0) }}
+                                        </strong>
+
+                                        <em>
+                                            Data kondisi lainnya
+                                        </em>
+
+                                    </span>
+
+                                </article>
+
+                            </section>
+
+                        </div>
+
+                    </article>
+
+
+                    {{-- =====================================================
+                     SLIDE 5
+                ====================================================== --}}
+                    <article
+                        class="
+                        dashboard-slide
+                        dashboard-slide-data
+                    "
+                        data-slide="4"
+                        style="
+                        --slide-background:
+                        url('{{ asset('images/dashboard/pdam7.jpeg') }}');
+                    ">
+
+                        <div class="dashboard-slide-number">
+                            Slide 5 dari 6
+                        </div>
+
+
+                        <header class="slide-heading-row">
+
+                            <div>
+
+                                <span class="slide-eyebrow">
+                                    Distribusi Lokasi
+                                </span>
+
+                                <h2>
+                                    Sebaran Aset
+                                </h2>
+
+                                <p>
+                                    Konsentrasi aset berdasarkan lokasi
+                                    yang memiliki pencatatan aset.
+                                </p>
+
+                            </div>
+
+
+                            <div class="slide-summary-card">
+
+                                <small>
+                                    Lokasi Aset
+                                </small>
+
+                                <strong>
+                                    {{ $formatNumber($totalLokasiAset) }}
+                                </strong>
+
+                            </div>
+
+                        </header>
+
+
+                        <div class="location-layout">
+
+                            <section class="location-map-card">
+
+                                <div class="location-map-stage" id="dashboardMapStage"></div>
+
+
+                                <div class="map-empty" id="dashboardMapEmpty" hidden>
+
+                                    <i data-lucide="map-off"></i>
+
+                                    <span>
+                                        Koordinat lokasi belum tersedia
+                                    </span>
+
+                                </div>
+
+                            </section>
+
+
+                            <section class="location-ranking-card">
+
+                                <h3>
+                                    Lokasi dengan Aset Terbanyak
+                                </h3>
+
+
+                                <div class="location-ranking-list">
+
+                                    @forelse ($topLocations as $index => $location)
+                                        <article class="location-ranking-row">
+
+                                            <span class="location-rank">
+                                                {{ $index + 1 }}
+                                            </span>
+
+                                            <span class="location-rank-copy">
+
+                                                <strong>
+                                                    {{ $location['lokasi'] ?? '-' }}
+                                                </strong>
+
+                                                <small>
+                                                    {{ $location['alamat'] ?? '' ?: 'Alamat belum tersedia' }}
+                                                </small>
+
+                                            </span>
+
+                                            <b>
+                                                {{ $formatNumber($location['jumlah'] ?? 0) }}
+                                            </b>
+
+                                        </article>
+
+                                    @empty
+
+                                        <div class="dashboard-data-empty">
+                                            Belum ada relasi lokasi aset.
+                                        </div>
+                                    @endforelse
+
+                                </div>
+
+                            </section>
+
+                        </div>
+
+                    </article>
+
+
+                    {{-- =====================================================
+                     SLIDE 6
+                ====================================================== --}}
+                    <article
+                        class="
+                        dashboard-slide
+                        dashboard-slide-data
+                    "
+                        data-slide="5"
+                        style="
+                        --slide-background:
+                        url('{{ asset('images/dashboard/pdam8.jpg') }}');
+                    ">
+
+                        <div class="dashboard-slide-number">
+                            Slide 6 dari 6
+                        </div>
+
+
+                        <header class="slide-heading-row">
+
+                            <div>
+
+                                <span class="slide-eyebrow">
+                                    Sistem Aset
+                                </span>
+
+                                <h2>
+                                    Master Data & Aktivitas
+                                </h2>
+
+                                <p>
+                                    Referensi data utama dan aktivitas
+                                    master data terbaru.
+                                </p>
+
+                            </div>
+
+
+                            @if ($updateTerakhir)
+                                <div class="last-update-badge">
+
+                                    <i data-lucide="history"></i>
+
+                                    <span>
+
+                                        <small>
+                                            Update Terakhir
+                                        </small>
+
+                                        <strong>
+                                            {{ $updateTerakhir['relative'] }}
+                                        </strong>
+
+                                    </span>
+
+                                </div>
+                            @endif
+
+                        </header>
+
+
+                        <div class="master-layout">
+
+                            <section class="master-stat-section">
+
+                                <h3>
+                                    Statistik Master Data
+                                </h3>
+
+
+                                <div class="master-stat-grid">
+
+                                    @foreach ($masters as $master)
+                                        <article class="master-stat-card">
+
+                                            <span class="master-stat-icon">
+
+                                                <i data-lucide="{{ $master['icon'] }}"></i>
+
+                                            </span>
+
+
+                                            <span class="master-stat-label">
+                                                {{ $master['label'] }}
+                                            </span>
+
+
+                                            <strong>
+                                                {{ $formatNumber($master['value']) }}
+                                            </strong>
+
+                                        </article>
+                                    @endforeach
+
+                                </div>
+
+                            </section>
+
+
+                            <section class="activity-section">
+
+                                <h3>
+                                    Aktivitas Terbaru
+                                </h3>
+
+
+                                <div class="activity-list">
+
+                                    @forelse ($safeRecentActivities as $activity)
+                                        <article class="activity-row">
+
+                                            <span
+                                                class="
+                activity-icon
+                activity-{{ $activity['action'] ?? 'default' }}
+            ">
+
+                                                <i data-lucide="{{ $activity['icon'] ?? 'history' }}"></i>
+
+                                            </span>
+
+                                            <span class="activity-copy">
+
+                                                <strong>
+                                                    {{ $activity['action_label'] ?? 'Aktivitas' }}:
+                                                    {{ $activity['record_name'] ?? '' ?: 'Data master' }}
+                                                </strong>
+
+                                                <small>
+
+                                                    {{ $activity['module_label'] ?? '-' }}
+
+                                                    @if (!empty($activity['record_code']))
+                                                        • {{ $activity['record_code'] }}
+                                                    @endif
+
+                                                </small>
+
+                                            </span>
+
+                                            <time>
+
+                                                @if (!empty($activity['created_at']))
+                                                    {{ \Carbon\Carbon::parse($activity['created_at'])->timezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y') }}
+                                                @else
+                                                    -
+                                                @endif
+
+                                            </time>
+
+                                        </article>
+
+                                    @empty
+
+                                        <div class="dashboard-data-empty">
+                                            Belum ada riwayat aktivitas.
+                                        </div>
+                                    @endforelse
+
+                                </div>
+
+                            </section>
+
+                        </div>
+
+                    </article>
+
+                </div>
+
+
+                {{-- ARROWS --}}
+                <button type="button"
+                    class="
+                    dashboard-arrow
+                    dashboard-arrow-prev
+                "
+                    id="dashboardPrev">
+
+                    <i data-lucide="chevron-left"></i>
+
+                </button>
+
+
+                <button type="button"
+                    class="
+                    dashboard-arrow
+                    dashboard-arrow-next
+                "
+                    id="dashboardNext">
+
+                    <i data-lucide="chevron-right"></i>
+
+                </button>
+
+
+                {{-- DOTS --}}
+                <div class="dashboard-dots" id="dashboardDots"></div>
+
+
+                {{-- AUTOPLAY --}}
+                <div class="dashboard-autoplay-control">
+
+                    <button type="button" id="dashboardPauseButton">
+
+                        <i data-lucide="pause"></i>
+
+                        <span>
+                            Berhenti Otomatis
+                        </span>
+
+                    </button>
+
+
+                    <span class="dashboard-autoplay-delay">
+                        8 detik
+                    </span>
+
+
+                    <button type="button" class="dashboard-fullscreen-inside" id="dashboardFullscreenInside">
+
+                        <i data-lucide="maximize-2"></i>
+
+                    </button>
 
                 </div>
 
             </div>
 
 
+            {{-- THUMBNAIL --}}
+            @php
 
-            {{-- MASTER STAT --}}
-            <div class="dashboard-card master-stat-card">
+                $thumbs = [
+                    [
+                        'icon' => 'building-2',
 
-                <div class="dashboard-card-header">
+                        'title' => 'Profil Sistem',
+                    ],
 
-                    <div>
+                    [
+                        'icon' => 'pie-chart',
 
-                        <h3>
-                            Statistik Master Data
-                        </h3>
+                        'title' => 'K.I.B & Jumlah Aset',
+                    ],
 
-                        <p>
-                            Data referensi dalam sistem
-                        </p>
+                    [
+                        'icon' => 'chart-no-axes-combined',
 
-                    </div>
+                        'title' => 'Nilai & Pertumbuhan',
+                    ],
 
-                </div>
+                    [
+                        'icon' => 'gauge',
+
+                        'title' => 'Kondisi Aset',
+                    ],
+
+                    [
+                        'icon' => 'map',
+
+                        'title' => 'Sebaran Aset',
+                    ],
+
+                    [
+                        'icon' => 'database',
+
+                        'title' => 'Master Data & Aktivitas',
+                    ],
+                ];
+
+            @endphp
 
 
-                <div class="dashboard-card-body master-stat-grid">
+            <nav class="dashboard-thumbnail-strip">
 
+                @foreach ($thumbs as $index => $thumb)
+                    <button type="button"
+                        class="
+                        dashboard-thumbnail
+                        {{ $index === 0 ? 'is-active' : '' }}
+                    "
+                        data-slide-target="{{ $index }}">
 
-                    <div class="master-stat">
+                        <span
+                            class="
+                            dashboard-thumbnail-preview
+                            dashboard-thumbnail-preview-{{ $index + 1 }}
+                        ">
 
-                        <div>
-                            <i data-lucide="map-pin"></i>
-                        </div>
+                            <i data-lucide="{{ $thumb['icon'] }}"></i>
 
-                        <span>
-                            Lokasi
                         </span>
 
-                        <strong>
-                            24
-                        </strong>
 
-                    </div>
+                        <span class="dashboard-thumbnail-label">
 
+                            <b>
+                                {{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}
+                            </b>
 
-                    <div class="master-stat">
+                            {{ $thumb['title'] }}
 
-                        <div>
-                            <i data-lucide="building-2"></i>
-                        </div>
-
-                        <span>
-                            Ruangan
                         </span>
 
-                        <strong>
-                            186
-                        </strong>
+                    </button>
+                @endforeach
 
-                    </div>
+            </nav>
 
-
-                    <div class="master-stat">
-
-                        <div>
-                            <i data-lucide="network"></i>
-                        </div>
-
-                        <span>
-                            Departemen
-                        </span>
-
-                        <strong>
-                            12
-                        </strong>
-
-                    </div>
-
-
-                    <div class="master-stat">
-
-                        <div>
-                            <i data-lucide="users"></i>
-                        </div>
-
-                        <span>
-                            Divisi
-                        </span>
-
-                        <strong>
-                            36
-                        </strong>
-
-                    </div>
-
-
-                </div>
-
-            </div>
-
-
-
-            {{-- LATEST ASSET --}}
-            <div class="dashboard-card latest-assets">
-
-                <div class="dashboard-card-header">
-
-                    <div>
-
-                        <h3>
-                            Aset Terbaru
-                        </h3>
-
-                        <p>
-                            5 aset terakhir yang ditambahkan
-                        </p>
-
-                    </div>
-
-
-                    <a href="#">
-                        Lihat Semua
-                    </a>
-
-                </div>
-
-
-                <div class="dashboard-card-body asset-list">
-
-
-                    <div class="asset-item">
-
-                        <div class="asset-thumb laptop">
-
-                            <i data-lucide="laptop"></i>
-
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Laptop Dell Latitude
-                            </strong>
-
-                            <span>
-                                IT-2025-001
-                            </span>
-
-                        </div>
-
-                        <small>
-                            2 Des 2025
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="asset-item">
-
-                        <div class="asset-thumb printer">
-
-                            <i data-lucide="printer"></i>
-
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Printer Epson L5290
-                            </strong>
-
-                            <span>
-                                IT-2025-002
-                            </span>
-
-                        </div>
-
-                        <small>
-                            1 Des 2025
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="asset-item">
-
-                        <div class="asset-thumb machine">
-
-                            <i data-lucide="settings"></i>
-
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Pompa Distribusi
-                            </strong>
-
-                            <span>
-                                PM-2025-015
-                            </span>
-
-                        </div>
-
-                        <small>
-                            29 Nov 2025
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="asset-item">
-
-                        <div class="asset-thumb land">
-
-                            <i data-lucide="map"></i>
-
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Tanah IPA Gunung Lipan
-                            </strong>
-
-                            <span>
-                                TN-2025-003
-                            </span>
-
-                        </div>
-
-                        <small>
-                            28 Nov 2025
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="asset-item">
-
-                        <div class="asset-thumb building">
-
-                            <i data-lucide="building"></i>
-
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Gedung Kantor Unit
-                            </strong>
-
-                            <span>
-                                GD-2025-001
-                            </span>
-
-                        </div>
-
-                        <small>
-                            27 Nov 2025
-                        </small>
-
-                    </div>
-
-
-                </div>
-
-            </div>
-
-
-
-            {{-- ACTIVITY --}}
-            <div class="dashboard-card activity-card">
-
-                <div class="dashboard-card-header">
-
-                    <div>
-
-                        <h3>
-                            Aktivitas Terbaru
-                        </h3>
-
-                        <p>
-                            5 aktivitas terakhir di sistem
-                        </p>
-
-                    </div>
-
-
-                    <a href="#">
-                        Lihat Semua
-                    </a>
-
-                </div>
-
-
-                <div class="dashboard-card-body activity-list">
-
-
-                    <div class="activity-item">
-
-                        <span class="activity-icon blue">
-                            <i data-lucide="plus"></i>
-                        </span>
-
-                        <p>
-                            Menambahkan data aset
-                            <strong>
-                                Laptop Dell Latitude
-                            </strong>
-                        </p>
-
-                        <small>
-                            2 Des 2025
-                            <br>
-                            14:20
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="activity-item">
-
-                        <span class="activity-icon green">
-                            <i data-lucide="map-pin"></i>
-                        </span>
-
-                        <p>
-                            Mengubah data lokasi
-                            <strong>
-                                Kantor Pusat
-                            </strong>
-                        </p>
-
-                        <small>
-                            2 Des 2025
-                            <br>
-                            10:15
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="activity-item">
-
-                        <span class="activity-icon purple">
-                            <i data-lucide="file-up"></i>
-                        </span>
-
-                        <p>
-                            Mengunggah dokumen
-                            <strong>
-                                BAST Pompa Distribusi
-                            </strong>
-                        </p>
-
-                        <small>
-                            1 Des 2025
-                            <br>
-                            16:40
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="activity-item">
-
-                        <span class="activity-icon orange">
-                            <i data-lucide="badge-dollar-sign"></i>
-                        </span>
-
-                        <p>
-                            Menambahkan nilai aset
-                            <strong>
-                                Voucher VCH-2025-0123
-                            </strong>
-                        </p>
-
-                        <small>
-                            1 Des 2025
-                            <br>
-                            11:22
-                        </small>
-
-                    </div>
-
-
-
-                    <div class="activity-item">
-
-                        <span class="activity-icon blue">
-                            <i data-lucide="archive"></i>
-                        </span>
-
-                        <p>
-                            Mengubah data arsip
-                            <strong>
-                                Sertifikat Tanah IPA
-                            </strong>
-                        </p>
-
-                        <small>
-                            30 Nov 2025
-                            <br>
-                            09:18
-                        </small>
-
-                    </div>
-
-
-                </div>
-
-            </div>
-
-
-        </div>
-
+        </section>
 
     </section>
+
+
+    <script>
+        window.ASSET_DASHBOARD_DATA = {
+
+            growth: @json($growth),
+
+            locations: @json($locations),
+
+            totalAsset: @json($totalAset),
+
+            totalNilai: @json($totalNilai)
+
+        };
+    </script>
 
 @endsection
 
 
-
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script src="{{ asset('js/pages/dashboard.js') }}"></script>
 @endpush

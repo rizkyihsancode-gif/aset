@@ -3,7 +3,7 @@
 @section('title', 'Barang')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/barang.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/master/barang.css') }}">
 @endpush
 
 
@@ -1087,5 +1087,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 
-    <script src="{{ asset('js/pages/barang.js') }}"></script>
+    <script src="{{ asset('js/pages/master/barang.js') }}"></script>
 @endpush

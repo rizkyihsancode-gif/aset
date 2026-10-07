@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Models\Barang;
 use App\Http\Controllers\MasterController;
+use App\Http\Controllers\KIBController;
+use App\Http\Controllers\DashboardController;
 
 
 Route::get('/', function () {
@@ -31,14 +33,16 @@ Route::post('/login', function () {
 })->name('login.submit');
 
 
-Route::get('/dashboard', function () {
-
-    return view('main.dashboard');
-})->name('dashboard');
 
 // ------------------------------------------------
 // DASHBOARD ROUTES
 // -------------------------------------------------
+Route::get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
+
+
 Route::get('/nilai-aset', function () {
 
     return view('main.nilai');
@@ -318,9 +322,49 @@ Route::delete(
 // K.I.B ROUTES
 // -------------------------------------------------
 
-Route::get('/kib/tanah', function () {
-    return view('kib.tanah');
-})->name('kib.tanah');
+/*
+|--------------------------------------------------------------------------
+| K.I.B - TANAH
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('kib')
+    ->name('kib.')
+    ->group(function () {
+
+        Route::get(
+            '/tanah',
+            [KIBController::class, 'dataTanah']
+        )
+            ->name('tanah');
+
+        Route::get(
+            '/tanah/lokasi/{id}/detail',
+            [KIBController::class, 'detailTanahLokasi']
+        )
+            ->whereNumber('id')
+            ->name('tanah.detail');
+
+        Route::get(
+            '/tanah/lokasi/{id}/nilai',
+            [KIBController::class, 'detailNilaiTanahLokasi']
+        )
+            ->whereNumber('id')
+            ->name('tanah.nilai');
+
+        /*
+        |--------------------------------------------------------------------------
+        | GAMBAR LOKASI TANAH
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/tanah/lokasi/{id}/gambar',
+            [KIBController::class, 'gambarTanahLokasi']
+        )
+            ->whereNumber('id')
+            ->name('tanah.image');
+    });
 
 Route::get('/kib/mesin', function () {
     return view('kib.mesin');

@@ -4,7 +4,7 @@
 
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/departement.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/master/departement.css') }}">
 @endpush
 
 
@@ -1121,5 +1121,5 @@
     </script>
 
 
-    <script src="{{ asset('js/pages/departement.js') }}"></script>
+    <script src="{{ asset('js/pages/master/departement.js') }}"></script>
 @endpush

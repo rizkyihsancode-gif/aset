@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/pages/gedung.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/kib/gedung.css') }}">
 
     <section class="content gedung-page">
 
@@ -1262,9 +1262,9 @@
             </div>
 
         </dialog>
-
+        
     </section>
 
 
-    <script src="{{ asset('js/pages/gedung.js') }}"></script>
+    <script src="{{ asset('js/pages/kib/gedung.js') }}"></script>
 @endsection

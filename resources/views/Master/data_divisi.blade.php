@@ -4,7 +4,7 @@
 
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/divisi.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/master/divisi.css') }}">
 @endpush
 
 
@@ -1446,5 +1446,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 
-    <script src="{{ asset('js/pages/divisi.js') }}"></script>
+    <script src="{{ asset('js/pages/master/divisi.js') }}"></script>
 @endpush

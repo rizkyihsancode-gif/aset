@@ -3,7 +3,7 @@
 @section('title', 'Peralatan dan Mesin')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/mesin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/kib/mesin.css') }}">
 @endpush
 
 @section('content')
@@ -416,5 +416,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/pages/mesin.js') }}"></script>
+    <script src="{{ asset('js/pages/kib/mesin.js') }}"></script>
 @endpush

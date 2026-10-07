@@ -3,7 +3,7 @@
 @section('title', 'Lokasi')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/lokasi.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/master/lokasi.css') }}">
 @endpush
 
 @section('content')
@@ -1907,5 +1907,5 @@
         "></script>
 
 
-    <script src="{{ asset('js/pages/lokasi.js') }}"></script>
+    <script src="{{ asset('js/pages/master/lokasi.js') }}"></script>
 @endpush

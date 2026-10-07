@@ -4,7 +4,7 @@
 
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/bahan.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/master/bahan.css') }}">
 @endpush
 
 
@@ -1314,5 +1314,5 @@
     </script>
 
 
-    <script src="{{ asset('js/pages/bahan.js') }}"></script>
+    <script src="{{ asset('js/pages/master/bahan.js') }}"></script>
 @endpush

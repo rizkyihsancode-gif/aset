@@ -3,7 +3,7 @@
 @section('title', 'Kode Aktiva')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kode_aktiva.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/master/kode_aktiva.css') }}">
 @endpush
 
 
@@ -991,5 +991,5 @@
     </script>
 
 
-    <script src="{{ asset('js/pages/kode_aktiva.js') }}"></script>
+    <script src="{{ asset('js/pages/master/kode_aktiva.js') }}"></script>
 @endpush

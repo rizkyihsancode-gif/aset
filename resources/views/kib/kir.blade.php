@@ -3,7 +3,7 @@
 @section('title', 'K.I.R')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kir.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/kib/kir.css') }}">
 @endpush
 
 @section('content')
@@ -1008,5 +1008,5 @@
 
 
 @push('scripts')
-    <script src="{{ asset('js/pages/kir.js') }}"></script>
+    <script src="{{ asset('js/pages/kib/kir.js') }}"></script>
 @endpush

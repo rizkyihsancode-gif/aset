@@ -3,7 +3,7 @@
 @section('title', 'Jalan, Irigasi dan Jaringan')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/jalan.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/kib/jalan.css') }}">
 @endpush
 
 @section('content')
@@ -1520,7 +1520,7 @@
 
 
     @push('scripts')
-        <script src="{{ asset('js/pages/jalan.js') }}"></script>
+        <script src="{{ asset('js/pages/kib/jalan.js') }}"></script>
     @endpush
 
 @endsection

@@ -3,7 +3,7 @@
 @section('title', 'Konstruksi Dalam Pengerjaan')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/konstruksi.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pages/kib/konstruksi.css') }}">
 @endpush
 
 @section('content')
@@ -1583,7 +1583,7 @@
 
 
     @push('scripts')
-        <script src="{{ asset('js/pages/kontruksi.js') }}"></script>
+        <script src="{{ asset('js/pages/kib/konstruksi.js') }}"></script>
     @endpush
 
 @endsection
