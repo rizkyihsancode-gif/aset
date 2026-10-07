@@ -4628,3 +4628,166 @@ strong {
     }
 
 }
+
+/* =========================================================
+   FIX HOSTING - NILAI KESELURUHAN SLIDE 3
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.slide-heading-row
+.slide-summary-card.slide-summary-card-full-value {
+    flex:
+        0
+        0
+        320px
+        !important;
+
+    width:
+        320px
+        !important;
+
+    min-width:
+        320px
+        !important;
+
+    max-width:
+        320px
+        !important;
+
+    padding:
+        15px
+        18px
+        !important;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.slide-heading-row
+.slide-summary-card.slide-summary-card-full-value
+strong {
+    display:
+        block
+        !important;
+
+    width:
+        100%
+        !important;
+
+    margin-top:
+        6px;
+
+    color:
+        #ffffff;
+
+    font-size:
+        21px
+        !important;
+
+    line-height:
+        1.2;
+
+    font-weight:
+        700;
+
+    white-space:
+        nowrap
+        !important;
+
+    word-break:
+        normal
+        !important;
+
+    overflow-wrap:
+        normal
+        !important;
+
+    font-variant-numeric:
+        tabular-nums;
+
+    letter-spacing:
+        -.3px;
+}
+
+
+/* =========================================================
+   LAYAR MENENGAH
+========================================================= */
+
+@media (max-width: 1450px) {
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-full-value {
+        flex-basis:
+            300px
+            !important;
+
+        width:
+            300px
+            !important;
+
+        min-width:
+            300px
+            !important;
+
+        max-width:
+            300px
+            !important;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-full-value
+    strong {
+        font-size:
+            19px
+            !important;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET / MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-full-value {
+        flex:
+            1
+            1
+            100%
+            !important;
+
+        width:
+            100%
+            !important;
+
+        min-width:
+            0
+            !important;
+
+        max-width:
+            none
+            !important;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-full-value
+    strong {
+        white-space:
+            normal
+            !important;
+
+        overflow-wrap:
+            anywhere
+            !important;
+    }
+
+}
