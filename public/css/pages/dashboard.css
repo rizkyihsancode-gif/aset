@@ -4265,3 +4265,366 @@ body.dashboard-presenting {
             1 !important;
     }
 }
+
+/* =========================================================
+   SLIDE 3 - NILAI RUPIAH PENUH
+   =========================================================
+   Nilai Keseluruhan,
+   Nilai per K.I.B & K.I.R,
+   dan tooltip chart
+   menampilkan angka utuh.
+========================================================= */
+
+
+/* =========================================================
+   LAYOUT SLIDE 3
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.growth-layout {
+    grid-template-columns:
+        minmax(
+            0,
+            1.48fr
+        )
+        minmax(
+            390px,
+            .76fr
+        );
+}
+
+
+/* =========================================================
+   NILAI KESELURUHAN
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.slide-summary-card-full-value {
+    flex:
+        0
+        0
+        300px;
+
+    min-width:
+        300px;
+
+    padding:
+        15px
+        18px;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.slide-summary-card-full-value
+strong {
+    display:
+        block;
+
+    margin-top:
+        6px;
+
+    color:
+        #ffffff;
+
+    font-size:
+        clamp(
+            18px,
+            1.3vw,
+            23px
+        );
+
+    line-height:
+        1.2;
+
+    font-weight:
+        700;
+
+    white-space:
+        nowrap;
+
+    font-variant-numeric:
+        tabular-nums;
+
+    letter-spacing:
+        -.2px;
+}
+
+
+/* =========================================================
+   NILAI PER K.I.B & K.I.R
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.growth-value-item
+> div:first-child {
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(
+            0,
+            1fr
+        )
+        auto;
+
+    align-items:
+        center;
+
+    gap:
+        12px;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.growth-value-item
+> div:first-child
+> span {
+    min-width:
+        0;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.growth-value-item
+> div:first-child
+> strong {
+    flex-shrink:
+        0;
+
+    color:
+        #082958;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.25;
+
+    font-weight:
+        700;
+
+    text-align:
+        right;
+
+    white-space:
+        nowrap;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+
+/* =========================================================
+   TOOLTIP CHART
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.growth-chart-tooltip {
+    min-width:
+        245px;
+
+    max-width:
+        300px;
+
+    padding:
+        12px
+        15px;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.growth-chart-tooltip
+strong {
+    display:
+        block;
+
+    margin-top:
+        5px;
+
+    color:
+        #ffffff;
+
+    font-size:
+        16px;
+
+    line-height:
+        1.25;
+
+    font-weight:
+        700;
+
+    white-space:
+        nowrap;
+
+    font-variant-numeric:
+        tabular-nums;
+
+    letter-spacing:
+        -.1px;
+}
+
+
+/* =========================================================
+   BADGE PERTUMBUHAN
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.growth-change-badge {
+    flex-shrink:
+        0;
+}
+
+
+/* =========================================================
+   PANEL KIB
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.growth-value-card {
+    min-width:
+        390px;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.growth-value-list {
+    overflow-x:
+        hidden;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media
+(
+    max-width:
+    1180px
+) {
+
+    .dashboard-slide[data-slide="2"]
+    .growth-layout {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .growth-value-card {
+        min-width:
+            0;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-summary-card-full-value {
+        flex-basis:
+            270px;
+
+        min-width:
+            270px;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-summary-card-full-value
+    strong {
+        font-size:
+            18px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media
+(
+    max-width:
+    760px
+) {
+
+    .dashboard-slide[data-slide="2"]
+    .slide-summary-card-full-value {
+        width:
+            100%;
+
+        min-width:
+            0;
+
+        flex-basis:
+            auto;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-summary-card-full-value
+    strong {
+        font-size:
+            18px;
+
+        white-space:
+            normal;
+
+        overflow-wrap:
+            anywhere;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .growth-value-item
+    > div:first-child {
+        grid-template-columns:
+            1fr;
+
+        gap:
+            4px;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .growth-value-item
+    > div:first-child
+    > strong {
+        text-align:
+            left;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .growth-chart-tooltip {
+        min-width:
+            210px;
+
+        max-width:
+            min(
+                270px,
+                calc(
+                    100vw
+                    -
+                    44px
+                )
+            );
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .growth-chart-tooltip
+    strong {
+        font-size:
+            14px;
+    }
+
+}

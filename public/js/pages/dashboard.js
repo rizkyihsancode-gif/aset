@@ -1054,10 +1054,9 @@ function renderGrowthChart()
 
 
     const stage =
-        svg
-            ?.closest(
-                '.growth-chart-stage'
-            );
+        svg?.closest(
+            '.growth-chart-stage'
+        );
 
 
     const empty =
@@ -1111,11 +1110,9 @@ function renderGrowthChart()
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | SOURCE
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       DATA DATABASE
+    ===================================================== */
 
     const rawData =
         Array.isArray(
@@ -1131,11 +1128,9 @@ function renderGrowthChart()
             [];
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | NORMALISASI
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       NORMALISASI DATA
+    ===================================================== */
 
     const yearlyMap =
         new Map();
@@ -1165,17 +1160,13 @@ function renderGrowthChart()
 
 
             if (
-                !Number.isFinite(
-                    year
-                )
+                !Number.isFinite(year)
                 ||
                 year < 1900
                 ||
                 year > 2100
                 ||
-                !Number.isFinite(
-                    value
-                )
+                !Number.isFinite(value)
                 ||
                 value < 0
             ) {
@@ -1184,21 +1175,16 @@ function renderGrowthChart()
 
 
             if (
-                !yearlyMap.has(
-                    year
-                )
+                !yearlyMap.has(year)
                 ||
                 value
                 >
-                yearlyMap.get(
-                    year
-                ).value
+                yearlyMap.get(year).value
             ) {
 
                 yearlyMap.set(
                     year,
                     {
-
                         year:
                             year,
 
@@ -1235,11 +1221,9 @@ function renderGrowthChart()
         );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | RESET
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       RESET
+    ===================================================== */
 
     svg.innerHTML =
         '';
@@ -1252,22 +1236,17 @@ function renderGrowthChart()
         ?.remove();
 
 
-    if (
-        tooltip
-    ) {
+    if (tooltip) {
 
         tooltip.hidden =
             true;
     }
 
 
-    if (
-        badge
-    ) {
+    if (badge) {
 
         badge.hidden =
             true;
-
 
         badge.classList.remove(
             'is-up',
@@ -1277,11 +1256,9 @@ function renderGrowthChart()
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | EMPTY
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       EMPTY STATE
+    ===================================================== */
 
     if (
         !points.length
@@ -1291,9 +1268,7 @@ function renderGrowthChart()
             'none';
 
 
-        if (
-            empty
-        ) {
+        if (empty) {
 
             empty.hidden =
                 false;
@@ -1308,20 +1283,16 @@ function renderGrowthChart()
         'block';
 
 
-    if (
-        empty
-    ) {
+    if (empty) {
 
         empty.hidden =
             true;
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | BADGE PERTUMBUHAN
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       PERTUMBUHAN
+    ===================================================== */
 
     if (
         points.length >= 2
@@ -1399,13 +1370,11 @@ function renderGrowthChart()
             `${sign}${percentage.toLocaleString(
                 'id-ID',
                 {
-
                     minimumFractionDigits:
                         1,
 
                     maximumFractionDigits:
                         1,
-
                 }
             )}%`;
 
@@ -1449,11 +1418,9 @@ function renderGrowthChart()
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | SVG SETUP
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       SVG
+    ===================================================== */
 
     const NS =
         'http://www.w3.org/2000/svg';
@@ -1511,11 +1478,9 @@ function renderGrowthChart()
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       CREATE SVG ELEMENT
+    ===================================================== */
 
     const create =
         (
@@ -1543,9 +1508,7 @@ function renderGrowthChart()
 
                     element.setAttribute(
                         key,
-                        String(
-                            value
-                        )
+                        String(value)
                     );
                 }
             );
@@ -1555,11 +1518,9 @@ function renderGrowthChart()
         };
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Y RANGE
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       RANGE NILAI
+    ===================================================== */
 
     const values =
         points.map(
@@ -1630,11 +1591,9 @@ function renderGrowthChart()
         extraSpace;
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | COORDINATE
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       X
+    ===================================================== */
 
     function getX(
         index
@@ -1671,6 +1630,10 @@ function renderGrowthChart()
         );
     }
 
+
+    /* =====================================================
+       Y
+    ===================================================== */
 
     function getY(
         value
@@ -1709,11 +1672,9 @@ function renderGrowthChart()
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | DEFS
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       DEFINITIONS
+    ===================================================== */
 
     const defs =
         create(
@@ -1721,11 +1682,12 @@ function renderGrowthChart()
         );
 
 
+    /* AREA GRADIENT */
+
     const areaGradient =
         create(
             'linearGradient',
             {
-
                 id:
                     'growthAreaGradient',
 
@@ -1748,7 +1710,6 @@ function renderGrowthChart()
         create(
             'stop',
             {
-
                 offset:
                     '0%',
 
@@ -1766,7 +1727,6 @@ function renderGrowthChart()
         create(
             'stop',
             {
-
                 offset:
                     '55%',
 
@@ -1784,7 +1744,6 @@ function renderGrowthChart()
         create(
             'stop',
             {
-
                 offset:
                     '100%',
 
@@ -1803,11 +1762,12 @@ function renderGrowthChart()
     );
 
 
+    /* LINE GRADIENT */
+
     const lineGradient =
         create(
             'linearGradient',
             {
-
                 id:
                     'growthLineGradient',
 
@@ -1830,7 +1790,6 @@ function renderGrowthChart()
         create(
             'stop',
             {
-
                 offset:
                     '0%',
 
@@ -1845,7 +1804,6 @@ function renderGrowthChart()
         create(
             'stop',
             {
-
                 offset:
                     '100%',
 
@@ -1866,11 +1824,9 @@ function renderGrowthChart()
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | GRID
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       GRID Y
+    ===================================================== */
 
     const GRID_COUNT =
         4;
@@ -1914,7 +1870,6 @@ function renderGrowthChart()
             create(
                 'line',
                 {
-
                     x1:
                         padding.left,
 
@@ -1949,7 +1904,6 @@ function renderGrowthChart()
             create(
                 'text',
                 {
-
                     x:
                         padding.left
                         -
@@ -1975,6 +1929,9 @@ function renderGrowthChart()
             );
 
 
+        /*
+         * Sumbu Y sengaja tetap compact.
+         */
         label.textContent =
             formatDashboardAxisCurrency(
                 value
@@ -1987,11 +1944,9 @@ function renderGrowthChart()
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | BASELINE
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       BASELINE
+    ===================================================== */
 
     const baselineY =
         padding.top
@@ -2003,7 +1958,6 @@ function renderGrowthChart()
         create(
             'line',
             {
-
                 x1:
                     padding.left,
 
@@ -2031,11 +1985,9 @@ function renderGrowthChart()
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | COORDINATES
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       COORDINATES
+    ===================================================== */
 
     const coordinates =
         points.map(
@@ -2059,11 +2011,9 @@ function renderGrowthChart()
         );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | LINE PATH
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       PATH
+    ===================================================== */
 
     function makeLinePath(
         items
@@ -2074,13 +2024,10 @@ function renderGrowthChart()
             ===
             1
         ) {
+
             return '';
         }
 
-
-        /*
-         * Dua titik = garis lurus.
-         */
 
         if (
             items.length
@@ -2095,10 +2042,6 @@ function renderGrowthChart()
             );
         }
 
-
-        /*
-         * 3+ titik = smooth curve.
-         */
 
         let path =
             `M ${items[0].x} ${items[0].y}`;
@@ -2149,11 +2092,9 @@ function renderGrowthChart()
         );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | AREA + LINE
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       AREA + GARIS
+    ===================================================== */
 
     if (
         coordinates.length
@@ -2183,7 +2124,6 @@ function renderGrowthChart()
             create(
                 'path',
                 {
-
                     d:
                         areaPath,
 
@@ -2197,15 +2137,12 @@ function renderGrowthChart()
         );
 
 
-        /*
-         * White glow.
-         */
+        /* WHITE GLOW */
 
         svg.appendChild(
             create(
                 'path',
                 {
-
                     d:
                         linePath,
 
@@ -2231,15 +2168,12 @@ function renderGrowthChart()
         );
 
 
-        /*
-         * Main line.
-         */
+        /* BLUE LINE */
 
         svg.appendChild(
             create(
                 'path',
                 {
-
                     d:
                         linePath,
 
@@ -2266,14 +2200,9 @@ function renderGrowthChart()
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | X AXIS LABELS
-    |--------------------------------------------------------------------------
-    |
-    | Tahun memakai HTML agar tidak saling bertumpuk.
-    |
-    */
+    /* =====================================================
+       TAHUN
+    ===================================================== */
 
     const xLabels =
         document.createElement(
@@ -2328,11 +2257,9 @@ function renderGrowthChart()
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | TOOLTIP
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       TOOLTIP
+    ===================================================== */
 
     function showTooltip(
         point,
@@ -2354,10 +2281,18 @@ function renderGrowthChart()
             `Tahun ${point.year}`;
 
 
+        /*
+         * NILAI PENUH.
+         *
+         * Tidak lagi:
+         * Rp 1,3 T
+         *
+         * Tetapi:
+         * Rp 1.270.845.623.000
+         */
         tooltipValue.textContent =
-            formatDashboardCompact(
-                point.value,
-                true
+            formatDashboardRupiahFull(
+                point.value
             );
 
 
@@ -2421,13 +2356,11 @@ function renderGrowthChart()
                     `${sign}${percentage.toLocaleString(
                         'id-ID',
                         {
-
                             minimumFractionDigits:
                                 1,
 
                             maximumFractionDigits:
                                 1,
-
                         }
                     )}% dari tahun sebelumnya`;
 
@@ -2487,11 +2420,9 @@ function renderGrowthChart()
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | POINTS
-    |--------------------------------------------------------------------------
-    */
+    /* =====================================================
+       POINT
+    ===================================================== */
 
     coordinates.forEach(
         (
@@ -2503,7 +2434,6 @@ function renderGrowthChart()
                 create(
                     'g',
                     {
-
                         class:
                             'growth-point-group',
 
@@ -2516,15 +2446,12 @@ function renderGrowthChart()
                 );
 
 
-            /*
-             * Halo.
-             */
+            /* HALO */
 
             group.appendChild(
                 create(
                     'circle',
                     {
-
                         cx:
                             point.x,
 
@@ -2547,15 +2474,12 @@ function renderGrowthChart()
             );
 
 
-            /*
-             * White ring.
-             */
+            /* WHITE RING */
 
             group.appendChild(
                 create(
                     'circle',
                     {
-
                         cx:
                             point.x,
 
@@ -2575,15 +2499,12 @@ function renderGrowthChart()
             );
 
 
-            /*
-             * Blue point.
-             */
+            /* MAIN POINT */
 
             group.appendChild(
                 create(
                     'circle',
                     {
-
                         cx:
                             point.x,
 
@@ -2609,15 +2530,12 @@ function renderGrowthChart()
             );
 
 
-            /*
-             * Hit area.
-             */
+            /* HIT AREA */
 
             group.appendChild(
                 create(
                     'circle',
                     {
-
                         cx:
                             point.x,
 
@@ -3120,6 +3038,59 @@ function formatDashboardNumber(
 | Rp 1,14 T
 |
 */
+/*
+|--------------------------------------------------------------------------
+| FORMAT RUPIAH PENUH
+|--------------------------------------------------------------------------
+|
+| Digunakan pada tooltip chart Slide 3.
+|
+| Tidak ada pembulatan.
+| Tidak menggunakan T / M / Jt.
+|
+*/
+
+function formatDashboardRupiahFull(
+    value
+)
+{
+    const number =
+        Number(
+            value
+        );
+
+
+    if (
+        !Number.isFinite(
+            number
+        )
+    ) {
+
+        return 'Rp 0';
+    }
+
+
+    return (
+        'Rp '
+        +
+        new Intl.NumberFormat(
+            'id-ID',
+            {
+                useGrouping:
+                    true,
+
+                minimumFractionDigits:
+                    0,
+
+                maximumFractionDigits:
+                    0,
+            }
+        )
+        .format(
+            number
+        )
+    );
+}
 
 function formatDashboardAxisCurrency(
     value

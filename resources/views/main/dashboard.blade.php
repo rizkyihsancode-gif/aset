@@ -13,6 +13,13 @@
 
         $formatNumber = fn($value) => number_format((float) $value, 0, ',', '.');
 
+        /*
+    |--------------------------------------------------------------------------
+    | FORMAT COMPACT
+    |--------------------------------------------------------------------------
+    | Tetap digunakan oleh slide lain.
+    */
+
         $formatCurrencyCompact = function ($value) {
             $value = (float) $value;
 
@@ -29,6 +36,30 @@
             }
 
             return 'Rp ' . number_format($value, 0, ',', '.');
+        };
+
+        /*
+    |--------------------------------------------------------------------------
+    | FORMAT RUPIAH PENUH
+    |--------------------------------------------------------------------------
+    |
+    | Dipakai khusus Slide 3.
+    |
+    | Tidak dibulatkan.
+    | Tidak disingkat T / M / Jt.
+    |
+    | Contoh:
+    |
+    | 1270845623000
+    |
+    | menjadi:
+    |
+    | Rp 1.270.845.623.000
+    |
+    */
+
+        $formatCurrencyFull = function ($value) {
+            return 'Rp ' . number_format((int) ($value ?? 0), 0, ',', '.');
         };
 
         $kibColors = ['#2583f3', '#ff9f1a', '#f5bc28', '#7559d8', '#ef5350', '#537dd7', '#18a999'];
@@ -77,57 +108,43 @@
         $masters = [
             [
                 'icon' => 'package',
-
                 'label' => 'Barang',
-
                 'value' => $masterStats['barang'] ?? 0,
             ],
 
             [
                 'icon' => 'map-pin',
-
                 'label' => 'Lokasi',
-
                 'value' => $masterStats['lokasi'] ?? 0,
             ],
 
             [
                 'icon' => 'door-open',
-
                 'label' => 'Ruangan',
-
                 'value' => $masterStats['ruangan'] ?? 0,
             ],
 
             [
                 'icon' => 'network',
-
                 'label' => 'Departemen',
-
                 'value' => $masterStats['departemen'] ?? 0,
             ],
 
             [
                 'icon' => 'users',
-
                 'label' => 'Divisi',
-
                 'value' => $masterStats['divisi'] ?? 0,
             ],
 
             [
                 'icon' => 'contact',
-
                 'label' => 'SDM Pendukung',
-
                 'value' => $masterStats['sdm'] ?? 0,
             ],
 
             [
                 'icon' => 'badge-check',
-
                 'label' => 'Kode Aktiva',
-
                 'value' => $masterStats['kode_aktiva'] ?? 0,
             ],
         ];
@@ -562,24 +579,25 @@
 
 
                     {{-- =====================================================
-                     SLIDE 3 - FIXED LINE CHART
-                ====================================================== --}}
-                    <article
-                        class="
-                        dashboard-slide
-                        dashboard-slide-data
-                    "
-                        data-slide="2"
+     SLIDE 3 - NILAI & PERTUMBUHAN
+====================================================== --}}
+                    <article class="
+        dashboard-slide
+        dashboard-slide-data
+    " data-slide="2"
                         style="
-                        --slide-background:
-                        url('{{ asset('images/dashboard/pdam5.jpg') }}');
-                    ">
+        --slide-background:
+        url('{{ asset('images/dashboard/pdam5.jpg') }}');
+    ">
 
                         <div class="dashboard-slide-number">
                             Slide 3 dari 6
                         </div>
 
 
+                        {{-- =====================================================
+         HEADER
+    ====================================================== --}}
                         <header class="slide-heading-row">
 
                             <div>
@@ -588,28 +606,33 @@
                                     Nilai Aset
                                 </span>
 
-
                                 <h2>
                                     Nilai & Pertumbuhan Aset
                                 </h2>
 
-
                                 <p>
-                                    Perkembangan total nilai aset
-                                    berdasarkan periode pencatatan.
+                                    Perkembangan total nilai aset berdasarkan periode pencatatan.
                                 </p>
 
                             </div>
 
 
-                            <div class="slide-summary-card">
+                            {{-- =================================================
+             NILAI KESELURUHAN
+             FULL VALUE - TIDAK DISINGKAT
+        ================================================== --}}
+                            <div
+                                class="
+                slide-summary-card
+                slide-summary-card-full-value
+            ">
 
                                 <small>
                                     Nilai Keseluruhan
                                 </small>
 
                                 <strong>
-                                    {{ $formatCurrencyCompact($totalNilai) }}
+                                    {{ $formatCurrencyFull($totalNilai) }}
                                 </strong>
 
                             </div>
@@ -619,9 +642,14 @@
 
                         <div class="growth-layout">
 
+
+                            {{-- =================================================
+             CHART
+        ================================================== --}}
                             <section class="growth-chart-card">
 
                                 <div class="growth-chart-heading">
+
 
                                     <div class="panel-heading">
 
@@ -641,6 +669,7 @@
                                     </div>
 
 
+                                    {{-- BADGE PERTUMBUHAN --}}
                                     <div class="growth-change-badge" id="dashboardGrowthBadge" hidden>
 
                                         <i data-lucide="trending-up"></i>
@@ -662,12 +691,18 @@
                                 </div>
 
 
+                                {{-- =================================================
+                 CHART STAGE
+            ================================================== --}}
                                 <div class="growth-chart-stage">
 
                                     <svg id="dashboardGrowthChart" viewBox="0 0 900 360" preserveAspectRatio="xMidYMid meet"
                                         role="img" aria-label="Grafik pertumbuhan nilai aset"></svg>
 
 
+                                    {{-- =================================================
+                     TOOLTIP TITIK
+                ================================================== --}}
                                     <div class="growth-chart-tooltip" id="dashboardGrowthTooltip" hidden>
 
                                         <small id="dashboardGrowthTooltipYear">
@@ -685,15 +720,14 @@
                                     </div>
 
 
+                                    {{-- EMPTY STATE --}}
                                     <div class="chart-empty" id="dashboardGrowthEmpty" hidden>
 
                                         <i data-lucide="chart-no-axes-combined"></i>
 
-
                                         <strong>
                                             Data pertumbuhan belum tersedia
                                         </strong>
-
 
                                         <span>
                                             Sistem memerlukan informasi tahun
@@ -707,6 +741,10 @@
                             </section>
 
 
+                            {{-- =================================================
+             NILAI PER KIB & KIR
+             FULL VALUE - TIDAK DISINGKAT
+        ================================================== --}}
                             <section class="growth-value-card">
 
                                 <h3>
@@ -728,6 +766,8 @@
 
                                         <div class="growth-value-item">
 
+
+                                            {{-- LABEL + NILAI --}}
                                             <div>
 
                                                 <span>
@@ -736,22 +776,23 @@
 
 
                                                 <strong>
-                                                    {{ $formatCurrencyCompact($item['nilai'] ?? 0) }}
+                                                    {{ $formatCurrencyFull($item['nilai'] ?? 0) }}
                                                 </strong>
 
                                             </div>
 
 
+                                            {{-- PROGRESS --}}
                                             <div class="growth-value-track">
 
                                                 <span
                                                     style="
-                                                    width:
-                                                    {{ $nilaiPercentage }}%;
+                                    width:
+                                    {{ $nilaiPercentage }}%;
 
-                                                    background:
-                                                    {{ $kibColors[$index % count($kibColors)] }};
-                                                "></span>
+                                    background:
+                                    {{ $kibColors[$index % count($kibColors)] }};
+                                "></span>
 
                                             </div>
 
