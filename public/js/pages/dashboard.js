@@ -1,129 +1,112 @@
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
+document.addEventListener('DOMContentLoaded', () => {
 
-        const deck =
-            document.getElementById(
-                'dashboardDeck'
-            );
+    /* =========================================================
+       ELEMENT
+    ========================================================= */
 
-        if (!deck) {
-            return;
+    const deck =
+        document.getElementById('dashboardDeck');
+
+    if (!deck) {
+        return;
+    }
+
+    const slides =
+        Array.from(
+            deck.querySelectorAll('.dashboard-slide')
+        );
+
+    const thumbnails =
+        Array.from(
+            deck.querySelectorAll('.dashboard-thumbnail')
+        );
+
+    const dotsContainer =
+        document.getElementById('dashboardDots');
+
+    const prevButton =
+        document.getElementById('dashboardPrev');
+
+    const nextButton =
+        document.getElementById('dashboardNext');
+
+    const pauseButton =
+        document.getElementById('dashboardPauseButton');
+
+    const presentationButton =
+        document.getElementById(
+            'dashboardPresentationButton'
+        );
+
+    const fullscreenInside =
+        document.getElementById(
+            'dashboardFullscreenInside'
+        );
+
+
+    /* =========================================================
+       CONFIG
+    ========================================================= */
+
+    const AUTOPLAY_DELAY =
+        8000;
+
+    const RESUME_DELAY =
+        15000;
+
+    const SWIPE_MIN_DISTANCE =
+        52;
+
+
+    /* =========================================================
+       STATE
+    ========================================================= */
+
+    let currentSlide =
+        0;
+
+    let autoplayEnabled =
+        true;
+
+    let autoplayTimer =
+        null;
+
+    let resumeTimer =
+        null;
+
+    let pointerStartX =
+        null;
+
+    let pointerStartY =
+        null;
+
+
+    /* =========================================================
+       LUCIDE ICON
+    ========================================================= */
+
+    function refreshIcons()
+    {
+        if (
+            window.lucide
+            &&
+            typeof window.lucide.createIcons
+            ===
+            'function'
+        ) {
+            window.lucide.createIcons();
         }
+    }
 
 
-        const slides =
-            Array.from(
-                deck.querySelectorAll(
-                    '.dashboard-slide'
-                )
-            );
+    /* =========================================================
+       DOT NAVIGATION
+    ========================================================= */
 
+    if (dotsContainer) {
 
-        const thumbnails =
-            Array.from(
-                deck.querySelectorAll(
-                    '.dashboard-thumbnail'
-                )
-            );
-
-
-        const dotsContainer =
-            document.getElementById(
-                'dashboardDots'
-            );
-
-
-        const prevButton =
-            document.getElementById(
-                'dashboardPrev'
-            );
-
-
-        const nextButton =
-            document.getElementById(
-                'dashboardNext'
-            );
-
-
-        const pauseButton =
-            document.getElementById(
-                'dashboardPauseButton'
-            );
-
-
-        const presentationButton =
-            document.getElementById(
-                'dashboardPresentationButton'
-            );
-
-
-        const fullscreenInside =
-            document.getElementById(
-                'dashboardFullscreenInside'
-            );
-
-
-        const AUTOPLAY_DELAY =
-            8000;
-
-
-        const RESUME_DELAY =
-            15000;
-
-
-        let currentSlide =
-            0;
-
-
-        let autoplayEnabled =
-            true;
-
-
-        let autoplayTimer =
-            null;
-
-
-        let resumeTimer =
-            null;
-
-
-        let pointerStartX =
-            null;
-
-
-        let pointerStartY =
-            null;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ICON
-        |--------------------------------------------------------------------------
-        */
-
-        function refreshIcons()
-        {
-            if (
-                window.lucide
-                &&
-                typeof
-                window.lucide.createIcons
-                ===
-                'function'
-            ) {
-
-                window.lucide
-                    .createIcons();
-            }
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DOTS
-        |--------------------------------------------------------------------------
-        */
+        dotsContainer.innerHTML =
+            '';
 
         slides.forEach(
             (
@@ -136,357 +119,989 @@ document.addEventListener(
                         'button'
                     );
 
-
                 dot.type =
                     'button';
 
-
                 dot.className =
                     'dashboard-dot';
-
 
                 dot.setAttribute(
                     'aria-label',
                     `Buka slide ${index + 1}`
                 );
 
-
                 dot.addEventListener(
                     'click',
-                    () =>
+                    () => {
+
                         userNavigate(
                             index
-                        )
+                        );
+                    }
                 );
 
-
                 dotsContainer
-                    ?.appendChild(
+                    .appendChild(
                         dot
                     );
             }
         );
+    }
 
 
-        const dots =
-            Array.from(
-                dotsContainer
-                    ?.children
-                ??
-                []
+    const dots =
+        Array.from(
+            dotsContainer?.children
+            ??
+            []
+        );
+
+
+    /* =========================================================
+       NORMALIZE INDEX
+    ========================================================= */
+
+    function normalizeSlideIndex(
+        index
+    )
+    {
+        if (!slides.length) {
+            return 0;
+        }
+
+        if (index < 0) {
+            return slides.length - 1;
+        }
+
+        if (
+            index >= slides.length
+        ) {
+            return 0;
+        }
+
+        return index;
+    }
+
+
+    /* =========================================================
+       SHOW SLIDE
+       Animasi tetap berasal dari class CSS .is-active
+       dan data-direction.
+    ========================================================= */
+
+    function showSlide(
+        index,
+        userInteraction = false
+    )
+    {
+        if (!slides.length) {
+            return;
+        }
+
+        const previousSlide =
+            currentSlide;
+
+        currentSlide =
+            normalizeSlideIndex(
+                index
             );
 
 
         /*
-        |--------------------------------------------------------------------------
-        | SLIDE
-        |--------------------------------------------------------------------------
-        */
+         * Memberitahu CSS arah animasi.
+         */
+        deck.dataset.direction =
+            currentSlide < previousSlide
+                ?
+                'prev'
+                :
+                'next';
 
-        function normalizeSlideIndex(
-            index
-        )
-        {
-            if (!slides.length) {
-                return 0;
+
+        /*
+         * Slide.
+         */
+        slides.forEach(
+            (
+                slide,
+                slideIndex
+            ) => {
+
+                const active =
+                    slideIndex === currentSlide;
+
+                slide.classList.toggle(
+                    'is-active',
+                    active
+                );
+
+                slide.setAttribute(
+                    'aria-hidden',
+                    active
+                        ?
+                        'false'
+                        :
+                        'true'
+                );
             }
+        );
 
 
-            if (
-                index < 0
-            ) {
-                return slides.length - 1;
+        /*
+         * Thumbnail.
+         */
+        thumbnails.forEach(
+            (
+                thumbnail,
+                thumbnailIndex
+            ) => {
+
+                const active =
+                    thumbnailIndex === currentSlide;
+
+                thumbnail.classList.toggle(
+                    'is-active',
+                    active
+                );
+
+                thumbnail.setAttribute(
+                    'aria-current',
+                    active
+                        ?
+                        'true'
+                        :
+                        'false'
+                );
             }
+        );
 
 
-            if (
-                index >= slides.length
-            ) {
-                return 0;
+        /*
+         * Dots.
+         */
+        dots.forEach(
+            (
+                dot,
+                dotIndex
+            ) => {
+
+                dot.classList.toggle(
+                    'is-active',
+                    dotIndex === currentSlide
+                );
             }
+        );
 
 
-            return index;
+        /*
+         * Jika user melakukan navigasi manual,
+         * autoplay berhenti sementara 15 detik.
+         */
+        if (
+            userInteraction
+        ) {
+            pauseTemporarily();
         }
 
 
-        function showSlide(
+        /*
+         * Slide 3.
+         */
+        if (
+            currentSlide === 2
+        ) {
+
+            window.requestAnimationFrame(
+                () => {
+
+                    renderGrowthChart();
+                }
+            );
+        }
+
+
+        /*
+         * Slide 5.
+         */
+        if (
+            currentSlide === 4
+        ) {
+
+            window.requestAnimationFrame(
+                () => {
+
+                    renderLocationMap();
+                }
+            );
+        }
+
+
+        refreshIcons();
+    }
+
+
+    function userNavigate(
+        index
+    )
+    {
+        showSlide(
             index,
-            userInteraction = false
-        )
-        {
-            if (!slides.length) {
-                return;
-            }
+            true
+        );
+    }
 
 
-            const previousSlide =
-                currentSlide;
+    /* =========================================================
+       AUTOPLAY
+    ========================================================= */
 
+    function stopAutoplayTimer()
+    {
+        if (
+            autoplayTimer
+        ) {
 
-            currentSlide =
-                normalizeSlideIndex(
-                    index
-                );
-
-
-            deck.dataset.direction =
-                currentSlide
-                <
-                previousSlide
-                    ?
-                    'prev'
-                    :
-                    'next';
-
-
-            slides.forEach(
-                (
-                    slide,
-                    slideIndex
-                ) => {
-
-                    slide.classList.toggle(
-                        'is-active',
-                        slideIndex
-                        ===
-                        currentSlide
-                    );
-
-
-                    slide.setAttribute(
-                        'aria-hidden',
-                        slideIndex
-                        ===
-                        currentSlide
-                            ?
-                            'false'
-                            :
-                            'true'
-                    );
-                }
-            );
-
-
-            thumbnails.forEach(
-                (
-                    button,
-                    buttonIndex
-                ) => {
-
-                    button.classList.toggle(
-                        'is-active',
-                        buttonIndex
-                        ===
-                        currentSlide
-                    );
-
-
-                    button.setAttribute(
-                        'aria-current',
-                        buttonIndex
-                        ===
-                        currentSlide
-                            ?
-                            'true'
-                            :
-                            'false'
-                    );
-                }
-            );
-
-
-            dots.forEach(
-                (
-                    dot,
-                    dotIndex
-                ) => {
-
-                    dot.classList.toggle(
-                        'is-active',
-                        dotIndex
-                        ===
-                        currentSlide
-                    );
-                }
-            );
-
-
-            if (
-                userInteraction
-            ) {
-
-                pauseTemporarily();
-            }
-
-
-            if (
-                currentSlide
-                ===
-                2
-            ) {
-
-                window.requestAnimationFrame(
-                    renderGrowthChart
-                );
-            }
-
-
-            if (
-                currentSlide
-                ===
-                4
-            ) {
-
-                window.requestAnimationFrame(
-                    renderLocationMap
-                );
-            }
-
-
-            refreshIcons();
-        }
-
-
-        function userNavigate(
-            index
-        )
-        {
-            showSlide(
-                index,
-                true
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | AUTOPLAY
-        |--------------------------------------------------------------------------
-        */
-
-        function stopAutoplayTimer()
-        {
-            if (
+            window.clearInterval(
                 autoplayTimer
-            ) {
-
-                window.clearInterval(
-                    autoplayTimer
-                );
-
-
-                autoplayTimer =
-                    null;
-            }
-        }
-
-
-        function startAutoplay()
-        {
-            stopAutoplayTimer();
-
-
-            if (
-                !autoplayEnabled
-                ||
-                document.hidden
-            ) {
-                return;
-            }
-
+            );
 
             autoplayTimer =
-                window.setInterval(
-                    () => {
+                null;
+        }
+    }
 
-                        showSlide(
-                            currentSlide
-                            +
-                            1
-                        );
 
-                    },
-                    AUTOPLAY_DELAY
-                );
+    function startAutoplay()
+    {
+        stopAutoplayTimer();
+
+        if (
+            !autoplayEnabled
+            ||
+            document.hidden
+        ) {
+            return;
         }
 
+        autoplayTimer =
+            window.setInterval(
+                () => {
 
-        function pauseTemporarily()
-        {
-            stopAutoplayTimer();
+                    showSlide(
+                        currentSlide + 1
+                    );
+
+                },
+                AUTOPLAY_DELAY
+            );
+    }
 
 
-            if (
-                !autoplayEnabled
-            ) {
-                return;
-            }
+    function pauseTemporarily()
+    {
+        stopAutoplayTimer();
 
+        if (
+            !autoplayEnabled
+        ) {
+            return;
+        }
 
-            if (
+        if (
+            resumeTimer
+        ) {
+
+            window.clearTimeout(
                 resumeTimer
-            ) {
+            );
+        }
 
-                window.clearTimeout(
-                    resumeTimer
-                );
-            }
+        resumeTimer =
+            window.setTimeout(
+                () => {
 
+                    startAutoplay();
+
+                },
+                RESUME_DELAY
+            );
+    }
+
+
+    function updatePauseButton()
+    {
+        if (!pauseButton) {
+            return;
+        }
+
+        pauseButton.innerHTML =
+            autoplayEnabled
+                ?
+                `
+                    <i data-lucide="pause"></i>
+                    <span>Berhenti Otomatis</span>
+                `
+                :
+                `
+                    <i data-lucide="play"></i>
+                    <span>Mulai Otomatis</span>
+                `;
+
+        refreshIcons();
+    }
+
+
+    function toggleAutoplay()
+    {
+        autoplayEnabled =
+            !autoplayEnabled;
+
+        if (
+            resumeTimer
+        ) {
+
+            window.clearTimeout(
+                resumeTimer
+            );
 
             resumeTimer =
-                window.setTimeout(
-                    () => {
+                null;
+        }
 
-                        startAutoplay();
+        if (
+            autoplayEnabled
+        ) {
 
-                    },
-                    RESUME_DELAY
+            startAutoplay();
+
+        } else {
+
+            stopAutoplayTimer();
+        }
+
+        updatePauseButton();
+    }
+
+
+    /* =========================================================
+       PREV / NEXT
+    ========================================================= */
+
+    prevButton?.addEventListener(
+        'click',
+        () => {
+
+            userNavigate(
+                currentSlide - 1
+            );
+        }
+    );
+
+
+    nextButton?.addEventListener(
+        'click',
+        () => {
+
+            userNavigate(
+                currentSlide + 1
+            );
+        }
+    );
+
+
+    pauseButton?.addEventListener(
+        'click',
+        toggleAutoplay
+    );
+
+
+    /* =========================================================
+       THUMBNAIL
+    ========================================================= */
+
+    thumbnails.forEach(
+        thumbnail => {
+
+            thumbnail.addEventListener(
+                'click',
+                () => {
+
+                    const target =
+                        Number(
+                            thumbnail
+                                .dataset
+                                .slideTarget
+                        );
+
+                    if (
+                        Number.isNaN(
+                            target
+                        )
+                    ) {
+                        return;
+                    }
+
+                    userNavigate(
+                        target
+                    );
+                }
+            );
+        }
+    );
+
+
+    /* =========================================================
+       KEYBOARD
+    ========================================================= */
+
+    function handleKeyboard(
+        event
+    )
+    {
+        if (
+            event.key === 'ArrowLeft'
+        ) {
+
+            event.preventDefault();
+
+            userNavigate(
+                currentSlide - 1
+            );
+        }
+
+        if (
+            event.key === 'ArrowRight'
+        ) {
+
+            event.preventDefault();
+
+            userNavigate(
+                currentSlide + 1
+            );
+        }
+    }
+
+
+    deck.addEventListener(
+        'keydown',
+        handleKeyboard
+    );
+
+
+    /*
+     * Saat fullscreen, event keyboard juga dibaca dari document.
+     */
+    document.addEventListener(
+        'keydown',
+        event => {
+
+            const fullscreen =
+                document.fullscreenElement
+                ||
+                document.webkitFullscreenElement;
+
+            if (
+                fullscreen === deck
+            ) {
+
+                handleKeyboard(
+                    event
                 );
+            }
+        }
+    );
+
+
+    /* =========================================================
+       SWIPE TABLET / TOUCH SCREEN
+    =========================================================
+       Pointer Events dipakai supaya bekerja di:
+       - Android tablet
+       - iPad modern
+       - Windows touchscreen
+       - browser desktop dengan mouse drag
+    ========================================================= */
+
+    function resetSwipe()
+    {
+        pointerStartX =
+            null;
+
+        pointerStartY =
+            null;
+    }
+
+
+    function finishSwipe(
+        event
+    )
+    {
+        if (
+            pointerStartX === null
+            ||
+            pointerStartY === null
+        ) {
+            return;
         }
 
 
-        function updatePauseButton()
-        {
-            if (!pauseButton) {
+        const dx =
+            event.clientX
+            -
+            pointerStartX;
+
+        const dy =
+            event.clientY
+            -
+            pointerStartY;
+
+
+        resetSwipe();
+
+
+        /*
+         * Gerakan terlalu pendek.
+         */
+        if (
+            Math.abs(dx)
+            <
+            SWIPE_MIN_DISTANCE
+        ) {
+            return;
+        }
+
+
+        /*
+         * Jika gerakan vertikal lebih dominan,
+         * anggap sebagai scroll.
+         */
+        if (
+            Math.abs(dx)
+            <=
+            Math.abs(dy)
+        ) {
+            return;
+        }
+
+
+        /*
+         * Swipe ke kanan.
+         */
+        if (
+            dx > 0
+        ) {
+
+            userNavigate(
+                currentSlide - 1
+            );
+
+            return;
+        }
+
+
+        /*
+         * Swipe ke kiri.
+         */
+        userNavigate(
+            currentSlide + 1
+        );
+    }
+
+
+    deck.addEventListener(
+        'pointerdown',
+        event => {
+
+            /*
+             * Kalau mouse,
+             * hanya tombol kiri.
+             */
+            if (
+                event.pointerType === 'mouse'
+                &&
+                event.button !== 0
+            ) {
                 return;
             }
 
 
-            pauseButton.innerHTML =
-                autoplayEnabled
+            pointerStartX =
+                event.clientX;
+
+            pointerStartY =
+                event.clientY;
+
+
+            /*
+             * Pointer capture membantu agar gesture
+             * tidak putus saat jari keluar sedikit
+             * dari dashboard.
+             */
+            if (
+                typeof deck.setPointerCapture
+                ===
+                'function'
+            ) {
+
+                try {
+
+                    deck.setPointerCapture(
+                        event.pointerId
+                    );
+
+                } catch (_) {
+                    // Tidak perlu melakukan apa-apa.
+                }
+            }
+        },
+        {
+            passive: true
+        }
+    );
+
+
+    deck.addEventListener(
+        'pointerup',
+        event => {
+
+            finishSwipe(
+                event
+            );
+
+
+            if (
+                typeof deck.releasePointerCapture
+                ===
+                'function'
+            ) {
+
+                try {
+
+                    deck.releasePointerCapture(
+                        event.pointerId
+                    );
+
+                } catch (_) {
+                    // Tidak perlu melakukan apa-apa.
+                }
+            }
+        },
+        {
+            passive: true
+        }
+    );
+
+
+    deck.addEventListener(
+        'pointercancel',
+        resetSwipe,
+        {
+            passive: true
+        }
+    );
+
+
+    /* =========================================================
+       FULLSCREEN / PRESENTATION MODE
+    ========================================================= */
+
+    function fullscreenElement()
+    {
+        return (
+            document.fullscreenElement
+            ||
+            document.webkitFullscreenElement
+            ||
+            null
+        );
+    }
+
+
+    function isDashboardFullscreen()
+    {
+        return (
+            fullscreenElement()
+            ===
+            deck
+        );
+    }
+
+
+    async function togglePresentation()
+    {
+        try {
+
+            if (
+                fullscreenElement()
+            ) {
+
+                if (
+                    document.exitFullscreen
+                ) {
+
+                    await document
+                        .exitFullscreen();
+
+                } else if (
+                    document.webkitExitFullscreen
+                ) {
+
+                    document
+                        .webkitExitFullscreen();
+                }
+
+                return;
+            }
+
+
+            if (
+                deck.requestFullscreen
+            ) {
+
+                await deck
+                    .requestFullscreen();
+
+            } else if (
+                deck.webkitRequestFullscreen
+            ) {
+
+                deck
+                    .webkitRequestFullscreen();
+            }
+
+        } catch (
+            error
+        ) {
+
+            console.error(
+                'Fullscreen error:',
+                error
+            );
+        }
+    }
+
+
+    function updatePresentationButton()
+    {
+        const active =
+            isDashboardFullscreen();
+
+
+        document
+            .documentElement
+            .classList
+            .toggle(
+                'dashboard-presenting',
+                active
+            );
+
+
+        document
+            .body
+            .classList
+            .toggle(
+                'dashboard-presenting',
+                active
+            );
+
+
+        if (
+            presentationButton
+        ) {
+
+            presentationButton
+                .setAttribute(
+                    'aria-pressed',
+                    active
+                        ?
+                        'true'
+                        :
+                        'false'
+                );
+
+
+            presentationButton.innerHTML =
+                active
                     ?
                     `
-                        <i data-lucide="pause"></i>
-                        <span>Berhenti Otomatis</span>
+                        <i data-lucide="minimize"></i>
+                        <span>Keluar Presentasi</span>
                     `
                     :
                     `
-                        <i data-lucide="play"></i>
-                        <span>Mulai Otomatis</span>
+                        <i data-lucide="maximize-2"></i>
+                        <span>Mode Presentasi</span>
                     `;
-
-
-            refreshIcons();
         }
 
 
-        function toggleAutoplay()
-        {
-            autoplayEnabled =
-                !autoplayEnabled;
+        if (
+            fullscreenInside
+        ) {
 
+            fullscreenInside.innerHTML =
+                active
+                    ?
+                    '<i data-lucide="minimize"></i>'
+                    :
+                    '<i data-lucide="maximize-2"></i>';
+        }
+
+
+        /*
+         * Ukuran chart berubah setelah fullscreen.
+         * Render ulang setelah browser selesai resize.
+         */
+        window.setTimeout(
+            () => {
+
+                renderGrowthChart();
+
+                renderLocationMap();
+
+                refreshIcons();
+
+            },
+            120
+        );
+    }
+
+
+    presentationButton?.addEventListener(
+        'click',
+        togglePresentation
+    );
+
+
+    fullscreenInside?.addEventListener(
+        'click',
+        togglePresentation
+    );
+
+
+    document.addEventListener(
+        'fullscreenchange',
+        updatePresentationButton
+    );
+
+
+    document.addEventListener(
+        'webkitfullscreenchange',
+        updatePresentationButton
+    );
+
+
+    /* =========================================================
+       DATE & TIME WITA
+    ========================================================= */
+
+    function updateClock()
+    {
+        const dateElement =
+            document.getElementById(
+                'dashboardCurrentDate'
+            );
+
+        const timeElement =
+            document.getElementById(
+                'dashboardCurrentTime'
+            );
+
+        const now =
+            new Date();
+
+
+        if (
+            dateElement
+        ) {
+
+            dateElement.textContent =
+                new Intl.DateTimeFormat(
+                    'id-ID',
+                    {
+                        timeZone:
+                            'Asia/Makassar',
+
+                        weekday:
+                            'long',
+
+                        day:
+                            '2-digit',
+
+                        month:
+                            'long',
+
+                        year:
+                            'numeric',
+                    }
+                )
+                .format(
+                    now
+                );
+        }
+
+
+        if (
+            timeElement
+        ) {
+
+            timeElement.textContent =
+                new Intl.DateTimeFormat(
+                    'id-ID',
+                    {
+                        timeZone:
+                            'Asia/Makassar',
+
+                        hour:
+                            '2-digit',
+
+                        minute:
+                            '2-digit',
+
+                        second:
+                            '2-digit',
+
+                        hourCycle:
+                            'h23',
+                    }
+                )
+                .format(
+                    now
+                )
+                .replace(
+                    /\./g,
+                    ':'
+                )
+                +
+                ' WITA';
+        }
+    }
+
+
+    updateClock();
+
+
+    window.setInterval(
+        updateClock,
+        1000
+    );
+
+
+    /* =========================================================
+       TAB VISIBILITY
+    ========================================================= */
+
+    document.addEventListener(
+        'visibilitychange',
+        () => {
 
             if (
-                resumeTimer
+                document.hidden
             ) {
 
-                clearTimeout(
-                    resumeTimer
-                );
+                stopAutoplayTimer();
 
-                resumeTimer =
-                    null;
+                return;
             }
 
 
@@ -495,555 +1110,66 @@ document.addEventListener(
             ) {
 
                 startAutoplay();
-
-            } else {
-
-                stopAutoplayTimer();
             }
-
-
-            updatePauseButton();
         }
+    );
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | NAVIGATION
-        |--------------------------------------------------------------------------
-        */
+    /* =========================================================
+       RESIZE
+    ========================================================= */
 
-        prevButton
-            ?.addEventListener(
-                'click',
-                () =>
-                    userNavigate(
-                        currentSlide
-                        -
-                        1
-                    )
+    let resizeTimer =
+        null;
+
+
+    window.addEventListener(
+        'resize',
+        () => {
+
+            window.clearTimeout(
+                resizeTimer
             );
 
 
-        nextButton
-            ?.addEventListener(
-                'click',
-                () =>
-                    userNavigate(
-                        currentSlide
-                        +
-                        1
-                    )
-            );
-
-
-        pauseButton
-            ?.addEventListener(
-                'click',
-                toggleAutoplay
-            );
-
-
-        thumbnails.forEach(
-            button => {
-
-                button.addEventListener(
-                    'click',
+            resizeTimer =
+                window.setTimeout(
                     () => {
 
-                        const target =
-                            Number(
-                                button.dataset.slideTarget
-                            );
+                        renderGrowthChart();
 
+                        renderLocationMap();
 
-                        if (
-                            !Number.isNaN(
-                                target
-                            )
-                        ) {
-
-                            userNavigate(
-                                target
-                            );
-                        }
-                    }
+                    },
+                    150
                 );
-            }
-        );
-
-
-        deck.addEventListener(
-            'keydown',
-            event => {
-
-                if (
-                    event.key
-                    ===
-                    'ArrowLeft'
-                ) {
-
-                    event.preventDefault();
-
-                    userNavigate(
-                        currentSlide
-                        -
-                        1
-                    );
-                }
-
-
-                if (
-                    event.key
-                    ===
-                    'ArrowRight'
-                ) {
-
-                    event.preventDefault();
-
-                    userNavigate(
-                        currentSlide
-                        +
-                        1
-                    );
-                }
-            }
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SWIPE
-        |--------------------------------------------------------------------------
-        */
-
-        deck.addEventListener(
-            'pointerdown',
-            event => {
-
-                pointerStartX =
-                    event.clientX;
-
-
-                pointerStartY =
-                    event.clientY;
-            }
-        );
-
-
-        deck.addEventListener(
-            'pointerup',
-            event => {
-
-                if (
-                    pointerStartX
-                    ===
-                    null
-                    ||
-                    pointerStartY
-                    ===
-                    null
-                ) {
-                    return;
-                }
-
-
-                const dx =
-                    event.clientX
-                    -
-                    pointerStartX;
-
-
-                const dy =
-                    event.clientY
-                    -
-                    pointerStartY;
-
-
-                pointerStartX =
-                    null;
-
-
-                pointerStartY =
-                    null;
-
-
-                if (
-                    Math.abs(dx)
-                    <
-                    60
-                    ||
-                    Math.abs(dx)
-                    <
-                    Math.abs(dy)
-                ) {
-                    return;
-                }
-
-
-                if (
-                    dx > 0
-                ) {
-
-                    userNavigate(
-                        currentSlide
-                        -
-                        1
-                    );
-
-                } else {
-
-                    userNavigate(
-                        currentSlide
-                        +
-                        1
-                    );
-                }
-            }
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | FULLSCREEN
-        |--------------------------------------------------------------------------
-        */
-
-        function fullscreenElement()
-        {
-            return (
-                document.fullscreenElement
-                ||
-                document.webkitFullscreenElement
-                ||
-                null
-            );
         }
+    );
 
 
-        function isDashboardFullscreen()
-        {
-            return (
-                fullscreenElement()
-                ===
-                deck
-            );
-        }
+    /* =========================================================
+       INIT
+    ========================================================= */
 
+    showSlide(
+        0
+    );
 
-        async function togglePresentation()
-        {
-            try {
+    updatePauseButton();
 
-                if (
-                    fullscreenElement()
-                ) {
+    startAutoplay();
 
-                    if (
-                        document.exitFullscreen
-                    ) {
+    updatePresentationButton();
 
-                        await document.exitFullscreen();
+    refreshIcons();
+});
 
-                    } else if (
-                        document.webkitExitFullscreen
-                    ) {
 
-                        document.webkitExitFullscreen();
-                    }
-
-                } else {
-
-                    if (
-                        deck.requestFullscreen
-                    ) {
-
-                        await deck.requestFullscreen();
-
-                    } else if (
-                        deck.webkitRequestFullscreen
-                    ) {
-
-                        deck.webkitRequestFullscreen();
-                    }
-                }
-
-            } catch (
-                error
-            ) {
-
-                console.error(
-                    'Fullscreen error:',
-                    error
-                );
-            }
-        }
-
-
-        function updatePresentationButton()
-        {
-            const active =
-                isDashboardFullscreen();
-
-
-            document
-                .documentElement
-                .classList
-                .toggle(
-                    'dashboard-presenting',
-                    active
-                );
-
-
-            document
-                .body
-                .classList
-                .toggle(
-                    'dashboard-presenting',
-                    active
-                );
-
-
-            if (
-                presentationButton
-            ) {
-
-                presentationButton.innerHTML =
-                    active
-                        ?
-                        `
-                            <i data-lucide="minimize"></i>
-                            <span>Keluar Presentasi</span>
-                        `
-                        :
-                        `
-                            <i data-lucide="maximize-2"></i>
-                            <span>Mode Presentasi</span>
-                        `;
-            }
-
-
-            if (
-                fullscreenInside
-            ) {
-
-                fullscreenInside.innerHTML =
-                    active
-                        ?
-                        '<i data-lucide="minimize"></i>'
-                        :
-                        '<i data-lucide="maximize-2"></i>';
-            }
-
-
-            setTimeout(
-                () => {
-
-                    renderGrowthChart();
-
-                    renderLocationMap();
-
-                    refreshIcons();
-
-                },
-                100
-            );
-        }
-
-
-        presentationButton
-            ?.addEventListener(
-                'click',
-                togglePresentation
-            );
-
-
-        fullscreenInside
-            ?.addEventListener(
-                'click',
-                togglePresentation
-            );
-
-
-        document.addEventListener(
-            'fullscreenchange',
-            updatePresentationButton
-        );
-
-
-        document.addEventListener(
-            'webkitfullscreenchange',
-            updatePresentationButton
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CLOCK
-        |--------------------------------------------------------------------------
-        */
-
-        function updateClock()
-        {
-            const dateElement =
-                document.getElementById(
-                    'dashboardCurrentDate'
-                );
-
-
-            const timeElement =
-                document.getElementById(
-                    'dashboardCurrentTime'
-                );
-
-
-            const now =
-                new Date();
-
-
-            if (
-                dateElement
-            ) {
-
-                dateElement.textContent =
-                    new Intl.DateTimeFormat(
-                        'id-ID',
-                        {
-
-                            timeZone:
-                                'Asia/Makassar',
-
-                            weekday:
-                                'long',
-
-                            day:
-                                '2-digit',
-
-                            month:
-                                'long',
-
-                            year:
-                                'numeric',
-
-                        }
-                    )
-                    .format(
-                        now
-                    );
-            }
-
-
-            if (
-                timeElement
-            ) {
-
-                timeElement.textContent =
-                    new Intl.DateTimeFormat(
-                        'id-ID',
-                        {
-
-                            timeZone:
-                                'Asia/Makassar',
-
-                            hour:
-                                '2-digit',
-
-                            minute:
-                                '2-digit',
-
-                            second:
-                                '2-digit',
-
-                            hourCycle:
-                                'h23',
-
-                        }
-                    )
-                    .format(
-                        now
-                    )
-                    .replace(
-                        /\./g,
-                        ':'
-                    )
-                    +
-                    ' WITA';
-            }
-        }
-
-
-        updateClock();
-
-
-        setInterval(
-            updateClock,
-            1000
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | RESIZE
-        |--------------------------------------------------------------------------
-        */
-
-        let resizeTimer =
-            null;
-
-
-        window.addEventListener(
-            'resize',
-            () => {
-
-                clearTimeout(
-                    resizeTimer
-                );
-
-
-                resizeTimer =
-                    setTimeout(
-                        () => {
-
-                            renderGrowthChart();
-
-                            renderLocationMap();
-
-                        },
-                        140
-                    );
-            }
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | INIT
-        |--------------------------------------------------------------------------
-        */
-
-        showSlide(
-            0
-        );
-
-
-        updatePauseButton();
-
-
-        startAutoplay();
-
-
-        updatePresentationButton();
-
-
-        refreshIcons();
-    }
-);
-
-
-/* =========================================================
-   =========================================================
-   GROWTH CHART
-   =========================================================
-========================================================= */
+/* ============================================================
+   ============================================================
+   SLIDE 3 - GROWTH CHART
+   ============================================================
+============================================================ */
 
 function renderGrowthChart()
 {
@@ -1110,9 +1236,9 @@ function renderGrowthChart()
     }
 
 
-    /* =====================================================
-       DATA DATABASE
-    ===================================================== */
+    /* =========================================================
+       SOURCE DATA
+    ========================================================= */
 
     const rawData =
         Array.isArray(
@@ -1128,9 +1254,9 @@ function renderGrowthChart()
             [];
 
 
-    /* =====================================================
-       NORMALISASI DATA
-    ===================================================== */
+    /* =========================================================
+       NORMALIZE PER YEAR
+    ========================================================= */
 
     const yearlyMap =
         new Map();
@@ -1159,14 +1285,28 @@ function renderGrowthChart()
                 );
 
 
+            const added =
+                Number(
+                    item?.tambahan
+                    ??
+                    0
+                )
+                ||
+                0;
+
+
             if (
-                !Number.isFinite(year)
+                !Number.isFinite(
+                    year
+                )
                 ||
                 year < 1900
                 ||
                 year > 2100
                 ||
-                !Number.isFinite(value)
+                !Number.isFinite(
+                    value
+                )
                 ||
                 value < 0
             ) {
@@ -1174,31 +1314,27 @@ function renderGrowthChart()
             }
 
 
+            /*
+             * Jika tahun yang sama muncul lebih dari sekali,
+             * pakai nilai tertinggi dari data cumulative.
+             */
             if (
-                !yearlyMap.has(year)
+                !yearlyMap.has(
+                    year
+                )
                 ||
-                value
-                >
-                yearlyMap.get(year).value
+                value >
+                yearlyMap
+                    .get(year)
+                    .value
             ) {
 
                 yearlyMap.set(
                     year,
                     {
-                        year:
-                            year,
-
-                        value:
-                            value,
-
-                        added:
-                            Number(
-                                item?.tambahan
-                                ??
-                                0
-                            )
-                            ||
-                            0,
+                        year,
+                        value,
+                        added
                     }
                 );
             }
@@ -1207,23 +1343,24 @@ function renderGrowthChart()
 
 
     const points =
-        Array.from(
-            yearlyMap.values()
-        )
-        .sort(
-            (
-                a,
-                b
-            ) =>
-                a.year
-                -
-                b.year
-        );
+        Array
+            .from(
+                yearlyMap.values()
+            )
+            .sort(
+                (
+                    a,
+                    b
+                ) =>
+                    a.year
+                    -
+                    b.year
+            );
 
 
-    /* =====================================================
+    /* =========================================================
        RESET
-    ===================================================== */
+    ========================================================= */
 
     svg.innerHTML =
         '';
@@ -1236,14 +1373,18 @@ function renderGrowthChart()
         ?.remove();
 
 
-    if (tooltip) {
+    if (
+        tooltip
+    ) {
 
         tooltip.hidden =
             true;
     }
 
 
-    if (badge) {
+    if (
+        badge
+    ) {
 
         badge.hidden =
             true;
@@ -1256,9 +1397,9 @@ function renderGrowthChart()
     }
 
 
-    /* =====================================================
-       EMPTY STATE
-    ===================================================== */
+    /* =========================================================
+       EMPTY
+    ========================================================= */
 
     if (
         !points.length
@@ -1268,7 +1409,9 @@ function renderGrowthChart()
             'none';
 
 
-        if (empty) {
+        if (
+            empty
+        ) {
 
             empty.hidden =
                 false;
@@ -1283,16 +1426,18 @@ function renderGrowthChart()
         'block';
 
 
-    if (empty) {
+    if (
+        empty
+    ) {
 
         empty.hidden =
             true;
     }
 
 
-    /* =====================================================
-       PERTUMBUHAN
-    ===================================================== */
+    /* =========================================================
+       GROWTH BADGE
+    ========================================================= */
 
     if (
         points.length >= 2
@@ -1303,15 +1448,15 @@ function renderGrowthChart()
     ) {
 
         const firstValue =
-            points[0].value;
+            points[0]
+                .value;
 
 
         const lastValue =
             points[
-                points.length
-                -
-                1
-            ].value;
+                points.length - 1
+            ]
+                .value;
 
 
         let percentage =
@@ -1385,11 +1530,12 @@ function renderGrowthChart()
             );
 
 
-        if (icon) {
+        if (
+            icon
+        ) {
 
             icon.setAttribute(
                 'data-lucide',
-
                 status === 'is-up'
                     ?
                     'trending-up'
@@ -1406,8 +1552,7 @@ function renderGrowthChart()
         if (
             window.lucide
             &&
-            typeof
-            window.lucide.createIcons
+            typeof window.lucide.createIcons
             ===
             'function'
         ) {
@@ -1418,9 +1563,9 @@ function renderGrowthChart()
     }
 
 
-    /* =====================================================
-       SVG
-    ===================================================== */
+    /* =========================================================
+       SVG CONFIG
+    ========================================================= */
 
     const NS =
         'http://www.w3.org/2000/svg';
@@ -1435,7 +1580,6 @@ function renderGrowthChart()
 
 
     const padding = {
-
         top:
             48,
 
@@ -1446,7 +1590,7 @@ function renderGrowthChart()
             58,
 
         left:
-            105,
+            105
     };
 
 
@@ -1478,49 +1622,50 @@ function renderGrowthChart()
     );
 
 
-    /* =====================================================
-       CREATE SVG ELEMENT
-    ===================================================== */
+    /* =========================================================
+       SVG HELPER
+    ========================================================= */
 
-    const create =
-        (
-            tag,
-            attributes = {}
-        ) => {
-
-            const element =
-                document.createElementNS(
-                    NS,
-                    tag
-                );
-
-
-            Object.entries(
-                attributes
-            )
-            .forEach(
-                (
-                    [
-                        key,
-                        value
-                    ]
-                ) => {
-
-                    element.setAttribute(
-                        key,
-                        String(value)
-                    );
-                }
+    function createSvgElement(
+        tag,
+        attributes = {}
+    )
+    {
+        const element =
+            document.createElementNS(
+                NS,
+                tag
             );
 
 
-            return element;
-        };
+        Object.entries(
+            attributes
+        )
+        .forEach(
+            (
+                [
+                    key,
+                    value
+                ]
+            ) => {
+
+                element.setAttribute(
+                    key,
+                    String(
+                        value
+                    )
+                );
+            }
+        );
 
 
-    /* =====================================================
-       RANGE NILAI
-    ===================================================== */
+        return element;
+    }
+
+
+    /* =========================================================
+       VALUE RANGE
+    ========================================================= */
 
     const values =
         points.map(
@@ -1553,9 +1698,7 @@ function renderGrowthChart()
 
         difference =
             Math.max(
-                rawMax
-                *
-                0.15,
+                rawMax * 0.15,
                 1
             );
     }
@@ -1563,14 +1706,8 @@ function renderGrowthChart()
 
     const extraSpace =
         Math.max(
-            difference
-            *
-            0.30,
-
-            rawMax
-            *
-            0.025,
-
+            difference * 0.30,
+            rawMax * 0.025,
             1
         );
 
@@ -1578,10 +1715,7 @@ function renderGrowthChart()
     const chartMin =
         Math.max(
             0,
-
-            rawMin
-            -
-            extraSpace
+            rawMin - extraSpace
         );
 
 
@@ -1591,18 +1725,16 @@ function renderGrowthChart()
         extraSpace;
 
 
-    /* =====================================================
-       X
-    ===================================================== */
+    /* =========================================================
+       X POSITION
+    ========================================================= */
 
     function getX(
         index
     )
     {
         if (
-            points.length
-            ===
-            1
+            points.length === 1
         ) {
 
             return (
@@ -1620,9 +1752,7 @@ function renderGrowthChart()
                 index
                 /
                 (
-                    points.length
-                    -
-                    1
+                    points.length - 1
                 )
             )
             *
@@ -1631,9 +1761,9 @@ function renderGrowthChart()
     }
 
 
-    /* =====================================================
-       Y
-    ===================================================== */
+    /* =========================================================
+       Y POSITION
+    ========================================================= */
 
     function getY(
         value
@@ -1663,29 +1793,23 @@ function renderGrowthChart()
             +
             plotHeight
             -
-            (
-                ratio
-                *
-                plotHeight
-            )
+            ratio * plotHeight
         );
     }
 
 
-    /* =====================================================
-       DEFINITIONS
-    ===================================================== */
+    /* =========================================================
+       GRADIENTS
+    ========================================================= */
 
     const defs =
-        create(
+        createSvgElement(
             'defs'
         );
 
 
-    /* AREA GRADIENT */
-
     const areaGradient =
-        create(
+        createSvgElement(
             'linearGradient',
             {
                 id:
@@ -1701,13 +1825,13 @@ function renderGrowthChart()
                     '0%',
 
                 y2:
-                    '100%',
+                    '100%'
             }
         );
 
 
     areaGradient.appendChild(
-        create(
+        createSvgElement(
             'stop',
             {
                 offset:
@@ -1717,14 +1841,14 @@ function renderGrowthChart()
                     '#2583f3',
 
                 'stop-opacity':
-                    '.40',
+                    '.40'
             }
         )
     );
 
 
     areaGradient.appendChild(
-        create(
+        createSvgElement(
             'stop',
             {
                 offset:
@@ -1734,14 +1858,14 @@ function renderGrowthChart()
                     '#2583f3',
 
                 'stop-opacity':
-                    '.16',
+                    '.16'
             }
         )
     );
 
 
     areaGradient.appendChild(
-        create(
+        createSvgElement(
             'stop',
             {
                 offset:
@@ -1751,7 +1875,7 @@ function renderGrowthChart()
                     '#2583f3',
 
                 'stop-opacity':
-                    '.02',
+                    '.02'
             }
         )
     );
@@ -1762,10 +1886,8 @@ function renderGrowthChart()
     );
 
 
-    /* LINE GRADIENT */
-
     const lineGradient =
-        create(
+        createSvgElement(
             'linearGradient',
             {
                 id:
@@ -1781,34 +1903,34 @@ function renderGrowthChart()
                     '100%',
 
                 y2:
-                    '0%',
+                    '0%'
             }
         );
 
 
     lineGradient.appendChild(
-        create(
+        createSvgElement(
             'stop',
             {
                 offset:
                     '0%',
 
                 'stop-color':
-                    '#0875e1',
+                    '#0875e1'
             }
         )
     );
 
 
     lineGradient.appendChild(
-        create(
+        createSvgElement(
             'stop',
             {
                 offset:
                     '100%',
 
                 'stop-color':
-                    '#55b1ff',
+                    '#55b1ff'
             }
         )
     );
@@ -1824,9 +1946,9 @@ function renderGrowthChart()
     );
 
 
-    /* =====================================================
-       GRID Y
-    ===================================================== */
+    /* =========================================================
+       Y GRID
+    ========================================================= */
 
     const GRID_COUNT =
         4;
@@ -1855,19 +1977,17 @@ function renderGrowthChart()
         const value =
             chartMax
             -
+            ratio
+            *
             (
-                ratio
-                *
-                (
-                    chartMax
-                    -
-                    chartMin
-                )
+                chartMax
+                -
+                chartMin
             );
 
 
         svg.appendChild(
-            create(
+            createSvgElement(
                 'line',
                 {
                     x1:
@@ -1894,14 +2014,14 @@ function renderGrowthChart()
                         1,
 
                     'stroke-dasharray':
-                        '5 7',
+                        '5 7'
                 }
             )
         );
 
 
         const label =
-            create(
+            createSvgElement(
                 'text',
                 {
                     x:
@@ -1924,13 +2044,14 @@ function renderGrowthChart()
                         13,
 
                     'font-weight':
-                        600,
+                        600
                 }
             );
 
 
         /*
-         * Sumbu Y sengaja tetap compact.
+         * Function ini WAJIB ada.
+         * Sebelumnya chart kosong karena helper ini hilang.
          */
         label.textContent =
             formatDashboardAxisCurrency(
@@ -1944,9 +2065,9 @@ function renderGrowthChart()
     }
 
 
-    /* =====================================================
+    /* =========================================================
        BASELINE
-    ===================================================== */
+    ========================================================= */
 
     const baselineY =
         padding.top
@@ -1955,7 +2076,7 @@ function renderGrowthChart()
 
 
     svg.appendChild(
-        create(
+        createSvgElement(
             'line',
             {
                 x1:
@@ -1979,15 +2100,15 @@ function renderGrowthChart()
                     '.30',
 
                 'stroke-width':
-                    1.5,
+                    1.5
             }
         )
     );
 
 
-    /* =====================================================
-       COORDINATES
-    ===================================================== */
+    /* =========================================================
+       POINT COORDINATES
+    ========================================================= */
 
     const coordinates =
         points.map(
@@ -1995,7 +2116,6 @@ function renderGrowthChart()
                 item,
                 index
             ) => ({
-
                 ...item,
 
                 x:
@@ -2006,33 +2126,31 @@ function renderGrowthChart()
                 y:
                     getY(
                         item.value
-                    ),
+                    )
             })
         );
 
 
-    /* =====================================================
-       PATH
-    ===================================================== */
+    /* =========================================================
+       LINE PATH
+    ========================================================= */
 
     function makeLinePath(
         items
     )
     {
         if (
-            items.length
-            ===
-            1
+            items.length === 1
         ) {
-
             return '';
         }
 
 
+        /*
+         * Dua titik = garis lurus.
+         */
         if (
-            items.length
-            ===
-            2
+            items.length === 2
         ) {
 
             return (
@@ -2043,13 +2161,17 @@ function renderGrowthChart()
         }
 
 
+        /*
+         * 3+ titik = smooth curve.
+         */
         let path =
             `M ${items[0].x} ${items[0].y}`;
 
 
         for (
             let i = 0;
-            i < items.length - 1;
+            i <
+            items.length - 1;
             i++
         ) {
 
@@ -2092,14 +2214,12 @@ function renderGrowthChart()
         );
 
 
-    /* =====================================================
-       AREA + GARIS
-    ===================================================== */
+    /* =========================================================
+       AREA + LINE
+    ========================================================= */
 
     if (
-        coordinates.length
-        >=
-        2
+        coordinates.length >= 2
     ) {
 
         const areaPath =
@@ -2107,9 +2227,7 @@ function renderGrowthChart()
             +
             ` L ${
                 coordinates[
-                    coordinates.length
-                    -
-                    1
+                    coordinates.length - 1
                 ].x
             } ${baselineY}`
             +
@@ -2120,8 +2238,11 @@ function renderGrowthChart()
             ' Z';
 
 
+        /*
+         * Area biru.
+         */
         svg.appendChild(
-            create(
+            createSvgElement(
                 'path',
                 {
                     d:
@@ -2131,16 +2252,17 @@ function renderGrowthChart()
                         'url(#growthAreaGradient)',
 
                     class:
-                        'growth-area-path',
+                        'growth-area-path'
                 }
             )
         );
 
 
-        /* WHITE GLOW */
-
+        /*
+         * Glow putih.
+         */
         svg.appendChild(
-            create(
+            createSvgElement(
                 'path',
                 {
                     d:
@@ -2162,16 +2284,17 @@ function renderGrowthChart()
                         'round',
 
                     class:
-                        'growth-line-glow',
+                        'growth-line-glow'
                 }
             )
         );
 
 
-        /* BLUE LINE */
-
+        /*
+         * Garis utama.
+         */
         svg.appendChild(
-            create(
+            createSvgElement(
                 'path',
                 {
                     d:
@@ -2193,16 +2316,16 @@ function renderGrowthChart()
                         'round',
 
                     class:
-                        'growth-line-path',
+                        'growth-line-path'
                 }
             )
         );
     }
 
 
-    /* =====================================================
-       TAHUN
-    ===================================================== */
+    /* =========================================================
+       X AXIS YEAR
+    ========================================================= */
 
     const xLabels =
         document.createElement(
@@ -2257,9 +2380,9 @@ function renderGrowthChart()
     );
 
 
-    /* =====================================================
+    /* =========================================================
        TOOLTIP
-    ===================================================== */
+    ========================================================= */
 
     function showTooltip(
         point,
@@ -2282,13 +2405,10 @@ function renderGrowthChart()
 
 
         /*
-         * NILAI PENUH.
+         * Tooltip tetap angka database penuh.
          *
-         * Tidak lagi:
-         * Rp 1,3 T
-         *
-         * Tetapi:
-         * Rp 1.270.845.623.000
+         * Contoh:
+         * Rp 1.270.746.080.536
          */
         tooltipValue.textContent =
             formatDashboardRupiahFull(
@@ -2300,6 +2420,9 @@ function renderGrowthChart()
             tooltipChange
         ) {
 
+            /*
+             * Titik pertama.
+             */
             if (
                 index === 0
             ) {
@@ -2315,10 +2438,9 @@ function renderGrowthChart()
 
                 const previous =
                     coordinates[
-                        index
-                        -
-                        1
-                    ].value;
+                        index - 1
+                    ]
+                    .value;
 
 
                 let percentage =
@@ -2360,7 +2482,7 @@ function renderGrowthChart()
                                 1,
 
                             maximumFractionDigits:
-                                1,
+                                1
                         }
                     )}% dari tahun sebelumnya`;
 
@@ -2420,9 +2542,9 @@ function renderGrowthChart()
     }
 
 
-    /* =====================================================
-       POINT
-    ===================================================== */
+    /* =========================================================
+       POINTS
+    ========================================================= */
 
     coordinates.forEach(
         (
@@ -2431,7 +2553,7 @@ function renderGrowthChart()
         ) => {
 
             const group =
-                create(
+                createSvgElement(
                     'g',
                     {
                         class:
@@ -2441,15 +2563,16 @@ function renderGrowthChart()
                             '0',
 
                         role:
-                            'button',
+                            'button'
                     }
                 );
 
 
-            /* HALO */
-
+            /*
+             * Halo luar.
+             */
             group.appendChild(
-                create(
+                createSvgElement(
                     'circle',
                     {
                         cx:
@@ -2468,16 +2591,17 @@ function renderGrowthChart()
                             '.14',
 
                         class:
-                            'growth-point-halo',
+                            'growth-point-halo'
                     }
                 )
             );
 
 
-            /* WHITE RING */
-
+            /*
+             * Ring putih.
+             */
             group.appendChild(
-                create(
+                createSvgElement(
                     'circle',
                     {
                         cx:
@@ -2493,16 +2617,17 @@ function renderGrowthChart()
                             '#ffffff',
 
                         'fill-opacity':
-                            '.95',
+                            '.95'
                     }
                 )
             );
 
 
-            /* MAIN POINT */
-
+            /*
+             * Titik biru.
+             */
             group.appendChild(
-                create(
+                createSvgElement(
                     'circle',
                     {
                         cx:
@@ -2524,16 +2649,18 @@ function renderGrowthChart()
                             2,
 
                         class:
-                            'growth-point-dot',
+                            'growth-point-dot'
                     }
                 )
             );
 
 
-            /* HIT AREA */
-
+            /*
+             * Invisible hit area supaya mudah disentuh
+             * menggunakan jari di tablet.
+             */
             group.appendChild(
-                create(
+                createSvgElement(
                     'circle',
                     {
                         cx:
@@ -2543,13 +2670,13 @@ function renderGrowthChart()
                             point.y,
 
                         r:
-                            24,
+                            25,
 
                         fill:
                             'transparent',
 
                         cursor:
-                            'pointer',
+                            'pointer'
                     }
                 )
             );
@@ -2557,11 +2684,13 @@ function renderGrowthChart()
 
             group.addEventListener(
                 'mouseenter',
-                () =>
+                () => {
+
                     showTooltip(
                         point,
                         index
-                    )
+                    );
+                }
             );
 
 
@@ -2573,11 +2702,13 @@ function renderGrowthChart()
 
             group.addEventListener(
                 'focus',
-                () =>
+                () => {
+
                     showTooltip(
                         point,
                         index
-                    )
+                    );
+                }
             );
 
 
@@ -2587,13 +2718,18 @@ function renderGrowthChart()
             );
 
 
+            /*
+             * Penting untuk tablet.
+             */
             group.addEventListener(
                 'click',
-                () =>
+                () => {
+
                     showTooltip(
                         point,
                         index
-                    )
+                    );
+                }
             );
 
 
@@ -2605,11 +2741,11 @@ function renderGrowthChart()
 }
 
 
-/* =========================================================
-   =========================================================
-   LOCATION MAP
-   =========================================================
-========================================================= */
+/* ============================================================
+   ============================================================
+   SLIDE 5 - LOCATION MAP
+   ============================================================
+============================================================ */
 
 function renderLocationMap()
 {
@@ -2630,6 +2766,10 @@ function renderLocationMap()
     }
 
 
+    /* =========================================================
+       SOURCE
+    ========================================================= */
+
     const source =
         Array.isArray(
             window
@@ -2644,6 +2784,10 @@ function renderLocationMap()
             [];
 
 
+    /* =========================================================
+       NORMALIZE
+    ========================================================= */
+
     const locations =
         source
             .map(
@@ -2651,24 +2795,31 @@ function renderLocationMap()
 
                     ...location,
 
+
                     latNumber:
                         parseDashboardCoordinate(
                             location?.lat
                         ),
+
 
                     longNumber:
                         parseDashboardCoordinate(
                             location?.long
                         ),
 
+
                     jumlahNumber:
                         Number(
                             location?.jumlah
                             ??
+                            location?.total
+                            ??
+                            location?.count
+                            ??
                             0
                         )
                         ||
-                        0,
+                        0
                 })
             )
             .filter(
@@ -2706,6 +2857,10 @@ function renderLocationMap()
         '';
 
 
+    /* =========================================================
+       EMPTY
+    ========================================================= */
+
     if (
         !locations.length
     ) {
@@ -2717,7 +2872,6 @@ function renderLocationMap()
             empty.hidden =
                 false;
         }
-
 
         return;
     }
@@ -2731,6 +2885,10 @@ function renderLocationMap()
             true;
     }
 
+
+    /* =========================================================
+       BOUNDS
+    ========================================================= */
 
     const lats =
         locations.map(
@@ -2770,6 +2928,9 @@ function renderLocationMap()
         );
 
 
+    /*
+     * Hindari pembagian nol.
+     */
     if (
         minLat === maxLat
     ) {
@@ -2809,6 +2970,10 @@ function renderLocationMap()
     const paddingPercent =
         8;
 
+
+    /* =========================================================
+       MARKERS
+    ========================================================= */
 
     locations.forEach(
         (
@@ -2864,6 +3029,10 @@ function renderLocationMap()
                 );
 
 
+            /* =================================================
+               MARKER
+            ================================================= */
+
             const marker =
                 document.createElement(
                     'span'
@@ -2899,6 +3068,10 @@ function renderLocationMap()
             );
 
 
+            /* =================================================
+               LABEL TOP 5
+            ================================================= */
+
             if (
                 index < 5
             ) {
@@ -2913,6 +3086,9 @@ function renderLocationMap()
                     'map-marker-label';
 
 
+                /*
+                 * Batasi agar label tidak terlalu keluar kanan.
+                 */
                 label.style.left =
                     `${
                         Math.min(
@@ -2955,8 +3131,15 @@ function renderLocationMap()
 }
 
 
+/* ============================================================
+   ============================================================
+   HELPER
+   ============================================================
+============================================================ */
+
+
 /* =========================================================
-   HELPERS
+   PARSE COORDINATE
 ========================================================= */
 
 function parseDashboardCoordinate(
@@ -2968,6 +3151,7 @@ function parseDashboardCoordinate(
         ||
         value === undefined
     ) {
+
         return NaN;
     }
 
@@ -2990,6 +3174,7 @@ function parseDashboardCoordinate(
     if (
         !normalized
     ) {
+
         return NaN;
     }
 
@@ -3000,61 +3185,47 @@ function parseDashboardCoordinate(
 }
 
 
+/* =========================================================
+   NUMBER
+========================================================= */
+
 function formatDashboardNumber(
     value
 )
 {
+    const number =
+        Number(
+            value
+        );
+
+
     return new Intl.NumberFormat(
         'id-ID',
         {
-
             maximumFractionDigits:
-                0,
-
+                0
         }
     )
     .format(
-        Number(
-            value
+        Number.isFinite(
+            number
         )
-        ||
-        0
+            ?
+            number
+            :
+            0
     );
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| FORMAT SUMBU Y
-|--------------------------------------------------------------------------
-|
-| Lebih presisi daripada kartu biasa.
-|
-| Contoh:
-|
-| Rp 966,4 M
-| Rp 1,02 T
-| Rp 1,08 T
-| Rp 1,14 T
-|
-*/
-/*
-|--------------------------------------------------------------------------
-| FORMAT RUPIAH PENUH
-|--------------------------------------------------------------------------
-|
-| Digunakan pada tooltip chart Slide 3.
-|
-| Tidak ada pembulatan.
-| Tidak menggunakan T / M / Jt.
-|
-*/
+/* =========================================================
+   FULL RUPIAH
+   Tooltip chart menggunakan angka penuh dari database.
 
-/*
-|--------------------------------------------------------------------------
-| FORMAT RUPIAH PENUH
-|--------------------------------------------------------------------------
-*/
+   1270746080536
+   =>
+   Rp 1.270.746.080.536
+========================================================= */
 
 function formatDashboardRupiahFull(
     value
@@ -3089,7 +3260,7 @@ function formatDashboardRupiahFull(
                     0,
 
                 maximumFractionDigits:
-                    0,
+                    0
             }
         )
         .format(
@@ -3099,14 +3270,12 @@ function formatDashboardRupiahFull(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| TRUNCATE
-|--------------------------------------------------------------------------
-|
-| Tidak menggunakan Math.round().
-|
-*/
+/* =========================================================
+   TRUNCATE
+   Bukan pembulatan.
+
+   1.2799 -> 1.27
+========================================================= */
 
 function truncateDashboardNumber(
     value,
@@ -3136,6 +3305,9 @@ function truncateDashboardNumber(
         );
 
 
+    /*
+     * Positif.
+     */
     if (
         number >= 0
     ) {
@@ -3152,6 +3324,9 @@ function truncateDashboardNumber(
     }
 
 
+    /*
+     * Negatif.
+     */
     return (
         Math.ceil(
             number
@@ -3164,24 +3339,186 @@ function truncateDashboardNumber(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| FORMAT COMPACT PRESISI
-|--------------------------------------------------------------------------
-|
-| Contoh:
-|
-| 1.270.746.080.536
-|
-| menjadi:
-|
-| Rp 1,27 T
-|
-| Bukan:
-|
-| Rp 1,3 T
-|
-*/
+/* =========================================================
+   AXIS CURRENCY
+   Wajib dipakai oleh renderGrowthChart().
+
+   Contoh:
+   Rp 1,27 T
+   Rp 1,14 T
+   Rp 966,4 M
+
+   Tidak membulatkan ke Rp 1,3 T.
+========================================================= */
+
+function formatDashboardAxisCurrency(
+    value
+)
+{
+    const number =
+        Number(
+            value
+        )
+        ||
+        0;
+
+
+    /* =====================================================
+       TRILIUN
+    ===================================================== */
+
+    if (
+        Math.abs(
+            number
+        )
+        >=
+        1000000000000
+    ) {
+
+        const result =
+            truncateDashboardNumber(
+                number
+                /
+                1000000000000,
+                2
+            );
+
+
+        return (
+            'Rp '
+            +
+            result.toLocaleString(
+                'id-ID',
+                {
+                    minimumFractionDigits:
+                        2,
+
+                    maximumFractionDigits:
+                        2
+                }
+            )
+            +
+            ' T'
+        );
+    }
+
+
+    /* =====================================================
+       MILIAR
+    ===================================================== */
+
+    if (
+        Math.abs(
+            number
+        )
+        >=
+        1000000000
+    ) {
+
+        const result =
+            truncateDashboardNumber(
+                number
+                /
+                1000000000,
+                1
+            );
+
+
+        return (
+            'Rp '
+            +
+            result.toLocaleString(
+                'id-ID',
+                {
+                    minimumFractionDigits:
+                        1,
+
+                    maximumFractionDigits:
+                        1
+                }
+            )
+            +
+            ' M'
+        );
+    }
+
+
+    /* =====================================================
+       JUTA
+    ===================================================== */
+
+    if (
+        Math.abs(
+            number
+        )
+        >=
+        1000000
+    ) {
+
+        const result =
+            truncateDashboardNumber(
+                number
+                /
+                1000000,
+                1
+            );
+
+
+        return (
+            'Rp '
+            +
+            result.toLocaleString(
+                'id-ID',
+                {
+                    minimumFractionDigits:
+                        1,
+
+                    maximumFractionDigits:
+                        1
+                }
+            )
+            +
+            ' Jt'
+        );
+    }
+
+
+    /* =====================================================
+       NORMAL
+    ===================================================== */
+
+    return (
+        'Rp '
+        +
+        new Intl.NumberFormat(
+            'id-ID',
+            {
+                maximumFractionDigits:
+                    0
+            }
+        )
+        .format(
+            number
+        )
+    );
+}
+
+
+/* =========================================================
+   COMPACT PRECISE
+   Digunakan jika suatu elemen JS membutuhkan singkatan
+   tanpa pembulatan.
+
+   1.270.746.080.536
+   =>
+   Rp 1,27 T
+
+   1.279.999.999.999
+   =>
+   Rp 1,27 T
+
+   Bukan Rp 1,28 T.
+========================================================= */
 
 function formatDashboardCompactPrecise(
     value,
@@ -3204,9 +3541,10 @@ function formatDashboardCompactPrecise(
             '';
 
 
-    /*
-     * TRILIUN
-     */
+    /* =====================================================
+       TRILIUN
+    ===================================================== */
+
     if (
         Math.abs(
             number
@@ -3234,7 +3572,7 @@ function formatDashboardCompactPrecise(
                         2,
 
                     maximumFractionDigits:
-                        2,
+                        2
                 }
             )
             +
@@ -3243,9 +3581,10 @@ function formatDashboardCompactPrecise(
     }
 
 
-    /*
-     * MILIAR
-     */
+    /* =====================================================
+       MILIAR
+    ===================================================== */
+
     if (
         Math.abs(
             number
@@ -3273,7 +3612,7 @@ function formatDashboardCompactPrecise(
                         2,
 
                     maximumFractionDigits:
-                        2,
+                        2
                 }
             )
             +
@@ -3282,9 +3621,10 @@ function formatDashboardCompactPrecise(
     }
 
 
-    /*
-     * JUTA
-     */
+    /* =====================================================
+       JUTA
+    ===================================================== */
+
     if (
         Math.abs(
             number
@@ -3312,7 +3652,7 @@ function formatDashboardCompactPrecise(
                         2,
 
                     maximumFractionDigits:
-                        2,
+                        2
                 }
             )
             +
@@ -3321,9 +3661,10 @@ function formatDashboardCompactPrecise(
     }
 
 
-    /*
-     * RIBU
-     */
+    /* =====================================================
+       RIBU
+    ===================================================== */
+
     if (
         Math.abs(
             number
@@ -3351,7 +3692,7 @@ function formatDashboardCompactPrecise(
                         2,
 
                     maximumFractionDigits:
-                        2,
+                        2
                 }
             )
             +
@@ -3360,6 +3701,10 @@ function formatDashboardCompactPrecise(
     }
 
 
+    /* =====================================================
+       NORMAL
+    ===================================================== */
+
     return (
         prefix
         +
@@ -3367,11 +3712,29 @@ function formatDashboardCompactPrecise(
             'id-ID',
             {
                 maximumFractionDigits:
-                    0,
+                    0
             }
         )
         .format(
             number
         )
+    );
+}
+
+
+/* =========================================================
+   LEGACY COMPACT
+   Supaya kode lama yang masih memanggil function ini
+   tidak menghasilkan error.
+========================================================= */
+
+function formatDashboardCompact(
+    value,
+    currency = true
+)
+{
+    return formatDashboardCompactPrecise(
+        value,
+        currency
     );
 }
