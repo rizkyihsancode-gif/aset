@@ -3050,6 +3050,12 @@ function formatDashboardNumber(
 |
 */
 
+/*
+|--------------------------------------------------------------------------
+| FORMAT RUPIAH PENUH
+|--------------------------------------------------------------------------
+*/
+
 function formatDashboardRupiahFull(
     value
 )
@@ -3092,135 +3098,92 @@ function formatDashboardRupiahFull(
     );
 }
 
-function formatDashboardAxisCurrency(
-    value
+
+/*
+|--------------------------------------------------------------------------
+| TRUNCATE
+|--------------------------------------------------------------------------
+|
+| Tidak menggunakan Math.round().
+|
+*/
+
+function truncateDashboardNumber(
+    value,
+    precision = 2
 )
 {
     const number =
         Number(
             value
-        )
-        ||
-        0;
+        );
 
 
     if (
-        Math.abs(
+        !Number.isFinite(
             number
         )
-        >=
-        1000000000000
     ) {
 
-        const trillion =
-            number
+        return 0;
+    }
+
+
+    const factor =
+        Math.pow(
+            10,
+            precision
+        );
+
+
+    if (
+        number >= 0
+    ) {
+
+        return (
+            Math.floor(
+                number
+                *
+                factor
+            )
             /
-            1000000000000;
-
-
-        return (
-            'Rp '
-            +
-            trillion.toLocaleString(
-                'id-ID',
-                {
-
-                    minimumFractionDigits:
-                        trillion < 1.1
-                            ?
-                            2
-                            :
-                            1,
-
-                    maximumFractionDigits:
-                        2,
-                }
-            )
-            +
-            ' T'
-        );
-    }
-
-
-    if (
-        Math.abs(
-            number
-        )
-        >=
-        1000000000
-    ) {
-
-        return (
-            'Rp '
-            +
-            (
-                number
-                /
-                1000000000
-            )
-            .toLocaleString(
-                'id-ID',
-                {
-
-                    maximumFractionDigits:
-                        1,
-
-                }
-            )
-            +
-            ' M'
-        );
-    }
-
-
-    if (
-        Math.abs(
-            number
-        )
-        >=
-        1000000
-    ) {
-
-        return (
-            'Rp '
-            +
-            (
-                number
-                /
-                1000000
-            )
-            .toLocaleString(
-                'id-ID',
-                {
-
-                    maximumFractionDigits:
-                        1,
-
-                }
-            )
-            +
-            ' Jt'
+            factor
         );
     }
 
 
     return (
-        'Rp '
-        +
-        number.toLocaleString(
-            'id-ID',
-            {
-
-                maximumFractionDigits:
-                    0,
-
-            }
+        Math.ceil(
+            number
+            *
+            factor
         )
+        /
+        factor
     );
 }
 
 
-function formatDashboardCompact(
+/*
+|--------------------------------------------------------------------------
+| FORMAT COMPACT PRESISI
+|--------------------------------------------------------------------------
+|
+| Contoh:
+|
+| 1.270.746.080.536
+|
+| menjadi:
+|
+| Rp 1,27 T
+|
+| Bukan:
+|
+| Rp 1,3 T
+|
+*/
+
+function formatDashboardCompactPrecise(
     value,
     currency = true
 )
@@ -3241,6 +3204,9 @@ function formatDashboardCompact(
             '';
 
 
+    /*
+     * TRILIUN
+     */
     if (
         Math.abs(
             number
@@ -3249,21 +3215,26 @@ function formatDashboardCompact(
         1000000000000
     ) {
 
+        const result =
+            truncateDashboardNumber(
+                number
+                /
+                1000000000000,
+                2
+            );
+
+
         return (
             prefix
             +
-            (
-                number
-                /
-                1000000000000
-            )
-            .toLocaleString(
+            result.toLocaleString(
                 'id-ID',
                 {
+                    minimumFractionDigits:
+                        2,
 
                     maximumFractionDigits:
-                        1,
-
+                        2,
                 }
             )
             +
@@ -3272,6 +3243,9 @@ function formatDashboardCompact(
     }
 
 
+    /*
+     * MILIAR
+     */
     if (
         Math.abs(
             number
@@ -3280,21 +3254,26 @@ function formatDashboardCompact(
         1000000000
     ) {
 
+        const result =
+            truncateDashboardNumber(
+                number
+                /
+                1000000000,
+                2
+            );
+
+
         return (
             prefix
             +
-            (
-                number
-                /
-                1000000000
-            )
-            .toLocaleString(
+            result.toLocaleString(
                 'id-ID',
                 {
+                    minimumFractionDigits:
+                        2,
 
                     maximumFractionDigits:
-                        1,
-
+                        2,
                 }
             )
             +
@@ -3303,6 +3282,9 @@ function formatDashboardCompact(
     }
 
 
+    /*
+     * JUTA
+     */
     if (
         Math.abs(
             number
@@ -3311,21 +3293,26 @@ function formatDashboardCompact(
         1000000
     ) {
 
+        const result =
+            truncateDashboardNumber(
+                number
+                /
+                1000000,
+                2
+            );
+
+
         return (
             prefix
             +
-            (
-                number
-                /
-                1000000
-            )
-            .toLocaleString(
+            result.toLocaleString(
                 'id-ID',
                 {
+                    minimumFractionDigits:
+                        2,
 
                     maximumFractionDigits:
-                        1,
-
+                        2,
                 }
             )
             +
@@ -3334,6 +3321,9 @@ function formatDashboardCompact(
     }
 
 
+    /*
+     * RIBU
+     */
     if (
         Math.abs(
             number
@@ -3342,21 +3332,26 @@ function formatDashboardCompact(
         1000
     ) {
 
+        const result =
+            truncateDashboardNumber(
+                number
+                /
+                1000,
+                2
+            );
+
+
         return (
             prefix
             +
-            (
-                number
-                /
-                1000
-            )
-            .toLocaleString(
+            result.toLocaleString(
                 'id-ID',
                 {
+                    minimumFractionDigits:
+                        2,
 
                     maximumFractionDigits:
-                        1,
-
+                        2,
                 }
             )
             +
@@ -3368,7 +3363,14 @@ function formatDashboardCompact(
     return (
         prefix
         +
-        formatDashboardNumber(
+        new Intl.NumberFormat(
+            'id-ID',
+            {
+                maximumFractionDigits:
+                    0,
+            }
+        )
+        .format(
             number
         )
     );

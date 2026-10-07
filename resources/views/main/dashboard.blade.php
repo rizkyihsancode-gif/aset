@@ -3,7 +3,8 @@
 @section('title', 'Dashboard')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/dashboard.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/dashboard.css') }}?v={{ filemtime(public_path('css/pages/dashboard.css')) }}">
 @endpush
 
 
@@ -11,27 +12,145 @@
 
     @php
 
-        $formatNumber = fn($value) => number_format((float) $value, 0, ',', '.');
+        /*
+    |--------------------------------------------------------------------------
+    | FORMAT ANGKA BIASA
+    |--------------------------------------------------------------------------
+    */
+
+        $formatNumber = fn($value) => number_format((float) ($value ?? 0), 0, ',', '.');
 
         /*
     |--------------------------------------------------------------------------
-    | FORMAT COMPACT
+    | TRUNCATE / POTONG ANGKA
     |--------------------------------------------------------------------------
-    | Tetap digunakan oleh slide lain.
+    |
+    | Ini berbeda dengan round().
+    |
+    | Contoh:
+    |
+    | 1.2799
+    | menjadi
+    | 1.27
+    |
+    | BUKAN:
+    | 1.28
+    |
+    */
+
+        $truncateNumber = function ($value, $precision = 2) {
+            $value = (float) $value;
+
+            $factor = pow(10, $precision);
+
+            if ($value >= 0) {
+                return floor($value * $factor) / $factor;
+            }
+
+            return ceil($value * $factor) / $factor;
+        };
+
+        /*
+    |--------------------------------------------------------------------------
+    | FORMAT COMPACT PRESISI
+    |--------------------------------------------------------------------------
+    |
+    | Digunakan untuk:
+    |
+    | - Slide 1 Total Nilai Aset
+    | - Slide 3 Nilai Keseluruhan
+    |
+    | Nilai TIDAK dibulatkan.
+    |
+    | Contoh:
+    |
+    | 1.270.746.080.536
+    | =>
+    | Rp 1,27 T
+    |
+    */
+
+        $formatCurrencyCompactPrecise = function ($value) use ($truncateNumber) {
+            $value = (float) ($value ?? 0);
+
+            /*
+        |--------------------------------------------------------------------------
+        | TRILIUN
+        |--------------------------------------------------------------------------
+        */
+
+            if (abs($value) >= 1000000000000) {
+                $scaled = $truncateNumber($value / 1000000000000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' T';
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | MILIAR
+        |--------------------------------------------------------------------------
+        */
+
+            if (abs($value) >= 1000000000) {
+                $scaled = $truncateNumber($value / 1000000000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' M';
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | JUTA
+        |--------------------------------------------------------------------------
+        */
+
+            if (abs($value) >= 1000000) {
+                $scaled = $truncateNumber($value / 1000000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' Jt';
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | RIBU
+        |--------------------------------------------------------------------------
+        */
+
+            if (abs($value) >= 1000) {
+                $scaled = $truncateNumber($value / 1000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' Rb';
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | NILAI KECIL
+        |--------------------------------------------------------------------------
+        */
+
+            return 'Rp ' . number_format($value, 0, ',', '.');
+        };
+
+        /*
+    |--------------------------------------------------------------------------
+    | FORMAT COMPACT LAMA
+    |--------------------------------------------------------------------------
+    |
+    | Tetap tersedia untuk bagian lain bila diperlukan.
+    |
     */
 
         $formatCurrencyCompact = function ($value) {
-            $value = (float) $value;
+            $value = (float) ($value ?? 0);
 
-            if ($value >= 1000000000000) {
+            if (abs($value) >= 1000000000000) {
                 return 'Rp ' . number_format($value / 1000000000000, 1, ',', '.') . ' T';
             }
 
-            if ($value >= 1000000000) {
+            if (abs($value) >= 1000000000) {
                 return 'Rp ' . number_format($value / 1000000000, 1, ',', '.') . ' M';
             }
 
-            if ($value >= 1000000) {
+            if (abs($value) >= 1000000) {
                 return 'Rp ' . number_format($value / 1000000, 1, ',', '.') . ' Jt';
             }
 
@@ -43,26 +162,30 @@
     | FORMAT RUPIAH PENUH
     |--------------------------------------------------------------------------
     |
-    | Dipakai khusus Slide 3.
+    | Dipakai untuk:
     |
-    | Tidak dibulatkan.
-    | Tidak disingkat T / M / Jt.
-    |
-    | Contoh:
-    |
-    | 1270845623000
-    |
-    | menjadi:
-    |
-    | Rp 1.270.845.623.000
+    | - Nilai per K.I.B & K.I.R
+    | - Tooltip chart
     |
     */
 
         $formatCurrencyFull = function ($value) {
-            return 'Rp ' . number_format((int) ($value ?? 0), 0, ',', '.');
+            return 'Rp ' . number_format((float) ($value ?? 0), 0, ',', '.');
         };
 
+        /*
+    |--------------------------------------------------------------------------
+    | WARNA K.I.B
+    |--------------------------------------------------------------------------
+    */
+
         $kibColors = ['#2583f3', '#ff9f1a', '#f5bc28', '#7559d8', '#ef5350', '#537dd7', '#18a999'];
+
+        /*
+    |--------------------------------------------------------------------------
+    | DONUT KIB
+    |--------------------------------------------------------------------------
+    */
 
         $kibSegments = [];
 
@@ -70,9 +193,11 @@
 
         if ($totalAset > 0) {
             foreach ($kibStats as $index => $item) {
+                $jumlah = (float) ($item['jumlah'] ?? 0);
+
                 $start = $cursor;
 
-                $size = (((float) ($item['jumlah'] ?? 0)) / (float) $totalAset) * 360;
+                $size = ($jumlah / (float) $totalAset) * 360;
 
                 $end = $start + $size;
 
@@ -85,6 +210,12 @@
         }
 
         $kibGradient = count($kibSegments) ? implode(', ', $kibSegments) : '#e7eef7 0deg 360deg';
+
+        /*
+    |--------------------------------------------------------------------------
+    | KONDISI ASET
+    |--------------------------------------------------------------------------
+    */
 
         $conditionKnownTotal = (int) ($conditionStats['total'] ?? 0);
 
@@ -101,9 +232,15 @@
 
         $conditionGradient = $conditionAvailable
             ? "#21b66f 0deg {$baikEnd}deg,
-            #f6ad19 {$baikEnd}deg {$maintenanceEnd}deg,
-            #ef4444 {$maintenanceEnd}deg 360deg"
+             #f6ad19 {$baikEnd}deg {$maintenanceEnd}deg,
+             #ef4444 {$maintenanceEnd}deg 360deg"
             : '#e5edf6 0deg 360deg';
+
+        /*
+    |--------------------------------------------------------------------------
+    | MASTER DATA
+    |--------------------------------------------------------------------------
+    */
 
         $masters = [
             [
@@ -157,7 +294,11 @@
 
     <section class="content dashboard-page">
 
-        {{-- HEADER --}}
+
+        {{-- =====================================================
+         HEADER
+    ====================================================== --}}
+
         <header class="dashboard-page-header">
 
             <div class="dashboard-page-heading">
@@ -224,7 +365,10 @@
         </header>
 
 
-        {{-- DECK --}}
+        {{-- =====================================================
+         DASHBOARD DECK
+    ====================================================== --}}
+
         <section class="dashboard-deck" id="dashboardDeck" tabindex="0">
 
             <div class="dashboard-deck-viewport">
@@ -232,9 +376,10 @@
                 <div class="dashboard-slide-stage">
 
 
-                    {{-- =====================================================
+                    {{-- =================================================
                      SLIDE 1
-                ====================================================== --}}
+                ================================================== --}}
+
                     <article
                         class="
                         dashboard-slide
@@ -286,14 +431,18 @@
 
 
                         <blockquote class="profile-quote">
+
                             “Aset yang terkelola dengan baik
                             <br>
                             untuk pelayanan air yang lebih baik”
+
                         </blockquote>
 
 
                         <div class="profile-kpi-grid">
 
+
+                            {{-- TOTAL ASET --}}
                             <article class="profile-kpi-card">
 
                                 <span
@@ -326,6 +475,7 @@
                             </article>
 
 
+                            {{-- TOTAL NILAI ASET --}}
                             <article class="profile-kpi-card">
 
                                 <span
@@ -346,7 +496,7 @@
                                     </small>
 
                                     <strong>
-                                        {{ $formatCurrencyCompact($totalNilai) }}
+                                        {{ $formatCurrencyCompactPrecise($totalNilai) }}
                                     </strong>
 
                                     <em>
@@ -358,6 +508,7 @@
                             </article>
 
 
+                            {{-- LOKASI --}}
                             <article class="profile-kpi-card">
 
                                 <span
@@ -390,6 +541,7 @@
                             </article>
 
 
+                            {{-- UNIT KERJA --}}
                             <article class="profile-kpi-card">
 
                                 <span
@@ -421,14 +573,16 @@
 
                             </article>
 
+
                         </div>
 
                     </article>
 
 
-                    {{-- =====================================================
+                    {{-- =================================================
                      SLIDE 2
-                ====================================================== --}}
+                ================================================== --}}
+
                     <article
                         class="
                         dashboard-slide
@@ -453,11 +607,9 @@
                                     Kartu Inventaris Barang & Ruangan
                                 </span>
 
-
                                 <h2>
                                     Komposisi Aset per K.I.B
                                 </h2>
-
 
                                 <p>
                                     Ringkasan jumlah dan nilai aset
@@ -527,7 +679,9 @@
 
 
                                             <strong>
+
                                                 {{ $formatNumber($item['jumlah'] ?? 0) }}
+
                                             </strong>
 
                                         </div>
@@ -545,7 +699,8 @@
 
                                         <span class="kib-card-icon">
 
-                                            <i data-lucide="{{ $item['icon'] ?? 'box' }}"></i>
+                                            <i
+                                                data-lucide="{{ $item['icon'] ?? 'box' }}"></i>
 
                                         </span>
 
@@ -556,14 +711,16 @@
                                                 {{ $item['label'] ?? '-' }}
                                             </small>
 
-
                                             <strong>
+
                                                 {{ $formatNumber($item['jumlah'] ?? 0) }}
+
                                             </strong>
 
-
                                             <em>
+
                                                 {{ $formatCurrencyCompact($item['nilai'] ?? 0) }}
+
                                             </em>
 
                                         </span>
@@ -578,26 +735,26 @@
                     </article>
 
 
-                    {{-- =====================================================
-     SLIDE 3 - NILAI & PERTUMBUHAN
-====================================================== --}}
-                    <article class="
-        dashboard-slide
-        dashboard-slide-data
-    " data-slide="2"
+                    {{-- =================================================
+                     SLIDE 3
+                ================================================== --}}
+
+                    <article
+                        class="
+                        dashboard-slide
+                        dashboard-slide-data
+                    "
+                        data-slide="2"
                         style="
-        --slide-background:
-        url('{{ asset('images/dashboard/pdam5.jpg') }}');
-    ">
+                        --slide-background:
+                        url('{{ asset('images/dashboard/pdam5.jpg') }}');
+                    ">
 
                         <div class="dashboard-slide-number">
                             Slide 3 dari 6
                         </div>
 
 
-                        {{-- =====================================================
-         HEADER
-    ====================================================== --}}
                         <header class="slide-heading-row">
 
                             <div>
@@ -606,33 +763,36 @@
                                     Nilai Aset
                                 </span>
 
+
                                 <h2>
                                     Nilai & Pertumbuhan Aset
                                 </h2>
 
+
                                 <p>
-                                    Perkembangan total nilai aset berdasarkan periode pencatatan.
+                                    Perkembangan total nilai aset
+                                    berdasarkan periode pencatatan.
                                 </p>
 
                             </div>
 
 
-                            {{-- =================================================
-             NILAI KESELURUHAN
-             FULL VALUE - TIDAK DISINGKAT
-        ================================================== --}}
+                            {{-- NILAI KESELURUHAN --}}
                             <div
                                 class="
-                slide-summary-card
-                slide-summary-card-full-value
-            ">
+                                slide-summary-card
+                                slide-summary-card-compact-value
+                            ">
 
                                 <small>
                                     Nilai Keseluruhan
                                 </small>
 
+
                                 <strong>
-                                    {{ $formatCurrencyFull($totalNilai) }}
+
+                                    {{ $formatCurrencyCompactPrecise($totalNilai) }}
+
                                 </strong>
 
                             </div>
@@ -643,33 +803,25 @@
                         <div class="growth-layout">
 
 
-                            {{-- =================================================
-             CHART
-        ================================================== --}}
+                            {{-- CHART --}}
                             <section class="growth-chart-card">
 
                                 <div class="growth-chart-heading">
 
-
                                     <div class="panel-heading">
 
-                                        <div>
+                                        <h3>
+                                            Pertumbuhan Nilai Aset
+                                        </h3>
 
-                                            <h3>
-                                                Pertumbuhan Nilai Aset
-                                            </h3>
-
-                                            <span>
-                                                total nilai aset kumulatif
-                                                berdasarkan periode pencatatan
-                                            </span>
-
-                                        </div>
+                                        <span>
+                                            total nilai aset kumulatif
+                                            berdasarkan periode pencatatan
+                                        </span>
 
                                     </div>
 
 
-                                    {{-- BADGE PERTUMBUHAN --}}
                                     <div class="growth-change-badge" id="dashboardGrowthBadge" hidden>
 
                                         <i data-lucide="trending-up"></i>
@@ -691,18 +843,12 @@
                                 </div>
 
 
-                                {{-- =================================================
-                 CHART STAGE
-            ================================================== --}}
                                 <div class="growth-chart-stage">
 
                                     <svg id="dashboardGrowthChart" viewBox="0 0 900 360" preserveAspectRatio="xMidYMid meet"
                                         role="img" aria-label="Grafik pertumbuhan nilai aset"></svg>
 
 
-                                    {{-- =================================================
-                     TOOLTIP TITIK
-                ================================================== --}}
                                     <div class="growth-chart-tooltip" id="dashboardGrowthTooltip" hidden>
 
                                         <small id="dashboardGrowthTooltipYear">
@@ -715,12 +861,12 @@
                                         </strong>
 
 
-                                        <span id="dashboardGrowthTooltipChange"></span>
+                                        <span id="dashboardGrowthTooltipChange">
+                                        </span>
 
                                     </div>
 
 
-                                    {{-- EMPTY STATE --}}
                                     <div class="chart-empty" id="dashboardGrowthEmpty" hidden>
 
                                         <i data-lucide="chart-no-axes-combined"></i>
@@ -730,8 +876,8 @@
                                         </strong>
 
                                         <span>
-                                            Sistem memerlukan informasi tahun
-                                            atau periode pada nilai aktiva.
+                                            Sistem memerlukan informasi
+                                            tahun atau periode pada nilai aktiva.
                                         </span>
 
                                     </div>
@@ -741,10 +887,7 @@
                             </section>
 
 
-                            {{-- =================================================
-             NILAI PER KIB & KIR
-             FULL VALUE - TIDAK DISINGKAT
-        ================================================== --}}
+                            {{-- NILAI PER KIB --}}
                             <section class="growth-value-card">
 
                                 <h3>
@@ -766,8 +909,6 @@
 
                                         <div class="growth-value-item">
 
-
-                                            {{-- LABEL + NILAI --}}
                                             <div>
 
                                                 <span>
@@ -776,23 +917,24 @@
 
 
                                                 <strong>
+
                                                     {{ $formatCurrencyFull($item['nilai'] ?? 0) }}
+
                                                 </strong>
 
                                             </div>
 
 
-                                            {{-- PROGRESS --}}
                                             <div class="growth-value-track">
 
                                                 <span
                                                     style="
-                                    width:
-                                    {{ $nilaiPercentage }}%;
+                                                    width:
+                                                    {{ $nilaiPercentage }}%;
 
-                                    background:
-                                    {{ $kibColors[$index % count($kibColors)] }};
-                                "></span>
+                                                    background:
+                                                    {{ $kibColors[$index % count($kibColors)] }};
+                                                "></span>
 
                                             </div>
 
@@ -808,9 +950,10 @@
                     </article>
 
 
-                    {{-- =====================================================
+                    {{-- =================================================
                      SLIDE 4
-                ====================================================== --}}
+                ================================================== --}}
+
                     <article
                         class="
                         dashboard-slide
@@ -905,7 +1048,6 @@
                                         Ringkasan Kondisi
                                     </strong>
 
-
                                     <span>
                                         Berdasarkan data kondisi yang
                                         berhasil dikenali oleh sistem.
@@ -917,6 +1059,7 @@
 
 
                             <section class="condition-stat-grid">
+
 
                                 <article
                                     class="
@@ -930,6 +1073,7 @@
 
                                     </span>
 
+
                                     <span>
 
                                         <small>
@@ -937,7 +1081,9 @@
                                         </small>
 
                                         <strong>
+
                                             {{ $formatNumber($conditionStats['baik'] ?? 0) }}
+
                                         </strong>
 
                                         <em>
@@ -961,6 +1107,7 @@
 
                                     </span>
 
+
                                     <span>
 
                                         <small>
@@ -968,7 +1115,9 @@
                                         </small>
 
                                         <strong>
+
                                             {{ $formatNumber($conditionStats['maintenance'] ?? 0) }}
+
                                         </strong>
 
                                         <em>
@@ -992,6 +1141,7 @@
 
                                     </span>
 
+
                                     <span>
 
                                         <small>
@@ -999,7 +1149,9 @@
                                         </small>
 
                                         <strong>
+
                                             {{ $formatNumber($conditionStats['rusak'] ?? 0) }}
+
                                         </strong>
 
                                         <em>
@@ -1023,6 +1175,7 @@
 
                                     </span>
 
+
                                     <span>
 
                                         <small>
@@ -1030,7 +1183,9 @@
                                         </small>
 
                                         <strong>
+
                                             {{ $formatNumber($conditionStats['unknown'] ?? 0) }}
+
                                         </strong>
 
                                         <em>
@@ -1048,9 +1203,10 @@
                     </article>
 
 
-                    {{-- =====================================================
+                    {{-- =================================================
                      SLIDE 5
-                ====================================================== --}}
+                ================================================== --}}
+
                     <article
                         class="
                         dashboard-slide
@@ -1131,37 +1287,47 @@
 
                                 <div class="location-ranking-list">
 
-                                    @forelse ($topLocations as $index => $location)
-                                        <article class="location-ranking-row">
+                                    @if (count($topLocations))
 
-                                            <span class="location-rank">
-                                                {{ $index + 1 }}
-                                            </span>
+                                        @foreach ($topLocations as $index => $location)
+                                            <article class="location-ranking-row">
 
-                                            <span class="location-rank-copy">
+                                                <span class="location-rank">
+                                                    {{ $index + 1 }}
+                                                </span>
 
-                                                <strong>
-                                                    {{ $location['lokasi'] ?? '-' }}
-                                                </strong>
 
-                                                <small>
-                                                    {{ $location['alamat'] ?? '' ?: 'Alamat belum tersedia' }}
-                                                </small>
+                                                <span class="location-rank-copy">
 
-                                            </span>
+                                                    <strong>
+                                                        {{ $location['lokasi'] ?? '-' }}
+                                                    </strong>
 
-                                            <b>
-                                                {{ $formatNumber($location['jumlah'] ?? 0) }}
-                                            </b>
+                                                    <small>
 
-                                        </article>
+                                                        {{ $location['alamat'] ?? '' ?: 'Alamat belum tersedia' }}
 
-                                    @empty
+                                                    </small>
 
+                                                </span>
+
+
+                                                <b>
+
+                                                    {{ $formatNumber($location['jumlah'] ?? 0) }}
+
+                                                </b>
+
+                                            </article>
+                                        @endforeach
+                                    @else
                                         <div class="dashboard-data-empty">
+
                                             Belum ada relasi lokasi aset.
+
                                         </div>
-                                    @endforelse
+
+                                    @endif
 
                                 </div>
 
@@ -1172,9 +1338,10 @@
                     </article>
 
 
-                    {{-- =====================================================
+                    {{-- =================================================
                      SLIDE 6
-                ====================================================== --}}
+                ================================================== --}}
+
                     <article
                         class="
                         dashboard-slide
@@ -1281,56 +1448,69 @@
 
                                 <div class="activity-list">
 
-                                    @forelse ($safeRecentActivities as $activity)
-                                        <article class="activity-row">
+                                    @if (count($safeRecentActivities))
 
-                                            <span
-                                                class="
-                activity-icon
-                activity-{{ $activity['action'] ?? 'default' }}
-            ">
+                                        @foreach ($safeRecentActivities as $activity)
+                                            <article class="activity-row">
 
-                                                <i data-lucide="{{ $activity['icon'] ?? 'history' }}"></i>
+                                                <span
+                                                    class="
+                                                    activity-icon
+                                                    activity-{{ $activity['action'] ?? 'default' }}
+                                                ">
 
-                                            </span>
+                                                    <i
+                                                        data-lucide="{{ $activity['icon'] ?? 'history' }}"></i>
 
-                                            <span class="activity-copy">
+                                                </span>
 
-                                                <strong>
-                                                    {{ $activity['action_label'] ?? 'Aktivitas' }}:
-                                                    {{ $activity['record_name'] ?? '' ?: 'Data master' }}
-                                                </strong>
 
-                                                <small>
+                                                <span class="activity-copy">
 
-                                                    {{ $activity['module_label'] ?? '-' }}
+                                                    <strong>
 
-                                                    @if (!empty($activity['record_code']))
-                                                        • {{ $activity['record_code'] }}
+                                                        {{ $activity['action_label'] ?? 'Aktivitas' }}:
+
+                                                        {{ $activity['record_name'] ?? '' ?: 'Data master' }}
+
+                                                    </strong>
+
+
+                                                    <small>
+
+                                                        {{ $activity['module_label'] ?? '-' }}
+
+
+                                                        @if (!empty($activity['record_code']))
+                                                            •
+                                                            {{ $activity['record_code'] }}
+                                                        @endif
+
+                                                    </small>
+
+                                                </span>
+
+
+                                                <time>
+
+                                                    @if (!empty($activity['created_at']))
+                                                        {{ \Carbon\Carbon::parse($activity['created_at'])->timezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y') }}
+                                                    @else
+                                                        -
                                                     @endif
 
-                                                </small>
+                                                </time>
 
-                                            </span>
-
-                                            <time>
-
-                                                @if (!empty($activity['created_at']))
-                                                    {{ \Carbon\Carbon::parse($activity['created_at'])->timezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y') }}
-                                                @else
-                                                    -
-                                                @endif
-
-                                            </time>
-
-                                        </article>
-
-                                    @empty
-
+                                            </article>
+                                        @endforeach
+                                    @else
                                         <div class="dashboard-data-empty">
+
                                             Belum ada riwayat aktivitas.
+
                                         </div>
-                                    @endforelse
+
+                                    @endif
 
                                 </div>
 
@@ -1343,13 +1523,16 @@
                 </div>
 
 
-                {{-- ARROWS --}}
+                {{-- =====================================================
+                 ARROWS
+            ====================================================== --}}
+
                 <button type="button"
                     class="
                     dashboard-arrow
                     dashboard-arrow-prev
                 "
-                    id="dashboardPrev">
+                    id="dashboardPrev" aria-label="Slide sebelumnya">
 
                     <i data-lucide="chevron-left"></i>
 
@@ -1361,7 +1544,7 @@
                     dashboard-arrow
                     dashboard-arrow-next
                 "
-                    id="dashboardNext">
+                    id="dashboardNext" aria-label="Slide berikutnya">
 
                     <i data-lucide="chevron-right"></i>
 
@@ -1391,7 +1574,8 @@
                     </span>
 
 
-                    <button type="button" class="dashboard-fullscreen-inside" id="dashboardFullscreenInside">
+                    <button type="button" class="dashboard-fullscreen-inside" id="dashboardFullscreenInside"
+                        aria-label="Fullscreen">
 
                         <i data-lucide="maximize-2"></i>
 
@@ -1402,43 +1586,40 @@
             </div>
 
 
-            {{-- THUMBNAIL --}}
+            {{-- =====================================================
+             THUMBNAILS
+        ====================================================== --}}
+
             @php
 
                 $thumbs = [
                     [
                         'icon' => 'building-2',
-
                         'title' => 'Profil Sistem',
                     ],
 
                     [
                         'icon' => 'pie-chart',
-
                         'title' => 'K.I.B & Jumlah Aset',
                     ],
 
                     [
                         'icon' => 'chart-no-axes-combined',
-
                         'title' => 'Nilai & Pertumbuhan',
                     ],
 
                     [
                         'icon' => 'gauge',
-
                         'title' => 'Kondisi Aset',
                     ],
 
                     [
                         'icon' => 'map',
-
                         'title' => 'Sebaran Aset',
                     ],
 
                     [
                         'icon' => 'database',
-
                         'title' => 'Master Data & Aktivitas',
                     ],
                 ];
@@ -1470,7 +1651,9 @@
                         <span class="dashboard-thumbnail-label">
 
                             <b>
+
                                 {{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}
+
                             </b>
 
                             {{ $thumb['title'] }}
@@ -1505,5 +1688,5 @@
 
 
 @push('scripts')
-    <script src="{{ asset('js/pages/dashboard.js') }}"></script>
+    <script src="{{ asset('js/pages/dashboard.js') }}?v={{ filemtime(public_path('js/pages/dashboard.js')) }}"></script>
 @endpush

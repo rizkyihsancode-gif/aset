@@ -4791,3 +4791,175 @@ strong {
     }
 
 }
+
+/* =========================================================
+   SLIDE 3 - NILAI KESELURUHAN COMPACT PRESISI
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.slide-heading-row
+.slide-summary-card.slide-summary-card-compact-value {
+    flex:
+        0
+        0
+        210px
+        !important;
+
+    width:
+        210px
+        !important;
+
+    min-width:
+        210px
+        !important;
+
+    max-width:
+        210px
+        !important;
+
+    padding:
+        15px
+        18px
+        !important;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.slide-heading-row
+.slide-summary-card.slide-summary-card-compact-value
+strong {
+    display:
+        block
+        !important;
+
+    width:
+        100%;
+
+    margin-top:
+        6px;
+
+    color:
+        #ffffff;
+
+    font-size:
+        26px
+        !important;
+
+    line-height:
+        1.1;
+
+    font-weight:
+        700;
+
+    white-space:
+        nowrap
+        !important;
+
+    font-variant-numeric:
+        tabular-nums;
+
+    letter-spacing:
+        -.35px;
+}
+
+
+/* =========================================================
+   SLIDE 1 - TOTAL NILAI ASET
+========================================================= */
+
+.dashboard-slide[data-slide="0"]
+.profile-kpi-card
+strong {
+    font-variant-numeric:
+        tabular-nums;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media
+(
+    max-width:
+    1180px
+) {
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-compact-value {
+        flex:
+            0
+            0
+            200px
+            !important;
+
+        width:
+            200px
+            !important;
+
+        min-width:
+            200px
+            !important;
+
+        max-width:
+            200px
+            !important;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-compact-value
+    strong {
+        font-size:
+            24px
+            !important;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media
+(
+    max-width:
+    760px
+) {
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-compact-value {
+        flex:
+            1
+            1
+            100%
+            !important;
+
+        width:
+            100%
+            !important;
+
+        min-width:
+            0
+            !important;
+
+        max-width:
+            none
+            !important;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-heading-row
+    .slide-summary-card.slide-summary-card-compact-value
+    strong {
+        font-size:
+            24px
+            !important;
+    }
+
+}
