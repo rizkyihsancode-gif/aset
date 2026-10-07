@@ -1,34 +1,34 @@
 'use strict';
 
-/* =========================================================
-   SISTEM ASET - DASHBOARD
 
-   FITUR:
-   - Animasi perpindahan slide
-   - Autoplay setiap 8 detik
-   - Resume 15 detik setelah interaksi
-   - Previous / Next
-   - Dots
-   - Thumbnail
-   - Keyboard arrow
-   - Swipe tablet / touchscreen
-   - Mouse drag
-   - Pause / Play
-   - Fullscreen / Mode Presentasi
-   - WITA Clock
-   - Growth Chart Slide 3
-   - Tooltip nominal penuh
-   - Location Map Slide 5
+/* =========================================================
+   DASHBOARD CONFIG
 ========================================================= */
 
+const DASHBOARD = {
+
+    autoplayDelay:
+        8000,
+
+    resumeDelay:
+        15000,
+
+    swipeMinDistance:
+        52,
+
+    transitionMs:
+        680,
+
+};
+
+
+/* =========================================================
+   DASHBOARD INITIALIZATION
+========================================================= */
 
 document.addEventListener(
     'DOMContentLoaded',
     () => {
-
-        /* =====================================================
-           ELEMENT UTAMA
-        ===================================================== */
 
         const deck =
             document.getElementById(
@@ -36,23 +36,34 @@ document.addEventListener(
             );
 
 
-        if (!deck) {
+        if (
+            !deck
+        ) {
             return;
         }
 
 
-        /*
-         * Area ini SAJA yang digunakan untuk swipe.
-         *
-         * Jangan menggunakan seluruh dashboardDeck karena
-         * tombol-tombol navigasi juga berada di dalam deck.
-         */
         const slideStage =
             deck.querySelector(
                 '.dashboard-slide-stage'
             );
 
 
+        /*
+         * Swipe hanya bekerja pada isi slide.
+         *
+         * Bukan pada seluruh deck.
+         *
+         * Ini membuat tombol:
+         *
+         * - Previous
+         * - Next
+         * - Pause
+         * - Fullscreen
+         * - Thumbnail
+         *
+         * tetap bisa diklik normal di laptop.
+         */
         const swipeSurface =
             slideStage
             ||
@@ -112,22 +123,6 @@ document.addEventListener(
 
 
         /* =====================================================
-           CONFIG
-        ===================================================== */
-
-        const AUTOPLAY_DELAY =
-            8000;
-
-
-        const RESUME_DELAY =
-            15000;
-
-
-        const SWIPE_MIN_DISTANCE =
-            52;
-
-
-        /* =====================================================
            STATE
         ===================================================== */
 
@@ -159,28 +154,39 @@ document.addEventListener(
             null;
 
 
+        let transitionTimer =
+            null;
+
+
+        let initialized =
+            false;
+
+
         /* =====================================================
            ICON
         ===================================================== */
 
-        function refreshIcons()
-        {
-            if (
-                window.lucide
-                &&
-                typeof window.lucide.createIcons
-                ===
-                'function'
-            ) {
+        const refreshIcons =
+            () => {
 
-                window.lucide
-                    .createIcons();
-            }
-        }
+                if (
+                    window.lucide
+                    &&
+                    typeof
+                        window.lucide
+                            .createIcons
+                    ===
+                    'function'
+                ) {
+
+                    window.lucide
+                        .createIcons();
+                }
+            };
 
 
         /* =====================================================
-           CREATE DOTS
+           DOTS
         ===================================================== */
 
         if (
@@ -252,45 +258,154 @@ document.addEventListener(
 
 
         /* =====================================================
-           NORMALIZE SLIDE INDEX
+           NORMALIZE INDEX
         ===================================================== */
 
-        function normalizeSlideIndex(
-            index
-        )
-        {
-            if (
-                !slides.length
-            ) {
+        const normalizeIndex =
+            index => {
 
-                return 0;
-            }
+                if (
+                    !slides.length
+                ) {
+
+                    return 0;
+                }
 
 
-            if (
-                index < 0
-            ) {
+                if (
+                    index < 0
+                ) {
 
-                return (
+                    return (
+                        slides.length
+                        -
+                        1
+                    );
+                }
+
+
+                if (
+                    index
+                    >=
+                    slides.length
+                ) {
+
+                    return 0;
+                }
+
+
+                return index;
+            };
+
+
+        /* =====================================================
+           CLEAR MOTION CLASS
+        ===================================================== */
+
+        const clearMotionClasses =
+            () => {
+
+                slides.forEach(
+                    slide => {
+
+                        slide.classList.remove(
+
+                            'is-entering-from-right',
+
+                            'is-entering-from-left',
+
+                            'is-leaving-to-left',
+
+                            'is-leaving-to-right'
+
+                        );
+                    }
+                );
+
+
+                slideStage
+                    ?.classList
+                    .remove(
+                        'is-transitioning'
+                    );
+            };
+
+
+        /* =====================================================
+           DIRECTION
+        ===================================================== */
+
+        const inferDirection =
+            (
+                targetIndex,
+                requestedIndex,
+                hint = null
+            ) => {
+
+                if (
+                    hint === 'prev'
+                    ||
+                    hint === 'next'
+                ) {
+
+                    return hint;
+                }
+
+
+                if (
+                    !slides.length
+                ) {
+
+                    return 'next';
+                }
+
+
+                /*
+                 * Last -> First
+                 */
+                if (
+                    currentSlide
+                    ===
                     slides.length
                     -
                     1
-                );
-            }
+                    &&
+                    targetIndex
+                    ===
+                    0
+                ) {
+
+                    return 'next';
+                }
 
 
-            if (
-                index
-                >=
-                slides.length
-            ) {
+                /*
+                 * First -> Last
+                 */
+                if (
+                    currentSlide
+                    ===
+                    0
+                    &&
+                    targetIndex
+                    ===
+                    slides.length
+                    -
+                    1
+                ) {
 
-                return 0;
-            }
+                    return 'prev';
+                }
 
 
-            return index;
-        }
+                return requestedIndex
+                    <
+                    currentSlide
+                        ?
+                        'prev'
+                        :
+                        'next';
+            };
 
 
         /* =====================================================
@@ -299,7 +414,8 @@ document.addEventListener(
 
         function showSlide(
             index,
-            userInteraction = false
+            userInteraction = false,
+            directionHint = null
         )
         {
             if (
@@ -310,61 +426,209 @@ document.addEventListener(
             }
 
 
-            const previousSlide =
-                currentSlide;
-
-
-            currentSlide =
-                normalizeSlideIndex(
+            const targetIndex =
+                normalizeIndex(
                     index
                 );
 
 
-            /*
-             * Dipakai CSS untuk menentukan arah animasi.
-             */
-            deck.dataset.direction =
-                currentSlide
-                <
-                previousSlide
-                    ?
-                    'prev'
-                    :
-                    'next';
+            const previousIndex =
+                currentSlide;
+
+
+            const previousSlide =
+                slides[
+                    previousIndex
+                ];
+
+
+            const nextSlide =
+                slides[
+                    targetIndex
+                ];
 
 
             /* =================================================
-               SLIDES
+               FIRST RENDER
             ================================================= */
 
-            slides.forEach(
-                (
-                    slide,
-                    slideIndex
-                ) => {
+            if (
+                !initialized
+            ) {
 
-                    const active =
+                currentSlide =
+                    targetIndex;
+
+
+                slides.forEach(
+                    (
+                        slide,
                         slideIndex
-                        ===
-                        currentSlide;
+                    ) => {
+
+                        const active =
+                            slideIndex
+                            ===
+                            currentSlide;
 
 
-                    slide.classList.toggle(
-                        'is-active',
-                        active
+                        slide.classList.toggle(
+                            'is-active',
+                            active
+                        );
+
+
+                        slide.setAttribute(
+                            'aria-hidden',
+                            active
+                                ?
+                                'false'
+                                :
+                                'true'
+                        );
+                    }
+                );
+
+
+                initialized =
+                    true;
+
+            }
+
+
+            /* =================================================
+               TRANSITION
+            ================================================= */
+
+            else if (
+                targetIndex
+                !==
+                previousIndex
+            ) {
+
+                const direction =
+                    inferDirection(
+
+                        targetIndex,
+
+                        index,
+
+                        directionHint
+
                     );
 
 
-                    slide.setAttribute(
-                        'aria-hidden',
-                        active
-                            ?
-                            'false'
-                            :
-                            'true'
+                currentSlide =
+                    targetIndex;
+
+
+                deck.dataset.direction =
+                    direction;
+
+
+                if (
+                    transitionTimer
+                ) {
+
+                    clearTimeout(
+                        transitionTimer
                     );
+
+
+                    transitionTimer =
+                        null;
                 }
-            );
+
+
+                clearMotionClasses();
+
+
+                /*
+                 * Slide lama tidak langsung dihilangkan.
+                 *
+                 * Slide lama dan baru overlap saat animasi.
+                 *
+                 * Karena background slide tidak ikut
+                 * translate, tidak akan muncul ruang putih.
+                 */
+
+                previousSlide
+                    .classList
+                    .remove(
+                        'is-active'
+                    );
+
+
+                previousSlide
+                    .classList
+                    .add(
+                        direction
+                        ===
+                        'next'
+                            ?
+                            'is-leaving-to-left'
+                            :
+                            'is-leaving-to-right'
+                    );
+
+
+                previousSlide
+                    .setAttribute(
+                        'aria-hidden',
+                        'true'
+                    );
+
+
+                nextSlide
+                    .classList
+                    .add(
+                        'is-active'
+                    );
+
+
+                nextSlide
+                    .classList
+                    .add(
+                        direction
+                        ===
+                        'next'
+                            ?
+                            'is-entering-from-right'
+                            :
+                            'is-entering-from-left'
+                    );
+
+
+                nextSlide
+                    .setAttribute(
+                        'aria-hidden',
+                        'false'
+                    );
+
+
+                slideStage
+                    ?.classList
+                    .add(
+                        'is-transitioning'
+                    );
+
+
+                transitionTimer =
+                    setTimeout(
+                        () => {
+
+                            clearMotionClasses();
+
+
+                            transitionTimer =
+                                null;
+
+                        },
+                        DASHBOARD.transitionMs
+                        +
+                        50
+                    );
+            }
 
 
             /* =================================================
@@ -374,11 +638,11 @@ document.addEventListener(
             thumbnails.forEach(
                 (
                     button,
-                    buttonIndex
+                    indexThumb
                 ) => {
 
                     const active =
-                        buttonIndex
+                        indexThumb
                         ===
                         currentSlide;
 
@@ -408,12 +672,12 @@ document.addEventListener(
             dots.forEach(
                 (
                     dot,
-                    dotIndex
+                    indexDot
                 ) => {
 
                     dot.classList.toggle(
                         'is-active',
-                        dotIndex
+                        indexDot
                         ===
                         currentSlide
                     );
@@ -421,10 +685,10 @@ document.addEventListener(
             );
 
 
-            /*
-             * Interaksi manual:
-             * autoplay berhenti sementara 15 detik.
-             */
+            /* =================================================
+               PAUSE TEMPORARY
+            ================================================= */
+
             if (
                 userInteraction
             ) {
@@ -433,34 +697,48 @@ document.addEventListener(
             }
 
 
-            /*
-             * Slide 3.
-             */
+            /* =================================================
+               SLIDE 3
+            ================================================= */
+
             if (
-                currentSlide === 2
+                currentSlide
+                ===
+                2
             ) {
 
-                window.requestAnimationFrame(
-                    () => {
-
-                        renderGrowthChart();
-                    }
+                setTimeout(
+                    renderGrowthChart,
+                    targetIndex
+                    ===
+                    previousIndex
+                        ?
+                        0
+                        :
+                        90
                 );
             }
 
 
-            /*
-             * Slide 5.
-             */
+            /* =================================================
+               SLIDE 5
+            ================================================= */
+
             if (
-                currentSlide === 4
+                currentSlide
+                ===
+                4
             ) {
 
-                window.requestAnimationFrame(
-                    () => {
-
-                        renderLocationMap();
-                    }
+                setTimeout(
+                    renderLocationMap,
+                    targetIndex
+                    ===
+                    previousIndex
+                        ?
+                        0
+                        :
+                        90
                 );
             }
 
@@ -470,12 +748,14 @@ document.addEventListener(
 
 
         function userNavigate(
-            index
+            index,
+            directionHint = null
         )
         {
             showSlide(
                 index,
-                true
+                true,
+                directionHint
             );
         }
 
@@ -494,7 +774,7 @@ document.addEventListener(
             }
 
 
-            window.clearInterval(
+            clearInterval(
                 autoplayTimer
             );
 
@@ -520,16 +800,19 @@ document.addEventListener(
 
 
             autoplayTimer =
-                window.setInterval(
+                setInterval(
                     () => {
 
                         showSlide(
-                            currentSlide + 1,
-                            false
+                            currentSlide
+                            +
+                            1,
+                            false,
+                            'next'
                         );
 
                     },
-                    AUTOPLAY_DELAY
+                    DASHBOARD.autoplayDelay
                 );
         }
 
@@ -551,14 +834,14 @@ document.addEventListener(
                 resumeTimer
             ) {
 
-                window.clearTimeout(
+                clearTimeout(
                     resumeTimer
                 );
             }
 
 
             resumeTimer =
-                window.setTimeout(
+                setTimeout(
                     () => {
 
                         resumeTimer =
@@ -568,13 +851,13 @@ document.addEventListener(
                         startAutoplay();
 
                     },
-                    RESUME_DELAY
+                    DASHBOARD.resumeDelay
                 );
         }
 
 
         /* =====================================================
-           PAUSE / PLAY BUTTON
+           PAUSE BUTTON
         ===================================================== */
 
         function updatePauseButton()
@@ -601,14 +884,15 @@ document.addEventListener(
                     `;
 
 
-            pauseButton.setAttribute(
-                'aria-pressed',
-                autoplayEnabled
-                    ?
-                    'false'
-                    :
-                    'true'
-            );
+            pauseButton
+                .setAttribute(
+                    'aria-pressed',
+                    autoplayEnabled
+                        ?
+                        'false'
+                        :
+                        'true'
+                );
 
 
             refreshIcons();
@@ -619,14 +903,12 @@ document.addEventListener(
             event
         )
         {
-            if (
-                event
-            ) {
+            event
+                ?.preventDefault();
 
-                event.preventDefault();
 
-                event.stopPropagation();
-            }
+            event
+                ?.stopPropagation();
 
 
             autoplayEnabled =
@@ -637,7 +919,7 @@ document.addEventListener(
                 resumeTimer
             ) {
 
-                window.clearTimeout(
+                clearTimeout(
                     resumeTimer
                 );
 
@@ -665,16 +947,10 @@ document.addEventListener(
 
         /* =====================================================
            PREVIOUS BUTTON
-
-           Click handler berdiri sendiri supaya tidak
-           terganggu event swipe.
         ===================================================== */
 
-        if (
-            prevButton
-        ) {
-
-            prevButton.addEventListener(
+        prevButton
+            ?.addEventListener(
                 'click',
                 event => {
 
@@ -684,22 +960,21 @@ document.addEventListener(
 
 
                     userNavigate(
-                        currentSlide - 1
+                        currentSlide
+                        -
+                        1,
+                        'prev'
                     );
                 }
             );
-        }
 
 
         /* =====================================================
            NEXT BUTTON
         ===================================================== */
 
-        if (
-            nextButton
-        ) {
-
-            nextButton.addEventListener(
+        nextButton
+            ?.addEventListener(
                 'click',
                 event => {
 
@@ -709,30 +984,28 @@ document.addEventListener(
 
 
                     userNavigate(
-                        currentSlide + 1
+                        currentSlide
+                        +
+                        1,
+                        'next'
                     );
                 }
             );
-        }
 
 
         /* =====================================================
-           PAUSE BUTTON
+           PAUSE
         ===================================================== */
 
-        if (
-            pauseButton
-        ) {
-
-            pauseButton.addEventListener(
+        pauseButton
+            ?.addEventListener(
                 'click',
                 toggleAutoplay
             );
-        }
 
 
         /* =====================================================
-           THUMBNAILS
+           THUMBNAIL
         ===================================================== */
 
         thumbnails.forEach(
@@ -778,39 +1051,44 @@ document.addEventListener(
            KEYBOARD
         ===================================================== */
 
-        function handleKeyboard(
-            event
-        )
-        {
-            if (
-                event.key
-                ===
-                'ArrowLeft'
-            ) {
+        const handleKeyboard =
+            event => {
 
-                event.preventDefault();
+                if (
+                    event.key
+                    ===
+                    'ArrowLeft'
+                ) {
 
-
-                userNavigate(
-                    currentSlide - 1
-                );
-            }
+                    event.preventDefault();
 
 
-            if (
-                event.key
-                ===
-                'ArrowRight'
-            ) {
+                    userNavigate(
+                        currentSlide
+                        -
+                        1,
+                        'prev'
+                    );
+                }
 
-                event.preventDefault();
+
+                if (
+                    event.key
+                    ===
+                    'ArrowRight'
+                ) {
+
+                    event.preventDefault();
 
 
-                userNavigate(
-                    currentSlide + 1
-                );
-            }
-        }
+                    userNavigate(
+                        currentSlide
+                        +
+                        1,
+                        'next'
+                    );
+                }
+            };
 
 
         deck.addEventListener(
@@ -819,9 +1097,6 @@ document.addEventListener(
         );
 
 
-        /*
-         * Keyboard ketika fullscreen.
-         */
         document.addEventListener(
             'keydown',
             event => {
@@ -847,244 +1122,231 @@ document.addEventListener(
 
 
         /* =====================================================
-           SWIPE TABLET / TOUCH / MOUSE
-        =====================================================
-
-           PERBAIKAN UTAMA:
-
-           Swipe sekarang HANYA bekerja pada:
-
-               .dashboard-slide-stage
-
-           BUKAN seluruh:
-
-               #dashboardDeck
-
-           Jadi mouse/pointer tidak lagi mengambil event klik
-           dari tombol Previous, Next, Pause dan Fullscreen.
+           SWIPE
         ===================================================== */
 
-
-        /*
-         * Jangan mulai swipe jika user menyentuh
-         * elemen interaktif.
-         */
-        function isInteractiveTarget(
-            target
-        )
-        {
-            if (
-                !(
-                    target
-                    instanceof
-                    Element
-                )
-            ) {
-
-                return false;
-            }
-
-
-            return Boolean(
-                target.closest(
-                    [
-                        'button',
-                        'a',
-                        'input',
-                        'select',
-                        'textarea',
-                        '[role="button"]',
-                        '.growth-chart-tooltip',
-                        '.map-marker-label'
-                    ]
-                    .join(
-                        ','
-                    )
-                )
-            );
-        }
-
-
-        function resetSwipe()
-        {
-            pointerStartX =
-                null;
-
-
-            pointerStartY =
-                null;
-
-
-            swipePointerId =
-                null;
-        }
-
-
-        function releaseSwipePointer(
-            pointerId
-        )
-        {
-            if (
-                pointerId === null
-                ||
-                pointerId === undefined
-                ||
-                typeof
-                    swipeSurface
-                        .releasePointerCapture
-                    !==
-                    'function'
-            ) {
-
-                return;
-            }
-
-
-            try {
+        const isInteractiveTarget =
+            target => {
 
                 if (
-                    typeof
-                        swipeSurface
-                            .hasPointerCapture
-                        !==
-                        'function'
-                    ||
-                    swipeSurface
-                        .hasPointerCapture(
-                            pointerId
-                        )
+                    !(
+                        target
+                        instanceof
+                        Element
+                    )
                 ) {
 
-                    swipeSurface
-                        .releasePointerCapture(
-                            pointerId
-                        );
+                    return false;
                 }
 
-            } catch (_) {
 
-                /*
-                 * Tidak fatal.
-                 */
-            }
-        }
+                return Boolean(
+
+                    target.closest(
+
+                        [
+
+                            'button',
+
+                            'a',
+
+                            'input',
+
+                            'select',
+
+                            'textarea',
+
+                            '[role="button"]',
+
+                            '.growth-chart-tooltip',
+
+                            '.map-marker-label'
+
+                        ]
+                        .join(
+                            ','
+                        )
+
+                    )
+
+                );
+            };
 
 
-        function finishSwipe(
-            event
-        )
-        {
-            if (
-                pointerStartX === null
-                ||
-                pointerStartY === null
-            ) {
+        const resetSwipe =
+            () => {
+
+                pointerStartX =
+                    null;
+
+
+                pointerStartY =
+                    null;
+
+
+                swipePointerId =
+                    null;
+            };
+
+
+        const releaseSwipePointer =
+            pointerId => {
+
+                if (
+                    pointerId
+                    ===
+                    null
+                    ||
+                    pointerId
+                    ===
+                    undefined
+                    ||
+                    typeof
+                        swipeSurface
+                            .releasePointerCapture
+                    !==
+                    'function'
+                ) {
+
+                    return;
+                }
+
+
+                try {
+
+                    if (
+                        typeof
+                            swipeSurface
+                                .hasPointerCapture
+                        !==
+                        'function'
+                        ||
+                        swipeSurface
+                            .hasPointerCapture(
+                                pointerId
+                            )
+                    ) {
+
+                        swipeSurface
+                            .releasePointerCapture(
+                                pointerId
+                            );
+                    }
+
+                } catch (_) {
+
+                }
+            };
+
+
+        const finishSwipe =
+            event => {
+
+                if (
+                    pointerStartX
+                    ===
+                    null
+                    ||
+                    pointerStartY
+                    ===
+                    null
+                ) {
+
+                    resetSwipe();
+
+                    return;
+                }
+
+
+                if (
+                    swipePointerId
+                    !==
+                    null
+                    &&
+                    event.pointerId
+                    !==
+                    swipePointerId
+                ) {
+
+                    return;
+                }
+
+
+                const dx =
+                    event.clientX
+                    -
+                    pointerStartX;
+
+
+                const dy =
+                    event.clientY
+                    -
+                    pointerStartY;
+
 
                 resetSwipe();
 
-                return;
-            }
+
+                /*
+                 * Terlalu pendek.
+                 */
+                if (
+                    Math.abs(
+                        dx
+                    )
+                    <
+                    DASHBOARD.swipeMinDistance
+                ) {
+
+                    return;
+                }
 
 
-            /*
-             * Abaikan pointer yang bukan pointer
-             * yang memulai gesture.
-             */
-            if (
-                swipePointerId !== null
-                &&
-                event.pointerId
-                !==
-                swipePointerId
-            ) {
+                /*
+                 * Gerakan vertikal lebih dominan.
+                 * Biarkan browser scroll.
+                 */
+                if (
+                    Math.abs(
+                        dx
+                    )
+                    <=
+                    Math.abs(
+                        dy
+                    )
+                ) {
 
-                return;
-            }
-
-
-            const dx =
-                event.clientX
-                -
-                pointerStartX;
+                    return;
+                }
 
 
-            const dy =
-                event.clientY
-                -
-                pointerStartY;
+                if (
+                    dx > 0
+                ) {
 
+                    userNavigate(
+                        currentSlide
+                        -
+                        1,
+                        'prev'
+                    );
 
-            resetSwipe();
+                } else {
 
+                    userNavigate(
+                        currentSlide
+                        +
+                        1,
+                        'next'
+                    );
+                }
+            };
 
-            /*
-             * Gesture terlalu pendek.
-             */
-            if (
-                Math.abs(
-                    dx
-                )
-                <
-                SWIPE_MIN_DISTANCE
-            ) {
-
-                return;
-            }
-
-
-            /*
-             * Kalau vertical movement lebih besar,
-             * berarti user sedang scroll.
-             */
-            if (
-                Math.abs(
-                    dx
-                )
-                <=
-                Math.abs(
-                    dy
-                )
-            ) {
-
-                return;
-            }
-
-
-            /*
-             * Swipe kanan.
-             */
-            if (
-                dx > 0
-            ) {
-
-                userNavigate(
-                    currentSlide - 1
-                );
-
-                return;
-            }
-
-
-            /*
-             * Swipe kiri.
-             */
-            userNavigate(
-                currentSlide + 1
-            );
-        }
-
-
-        /* =====================================================
-           POINTER DOWN
-        ===================================================== */
 
         swipeSurface.addEventListener(
             'pointerdown',
             event => {
 
-                /*
-                 * Mouse hanya tombol kiri.
-                 */
                 if (
                     event.pointerType
                     ===
@@ -1099,10 +1361,6 @@ document.addEventListener(
                 }
 
 
-                /*
-                 * Jangan mulai swipe dari tombol,
-                 * link, input atau titik chart.
-                 */
                 if (
                     isInteractiveTarget(
                         event.target
@@ -1127,16 +1385,12 @@ document.addEventListener(
                     event.pointerId;
 
 
-                /*
-                 * Pointer capture hanya dilakukan pada
-                 * slideStage. Bukan pada seluruh deck.
-                 */
                 if (
                     typeof
                         swipeSurface
                             .setPointerCapture
-                        ===
-                        'function'
+                    ===
+                    'function'
                 ) {
 
                     try {
@@ -1148,9 +1402,6 @@ document.addEventListener(
 
                     } catch (_) {
 
-                        /*
-                         * Browser boleh mengabaikannya.
-                         */
                     }
                 }
             },
@@ -1161,15 +1412,11 @@ document.addEventListener(
         );
 
 
-        /* =====================================================
-           POINTER UP
-        ===================================================== */
-
         swipeSurface.addEventListener(
             'pointerup',
             event => {
 
-                const capturedPointerId =
+                const capturedId =
                     swipePointerId;
 
 
@@ -1179,7 +1426,7 @@ document.addEventListener(
 
 
                 releaseSwipePointer(
-                    capturedPointerId
+                    capturedId
                 );
             },
             {
@@ -1189,15 +1436,11 @@ document.addEventListener(
         );
 
 
-        /* =====================================================
-           POINTER CANCEL
-        ===================================================== */
-
         swipeSurface.addEventListener(
             'pointercancel',
             () => {
 
-                const capturedPointerId =
+                const capturedId =
                     swipePointerId;
 
 
@@ -1205,7 +1448,7 @@ document.addEventListener(
 
 
                 releaseSwipePointer(
-                    capturedPointerId
+                    capturedId
                 );
             },
             {
@@ -1225,21 +1468,25 @@ document.addEventListener(
         );
 
 
-        /* =====================================================
-           PROTEKSI CONTROL BUTTONS
-
-           Event pointer dari tombol tidak boleh dianggap
-           gesture swipe.
-        ===================================================== */
-
+        /*
+         * Control buttons tidak ikut event swipe.
+         */
         [
+
             prevButton,
+
             nextButton,
+
             pauseButton,
+
             fullscreenInside,
+
             presentationButton,
+
             ...dots,
+
             ...thumbnails
+
         ]
         .filter(
             Boolean
@@ -1262,47 +1509,42 @@ document.addEventListener(
            FULLSCREEN
         ===================================================== */
 
-        function fullscreenElement()
-        {
-            return (
+        const fullscreenElement =
+            () =>
+
                 document.fullscreenElement
+
                 ||
+
                 document.webkitFullscreenElement
+
                 ||
-                null
-            );
-        }
+
+                null;
 
 
-        function isDashboardFullscreen()
-        {
-            return (
+        const isDashboardFullscreen =
+            () =>
+
                 fullscreenElement()
                 ===
-                deck
-            );
-        }
+                deck;
 
 
         async function togglePresentation(
             event
         )
         {
-            if (
-                event
-            ) {
+            event
+                ?.preventDefault();
 
-                event.preventDefault();
 
-                event.stopPropagation();
-            }
+            event
+                ?.stopPropagation();
 
 
             try {
 
-                /*
-                 * Keluar fullscreen.
-                 */
                 if (
                     fullscreenElement()
                 ) {
@@ -1327,9 +1569,6 @@ document.addEventListener(
                 }
 
 
-                /*
-                 * Masuk fullscreen.
-                 */
                 if (
                     deck.requestFullscreen
                 ) {
@@ -1381,10 +1620,6 @@ document.addEventListener(
                 );
 
 
-            /* =================================================
-               TOP PRESENTATION BUTTON
-            ================================================= */
-
             if (
                 presentationButton
             ) {
@@ -1415,10 +1650,6 @@ document.addEventListener(
             }
 
 
-            /* =================================================
-               BOTTOM FULLSCREEN BUTTON
-            ================================================= */
-
             if (
                 fullscreenInside
             ) {
@@ -1443,11 +1674,7 @@ document.addEventListener(
             }
 
 
-            /*
-             * Ukuran dashboard berubah ketika fullscreen.
-             * Chart dan map dirender ulang.
-             */
-            window.setTimeout(
+            setTimeout(
                 () => {
 
                     renderGrowthChart();
@@ -1462,34 +1689,18 @@ document.addEventListener(
         }
 
 
-        /* =====================================================
-           PRESENTATION BUTTON TOP
-        ===================================================== */
-
-        if (
-            presentationButton
-        ) {
-
-            presentationButton.addEventListener(
+        presentationButton
+            ?.addEventListener(
                 'click',
                 togglePresentation
             );
-        }
 
 
-        /* =====================================================
-           FULLSCREEN BUTTON BOTTOM
-        ===================================================== */
-
-        if (
-            fullscreenInside
-        ) {
-
-            fullscreenInside.addEventListener(
+        fullscreenInside
+            ?.addEventListener(
                 'click',
                 togglePresentation
             );
-        }
 
 
         document.addEventListener(
@@ -1505,7 +1716,7 @@ document.addEventListener(
 
 
         /* =====================================================
-           DATE & TIME WITA
+           WITA CLOCK
         ===================================================== */
 
         function updateClock()
@@ -1596,7 +1807,7 @@ document.addEventListener(
         updateClock();
 
 
-        window.setInterval(
+        setInterval(
             updateClock,
             1000
         );
@@ -1638,13 +1849,13 @@ document.addEventListener(
             'resize',
             () => {
 
-                window.clearTimeout(
+                clearTimeout(
                     resizeTimer
                 );
 
 
                 resizeTimer =
-                    window.setTimeout(
+                    setTimeout(
                         () => {
 
                             renderGrowthChart();
@@ -1659,12 +1870,13 @@ document.addEventListener(
 
 
         /* =====================================================
-           INITIALIZE
+           INIT
         ===================================================== */
 
         showSlide(
             0,
-            false
+            false,
+            'next'
         );
 
 
@@ -1678,16 +1890,14 @@ document.addEventListener(
 
 
         refreshIcons();
+
     }
 );
 
 
-/* ============================================================
-   ============================================================
-   SLIDE 3
-   GROWTH CHART
-   ============================================================
-============================================================ */
+/* =========================================================
+   SLIDE 3 - GROWTH CHART
+========================================================= */
 
 function renderGrowthChart()
 {
@@ -1757,7 +1967,7 @@ function renderGrowthChart()
 
 
     /* =====================================================
-       DATA FROM DATABASE
+       RAW DATA
     ===================================================== */
 
     const rawData =
@@ -1831,10 +2041,6 @@ function renderGrowthChart()
             }
 
 
-            /*
-             * Jika terdapat data tahun yang sama,
-             * gunakan nilai cumulative tertinggi.
-             */
             if (
                 !yearlyMap.has(
                     year
@@ -1975,8 +2181,10 @@ function renderGrowthChart()
     ) {
 
         const firstValue =
-            points[0]
-                .value;
+            points[
+                0
+            ]
+            .value;
 
 
         const lastValue =
@@ -1985,18 +2193,12 @@ function renderGrowthChart()
                 -
                 1
             ]
-                .value;
+            .value;
 
 
-        let percentage =
-            0;
-
-
-        if (
+        const percentage =
             firstValue > 0
-        ) {
-
-            percentage =
+                ?
                 (
                     (
                         lastValue
@@ -2007,16 +2209,17 @@ function renderGrowthChart()
                     firstValue
                 )
                 *
-                100;
-        }
+                100
+                :
+                0;
 
 
         const status =
-            percentage > 0.05
+            percentage > .05
                 ?
                 'is-up'
                 :
-                percentage < -0.05
+                percentage < -.05
                     ?
                     'is-down'
                     :
@@ -2085,10 +2288,7 @@ function renderGrowthChart()
 
         if (
             window.lucide
-            &&
-            typeof window.lucide.createIcons
-            ===
-            'function'
+                ?.createIcons
         ) {
 
             window.lucide
@@ -2126,6 +2326,7 @@ function renderGrowthChart()
 
         left:
             105
+
     };
 
 
@@ -2158,48 +2359,49 @@ function renderGrowthChart()
 
 
     /* =====================================================
-       SVG ELEMENT HELPER
+       SVG HELPER
     ===================================================== */
 
-    function createSvgElement(
-        tag,
-        attributes = {}
-    )
-    {
-        const element =
-            document.createElementNS(
-                NS,
-                tag
+    const createSvg =
+        (
+            tag,
+            attributes = {}
+        ) => {
+
+            const element =
+                document.createElementNS(
+                    NS,
+                    tag
+                );
+
+
+            Object.entries(
+                attributes
+            )
+            .forEach(
+                (
+                    [
+                        key,
+                        value
+                    ]
+                ) => {
+
+                    element.setAttribute(
+                        key,
+                        String(
+                            value
+                        )
+                    );
+                }
             );
 
 
-        Object.entries(
-            attributes
-        )
-        .forEach(
-            (
-                [
-                    key,
-                    value
-                ]
-            ) => {
-
-                element.setAttribute(
-                    key,
-                    String(
-                        value
-                    )
-                );
-            }
-        );
-
-
-        return element;
-    }
+            return element;
+        };
 
 
     /* =====================================================
-       CHART RANGE
+       RANGE
     ===================================================== */
 
     const values =
@@ -2235,7 +2437,7 @@ function renderGrowthChart()
             Math.max(
                 rawMax
                 *
-                0.15,
+                .15,
                 1
             );
     }
@@ -2243,15 +2445,17 @@ function renderGrowthChart()
 
     const extraSpace =
         Math.max(
+
             difference
             *
-            0.30,
+            .30,
 
             rawMax
             *
-            0.025,
+            .025,
 
             1
+
         );
 
 
@@ -2274,91 +2478,86 @@ function renderGrowthChart()
        X POSITION
     ===================================================== */
 
-    function getX(
-        index
-    )
-    {
-        if (
+    const getX =
+        index =>
+
             points.length
             ===
             1
-        ) {
 
-            return (
+                ?
+
                 padding.left
                 +
-                plotWidth
-                /
-                2
-            );
-        }
-
-
-        return (
-            padding.left
-            +
-            (
-                index
-                /
                 (
-                    points.length
-                    -
-                    1
+                    plotWidth
+                    /
+                    2
                 )
-            )
-            *
-            plotWidth
-        );
-    }
+
+                :
+
+                padding.left
+                +
+                (
+                    index
+                    /
+                    (
+                        points.length
+                        -
+                        1
+                    )
+                )
+                *
+                plotWidth;
 
 
     /* =====================================================
        Y POSITION
     ===================================================== */
 
-    function getY(
-        value
-    )
-    {
-        const range =
-            Math.max(
-                chartMax
-                -
-                chartMin,
-                1
-            );
+    const getY =
+        value => {
+
+            const range =
+                Math.max(
+                    chartMax
+                    -
+                    chartMin,
+                    1
+                );
 
 
-        const ratio =
-            (
-                value
-                -
-                chartMin
-            )
-            /
-            range;
+            const ratio =
+                (
+                    value
+                    -
+                    chartMin
+                )
+                /
+                range;
 
 
-        return (
-            padding.top
-            +
-            plotHeight
-            -
-            (
-                ratio
-                *
+            return (
+                padding.top
+                +
                 plotHeight
-            )
-        );
-    }
+                -
+                (
+                    ratio
+                    *
+                    plotHeight
+                )
+            );
+        };
 
 
     /* =====================================================
-       SVG DEFINITIONS
+       DEFINITIONS
     ===================================================== */
 
     const defs =
-        createSvgElement(
+        createSvg(
             'defs'
         );
 
@@ -2368,7 +2567,7 @@ function renderGrowthChart()
     ===================================================== */
 
     const areaGradient =
-        createSvgElement(
+        createSvg(
             'linearGradient',
             {
                 id:
@@ -2390,7 +2589,7 @@ function renderGrowthChart()
 
 
     areaGradient.appendChild(
-        createSvgElement(
+        createSvg(
             'stop',
             {
                 offset:
@@ -2407,7 +2606,7 @@ function renderGrowthChart()
 
 
     areaGradient.appendChild(
-        createSvgElement(
+        createSvg(
             'stop',
             {
                 offset:
@@ -2424,7 +2623,7 @@ function renderGrowthChart()
 
 
     areaGradient.appendChild(
-        createSvgElement(
+        createSvg(
             'stop',
             {
                 offset:
@@ -2450,7 +2649,7 @@ function renderGrowthChart()
     ===================================================== */
 
     const lineGradient =
-        createSvgElement(
+        createSvg(
             'linearGradient',
             {
                 id:
@@ -2472,7 +2671,7 @@ function renderGrowthChart()
 
 
     lineGradient.appendChild(
-        createSvgElement(
+        createSvg(
             'stop',
             {
                 offset:
@@ -2486,7 +2685,7 @@ function renderGrowthChart()
 
 
     lineGradient.appendChild(
-        createSvgElement(
+        createSvg(
             'stop',
             {
                 offset:
@@ -2510,7 +2709,7 @@ function renderGrowthChart()
 
 
     /* =====================================================
-       Y GRID
+       GRID
     ===================================================== */
 
     const GRID_COUNT =
@@ -2532,33 +2731,25 @@ function renderGrowthChart()
         const y =
             padding.top
             +
-            (
-                ratio
-                *
-                plotHeight
-            );
+            ratio
+            *
+            plotHeight;
 
 
         const value =
             chartMax
             -
+            ratio
+            *
             (
-                ratio
-                *
-                (
-                    chartMax
-                    -
-                    chartMin
-                )
+                chartMax
+                -
+                chartMin
             );
 
 
-        /* =================================================
-           GRID LINE
-        ================================================= */
-
         svg.appendChild(
-            createSvgElement(
+            createSvg(
                 'line',
                 {
                     x1:
@@ -2591,12 +2782,8 @@ function renderGrowthChart()
         );
 
 
-        /* =================================================
-           Y LABEL
-        ================================================= */
-
         const label =
-            createSvgElement(
+            createSvg(
                 'text',
                 {
                     x:
@@ -2637,7 +2824,7 @@ function renderGrowthChart()
 
 
     /* =====================================================
-       BASELINE
+       BASE LINE
     ===================================================== */
 
     const baselineY =
@@ -2647,7 +2834,7 @@ function renderGrowthChart()
 
 
     svg.appendChild(
-        createSvgElement(
+        createSvg(
             'line',
             {
                 x1:
@@ -2699,86 +2886,90 @@ function renderGrowthChart()
                     getY(
                         item.value
                     )
+
             })
         );
 
 
     /* =====================================================
-       LINE PATH
+       SMOOTH LINE PATH
     ===================================================== */
 
-    function makeLinePath(
-        items
-    )
-    {
-        if (
-            items.length
-            ===
-            1
-        ) {
+    const makeLinePath =
+        items => {
 
-            return '';
-        }
+            if (
+                items.length
+                ===
+                1
+            ) {
 
-
-        if (
-            items.length
-            ===
-            2
-        ) {
-
-            return (
-                `M ${items[0].x} ${items[0].y}`
-                +
-                ` L ${items[1].x} ${items[1].y}`
-            );
-        }
+                return '';
+            }
 
 
-        let path =
-            `M ${items[0].x} ${items[0].y}`;
+            if (
+                items.length
+                ===
+                2
+            ) {
 
-
-        for (
-            let i = 0;
-            i <
-            items.length
-            -
-            1;
-            i++
-        ) {
-
-            const current =
-                items[i];
-
-
-            const next =
-                items[
-                    i + 1
-                ];
-
-
-            const middleX =
-                (
-                    current.x
+                return (
+                    `M ${items[0].x} ${items[0].y}`
                     +
-                    next.x
-                )
-                /
-                2;
+                    ` L ${items[1].x} ${items[1].y}`
+                );
+            }
 
 
-            path +=
-                ` C ${middleX} ${current.y},`
-                +
-                ` ${middleX} ${next.y},`
-                +
-                ` ${next.x} ${next.y}`;
-        }
+            let path =
+                `M ${items[0].x} ${items[0].y}`;
 
 
-        return path;
-    }
+            for (
+                let i = 0;
+                i <
+                items.length
+                -
+                1;
+                i++
+            ) {
+
+                const current =
+                    items[
+                        i
+                    ];
+
+
+                const next =
+                    items[
+                        i
+                        +
+                        1
+                    ];
+
+
+                const middleX =
+                    (
+                        current.x
+                        +
+                        next.x
+                    )
+                    /
+                    2;
+
+
+                path +=
+                    ` C ${middleX} ${current.y},`
+                    +
+                    ` ${middleX} ${next.y},`
+                    +
+                    ` ${next.x} ${next.y}`;
+            }
+
+
+            return path;
+        };
 
 
     const linePath =
@@ -2788,7 +2979,7 @@ function renderGrowthChart()
 
 
     /* =====================================================
-       AREA + LINE
+       AREA AND LINE
     ===================================================== */
 
     if (
@@ -2797,30 +2988,32 @@ function renderGrowthChart()
         2
     ) {
 
+        const last =
+            coordinates[
+                coordinates.length
+                -
+                1
+            ];
+
+
+        const first =
+            coordinates[
+                0
+            ];
+
+
         const areaPath =
-            linePath
+            `${linePath}`
             +
-            ` L ${
-                coordinates[
-                    coordinates.length
-                    -
-                    1
-                ].x
-            } ${baselineY}`
+            ` L ${last.x} ${baselineY}`
             +
-            ` L ${
-                coordinates[0].x
-            } ${baselineY}`
+            ` L ${first.x} ${baselineY}`
             +
-            ' Z';
+            ` Z`;
 
-
-        /* =================================================
-           AREA
-        ================================================= */
 
         svg.appendChild(
-            createSvgElement(
+            createSvg(
                 'path',
                 {
                     d:
@@ -2836,12 +3029,9 @@ function renderGrowthChart()
         );
 
 
-        /* =================================================
-           WHITE GLOW
-        ================================================= */
-
+        /* WHITE GLOW */
         svg.appendChild(
-            createSvgElement(
+            createSvg(
                 'path',
                 {
                     d:
@@ -2869,12 +3059,9 @@ function renderGrowthChart()
         );
 
 
-        /* =================================================
-           BLUE LINE
-        ================================================= */
-
+        /* MAIN LINE */
         svg.appendChild(
-            createSvgElement(
+            createSvg(
                 'path',
                 {
                     d:
@@ -2904,7 +3091,7 @@ function renderGrowthChart()
 
 
     /* =====================================================
-       X AXIS LABELS
+       X YEAR LABEL
     ===================================================== */
 
     const xLabels =
@@ -2964,163 +3151,161 @@ function renderGrowthChart()
        TOOLTIP
     ===================================================== */
 
-    function showTooltip(
-        point,
-        index
-    )
-    {
-        if (
-            !tooltip
-            ||
-            !tooltipYear
-            ||
-            !tooltipValue
-        ) {
-
-            return;
-        }
-
-
-        tooltipYear.textContent =
-            `Tahun ${point.year}`;
-
-
-        /*
-         * Nilai database FULL.
-         */
-        tooltipValue.textContent =
-            formatDashboardRupiahFull(
-                point.value
-            );
-
-
-        if (
-            tooltipChange
-        ) {
+    const showTooltip =
+        (
+            point,
+            index
+        ) => {
 
             if (
-                index === 0
+                !tooltip
+                ||
+                !tooltipYear
+                ||
+                !tooltipValue
             ) {
 
-                tooltipChange.textContent =
-                    'Periode awal pada grafik';
+                return;
+            }
 
 
-                tooltipChange.className =
-                    '';
-
-            } else {
-
-                const previous =
-                    coordinates[
-                        index
-                        -
-                        1
-                    ]
-                    .value;
+            tooltipYear.textContent =
+                `Tahun ${point.year}`;
 
 
-                let percentage =
-                    0;
+            /*
+             * Tooltip tetap menampilkan nominal penuh
+             * sesuai database.
+             */
+            tooltipValue.textContent =
+                formatDashboardRupiahFull(
+                    point.value
+                );
 
+
+            if (
+                tooltipChange
+            ) {
 
                 if (
-                    previous > 0
+                    index === 0
                 ) {
 
-                    percentage =
-                        (
-                            (
-                                point.value
-                                -
-                                previous
-                            )
-                            /
-                            previous
-                        )
-                        *
-                        100;
-                }
+                    tooltipChange.textContent =
+                        'Periode awal pada grafik';
 
 
-                const sign =
-                    percentage > 0
-                        ?
-                        '+'
-                        :
+                    tooltipChange.className =
                         '';
 
+                } else {
 
-                tooltipChange.textContent =
-                    `${sign}${percentage.toLocaleString(
-                        'id-ID',
-                        {
-                            minimumFractionDigits:
-                                1,
-
-                            maximumFractionDigits:
-                                1
-                        }
-                    )}% dari tahun sebelumnya`;
+                    const previous =
+                        coordinates[
+                            index
+                            -
+                            1
+                        ]
+                        .value;
 
 
-                tooltipChange.className =
-                    percentage > 0.05
-                        ?
-                        'is-up'
-                        :
-                        percentage < -0.05
+                    const percentage =
+                        previous > 0
                             ?
-                            'is-down'
+                            (
+                                (
+                                    point.value
+                                    -
+                                    previous
+                                )
+                                /
+                                previous
+                            )
+                            *
+                            100
                             :
-                            'is-flat';
+                            0;
+
+
+                    const sign =
+                        percentage > 0
+                            ?
+                            '+'
+                            :
+                            '';
+
+
+                    tooltipChange.textContent =
+                        `${sign}${percentage.toLocaleString(
+                            'id-ID',
+                            {
+                                minimumFractionDigits:
+                                    1,
+
+                                maximumFractionDigits:
+                                    1
+                            }
+                        )}% dari tahun sebelumnya`;
+
+
+                    tooltipChange.className =
+                        percentage > .05
+                            ?
+                            'is-up'
+                            :
+                            percentage < -.05
+                                ?
+                                'is-down'
+                                :
+                                'is-flat';
+                }
             }
-        }
 
 
-        tooltip.style.left =
-            `${
-                (
-                    point.x
-                    /
-                    WIDTH
-                )
-                *
-                100
-            }%`;
+            tooltip.style.left =
+                `${
+                    (
+                        point.x
+                        /
+                        WIDTH
+                    )
+                    *
+                    100
+                }%`;
 
 
-        tooltip.style.top =
-            `${
-                (
-                    point.y
-                    /
-                    HEIGHT
-                )
-                *
-                100
-            }%`;
+            tooltip.style.top =
+                `${
+                    (
+                        point.y
+                        /
+                        HEIGHT
+                    )
+                    *
+                    100
+                }%`;
 
-
-        tooltip.hidden =
-            false;
-    }
-
-
-    function hideTooltip()
-    {
-        if (
-            tooltip
-        ) {
 
             tooltip.hidden =
-                true;
-        }
-    }
+                false;
+        };
+
+
+    const hideTooltip =
+        () => {
+
+            if (
+                tooltip
+            ) {
+
+                tooltip.hidden =
+                    true;
+            }
+        };
 
 
     /* =====================================================
-       CHART POINTS
+       POINTS
     ===================================================== */
 
     coordinates.forEach(
@@ -3130,7 +3315,7 @@ function renderGrowthChart()
         ) => {
 
             const group =
-                createSvgElement(
+                createSvg(
                     'g',
                     {
                         class:
@@ -3145,12 +3330,9 @@ function renderGrowthChart()
                 );
 
 
-            /* =================================================
-               HALO
-            ================================================= */
-
+            /* HALO */
             group.appendChild(
-                createSvgElement(
+                createSvg(
                     'circle',
                     {
                         cx:
@@ -3175,12 +3357,9 @@ function renderGrowthChart()
             );
 
 
-            /* =================================================
-               WHITE RING
-            ================================================= */
-
+            /* WHITE RING */
             group.appendChild(
-                createSvgElement(
+                createSvg(
                     'circle',
                     {
                         cx:
@@ -3202,12 +3381,9 @@ function renderGrowthChart()
             );
 
 
-            /* =================================================
-               BLUE POINT
-            ================================================= */
-
+            /* POINT */
             group.appendChild(
-                createSvgElement(
+                createSvg(
                     'circle',
                     {
                         cx:
@@ -3236,10 +3412,10 @@ function renderGrowthChart()
 
 
             /*
-             * Hit area lebih besar untuk tablet.
+             * Touch hit area.
              */
             group.appendChild(
-                createSvgElement(
+                createSvg(
                     'circle',
                     {
                         cx:
@@ -3297,9 +3473,6 @@ function renderGrowthChart()
             );
 
 
-            /*
-             * Tablet tap.
-             */
             group.addEventListener(
                 'click',
                 () => {
@@ -3320,12 +3493,9 @@ function renderGrowthChart()
 }
 
 
-/* ============================================================
-   ============================================================
-   SLIDE 5
-   LOCATION MAP
-   ============================================================
-============================================================ */
+/* =========================================================
+   SLIDE 5 - LOCATION MAP
+========================================================= */
 
 function renderLocationMap()
 {
@@ -3349,10 +3519,6 @@ function renderLocationMap()
     }
 
 
-    /* =====================================================
-       SOURCE
-    ===================================================== */
-
     const source =
         Array.isArray(
             window
@@ -3366,10 +3532,6 @@ function renderLocationMap()
             :
             [];
 
-
-    /* =====================================================
-       NORMALIZE
-    ===================================================== */
 
     const locations =
         source
@@ -3403,6 +3565,7 @@ function renderLocationMap()
                     )
                     ||
                     0
+
             })
         )
         .filter(
@@ -3448,10 +3611,6 @@ function renderLocationMap()
         '';
 
 
-    /* =====================================================
-       EMPTY
-    ===================================================== */
-
     if (
         !locations.length
     ) {
@@ -3477,10 +3636,6 @@ function renderLocationMap()
             true;
     }
 
-
-    /* =====================================================
-       LAT LONG BOUNDS
-    ===================================================== */
 
     const lats =
         locations.map(
@@ -3521,28 +3676,32 @@ function renderLocationMap()
 
 
     if (
-        minLat === maxLat
+        minLat
+        ===
+        maxLat
     ) {
 
         minLat -=
-            0.01;
+            .01;
 
 
         maxLat +=
-            0.01;
+            .01;
     }
 
 
     if (
-        minLong === maxLong
+        minLong
+        ===
+        maxLong
     ) {
 
         minLong -=
-            0.01;
+            .01;
 
 
         maxLong +=
-            0.01;
+            .01;
     }
 
 
@@ -3558,13 +3717,9 @@ function renderLocationMap()
         minLong;
 
 
-    const paddingPercent =
+    const padding =
         8;
 
-
-    /* =====================================================
-       MARKERS
-    ===================================================== */
 
     locations.forEach(
         (
@@ -3593,40 +3748,32 @@ function renderLocationMap()
 
 
             const left =
-                paddingPercent
+                padding
                 +
+                xRatio
+                *
                 (
-                    xRatio
+                    100
+                    -
+                    padding
                     *
-                    (
-                        100
-                        -
-                        paddingPercent
-                        *
-                        2
-                    )
+                    2
                 );
 
 
             const top =
-                paddingPercent
+                padding
                 +
+                yRatio
+                *
                 (
-                    yRatio
+                    100
+                    -
+                    padding
                     *
-                    (
-                        100
-                        -
-                        paddingPercent
-                        *
-                        2
-                    )
+                    2
                 );
 
-
-            /* =================================================
-               MARKER
-            ================================================= */
 
             const marker =
                 document.createElement(
@@ -3662,10 +3809,6 @@ function renderLocationMap()
                 marker
             );
 
-
-            /* =================================================
-               LABEL TOP 5
-            ================================================= */
 
             if (
                 index < 5
@@ -3723,15 +3866,8 @@ function renderLocationMap()
 }
 
 
-/* ============================================================
-   ============================================================
-   HELPER
-   ============================================================
-============================================================ */
-
-
 /* =========================================================
-   PARSE COORDINATE
+   HELPERS
 ========================================================= */
 
 function parseDashboardCoordinate(
@@ -3763,22 +3899,18 @@ function parseDashboardCoordinate(
         );
 
 
-    if (
-        !normalized
-    ) {
-
-        return NaN;
-    }
-
-
-    return Number(
-        normalized
-    );
+    return normalized
+        ?
+        Number(
+            normalized
+        )
+        :
+        NaN;
 }
 
 
 /* =========================================================
-   FORMAT NUMBER
+   NUMBER FORMAT
 ========================================================= */
 
 function formatDashboardNumber(
@@ -3811,11 +3943,7 @@ function formatDashboardNumber(
 
 
 /* =========================================================
-   FORMAT FULL RUPIAH
-
-   1.270.746.080.536
-   =>
-   Rp 1.270.746.080.536
+   FULL RUPIAH
 ========================================================= */
 
 function formatDashboardRupiahFull(
@@ -3863,12 +3991,6 @@ function formatDashboardRupiahFull(
 
 /* =========================================================
    TRUNCATE
-
-   BUKAN ROUND.
-
-   1.2799
-   =>
-   1.27
 ========================================================= */
 
 function truncateDashboardNumber(
@@ -3899,44 +4021,51 @@ function truncateDashboardNumber(
         );
 
 
-    if (
-        number >= 0
-    ) {
-
-        return (
-            Math.floor(
-                number
-                *
-                factor
-            )
-            /
-            factor
-        );
-    }
-
-
-    return (
-        Math.ceil(
+    return number >= 0
+        ?
+        Math.floor(
             number
             *
             factor
         )
         /
         factor
+        :
+        Math.ceil(
+            number
+            *
+            factor
+        )
+        /
+        factor;
+}
+
+
+/* =========================================================
+   DECIMAL FORMAT
+========================================================= */
+
+function trimCompactDecimal(
+    number,
+    minDigits = 0,
+    maxDigits = 2
+)
+{
+    return number.toLocaleString(
+        'id-ID',
+        {
+            minimumFractionDigits:
+                minDigits,
+
+            maximumFractionDigits:
+                maxDigits
+        }
     );
 }
 
 
 /* =========================================================
-   FORMAT AXIS CURRENCY
-
-   Digunakan pada Y Axis chart.
-
-   1.270.746.080.536
-   =>
-   Rp 1,27 T
-
-   Tidak dibulatkan menjadi 1,3 T.
+   Y AXIS FORMAT
 ========================================================= */
 
 function formatDashboardAxisCurrency(
@@ -3957,37 +4086,30 @@ function formatDashboardAxisCurrency(
         );
 
 
-    /* =====================================================
-       TRILIUN
-    ===================================================== */
-
+    /*
+     * TRILIUN
+     */
     if (
         abs
         >=
-        1000000000000
+        1_000_000_000_000
     ) {
-
-        const result =
-            truncateDashboardNumber(
-                number
-                /
-                1000000000000,
-                2
-            );
-
 
         return (
             'Rp '
             +
-            result.toLocaleString(
-                'id-ID',
-                {
-                    minimumFractionDigits:
-                        2,
+            trimCompactDecimal(
 
-                    maximumFractionDigits:
-                        2
-                }
+                truncateDashboardNumber(
+                    number
+                    /
+                    1_000_000_000_000,
+                    2
+                ),
+
+                2,
+
+                2
             )
             +
             ' T'
@@ -3995,37 +4117,30 @@ function formatDashboardAxisCurrency(
     }
 
 
-    /* =====================================================
-       MILIAR
-    ===================================================== */
-
+    /*
+     * MILIAR
+     */
     if (
         abs
         >=
-        1000000000
+        1_000_000_000
     ) {
-
-        const result =
-            truncateDashboardNumber(
-                number
-                /
-                1000000000,
-                1
-            );
-
 
         return (
             'Rp '
             +
-            result.toLocaleString(
-                'id-ID',
-                {
-                    minimumFractionDigits:
-                        1,
+            trimCompactDecimal(
 
-                    maximumFractionDigits:
-                        1
-                }
+                truncateDashboardNumber(
+                    number
+                    /
+                    1_000_000_000,
+                    1
+                ),
+
+                1,
+
+                1
             )
             +
             ' M'
@@ -4033,37 +4148,30 @@ function formatDashboardAxisCurrency(
     }
 
 
-    /* =====================================================
-       JUTA
-    ===================================================== */
-
+    /*
+     * JUTA
+     */
     if (
         abs
         >=
-        1000000
+        1_000_000
     ) {
-
-        const result =
-            truncateDashboardNumber(
-                number
-                /
-                1000000,
-                1
-            );
-
 
         return (
             'Rp '
             +
-            result.toLocaleString(
-                'id-ID',
-                {
-                    minimumFractionDigits:
-                        1,
+            trimCompactDecimal(
 
-                    maximumFractionDigits:
-                        1
-                }
+                truncateDashboardNumber(
+                    number
+                    /
+                    1_000_000,
+                    1
+                ),
+
+                1,
+
+                1
             )
             +
             ' Jt'
@@ -4071,21 +4179,10 @@ function formatDashboardAxisCurrency(
     }
 
 
-    /* =====================================================
-       NORMAL
-    ===================================================== */
-
     return (
         'Rp '
         +
-        new Intl.NumberFormat(
-            'id-ID',
-            {
-                maximumFractionDigits:
-                    0
-            }
-        )
-        .format(
+        formatDashboardNumber(
             number
         )
     );
@@ -4093,18 +4190,7 @@ function formatDashboardAxisCurrency(
 
 
 /* =========================================================
-   FORMAT COMPACT PRESISI
-
-   1.270.746.080.536
-   =>
-   Rp 1,27 T
-
-   1.279.999.999.999
-   =>
-   Rp 1,27 T
-
-   BUKAN:
-   Rp 1,28 T
+   COMPACT PRESISI JS
 ========================================================= */
 
 function formatDashboardCompactPrecise(
@@ -4134,154 +4220,88 @@ function formatDashboardCompactPrecise(
             '';
 
 
-    /* =====================================================
-       TRILIUN
-    ===================================================== */
+    const compact =
+        (
+            divisor,
+            suffix
+        ) => {
+
+            const result =
+                truncateDashboardNumber(
+                    number
+                    /
+                    divisor,
+                    2
+                );
+
+
+            const formatted =
+                result.toLocaleString(
+                    'id-ID',
+                    {
+                        minimumFractionDigits:
+                            0,
+
+                        maximumFractionDigits:
+                            2
+                    }
+                );
+
+
+            return (
+                `${prefix}${formatted} ${suffix}`
+            );
+        };
+
 
     if (
         abs
         >=
-        1000000000000
+        1_000_000_000_000
     ) {
 
-        const result =
-            truncateDashboardNumber(
-                number
-                /
-                1000000000000,
-                2
-            );
-
-
-        return (
-            prefix
-            +
-            result.toLocaleString(
-                'id-ID',
-                {
-                    minimumFractionDigits:
-                        2,
-
-                    maximumFractionDigits:
-                        2
-                }
-            )
-            +
-            ' T'
+        return compact(
+            1_000_000_000_000,
+            'T'
         );
     }
 
 
-    /* =====================================================
-       MILIAR
-    ===================================================== */
-
     if (
         abs
         >=
-        1000000000
+        1_000_000_000
     ) {
 
-        const result =
-            truncateDashboardNumber(
-                number
-                /
-                1000000000,
-                2
-            );
-
-
-        return (
-            prefix
-            +
-            result.toLocaleString(
-                'id-ID',
-                {
-                    minimumFractionDigits:
-                        2,
-
-                    maximumFractionDigits:
-                        2
-                }
-            )
-            +
-            ' M'
+        return compact(
+            1_000_000_000,
+            'M'
         );
     }
 
 
-    /* =====================================================
-       JUTA
-    ===================================================== */
-
     if (
         abs
         >=
-        1000000
+        1_000_000
     ) {
 
-        const result =
-            truncateDashboardNumber(
-                number
-                /
-                1000000,
-                2
-            );
-
-
-        return (
-            prefix
-            +
-            result.toLocaleString(
-                'id-ID',
-                {
-                    minimumFractionDigits:
-                        2,
-
-                    maximumFractionDigits:
-                        2
-                }
-            )
-            +
-            ' Jt'
+        return compact(
+            1_000_000,
+            'Jt'
         );
     }
 
 
-    /* =====================================================
-       RIBU
-    ===================================================== */
-
     if (
         abs
         >=
-        1000
+        1_000
     ) {
 
-        const result =
-            truncateDashboardNumber(
-                number
-                /
-                1000,
-                2
-            );
-
-
-        return (
-            prefix
-            +
-            result.toLocaleString(
-                'id-ID',
-                {
-                    minimumFractionDigits:
-                        2,
-
-                    maximumFractionDigits:
-                        2
-                }
-            )
-            +
-            ' Rb'
+        return compact(
+            1_000,
+            'Rb'
         );
     }
 
@@ -4297,10 +4317,7 @@ function formatDashboardCompactPrecise(
 
 
 /* =========================================================
-   LEGACY FORMATTER
-
-   Supaya function lama yang masih memanggil
-   formatDashboardCompact() tidak error.
+   LEGACY COMPATIBILITY
 ========================================================= */
 
 function formatDashboardCompact(
@@ -4312,4 +4329,4 @@ function formatDashboardCompact(
         value,
         currency
     );
-}   
+}

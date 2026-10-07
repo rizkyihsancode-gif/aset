@@ -9,7 +9,15 @@
 
     --dash-shadow:
         0 12px 30px
-        rgba(21, 62, 108, 0.08);
+        rgba(21, 62, 108, .08);
+
+    --dash-ease:
+        cubic-bezier(
+            .16,
+            1,
+            .3,
+            1
+        );
 }
 
 
@@ -19,35 +27,47 @@
 
 
 /* =========================================================
-   SCROLL NORMAL
+   NORMAL PAGE SCROLL
 ========================================================= */
 
 html:not(.dashboard-presenting),
 body:not(.dashboard-presenting) {
     height: auto !important;
-
     min-height: 100% !important;
-
     max-height: none !important;
 
     overflow-x: hidden !important;
-
     overflow-y: auto !important;
 }
 
 
 body:has(.dashboard-page):not(.dashboard-presenting)
-.content-wrapper,
+.wrapper,
 
 body:has(.dashboard-page):not(.dashboard-presenting)
-.main-content {
+.app,
+
+body:has(.dashboard-page):not(.dashboard-presenting)
+.main,
+
+body:has(.dashboard-page):not(.dashboard-presenting)
+.main-content,
+
+body:has(.dashboard-page):not(.dashboard-presenting)
+.content-wrapper {
     height: auto !important;
 
-    min-height: 100vh !important;
+    min-height:
+        100vh
+        !important;
 
-    max-height: none !important;
+    max-height:
+        none
+        !important;
 
-    overflow: visible !important;
+    overflow:
+        visible
+        !important;
 }
 
 
@@ -56,81 +76,109 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 ========================================================= */
 
 .dashboard-page {
-    width: 100%;
+    width:
+        100%;
 
-    min-width: 0;
+    min-width:
+        0;
 
-    min-height: 0;
+    height:
+        auto
+        !important;
 
     padding:
         18px
         20px
-        32px;
-
-    overflow: visible;
+        30px;
 
     color:
-        var(--dash-text);
+        var(
+            --dash-text
+        );
+
+    overflow:
+        visible
+        !important;
 }
 
 
 /* =========================================================
-   HEADER
+   PAGE HEADER
 ========================================================= */
 
 .dashboard-page-header {
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    justify-content: space-between;
+    justify-content:
+        space-between;
 
-    gap: 20px;
+    gap:
+        20px;
 
-    margin-bottom: 18px;
+    margin-bottom:
+        18px;
 }
 
 
 .dashboard-page-heading {
-    min-width: 0;
+    flex:
+        1;
 
-    flex: 1;
+    min-width:
+        0;
 }
 
 
 .dashboard-eyebrow,
 .slide-eyebrow {
-    display: inline-block;
+    display:
+        inline-block;
 
-    color: #0b68d9;
+    color:
+        #0b68d9;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    line-height: 1.35;
+    line-height:
+        1.3;
 
-    letter-spacing: 1.4px;
+    letter-spacing:
+        1.4px;
 
-    text-transform: uppercase;
+    text-transform:
+        uppercase;
 
-    font-weight: 700;
+    font-weight:
+        700;
 }
 
 
 .dashboard-title-line {
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    gap: 18px;
+    gap:
+        18px;
 
-    margin-top: 4px;
+    margin-top:
+        4px;
 }
 
 
 .dashboard-title-line h1 {
-    margin: 0;
+    margin:
+        0;
 
-    color: #092753;
+    color:
+        #092753;
 
     font-size:
         clamp(
@@ -139,22 +187,27 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             40px
         );
 
-    line-height: 1.05;
+    line-height:
+        1;
 
-    font-weight: 700;
+    font-weight:
+        750;
 }
 
 
 .dashboard-title-line p {
     margin:
-        5px
+        6px
         0
         0;
 
     color:
-        var(--dash-muted);
+        var(
+            --dash-muted
+        );
 
-    font-size: 15px;
+    font-size:
+        15px;
 }
 
 
@@ -163,15 +216,20 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 ========================================================= */
 
 .dashboard-presentation-button {
-    display: inline-flex;
+    display:
+        inline-flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    justify-content: center;
+    justify-content:
+        center;
 
-    gap: 9px;
+    gap:
+        9px;
 
-    min-height: 46px;
+    min-height:
+        46px;
 
     padding:
         0
@@ -181,21 +239,25 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         1px solid
         #cfdef0;
 
-    border-radius: 10px;
+    border-radius:
+        10px;
 
     background:
         rgba(
             255,
             255,
             255,
-            .9
+            .94
         );
 
-    color: #16345f;
+    color:
+        #16345f;
 
-    cursor: pointer;
+    cursor:
+        pointer;
 
-    white-space: nowrap;
+    white-space:
+        nowrap;
 
     box-shadow:
         0
@@ -209,14 +271,37 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         );
 
     transition:
-        .2s ease;
+        transform
+        .2s
+        ease,
+
+        border-color
+        .2s
+        ease,
+
+        box-shadow
+        .2s
+        ease;
+
+    touch-action:
+        manipulation;
 }
 
 
 .dashboard-presentation-button:hover {
-    border-color: #8eb9ea;
+    border-color:
+        #8eb9ea;
 
-    background: #fff;
+    box-shadow:
+        0
+        8px
+        18px
+        rgba(
+            25,
+            74,
+            126,
+            .10
+        );
 
     transform:
         translateY(
@@ -226,9 +311,11 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .dashboard-presentation-button svg {
-    width: 19px;
+    width:
+        19px;
 
-    height: 19px;
+    height:
+        19px;
 }
 
 
@@ -237,13 +324,17 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 ========================================================= */
 
 .dashboard-date-card {
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    gap: 11px;
+    gap:
+        11px;
 
-    min-width: 220px;
+    min-width:
+        220px;
 
     padding:
         10px
@@ -251,16 +342,19 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
     border:
         1px solid
-        var(--dash-line);
+        var(
+            --dash-line
+        );
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
     background:
         rgba(
             255,
             255,
             255,
-            .9
+            .94
         );
 
     box-shadow:
@@ -277,15 +371,20 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .dashboard-date-icon {
-    display: grid;
+    display:
+        grid;
 
-    place-items: center;
+    place-items:
+        center;
 
-    width: 38px;
+    width:
+        38px;
 
-    height: 38px;
+    height:
+        38px;
 
-    border-radius: 9px;
+    border-radius:
+        9px;
 
     background:
         #eaf4ff;
@@ -296,56 +395,81 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .dashboard-date-icon svg {
-    width: 19px;
+    width:
+        19px;
 
-    height: 19px;
+    height:
+        19px;
 }
 
 
-.dashboard-date-card > span:last-child {
-    display: flex;
+.dashboard-date-card
+> span:last-child {
+    display:
+        flex;
 
-    flex-direction: column;
+    flex-direction:
+        column;
 }
 
 
 .dashboard-date-card strong {
-    color: #17335c;
+    color:
+        #17335c;
 
-    font-size: 13px;
+    font-size:
+        13px;
 }
 
 
 .dashboard-date-card small {
-    margin-top: 2px;
+    margin-top:
+        2px;
 
-    color: #6d84a1;
+    color:
+        #6d84a1;
 
-    font-size: 11px;
+    font-size:
+        11px;
 }
 
 
 /* =========================================================
-   DECK
+   DASHBOARD DECK
 ========================================================= */
 
 .dashboard-deck {
-    position: relative;
+    position:
+        relative;
 
-    width: 100%;
+    width:
+        100%;
 
-    min-width: 0;
+    min-width:
+        0;
 
-    overflow: visible;
+    height:
+        auto
+        !important;
 
-    outline: none;
+    outline:
+        none;
+
+    overflow:
+        visible
+        !important;
+
+    touch-action:
+        auto;
 }
 
 
 .dashboard-deck-viewport {
-    position: relative;
+    position:
+        relative;
 
-    width: 100%;
+    width:
+        100%;
 
     height:
         clamp(
@@ -354,120 +478,522 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             790px
         );
 
-    min-height: 680px;
+    min-height:
+        680px;
 
-    overflow: hidden;
+    overflow:
+        hidden;
 
     border:
         1px solid
         #cbdff2;
 
-    border-radius: 14px;
+    border-radius:
+        14px;
 
     background:
-        #eef6ff;
+        #0a355f;
 
     box-shadow:
-        var(--dash-shadow);
+        var(
+            --dash-shadow
+        );
 }
 
 
 .dashboard-slide-stage {
-    position: absolute;
+    position:
+        absolute;
 
-    inset: 0;
+    inset:
+        0;
 
-    overflow: hidden;
+    overflow:
+        hidden;
+
+    isolation:
+        isolate;
+
+    background:
+        #0a355f;
+
+    touch-action:
+        pan-y;
+
+    overscroll-behavior-x:
+        contain;
 }
 
 
 /* =========================================================
-   SLIDE
+   SLIDE CORE
+
+   PENTING:
+   Slide tidak digeser sebagai satu panel.
+   Ini menghilangkan ruang putih kiri / kanan.
 ========================================================= */
 
 .dashboard-slide {
-    position: absolute;
+    position:
+        absolute;
 
-    inset: 0;
+    inset:
+        0;
 
-    min-width: 0;
+    z-index:
+        1;
+
+    min-width:
+        0;
 
     padding:
         28px
         54px
         86px;
 
-    overflow: hidden;
+    overflow:
+        hidden;
 
-    opacity: 0;
+    opacity:
+        0;
 
-    visibility: hidden;
+    visibility:
+        hidden;
 
-    pointer-events: none;
+    pointer-events:
+        none;
 
     transform:
-        translate3d(
-            28px,
-            0,
-            0
-        )
-        scale(
-            .995
-        );
+        none
+        !important;
 
-    transition:
-        opacity
-        .46s
-        cubic-bezier(
-            .22,
-            .61,
-            .36,
-            1
-        ),
-
-        transform
-        .56s
-        cubic-bezier(
-            .22,
-            .61,
-            .36,
-            1
-        );
+    will-change:
+        opacity;
 }
 
 
 .dashboard-deck[data-direction="prev"]
-.dashboard-slide {
+.dashboard-slide,
+
+.dashboard-deck[data-direction="next"]
+.dashboard-slide,
+
+.dashboard-slide.is-active {
     transform:
-        translate3d(
-            -28px,
-            0,
-            0
-        )
-        scale(
-            .995
-        );
+        none
+        !important;
 }
 
 
 .dashboard-slide.is-active {
-    z-index: 2;
+    z-index:
+        4;
 
-    opacity: 1;
+    opacity:
+        1;
 
-    visibility: visible;
+    visibility:
+        visible;
 
-    pointer-events: auto;
+    pointer-events:
+        auto;
+}
 
-    transform:
-        translate3d(
-            0,
-            0,
-            0
-        )
-        scale(
+
+/* =========================================================
+   SLIDE LEAVING
+========================================================= */
+
+.dashboard-slide.is-leaving-to-left,
+.dashboard-slide.is-leaving-to-right {
+    z-index:
+        3;
+
+    visibility:
+        visible;
+
+    pointer-events:
+        none;
+
+    animation:
+        dashboardSlideOut
+        .54s
+        cubic-bezier(
+            .22,
+            .61,
+            .36,
             1
+        )
+        both;
+}
+
+
+/* =========================================================
+   SLIDE ENTERING
+========================================================= */
+
+.dashboard-slide.is-entering-from-right,
+.dashboard-slide.is-entering-from-left {
+    z-index:
+        4;
+
+    visibility:
+        visible;
+
+    animation:
+        dashboardSlideIn
+        .68s
+        var(
+            --dash-ease
+        )
+        both;
+}
+
+
+/* =========================================================
+   CONTENT ANIMATION
+========================================================= */
+
+.dashboard-slide.is-entering-from-right
+> *,
+
+.dashboard-slide.is-entering-from-left
+> * {
+    will-change:
+        opacity,
+        transform,
+        filter;
+
+    animation-duration:
+        .72s;
+
+    animation-timing-function:
+        var(
+            --dash-ease
         );
+
+    animation-fill-mode:
+        both;
+}
+
+
+.dashboard-slide.is-entering-from-right
+> * {
+    animation-name:
+        dashboardContentInRight;
+}
+
+
+.dashboard-slide.is-entering-from-left
+> * {
+    animation-name:
+        dashboardContentInLeft;
+}
+
+
+/* =========================================================
+   STAGGER
+========================================================= */
+
+.dashboard-slide.is-entering-from-right
+> :nth-child(1),
+
+.dashboard-slide.is-entering-from-left
+> :nth-child(1) {
+    animation-delay:
+        20ms;
+}
+
+
+.dashboard-slide.is-entering-from-right
+> :nth-child(2),
+
+.dashboard-slide.is-entering-from-left
+> :nth-child(2) {
+    animation-delay:
+        65ms;
+}
+
+
+.dashboard-slide.is-entering-from-right
+> :nth-child(3),
+
+.dashboard-slide.is-entering-from-left
+> :nth-child(3) {
+    animation-delay:
+        110ms;
+}
+
+
+.dashboard-slide.is-entering-from-right
+> :nth-child(4),
+
+.dashboard-slide.is-entering-from-left
+> :nth-child(4) {
+    animation-delay:
+        155ms;
+}
+
+
+.dashboard-slide.is-entering-from-right
+> :nth-child(n+5),
+
+.dashboard-slide.is-entering-from-left
+> :nth-child(n+5) {
+    animation-delay:
+        190ms;
+}
+
+
+/* =========================================================
+   SLIDE ANIMATION KEYFRAMES
+========================================================= */
+
+@keyframes dashboardSlideIn {
+
+    from {
+        opacity:
+            0;
+    }
+
+    to {
+        opacity:
+            1;
+    }
+
+}
+
+
+@keyframes dashboardSlideOut {
+
+    from {
+        opacity:
+            1;
+    }
+
+    to {
+        opacity:
+            0;
+    }
+
+}
+
+
+@keyframes dashboardContentInRight {
+
+    0% {
+        opacity:
+            0;
+
+        transform:
+            translate3d(
+                22px,
+                8px,
+                0
+            )
+            scale(
+                .992
+            );
+
+        filter:
+            blur(
+                1.5px
+            );
+    }
+
+
+    55% {
+        opacity:
+            1;
+
+        filter:
+            blur(
+                0
+            );
+    }
+
+
+    100% {
+        opacity:
+            1;
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            scale(
+                1
+            );
+
+        filter:
+            blur(
+                0
+            );
+    }
+
+}
+
+
+@keyframes dashboardContentInLeft {
+
+    0% {
+        opacity:
+            0;
+
+        transform:
+            translate3d(
+                -22px,
+                8px,
+                0
+            )
+            scale(
+                .992
+            );
+
+        filter:
+            blur(
+                1.5px
+            );
+    }
+
+
+    55% {
+        opacity:
+            1;
+
+        filter:
+            blur(
+                0
+            );
+    }
+
+
+    100% {
+        opacity:
+            1;
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            scale(
+                1
+            );
+
+        filter:
+            blur(
+                0
+            );
+    }
+
+}
+
+
+@keyframes dashboardBackgroundIn {
+
+    from {
+        transform:
+            scale(
+                1.055
+            );
+
+        filter:
+            saturate(
+                .96
+            )
+            contrast(
+                1.01
+            )
+            brightness(
+                .88
+            );
+    }
+
+
+    to {
+        transform:
+            scale(
+                1.025
+            );
+    }
+
+}
+
+
+@keyframes dashboardCardRise {
+
+    from {
+        opacity:
+            .2;
+
+        transform:
+            translate3d(
+                0,
+                12px,
+                0
+            )
+            scale(
+                .985
+            );
+    }
+
+
+    to {
+        opacity:
+            1;
+
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            scale(
+                1
+            );
+    }
+
+}
+
+
+/* =========================================================
+   CARD MICRO ANIMATION
+========================================================= */
+
+.dashboard-slide.is-entering-from-right
+.profile-kpi-card,
+
+.dashboard-slide.is-entering-from-left
+.profile-kpi-card,
+
+.dashboard-slide.is-entering-from-right
+.kib-card,
+
+.dashboard-slide.is-entering-from-left
+.kib-card,
+
+.dashboard-slide.is-entering-from-right
+.condition-stat-card,
+
+.dashboard-slide.is-entering-from-left
+.condition-stat-card,
+
+.dashboard-slide.is-entering-from-right
+.master-stat-card,
+
+.dashboard-slide.is-entering-from-left
+.master-stat-card {
+    animation:
+        dashboardCardRise
+        .64s
+        var(
+            --dash-ease
+        )
+        both;
 }
 
 
@@ -476,21 +1002,26 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 ========================================================= */
 
 .dashboard-slide-data {
-    isolation: isolate;
+    isolation:
+        isolate;
 
     background:
-        #f7fbff;
+        #0b355f;
 }
 
 
 .dashboard-slide-data::before {
-    content: '';
+    content:
+        '';
 
-    position: absolute;
+    position:
+        absolute;
 
-    inset: 0;
+    inset:
+        0;
 
-    z-index: 0;
+    z-index:
+        0;
 
     background-image:
         var(
@@ -517,13 +1048,17 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .dashboard-slide-data::after {
-    content: '';
+    content:
+        '';
 
-    position: absolute;
+    position:
+        absolute;
 
-    inset: 0;
+    inset:
+        0;
 
-    z-index: 1;
+    z-index:
+        1;
 
     background:
         linear-gradient(
@@ -567,333 +1102,123 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 }
 
 
-.dashboard-slide-data > * {
-    position: relative;
+.dashboard-slide-data
+> * {
+    position:
+        relative;
 
-    z-index: 2;
+    z-index:
+        2;
+}
+
+
+.dashboard-slide-data.is-entering-from-right::before,
+.dashboard-slide-data.is-entering-from-left::before {
+    animation:
+        dashboardBackgroundIn
+        1.05s
+        var(
+            --dash-ease
+        )
+        both;
 }
 
 
 .dashboard-slide[data-slide="1"]::before {
-    opacity: .72;
+    opacity:
+        .72;
 
     filter:
-        saturate(1.05)
-        contrast(1.03)
-        brightness(.92);
+        saturate(
+            1.05
+        )
+        contrast(
+            1.03
+        )
+        brightness(
+            .92
+        );
 }
 
 
 .dashboard-slide[data-slide="2"]::before {
-    opacity: .68;
+    opacity:
+        .68;
 
     filter:
-        saturate(1)
-        contrast(1.02)
-        brightness(.90);
+        saturate(
+            1
+        )
+        contrast(
+            1.02
+        )
+        brightness(
+            .90
+        );
 }
 
 
 .dashboard-slide[data-slide="3"]::before {
-    opacity: .70;
+    opacity:
+        .70;
 
     filter:
-        saturate(1)
-        contrast(1.02)
-        brightness(.91);
+        saturate(
+            1
+        )
+        contrast(
+            1.02
+        )
+        brightness(
+            .91
+        );
 }
 
 
 .dashboard-slide[data-slide="4"]::before {
-    opacity: .74;
+    opacity:
+        .74;
 
     filter:
-        saturate(1.04)
-        contrast(1.03)
-        brightness(.92);
+        saturate(
+            1.04
+        )
+        contrast(
+            1.03
+        )
+        brightness(
+            .92
+        );
 }
 
 
 .dashboard-slide[data-slide="5"]::before {
-    opacity: .66;
+    opacity:
+        .66;
 
     filter:
-        saturate(.98)
-        contrast(1.02)
-        brightness(.90);
+        saturate(
+            .98
+        )
+        contrast(
+            1.02
+        )
+        brightness(
+            .90
+        );
 }
 
 
 /* =========================================================
-   SLIDE NUMBER
-========================================================= */
-
-.dashboard-slide-number {
-    position: relative;
-
-    z-index: 4;
-
-    display: inline-flex;
-
-    align-items: center;
-
-    min-height: 31px;
-
-    padding:
-        0
-        13px;
-
-    border:
-        1px solid
-        #cee0f3;
-
-    border-radius:
-        999px;
-
-    background:
-        rgba(
-            247,
-            251,
-            255,
-            .88
-        );
-
-    color:
-        #18416d;
-
-    font-size:
-        13px;
-
-    font-weight:
-        600;
-
-    backdrop-filter:
-        blur(
-            8px
-        );
-}
-
-
-.dashboard-slide-number-light,
-.dashboard-slide-data
-.dashboard-slide-number {
-    border-color:
-        rgba(
-            255,
-            255,
-            255,
-            .22
-        );
-
-    background:
-        rgba(
-            4,
-            31,
-            62,
-            .42
-        );
-
-    color:
-        #fff;
-}
-
-
-/* =========================================================
-   HEADING
-========================================================= */
-
-.slide-heading-row {
-    position: relative;
-
-    z-index: 4;
-
-    display: flex;
-
-    align-items: flex-start;
-
-    justify-content:
-        space-between;
-
-    gap: 24px;
-
-    margin-top:
-        16px;
-
-    margin-bottom:
-        18px;
-}
-
-
-.slide-heading-row h2 {
-    margin:
-        6px
-        0
-        4px;
-
-    font-size:
-        clamp(
-            34px,
-            3vw,
-            50px
-        );
-
-    line-height:
-        1.04;
-
-    font-weight:
-        700;
-}
-
-
-.dashboard-slide-data
-.slide-heading-row h2 {
-    color: #fff;
-
-    text-shadow:
-        0
-        3px
-        16px
-        rgba(
-            0,
-            20,
-            45,
-            .2
-        );
-}
-
-
-.dashboard-slide-data
-.slide-heading-row p {
-    margin: 0;
-
-    color:
-        rgba(
-            231,
-            242,
-            255,
-            .82
-        );
-
-    font-size:
-        15px;
-}
-
-
-.dashboard-slide-data
-.slide-eyebrow {
-    color:
-        #92caff;
-}
-
-
-/* =========================================================
-   SUMMARY
-========================================================= */
-
-.slide-summary-card {
-    flex:
-        0
-        0
-        180px;
-
-    min-width:
-        180px;
-
-    padding:
-        15px
-        17px;
-
-    border:
-        1px solid
-        rgba(
-            255,
-            255,
-            255,
-            .18
-        );
-
-    border-radius:
-        12px;
-
-    background:
-        linear-gradient(
-            135deg,
-
-            rgba(
-                6,
-                42,
-                79,
-                .66
-            ),
-
-            rgba(
-                15,
-                79,
-                128,
-                .48
-            )
-        );
-
-    box-shadow:
-        0
-        14px
-        30px
-        rgba(
-            0,
-            21,
-            47,
-            .2
-        );
-
-    backdrop-filter:
-        blur(
-            16px
-        );
-}
-
-
-.slide-summary-card small {
-    display: block;
-
-    color:
-        rgba(
-            224,
-            239,
-            255,
-            .76
-        );
-
-    font-size:
-        11px;
-}
-
-
-.slide-summary-card strong {
-    display: block;
-
-    margin-top:
-        6px;
-
-    color:
-        #fff;
-
-    font-size:
-        28px;
-
-    line-height:
-        1.1;
-}
-
-
-/* =========================================================
-   PROFILE
+   PROFILE BACKGROUND
 ========================================================= */
 
 .dashboard-slide-profile {
     color:
-        #fff;
+        #ffffff;
 
     background-image:
+
         linear-gradient(
             90deg,
 
@@ -942,10 +1267,321 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 }
 
 
-.profile-copy {
-    position: relative;
+/* =========================================================
+   SLIDE NUMBER
+========================================================= */
 
-    z-index: 4;
+.dashboard-slide-number {
+    position:
+        relative;
+
+    z-index:
+        4;
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    min-height:
+        31px;
+
+    padding:
+        0
+        13px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .24
+        );
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(
+            4,
+            31,
+            62,
+            .42
+        );
+
+    color:
+        #ffffff;
+
+    font-size:
+        13px;
+
+    font-weight:
+        650;
+
+    backdrop-filter:
+        blur(
+            8px
+        );
+}
+
+
+/* =========================================================
+   SLIDE HEADING
+========================================================= */
+
+.slide-heading-row {
+    position:
+        relative;
+
+    z-index:
+        4;
+
+    display:
+        flex;
+
+    align-items:
+        flex-start;
+
+    justify-content:
+        space-between;
+
+    gap:
+        24px;
+
+    margin-top:
+        16px;
+
+    margin-bottom:
+        18px;
+}
+
+
+.slide-heading-row
+> div:first-child {
+    flex:
+        1;
+
+    min-width:
+        0;
+}
+
+
+.slide-heading-row h2 {
+    margin:
+        6px
+        0
+        4px;
+
+    color:
+        #ffffff;
+
+    font-size:
+        clamp(
+            34px,
+            3vw,
+            50px
+        );
+
+    line-height:
+        1.04;
+
+    font-weight:
+        760;
+
+    text-shadow:
+        0
+        3px
+        16px
+        rgba(
+            0,
+            20,
+            45,
+            .2
+        );
+}
+
+
+.slide-heading-row p {
+    margin:
+        0;
+
+    color:
+        rgba(
+            231,
+            242,
+            255,
+            .82
+        );
+
+    font-size:
+        15px;
+}
+
+
+.dashboard-slide-data
+.slide-eyebrow {
+    color:
+        #92caff;
+}
+
+
+/* =========================================================
+   SUMMARY CARD
+========================================================= */
+
+.slide-summary-card {
+    flex:
+        0
+        0
+        180px;
+
+    width:
+        180px;
+
+    min-width:
+        180px;
+
+    padding:
+        15px
+        17px;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            .18
+        );
+
+    border-radius:
+        12px;
+
+    background:
+        linear-gradient(
+            135deg,
+
+            rgba(
+                6,
+                42,
+                79,
+                .70
+            ),
+
+            rgba(
+                15,
+                79,
+                128,
+                .56
+            )
+        );
+
+    box-shadow:
+        0
+        14px
+        30px
+        rgba(
+            0,
+            21,
+            47,
+            .20
+        );
+
+    backdrop-filter:
+        blur(
+            16px
+        );
+}
+
+
+.slide-summary-card small {
+    display:
+        block;
+
+    color:
+        rgba(
+            224,
+            239,
+            255,
+            .76
+        );
+
+    font-size:
+        11px;
+}
+
+
+.slide-summary-card strong {
+    display:
+        block;
+
+    margin-top:
+        6px;
+
+    color:
+        #ffffff;
+
+    font-size:
+        28px;
+
+    line-height:
+        1.1;
+}
+
+
+/* =========================================================
+   SLIDE 3 SUMMARY
+========================================================= */
+
+.dashboard-slide[data-slide="2"]
+.slide-summary-card-compact-value {
+    flex:
+        0
+        0
+        210px
+        !important;
+
+    width:
+        210px
+        !important;
+
+    min-width:
+        210px
+        !important;
+
+    max-width:
+        210px
+        !important;
+}
+
+
+.dashboard-slide[data-slide="2"]
+.slide-summary-card-compact-value
+strong {
+    font-size:
+        26px
+        !important;
+
+    white-space:
+        nowrap;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+
+/* =========================================================
+   PROFILE COPY
+========================================================= */
+
+.profile-copy {
+    position:
+        relative;
+
+    z-index:
+        4;
 
     width:
         min(
@@ -969,7 +1605,7 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         uppercase;
 
     font-weight:
-        600;
+        650;
 }
 
 
@@ -980,7 +1616,7 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         0;
 
     color:
-        #fff;
+        #ffffff;
 
     font-size:
         clamp(
@@ -1031,7 +1667,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .profile-line {
-    display: block;
+    display:
+        block;
 
     width:
         92px;
@@ -1051,7 +1688,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .profile-quote {
-    position: absolute;
+    position:
+        absolute;
 
     top:
         54px;
@@ -1062,7 +1700,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
     z-index:
         4;
 
-    margin: 0;
+    margin:
+        0;
 
     color:
         rgba(
@@ -1091,7 +1730,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 ========================================================= */
 
 .profile-kpi-grid {
-    position: absolute;
+    position:
+        absolute;
 
     left:
         54px;
@@ -1105,7 +1745,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
     z-index:
         5;
 
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
         repeat(
@@ -1122,7 +1763,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .profile-kpi-card {
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
         58px
@@ -1194,7 +1836,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .profile-kpi-icon {
-    display: grid;
+    display:
+        grid;
 
     place-items:
         center;
@@ -1209,7 +1852,7 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         12px;
 
     color:
-        #fff;
+        #ffffff;
 }
 
 
@@ -1272,13 +1915,14 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .profile-kpi-card strong {
-    display: block;
+    display:
+        block;
 
     margin-top:
         3px;
 
     color:
-        #fff;
+        #ffffff;
 
     font-size:
         clamp(
@@ -1286,11 +1930,15 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             2vw,
             36px
         );
+
+    font-variant-numeric:
+        tabular-nums;
 }
 
 
 .profile-kpi-card em {
-    display: block;
+    display:
+        block;
 
     margin-top:
         5px;
@@ -1312,7 +1960,7 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 /* =========================================================
-   GLASS PANELS
+   COMMON GLASS CARD
 ========================================================= */
 
 .kib-card,
@@ -1340,14 +1988,14 @@ body:has(.dashboard-page):not(.dashboard-presenting)
                 218,
                 233,
                 247,
-                .78
+                .80
             ),
 
             rgba(
                 197,
                 218,
                 238,
-                .67
+                .70
             )
         );
 
@@ -1370,11 +2018,12 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 /* =========================================================
-   KIB
+   SLIDE 2 - KIB
 ========================================================= */
 
 .kib-layout {
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
         minmax(
@@ -1392,7 +2041,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .kib-chart-panel {
-    display: grid;
+    display:
+        grid;
 
     grid-template-columns:
         230px
@@ -1445,7 +2095,7 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             218,
             233,
             247,
-            .88
+            .90
         );
 
     text-align:
@@ -1462,6 +2112,15 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 }
 
 
+.kib-donut-hole span {
+    color:
+        #6b8199;
+
+    font-size:
+        12px;
+}
+
+
 .kib-legend-row {
     display:
         grid;
@@ -1474,24 +2133,15 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         )
         auto;
 
-    gap:
-        9px;
-
     align-items:
         center;
+
+    gap:
+        9px;
 
     padding:
         7px
         0;
-
-    border-bottom:
-        1px solid
-        rgba(
-            255,
-            255,
-            255,
-            .14
-        );
 }
 
 
@@ -1521,9 +2171,10 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 }
 
 
-.kib-legend-row > strong {
+.kib-legend-row
+> strong {
     color:
-        #fff;
+        #ffffff;
 
     font-size:
         13px;
@@ -1650,11 +2301,17 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
     font-style:
         normal;
+
+    white-space:
+        nowrap;
+
+    font-variant-numeric:
+        tabular-nums;
 }
 
 
 /* =========================================================
-   GROWTH LAYOUT
+   SLIDE 3 - GROWTH
 ========================================================= */
 
 .growth-layout {
@@ -1664,11 +2321,11 @@ body:has(.dashboard-page):not(.dashboard-presenting)
     grid-template-columns:
         minmax(
             0,
-            1.55fr
+            1.48fr
         )
         minmax(
-            330px,
-            .68fr
+            390px,
+            .76fr
         );
 
     gap:
@@ -1706,10 +2363,14 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .panel-heading h3,
-.growth-value-card > h3,
-.location-ranking-card > h3,
-.master-stat-section > h3,
-.activity-section > h3 {
+.growth-value-card
+> h3,
+.location-ranking-card
+> h3,
+.master-stat-section
+> h3,
+.activity-section
+> h3 {
     margin:
         0;
 
@@ -1750,6 +2411,9 @@ body:has(.dashboard-page):not(.dashboard-presenting)
     gap:
         9px;
 
+    flex-shrink:
+        0;
+
     min-height:
         46px;
 
@@ -1774,7 +2438,7 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             240,
             247,
             253,
-            .70
+            .76
         );
 
     color:
@@ -1784,7 +2448,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 .growth-change-badge[hidden] {
     display:
-        none !important;
+        none
+        !important;
 }
 
 
@@ -1827,12 +2492,13 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             222,
             246,
             235,
-            .80
+            .86
         );
 }
 
 
-.growth-change-badge.is-up strong {
+.growth-change-badge.is-up
+strong {
     color:
         #087946;
 }
@@ -1847,16 +2513,15 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             255,
             231,
             230,
-            .8
+            .86
         );
 }
 
 
 /* =========================================================
-   GROWTH CHART - FIX TERBARU
+   GROWTH CHART
 ========================================================= */
 
-.dashboard-slide[data-slide="2"]
 .growth-chart-stage {
     position:
         relative;
@@ -1881,7 +2546,6 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 }
 
 
-.dashboard-slide[data-slide="2"]
 #dashboardGrowthChart {
     position:
         absolute;
@@ -1911,10 +2575,6 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         visible;
 }
 
-
-/* =========================================================
-   X AXIS LABEL
-========================================================= */
 
 .growth-x-axis-labels {
     position:
@@ -1970,10 +2630,11 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 /* =========================================================
-   LINE
+   CHART LINE ANIMATION
 ========================================================= */
 
-.growth-line-path {
+.growth-line-path,
+.growth-line-glow {
     stroke-dasharray:
         1800;
 
@@ -1990,7 +2651,10 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             1
         )
         forwards;
+}
 
+
+.growth-line-path {
     filter:
         drop-shadow(
             0
@@ -2009,38 +2673,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 .growth-line-glow {
     opacity:
         .60;
-
-    stroke-dasharray:
-        1800;
-
-    stroke-dashoffset:
-        1800;
-
-    animation:
-        growthLineDraw
-        1.1s
-        cubic-bezier(
-            .22,
-            .61,
-            .36,
-            1
-        )
-        forwards;
 }
 
-
-@keyframes growthLineDraw {
-
-    to {
-        stroke-dashoffset:
-            0;
-    }
-}
-
-
-/* =========================================================
-   AREA
-========================================================= */
 
 .growth-area-path {
     opacity:
@@ -2055,18 +2689,25 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 }
 
 
+@keyframes growthLineDraw {
+
+    to {
+        stroke-dashoffset:
+            0;
+    }
+
+}
+
+
 @keyframes growthAreaFade {
 
     to {
         opacity:
             1;
     }
+
 }
 
-
-/* =========================================================
-   POINT
-========================================================= */
 
 .growth-point-group {
     outline:
@@ -2086,7 +2727,9 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         center;
 
     transition:
-        .2s ease;
+        transform
+        .2s
+        ease;
 }
 
 
@@ -2132,11 +2775,14 @@ body:has(.dashboard-page):not(.dashboard-presenting)
         column;
 
     min-width:
-        160px;
+        245px;
+
+    max-width:
+        300px;
 
     padding:
-        11px
-        13px;
+        12px
+        15px;
 
     border:
         1px solid
@@ -2155,11 +2801,11 @@ body:has(.dashboard-page):not(.dashboard-presenting)
             5,
             39,
             73,
-            .94
+            .96
         );
 
     color:
-        #fff;
+        #ffffff;
 
     box-shadow:
         0
@@ -2189,7 +2835,8 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 .growth-chart-tooltip[hidden] {
     display:
-        none !important;
+        none
+        !important;
 }
 
 
@@ -2208,14 +2855,29 @@ body:has(.dashboard-page):not(.dashboard-presenting)
 
 
 .growth-chart-tooltip strong {
+    display:
+        block;
+
     margin-top:
-        4px;
+        5px;
 
     color:
-        #fff;
+        #ffffff;
 
     font-size:
-        17px;
+        16px;
+
+    line-height:
+        1.25;
+
+    font-weight:
+        700;
+
+    white-space:
+        nowrap;
+
+    font-variant-numeric:
+        tabular-nums;
 }
 
 
@@ -2251,7 +2913,7 @@ span.is-down {
 
 
 /* =========================================================
-   EMPTY CHART
+   CHART EMPTY
 ========================================================= */
 
 .chart-empty {
@@ -2289,7 +2951,8 @@ span.is-down {
 
 .chart-empty[hidden] {
     display:
-        none !important;
+        none
+        !important;
 }
 
 
@@ -2315,10 +2978,13 @@ span.is-down {
 
 
 /* =========================================================
-   GROWTH RIGHT
+   NILAI PER KIB
 ========================================================= */
 
 .growth-value-card {
+    min-width:
+        390px;
+
     padding:
         17px
         18px;
@@ -2337,6 +3003,9 @@ span.is-down {
 
     overflow-y:
         auto;
+
+    overflow-x:
+        hidden;
 }
 
 
@@ -2350,17 +3019,38 @@ span.is-down {
 .growth-value-item
 > div:first-child {
     display:
-        flex;
+        grid;
 
-    justify-content:
-        space-between;
+    grid-template-columns:
+        minmax(
+            0,
+            1fr
+        )
+        auto;
+
+    align-items:
+        center;
 
     gap:
         12px;
 }
 
 
-.growth-value-item span {
+.growth-value-item
+> div:first-child
+> span {
+    min-width:
+        0;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+
     color:
         #486886;
 
@@ -2369,12 +3059,35 @@ span.is-down {
 }
 
 
-.growth-value-item strong {
+.growth-value-item
+> div:first-child
+> strong {
+    min-width:
+        96px;
+
     color:
         #082958;
 
     font-size:
         12px;
+
+    line-height:
+        1.25;
+
+    font-weight:
+        750;
+
+    text-align:
+        right;
+
+    white-space:
+        nowrap;
+
+    letter-spacing:
+        -.1px;
+
+    font-variant-numeric:
+        tabular-nums;
 }
 
 
@@ -2401,7 +3114,8 @@ span.is-down {
 }
 
 
-.growth-value-track > span {
+.growth-value-track
+> span {
     display:
         block;
 
@@ -2417,7 +3131,7 @@ span.is-down {
 
 
 /* =========================================================
-   CONDITION
+   SLIDE 4 CONDITION
 ========================================================= */
 
 .condition-layout {
@@ -2697,7 +3411,7 @@ span.is-down {
 
 
 /* =========================================================
-   LOCATION
+   SLIDE 5 LOCATION
 ========================================================= */
 
 .location-layout {
@@ -2742,6 +3456,7 @@ span.is-down {
         12px;
 
     background:
+
         linear-gradient(
             rgba(
                 74,
@@ -2824,7 +3539,7 @@ span.is-down {
 
     border:
         3px solid
-        #fff;
+        #ffffff;
 
     border-radius:
         50%;
@@ -2862,7 +3577,7 @@ span.is-down {
             219,
             234,
             247,
-            .92
+            .94
         );
 
     color:
@@ -3022,7 +3737,7 @@ span.is-down {
 
 
 /* =========================================================
-   MASTER
+   SLIDE 6 MASTER
 ========================================================= */
 
 .last-update-badge {
@@ -3085,7 +3800,7 @@ span.is-down {
 
 .last-update-badge strong {
     color:
-        #fff;
+        #ffffff;
 }
 
 
@@ -3110,12 +3825,21 @@ span.is-down {
 
 .master-stat-section,
 .activity-section {
+    min-width:
+        0;
+
+    min-height:
+        0;
+
     padding:
         17px
         18px;
 
     border-radius:
         12px;
+
+    overflow:
+        hidden;
 }
 
 
@@ -3135,12 +3859,21 @@ span.is-down {
     gap:
         10px;
 
+    width:
+        100%;
+
     margin-top:
         12px;
 }
 
 
 .master-stat-card {
+    min-width:
+        0;
+
+    min-height:
+        68px;
+
     display:
         grid;
 
@@ -3157,9 +3890,6 @@ span.is-down {
 
     gap:
         8px;
-
-    min-height:
-        68px;
 
     padding:
         10px
@@ -3184,6 +3914,9 @@ span.is-down {
             252,
             .56
         );
+
+    overflow:
+        hidden;
 }
 
 
@@ -3225,11 +3958,17 @@ span.is-down {
 
 
 .master-stat-label {
+    min-width:
+        0;
+
     color:
         #58728e;
 
     font-size:
         10px;
+
+    overflow-wrap:
+        break-word;
 }
 
 
@@ -3239,8 +3978,15 @@ span.is-down {
 
     font-size:
         19px;
+
+    white-space:
+        nowrap;
 }
 
+
+/* =========================================================
+   ACTIVITY
+========================================================= */
 
 .activity-list {
     max-height:
@@ -3365,8 +4111,45 @@ span.is-down {
 }
 
 
+.dashboard-data-empty {
+    padding:
+        20px;
+
+    color:
+        #6e849c;
+
+    text-align:
+        center;
+
+    font-size:
+        12px;
+}
+
+
 /* =========================================================
-   ARROWS
+   INTERACTION CONTROL
+========================================================= */
+
+.dashboard-arrow,
+.dashboard-dots,
+.dashboard-dot,
+.dashboard-autoplay-control,
+.dashboard-autoplay-control button,
+.dashboard-fullscreen-inside,
+.dashboard-thumbnail-strip,
+.dashboard-thumbnail,
+.dashboard-presentation-button {
+    pointer-events:
+        auto
+        !important;
+
+    touch-action:
+        manipulation;
+}
+
+
+/* =========================================================
+   PREV / NEXT
 ========================================================= */
 
 .dashboard-arrow {
@@ -3377,7 +4160,8 @@ span.is-down {
         50%;
 
     z-index:
-        60;
+        220
+        !important;
 
     display:
         grid;
@@ -3415,7 +4199,7 @@ span.is-down {
         );
 
     color:
-        #fff;
+        #ffffff;
 
     cursor:
         pointer;
@@ -3423,6 +4207,58 @@ span.is-down {
     transform:
         translateY(
             -50%
+        );
+
+    user-select:
+        none;
+
+    -webkit-user-select:
+        none;
+
+    transition:
+        transform
+        .2s
+        ease,
+
+        background
+        .2s
+        ease,
+
+        box-shadow
+        .2s
+        ease;
+}
+
+
+.dashboard-arrow:hover {
+    background:
+        rgba(
+            35,
+            84,
+            130,
+            .98
+        );
+
+    box-shadow:
+        0
+        10px
+        24px
+        rgba(
+            0,
+            26,
+            55,
+            .22
+        );
+}
+
+
+.dashboard-arrow:active {
+    transform:
+        translateY(
+            -50%
+        )
+        scale(
+            .94
         );
 }
 
@@ -3440,7 +4276,7 @@ span.is-down {
 
 
 /* =========================================================
-   DOTS
+   DOT
 ========================================================= */
 
 .dashboard-dots {
@@ -3454,7 +4290,8 @@ span.is-down {
         25px;
 
     z-index:
-        65;
+        225
+        !important;
 
     display:
         flex;
@@ -3490,6 +4327,27 @@ span.is-down {
 
     cursor:
         pointer;
+
+    transition:
+        transform
+        .18s
+        ease,
+
+        background
+        .18s
+        ease,
+
+        box-shadow
+        .18s
+        ease;
+}
+
+
+.dashboard-dot:hover {
+    transform:
+        scale(
+            1.18
+        );
 }
 
 
@@ -3526,7 +4384,8 @@ span.is-down {
         15px;
 
     z-index:
-        70;
+        230
+        !important;
 
     display:
         flex;
@@ -3553,11 +4412,28 @@ span.is-down {
         );
 
     color:
-        #fff;
+        #ffffff;
+
+    box-shadow:
+        0
+        10px
+        26px
+        rgba(
+            0,
+            25,
+            52,
+            .18
+        );
 }
 
 
 .dashboard-autoplay-control button {
+    position:
+        relative;
+
+    z-index:
+        231;
+
     display:
         inline-flex;
 
@@ -3581,13 +4457,19 @@ span.is-down {
         transparent;
 
     color:
-        #fff;
+        #ffffff;
 
     cursor:
         pointer;
 
     font-size:
         11px;
+}
+
+
+.dashboard-autoplay-control button:hover {
+    opacity:
+        .86;
 }
 
 
@@ -3623,10 +4505,16 @@ span.is-down {
 
 
 /* =========================================================
-   THUMBNAIL
+   THUMBNAILS
 ========================================================= */
 
 .dashboard-thumbnail-strip {
+    position:
+        relative;
+
+    z-index:
+        120;
+
     display:
         grid;
 
@@ -3648,6 +4536,12 @@ span.is-down {
 
 
 .dashboard-thumbnail {
+    position:
+        relative;
+
+    z-index:
+        121;
+
     min-width:
         0;
 
@@ -3666,11 +4560,37 @@ span.is-down {
             255,
             255,
             255,
-            .92
+            .94
         );
 
     cursor:
         pointer;
+
+    transition:
+        transform
+        .22s
+        var(
+            --dash-ease
+        ),
+
+        border-color
+        .22s
+        ease,
+
+        box-shadow
+        .22s
+        ease;
+}
+
+
+.dashboard-thumbnail:hover {
+    transform:
+        translateY(
+            -2px
+        );
+
+    border-color:
+        #a8caef;
 }
 
 
@@ -3706,18 +4626,22 @@ span.is-down {
         8px;
 
     color:
-        #fff;
+        #ffffff;
 
     background-size:
         cover;
 
     background-position:
         center;
+
+    overflow:
+        hidden;
 }
 
 
 .dashboard-thumbnail-preview-1 {
     background-image:
+
         linear-gradient(
             rgba(
                 7,
@@ -3732,12 +4656,14 @@ span.is-down {
                 .50
             )
         ),
+
         url('/images/dashboard/pdam2.jpeg');
 }
 
 
 .dashboard-thumbnail-preview-2 {
     background-image:
+
         linear-gradient(
             rgba(
                 24,
@@ -3752,12 +4678,14 @@ span.is-down {
                 .50
             )
         ),
+
         url('/images/dashboard/pdam1.jpeg');
 }
 
 
 .dashboard-thumbnail-preview-3 {
     background-image:
+
         linear-gradient(
             rgba(
                 24,
@@ -3772,12 +4700,14 @@ span.is-down {
                 .45
             )
         ),
+
         url('/images/dashboard/pdam5.jpg');
 }
 
 
 .dashboard-thumbnail-preview-4 {
     background-image:
+
         linear-gradient(
             rgba(
                 19,
@@ -3792,12 +4722,14 @@ span.is-down {
                 .44
             )
         ),
+
         url('/images/dashboard/pdam6.jpg');
 }
 
 
 .dashboard-thumbnail-preview-5 {
     background-image:
+
         linear-gradient(
             rgba(
                 36,
@@ -3812,12 +4744,14 @@ span.is-down {
                 .44
             )
         ),
+
         url('/images/dashboard/pdam7.jpeg');
 }
 
 
 .dashboard-thumbnail-preview-6 {
     background-image:
+
         linear-gradient(
             rgba(
                 66,
@@ -3832,6 +4766,7 @@ span.is-down {
                 .44
             )
         ),
+
         url('/images/dashboard/pdam8.jpg');
 }
 
@@ -3892,7 +4827,7 @@ span.is-down {
         #1675ea;
 
     color:
-        #fff;
+        #ffffff;
 }
 
 
@@ -3903,13 +4838,16 @@ span.is-down {
 html.dashboard-presenting,
 body.dashboard-presenting {
     width:
-        100% !important;
+        100%
+        !important;
 
     height:
-        100% !important;
+        100%
+        !important;
 
     overflow:
-        hidden !important;
+        hidden
+        !important;
 }
 
 
@@ -3947,7 +4885,8 @@ body.dashboard-presenting {
         0;
 
     overflow:
-        hidden;
+        hidden
+        !important;
 
     border:
         0;
@@ -4026,6 +4965,37 @@ body.dashboard-presenting {
 
 
 /* =========================================================
+   RESPONSIVE 1450
+========================================================= */
+
+@media
+(
+    max-width:
+    1450px
+) {
+
+    .growth-layout {
+        grid-template-columns:
+            minmax(
+                0,
+                1.5fr
+            )
+            minmax(
+                370px,
+                .78fr
+            );
+    }
+
+
+    .growth-value-card {
+        min-width:
+            370px;
+    }
+
+}
+
+
+/* =========================================================
    TABLET
 ========================================================= */
 
@@ -4073,6 +5043,12 @@ body.dashboard-presenting {
     }
 
 
+    .growth-value-card {
+        min-width:
+            0;
+    }
+
+
     .profile-kpi-grid {
         grid-template-columns:
             repeat(
@@ -4098,6 +5074,66 @@ body.dashboard-presenting {
         overflow-x:
             auto;
     }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-summary-card-compact-value {
+        flex-basis:
+            200px
+            !important;
+
+        width:
+            200px
+            !important;
+
+        min-width:
+            200px
+            !important;
+
+        max-width:
+            200px
+            !important;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-summary-card-compact-value
+    strong {
+        font-size:
+            24px
+            !important;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media
+(
+    max-width:
+    850px
+) {
+
+    .master-stat-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+    }
+
+
+    .master-stat-card:last-child:nth-child(3n + 1) {
+        grid-column:
+            auto;
+    }
+
 }
 
 
@@ -4158,6 +5194,31 @@ body.dashboard-presenting {
     .slide-summary-card {
         width:
             100%;
+
+        min-width:
+            0;
+    }
+
+
+    .dashboard-slide[data-slide="2"]
+    .slide-summary-card-compact-value {
+        flex:
+            1
+            1
+            100%
+            !important;
+
+        width:
+            100%
+            !important;
+
+        min-width:
+            0
+            !important;
+
+        max-width:
+            none
+            !important;
     }
 
 
@@ -4209,6 +5270,12 @@ body.dashboard-presenting {
     }
 
 
+    .master-stat-card:last-child:nth-child(3n + 1) {
+        grid-column:
+            auto;
+    }
+
+
     .growth-chart-heading {
         flex-direction:
             column;
@@ -4217,10 +5284,10 @@ body.dashboard-presenting {
 
     .growth-chart-stage {
         height:
-            300px !important;
+            300px;
 
         min-height:
-            300px !important;
+            300px;
     }
 
 
@@ -4228,362 +5295,8 @@ body.dashboard-presenting {
         font-size:
             10px;
     }
-}
 
 
-/* =========================================================
-   REDUCED MOTION
-========================================================= */
-
-@media
-(
-    prefers-reduced-motion:
-    reduce
-) {
-
-    .dashboard-slide,
-    .growth-line-path,
-    .growth-line-glow,
-    .growth-area-path {
-        animation:
-            none !important;
-
-        transition:
-            none !important;
-    }
-
-
-    .growth-line-path,
-    .growth-line-glow {
-        stroke-dashoffset:
-            0 !important;
-    }
-
-
-    .growth-area-path {
-        opacity:
-            1 !important;
-    }
-}
-
-/* =========================================================
-   SLIDE 3 - NILAI RUPIAH PENUH
-   =========================================================
-   Nilai Keseluruhan,
-   Nilai per K.I.B & K.I.R,
-   dan tooltip chart
-   menampilkan angka utuh.
-========================================================= */
-
-
-/* =========================================================
-   LAYOUT SLIDE 3
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.growth-layout {
-    grid-template-columns:
-        minmax(
-            0,
-            1.48fr
-        )
-        minmax(
-            390px,
-            .76fr
-        );
-}
-
-
-/* =========================================================
-   NILAI KESELURUHAN
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.slide-summary-card-full-value {
-    flex:
-        0
-        0
-        300px;
-
-    min-width:
-        300px;
-
-    padding:
-        15px
-        18px;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.slide-summary-card-full-value
-strong {
-    display:
-        block;
-
-    margin-top:
-        6px;
-
-    color:
-        #ffffff;
-
-    font-size:
-        clamp(
-            18px,
-            1.3vw,
-            23px
-        );
-
-    line-height:
-        1.2;
-
-    font-weight:
-        700;
-
-    white-space:
-        nowrap;
-
-    font-variant-numeric:
-        tabular-nums;
-
-    letter-spacing:
-        -.2px;
-}
-
-
-/* =========================================================
-   NILAI PER K.I.B & K.I.R
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.growth-value-item
-> div:first-child {
-    display:
-        grid;
-
-    grid-template-columns:
-        minmax(
-            0,
-            1fr
-        )
-        auto;
-
-    align-items:
-        center;
-
-    gap:
-        12px;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.growth-value-item
-> div:first-child
-> span {
-    min-width:
-        0;
-
-    overflow:
-        hidden;
-
-    text-overflow:
-        ellipsis;
-
-    white-space:
-        nowrap;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.growth-value-item
-> div:first-child
-> strong {
-    flex-shrink:
-        0;
-
-    color:
-        #082958;
-
-    font-size:
-        11px;
-
-    line-height:
-        1.25;
-
-    font-weight:
-        700;
-
-    text-align:
-        right;
-
-    white-space:
-        nowrap;
-
-    font-variant-numeric:
-        tabular-nums;
-}
-
-
-/* =========================================================
-   TOOLTIP CHART
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.growth-chart-tooltip {
-    min-width:
-        245px;
-
-    max-width:
-        300px;
-
-    padding:
-        12px
-        15px;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.growth-chart-tooltip
-strong {
-    display:
-        block;
-
-    margin-top:
-        5px;
-
-    color:
-        #ffffff;
-
-    font-size:
-        16px;
-
-    line-height:
-        1.25;
-
-    font-weight:
-        700;
-
-    white-space:
-        nowrap;
-
-    font-variant-numeric:
-        tabular-nums;
-
-    letter-spacing:
-        -.1px;
-}
-
-
-/* =========================================================
-   BADGE PERTUMBUHAN
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.growth-change-badge {
-    flex-shrink:
-        0;
-}
-
-
-/* =========================================================
-   PANEL KIB
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.growth-value-card {
-    min-width:
-        390px;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.growth-value-list {
-    overflow-x:
-        hidden;
-}
-
-
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media
-(
-    max-width:
-    1180px
-) {
-
-    .dashboard-slide[data-slide="2"]
-    .growth-layout {
-        grid-template-columns:
-            1fr;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .growth-value-card {
-        min-width:
-            0;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-summary-card-full-value {
-        flex-basis:
-            270px;
-
-        min-width:
-            270px;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-summary-card-full-value
-    strong {
-        font-size:
-            18px;
-    }
-
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media
-(
-    max-width:
-    760px
-) {
-
-    .dashboard-slide[data-slide="2"]
-    .slide-summary-card-full-value {
-        width:
-            100%;
-
-        min-width:
-            0;
-
-        flex-basis:
-            auto;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-summary-card-full-value
-    strong {
-        font-size:
-            18px;
-
-        white-space:
-            normal;
-
-        overflow-wrap:
-            anywhere;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
     .growth-value-item
     > div:first-child {
         grid-template-columns:
@@ -4594,16 +5307,17 @@ strong {
     }
 
 
-    .dashboard-slide[data-slide="2"]
     .growth-value-item
     > div:first-child
     > strong {
+        min-width:
+            0;
+
         text-align:
             left;
     }
 
 
-    .dashboard-slide[data-slide="2"]
     .growth-chart-tooltip {
         min-width:
             210px;
@@ -4620,815 +5334,86 @@ strong {
     }
 
 
-    .dashboard-slide[data-slide="2"]
-    .growth-chart-tooltip
-    strong {
+    .growth-chart-tooltip strong {
         font-size:
             14px;
     }
 
 }
 
-/* =========================================================
-   FIX HOSTING - NILAI KESELURUHAN SLIDE 3
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.slide-heading-row
-.slide-summary-card.slide-summary-card-full-value {
-    flex:
-        0
-        0
-        320px
-        !important;
-
-    width:
-        320px
-        !important;
-
-    min-width:
-        320px
-        !important;
-
-    max-width:
-        320px
-        !important;
-
-    padding:
-        15px
-        18px
-        !important;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.slide-heading-row
-.slide-summary-card.slide-summary-card-full-value
-strong {
-    display:
-        block
-        !important;
-
-    width:
-        100%
-        !important;
-
-    margin-top:
-        6px;
-
-    color:
-        #ffffff;
-
-    font-size:
-        21px
-        !important;
-
-    line-height:
-        1.2;
-
-    font-weight:
-        700;
-
-    white-space:
-        nowrap
-        !important;
-
-    word-break:
-        normal
-        !important;
-
-    overflow-wrap:
-        normal
-        !important;
-
-    font-variant-numeric:
-        tabular-nums;
-
-    letter-spacing:
-        -.3px;
-}
-
 
 /* =========================================================
-   LAYAR MENENGAH
-========================================================= */
-
-@media (max-width: 1450px) {
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-full-value {
-        flex-basis:
-            300px
-            !important;
-
-        width:
-            300px
-            !important;
-
-        min-width:
-            300px
-            !important;
-
-        max-width:
-            300px
-            !important;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-full-value
-    strong {
-        font-size:
-            19px
-            !important;
-    }
-
-}
-
-
-/* =========================================================
-   TABLET / MOBILE
-========================================================= */
-
-@media (max-width: 760px) {
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-full-value {
-        flex:
-            1
-            1
-            100%
-            !important;
-
-        width:
-            100%
-            !important;
-
-        min-width:
-            0
-            !important;
-
-        max-width:
-            none
-            !important;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-full-value
-    strong {
-        white-space:
-            normal
-            !important;
-
-        overflow-wrap:
-            anywhere
-            !important;
-    }
-
-}
-
-/* =========================================================
-   SLIDE 3 - NILAI KESELURUHAN COMPACT PRESISI
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.slide-heading-row
-.slide-summary-card.slide-summary-card-compact-value {
-    flex:
-        0
-        0
-        210px
-        !important;
-
-    width:
-        210px
-        !important;
-
-    min-width:
-        210px
-        !important;
-
-    max-width:
-        210px
-        !important;
-
-    padding:
-        15px
-        18px
-        !important;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.slide-heading-row
-.slide-summary-card.slide-summary-card-compact-value
-strong {
-    display:
-        block
-        !important;
-
-    width:
-        100%;
-
-    margin-top:
-        6px;
-
-    color:
-        #ffffff;
-
-    font-size:
-        26px
-        !important;
-
-    line-height:
-        1.1;
-
-    font-weight:
-        700;
-
-    white-space:
-        nowrap
-        !important;
-
-    font-variant-numeric:
-        tabular-nums;
-
-    letter-spacing:
-        -.35px;
-}
-
-
-/* =========================================================
-   SLIDE 1 - TOTAL NILAI ASET
-========================================================= */
-
-.dashboard-slide[data-slide="0"]
-.profile-kpi-card
-strong {
-    font-variant-numeric:
-        tabular-nums;
-}
-
-
-/* =========================================================
-   TABLET
+   MOBILE SMALL
 ========================================================= */
 
 @media
 (
     max-width:
-    1180px
+    600px
 ) {
 
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value {
-        flex:
-            0
-            0
-            200px
-            !important;
-
-        width:
-            200px
-            !important;
-
-        min-width:
-            200px
-            !important;
-
-        max-width:
-            200px
-            !important;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value
-    strong {
-        font-size:
-            24px
-            !important;
+    .master-stat-grid {
+        grid-template-columns:
+            1fr;
     }
 
 }
 
 
 /* =========================================================
-   MOBILE
-========================================================= */
-
-@media
-(
-    max-width:
-    760px
-) {
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value {
-        flex:
-            1
-            1
-            100%
-            !important;
-
-        width:
-            100%
-            !important;
-
-        min-width:
-            0
-            !important;
-
-        max-width:
-            none
-            !important;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value
-    strong {
-        font-size:
-            24px
-            !important;
-    }
-
-}
-
-
-/* =========================================================
-   TABLET SWIPE + SLIDE ANIMATION
-   =========================================================
-   pan-y menjaga scroll vertikal halaman tetap normal.
-   Gesture horizontal ditangani dashboard.js untuk pindah slide.
-========================================================= */
-
-.dashboard-deck,
-.dashboard-deck-viewport,
-.dashboard-slide-stage {
-    touch-action: pan-y;
-    overscroll-behavior-x: contain;
-}
-
-.dashboard-slide {
-    will-change: opacity, transform;
-}
-
-/*
- * Pastikan transisi slide tetap aktif pada desktop dan tablet.
- * Rule ini tidak mengubah durasi/desain animasi yang sudah ada,
- * hanya menegaskan properti animasinya.
- */
-@media (prefers-reduced-motion: no-preference) {
-
-  .dashboard-slide {
-    transition:
-        opacity .46s cubic-bezier(.22, .61, .36, 1),
-        transform .56s cubic-bezier(.22, .61, .36, 1);
-}
-
-.dashboard-deck,
-.dashboard-deck-viewport,
-.dashboard-slide-stage {
-    touch-action: pan-y;
-    overscroll-behavior-x: contain;
-}
-
-
-/* =========================================================
-   SLIDE 3 - NILAI KESELURUHAN COMPACT PRESISI
-========================================================= */
-
-.dashboard-slide[data-slide="2"]
-.slide-heading-row
-.slide-summary-card.slide-summary-card-compact-value {
-    flex:
-        0
-        0
-        210px
-        !important;
-
-    width:
-        210px
-        !important;
-
-    min-width:
-        210px
-        !important;
-
-    max-width:
-        210px
-        !important;
-
-    padding:
-        15px
-        18px
-        !important;
-}
-
-
-.dashboard-slide[data-slide="2"]
-.slide-heading-row
-.slide-summary-card.slide-summary-card-compact-value
-strong {
-    display:
-        block
-        !important;
-
-    width:
-        100%;
-
-    margin-top:
-        6px;
-
-    color:
-        #ffffff;
-
-    font-size:
-        26px
-        !important;
-
-    line-height:
-        1.1;
-
-    font-weight:
-        700;
-
-    white-space:
-        nowrap
-        !important;
-
-    font-variant-numeric:
-        tabular-nums;
-
-    letter-spacing:
-        -.35px;
-}
-
-
-.dashboard-slide[data-slide="0"]
-.profile-kpi-card
-strong {
-    font-variant-numeric:
-        tabular-nums;
-}
-
-
-@media (max-width: 1180px) {
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value {
-        flex:
-            0
-            0
-            200px
-            !important;
-
-        width:
-            200px
-            !important;
-
-        min-width:
-            200px
-            !important;
-
-        max-width:
-            200px
-            !important;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value
-    strong {
-        font-size:
-            24px
-            !important;
-    }
-}
-
-
-@media (max-width: 760px) {
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value {
-        flex:
-            1
-            1
-            100%
-            !important;
-
-        width:
-            100%
-            !important;
-
-        min-width:
-            0
-            !important;
-
-        max-width:
-            none
-            !important;
-    }
-
-
-    .dashboard-slide[data-slide="2"]
-    .slide-heading-row
-    .slide-summary-card.slide-summary-card-compact-value
-    strong {
-        font-size:
-            24px
-            !important;
-    }
-}
-}
-/* =========================================================
-   DASHBOARD INTERACTION FIX
-   Laptop + Tablet + Touchscreen
-========================================================= */
-
-
-/* =========================================================
-   SWIPE HANYA PADA AREA SLIDE
-========================================================= */
-
-.dashboard-slide-stage {
-    touch-action:
-        pan-y;
-
-    overscroll-behavior-x:
-        contain;
-}
-
-
-/* =========================================================
-   DECK TIDAK PERLU MENANGKAP SEMUA TOUCH
-========================================================= */
-
-.dashboard-deck {
-    touch-action:
-        auto;
-}
-
-
-/* =========================================================
-   CONTROL BUTTONS HARUS SELALU CLICKABLE
-========================================================= */
-
-.dashboard-arrow,
-.dashboard-dots,
-.dashboard-dot,
-.dashboard-autoplay-control,
-.dashboard-autoplay-control button,
-.dashboard-fullscreen-inside,
-.dashboard-thumbnail-strip,
-.dashboard-thumbnail {
-    pointer-events:
-        auto
-        !important;
-}
-
-
-/* =========================================================
-   PREVIOUS / NEXT
-========================================================= */
-
-.dashboard-arrow {
-    z-index:
-        200
-        !important;
-
-    cursor:
-        pointer;
-
-    user-select:
-        none;
-
-    -webkit-user-select:
-        none;
-
-    touch-action:
-        manipulation;
-}
-
-
-/* =========================================================
-   DOTS
-========================================================= */
-
-.dashboard-dots {
-    z-index:
-        210
-        !important;
-
-    pointer-events:
-        auto
-        !important;
-}
-
-
-.dashboard-dot {
-    position:
-        relative;
-
-    z-index:
-        211;
-
-    pointer-events:
-        auto
-        !important;
-
-    touch-action:
-        manipulation;
-}
-
-
-/* =========================================================
-   PAUSE + FULLSCREEN BOTTOM
-========================================================= */
-
-.dashboard-autoplay-control {
-    z-index:
-        220
-        !important;
-
-    pointer-events:
-        auto
-        !important;
-}
-
-
-.dashboard-autoplay-control button {
-    position:
-        relative;
-
-    z-index:
-        221;
-
-    pointer-events:
-        auto
-        !important;
-
-    cursor:
-        pointer;
-
-    touch-action:
-        manipulation;
-}
-
-
-#dashboardPauseButton,
-#dashboardFullscreenInside {
-    pointer-events:
-        auto
-        !important;
-
-    cursor:
-        pointer;
-
-    touch-action:
-        manipulation;
-}
-
-
-/* =========================================================
-   THUMBNAILS
-========================================================= */
-
-.dashboard-thumbnail-strip {
-    position:
-        relative;
-
-    z-index:
-        100;
-
-    pointer-events:
-        auto
-        !important;
-}
-
-
-.dashboard-thumbnail {
-    position:
-        relative;
-
-    z-index:
-        101;
-
-    pointer-events:
-        auto
-        !important;
-
-    cursor:
-        pointer;
-
-    touch-action:
-        manipulation;
-}
-
-
-/* =========================================================
-   SLIDE CONTENT
-
-   Tetap menerima pointer karena diperlukan untuk:
-   - Swipe
-   - Tooltip chart
-   - Interaksi pada slide
-========================================================= */
-
-.dashboard-slide-stage {
-    pointer-events:
-        auto;
-}
-
-
-/* =========================================================
-   ANIMASI SLIDE TETAP AKTIF
+   ACCESSIBILITY
 ========================================================= */
 
 @media
 (
     prefers-reduced-motion:
-    no-preference
+    reduce
 ) {
 
-    .dashboard-slide {
-        will-change:
-            opacity,
-            transform;
+    .dashboard-slide,
+    .dashboard-slide::before,
+    .dashboard-slide
+    > *,
+    .profile-kpi-card,
+    .kib-card,
+    .condition-stat-card,
+    .master-stat-card,
+    .growth-line-path,
+    .growth-line-glow,
+    .growth-area-path {
+        animation:
+            none
+            !important;
 
         transition:
-            opacity
-            .46s
-            cubic-bezier(
-                .22,
-                .61,
-                .36,
-                1
-            ),
+            none
+            !important;
 
-            transform
-            .56s
-            cubic-bezier(
-                .22,
-                .61,
-                .36,
-                1
-            )
+        filter:
+            none
             !important;
     }
 
 
-    .dashboard-deck[data-direction="prev"]
-    .dashboard-slide {
-        transform:
-            translate3d(
-                -28px,
-                0,
-                0
-            )
-            scale(
-                .995
-            );
-    }
-
-
-    .dashboard-deck[data-direction="next"]
-    .dashboard-slide {
-        transform:
-            translate3d(
-                28px,
-                0,
-                0
-            )
-            scale(
-                .995
-            );
-    }
-
-
     .dashboard-slide.is-active {
-        transform:
-            translate3d(
-                0,
-                0,
-                0
-            )
-            scale(
-                1
-            );
+        opacity:
+            1
+            !important;
+    }
+
+
+    .growth-line-path,
+    .growth-line-glow {
+        stroke-dashoffset:
+            0
+            !important;
+    }
+
+
+    .growth-area-path {
+        opacity:
+            1
+            !important;
     }
 
 }
