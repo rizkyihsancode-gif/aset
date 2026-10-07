@@ -4990,25 +4990,17 @@ strong {
  */
 @media (prefers-reduced-motion: no-preference) {
 
-    .dashboard-slide {
-        transition:
-            opacity
-            .46s
-            cubic-bezier(
-                .22,
-                .61,
-                .36,
-                1
-            ),
-            transform
-            .56s
-            cubic-bezier(
-                .22,
-                .61,
-                .36,
-                1
-            );
-    }
+  .dashboard-slide {
+    transition:
+        opacity .46s cubic-bezier(.22, .61, .36, 1),
+        transform .56s cubic-bezier(.22, .61, .36, 1);
+}
+
+.dashboard-deck,
+.dashboard-deck-viewport,
+.dashboard-slide-stage {
+    touch-action: pan-y;
+    overscroll-behavior-x: contain;
 }
 
 
@@ -5160,4 +5152,283 @@ strong {
             24px
             !important;
     }
+}
+}
+/* =========================================================
+   DASHBOARD INTERACTION FIX
+   Laptop + Tablet + Touchscreen
+========================================================= */
+
+
+/* =========================================================
+   SWIPE HANYA PADA AREA SLIDE
+========================================================= */
+
+.dashboard-slide-stage {
+    touch-action:
+        pan-y;
+
+    overscroll-behavior-x:
+        contain;
+}
+
+
+/* =========================================================
+   DECK TIDAK PERLU MENANGKAP SEMUA TOUCH
+========================================================= */
+
+.dashboard-deck {
+    touch-action:
+        auto;
+}
+
+
+/* =========================================================
+   CONTROL BUTTONS HARUS SELALU CLICKABLE
+========================================================= */
+
+.dashboard-arrow,
+.dashboard-dots,
+.dashboard-dot,
+.dashboard-autoplay-control,
+.dashboard-autoplay-control button,
+.dashboard-fullscreen-inside,
+.dashboard-thumbnail-strip,
+.dashboard-thumbnail {
+    pointer-events:
+        auto
+        !important;
+}
+
+
+/* =========================================================
+   PREVIOUS / NEXT
+========================================================= */
+
+.dashboard-arrow {
+    z-index:
+        200
+        !important;
+
+    cursor:
+        pointer;
+
+    user-select:
+        none;
+
+    -webkit-user-select:
+        none;
+
+    touch-action:
+        manipulation;
+}
+
+
+/* =========================================================
+   DOTS
+========================================================= */
+
+.dashboard-dots {
+    z-index:
+        210
+        !important;
+
+    pointer-events:
+        auto
+        !important;
+}
+
+
+.dashboard-dot {
+    position:
+        relative;
+
+    z-index:
+        211;
+
+    pointer-events:
+        auto
+        !important;
+
+    touch-action:
+        manipulation;
+}
+
+
+/* =========================================================
+   PAUSE + FULLSCREEN BOTTOM
+========================================================= */
+
+.dashboard-autoplay-control {
+    z-index:
+        220
+        !important;
+
+    pointer-events:
+        auto
+        !important;
+}
+
+
+.dashboard-autoplay-control button {
+    position:
+        relative;
+
+    z-index:
+        221;
+
+    pointer-events:
+        auto
+        !important;
+
+    cursor:
+        pointer;
+
+    touch-action:
+        manipulation;
+}
+
+
+#dashboardPauseButton,
+#dashboardFullscreenInside {
+    pointer-events:
+        auto
+        !important;
+
+    cursor:
+        pointer;
+
+    touch-action:
+        manipulation;
+}
+
+
+/* =========================================================
+   THUMBNAILS
+========================================================= */
+
+.dashboard-thumbnail-strip {
+    position:
+        relative;
+
+    z-index:
+        100;
+
+    pointer-events:
+        auto
+        !important;
+}
+
+
+.dashboard-thumbnail {
+    position:
+        relative;
+
+    z-index:
+        101;
+
+    pointer-events:
+        auto
+        !important;
+
+    cursor:
+        pointer;
+
+    touch-action:
+        manipulation;
+}
+
+
+/* =========================================================
+   SLIDE CONTENT
+
+   Tetap menerima pointer karena diperlukan untuk:
+   - Swipe
+   - Tooltip chart
+   - Interaksi pada slide
+========================================================= */
+
+.dashboard-slide-stage {
+    pointer-events:
+        auto;
+}
+
+
+/* =========================================================
+   ANIMASI SLIDE TETAP AKTIF
+========================================================= */
+
+@media
+(
+    prefers-reduced-motion:
+    no-preference
+) {
+
+    .dashboard-slide {
+        will-change:
+            opacity,
+            transform;
+
+        transition:
+            opacity
+            .46s
+            cubic-bezier(
+                .22,
+                .61,
+                .36,
+                1
+            ),
+
+            transform
+            .56s
+            cubic-bezier(
+                .22,
+                .61,
+                .36,
+                1
+            )
+            !important;
+    }
+
+
+    .dashboard-deck[data-direction="prev"]
+    .dashboard-slide {
+        transform:
+            translate3d(
+                -28px,
+                0,
+                0
+            )
+            scale(
+                .995
+            );
+    }
+
+
+    .dashboard-deck[data-direction="next"]
+    .dashboard-slide {
+        transform:
+            translate3d(
+                28px,
+                0,
+                0
+            )
+            scale(
+                .995
+            );
+    }
+
+
+    .dashboard-slide.is-active {
+        transform:
+            translate3d(
+                0,
+                0,
+                0
+            )
+            scale(
+                1
+            );
+    }
+
 }

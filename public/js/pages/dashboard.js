@@ -1,1107 +1,649 @@
-document.addEventListener('DOMContentLoaded', () => {
+'use strict';
 
-    /* =========================================================
-       ELEMENT
-    ========================================================= */
+/* =========================================================
+   SISTEM ASET - DASHBOARD
 
-    const deck =
-        document.getElementById('dashboardDeck');
-
-    if (!deck) {
-        return;
-    }
-
-    const slides =
-        Array.from(
-            deck.querySelectorAll('.dashboard-slide')
-        );
-
-    const thumbnails =
-        Array.from(
-            deck.querySelectorAll('.dashboard-thumbnail')
-        );
-
-    const dotsContainer =
-        document.getElementById('dashboardDots');
-
-    const prevButton =
-        document.getElementById('dashboardPrev');
-
-    const nextButton =
-        document.getElementById('dashboardNext');
-
-    const pauseButton =
-        document.getElementById('dashboardPauseButton');
-
-    const presentationButton =
-        document.getElementById(
-            'dashboardPresentationButton'
-        );
-
-    const fullscreenInside =
-        document.getElementById(
-            'dashboardFullscreenInside'
-        );
+   FITUR:
+   - Animasi perpindahan slide
+   - Autoplay setiap 8 detik
+   - Resume 15 detik setelah interaksi
+   - Previous / Next
+   - Dots
+   - Thumbnail
+   - Keyboard arrow
+   - Swipe tablet / touchscreen
+   - Mouse drag
+   - Pause / Play
+   - Fullscreen / Mode Presentasi
+   - WITA Clock
+   - Growth Chart Slide 3
+   - Tooltip nominal penuh
+   - Location Map Slide 5
+========================================================= */
 
 
-    /* =========================================================
-       CONFIG
-    ========================================================= */
+document.addEventListener(
+    'DOMContentLoaded',
+    () => {
 
-    const AUTOPLAY_DELAY =
-        8000;
+        /* =====================================================
+           ELEMENT UTAMA
+        ===================================================== */
 
-    const RESUME_DELAY =
-        15000;
-
-    const SWIPE_MIN_DISTANCE =
-        52;
-
-
-    /* =========================================================
-       STATE
-    ========================================================= */
-
-    let currentSlide =
-        0;
-
-    let autoplayEnabled =
-        true;
-
-    let autoplayTimer =
-        null;
-
-    let resumeTimer =
-        null;
-
-    let pointerStartX =
-        null;
-
-    let pointerStartY =
-        null;
+        const deck =
+            document.getElementById(
+                'dashboardDeck'
+            );
 
 
-    /* =========================================================
-       LUCIDE ICON
-    ========================================================= */
-
-    function refreshIcons()
-    {
-        if (
-            window.lucide
-            &&
-            typeof window.lucide.createIcons
-            ===
-            'function'
-        ) {
-            window.lucide.createIcons();
-        }
-    }
-
-
-    /* =========================================================
-       DOT NAVIGATION
-    ========================================================= */
-
-    if (dotsContainer) {
-
-        dotsContainer.innerHTML =
-            '';
-
-        slides.forEach(
-            (
-                _,
-                index
-            ) => {
-
-                const dot =
-                    document.createElement(
-                        'button'
-                    );
-
-                dot.type =
-                    'button';
-
-                dot.className =
-                    'dashboard-dot';
-
-                dot.setAttribute(
-                    'aria-label',
-                    `Buka slide ${index + 1}`
-                );
-
-                dot.addEventListener(
-                    'click',
-                    () => {
-
-                        userNavigate(
-                            index
-                        );
-                    }
-                );
-
-                dotsContainer
-                    .appendChild(
-                        dot
-                    );
-            }
-        );
-    }
-
-
-    const dots =
-        Array.from(
-            dotsContainer?.children
-            ??
-            []
-        );
-
-
-    /* =========================================================
-       NORMALIZE INDEX
-    ========================================================= */
-
-    function normalizeSlideIndex(
-        index
-    )
-    {
-        if (!slides.length) {
-            return 0;
-        }
-
-        if (index < 0) {
-            return slides.length - 1;
-        }
-
-        if (
-            index >= slides.length
-        ) {
-            return 0;
-        }
-
-        return index;
-    }
-
-
-    /* =========================================================
-       SHOW SLIDE
-       Animasi tetap berasal dari class CSS .is-active
-       dan data-direction.
-    ========================================================= */
-
-    function showSlide(
-        index,
-        userInteraction = false
-    )
-    {
-        if (!slides.length) {
+        if (!deck) {
             return;
         }
 
-        const previousSlide =
-            currentSlide;
 
-        currentSlide =
-            normalizeSlideIndex(
+        /*
+         * Area ini SAJA yang digunakan untuk swipe.
+         *
+         * Jangan menggunakan seluruh dashboardDeck karena
+         * tombol-tombol navigasi juga berada di dalam deck.
+         */
+        const slideStage =
+            deck.querySelector(
+                '.dashboard-slide-stage'
+            );
+
+
+        const swipeSurface =
+            slideStage
+            ||
+            deck;
+
+
+        const slides =
+            Array.from(
+                deck.querySelectorAll(
+                    '.dashboard-slide'
+                )
+            );
+
+
+        const thumbnails =
+            Array.from(
+                deck.querySelectorAll(
+                    '.dashboard-thumbnail'
+                )
+            );
+
+
+        const dotsContainer =
+            document.getElementById(
+                'dashboardDots'
+            );
+
+
+        const prevButton =
+            document.getElementById(
+                'dashboardPrev'
+            );
+
+
+        const nextButton =
+            document.getElementById(
+                'dashboardNext'
+            );
+
+
+        const pauseButton =
+            document.getElementById(
+                'dashboardPauseButton'
+            );
+
+
+        const presentationButton =
+            document.getElementById(
+                'dashboardPresentationButton'
+            );
+
+
+        const fullscreenInside =
+            document.getElementById(
+                'dashboardFullscreenInside'
+            );
+
+
+        /* =====================================================
+           CONFIG
+        ===================================================== */
+
+        const AUTOPLAY_DELAY =
+            8000;
+
+
+        const RESUME_DELAY =
+            15000;
+
+
+        const SWIPE_MIN_DISTANCE =
+            52;
+
+
+        /* =====================================================
+           STATE
+        ===================================================== */
+
+        let currentSlide =
+            0;
+
+
+        let autoplayEnabled =
+            true;
+
+
+        let autoplayTimer =
+            null;
+
+
+        let resumeTimer =
+            null;
+
+
+        let pointerStartX =
+            null;
+
+
+        let pointerStartY =
+            null;
+
+
+        let swipePointerId =
+            null;
+
+
+        /* =====================================================
+           ICON
+        ===================================================== */
+
+        function refreshIcons()
+        {
+            if (
+                window.lucide
+                &&
+                typeof window.lucide.createIcons
+                ===
+                'function'
+            ) {
+
+                window.lucide
+                    .createIcons();
+            }
+        }
+
+
+        /* =====================================================
+           CREATE DOTS
+        ===================================================== */
+
+        if (
+            dotsContainer
+        ) {
+
+            dotsContainer.innerHTML =
+                '';
+
+
+            slides.forEach(
+                (
+                    _,
+                    index
+                ) => {
+
+                    const dot =
+                        document.createElement(
+                            'button'
+                        );
+
+
+                    dot.type =
+                        'button';
+
+
+                    dot.className =
+                        'dashboard-dot';
+
+
+                    dot.setAttribute(
+                        'aria-label',
+                        `Buka slide ${index + 1}`
+                    );
+
+
+                    dot.addEventListener(
+                        'click',
+                        event => {
+
+                            event.preventDefault();
+
+                            event.stopPropagation();
+
+
+                            userNavigate(
+                                index
+                            );
+                        }
+                    );
+
+
+                    dotsContainer
+                        .appendChild(
+                            dot
+                        );
+                }
+            );
+        }
+
+
+        const dots =
+            Array.from(
+                dotsContainer
+                    ?.children
+                ||
+                []
+            );
+
+
+        /* =====================================================
+           NORMALIZE SLIDE INDEX
+        ===================================================== */
+
+        function normalizeSlideIndex(
+            index
+        )
+        {
+            if (
+                !slides.length
+            ) {
+
+                return 0;
+            }
+
+
+            if (
+                index < 0
+            ) {
+
+                return (
+                    slides.length
+                    -
+                    1
+                );
+            }
+
+
+            if (
                 index
-            );
+                >=
+                slides.length
+            ) {
 
-
-        /*
-         * Memberitahu CSS arah animasi.
-         */
-        deck.dataset.direction =
-            currentSlide < previousSlide
-                ?
-                'prev'
-                :
-                'next';
-
-
-        /*
-         * Slide.
-         */
-        slides.forEach(
-            (
-                slide,
-                slideIndex
-            ) => {
-
-                const active =
-                    slideIndex === currentSlide;
-
-                slide.classList.toggle(
-                    'is-active',
-                    active
-                );
-
-                slide.setAttribute(
-                    'aria-hidden',
-                    active
-                        ?
-                        'false'
-                        :
-                        'true'
-                );
+                return 0;
             }
-        );
 
 
-        /*
-         * Thumbnail.
-         */
-        thumbnails.forEach(
-            (
-                thumbnail,
-                thumbnailIndex
-            ) => {
-
-                const active =
-                    thumbnailIndex === currentSlide;
-
-                thumbnail.classList.toggle(
-                    'is-active',
-                    active
-                );
-
-                thumbnail.setAttribute(
-                    'aria-current',
-                    active
-                        ?
-                        'true'
-                        :
-                        'false'
-                );
-            }
-        );
-
-
-        /*
-         * Dots.
-         */
-        dots.forEach(
-            (
-                dot,
-                dotIndex
-            ) => {
-
-                dot.classList.toggle(
-                    'is-active',
-                    dotIndex === currentSlide
-                );
-            }
-        );
-
-
-        /*
-         * Jika user melakukan navigasi manual,
-         * autoplay berhenti sementara 15 detik.
-         */
-        if (
-            userInteraction
-        ) {
-            pauseTemporarily();
+            return index;
         }
 
 
-        /*
-         * Slide 3.
-         */
-        if (
-            currentSlide === 2
-        ) {
+        /* =====================================================
+           SHOW SLIDE
+        ===================================================== */
 
-            window.requestAnimationFrame(
-                () => {
-
-                    renderGrowthChart();
-                }
-            );
-        }
-
-
-        /*
-         * Slide 5.
-         */
-        if (
-            currentSlide === 4
-        ) {
-
-            window.requestAnimationFrame(
-                () => {
-
-                    renderLocationMap();
-                }
-            );
-        }
-
-
-        refreshIcons();
-    }
-
-
-    function userNavigate(
-        index
-    )
-    {
-        showSlide(
+        function showSlide(
             index,
-            true
-        );
-    }
+            userInteraction = false
+        )
+        {
+            if (
+                !slides.length
+            ) {
+
+                return;
+            }
 
 
-    /* =========================================================
-       AUTOPLAY
-    ========================================================= */
+            const previousSlide =
+                currentSlide;
 
-    function stopAutoplayTimer()
-    {
-        if (
-            autoplayTimer
-        ) {
+
+            currentSlide =
+                normalizeSlideIndex(
+                    index
+                );
+
+
+            /*
+             * Dipakai CSS untuk menentukan arah animasi.
+             */
+            deck.dataset.direction =
+                currentSlide
+                <
+                previousSlide
+                    ?
+                    'prev'
+                    :
+                    'next';
+
+
+            /* =================================================
+               SLIDES
+            ================================================= */
+
+            slides.forEach(
+                (
+                    slide,
+                    slideIndex
+                ) => {
+
+                    const active =
+                        slideIndex
+                        ===
+                        currentSlide;
+
+
+                    slide.classList.toggle(
+                        'is-active',
+                        active
+                    );
+
+
+                    slide.setAttribute(
+                        'aria-hidden',
+                        active
+                            ?
+                            'false'
+                            :
+                            'true'
+                    );
+                }
+            );
+
+
+            /* =================================================
+               THUMBNAILS
+            ================================================= */
+
+            thumbnails.forEach(
+                (
+                    button,
+                    buttonIndex
+                ) => {
+
+                    const active =
+                        buttonIndex
+                        ===
+                        currentSlide;
+
+
+                    button.classList.toggle(
+                        'is-active',
+                        active
+                    );
+
+
+                    button.setAttribute(
+                        'aria-current',
+                        active
+                            ?
+                            'true'
+                            :
+                            'false'
+                    );
+                }
+            );
+
+
+            /* =================================================
+               DOTS
+            ================================================= */
+
+            dots.forEach(
+                (
+                    dot,
+                    dotIndex
+                ) => {
+
+                    dot.classList.toggle(
+                        'is-active',
+                        dotIndex
+                        ===
+                        currentSlide
+                    );
+                }
+            );
+
+
+            /*
+             * Interaksi manual:
+             * autoplay berhenti sementara 15 detik.
+             */
+            if (
+                userInteraction
+            ) {
+
+                pauseTemporarily();
+            }
+
+
+            /*
+             * Slide 3.
+             */
+            if (
+                currentSlide === 2
+            ) {
+
+                window.requestAnimationFrame(
+                    () => {
+
+                        renderGrowthChart();
+                    }
+                );
+            }
+
+
+            /*
+             * Slide 5.
+             */
+            if (
+                currentSlide === 4
+            ) {
+
+                window.requestAnimationFrame(
+                    () => {
+
+                        renderLocationMap();
+                    }
+                );
+            }
+
+
+            refreshIcons();
+        }
+
+
+        function userNavigate(
+            index
+        )
+        {
+            showSlide(
+                index,
+                true
+            );
+        }
+
+
+        /* =====================================================
+           AUTOPLAY
+        ===================================================== */
+
+        function stopAutoplayTimer()
+        {
+            if (
+                !autoplayTimer
+            ) {
+
+                return;
+            }
+
 
             window.clearInterval(
                 autoplayTimer
             );
 
+
             autoplayTimer =
                 null;
         }
-    }
 
 
-    function startAutoplay()
-    {
-        stopAutoplayTimer();
-
-        if (
-            !autoplayEnabled
-            ||
-            document.hidden
-        ) {
-            return;
-        }
-
-        autoplayTimer =
-            window.setInterval(
-                () => {
-
-                    showSlide(
-                        currentSlide + 1
-                    );
-
-                },
-                AUTOPLAY_DELAY
-            );
-    }
-
-
-    function pauseTemporarily()
-    {
-        stopAutoplayTimer();
-
-        if (
-            !autoplayEnabled
-        ) {
-            return;
-        }
-
-        if (
-            resumeTimer
-        ) {
-
-            window.clearTimeout(
-                resumeTimer
-            );
-        }
-
-        resumeTimer =
-            window.setTimeout(
-                () => {
-
-                    startAutoplay();
-
-                },
-                RESUME_DELAY
-            );
-    }
-
-
-    function updatePauseButton()
-    {
-        if (!pauseButton) {
-            return;
-        }
-
-        pauseButton.innerHTML =
-            autoplayEnabled
-                ?
-                `
-                    <i data-lucide="pause"></i>
-                    <span>Berhenti Otomatis</span>
-                `
-                :
-                `
-                    <i data-lucide="play"></i>
-                    <span>Mulai Otomatis</span>
-                `;
-
-        refreshIcons();
-    }
-
-
-    function toggleAutoplay()
-    {
-        autoplayEnabled =
-            !autoplayEnabled;
-
-        if (
-            resumeTimer
-        ) {
-
-            window.clearTimeout(
-                resumeTimer
-            );
-
-            resumeTimer =
-                null;
-        }
-
-        if (
-            autoplayEnabled
-        ) {
-
-            startAutoplay();
-
-        } else {
-
+        function startAutoplay()
+        {
             stopAutoplayTimer();
-        }
-
-        updatePauseButton();
-    }
 
 
-    /* =========================================================
-       PREV / NEXT
-    ========================================================= */
-
-    prevButton?.addEventListener(
-        'click',
-        () => {
-
-            userNavigate(
-                currentSlide - 1
-            );
-        }
-    );
-
-
-    nextButton?.addEventListener(
-        'click',
-        () => {
-
-            userNavigate(
-                currentSlide + 1
-            );
-        }
-    );
-
-
-    pauseButton?.addEventListener(
-        'click',
-        toggleAutoplay
-    );
-
-
-    /* =========================================================
-       THUMBNAIL
-    ========================================================= */
-
-    thumbnails.forEach(
-        thumbnail => {
-
-            thumbnail.addEventListener(
-                'click',
-                () => {
-
-                    const target =
-                        Number(
-                            thumbnail
-                                .dataset
-                                .slideTarget
-                        );
-
-                    if (
-                        Number.isNaN(
-                            target
-                        )
-                    ) {
-                        return;
-                    }
-
-                    userNavigate(
-                        target
-                    );
-                }
-            );
-        }
-    );
-
-
-    /* =========================================================
-       KEYBOARD
-    ========================================================= */
-
-    function handleKeyboard(
-        event
-    )
-    {
-        if (
-            event.key === 'ArrowLeft'
-        ) {
-
-            event.preventDefault();
-
-            userNavigate(
-                currentSlide - 1
-            );
-        }
-
-        if (
-            event.key === 'ArrowRight'
-        ) {
-
-            event.preventDefault();
-
-            userNavigate(
-                currentSlide + 1
-            );
-        }
-    }
-
-
-    deck.addEventListener(
-        'keydown',
-        handleKeyboard
-    );
-
-
-    /*
-     * Saat fullscreen, event keyboard juga dibaca dari document.
-     */
-    document.addEventListener(
-        'keydown',
-        event => {
-
-            const fullscreen =
-                document.fullscreenElement
+            if (
+                !autoplayEnabled
                 ||
-                document.webkitFullscreenElement;
-
-            if (
-                fullscreen === deck
-            ) {
-
-                handleKeyboard(
-                    event
-                );
-            }
-        }
-    );
-
-
-    /* =========================================================
-       SWIPE TABLET / TOUCH SCREEN
-    =========================================================
-       Pointer Events dipakai supaya bekerja di:
-       - Android tablet
-       - iPad modern
-       - Windows touchscreen
-       - browser desktop dengan mouse drag
-    ========================================================= */
-
-    function resetSwipe()
-    {
-        pointerStartX =
-            null;
-
-        pointerStartY =
-            null;
-    }
-
-
-    function finishSwipe(
-        event
-    )
-    {
-        if (
-            pointerStartX === null
-            ||
-            pointerStartY === null
-        ) {
-            return;
-        }
-
-
-        const dx =
-            event.clientX
-            -
-            pointerStartX;
-
-        const dy =
-            event.clientY
-            -
-            pointerStartY;
-
-
-        resetSwipe();
-
-
-        /*
-         * Gerakan terlalu pendek.
-         */
-        if (
-            Math.abs(dx)
-            <
-            SWIPE_MIN_DISTANCE
-        ) {
-            return;
-        }
-
-
-        /*
-         * Jika gerakan vertikal lebih dominan,
-         * anggap sebagai scroll.
-         */
-        if (
-            Math.abs(dx)
-            <=
-            Math.abs(dy)
-        ) {
-            return;
-        }
-
-
-        /*
-         * Swipe ke kanan.
-         */
-        if (
-            dx > 0
-        ) {
-
-            userNavigate(
-                currentSlide - 1
-            );
-
-            return;
-        }
-
-
-        /*
-         * Swipe ke kiri.
-         */
-        userNavigate(
-            currentSlide + 1
-        );
-    }
-
-
-    deck.addEventListener(
-        'pointerdown',
-        event => {
-
-            /*
-             * Kalau mouse,
-             * hanya tombol kiri.
-             */
-            if (
-                event.pointerType === 'mouse'
-                &&
-                event.button !== 0
-            ) {
-                return;
-            }
-
-
-            pointerStartX =
-                event.clientX;
-
-            pointerStartY =
-                event.clientY;
-
-
-            /*
-             * Pointer capture membantu agar gesture
-             * tidak putus saat jari keluar sedikit
-             * dari dashboard.
-             */
-            if (
-                typeof deck.setPointerCapture
-                ===
-                'function'
-            ) {
-
-                try {
-
-                    deck.setPointerCapture(
-                        event.pointerId
-                    );
-
-                } catch (_) {
-                    // Tidak perlu melakukan apa-apa.
-                }
-            }
-        },
-        {
-            passive: true
-        }
-    );
-
-
-    deck.addEventListener(
-        'pointerup',
-        event => {
-
-            finishSwipe(
-                event
-            );
-
-
-            if (
-                typeof deck.releasePointerCapture
-                ===
-                'function'
-            ) {
-
-                try {
-
-                    deck.releasePointerCapture(
-                        event.pointerId
-                    );
-
-                } catch (_) {
-                    // Tidak perlu melakukan apa-apa.
-                }
-            }
-        },
-        {
-            passive: true
-        }
-    );
-
-
-    deck.addEventListener(
-        'pointercancel',
-        resetSwipe,
-        {
-            passive: true
-        }
-    );
-
-
-    /* =========================================================
-       FULLSCREEN / PRESENTATION MODE
-    ========================================================= */
-
-    function fullscreenElement()
-    {
-        return (
-            document.fullscreenElement
-            ||
-            document.webkitFullscreenElement
-            ||
-            null
-        );
-    }
-
-
-    function isDashboardFullscreen()
-    {
-        return (
-            fullscreenElement()
-            ===
-            deck
-        );
-    }
-
-
-    async function togglePresentation()
-    {
-        try {
-
-            if (
-                fullscreenElement()
-            ) {
-
-                if (
-                    document.exitFullscreen
-                ) {
-
-                    await document
-                        .exitFullscreen();
-
-                } else if (
-                    document.webkitExitFullscreen
-                ) {
-
-                    document
-                        .webkitExitFullscreen();
-                }
-
-                return;
-            }
-
-
-            if (
-                deck.requestFullscreen
-            ) {
-
-                await deck
-                    .requestFullscreen();
-
-            } else if (
-                deck.webkitRequestFullscreen
-            ) {
-
-                deck
-                    .webkitRequestFullscreen();
-            }
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                'Fullscreen error:',
-                error
-            );
-        }
-    }
-
-
-    function updatePresentationButton()
-    {
-        const active =
-            isDashboardFullscreen();
-
-
-        document
-            .documentElement
-            .classList
-            .toggle(
-                'dashboard-presenting',
-                active
-            );
-
-
-        document
-            .body
-            .classList
-            .toggle(
-                'dashboard-presenting',
-                active
-            );
-
-
-        if (
-            presentationButton
-        ) {
-
-            presentationButton
-                .setAttribute(
-                    'aria-pressed',
-                    active
-                        ?
-                        'true'
-                        :
-                        'false'
-                );
-
-
-            presentationButton.innerHTML =
-                active
-                    ?
-                    `
-                        <i data-lucide="minimize"></i>
-                        <span>Keluar Presentasi</span>
-                    `
-                    :
-                    `
-                        <i data-lucide="maximize-2"></i>
-                        <span>Mode Presentasi</span>
-                    `;
-        }
-
-
-        if (
-            fullscreenInside
-        ) {
-
-            fullscreenInside.innerHTML =
-                active
-                    ?
-                    '<i data-lucide="minimize"></i>'
-                    :
-                    '<i data-lucide="maximize-2"></i>';
-        }
-
-
-        /*
-         * Ukuran chart berubah setelah fullscreen.
-         * Render ulang setelah browser selesai resize.
-         */
-        window.setTimeout(
-            () => {
-
-                renderGrowthChart();
-
-                renderLocationMap();
-
-                refreshIcons();
-
-            },
-            120
-        );
-    }
-
-
-    presentationButton?.addEventListener(
-        'click',
-        togglePresentation
-    );
-
-
-    fullscreenInside?.addEventListener(
-        'click',
-        togglePresentation
-    );
-
-
-    document.addEventListener(
-        'fullscreenchange',
-        updatePresentationButton
-    );
-
-
-    document.addEventListener(
-        'webkitfullscreenchange',
-        updatePresentationButton
-    );
-
-
-    /* =========================================================
-       DATE & TIME WITA
-    ========================================================= */
-
-    function updateClock()
-    {
-        const dateElement =
-            document.getElementById(
-                'dashboardCurrentDate'
-            );
-
-        const timeElement =
-            document.getElementById(
-                'dashboardCurrentTime'
-            );
-
-        const now =
-            new Date();
-
-
-        if (
-            dateElement
-        ) {
-
-            dateElement.textContent =
-                new Intl.DateTimeFormat(
-                    'id-ID',
-                    {
-                        timeZone:
-                            'Asia/Makassar',
-
-                        weekday:
-                            'long',
-
-                        day:
-                            '2-digit',
-
-                        month:
-                            'long',
-
-                        year:
-                            'numeric',
-                    }
-                )
-                .format(
-                    now
-                );
-        }
-
-
-        if (
-            timeElement
-        ) {
-
-            timeElement.textContent =
-                new Intl.DateTimeFormat(
-                    'id-ID',
-                    {
-                        timeZone:
-                            'Asia/Makassar',
-
-                        hour:
-                            '2-digit',
-
-                        minute:
-                            '2-digit',
-
-                        second:
-                            '2-digit',
-
-                        hourCycle:
-                            'h23',
-                    }
-                )
-                .format(
-                    now
-                )
-                .replace(
-                    /\./g,
-                    ':'
-                )
-                +
-                ' WITA';
-        }
-    }
-
-
-    updateClock();
-
-
-    window.setInterval(
-        updateClock,
-        1000
-    );
-
-
-    /* =========================================================
-       TAB VISIBILITY
-    ========================================================= */
-
-    document.addEventListener(
-        'visibilitychange',
-        () => {
-
-            if (
                 document.hidden
             ) {
 
-                stopAutoplayTimer();
+                return;
+            }
+
+
+            autoplayTimer =
+                window.setInterval(
+                    () => {
+
+                        showSlide(
+                            currentSlide + 1,
+                            false
+                        );
+
+                    },
+                    AUTOPLAY_DELAY
+                );
+        }
+
+
+        function pauseTemporarily()
+        {
+            stopAutoplayTimer();
+
+
+            if (
+                !autoplayEnabled
+            ) {
 
                 return;
+            }
+
+
+            if (
+                resumeTimer
+            ) {
+
+                window.clearTimeout(
+                    resumeTimer
+                );
+            }
+
+
+            resumeTimer =
+                window.setTimeout(
+                    () => {
+
+                        resumeTimer =
+                            null;
+
+
+                        startAutoplay();
+
+                    },
+                    RESUME_DELAY
+                );
+        }
+
+
+        /* =====================================================
+           PAUSE / PLAY BUTTON
+        ===================================================== */
+
+        function updatePauseButton()
+        {
+            if (
+                !pauseButton
+            ) {
+
+                return;
+            }
+
+
+            pauseButton.innerHTML =
+                autoplayEnabled
+                    ?
+                    `
+                        <i data-lucide="pause"></i>
+                        <span>Berhenti Otomatis</span>
+                    `
+                    :
+                    `
+                        <i data-lucide="play"></i>
+                        <span>Mulai Otomatis</span>
+                    `;
+
+
+            pauseButton.setAttribute(
+                'aria-pressed',
+                autoplayEnabled
+                    ?
+                    'false'
+                    :
+                    'true'
+            );
+
+
+            refreshIcons();
+        }
+
+
+        function toggleAutoplay(
+            event
+        )
+        {
+            if (
+                event
+            ) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+            }
+
+
+            autoplayEnabled =
+                !autoplayEnabled;
+
+
+            if (
+                resumeTimer
+            ) {
+
+                window.clearTimeout(
+                    resumeTimer
+                );
+
+
+                resumeTimer =
+                    null;
             }
 
 
@@ -1110,64 +652,1040 @@ document.addEventListener('DOMContentLoaded', () => {
             ) {
 
                 startAutoplay();
+
+            } else {
+
+                stopAutoplayTimer();
+            }
+
+
+            updatePauseButton();
+        }
+
+
+        /* =====================================================
+           PREVIOUS BUTTON
+
+           Click handler berdiri sendiri supaya tidak
+           terganggu event swipe.
+        ===================================================== */
+
+        if (
+            prevButton
+        ) {
+
+            prevButton.addEventListener(
+                'click',
+                event => {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    userNavigate(
+                        currentSlide - 1
+                    );
+                }
+            );
+        }
+
+
+        /* =====================================================
+           NEXT BUTTON
+        ===================================================== */
+
+        if (
+            nextButton
+        ) {
+
+            nextButton.addEventListener(
+                'click',
+                event => {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+
+                    userNavigate(
+                        currentSlide + 1
+                    );
+                }
+            );
+        }
+
+
+        /* =====================================================
+           PAUSE BUTTON
+        ===================================================== */
+
+        if (
+            pauseButton
+        ) {
+
+            pauseButton.addEventListener(
+                'click',
+                toggleAutoplay
+            );
+        }
+
+
+        /* =====================================================
+           THUMBNAILS
+        ===================================================== */
+
+        thumbnails.forEach(
+            button => {
+
+                button.addEventListener(
+                    'click',
+                    event => {
+
+                        event.preventDefault();
+
+                        event.stopPropagation();
+
+
+                        const target =
+                            Number(
+                                button
+                                    .dataset
+                                    .slideTarget
+                            );
+
+
+                        if (
+                            Number.isNaN(
+                                target
+                            )
+                        ) {
+
+                            return;
+                        }
+
+
+                        userNavigate(
+                            target
+                        );
+                    }
+                );
+            }
+        );
+
+
+        /* =====================================================
+           KEYBOARD
+        ===================================================== */
+
+        function handleKeyboard(
+            event
+        )
+        {
+            if (
+                event.key
+                ===
+                'ArrowLeft'
+            ) {
+
+                event.preventDefault();
+
+
+                userNavigate(
+                    currentSlide - 1
+                );
+            }
+
+
+            if (
+                event.key
+                ===
+                'ArrowRight'
+            ) {
+
+                event.preventDefault();
+
+
+                userNavigate(
+                    currentSlide + 1
+                );
             }
         }
-    );
 
 
-    /* =========================================================
-       RESIZE
-    ========================================================= */
-
-    let resizeTimer =
-        null;
+        deck.addEventListener(
+            'keydown',
+            handleKeyboard
+        );
 
 
-    window.addEventListener(
-        'resize',
-        () => {
+        /*
+         * Keyboard ketika fullscreen.
+         */
+        document.addEventListener(
+            'keydown',
+            event => {
 
-            window.clearTimeout(
-                resizeTimer
+                const fullscreen =
+                    document.fullscreenElement
+                    ||
+                    document.webkitFullscreenElement;
+
+
+                if (
+                    fullscreen
+                    ===
+                    deck
+                ) {
+
+                    handleKeyboard(
+                        event
+                    );
+                }
+            }
+        );
+
+
+        /* =====================================================
+           SWIPE TABLET / TOUCH / MOUSE
+        =====================================================
+
+           PERBAIKAN UTAMA:
+
+           Swipe sekarang HANYA bekerja pada:
+
+               .dashboard-slide-stage
+
+           BUKAN seluruh:
+
+               #dashboardDeck
+
+           Jadi mouse/pointer tidak lagi mengambil event klik
+           dari tombol Previous, Next, Pause dan Fullscreen.
+        ===================================================== */
+
+
+        /*
+         * Jangan mulai swipe jika user menyentuh
+         * elemen interaktif.
+         */
+        function isInteractiveTarget(
+            target
+        )
+        {
+            if (
+                !(
+                    target
+                    instanceof
+                    Element
+                )
+            ) {
+
+                return false;
+            }
+
+
+            return Boolean(
+                target.closest(
+                    [
+                        'button',
+                        'a',
+                        'input',
+                        'select',
+                        'textarea',
+                        '[role="button"]',
+                        '.growth-chart-tooltip',
+                        '.map-marker-label'
+                    ]
+                    .join(
+                        ','
+                    )
+                )
             );
-
-
-            resizeTimer =
-                window.setTimeout(
-                    () => {
-
-                        renderGrowthChart();
-
-                        renderLocationMap();
-
-                    },
-                    150
-                );
         }
-    );
 
 
-    /* =========================================================
-       INIT
-    ========================================================= */
+        function resetSwipe()
+        {
+            pointerStartX =
+                null;
 
-    showSlide(
-        0
-    );
 
-    updatePauseButton();
+            pointerStartY =
+                null;
 
-    startAutoplay();
 
-    updatePresentationButton();
+            swipePointerId =
+                null;
+        }
 
-    refreshIcons();
-});
+
+        function releaseSwipePointer(
+            pointerId
+        )
+        {
+            if (
+                pointerId === null
+                ||
+                pointerId === undefined
+                ||
+                typeof
+                    swipeSurface
+                        .releasePointerCapture
+                    !==
+                    'function'
+            ) {
+
+                return;
+            }
+
+
+            try {
+
+                if (
+                    typeof
+                        swipeSurface
+                            .hasPointerCapture
+                        !==
+                        'function'
+                    ||
+                    swipeSurface
+                        .hasPointerCapture(
+                            pointerId
+                        )
+                ) {
+
+                    swipeSurface
+                        .releasePointerCapture(
+                            pointerId
+                        );
+                }
+
+            } catch (_) {
+
+                /*
+                 * Tidak fatal.
+                 */
+            }
+        }
+
+
+        function finishSwipe(
+            event
+        )
+        {
+            if (
+                pointerStartX === null
+                ||
+                pointerStartY === null
+            ) {
+
+                resetSwipe();
+
+                return;
+            }
+
+
+            /*
+             * Abaikan pointer yang bukan pointer
+             * yang memulai gesture.
+             */
+            if (
+                swipePointerId !== null
+                &&
+                event.pointerId
+                !==
+                swipePointerId
+            ) {
+
+                return;
+            }
+
+
+            const dx =
+                event.clientX
+                -
+                pointerStartX;
+
+
+            const dy =
+                event.clientY
+                -
+                pointerStartY;
+
+
+            resetSwipe();
+
+
+            /*
+             * Gesture terlalu pendek.
+             */
+            if (
+                Math.abs(
+                    dx
+                )
+                <
+                SWIPE_MIN_DISTANCE
+            ) {
+
+                return;
+            }
+
+
+            /*
+             * Kalau vertical movement lebih besar,
+             * berarti user sedang scroll.
+             */
+            if (
+                Math.abs(
+                    dx
+                )
+                <=
+                Math.abs(
+                    dy
+                )
+            ) {
+
+                return;
+            }
+
+
+            /*
+             * Swipe kanan.
+             */
+            if (
+                dx > 0
+            ) {
+
+                userNavigate(
+                    currentSlide - 1
+                );
+
+                return;
+            }
+
+
+            /*
+             * Swipe kiri.
+             */
+            userNavigate(
+                currentSlide + 1
+            );
+        }
+
+
+        /* =====================================================
+           POINTER DOWN
+        ===================================================== */
+
+        swipeSurface.addEventListener(
+            'pointerdown',
+            event => {
+
+                /*
+                 * Mouse hanya tombol kiri.
+                 */
+                if (
+                    event.pointerType
+                    ===
+                    'mouse'
+                    &&
+                    event.button
+                    !==
+                    0
+                ) {
+
+                    return;
+                }
+
+
+                /*
+                 * Jangan mulai swipe dari tombol,
+                 * link, input atau titik chart.
+                 */
+                if (
+                    isInteractiveTarget(
+                        event.target
+                    )
+                ) {
+
+                    resetSwipe();
+
+                    return;
+                }
+
+
+                pointerStartX =
+                    event.clientX;
+
+
+                pointerStartY =
+                    event.clientY;
+
+
+                swipePointerId =
+                    event.pointerId;
+
+
+                /*
+                 * Pointer capture hanya dilakukan pada
+                 * slideStage. Bukan pada seluruh deck.
+                 */
+                if (
+                    typeof
+                        swipeSurface
+                            .setPointerCapture
+                        ===
+                        'function'
+                ) {
+
+                    try {
+
+                        swipeSurface
+                            .setPointerCapture(
+                                event.pointerId
+                            );
+
+                    } catch (_) {
+
+                        /*
+                         * Browser boleh mengabaikannya.
+                         */
+                    }
+                }
+            },
+            {
+                passive:
+                    true
+            }
+        );
+
+
+        /* =====================================================
+           POINTER UP
+        ===================================================== */
+
+        swipeSurface.addEventListener(
+            'pointerup',
+            event => {
+
+                const capturedPointerId =
+                    swipePointerId;
+
+
+                finishSwipe(
+                    event
+                );
+
+
+                releaseSwipePointer(
+                    capturedPointerId
+                );
+            },
+            {
+                passive:
+                    true
+            }
+        );
+
+
+        /* =====================================================
+           POINTER CANCEL
+        ===================================================== */
+
+        swipeSurface.addEventListener(
+            'pointercancel',
+            () => {
+
+                const capturedPointerId =
+                    swipePointerId;
+
+
+                resetSwipe();
+
+
+                releaseSwipePointer(
+                    capturedPointerId
+                );
+            },
+            {
+                passive:
+                    true
+            }
+        );
+
+
+        swipeSurface.addEventListener(
+            'lostpointercapture',
+            resetSwipe,
+            {
+                passive:
+                    true
+            }
+        );
+
+
+        /* =====================================================
+           PROTEKSI CONTROL BUTTONS
+
+           Event pointer dari tombol tidak boleh dianggap
+           gesture swipe.
+        ===================================================== */
+
+        [
+            prevButton,
+            nextButton,
+            pauseButton,
+            fullscreenInside,
+            presentationButton,
+            ...dots,
+            ...thumbnails
+        ]
+        .filter(
+            Boolean
+        )
+        .forEach(
+            control => {
+
+                control.addEventListener(
+                    'pointerdown',
+                    event => {
+
+                        event.stopPropagation();
+                    }
+                );
+            }
+        );
+
+
+        /* =====================================================
+           FULLSCREEN
+        ===================================================== */
+
+        function fullscreenElement()
+        {
+            return (
+                document.fullscreenElement
+                ||
+                document.webkitFullscreenElement
+                ||
+                null
+            );
+        }
+
+
+        function isDashboardFullscreen()
+        {
+            return (
+                fullscreenElement()
+                ===
+                deck
+            );
+        }
+
+
+        async function togglePresentation(
+            event
+        )
+        {
+            if (
+                event
+            ) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+            }
+
+
+            try {
+
+                /*
+                 * Keluar fullscreen.
+                 */
+                if (
+                    fullscreenElement()
+                ) {
+
+                    if (
+                        document.exitFullscreen
+                    ) {
+
+                        await document
+                            .exitFullscreen();
+
+                    } else if (
+                        document.webkitExitFullscreen
+                    ) {
+
+                        document
+                            .webkitExitFullscreen();
+                    }
+
+
+                    return;
+                }
+
+
+                /*
+                 * Masuk fullscreen.
+                 */
+                if (
+                    deck.requestFullscreen
+                ) {
+
+                    await deck
+                        .requestFullscreen();
+
+                } else if (
+                    deck.webkitRequestFullscreen
+                ) {
+
+                    deck
+                        .webkitRequestFullscreen();
+                }
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    'Fullscreen error:',
+                    error
+                );
+            }
+        }
+
+
+        function updatePresentationButton()
+        {
+            const active =
+                isDashboardFullscreen();
+
+
+            document
+                .documentElement
+                .classList
+                .toggle(
+                    'dashboard-presenting',
+                    active
+                );
+
+
+            document
+                .body
+                .classList
+                .toggle(
+                    'dashboard-presenting',
+                    active
+                );
+
+
+            /* =================================================
+               TOP PRESENTATION BUTTON
+            ================================================= */
+
+            if (
+                presentationButton
+            ) {
+
+                presentationButton
+                    .setAttribute(
+                        'aria-pressed',
+                        active
+                            ?
+                            'true'
+                            :
+                            'false'
+                    );
+
+
+                presentationButton.innerHTML =
+                    active
+                        ?
+                        `
+                            <i data-lucide="minimize"></i>
+                            <span>Keluar Presentasi</span>
+                        `
+                        :
+                        `
+                            <i data-lucide="maximize-2"></i>
+                            <span>Mode Presentasi</span>
+                        `;
+            }
+
+
+            /* =================================================
+               BOTTOM FULLSCREEN BUTTON
+            ================================================= */
+
+            if (
+                fullscreenInside
+            ) {
+
+                fullscreenInside
+                    .setAttribute(
+                        'aria-pressed',
+                        active
+                            ?
+                            'true'
+                            :
+                            'false'
+                    );
+
+
+                fullscreenInside.innerHTML =
+                    active
+                        ?
+                        '<i data-lucide="minimize"></i>'
+                        :
+                        '<i data-lucide="maximize-2"></i>';
+            }
+
+
+            /*
+             * Ukuran dashboard berubah ketika fullscreen.
+             * Chart dan map dirender ulang.
+             */
+            window.setTimeout(
+                () => {
+
+                    renderGrowthChart();
+
+                    renderLocationMap();
+
+                    refreshIcons();
+
+                },
+                120
+            );
+        }
+
+
+        /* =====================================================
+           PRESENTATION BUTTON TOP
+        ===================================================== */
+
+        if (
+            presentationButton
+        ) {
+
+            presentationButton.addEventListener(
+                'click',
+                togglePresentation
+            );
+        }
+
+
+        /* =====================================================
+           FULLSCREEN BUTTON BOTTOM
+        ===================================================== */
+
+        if (
+            fullscreenInside
+        ) {
+
+            fullscreenInside.addEventListener(
+                'click',
+                togglePresentation
+            );
+        }
+
+
+        document.addEventListener(
+            'fullscreenchange',
+            updatePresentationButton
+        );
+
+
+        document.addEventListener(
+            'webkitfullscreenchange',
+            updatePresentationButton
+        );
+
+
+        /* =====================================================
+           DATE & TIME WITA
+        ===================================================== */
+
+        function updateClock()
+        {
+            const dateElement =
+                document.getElementById(
+                    'dashboardCurrentDate'
+                );
+
+
+            const timeElement =
+                document.getElementById(
+                    'dashboardCurrentTime'
+                );
+
+
+            const now =
+                new Date();
+
+
+            if (
+                dateElement
+            ) {
+
+                dateElement.textContent =
+                    new Intl.DateTimeFormat(
+                        'id-ID',
+                        {
+                            timeZone:
+                                'Asia/Makassar',
+
+                            weekday:
+                                'long',
+
+                            day:
+                                '2-digit',
+
+                            month:
+                                'long',
+
+                            year:
+                                'numeric'
+                        }
+                    )
+                    .format(
+                        now
+                    );
+            }
+
+
+            if (
+                timeElement
+            ) {
+
+                timeElement.textContent =
+                    new Intl.DateTimeFormat(
+                        'id-ID',
+                        {
+                            timeZone:
+                                'Asia/Makassar',
+
+                            hour:
+                                '2-digit',
+
+                            minute:
+                                '2-digit',
+
+                            second:
+                                '2-digit',
+
+                            hourCycle:
+                                'h23'
+                        }
+                    )
+                    .format(
+                        now
+                    )
+                    .replace(
+                        /\./g,
+                        ':'
+                    )
+                    +
+                    ' WITA';
+            }
+        }
+
+
+        updateClock();
+
+
+        window.setInterval(
+            updateClock,
+            1000
+        );
+
+
+        /* =====================================================
+           PAGE VISIBILITY
+        ===================================================== */
+
+        document.addEventListener(
+            'visibilitychange',
+            () => {
+
+                if (
+                    document.hidden
+                ) {
+
+                    stopAutoplayTimer();
+
+                } else if (
+                    autoplayEnabled
+                ) {
+
+                    startAutoplay();
+                }
+            }
+        );
+
+
+        /* =====================================================
+           RESIZE
+        ===================================================== */
+
+        let resizeTimer =
+            null;
+
+
+        window.addEventListener(
+            'resize',
+            () => {
+
+                window.clearTimeout(
+                    resizeTimer
+                );
+
+
+                resizeTimer =
+                    window.setTimeout(
+                        () => {
+
+                            renderGrowthChart();
+
+                            renderLocationMap();
+
+                        },
+                        150
+                    );
+            }
+        );
+
+
+        /* =====================================================
+           INITIALIZE
+        ===================================================== */
+
+        showSlide(
+            0,
+            false
+        );
+
+
+        updatePauseButton();
+
+
+        startAutoplay();
+
+
+        updatePresentationButton();
+
+
+        refreshIcons();
+    }
+);
 
 
 /* ============================================================
    ============================================================
-   SLIDE 3 - GROWTH CHART
+   SLIDE 3
+   GROWTH CHART
    ============================================================
 ============================================================ */
 
@@ -1180,9 +1698,10 @@ function renderGrowthChart()
 
 
     const stage =
-        svg?.closest(
-            '.growth-chart-stage'
-        );
+        svg
+            ?.closest(
+                '.growth-chart-stage'
+            );
 
 
     const empty =
@@ -1232,13 +1751,14 @@ function renderGrowthChart()
         ||
         !stage
     ) {
+
         return;
     }
 
 
-    /* =========================================================
-       SOURCE DATA
-    ========================================================= */
+    /* =====================================================
+       DATA FROM DATABASE
+    ===================================================== */
 
     const rawData =
         Array.isArray(
@@ -1253,10 +1773,6 @@ function renderGrowthChart()
             :
             [];
 
-
-    /* =========================================================
-       NORMALIZE PER YEAR
-    ========================================================= */
 
     const yearlyMap =
         new Map();
@@ -1310,31 +1826,40 @@ function renderGrowthChart()
                 ||
                 value < 0
             ) {
+
                 return;
             }
 
 
             /*
-             * Jika tahun yang sama muncul lebih dari sekali,
-             * pakai nilai tertinggi dari data cumulative.
+             * Jika terdapat data tahun yang sama,
+             * gunakan nilai cumulative tertinggi.
              */
             if (
                 !yearlyMap.has(
                     year
                 )
                 ||
-                value >
+                value
+                >
                 yearlyMap
-                    .get(year)
+                    .get(
+                        year
+                    )
                     .value
             ) {
 
                 yearlyMap.set(
                     year,
                     {
-                        year,
-                        value,
-                        added
+                        year:
+                            year,
+
+                        value:
+                            value,
+
+                        added:
+                            added
                     }
                 );
             }
@@ -1343,24 +1868,23 @@ function renderGrowthChart()
 
 
     const points =
-        Array
-            .from(
-                yearlyMap.values()
-            )
-            .sort(
-                (
-                    a,
-                    b
-                ) =>
-                    a.year
-                    -
-                    b.year
-            );
+        Array.from(
+            yearlyMap.values()
+        )
+        .sort(
+            (
+                a,
+                b
+            ) =>
+                a.year
+                -
+                b.year
+        );
 
 
-    /* =========================================================
+    /* =====================================================
        RESET
-    ========================================================= */
+    ===================================================== */
 
     svg.innerHTML =
         '';
@@ -1389,6 +1913,7 @@ function renderGrowthChart()
         badge.hidden =
             true;
 
+
         badge.classList.remove(
             'is-up',
             'is-down',
@@ -1397,9 +1922,9 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
+    /* =====================================================
        EMPTY
-    ========================================================= */
+    ===================================================== */
 
     if (
         !points.length
@@ -1435,12 +1960,14 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
+    /* =====================================================
        GROWTH BADGE
-    ========================================================= */
+    ===================================================== */
 
     if (
-        points.length >= 2
+        points.length
+        >=
+        2
         &&
         badge
         &&
@@ -1454,7 +1981,9 @@ function renderGrowthChart()
 
         const lastValue =
             points[
-                points.length - 1
+                points.length
+                -
+                1
             ]
                 .value;
 
@@ -1519,7 +2048,7 @@ function renderGrowthChart()
                         1,
 
                     maximumFractionDigits:
-                        1,
+                        1
                 }
             )}%`;
 
@@ -1536,11 +2065,16 @@ function renderGrowthChart()
 
             icon.setAttribute(
                 'data-lucide',
-                status === 'is-up'
+
+                status
+                ===
+                'is-up'
                     ?
                     'trending-up'
                     :
-                    status === 'is-down'
+                    status
+                    ===
+                    'is-down'
                         ?
                         'trending-down'
                         :
@@ -1563,9 +2097,9 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
+    /* =====================================================
        SVG CONFIG
-    ========================================================= */
+    ===================================================== */
 
     const NS =
         'http://www.w3.org/2000/svg';
@@ -1580,6 +2114,7 @@ function renderGrowthChart()
 
 
     const padding = {
+
         top:
             48,
 
@@ -1622,9 +2157,9 @@ function renderGrowthChart()
     );
 
 
-    /* =========================================================
-       SVG HELPER
-    ========================================================= */
+    /* =====================================================
+       SVG ELEMENT HELPER
+    ===================================================== */
 
     function createSvgElement(
         tag,
@@ -1663,9 +2198,9 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
-       VALUE RANGE
-    ========================================================= */
+    /* =====================================================
+       CHART RANGE
+    ===================================================== */
 
     const values =
         points.map(
@@ -1698,7 +2233,9 @@ function renderGrowthChart()
 
         difference =
             Math.max(
-                rawMax * 0.15,
+                rawMax
+                *
+                0.15,
                 1
             );
     }
@@ -1706,8 +2243,14 @@ function renderGrowthChart()
 
     const extraSpace =
         Math.max(
-            difference * 0.30,
-            rawMax * 0.025,
+            difference
+            *
+            0.30,
+
+            rawMax
+            *
+            0.025,
+
             1
         );
 
@@ -1715,7 +2258,9 @@ function renderGrowthChart()
     const chartMin =
         Math.max(
             0,
-            rawMin - extraSpace
+            rawMin
+            -
+            extraSpace
         );
 
 
@@ -1725,22 +2270,26 @@ function renderGrowthChart()
         extraSpace;
 
 
-    /* =========================================================
+    /* =====================================================
        X POSITION
-    ========================================================= */
+    ===================================================== */
 
     function getX(
         index
     )
     {
         if (
-            points.length === 1
+            points.length
+            ===
+            1
         ) {
 
             return (
                 padding.left
                 +
-                plotWidth / 2
+                plotWidth
+                /
+                2
             );
         }
 
@@ -1752,7 +2301,9 @@ function renderGrowthChart()
                 index
                 /
                 (
-                    points.length - 1
+                    points.length
+                    -
+                    1
                 )
             )
             *
@@ -1761,9 +2312,9 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
+    /* =====================================================
        Y POSITION
-    ========================================================= */
+    ===================================================== */
 
     function getY(
         value
@@ -1793,20 +2344,28 @@ function renderGrowthChart()
             +
             plotHeight
             -
-            ratio * plotHeight
+            (
+                ratio
+                *
+                plotHeight
+            )
         );
     }
 
 
-    /* =========================================================
-       GRADIENTS
-    ========================================================= */
+    /* =====================================================
+       SVG DEFINITIONS
+    ===================================================== */
 
     const defs =
         createSvgElement(
             'defs'
         );
 
+
+    /* =====================================================
+       AREA GRADIENT
+    ===================================================== */
 
     const areaGradient =
         createSvgElement(
@@ -1886,6 +2445,10 @@ function renderGrowthChart()
     );
 
 
+    /* =====================================================
+       LINE GRADIENT
+    ===================================================== */
+
     const lineGradient =
         createSvgElement(
             'linearGradient',
@@ -1946,9 +2509,9 @@ function renderGrowthChart()
     );
 
 
-    /* =========================================================
+    /* =====================================================
        Y GRID
-    ========================================================= */
+    ===================================================== */
 
     const GRID_COUNT =
         4;
@@ -1969,22 +2532,30 @@ function renderGrowthChart()
         const y =
             padding.top
             +
-            ratio
-            *
-            plotHeight;
+            (
+                ratio
+                *
+                plotHeight
+            );
 
 
         const value =
             chartMax
             -
-            ratio
-            *
             (
-                chartMax
-                -
-                chartMin
+                ratio
+                *
+                (
+                    chartMax
+                    -
+                    chartMin
+                )
             );
 
+
+        /* =================================================
+           GRID LINE
+        ================================================= */
 
         svg.appendChild(
             createSvgElement(
@@ -2020,6 +2591,10 @@ function renderGrowthChart()
         );
 
 
+        /* =================================================
+           Y LABEL
+        ================================================= */
+
         const label =
             createSvgElement(
                 'text',
@@ -2049,10 +2624,6 @@ function renderGrowthChart()
             );
 
 
-        /*
-         * Function ini WAJIB ada.
-         * Sebelumnya chart kosong karena helper ini hilang.
-         */
         label.textContent =
             formatDashboardAxisCurrency(
                 value
@@ -2065,9 +2636,9 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
+    /* =====================================================
        BASELINE
-    ========================================================= */
+    ===================================================== */
 
     const baselineY =
         padding.top
@@ -2106,9 +2677,9 @@ function renderGrowthChart()
     );
 
 
-    /* =========================================================
-       POINT COORDINATES
-    ========================================================= */
+    /* =====================================================
+       COORDINATES
+    ===================================================== */
 
     const coordinates =
         points.map(
@@ -2116,6 +2687,7 @@ function renderGrowthChart()
                 item,
                 index
             ) => ({
+
                 ...item,
 
                 x:
@@ -2131,26 +2703,28 @@ function renderGrowthChart()
         );
 
 
-    /* =========================================================
+    /* =====================================================
        LINE PATH
-    ========================================================= */
+    ===================================================== */
 
     function makeLinePath(
         items
     )
     {
         if (
-            items.length === 1
+            items.length
+            ===
+            1
         ) {
+
             return '';
         }
 
 
-        /*
-         * Dua titik = garis lurus.
-         */
         if (
-            items.length === 2
+            items.length
+            ===
+            2
         ) {
 
             return (
@@ -2161,9 +2735,6 @@ function renderGrowthChart()
         }
 
 
-        /*
-         * 3+ titik = smooth curve.
-         */
         let path =
             `M ${items[0].x} ${items[0].y}`;
 
@@ -2171,7 +2742,9 @@ function renderGrowthChart()
         for (
             let i = 0;
             i <
-            items.length - 1;
+            items.length
+            -
+            1;
             i++
         ) {
 
@@ -2214,12 +2787,14 @@ function renderGrowthChart()
         );
 
 
-    /* =========================================================
+    /* =====================================================
        AREA + LINE
-    ========================================================= */
+    ===================================================== */
 
     if (
-        coordinates.length >= 2
+        coordinates.length
+        >=
+        2
     ) {
 
         const areaPath =
@@ -2227,7 +2802,9 @@ function renderGrowthChart()
             +
             ` L ${
                 coordinates[
-                    coordinates.length - 1
+                    coordinates.length
+                    -
+                    1
                 ].x
             } ${baselineY}`
             +
@@ -2238,9 +2815,10 @@ function renderGrowthChart()
             ' Z';
 
 
-        /*
-         * Area biru.
-         */
+        /* =================================================
+           AREA
+        ================================================= */
+
         svg.appendChild(
             createSvgElement(
                 'path',
@@ -2258,9 +2836,10 @@ function renderGrowthChart()
         );
 
 
-        /*
-         * Glow putih.
-         */
+        /* =================================================
+           WHITE GLOW
+        ================================================= */
+
         svg.appendChild(
             createSvgElement(
                 'path',
@@ -2290,9 +2869,10 @@ function renderGrowthChart()
         );
 
 
-        /*
-         * Garis utama.
-         */
+        /* =================================================
+           BLUE LINE
+        ================================================= */
+
         svg.appendChild(
             createSvgElement(
                 'path',
@@ -2323,9 +2903,9 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
-       X AXIS YEAR
-    ========================================================= */
+    /* =====================================================
+       X AXIS LABELS
+    ===================================================== */
 
     const xLabels =
         document.createElement(
@@ -2380,9 +2960,9 @@ function renderGrowthChart()
     );
 
 
-    /* =========================================================
+    /* =====================================================
        TOOLTIP
-    ========================================================= */
+    ===================================================== */
 
     function showTooltip(
         point,
@@ -2396,6 +2976,7 @@ function renderGrowthChart()
             ||
             !tooltipValue
         ) {
+
             return;
         }
 
@@ -2405,10 +2986,7 @@ function renderGrowthChart()
 
 
         /*
-         * Tooltip tetap angka database penuh.
-         *
-         * Contoh:
-         * Rp 1.270.746.080.536
+         * Nilai database FULL.
          */
         tooltipValue.textContent =
             formatDashboardRupiahFull(
@@ -2420,9 +2998,6 @@ function renderGrowthChart()
             tooltipChange
         ) {
 
-            /*
-             * Titik pertama.
-             */
             if (
                 index === 0
             ) {
@@ -2438,7 +3013,9 @@ function renderGrowthChart()
 
                 const previous =
                     coordinates[
-                        index - 1
+                        index
+                        -
+                        1
                     ]
                     .value;
 
@@ -2542,9 +3119,9 @@ function renderGrowthChart()
     }
 
 
-    /* =========================================================
-       POINTS
-    ========================================================= */
+    /* =====================================================
+       CHART POINTS
+    ===================================================== */
 
     coordinates.forEach(
         (
@@ -2568,9 +3145,10 @@ function renderGrowthChart()
                 );
 
 
-            /*
-             * Halo luar.
-             */
+            /* =================================================
+               HALO
+            ================================================= */
+
             group.appendChild(
                 createSvgElement(
                     'circle',
@@ -2597,9 +3175,10 @@ function renderGrowthChart()
             );
 
 
-            /*
-             * Ring putih.
-             */
+            /* =================================================
+               WHITE RING
+            ================================================= */
+
             group.appendChild(
                 createSvgElement(
                     'circle',
@@ -2623,9 +3202,10 @@ function renderGrowthChart()
             );
 
 
-            /*
-             * Titik biru.
-             */
+            /* =================================================
+               BLUE POINT
+            ================================================= */
+
             group.appendChild(
                 createSvgElement(
                     'circle',
@@ -2656,8 +3236,7 @@ function renderGrowthChart()
 
 
             /*
-             * Invisible hit area supaya mudah disentuh
-             * menggunakan jari di tablet.
+             * Hit area lebih besar untuk tablet.
              */
             group.appendChild(
                 createSvgElement(
@@ -2719,7 +3298,7 @@ function renderGrowthChart()
 
 
             /*
-             * Penting untuk tablet.
+             * Tablet tap.
              */
             group.addEventListener(
                 'click',
@@ -2743,7 +3322,8 @@ function renderGrowthChart()
 
 /* ============================================================
    ============================================================
-   SLIDE 5 - LOCATION MAP
+   SLIDE 5
+   LOCATION MAP
    ============================================================
 ============================================================ */
 
@@ -2761,14 +3341,17 @@ function renderLocationMap()
         );
 
 
-    if (!stage) {
+    if (
+        !stage
+    ) {
+
         return;
     }
 
 
-    /* =========================================================
+    /* =====================================================
        SOURCE
-    ========================================================= */
+    ===================================================== */
 
     const source =
         Array.isArray(
@@ -2784,82 +3367,90 @@ function renderLocationMap()
             [];
 
 
-    /* =========================================================
+    /* =====================================================
        NORMALIZE
-    ========================================================= */
+    ===================================================== */
 
     const locations =
         source
-            .map(
-                location => ({
+        .map(
+            location => ({
 
-                    ...location,
-
-
-                    latNumber:
-                        parseDashboardCoordinate(
-                            location?.lat
-                        ),
+                ...location,
 
 
-                    longNumber:
-                        parseDashboardCoordinate(
-                            location?.long
-                        ),
+                latNumber:
+                    parseDashboardCoordinate(
+                        location?.lat
+                    ),
 
 
-                    jumlahNumber:
-                        Number(
-                            location?.jumlah
-                            ??
-                            location?.total
-                            ??
-                            location?.count
-                            ??
-                            0
-                        )
-                        ||
+                longNumber:
+                    parseDashboardCoordinate(
+                        location?.long
+                    ),
+
+
+                jumlahNumber:
+                    Number(
+                        location?.jumlah
+                        ??
+                        location?.total
+                        ??
+                        location?.count
+                        ??
                         0
-                })
-            )
-            .filter(
-                location =>
-
-                    Number.isFinite(
-                        location.latNumber
                     )
+                    ||
+                    0
+            })
+        )
+        .filter(
+            location =>
 
-                    &&
+                Number.isFinite(
+                    location.latNumber
+                )
 
-                    Number.isFinite(
-                        location.longNumber
-                    )
+                &&
 
-                    &&
+                Number.isFinite(
+                    location.longNumber
+                )
 
-                    location.latNumber >= -90
+                &&
 
-                    &&
+                location.latNumber
+                >=
+                -90
 
-                    location.latNumber <= 90
+                &&
 
-                    &&
+                location.latNumber
+                <=
+                90
 
-                    location.longNumber >= -180
+                &&
 
-                    &&
+                location.longNumber
+                >=
+                -180
 
-                    location.longNumber <= 180
-            );
+                &&
+
+                location.longNumber
+                <=
+                180
+        );
 
 
     stage.innerHTML =
         '';
 
 
-    /* =========================================================
+    /* =====================================================
        EMPTY
-    ========================================================= */
+    ===================================================== */
 
     if (
         !locations.length
@@ -2872,6 +3463,7 @@ function renderLocationMap()
             empty.hidden =
                 false;
         }
+
 
         return;
     }
@@ -2886,9 +3478,9 @@ function renderLocationMap()
     }
 
 
-    /* =========================================================
-       BOUNDS
-    ========================================================= */
+    /* =====================================================
+       LAT LONG BOUNDS
+    ===================================================== */
 
     const lats =
         locations.map(
@@ -2928,15 +3520,13 @@ function renderLocationMap()
         );
 
 
-    /*
-     * Hindari pembagian nol.
-     */
     if (
         minLat === maxLat
     ) {
 
         minLat -=
             0.01;
+
 
         maxLat +=
             0.01;
@@ -2949,6 +3539,7 @@ function renderLocationMap()
 
         minLong -=
             0.01;
+
 
         maxLong +=
             0.01;
@@ -2971,9 +3562,9 @@ function renderLocationMap()
         8;
 
 
-    /* =========================================================
+    /* =====================================================
        MARKERS
-    ========================================================= */
+    ===================================================== */
 
     locations.forEach(
         (
@@ -3004,28 +3595,32 @@ function renderLocationMap()
             const left =
                 paddingPercent
                 +
-                xRatio
-                *
                 (
-                    100
-                    -
-                    paddingPercent
+                    xRatio
                     *
-                    2
+                    (
+                        100
+                        -
+                        paddingPercent
+                        *
+                        2
+                    )
                 );
 
 
             const top =
                 paddingPercent
                 +
-                yRatio
-                *
                 (
-                    100
-                    -
-                    paddingPercent
+                    yRatio
                     *
-                    2
+                    (
+                        100
+                        -
+                        paddingPercent
+                        *
+                        2
+                    )
                 );
 
 
@@ -3086,9 +3681,6 @@ function renderLocationMap()
                     'map-marker-label';
 
 
-                /*
-                 * Batasi agar label tidak terlalu keluar kanan.
-                 */
                 label.style.left =
                     `${
                         Math.min(
@@ -3186,7 +3778,7 @@ function parseDashboardCoordinate(
 
 
 /* =========================================================
-   NUMBER
+   FORMAT NUMBER
 ========================================================= */
 
 function formatDashboardNumber(
@@ -3219,10 +3811,9 @@ function formatDashboardNumber(
 
 
 /* =========================================================
-   FULL RUPIAH
-   Tooltip chart menggunakan angka penuh dari database.
+   FORMAT FULL RUPIAH
 
-   1270746080536
+   1.270.746.080.536
    =>
    Rp 1.270.746.080.536
 ========================================================= */
@@ -3272,9 +3863,12 @@ function formatDashboardRupiahFull(
 
 /* =========================================================
    TRUNCATE
-   Bukan pembulatan.
 
-   1.2799 -> 1.27
+   BUKAN ROUND.
+
+   1.2799
+   =>
+   1.27
 ========================================================= */
 
 function truncateDashboardNumber(
@@ -3305,9 +3899,6 @@ function truncateDashboardNumber(
         );
 
 
-    /*
-     * Positif.
-     */
     if (
         number >= 0
     ) {
@@ -3324,9 +3915,6 @@ function truncateDashboardNumber(
     }
 
 
-    /*
-     * Negatif.
-     */
     return (
         Math.ceil(
             number
@@ -3340,15 +3928,15 @@ function truncateDashboardNumber(
 
 
 /* =========================================================
-   AXIS CURRENCY
-   Wajib dipakai oleh renderGrowthChart().
+   FORMAT AXIS CURRENCY
 
-   Contoh:
+   Digunakan pada Y Axis chart.
+
+   1.270.746.080.536
+   =>
    Rp 1,27 T
-   Rp 1,14 T
-   Rp 966,4 M
 
-   Tidak membulatkan ke Rp 1,3 T.
+   Tidak dibulatkan menjadi 1,3 T.
 ========================================================= */
 
 function formatDashboardAxisCurrency(
@@ -3363,14 +3951,18 @@ function formatDashboardAxisCurrency(
         0;
 
 
+    const abs =
+        Math.abs(
+            number
+        );
+
+
     /* =====================================================
        TRILIUN
     ===================================================== */
 
     if (
-        Math.abs(
-            number
-        )
+        abs
         >=
         1000000000000
     ) {
@@ -3408,9 +4000,7 @@ function formatDashboardAxisCurrency(
     ===================================================== */
 
     if (
-        Math.abs(
-            number
-        )
+        abs
         >=
         1000000000
     ) {
@@ -3448,9 +4038,7 @@ function formatDashboardAxisCurrency(
     ===================================================== */
 
     if (
-        Math.abs(
-            number
-        )
+        abs
         >=
         1000000
     ) {
@@ -3505,9 +4093,7 @@ function formatDashboardAxisCurrency(
 
 
 /* =========================================================
-   COMPACT PRECISE
-   Digunakan jika suatu elemen JS membutuhkan singkatan
-   tanpa pembulatan.
+   FORMAT COMPACT PRESISI
 
    1.270.746.080.536
    =>
@@ -3517,7 +4103,8 @@ function formatDashboardAxisCurrency(
    =>
    Rp 1,27 T
 
-   Bukan Rp 1,28 T.
+   BUKAN:
+   Rp 1,28 T
 ========================================================= */
 
 function formatDashboardCompactPrecise(
@@ -3533,6 +4120,12 @@ function formatDashboardCompactPrecise(
         0;
 
 
+    const abs =
+        Math.abs(
+            number
+        );
+
+
     const prefix =
         currency
             ?
@@ -3546,9 +4139,7 @@ function formatDashboardCompactPrecise(
     ===================================================== */
 
     if (
-        Math.abs(
-            number
-        )
+        abs
         >=
         1000000000000
     ) {
@@ -3586,9 +4177,7 @@ function formatDashboardCompactPrecise(
     ===================================================== */
 
     if (
-        Math.abs(
-            number
-        )
+        abs
         >=
         1000000000
     ) {
@@ -3626,9 +4215,7 @@ function formatDashboardCompactPrecise(
     ===================================================== */
 
     if (
-        Math.abs(
-            number
-        )
+        abs
         >=
         1000000
     ) {
@@ -3666,9 +4253,7 @@ function formatDashboardCompactPrecise(
     ===================================================== */
 
     if (
-        Math.abs(
-            number
-        )
+        abs
         >=
         1000
     ) {
@@ -3701,21 +4286,10 @@ function formatDashboardCompactPrecise(
     }
 
 
-    /* =====================================================
-       NORMAL
-    ===================================================== */
-
     return (
         prefix
         +
-        new Intl.NumberFormat(
-            'id-ID',
-            {
-                maximumFractionDigits:
-                    0
-            }
-        )
-        .format(
+        formatDashboardNumber(
             number
         )
     );
@@ -3723,9 +4297,10 @@ function formatDashboardCompactPrecise(
 
 
 /* =========================================================
-   LEGACY COMPACT
-   Supaya kode lama yang masih memanggil function ini
-   tidak menghasilkan error.
+   LEGACY FORMATTER
+
+   Supaya function lama yang masih memanggil
+   formatDashboardCompact() tidak error.
 ========================================================= */
 
 function formatDashboardCompact(
@@ -3737,4 +4312,4 @@ function formatDashboardCompact(
         value,
         currency
     );
-}
+}   
