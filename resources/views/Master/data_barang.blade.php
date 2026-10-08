@@ -793,7 +793,7 @@
 
 
                         @forelse ($distribusiGolongan
-                                                                                                as $index => $group)
+                                                                                                                                        as $index => $group)
                             @php
 
                                 $count = (int) $group->total;
@@ -900,7 +900,7 @@
                         <tbody>
 
                             @forelse ($barangTerbaru
-                                                                                                    as $index => $item)
+                                                                                                                                            as $index => $item)
                                 <tr>
 
                                     <td>

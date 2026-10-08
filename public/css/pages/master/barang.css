@@ -24,8 +24,10 @@
     overflow: hidden;
     margin: -21px -24px 16px;
     padding: 20px 24px 17px;
-    background: url('../../images/pdam4.png') right center / cover no-repeat;
+
+    background: url('../../images/master/pdam4.png') right center / cover no-repeat;
 }
+
 .barang-hero-overlay {
     position: absolute;
     inset: 0;
