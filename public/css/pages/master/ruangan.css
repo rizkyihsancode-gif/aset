@@ -45,34 +45,27 @@
 
 .ruangan-hero {
     position: relative;
-
     overflow: hidden;
-
     margin: -21px -24px 16px;
-
-    padding: 21px 24px 18px;
+    padding: 20px 24px 17px;
 
     background:
-        url('../../images/pdam4.png')
-        right center /
-        cover
+        url('/images/master/pdam4.png')
+        right center / cover
         no-repeat;
 }
 
-
 .ruangan-hero-overlay {
     position: absolute;
-
     inset: 0;
 
-    background:
-        linear-gradient(
-            90deg,
-            rgba(246, 251, 255, .995) 0%,
-            rgba(242, 249, 255, .97) 30%,
-            rgba(229, 243, 255, .87) 56%,
-            rgba(212, 236, 255, .30) 100%
-        );
+    background: linear-gradient(
+        90deg,
+        rgba(245, 250, 255, .96) 0%,
+        rgba(239, 248, 255, .88) 30%,
+        rgba(225, 241, 255, .60) 55%,
+        rgba(207, 232, 252, .10) 100%
+    );
 
     pointer-events: none;
 }

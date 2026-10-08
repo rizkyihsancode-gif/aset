@@ -51,34 +51,29 @@
 
 .aset-ttp-hero {
     position: relative;
-
     overflow: hidden;
-
-    margin: -21px -24px 10px;
-
-    padding: 23px 24px 13px;
+    margin: -21px -24px 16px;
+    padding: 20px 24px 17px;
 
     background:
-        url('../../images/pdam4.png')
-        right center / cover no-repeat;
+        url('/images/master/pdam4.png')
+        right center / cover
+        no-repeat;
 }
 
 .aset-ttp-hero-overlay {
     position: absolute;
-
     inset: 0;
 
-    pointer-events: none;
+    background: linear-gradient(
+        90deg,
+        rgba(245, 250, 255, .96) 0%,
+        rgba(239, 248, 255, .88) 30%,
+        rgba(225, 241, 255, .60) 55%,
+        rgba(207, 232, 252, .10) 100%
+    );
 
-    background:
-        linear-gradient(
-            90deg,
-            rgba(247,251,255,.99) 0%,
-            rgba(240,248,255,.97) 30%,
-            rgba(225,241,255,.87) 55%,
-            rgba(205,231,253,.34) 76%,
-            rgba(205,231,253,.08) 100%
-        );
+    pointer-events: none;
 }
 
 .aset-ttp-hero-inner {

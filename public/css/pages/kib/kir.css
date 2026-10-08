@@ -41,13 +41,11 @@
 .kir-hero {
     position: relative;
     overflow: hidden;
-
-    margin: -21px -24px 10px;
-
-    padding: 24px 24px 12px;
+    margin: -21px -24px 16px;
+    padding: 20px 24px 17px;
 
     background:
-        url('../../images/pdam4.png')
+        url('/images/master/pdam4.png')
         right center / cover
         no-repeat;
 }
@@ -56,14 +54,15 @@
     position: absolute;
     inset: 0;
 
-    background:
-        linear-gradient(
-            90deg,
-            rgba(246, 251, 255, .995) 0%,
-            rgba(239, 248, 255, .96) 36%,
-            rgba(221, 239, 255, .80) 62%,
-            rgba(200, 228, 250, .18) 100%
-        );
+    background: linear-gradient(
+        90deg,
+        rgba(245, 250, 255, .96) 0%,
+        rgba(239, 248, 255, .88) 30%,
+        rgba(225, 241, 255, .60) 55%,
+        rgba(207, 232, 252, .10) 100%
+    );
+
+    pointer-events: none;
 }
 
 .kir-hero-inner {

@@ -25,15 +25,27 @@
     margin: -21px -24px 16px;
     padding: 20px 24px 17px;
 
-    background: url('../../images/master/pdam4.png') right center / cover no-repeat;
+    background:
+        url('/images/master/pdam4.png')
+        right center / cover
+        no-repeat;
 }
 
 .barang-hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient( 90deg, rgba(245,250,255,.99) 0%, rgba(239,248,255,.96) 30%, rgba(225,241,255,.86) 55%, rgba(207,232,252,.22) 100% );
+
+    background: linear-gradient(
+        90deg,
+        rgba(245, 250, 255, .96) 0%,
+        rgba(239, 248, 255, .88) 30%,
+        rgba(225, 241, 255, .60) 55%,
+        rgba(207, 232, 252, .10) 100%
+    );
+
     pointer-events: none;
 }
+
 .barang-hero-top {
     position: relative;
     z-index: 2;
