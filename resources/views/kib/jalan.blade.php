@@ -3,7 +3,8 @@
 @section('title', 'Jalan, Irigasi dan Jaringan')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kib/jalan.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/jalan.css') }}?v={{ filemtime(public_path('css/pages/kib/jalan.css')) }}">
 @endpush
 
 @section('content')

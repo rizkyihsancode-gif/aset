@@ -3,7 +3,8 @@
 @section('title', 'Peralatan dan Mesin')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kib/mesin.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/mesin.css') }}?v={{ filemtime(public_path('css/pages/kib/mesin.css')) }}">
 @endpush
 
 @section('content')
