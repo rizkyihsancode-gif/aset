@@ -70,7 +70,7 @@
                 </div>
 
                 <h1>
-                    Nilai Aset
+                    Nilai Aset (MASI DALAM TAHAP DEVELOPMENT)
                 </h1>
 
                 <p>
