@@ -79,18 +79,6 @@
     pointer-events: none;
 }
 
-.mesin-hero-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-        radial-gradient(
-            circle at 72% 15%,
-            rgba(255, 255, 255, .42),
-            transparent 34%
-        );
-}
 
 .mesin-hero-inner {
     position: relative;

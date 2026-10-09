@@ -186,43 +186,43 @@
 
             <div class="sidebar-submenu">
 
-                <a href="{{ url('/kib/tanah') }}"
+                <a href="{{ route('kib.tanah') }}"
                     class="sidebar-submenu-item {{ request()->is('kib/tanah') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon"><i data-lucide="map"></i></span>
                     <span class="sidebar-submenu-text">Tanah</span>
                 </a>
 
-                <a href="{{ url('/kib/mesin') }}"
+                <a href="{{ route('kib.mesin') }}"
                     class="sidebar-submenu-item {{ request()->is('kib/mesin') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon"><i data-lucide="settings"></i></span>
                     <span class="sidebar-submenu-text">Peralatan &amp; Mesin</span>
                 </a>
 
-                <a href="{{ url('/kib/gedung') }}"
+                <a href="{{ route('kib.gedung') }}"
                     class="sidebar-submenu-item {{ request()->is('kib/gedung') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon"><i data-lucide="building-2"></i></span>
                     <span class="sidebar-submenu-text">Gedung &amp; Bangunan</span>
                 </a>
 
-                <a href="{{ url('/kib/jalan') }}"
+                <a href="{{ route('kib.jalan') }}"
                     class="sidebar-submenu-item {{ request()->is('kib/jalan') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon"><i data-lucide="route"></i></span>
                     <span class="sidebar-submenu-text">Jalan, Irigasi &amp; Jaringan</span>
                 </a>
 
-                <a href="{{ url('/kib/aset-ttp') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/aset-ttp') ? 'active' : '' }}">
+                <a href="{{ route('kib.aset_ttp') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/aset_ ttp') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon"><i data-lucide="package-open"></i></span>
                     <span class="sidebar-submenu-text">Aset Tetap Lainnya</span>
                 </a>
 
-                <a href="{{ url('/kib/kontruksi') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/kontruksi') ? 'active' : '' }}">
+                <a href="{{ route('kib.konstruksi') }}"
+                    class="sidebar-submenu-item {{ request()->is('kib/konstruksi') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon"><i data-lucide="construction"></i></span>
                     <span class="sidebar-submenu-text">Konstruksi</span>
                 </a>
 
-                <a href="{{ url('/kib/kir') }}"
+                <a href="{{ route('kib.kir') }}"
                     class="sidebar-submenu-item {{ request()->is('kib/kir') ? 'active' : '' }}">
                     <span class="sidebar-submenu-icon"><i data-lucide="clipboard-list"></i></span>
                     <span class="sidebar-submenu-text">K.I.R</span>
