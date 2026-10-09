@@ -6,7 +6,6 @@
 
         $truncateNumber = function ($value, $precision = 2) {
             $value = (float) $value;
-
             $factor = pow(10, $precision);
 
             return $value >= 0 ? floor($value * $factor) / $factor : ceil($value * $factor) / $factor;
@@ -14,7 +13,6 @@
 
         $compactRupiah = function ($value) use ($truncateNumber) {
             $value = (float) ($value ?? 0);
-
             $absolute = abs($value);
 
             if ($absolute >= 1000000000000) {
@@ -56,9 +54,8 @@
 
     <div id="nilaiPage" class="nilai-page" data-validation-errors="{{ $errors->any() ? '1' : '0' }}">
 
-
         {{-- =====================================================
-         HEADING
+         HEADER
     ====================================================== --}}
 
         <section class="nilai-heading-section">
@@ -70,14 +67,13 @@
                 </div>
 
                 <h1>
-                    Nilai Aset (MASI DALAM TAHAP DEVELOPMENT)
+                    Nilai Aset
                 </h1>
 
                 <p>
-                    Kelola transaksi penilaian aset,
-                    voucher, lokasi, unit kerja,
-                    kategori aset, serta dokumen
-                    pendukung Perumda Tirta Kencana.
+                    Kelola transaksi penilaian aset, voucher, lokasi,
+                    unit kerja, kategori aset, serta dokumen pendukung
+                    Perumda Tirta Kencana.
                 </p>
 
             </div>
@@ -94,16 +90,11 @@
                     <div>
 
                         <strong>
-
                             {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
-
                         </strong>
 
                         <span>
-
-                            {{ now('Asia/Makassar')->format('H:i') }}
-                            WITA
-
+                            {{ now('Asia/Makassar')->format('H:i') }} WITA
                         </span>
 
                     </div>
@@ -112,11 +103,9 @@
 
 
                 <button type="button" id="nilaiAddButton" class="nilai-primary-button">
-
                     <i data-lucide="plus"></i>
 
                     Tambah Nilai Aset
-
                 </button>
 
             </div>
@@ -187,9 +176,7 @@
                     </span>
 
                     <strong title="{{ $fullRupiah($stats['total_nilai']) }}">
-
                         {{ $compactRupiah($stats['total_nilai']) }}
-
                     </strong>
 
                     <small>
@@ -214,21 +201,16 @@
                     </span>
 
                     <strong title="{{ $fullRupiah($stats['penambahan_tahun_ini']) }}">
-
                         {{ $compactRupiah($stats['penambahan_tahun_ini']) }}
-
                     </strong>
-
 
                     @if (!is_null($stats['delta_tahun']))
                         <small class="{{ $stats['delta_tahun'] >= 0 ? 'positive' : 'negative' }}">
-
                             {{ $stats['delta_tahun'] >= 0 ? '↑' : '↓' }}
 
                             {{ number_format(abs($stats['delta_tahun']), 1, ',', '.') }}%
 
                             dari tahun lalu
-
                         </small>
                     @else
                         <small>
@@ -254,9 +236,7 @@
                     </span>
 
                     <strong>
-
                         {{ number_format($stats['total_transaksi'], 0, ',', '.') }}
-
                     </strong>
 
                     <small>
@@ -281,9 +261,7 @@
                     </span>
 
                     <strong>
-
                         {{ $stats['tahun_aktif'] }}
-
                     </strong>
 
                     <small>
@@ -298,7 +276,7 @@
 
 
         {{-- =====================================================
-         CHART
+         GRAFIK
     ====================================================== --}}
 
         <section class="nilai-chart-grid">
@@ -314,8 +292,7 @@
                         </h2>
 
                         <p>
-                            Nilai transaksi berdasarkan
-                            tahun pencatatan.
+                            Nilai transaksi berdasarkan tahun pencatatan.
                         </p>
 
                     </div>
@@ -364,9 +341,7 @@
                         <div class="nilai-donut-center">
 
                             <strong>
-
                                 {{ $compactRupiah($stats['total_nilai']) }}
-
                             </strong>
 
                             <span>
@@ -500,20 +475,16 @@
 
 
                 <button type="submit" class="nilai-filter-button">
-
                     <i data-lucide="filter"></i>
 
                     Filter
-
                 </button>
 
 
                 <a href="{{ route('main.nilai') }}" class="nilai-reset-button">
-
                     <i data-lucide="rotate-ccw"></i>
 
                     Reset
-
                 </a>
 
             </form>
@@ -536,8 +507,7 @@
                     </h2>
 
                     <p>
-                        Data transaksi nilai aset
-                        dari PostgreSQL.
+                        Data transaksi nilai aset dari PostgreSQL.
                     </p>
 
                 </div>
@@ -656,6 +626,8 @@
                                             @if ($item->aktiva_kode)
                                                 <small>
 
+                                                    <i data-lucide="hash"></i>
+
                                                     {{ $item->aktiva_kode }}
 
                                                 </small>
@@ -719,11 +691,11 @@
 
                                     <td class="nilai-pdf-column">
 
-                                        @if ($item->dokumen_pdf)
+                                        @if (!empty($item->dokumen_pdf))
                                             <button type="button" class="nilai-pdf-button js-pdf-button"
                                                 data-preview-url="{{ route('nilai.pdf.preview', $item->id) }}"
                                                 data-download-url="{{ route('nilai.pdf.download', $item->id) }}"
-                                                data-pdf-name="{{ $item->dokumen_pdf_nama_asli ?: 'Dokumen PDF' }}">
+                                                data-pdf-name="{{ $item->dokumen_pdf_nama_asli ?? 'Dokumen PDF' }}">
 
                                                 <i data-lucide="file-text"></i>
 
@@ -732,7 +704,9 @@
                                             </button>
                                         @else
                                             <span class="nilai-no-document">
+
                                                 Belum ada
+
                                             </span>
                                         @endif
 
@@ -786,8 +760,7 @@
                                     </strong>
 
                                     <span>
-                                        Ubah filter atau
-                                        kata pencarian.
+                                        Coba ubah filter atau kata pencarian.
                                     </span>
 
                                 </td>
@@ -801,6 +774,10 @@
 
             </div>
 
+
+            {{-- =================================================
+             TABLE FOOTER + CUSTOM PAGINATION
+        ================================================== --}}
 
             <div class="nilai-table-footer">
 
@@ -822,9 +799,7 @@
                         dari
 
                         <strong>
-
                             {{ number_format($nilaiAsets->total(), 0, ',', '.') }}
-
                         </strong>
 
                         data
@@ -837,7 +812,8 @@
 
                 <div class="nilai-pagination-wrapper">
 
-                    <form action="{{ route('main.nilai') }}" method="GET">
+                    {{-- PER PAGE --}}
+                    <form action="{{ route('main.nilai') }}" method="GET" class="nilai-per-page-form">
 
                         @foreach (request()->except('per_page', 'page') as $key => $value)
                             @if (!is_array($value))
@@ -846,14 +822,11 @@
                         @endforeach
 
 
-                        <select name="per_page" onchange="this.form.submit()">
+                        <select name="per_page" onchange="this.form.submit()" aria-label="Jumlah data per halaman">
 
                             @foreach ([10, 20, 50, 100] as $size)
                                 <option value="{{ $size }}" @selected(request('per_page', 20) == $size)>
-
-                                    {{ $size }}
-                                    per halaman
-
+                                    {{ $size }} per halaman
                                 </option>
                             @endforeach
 
@@ -862,11 +835,98 @@
                     </form>
 
 
-                    <div class="nilai-pagination">
+                    {{-- CUSTOM PAGINATION --}}
+                    @if ($nilaiAsets->lastPage() > 1)
 
-                        {{ $nilaiAsets->onEachSide(1)->links() }}
+                        @php
 
-                    </div>
+                            $currentPage = $nilaiAsets->currentPage();
+
+                            $lastPage = $nilaiAsets->lastPage();
+
+                            $startPage = max(1, $currentPage - 2);
+
+                            $endPage = min($lastPage, $currentPage + 2);
+
+                        @endphp
+
+
+                        <div class="nilai-pagination">
+
+                            {{-- PREVIOUS --}}
+                            @if ($nilaiAsets->onFirstPage())
+                                <button type="button" class="nilai-page-button" disabled
+                                    aria-label="Halaman sebelumnya">
+                                    <i data-lucide="chevron-left"></i>
+                                </button>
+                            @else
+                                <a href="{{ $nilaiAsets->previousPageUrl() }}" class="nilai-page-button"
+                                    aria-label="Halaman sebelumnya">
+                                    <i data-lucide="chevron-left"></i>
+                                </a>
+                            @endif
+
+
+                            {{-- FIRST PAGE --}}
+                            @if ($startPage > 1)
+                                <a href="{{ $nilaiAsets->url(1) }}" class="nilai-page-button">
+                                    1
+                                </a>
+
+
+                                @if ($startPage > 2)
+                                    <span class="nilai-page-dots">
+                                        ...
+                                    </span>
+                                @endif
+                            @endif
+
+
+                            {{-- PAGE NUMBERS --}}
+                            @for ($pageNumber = $startPage; $pageNumber <= $endPage; $pageNumber++)
+                                @if ($pageNumber === $currentPage)
+                                    <span class="nilai-page-button active" aria-current="page">
+                                        {{ $pageNumber }}
+                                    </span>
+                                @else
+                                    <a href="{{ $nilaiAsets->url($pageNumber) }}" class="nilai-page-button">
+                                        {{ $pageNumber }}
+                                    </a>
+                                @endif
+                            @endfor
+
+
+                            {{-- LAST PAGE --}}
+                            @if ($endPage < $lastPage)
+                                @if ($endPage < $lastPage - 1)
+                                    <span class="nilai-page-dots">
+                                        ...
+                                    </span>
+                                @endif
+
+
+                                <a href="{{ $nilaiAsets->url($lastPage) }}" class="nilai-page-button">
+                                    {{ $lastPage }}
+                                </a>
+                            @endif
+
+
+                            {{-- NEXT --}}
+                            @if ($nilaiAsets->hasMorePages())
+                                <a href="{{ $nilaiAsets->nextPageUrl() }}" class="nilai-page-button"
+                                    aria-label="Halaman berikutnya">
+                                    <i data-lucide="chevron-right"></i>
+                                </a>
+                            @else
+                                <button type="button" class="nilai-page-button" disabled
+                                    aria-label="Halaman berikutnya">
+                                    <i data-lucide="chevron-right"></i>
+                                </button>
+                            @endif
+
+                        </div>
+
+                    @endif
 
                 </div>
 
@@ -902,8 +962,7 @@
                         </h3>
 
                         <p>
-                            Isi data transaksi nilai
-                            dan lampirkan dokumen PDF.
+                            Isi data transaksi dan lampirkan dokumen PDF.
                         </p>
 
                     </div>
@@ -960,11 +1019,9 @@
 
                                 @foreach ($aktivaOptions as $item)
                                     <option value="{{ $item->id }}" @selected(old('id_aktiva') == $item->id)>
-
                                         {{ $item->kode }}
                                         |
                                         {{ $item->aktiva }}
-
                                     </option>
                                 @endforeach
 
@@ -988,9 +1045,7 @@
 
                                 @foreach ($lokasiOptions as $item)
                                     <option value="{{ $item->id }}" @selected(old('id_lokasi') == $item->id)>
-
                                         {{ $item->lokasi }}
-
                                     </option>
                                 @endforeach
 
@@ -1014,9 +1069,7 @@
 
                                 @foreach ($departemenOptions as $item)
                                     <option value="{{ $item->id }}" @selected(old('dep') == $item->id)>
-
                                         {{ $item->kode_dep }}
-
                                     </option>
                                 @endforeach
 
@@ -1041,9 +1094,7 @@
                                 @foreach ($divisiOptions as $item)
                                     <option value="{{ $item->id }}" data-departemen="{{ $item->id_dep }}"
                                         @selected(old('div') == $item->id)>
-
                                         {{ $item->nama_div }}
-
                                     </option>
                                 @endforeach
 
@@ -1067,9 +1118,7 @@
 
                                 @foreach ($golonganOptions as $item)
                                     <option value="{{ $item->id }}" @selected(old('cat') == $item->id)>
-
                                         {{ $item->nama }}
-
                                     </option>
                                 @endforeach
 
@@ -1093,9 +1142,7 @@
 
                                 @foreach ($tahunOptions as $tahun)
                                     <option value="{{ $tahun }}" @selected(old('tahun', $currentYear) == $tahun)>
-
                                         {{ $tahun }}
-
                                     </option>
                                 @endforeach
 
@@ -1119,9 +1166,7 @@
 
                                 @foreach ($jenisOptions as $item)
                                     <option value="{{ $item['id'] }}" @selected(old('jenisn') == $item['id'])>
-
                                         {{ $item['nama'] }}
-
                                     </option>
                                 @endforeach
 
@@ -1178,7 +1223,9 @@
                                 <div class="nilai-upload-content">
 
                                     <div class="nilai-upload-icon">
+
                                         <i data-lucide="file-up"></i>
+
                                     </div>
 
 
@@ -1189,8 +1236,7 @@
                                         </strong>
 
                                         <span>
-                                            Format PDF,
-                                            maksimal 15 MB.
+                                            Format PDF, maksimal 15 MB.
                                         </span>
 
                                     </div>
@@ -1241,6 +1287,7 @@
                                 <span id="nilaiLocalPdfName"></span>
 
                             </div>
+
 
                             <iframe id="nilaiLocalPdfFrame" title="Preview PDF Baru"></iframe>
 
@@ -1299,9 +1346,7 @@
 
 
                 <button type="button" class="nilai-modal-close" data-close-dialog="nilaiDetailModal">
-
                     <i data-lucide="x"></i>
-
                 </button>
 
             </div>
@@ -1312,134 +1357,54 @@
                 <div class="nilai-detail-grid">
 
                     <div>
-
-                        <span>
-                            No Voucher
-                        </span>
-
-                        <strong id="detailVoucher">
-                            -
-                        </strong>
-
+                        <span>No Voucher</span>
+                        <strong id="detailVoucher">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Tanggal
-                        </span>
-
-                        <strong id="detailTanggal">
-                            -
-                        </strong>
-
+                        <span>Tanggal</span>
+                        <strong id="detailTanggal">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Aktiva
-                        </span>
-
-                        <strong id="detailAktiva">
-                            -
-                        </strong>
-
+                        <span>Aktiva</span>
+                        <strong id="detailAktiva">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Tahun
-                        </span>
-
-                        <strong id="detailTahun">
-                            -
-                        </strong>
-
+                        <span>Tahun</span>
+                        <strong id="detailTahun">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Lokasi
-                        </span>
-
-                        <strong id="detailLokasi">
-                            -
-                        </strong>
-
+                        <span>Lokasi</span>
+                        <strong id="detailLokasi">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Departemen
-                        </span>
-
-                        <strong id="detailDepartemen">
-                            -
-                        </strong>
-
+                        <span>Departemen</span>
+                        <strong id="detailDepartemen">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Divisi
-                        </span>
-
-                        <strong id="detailDivisi">
-                            -
-                        </strong>
-
+                        <span>Divisi</span>
+                        <strong id="detailDivisi">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Golongan
-                        </span>
-
-                        <strong id="detailGolongan">
-                            -
-                        </strong>
-
+                        <span>Golongan</span>
+                        <strong id="detailGolongan">-</strong>
                     </div>
-
 
                     <div>
-
-                        <span>
-                            Jenis
-                        </span>
-
-                        <strong id="detailJenis">
-                            -
-                        </strong>
-
+                        <span>Jenis</span>
+                        <strong id="detailJenis">-</strong>
                     </div>
-
 
                     <div class="nilai-detail-money">
-
-                        <span>
-                            Nilai
-                        </span>
-
-                        <strong id="detailNilai">
-                            Rp 0
-                        </strong>
-
+                        <span>Nilai</span>
+                        <strong id="detailNilai">Rp 0</strong>
                     </div>
-
 
                     <div class="nilai-detail-full">
 
@@ -1479,7 +1444,7 @@
 
 
         {{-- =====================================================
-         PDF MODAL
+         PDF PREVIEW
     ====================================================== --}}
 
         <dialog id="nilaiPdfModal" class="nilai-modal nilai-pdf-modal">
@@ -1500,9 +1465,7 @@
 
 
                 <button type="button" class="nilai-modal-close" data-close-dialog="nilaiPdfModal">
-
                     <i data-lucide="x"></i>
-
                 </button>
 
             </div>
@@ -1523,11 +1486,9 @@
 
 
                 <a href="#" id="nilaiPdfDownload" class="nilai-primary-button">
-
                     <i data-lucide="download"></i>
 
                     Download PDF
-
                 </a>
 
             </div>
@@ -1550,7 +1511,9 @@
                 <div class="nilai-delete-body">
 
                     <div class="nilai-delete-icon">
+
                         <i data-lucide="triangle-alert"></i>
+
                     </div>
 
                     <h3>
@@ -1565,8 +1528,7 @@
 
                         akan dihapus secara permanen.
 
-                        Jika data memiliki PDF,
-                        dokumen PDF juga akan dihapus.
+                        Jika memiliki PDF, dokumen PDF juga akan dihapus.
 
                     </p>
 
@@ -1595,23 +1557,19 @@
         </dialog>
 
 
+        {{-- =====================================================
+         DATA CHART
+    ====================================================== --}}
+
         <script
         type="application/json"
         id="nilaiChartData"
     >{!! json_encode([
-        'trendLabels' =>
-            $trendLabels,
-
-        'trendValues' =>
-            $trendValues,
-
-        'categoryLabels' =>
-            $categoryLabels,
-
-        'categoryValues' =>
-            $categoryValues,
+        'trendLabels' => $trendLabels,
+        'trendValues' => $trendValues,
+        'categoryLabels' => $categoryLabels,
+        'categoryValues' => $categoryValues,
     ]) !!}</script>
-
 
     </div>
 
