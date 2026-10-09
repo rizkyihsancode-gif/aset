@@ -1064,12 +1064,14 @@
                             <select name="dep" id="nilaiDepartemen" required>
 
                                 <option value="">
-                                    -DEPARTEMEN-
+                                    - PILIH DEPARTEMEN -
                                 </option>
 
                                 @foreach ($departemenOptions as $item)
                                     <option value="{{ $item->id }}" @selected(old('dep') == $item->id)>
-                                        {{ $item->kode_dep }}
+
+                                        {{ $item->nama_dep }}
+
                                     </option>
                                 @endforeach
 
@@ -1088,13 +1090,15 @@
                             <select name="div" id="nilaiDivisi" required>
 
                                 <option value="">
-                                    -DIVISI-
+                                    - PILIH DIVISI -
                                 </option>
 
                                 @foreach ($divisiOptions as $item)
                                     <option value="{{ $item->id }}" data-departemen="{{ $item->id_dep }}"
                                         @selected(old('div') == $item->id)>
+
                                         {{ $item->nama_div }}
+
                                     </option>
                                 @endforeach
 

@@ -27,10 +27,9 @@ class NilaiAsetController extends Controller
             $perPage = 20;
         }
 
-
         /*
         |--------------------------------------------------------------------------
-        | QUERY NILAI ASET
+        | QUERY UTAMA
         |--------------------------------------------------------------------------
         */
 
@@ -80,13 +79,22 @@ class NilaiAsetController extends Controller
 
                 'l.lokasi as lokasi_nama',
 
-                'd.kode_dep as departemen_nama',
+                DB::raw(
+                    "TRIM(d.nama_dep) as departemen_nama"
+                ),
 
-                'dv.nama_div as divisi_nama',
+                DB::raw(
+                    "TRIM(d.kode_dep) as departemen_kode"
+                ),
 
-                'g.nama as golongan_nama',
+                DB::raw(
+                    "TRIM(dv.nama_div) as divisi_nama"
+                ),
+
+                DB::raw(
+                    "TRIM(g.nama) as golongan_nama"
+                ),
             ]);
-
 
         /*
         |--------------------------------------------------------------------------
@@ -101,14 +109,12 @@ class NilaiAsetController extends Controller
             )
         );
 
-
         if ($search !== '') {
 
             $needle =
                 '%' .
                 mb_strtolower($search) .
                 '%';
-
 
             $query->where(
                 function ($q) use ($needle) {
@@ -124,17 +130,43 @@ class NilaiAsetController extends Controller
                         )
 
                         ->orWhereRaw(
-                            "LOWER(COALESCE(a.aktiva, '')) LIKE ?",
-                            [$needle]
-                        )
-
-                        ->orWhereRaw(
                             "LOWER(COALESCE(a.kode, '')) LIKE ?",
                             [$needle]
                         )
 
                         ->orWhereRaw(
+                            "LOWER(COALESCE(a.aktiva, '')) LIKE ?",
+                            [$needle]
+                        )
+
+                        ->orWhereRaw(
+                            "LOWER(COALESCE(a.kib, '')) LIKE ?",
+                            [$needle]
+                        )
+
+                        ->orWhereRaw(
                             "LOWER(COALESCE(l.lokasi, '')) LIKE ?",
+                            [$needle]
+                        )
+
+                        /*
+                    | Cari berdasarkan nama departemen
+                    */
+                        ->orWhereRaw(
+                            "LOWER(COALESCE(d.nama_dep, '')) LIKE ?",
+                            [$needle]
+                        )
+
+                        /*
+                    | Kode departemen juga tetap bisa dicari
+                    */
+                        ->orWhereRaw(
+                            "LOWER(COALESCE(d.kode_dep, '')) LIKE ?",
+                            [$needle]
+                        )
+
+                        ->orWhereRaw(
+                            "LOWER(COALESCE(dv.nama_div, '')) LIKE ?",
                             [$needle]
                         )
 
@@ -145,7 +177,6 @@ class NilaiAsetController extends Controller
                 }
             );
         }
-
 
         /*
         |--------------------------------------------------------------------------
@@ -161,7 +192,6 @@ class NilaiAsetController extends Controller
             );
         }
 
-
         if ($request->filled('lokasi')) {
 
             $query->where(
@@ -169,7 +199,6 @@ class NilaiAsetController extends Controller
                 (int) $request->lokasi
             );
         }
-
 
         if ($request->filled('cat')) {
 
@@ -179,7 +208,6 @@ class NilaiAsetController extends Controller
             );
         }
 
-
         if ($request->filled('dep')) {
 
             $query->where(
@@ -187,7 +215,6 @@ class NilaiAsetController extends Controller
                 (int) $request->dep
             );
         }
-
 
         if ($request->filled('div')) {
 
@@ -197,7 +224,6 @@ class NilaiAsetController extends Controller
             );
         }
 
-
         /*
         |--------------------------------------------------------------------------
         | PAGINATION
@@ -206,24 +232,17 @@ class NilaiAsetController extends Controller
 
         $nilaiAsets = $query
 
-            ->orderByDesc(
-                'n.tgl_voucher'
-            )
+            ->orderByDesc('n.tgl_voucher')
 
-            ->orderByDesc(
-                'n.id'
-            )
+            ->orderByDesc('n.id')
 
-            ->paginate(
-                $perPage
-            )
+            ->paginate($perPage)
 
             ->withQueryString();
 
-
         /*
         |--------------------------------------------------------------------------
-        | MASTER DATA AKTIVA
+        | MASTER AKTIVA
         |--------------------------------------------------------------------------
         */
 
@@ -242,7 +261,6 @@ class NilaiAsetController extends Controller
 
             ->get();
 
-
         /*
         |--------------------------------------------------------------------------
         | MASTER LOKASI
@@ -260,26 +278,34 @@ class NilaiAsetController extends Controller
 
             ->get();
 
-
         /*
         |--------------------------------------------------------------------------
         | MASTER DEPARTEMEN
         |--------------------------------------------------------------------------
+        |
+        | id       = disimpan ke nilai_aktivas.dep
+        | nama_dep = ditampilkan ke user
+        | kode_dep = kode internal
+        |
         */
 
-        $departemenOptions = DB::table(
-            'departemens'
-        )
+        $departemenOptions = DB::table('departemens')
 
-            ->select([
-                'id',
-                'kode_dep',
-            ])
+            ->select('id')
 
-            ->orderBy('kode_dep')
+            ->selectRaw(
+                'TRIM(nama_dep) as nama_dep'
+            )
+
+            ->selectRaw(
+                'TRIM(kode_dep) as kode_dep'
+            )
+
+            ->orderByRaw(
+                'TRIM(nama_dep) ASC'
+            )
 
             ->get();
-
 
         /*
         |--------------------------------------------------------------------------
@@ -287,20 +313,22 @@ class NilaiAsetController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $divisiOptions = DB::table(
-            'divisis'
-        )
+        $divisiOptions = DB::table('divisis')
 
             ->select([
                 'id',
                 'id_dep',
-                'nama_div',
             ])
 
-            ->orderBy('nama_div')
+            ->selectRaw(
+                'TRIM(nama_div) as nama_div'
+            )
+
+            ->orderByRaw(
+                'TRIM(nama_div) ASC'
+            )
 
             ->get();
-
 
         /*
         |--------------------------------------------------------------------------
@@ -308,19 +336,17 @@ class NilaiAsetController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $golonganOptions = DB::table(
-            'golongans'
-        )
+        $golonganOptions = DB::table('golongans')
 
-            ->select([
-                'id',
-                'nama',
-            ])
+            ->select('id')
+
+            ->selectRaw(
+                'TRIM(nama) as nama'
+            )
 
             ->orderBy('id')
 
             ->get();
-
 
         /*
         |--------------------------------------------------------------------------
@@ -340,7 +366,6 @@ class NilaiAsetController extends Controller
             ],
         ]);
 
-
         /*
         |--------------------------------------------------------------------------
         | TAHUN
@@ -352,15 +377,12 @@ class NilaiAsetController extends Controller
                 'Asia/Makassar'
             )->format('Y');
 
-
-        $tahunOptions =
-            collect(
-                range(
-                    $currentYear + 10,
-                    $currentYear - 30
-                )
-            );
-
+        $tahunOptions = collect(
+            range(
+                $currentYear + 10,
+                $currentYear - 50
+            )
+        );
 
         /*
         |--------------------------------------------------------------------------
@@ -368,48 +390,69 @@ class NilaiAsetController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $totalNilai =
-            (int) DB::table(
-                'nilai_aktivas'
-            )->sum('nilai');
+        $totalNilai = (int) DB::table(
+            'nilai_aktivas'
+        )->sum('nilai');
 
+        $totalTransaksi = DB::table(
+            'nilai_aktivas'
+        )->count();
 
-        $totalTransaksi =
-            DB::table(
-                'nilai_aktivas'
-            )->count();
-
-
-        $penambahanTahunIni =
-            (int) DB::table(
-                'nilai_aktivas'
+        $penambahanTahunIni = (int) DB::table(
+            'nilai_aktivas'
+        )
+            ->where(
+                'tahun',
+                (string) $currentYear
             )
+            ->sum('nilai');
 
-                ->where(
-                    'tahun',
-                    (string) $currentYear
+        $previousYear =
+            $currentYear - 1;
+
+        $penambahanTahunLalu = (int) DB::table(
+            'nilai_aktivas'
+        )
+            ->where(
+                'tahun',
+                (string) $previousYear
+            )
+            ->sum('nilai');
+
+        $deltaTahun =
+            null;
+
+        if ($penambahanTahunLalu > 0) {
+
+            $deltaTahun =
+                (
+                    (
+                        $penambahanTahunIni
+                        -
+                        $penambahanTahunLalu
+                    )
+                    /
+                    $penambahanTahunLalu
                 )
+                *
+                100;
+        }
 
-                ->sum('nilai');
-
-
-        $tahunAktif =
-            DB::table(
-                'nilai_aktivas'
-            )
+        $tahunAktif = DB::table(
+            'nilai_aktivas'
+        )
 
             ->whereRaw(
                 "tahun ~ '^[0-9]{4}$'"
             )
 
             ->selectRaw(
-                'MAX(tahun::integer)'
+                'MAX(tahun::integer) AS tahun_aktif'
             )
 
             ->value(
-                'max'
+                'tahun_aktif'
             );
-
 
         $stats = [
 
@@ -422,41 +465,46 @@ class NilaiAsetController extends Controller
             'penambahan_tahun_ini' =>
             $penambahanTahunIni,
 
+            'penambahan_tahun_lalu' =>
+            $penambahanTahunLalu,
+
+            'delta_tahun' =>
+            $deltaTahun,
+
             'tahun_aktif' =>
             $tahunAktif
                 ?: $currentYear,
-
-            'delta_tahun' =>
-            null,
         ];
-
 
         /*
         |--------------------------------------------------------------------------
-        | TREND
+        | TREND 5 TAHUN
         |--------------------------------------------------------------------------
         */
 
-        $trendYears =
-            collect(
-                range(
-                    $currentYear - 4,
-                    $currentYear
-                )
-            );
-
-
-        $trendRaw =
-            DB::table(
-                'nilai_aktivas'
+        $trendYears = collect(
+            range(
+                $currentYear - 4,
+                $currentYear
             )
+        );
+
+        $trendRaw = DB::table(
+            'nilai_aktivas'
+        )
 
             ->selectRaw(
-                'tahun, SUM(COALESCE(nilai,0)) AS total'
+                '
+                tahun,
+                SUM(
+                    COALESCE(nilai, 0)
+                ) AS total
+                '
             )
 
             ->whereIn(
                 'tahun',
+
                 $trendYears
                     ->map(
                         fn($tahun) =>
@@ -472,20 +520,14 @@ class NilaiAsetController extends Controller
                 'tahun'
             );
 
-
         $trendLabels = [];
 
         $trendValues = [];
 
-
-        foreach (
-            $trendYears
-            as $tahun
-        ) {
+        foreach ($trendYears as $tahun) {
 
             $trendLabels[] =
                 (string) $tahun;
-
 
             $trendValues[] =
                 (int) (
@@ -494,17 +536,15 @@ class NilaiAsetController extends Controller
                 );
         }
 
-
         /*
         |--------------------------------------------------------------------------
         | DISTRIBUSI GOLONGAN
         |--------------------------------------------------------------------------
         */
 
-        $distribution =
-            DB::table(
-                'nilai_aktivas as n'
-            )
+        $distribution = DB::table(
+            'nilai_aktivas as n'
+        )
 
             ->leftJoin(
                 'golongans as g',
@@ -516,12 +556,15 @@ class NilaiAsetController extends Controller
             ->selectRaw(
                 "
                 COALESCE(
-                    g.nama,
+                    TRIM(g.nama),
                     'Tanpa Golongan'
                 ) AS nama,
 
                 SUM(
-                    COALESCE(n.nilai,0)
+                    COALESCE(
+                        n.nilai,
+                        0
+                    )
                 ) AS total
                 "
             )
@@ -535,13 +578,11 @@ class NilaiAsetController extends Controller
 
             ->get();
 
-
         $categoryLabels =
             $distribution
             ->pluck('nama')
             ->values()
             ->all();
-
 
         $categoryValues =
             $distribution
@@ -553,45 +594,30 @@ class NilaiAsetController extends Controller
             ->values()
             ->all();
 
-
         return view(
             'main.nilai',
             compact(
                 'nilaiAsets',
-
                 'aktivaOptions',
-
                 'lokasiOptions',
-
                 'departemenOptions',
-
                 'divisiOptions',
-
                 'golonganOptions',
-
                 'jenisOptions',
-
                 'tahunOptions',
-
                 'currentYear',
-
                 'stats',
-
                 'trendLabels',
-
                 'trendValues',
-
                 'categoryLabels',
-
                 'categoryValues'
             )
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
-    | SHOW / DETAIL
+    | SHOW
     |--------------------------------------------------------------------------
     */
 
@@ -645,26 +671,36 @@ class NilaiAsetController extends Controller
                 'n.*',
 
                 'a.kode as aktiva_kode',
+
                 'a.aktiva as aktiva_nama',
+
                 'a.kib as aktiva_kib',
 
                 'l.lokasi as lokasi_nama',
 
-                'd.kode_dep as departemen_nama',
+                DB::raw(
+                    "TRIM(d.nama_dep) as departemen_nama"
+                ),
 
-                'dv.nama_div as divisi_nama',
+                DB::raw(
+                    "TRIM(d.kode_dep) as departemen_kode"
+                ),
 
-                'g.nama as golongan_nama',
+                DB::raw(
+                    "TRIM(dv.nama_div) as divisi_nama"
+                ),
+
+                DB::raw(
+                    "TRIM(g.nama) as golongan_nama"
+                ),
             ])
 
             ->first();
-
 
         abort_if(
             !$data,
             404
         );
-
 
         return response()->json([
             'success' => true,
@@ -712,6 +748,9 @@ class NilaiAsetController extends Controller
 
                 'departemen_nama' =>
                 $data->departemen_nama,
+
+                'departemen_kode' =>
+                $data->departemen_kode,
 
                 'div' =>
                 $data->div,
@@ -778,51 +817,41 @@ class NilaiAsetController extends Controller
         ]);
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | STORE
     |--------------------------------------------------------------------------
     */
 
-    public function store(
-        Request $request
-    ) {
+    public function store(Request $request)
+    {
         $validated =
             $this->validateData(
                 $request
             );
-
 
         $pdf =
             $request->file(
                 'dokumen_pdf'
             );
 
-
         unset(
             $validated['dokumen_pdf']
         );
 
-
         /*
-        | Default sistem lama:
-        | stat 0 = data baru / belum diproses
+        | Status baru sesuai mekanisme lama.
         */
-
         $validated['stat'] =
             0;
 
-
         $validated['user'] =
             Auth::id();
-
 
         $record =
             NilaiAktiva::create(
                 $validated
             );
-
 
         if ($pdf) {
 
@@ -831,7 +860,6 @@ class NilaiAsetController extends Controller
                 $pdf
             );
         }
-
 
         return redirect()
 
@@ -844,7 +872,6 @@ class NilaiAsetController extends Controller
                 'Data Nilai Aset berhasil ditambahkan.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -861,38 +888,23 @@ class NilaiAsetController extends Controller
                 $nilai
             );
 
-
         $validated =
             $this->validateData(
                 $request
             );
-
 
         $pdf =
             $request->file(
                 'dokumen_pdf'
             );
 
-
         unset(
             $validated['dokumen_pdf']
         );
 
-
-        /*
-        | Jangan ubah stat lama
-        | ketika hanya edit data.
-        */
-
-        unset(
-            $validated['stat']
-        );
-
-
         $record->update(
             $validated
         );
-
 
         if ($pdf) {
 
@@ -900,13 +912,11 @@ class NilaiAsetController extends Controller
                 $record
             );
 
-
             $this->storePdf(
                 $record,
                 $pdf
             );
         }
-
 
         return redirect()
 
@@ -919,7 +929,6 @@ class NilaiAsetController extends Controller
                 'Data Nilai Aset berhasil diperbarui.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -934,18 +943,11 @@ class NilaiAsetController extends Controller
                 $nilai
             );
 
-
-        /*
-        | Hapus PDF terlebih dahulu
-        */
-
         $this->deletePdf(
             $record
         );
 
-
         $record->delete();
-
 
         return redirect()
 
@@ -958,7 +960,6 @@ class NilaiAsetController extends Controller
                 'Data Nilai Aset berhasil dihapus.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -979,12 +980,10 @@ class NilaiAsetController extends Controller
                     'max:255',
                 ],
 
-
                 'tgl_voucher' => [
                     'required',
                     'date',
                 ],
-
 
                 'id_aktiva' => [
                     'required',
@@ -996,7 +995,6 @@ class NilaiAsetController extends Controller
                     ),
                 ],
 
-
                 'id_lokasi' => [
                     'required',
                     'integer',
@@ -1007,7 +1005,10 @@ class NilaiAsetController extends Controller
                     ),
                 ],
 
-
+                /*
+                | Yang dikirim oleh dropdown adalah
+                | departemens.id, bukan nama_dep.
+                */
                 'dep' => [
                     'required',
                     'integer',
@@ -1018,7 +1019,10 @@ class NilaiAsetController extends Controller
                     ),
                 ],
 
-
+                /*
+                | Divisi harus benar-benar berada
+                | di departemen yang dipilih.
+                */
                 'div' => [
                     'required',
                     'integer',
@@ -1028,7 +1032,11 @@ class NilaiAsetController extends Controller
                         'id'
                     )
                         ->where(
-                            function ($query) use ($request) {
+                            function (
+                                $query
+                            ) use (
+                                $request
+                            ) {
 
                                 $query->where(
                                     'id_dep',
@@ -1037,7 +1045,6 @@ class NilaiAsetController extends Controller
                             }
                         ),
                 ],
-
 
                 'cat' => [
                     'required',
@@ -1049,22 +1056,20 @@ class NilaiAsetController extends Controller
                     ),
                 ],
 
-
                 'tahun' => [
                     'required',
                     'digits:4',
                 ],
 
-
                 'jenisn' => [
                     'required',
                     'integer',
+
                     Rule::in([
                         1,
                         2,
                     ]),
                 ],
-
 
                 'nilai' => [
                     'required',
@@ -1072,13 +1077,11 @@ class NilaiAsetController extends Controller
                     'min:0',
                 ],
 
-
                 'urai' => [
                     'required',
                     'string',
                     'max:10000',
                 ],
-
 
                 'dokumen_pdf' => [
                     'nullable',
@@ -1090,6 +1093,9 @@ class NilaiAsetController extends Controller
             ],
             [
 
+                'tgl_voucher.required' =>
+                'Tanggal voucher wajib diisi.',
+
                 'id_aktiva.required' =>
                 'Aktiva wajib dipilih.',
 
@@ -1099,17 +1105,26 @@ class NilaiAsetController extends Controller
                 'dep.required' =>
                 'Departemen wajib dipilih.',
 
+                'dep.exists' =>
+                'Departemen tidak valid.',
+
                 'div.required' =>
                 'Divisi wajib dipilih.',
 
+                'div.exists' =>
+                'Divisi tidak sesuai dengan Departemen.',
+
                 'cat.required' =>
                 'Golongan wajib dipilih.',
+
+                'tahun.required' =>
+                'Tahun wajib diisi.',
 
                 'jenisn.required' =>
                 'Jenis transaksi wajib dipilih.',
 
                 'nilai.required' =>
-                'Nilai wajib diisi.',
+                'Nilai aset wajib diisi.',
 
                 'urai.required' =>
                 'Uraian wajib diisi.',
@@ -1123,10 +1138,9 @@ class NilaiAsetController extends Controller
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
-    | PDF PREVIEW
+    | PREVIEW PDF
     |--------------------------------------------------------------------------
     */
 
@@ -1137,7 +1151,6 @@ class NilaiAsetController extends Controller
                 $nilai
             );
 
-
         if (
             !$record->dokumen_pdf
             ||
@@ -1153,13 +1166,11 @@ class NilaiAsetController extends Controller
             );
         }
 
-
         $path =
             Storage::disk('local')
             ->path(
                 $record->dokumen_pdf
             );
-
 
         $filename =
             $record
@@ -1169,6 +1180,16 @@ class NilaiAsetController extends Controller
                 $record->dokumen_pdf
             );
 
+        $filename =
+            str_replace(
+                [
+                    '"',
+                    "\r",
+                    "\n",
+                ],
+                '',
+                $filename
+            );
 
         return response()->file(
             $path,
@@ -1178,21 +1199,15 @@ class NilaiAsetController extends Controller
 
                 'Content-Disposition' =>
                 'inline; filename="' .
-                    str_replace(
-                        '"',
-                        '',
-                        $filename
-                    )
-                    .
+                    $filename .
                     '"',
             ]
         );
     }
 
-
     /*
     |--------------------------------------------------------------------------
-    | PDF DOWNLOAD
+    | DOWNLOAD PDF
     |--------------------------------------------------------------------------
     */
 
@@ -1203,7 +1218,6 @@ class NilaiAsetController extends Controller
                 $nilai
             );
 
-
         if (
             !$record->dokumen_pdf
             ||
@@ -1219,13 +1233,11 @@ class NilaiAsetController extends Controller
             );
         }
 
-
         $path =
             Storage::disk('local')
             ->path(
                 $record->dokumen_pdf
             );
-
 
         $filename =
             $record
@@ -1235,6 +1247,16 @@ class NilaiAsetController extends Controller
                 $record->dokumen_pdf
             );
 
+        $filename =
+            str_replace(
+                [
+                    '"',
+                    "\r",
+                    "\n",
+                ],
+                '',
+                $filename
+            );
 
         return response()->download(
             $path,
@@ -1245,7 +1267,6 @@ class NilaiAsetController extends Controller
             ]
         );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -1262,18 +1283,15 @@ class NilaiAsetController extends Controller
             $record->tahun
             ?: now()->format('Y');
 
-
         $voucher =
             $record->no_voucher
             ?: 'nilai-' .
             $record->id;
 
-
         $voucher =
             Str::slug(
                 $voucher
             );
-
 
         $fileName =
             $voucher
@@ -1292,7 +1310,6 @@ class NilaiAsetController extends Controller
             .
             '.pdf';
 
-
         $path =
             $file->storeAs(
                 'nilai-aset/' .
@@ -1302,7 +1319,6 @@ class NilaiAsetController extends Controller
 
                 'local'
             );
-
 
         $record->update([
             'dokumen_pdf' =>
@@ -1316,7 +1332,6 @@ class NilaiAsetController extends Controller
             $file->getSize(),
         ]);
     }
-
 
     /*
     |--------------------------------------------------------------------------
