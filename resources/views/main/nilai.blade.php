@@ -1,48 +1,90 @@
 @extends('layouts.main')
 
-@section('title', 'Nilai Aset')
-
-
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/nilai.css') }}">
-@endpush
-
-
 @section('content')
 
-    <section class="content nilai-page">
+    @php
+
+        $truncateNumber = function ($value, $precision = 2) {
+            $value = (float) $value;
+
+            $factor = pow(10, $precision);
+
+            return $value >= 0 ? floor($value * $factor) / $factor : ceil($value * $factor) / $factor;
+        };
+
+        $compactRupiah = function ($value) use ($truncateNumber) {
+            $value = (float) ($value ?? 0);
+
+            $absolute = abs($value);
+
+            if ($absolute >= 1000000000000) {
+                $scaled = $truncateNumber($value / 1000000000000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' T';
+            }
+
+            if ($absolute >= 1000000000) {
+                $scaled = $truncateNumber($value / 1000000000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' M';
+            }
+
+            if ($absolute >= 1000000) {
+                $scaled = $truncateNumber($value / 1000000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' Jt';
+            }
+
+            if ($absolute >= 1000) {
+                $scaled = $truncateNumber($value / 1000, 2);
+
+                return 'Rp ' . number_format($scaled, 2, ',', '.') . ' Rb';
+            }
+
+            return 'Rp ' . number_format($value, 0, ',', '.');
+        };
+
+        $fullRupiah = function ($value) {
+            return 'Rp ' . number_format((int) ($value ?? 0), 0, ',', '.');
+        };
+    @endphp
 
 
-        {{-- ============================================================
-         PAGE HEADER
-    ============================================================= --}}
-        <div class="nilai-page-header">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/nilai.css') }}?v={{ file_exists(public_path('css/pages/nilai.css')) ? filemtime(public_path('css/pages/nilai.css')) : time() }}">
 
 
-            <div class="nilai-heading">
+    <div id="nilaiPage" class="nilai-page" data-validation-errors="{{ $errors->any() ? '1' : '0' }}">
 
-                <span class="nilai-eyebrow">
-                    Manajemen Aset
-                </span>
+
+        {{-- =====================================================
+         HEADING
+    ====================================================== --}}
+
+        <section class="nilai-heading-section">
+
+            <div class="nilai-heading-left">
+
+                <div class="nilai-eyebrow">
+                    MANAJEMEN ASET
+                </div>
 
                 <h1>
                     Nilai Aset
                 </h1>
 
                 <p>
-                    Kelola penilaian aset, transaksi voucher, kategori,
-                    lokasi, serta riwayat nilai aset perusahaan dengan
-                    data yang akurat dan terintegrasi.
+                    Kelola transaksi penilaian aset,
+                    voucher, lokasi, unit kerja,
+                    kategori aset, serta dokumen
+                    pendukung Perumda Tirta Kencana.
                 </p>
 
             </div>
 
 
+            <div class="nilai-heading-actions">
 
-            <div class="nilai-header-actions">
-
-
-                {{-- DATE --}}
                 <div class="nilai-date-card">
 
                     <div class="nilai-date-icon">
@@ -51,12 +93,17 @@
 
                     <div>
 
-                        <strong id="nilaiCurrentDate">
-                            Kamis, 24 September 2026
+                        <strong>
+
+                            {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
+
                         </strong>
 
-                        <span id="nilaiCurrentTime">
-                            12:24 WIB
+                        <span>
+
+                            {{ now('Asia/Makassar')->format('H:i') }}
+                            WITA
+
                         </span>
 
                     </div>
@@ -64,34 +111,70 @@
                 </div>
 
 
-
-                {{-- ADD --}}
-                <button type="button" class="nilai-add-button">
+                <button type="button" id="nilaiAddButton" class="nilai-primary-button">
 
                     <i data-lucide="plus"></i>
 
-                    <span>
-                        Tambah Nilai Aset
-                    </span>
+                    Tambah Nilai Aset
 
                 </button>
 
-
             </div>
 
-
-        </div>
-
+        </section>
 
 
-        {{-- ============================================================
+        {{-- =====================================================
+         ALERT
+    ====================================================== --}}
+
+        @if (session('success'))
+            <div class="nilai-alert nilai-alert-success">
+
+                <i data-lucide="circle-check"></i>
+
+                <span>
+                    {{ session('success') }}
+                </span>
+
+            </div>
+        @endif
+
+
+        @if ($errors->any())
+            <div class="nilai-alert nilai-alert-danger">
+
+                <i data-lucide="circle-alert"></i>
+
+                <div>
+
+                    <strong>
+                        Data belum dapat disimpan.
+                    </strong>
+
+                    <ul>
+
+                        @foreach ($errors->all() as $error)
+                            <li>
+                                {{ $error }}
+                            </li>
+                        @endforeach
+
+                    </ul>
+
+                </div>
+
+            </div>
+        @endif
+
+
+        {{-- =====================================================
          KPI
-    ============================================================= --}}
-        <div class="nilai-kpi-grid">
+    ====================================================== --}}
 
+        <section class="nilai-kpi-grid">
 
-            {{-- TOTAL NILAI --}}
-            <div class="nilai-kpi-card">
+            <article class="nilai-kpi-card">
 
                 <div class="nilai-kpi-icon blue">
                     <i data-lucide="database"></i>
@@ -103,37 +186,22 @@
                         Total Nilai Aset
                     </span>
 
-                    <strong>
-                        Rp 928,7 M
+                    <strong title="{{ $fullRupiah($stats['total_nilai']) }}">
+
+                        {{ $compactRupiah($stats['total_nilai']) }}
+
                     </strong>
 
-                    <small class="positive">
-
-                        <i data-lucide="arrow-up"></i>
-
-                        +5,2% dari tahun lalu
-
+                    <small>
+                        Seluruh transaksi nilai aset
                     </small>
 
                 </div>
 
-
-                <div class="nilai-sparkline blue">
-
-                    <svg viewBox="0 0 100 45">
-
-                        <polyline points="2,38 18,21 33,27 50,13 65,20 82,7 98,3" />
-
-                    </svg>
-
-                </div>
-
-            </div>
+            </article>
 
 
-
-            {{-- PENAMBAHAN --}}
-            <div class="nilai-kpi-card">
+            <article class="nilai-kpi-card">
 
                 <div class="nilai-kpi-icon green">
                     <i data-lucide="chart-no-axes-column-increasing"></i>
@@ -145,37 +213,35 @@
                         Penambahan Tahun Ini
                     </span>
 
-                    <strong>
-                        Rp 53,7 M
+                    <strong title="{{ $fullRupiah($stats['penambahan_tahun_ini']) }}">
+
+                        {{ $compactRupiah($stats['penambahan_tahun_ini']) }}
+
                     </strong>
 
-                    <small class="positive">
 
-                        <i data-lucide="arrow-up"></i>
+                    @if (!is_null($stats['delta_tahun']))
+                        <small class="{{ $stats['delta_tahun'] >= 0 ? 'positive' : 'negative' }}">
 
-                        +6,1% dari tahun lalu
+                            {{ $stats['delta_tahun'] >= 0 ? '↑' : '↓' }}
 
-                    </small>
+                            {{ number_format(abs($stats['delta_tahun']), 1, ',', '.') }}%
 
-                </div>
+                            dari tahun lalu
 
-
-                <div class="nilai-sparkline green">
-
-                    <svg viewBox="0 0 100 45">
-
-                        <polyline points="2,40 15,30 26,33 41,16 54,23 72,12 85,14 98,2" />
-
-                    </svg>
+                        </small>
+                    @else
+                        <small>
+                            Data pembanding belum tersedia
+                        </small>
+                    @endif
 
                 </div>
 
-            </div>
+            </article>
 
 
-
-            {{-- TRANSAKSI --}}
-            <div class="nilai-kpi-card">
+            <article class="nilai-kpi-card">
 
                 <div class="nilai-kpi-icon purple">
                     <i data-lucide="file-text"></i>
@@ -188,35 +254,24 @@
                     </span>
 
                     <strong>
-                        1.284
+
+                        {{ number_format($stats['total_transaksi'], 0, ',', '.') }}
+
                     </strong>
 
                     <small>
-                        Voucher nilai aset
+                        Data voucher nilai aset
                     </small>
 
                 </div>
 
-
-                <div class="nilai-sparkline purple">
-
-                    <svg viewBox="0 0 100 45">
-
-                        <polyline points="2,36 15,27 26,31 39,20 52,24 67,13 81,18 98,4" />
-
-                    </svg>
-
-                </div>
-
-            </div>
+            </article>
 
 
-
-            {{-- TAHUN --}}
-            <div class="nilai-kpi-card">
+            <article class="nilai-kpi-card">
 
                 <div class="nilai-kpi-icon orange">
-                    <i data-lucide="calendar-days"></i>
+                    <i data-lucide="calendar-range"></i>
                 </div>
 
                 <div class="nilai-kpi-content">
@@ -226,87 +281,73 @@
                     </span>
 
                     <strong>
-                        2026
+
+                        {{ $stats['tahun_aktif'] }}
+
                     </strong>
 
                     <small>
-                        Periode penilaian aset
+                        Periode pencatatan terbaru
                     </small>
 
                 </div>
 
-            </div>
+            </article>
+
+        </section>
 
 
-        </div>
-
-
-
-        {{-- ============================================================
+        {{-- =====================================================
          CHART
-    ============================================================= --}}
-        <div class="nilai-chart-grid">
+    ====================================================== --}}
 
+        <section class="nilai-chart-grid">
 
-            {{-- TREND --}}
-            <div class="nilai-card nilai-trend-card">
-
+            <article class="nilai-card nilai-chart-card">
 
                 <div class="nilai-card-header">
 
                     <div>
 
-                        <h3>
+                        <h2>
                             Tren Nilai Aset 5 Tahun Terakhir
-                        </h3>
+                        </h2>
 
                         <p>
-                            Dalam Miliar Rupiah (Rp)
+                            Nilai transaksi berdasarkan
+                            tahun pencatatan.
                         </p>
 
                     </div>
 
-
-                    <select class="nilai-period-select">
-
-                        <option>
-                            5 Tahun Terakhir
-                        </option>
-
-                        <option>
-                            3 Tahun Terakhir
-                        </option>
-
-                    </select>
+                    <span class="nilai-card-badge">
+                        5 Tahun Terakhir
+                    </span>
 
                 </div>
 
 
-                <div class="nilai-chart-body">
+                <div class="nilai-line-chart-container">
 
-                    <canvas id="nilaiTrendChart"></canvas>
+                    <canvas id="nilaiTrendCanvas"></canvas>
 
                 </div>
 
-
-            </div>
-
+            </article>
 
 
-            {{-- CATEGORY DISTRIBUTION --}}
-            <div class="nilai-card">
-
+            <article class="nilai-card nilai-chart-card">
 
                 <div class="nilai-card-header">
 
                     <div>
 
-                        <h3>
-                            Distribusi Nilai Aset per Kategori
-                        </h3>
+                        <h2>
+                            Distribusi Nilai Aset
+                        </h2>
 
                         <p>
-                            Proporsi nilai berdasarkan kelompok aset
+                            Berdasarkan golongan aset.
                         </p>
 
                     </div>
@@ -314,19 +355,18 @@
                 </div>
 
 
+                <div class="nilai-distribution">
 
-                <div class="nilai-distribution-body">
+                    <div class="nilai-donut-container">
 
-
-                    <div class="nilai-donut-wrap">
-
-                        <canvas id="nilaiCategoryChart"></canvas>
-
+                        <canvas id="nilaiDonutCanvas"></canvas>
 
                         <div class="nilai-donut-center">
 
                             <strong>
-                                928,7 M
+
+                                {{ $compactRupiah($stats['total_nilai']) }}
+
                             </strong>
 
                             <span>
@@ -338,359 +378,196 @@
                     </div>
 
 
-
-                    <div class="nilai-category-legend">
-
-
-                        <div>
-
-                            <span class="nilai-dot tanah"></span>
-
-                            <p>
-                                Tanah
-                            </p>
-
-                            <strong>
-                                245,6 M
-                            </strong>
-
-                            <small>
-                                26,5%
-                            </small>
-
-                        </div>
-
-
-                        <div>
-
-                            <span class="nilai-dot mesin"></span>
-
-                            <p>
-                                Peralatan & Mesin
-                            </p>
-
-                            <strong>
-                                280,4 M
-                            </strong>
-
-                            <small>
-                                30,2%
-                            </small>
-
-                        </div>
-
-
-                        <div>
-
-                            <span class="nilai-dot gedung"></span>
-
-                            <p>
-                                Gedung & Bangunan
-                            </p>
-
-                            <strong>
-                                210,8 M
-                            </strong>
-
-                            <small>
-                                22,7%
-                            </small>
-
-                        </div>
-
-
-                        <div>
-
-                            <span class="nilai-dot jalan"></span>
-
-                            <p>
-                                Jalan & Jaringan
-                            </p>
-
-                            <strong>
-                                98,3 M
-                            </strong>
-
-                            <small>
-                                10,6%
-                            </small>
-
-                        </div>
-
-
-                        <div>
-
-                            <span class="nilai-dot lainnya"></span>
-
-                            <p>
-                                Aset Tetap Lainnya
-                            </p>
-
-                            <strong>
-                                63,1 M
-                            </strong>
-
-                            <small>
-                                6,8%
-                            </small>
-
-                        </div>
-
-
-                        <div>
-
-                            <span class="nilai-dot konstruksi"></span>
-
-                            <p>
-                                Konstruksi
-                            </p>
-
-                            <strong>
-                                30,5 M
-                            </strong>
-
-                            <small>
-                                3,3%
-                            </small>
-
-                        </div>
-
-
-                    </div>
-
+                    <div id="nilaiDonutLegend" class="nilai-donut-legend"></div>
 
                 </div>
 
+            </article>
 
-            </div>
-
-
-        </div>
+        </section>
 
 
-
-        {{-- ============================================================
+        {{-- =====================================================
          FILTER
-    ============================================================= --}}
-        <div class="nilai-card nilai-filter-card">
+    ====================================================== --}}
 
+        <section class="nilai-card nilai-filter-card">
 
-            <div class="nilai-filter-title">
+            <div class="nilai-card-header">
 
-                <h3>
-                    Filter Data Nilai Aset
-                </h3>
+                <div>
+
+                    <h2>
+                        Filter Data Nilai Aset
+                    </h2>
+
+                    <p>
+                        Cari transaksi berdasarkan data aset.
+                    </p>
+
+                </div>
 
             </div>
 
 
-            <div class="nilai-filter-grid">
+            <form action="{{ route('main.nilai') }}" method="GET" class="nilai-filter-grid">
 
-
-                {{-- SEARCH --}}
-                <div class="nilai-filter-group nilai-search-group">
+                <div class="nilai-field nilai-filter-search">
 
                     <label>
                         Pencarian
                     </label>
 
-
-                    <div class="nilai-search-input">
+                    <div class="nilai-input-icon">
 
                         <i data-lucide="search"></i>
 
-                        <input type="text" id="nilaiSearch" placeholder="Cari voucher, aktiva, uraian, lokasi...">
+                        <input type="text" name="search" value="{{ request('search') }}"
+                            placeholder="Voucher, aktiva, lokasi, uraian...">
 
                     </div>
 
                 </div>
 
 
-
-                {{-- YEAR --}}
-                <div class="nilai-filter-group">
+                <div class="nilai-field">
 
                     <label>
                         Tahun
                     </label>
 
-                    <select id="nilaiYear">
+                    <select name="tahun">
 
                         <option value="">
                             Semua Tahun
                         </option>
 
-                        <option value="2026">
-                            2026
-                        </option>
-
-                        <option value="2025">
-                            2025
-                        </option>
-
-                        <option value="2024">
-                            2024
-                        </option>
+                        @foreach ($tahunOptions as $tahun)
+                            <option value="{{ $tahun }}" @selected(request('tahun') == $tahun)>
+                                {{ $tahun }}
+                            </option>
+                        @endforeach
 
                     </select>
 
                 </div>
 
 
-
-                {{-- LOCATION --}}
-                <div class="nilai-filter-group">
+                <div class="nilai-field">
 
                     <label>
                         Lokasi
                     </label>
 
-                    <select id="nilaiLocation">
+                    <select name="lokasi">
 
                         <option value="">
                             Semua Lokasi
                         </option>
 
-                        <option>
-                            IPA Kota
-                        </option>
-
-                        <option>
-                            Kantor Pusat
-                        </option>
-
-                        <option>
-                            Jl. Melati
-                        </option>
-
-                        <option>
-                            Zona Timur
-                        </option>
+                        @foreach ($lokasiOptions as $item)
+                            <option value="{{ $item->id }}" @selected(request('lokasi') == $item->id)>
+                                {{ $item->lokasi }}
+                            </option>
+                        @endforeach
 
                     </select>
 
                 </div>
 
 
-
-                {{-- CATEGORY --}}
-                <div class="nilai-filter-group">
+                <div class="nilai-field">
 
                     <label>
-                        Kategori
+                        Golongan
                     </label>
 
-                    <select id="nilaiCategory">
+                    <select name="cat">
 
                         <option value="">
-                            Semua Kategori
+                            Semua Golongan
                         </option>
 
-                        <option>
-                            Tanah
-                        </option>
-
-                        <option>
-                            Peralatan & Mesin
-                        </option>
-
-                        <option>
-                            Gedung & Bangunan
-                        </option>
-
-                        <option>
-                            Jalan & Jaringan
-                        </option>
+                        @foreach ($golonganOptions as $item)
+                            <option value="{{ $item->id }}" @selected(request('cat') == $item->id)>
+                                {{ $item->nama }}
+                            </option>
+                        @endforeach
 
                     </select>
 
                 </div>
 
 
+                <button type="submit" class="nilai-filter-button">
 
-                {{-- BUTTON --}}
-                <div class="nilai-filter-actions">
+                    <i data-lucide="filter"></i>
 
-
-                    <button type="button" class="nilai-filter-button">
-
-                        <i data-lucide="list-filter"></i>
-
-                        Filter
-
-                    </button>
-
-
-
-                    <button type="button" class="nilai-reset-button" onclick="resetNilaiFilter()">
-
-                        <i data-lucide="refresh-cw"></i>
-
-                        Reset
-
-                    </button>
-
-
-                </div>
-
-
-            </div>
-
-
-        </div>
-
-
-
-        {{-- ============================================================
-         TABLE
-    ============================================================= --}}
-        <div class="nilai-card nilai-table-card">
-
-
-            <div class="nilai-table-header">
-
-
-                <div>
-
-                    <h3>
-                        Daftar Nilai Aset
-                    </h3>
-
-                </div>
-
-
-                <button type="button" class="nilai-export-button">
-
-                    <i data-lucide="download"></i>
-
-                    <span>
-                        Ekspor
-                    </span>
-
-                    <i data-lucide="chevron-down"></i>
+                    Filter
 
                 </button>
 
 
+                <a href="{{ route('main.nilai') }}" class="nilai-reset-button">
+
+                    <i data-lucide="rotate-ccw"></i>
+
+                    Reset
+
+                </a>
+
+            </form>
+
+        </section>
+
+
+        {{-- =====================================================
+         TABLE
+    ====================================================== --}}
+
+        <section class="nilai-card nilai-table-card">
+
+            <div class="nilai-table-top">
+
+                <div>
+
+                    <h2>
+                        Daftar Nilai Aset
+                    </h2>
+
+                    <p>
+                        Data transaksi nilai aset
+                        dari PostgreSQL.
+                    </p>
+
+                </div>
+
+
+                <span class="nilai-postgres-badge">
+
+                    <i data-lucide="database"></i>
+
+                    PostgreSQL
+
+                </span>
+
             </div>
 
 
+            <div class="nilai-table-scroll">
 
-            <div class="table-responsive">
-
-                <table class="nilai-table" id="nilaiTable">
-
+                <table class="nilai-table">
 
                     <thead>
 
                         <tr>
 
-                            <th>
+                            <th class="nilai-no">
                                 No
                             </th>
 
                             <th>
-                                Voucher
+                                No Voucher
                             </th>
 
                             <th>
@@ -702,22 +579,26 @@
                             </th>
 
                             <th>
-                                Lokasi
+                                Tahun
                             </th>
 
-                            <th>
+                            <th class="nilai-money">
+                                Nilai
+                            </th>
+
+                            <th class="nilai-description">
                                 Uraian
                             </th>
 
-                            <th class="nilai-column">
-                                Nilai (Rp)
+                            <th>
+                                Golongan
                             </th>
 
-                            <th class="status-column">
-                                Status
+                            <th class="nilai-pdf-column">
+                                PDF
                             </th>
 
-                            <th class="action-column">
+                            <th class="nilai-action-column">
                                 Aksi
                             </th>
 
@@ -726,613 +607,1017 @@
                     </thead>
 
 
-
                     <tbody>
 
+                        @if (count($nilaiAsets) > 0)
+                            @foreach ($nilaiAsets as $item)
+                                <tr>
 
-                        <tr>
+                                    <td class="nilai-no">
 
-                            <td>1</td>
+                                        {{ $nilaiAsets->firstItem() + $loop->index }}
 
-                            <td>
-                                VAL-2026-001
-                            </td>
+                                    </td>
 
-                            <td>
-                                04 Jan 2026
-                            </td>
 
-                            <td>
-                                Pompa Distribusi
-                            </td>
+                                    <td>
 
-                            <td>
-                                IPA Kota
-                            </td>
+                                        <strong class="nilai-voucher">
 
-                            <td>
-                                Penambahan pompa distribusi 250 m³/jam
-                            </td>
+                                            {{ $item->no_voucher ?: '-' }}
 
-                            <td class="nilai-column">
-                                1.250.000.000
-                            </td>
+                                        </strong>
 
-                            <td>
+                                    </td>
 
-                                <span class="nilai-status selesai">
-                                    Selesai
-                                </span>
 
-                            </td>
+                                    <td>
 
-                            <td>
+                                        @if ($item->tgl_voucher)
+                                            {{ \Carbon\Carbon::parse($item->tgl_voucher)->format('d/m/Y') }}
+                                        @else
+                                            -
+                                        @endif
 
-                                <div class="nilai-row-actions">
+                                    </td>
 
-                                    <button type="button" class="view" title="Detail">
-                                        <i data-lucide="eye"></i>
-                                    </button>
 
-                                    <button type="button" class="edit" title="Edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
+                                    <td>
 
-                                    <button type="button" class="delete" title="Hapus">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
+                                        <div class="nilai-main-cell">
 
-                                </div>
+                                            <strong>
 
-                            </td>
+                                                {{ $item->aktiva_nama ?: '-' }}
 
-                        </tr>
+                                            </strong>
 
 
+                                            @if ($item->aktiva_kode)
+                                                <small>
 
-                        <tr>
+                                                    {{ $item->aktiva_kode }}
 
-                            <td>2</td>
+                                                </small>
+                                            @endif
 
-                            <td>
-                                VAL-2026-002
-                            </td>
 
-                            <td>
-                                12 Jan 2026
-                            </td>
+                                            @if ($item->lokasi_nama)
+                                                <small>
 
-                            <td>
-                                Tanah
-                            </td>
+                                                    <i data-lucide="map-pin"></i>
 
-                            <td>
-                                Jl. Melati
-                            </td>
+                                                    {{ $item->lokasi_nama }}
 
-                            <td>
-                                Penilaian tanah untuk perluasan IPA
-                            </td>
+                                                </small>
+                                            @endif
 
-                            <td class="nilai-column">
-                                4.750.000.000
-                            </td>
+                                        </div>
 
-                            <td>
+                                    </td>
 
-                                <span class="nilai-status verifikasi">
-                                    Verifikasi
-                                </span>
 
-                            </td>
+                                    <td>
 
-                            <td>
+                                        {{ $item->tahun ?: '-' }}
 
-                                <div class="nilai-row-actions">
+                                    </td>
 
-                                    <button class="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
 
-                                    <button class="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
+                                    <td class="nilai-money">
 
-                                    <button class="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
+                                        <strong title="{{ $fullRupiah($item->nilai) }}">
 
-                                </div>
+                                            {{ $fullRupiah($item->nilai) }}
 
-                            </td>
+                                        </strong>
 
-                        </tr>
+                                    </td>
 
 
+                                    <td class="nilai-description">
 
-                        <tr>
+                                        {{ \Illuminate\Support\Str::limit($item->urai, 100) }}
 
-                            <td>3</td>
+                                    </td>
 
-                            <td>
-                                VAL-2026-003
-                            </td>
 
-                            <td>
-                                18 Feb 2026
-                            </td>
+                                    <td>
 
-                            <td>
-                                Kendaraan Operasional
-                            </td>
+                                        @if ($item->golongan_nama)
+                                            <span class="nilai-category-badge">
 
-                            <td>
-                                Divisi Produksi
-                            </td>
+                                                {{ $item->golongan_nama }}
 
-                            <td>
-                                Pengadaan mobil operasional pick up
-                            </td>
+                                            </span>
+                                        @else
+                                            -
+                                        @endif
 
-                            <td class="nilai-column">
-                                325.000.000
-                            </td>
+                                    </td>
 
-                            <td>
 
-                                <span class="nilai-status aktif">
-                                    Aktif
-                                </span>
+                                    <td class="nilai-pdf-column">
 
-                            </td>
+                                        @if ($item->dokumen_pdf)
+                                            <button type="button" class="nilai-pdf-button js-pdf-button"
+                                                data-preview-url="{{ route('nilai.pdf.preview', $item->id) }}"
+                                                data-download-url="{{ route('nilai.pdf.download', $item->id) }}"
+                                                data-pdf-name="{{ $item->dokumen_pdf_nama_asli ?: 'Dokumen PDF' }}">
 
-                            <td>
+                                                <i data-lucide="file-text"></i>
 
-                                <div class="nilai-row-actions">
+                                                Lihat
 
-                                    <button class="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
+                                            </button>
+                                        @else
+                                            <span class="nilai-no-document">
+                                                Belum ada
+                                            </span>
+                                        @endif
 
-                                    <button class="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
+                                    </td>
 
-                                    <button class="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
 
-                                </div>
+                                    <td class="nilai-action-column">
 
-                            </td>
+                                        <div class="nilai-actions">
 
-                        </tr>
+                                            <button type="button" class="nilai-action view js-view" title="Lihat"
+                                                data-url="{{ route('nilai.show', $item->id) }}">
 
+                                                <i data-lucide="eye"></i>
 
+                                            </button>
 
-                        <tr>
 
-                            <td>4</td>
+                                            <button type="button" class="nilai-action edit js-edit" title="Edit"
+                                                data-url="{{ route('nilai.show', $item->id) }}"
+                                                data-update-url="{{ route('nilai.update', $item->id) }}">
 
-                            <td>
-                                VAL-2026-004
-                            </td>
+                                                <i data-lucide="pencil"></i>
 
-                            <td>
-                                10 Mar 2026
-                            </td>
+                                            </button>
 
-                            <td>
-                                Gedung Kantor
-                            </td>
 
-                            <td>
-                                Kantor Pusat
-                            </td>
+                                            <button type="button" class="nilai-action delete js-delete" title="Hapus"
+                                                data-delete-url="{{ route('nilai.destroy', $item->id) }}"
+                                                data-name="{{ $item->no_voucher ?: 'Data #' . $item->id }}">
 
-                            <td>
-                                Penilaian gedung kantor utama
-                            </td>
+                                                <i data-lucide="trash-2"></i>
 
-                            <td class="nilai-column">
-                                12.500.000.000
-                            </td>
+                                            </button>
 
-                            <td>
+                                        </div>
 
-                                <span class="nilai-status selesai">
-                                    Selesai
-                                </span>
+                                    </td>
 
-                            </td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr>
 
-                            <td>
+                                <td colspan="10" class="nilai-empty-table">
 
-                                <div class="nilai-row-actions">
+                                    <i data-lucide="database-zap"></i>
 
-                                    <button class="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
+                                    <strong>
+                                        Data tidak ditemukan
+                                    </strong>
 
-                                    <button class="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
+                                    <span>
+                                        Ubah filter atau
+                                        kata pencarian.
+                                    </span>
 
-                                    <button class="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
+                                </td>
 
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        <tr>
-
-                            <td>5</td>
-
-                            <td>
-                                VAL-2026-005
-                            </td>
-
-                            <td>
-                                22 Mar 2026
-                            </td>
-
-                            <td>
-                                Generator Set
-                            </td>
-
-                            <td>
-                                IPA Kota
-                            </td>
-
-                            <td>
-                                Pengadaan genset 500 KVA
-                            </td>
-
-                            <td class="nilai-column">
-                                2.350.000.000
-                            </td>
-
-                            <td>
-
-                                <span class="nilai-status draft">
-                                    Draft
-                                </span>
-
-                            </td>
-
-                            <td>
-
-                                <div class="nilai-row-actions">
-
-                                    <button class="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        <tr>
-
-                            <td>6</td>
-
-                            <td>
-                                VAL-2026-006
-                            </td>
-
-                            <td>
-                                05 Apr 2026
-                            </td>
-
-                            <td>
-                                Pipa Jaringan
-                            </td>
-
-                            <td>
-                                Zona Timur
-                            </td>
-
-                            <td>
-                                Penambahan jaringan pipa HDPE
-                            </td>
-
-                            <td class="nilai-column">
-                                3.125.000.000
-                            </td>
-
-                            <td>
-
-                                <span class="nilai-status aktif">
-                                    Aktif
-                                </span>
-
-                            </td>
-
-                            <td>
-
-                                <div class="nilai-row-actions">
-
-                                    <button class="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        <tr>
-
-                            <td>7</td>
-
-                            <td>
-                                VAL-2026-007
-                            </td>
-
-                            <td>
-                                18 Apr 2026
-                            </td>
-
-                            <td>
-                                Peralatan Laboratorium
-                            </td>
-
-                            <td>
-                                Lab Kualitas Air
-                            </td>
-
-                            <td>
-                                Pengadaan alat uji kualitas air
-                            </td>
-
-                            <td class="nilai-column">
-                                680.000.000
-                            </td>
-
-                            <td>
-
-                                <span class="nilai-status verifikasi">
-                                    Verifikasi
-                                </span>
-
-                            </td>
-
-                            <td>
-
-                                <div class="nilai-row-actions">
-
-                                    <button class="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        <tr>
-
-                            <td>8</td>
-
-                            <td>
-                                VAL-2026-008
-                            </td>
-
-                            <td>
-                                02 Mei 2026
-                            </td>
-
-                            <td>
-                                Bangunan IPA
-                            </td>
-
-                            <td>
-                                IPA Kota
-                            </td>
-
-                            <td>
-                                Penilaian bangunan IPA kapasitas 500 l/det
-                            </td>
-
-                            <td class="nilai-column">
-                                18.200.000.000
-                            </td>
-
-                            <td>
-
-                                <span class="nilai-status aktif">
-                                    Aktif
-                                </span>
-
-                            </td>
-
-                            <td>
-
-                                <div class="nilai-row-actions">
-
-                                    <button class="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
+                            </tr>
+                        @endif
 
                     </tbody>
-
 
                 </table>
 
             </div>
 
 
-
-            {{-- ========================================================
-             TABLE FOOTER
-        ========================================================= --}}
             <div class="nilai-table-footer">
-
 
                 <div class="nilai-table-info">
 
-                    Menampilkan
+                    @if ($nilaiAsets->total() > 0)
+                        Menampilkan
 
-                    <strong>
-                        1 - 8
-                    </strong>
+                        <strong>
+                            {{ $nilaiAsets->firstItem() }}
+                        </strong>
 
-                    dari
+                        -
 
-                    <strong>
-                        1.284
-                    </strong>
+                        <strong>
+                            {{ $nilaiAsets->lastItem() }}
+                        </strong>
 
-                    data
+                        dari
+
+                        <strong>
+
+                            {{ number_format($nilaiAsets->total(), 0, ',', '.') }}
+
+                        </strong>
+
+                        data
+                    @else
+                        Tidak ada data
+                    @endif
 
                 </div>
 
 
+                <div class="nilai-pagination-wrapper">
 
-                <div class="nilai-pagination-area">
+                    <form action="{{ route('main.nilai') }}" method="GET">
+
+                        @foreach (request()->except('per_page', 'page') as $key => $value)
+                            @if (!is_array($value))
+                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                            @endif
+                        @endforeach
 
 
-                    <select>
+                        <select name="per_page" onchange="this.form.submit()">
 
-                        <option>
-                            10 per halaman
-                        </option>
+                            @foreach ([10, 20, 50, 100] as $size)
+                                <option value="{{ $size }}" @selected(request('per_page', 20) == $size)>
 
-                        <option>
-                            25 per halaman
-                        </option>
+                                    {{ $size }}
+                                    per halaman
 
-                        <option>
-                            50 per halaman
-                        </option>
+                                </option>
+                            @endforeach
 
-                    </select>
+                        </select>
 
+                    </form>
 
 
                     <div class="nilai-pagination">
 
+                        {{ $nilaiAsets->onEachSide(1)->links() }}
 
-                        <button disabled>
-                            <i data-lucide="chevron-left"></i>
-                        </button>
+                    </div>
 
+                </div>
 
-                        <button class="active">
-                            1
-                        </button>
+            </div>
 
-
-                        <button>
-                            2
-                        </button>
+        </section>
 
 
-                        <button>
-                            3
-                        </button>
+        {{-- =====================================================
+         MODAL CREATE / EDIT
+    ====================================================== --}}
+
+        <dialog id="nilaiFormModal" class="nilai-modal nilai-form-modal">
+
+            <form id="nilaiForm" action="{{ route('nilai.store') }}" method="POST" enctype="multipart/form-data">
+
+                @csrf
 
 
-                        <button>
-                            4
-                        </button>
+                <input type="hidden" name="_method" id="nilaiFormMethod" value="">
 
 
-                        <button>
-                            5
-                        </button>
+                <div class="nilai-modal-header">
 
+                    <div>
 
-                        <span>
-                            ...
+                        <span class="nilai-modal-eyebrow">
+                            NILAI ASET
                         </span>
 
+                        <h3 id="nilaiFormTitle">
+                            Tambah Nilai Aset
+                        </h3>
 
-                        <button>
-                            161
-                        </button>
-
-
-                        <button>
-                            <i data-lucide="chevron-right"></i>
-                        </button>
-
+                        <p>
+                            Isi data transaksi nilai
+                            dan lampirkan dokumen PDF.
+                        </p>
 
                     </div>
 
 
+                    <button type="button" class="nilai-modal-close" data-close-dialog="nilaiFormModal">
+                        <i data-lucide="x"></i>
+                    </button>
+
                 </div>
 
+
+                <div class="nilai-modal-body">
+
+                    <div class="nilai-form-grid">
+
+                        <div class="nilai-field">
+
+                            <label>
+                                No Voucher
+                            </label>
+
+                            <input type="text" name="no_voucher" id="nilaiNoVoucher" value="{{ old('no_voucher') }}"
+                                placeholder="Contoh: 0030.1.07.26">
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Tanggal Voucher
+                                <span>*</span>
+                            </label>
+
+                            <input type="date" name="tgl_voucher" id="nilaiTanggal" value="{{ old('tgl_voucher') }}"
+                                required>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Aktiva
+                                <span>*</span>
+                            </label>
+
+                            <select name="id_aktiva" id="nilaiAktiva" required>
+
+                                <option value="">
+                                    -AKTIVA-
+                                </option>
+
+                                @foreach ($aktivaOptions as $item)
+                                    <option value="{{ $item->id }}" @selected(old('id_aktiva') == $item->id)>
+
+                                        {{ $item->kode }}
+                                        |
+                                        {{ $item->aktiva }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Lokasi
+                                <span>*</span>
+                            </label>
+
+                            <select name="id_lokasi" id="nilaiLokasi" required>
+
+                                <option value="">
+                                    -LOKASI-
+                                </option>
+
+                                @foreach ($lokasiOptions as $item)
+                                    <option value="{{ $item->id }}" @selected(old('id_lokasi') == $item->id)>
+
+                                        {{ $item->lokasi }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Departemen
+                                <span>*</span>
+                            </label>
+
+                            <select name="dep" id="nilaiDepartemen" required>
+
+                                <option value="">
+                                    -DEPARTEMEN-
+                                </option>
+
+                                @foreach ($departemenOptions as $item)
+                                    <option value="{{ $item->id }}" @selected(old('dep') == $item->id)>
+
+                                        {{ $item->kode_dep }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Divisi
+                                <span>*</span>
+                            </label>
+
+                            <select name="div" id="nilaiDivisi" required>
+
+                                <option value="">
+                                    -DIVISI-
+                                </option>
+
+                                @foreach ($divisiOptions as $item)
+                                    <option value="{{ $item->id }}" data-departemen="{{ $item->id_dep }}"
+                                        @selected(old('div') == $item->id)>
+
+                                        {{ $item->nama_div }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Golongan
+                                <span>*</span>
+                            </label>
+
+                            <select name="cat" id="nilaiGolongan" required>
+
+                                <option value="">
+                                    -GOLONGAN-
+                                </option>
+
+                                @foreach ($golonganOptions as $item)
+                                    <option value="{{ $item->id }}" @selected(old('cat') == $item->id)>
+
+                                        {{ $item->nama }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Tahun
+                                <span>*</span>
+                            </label>
+
+                            <select name="tahun" id="nilaiTahun" required>
+
+                                <option value="">
+                                    -TAHUN-
+                                </option>
+
+                                @foreach ($tahunOptions as $tahun)
+                                    <option value="{{ $tahun }}" @selected(old('tahun', $currentYear) == $tahun)>
+
+                                        {{ $tahun }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Jenis
+                                <span>*</span>
+                            </label>
+
+                            <select name="jenisn" id="nilaiJenis" required>
+
+                                <option value="">
+                                    -JENIS-
+                                </option>
+
+                                @foreach ($jenisOptions as $item)
+                                    <option value="{{ $item['id'] }}" @selected(old('jenisn') == $item['id'])>
+
+                                        {{ $item['nama'] }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="nilai-field">
+
+                            <label>
+                                Nilai
+                                <span>*</span>
+                            </label>
+
+                            <div class="nilai-money-input">
+
+                                <span>
+                                    Rp
+                                </span>
+
+                                <input type="number" name="nilai" id="nilaiNominal" value="{{ old('nilai') }}"
+                                    min="0" step="1" placeholder="0" required>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="nilai-field nilai-field-full">
+
+                            <label>
+                                Uraian
+                                <span>*</span>
+                            </label>
+
+                            <textarea name="urai" id="nilaiUraian" rows="5" required placeholder="Masukkan uraian transaksi...">{{ old('urai') }}</textarea>
+
+                        </div>
+
+
+                        <div class="nilai-field nilai-field-full">
+
+                            <label>
+                                Dokumen PDF / Hasil Scan
+                            </label>
+
+                            <div class="nilai-upload-box">
+
+                                <input type="file" name="dokumen_pdf" id="nilaiPdfInput"
+                                    accept=".pdf,application/pdf">
+
+
+                                <div class="nilai-upload-content">
+
+                                    <div class="nilai-upload-icon">
+                                        <i data-lucide="file-up"></i>
+                                    </div>
+
+
+                                    <div>
+
+                                        <strong>
+                                            Pilih file PDF
+                                        </strong>
+
+                                        <span>
+                                            Format PDF,
+                                            maksimal 15 MB.
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div id="nilaiExistingPdf" class="nilai-existing-pdf nilai-field-full" hidden>
+
+                            <div>
+
+                                <i data-lucide="file-check-2"></i>
+
+                                <div>
+
+                                    <strong id="nilaiExistingPdfName">
+                                        Dokumen tersedia
+                                    </strong>
+
+                                    <span>
+                                        PDF yang tersimpan
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <button type="button" id="nilaiExistingPdfButton">
+                                Preview
+                            </button>
+
+                        </div>
+
+
+                        <div id="nilaiLocalPdfPreview" class="nilai-local-preview nilai-field-full" hidden>
+
+                            <div class="nilai-local-preview-header">
+
+                                <strong>
+                                    Preview PDF Baru
+                                </strong>
+
+                                <span id="nilaiLocalPdfName"></span>
+
+                            </div>
+
+                            <iframe id="nilaiLocalPdfFrame" title="Preview PDF Baru"></iframe>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="nilai-modal-footer">
+
+                    <button type="button" class="nilai-secondary-button" data-close-dialog="nilaiFormModal">
+                        Batal
+                    </button>
+
+
+                    <button type="submit" class="nilai-primary-button">
+
+                        <i data-lucide="save"></i>
+
+                        Simpan Data
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </dialog>
+
+
+        {{-- =====================================================
+         DETAIL
+    ====================================================== --}}
+
+        <dialog id="nilaiDetailModal" class="nilai-modal nilai-detail-modal">
+
+            <div class="nilai-modal-header">
+
+                <div>
+
+                    <span class="nilai-modal-eyebrow">
+                        DETAIL TRANSAKSI
+                    </span>
+
+                    <h3>
+                        Detail Nilai Aset
+                    </h3>
+
+                    <p>
+                        Informasi lengkap transaksi nilai aset.
+                    </p>
+
+                </div>
+
+
+                <button type="button" class="nilai-modal-close" data-close-dialog="nilaiDetailModal">
+
+                    <i data-lucide="x"></i>
+
+                </button>
 
             </div>
 
 
-        </div>
+            <div class="nilai-modal-body">
+
+                <div class="nilai-detail-grid">
+
+                    <div>
+
+                        <span>
+                            No Voucher
+                        </span>
+
+                        <strong id="detailVoucher">
+                            -
+                        </strong>
+
+                    </div>
 
 
-    </section>
+                    <div>
+
+                        <span>
+                            Tanggal
+                        </span>
+
+                        <strong id="detailTanggal">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Aktiva
+                        </span>
+
+                        <strong id="detailAktiva">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Tahun
+                        </span>
+
+                        <strong id="detailTahun">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Lokasi
+                        </span>
+
+                        <strong id="detailLokasi">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Departemen
+                        </span>
+
+                        <strong id="detailDepartemen">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Divisi
+                        </span>
+
+                        <strong id="detailDivisi">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Golongan
+                        </span>
+
+                        <strong id="detailGolongan">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Jenis
+                        </span>
+
+                        <strong id="detailJenis">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="nilai-detail-money">
+
+                        <span>
+                            Nilai
+                        </span>
+
+                        <strong id="detailNilai">
+                            Rp 0
+                        </strong>
+
+                    </div>
+
+
+                    <div class="nilai-detail-full">
+
+                        <span>
+                            Uraian
+                        </span>
+
+                        <p id="detailUraian">
+                            -
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="nilai-modal-footer">
+
+                <button type="button" id="detailPdfButton" class="nilai-outline-button" hidden>
+
+                    <i data-lucide="file-text"></i>
+
+                    Lihat PDF
+
+                </button>
+
+
+                <button type="button" class="nilai-primary-button" data-close-dialog="nilaiDetailModal">
+                    Tutup
+                </button>
+
+            </div>
+
+        </dialog>
+
+
+        {{-- =====================================================
+         PDF MODAL
+    ====================================================== --}}
+
+        <dialog id="nilaiPdfModal" class="nilai-modal nilai-pdf-modal">
+
+            <div class="nilai-modal-header">
+
+                <div>
+
+                    <span class="nilai-modal-eyebrow">
+                        DOKUMEN NILAI ASET
+                    </span>
+
+                    <h3 id="nilaiPdfTitle">
+                        Preview PDF
+                    </h3>
+
+                </div>
+
+
+                <button type="button" class="nilai-modal-close" data-close-dialog="nilaiPdfModal">
+
+                    <i data-lucide="x"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="nilai-pdf-body">
+
+                <iframe id="nilaiPdfFrame" title="Preview Dokumen PDF"></iframe>
+
+            </div>
+
+
+            <div class="nilai-modal-footer">
+
+                <button type="button" class="nilai-secondary-button" data-close-dialog="nilaiPdfModal">
+                    Tutup
+                </button>
+
+
+                <a href="#" id="nilaiPdfDownload" class="nilai-primary-button">
+
+                    <i data-lucide="download"></i>
+
+                    Download PDF
+
+                </a>
+
+            </div>
+
+        </dialog>
+
+
+        {{-- =====================================================
+         DELETE
+    ====================================================== --}}
+
+        <dialog id="nilaiDeleteModal" class="nilai-modal nilai-delete-modal">
+
+            <form method="POST" id="nilaiDeleteForm">
+
+                @csrf
+                @method('DELETE')
+
+
+                <div class="nilai-delete-body">
+
+                    <div class="nilai-delete-icon">
+                        <i data-lucide="triangle-alert"></i>
+                    </div>
+
+                    <h3>
+                        Hapus Nilai Aset?
+                    </h3>
+
+                    <p>
+
+                        Data
+
+                        <strong id="nilaiDeleteName"></strong>
+
+                        akan dihapus secara permanen.
+
+                        Jika data memiliki PDF,
+                        dokumen PDF juga akan dihapus.
+
+                    </p>
+
+                </div>
+
+
+                <div class="nilai-modal-footer">
+
+                    <button type="button" class="nilai-secondary-button" data-close-dialog="nilaiDeleteModal">
+                        Batal
+                    </button>
+
+
+                    <button type="submit" class="nilai-danger-button">
+
+                        <i data-lucide="trash-2"></i>
+
+                        Ya, Hapus
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </dialog>
+
+
+        <script
+        type="application/json"
+        id="nilaiChartData"
+    >{!! json_encode([
+        'trendLabels' =>
+            $trendLabels,
+
+        'trendValues' =>
+            $trendValues,
+
+        'categoryLabels' =>
+            $categoryLabels,
+
+        'categoryValues' =>
+            $categoryValues,
+    ]) !!}</script>
+
+
+    </div>
+
+
+    <script
+        src="{{ asset('js/pages/nilai.js') }}?v={{ file_exists(public_path('js/pages/nilai.js')) ? filemtime(public_path('js/pages/nilai.js')) : time() }}">
+    </script>
 
 @endsection
-
-
-
-@push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script src="{{ asset('js/pages/nilai.js') }}"></script>
-@endpush

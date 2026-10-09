@@ -5,6 +5,7 @@ use App\Models\Barang;
 use App\Http\Controllers\MasterController;
 use App\Http\Controllers\KIBController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NilaiAsetController;
 
 
 Route::get('/', function () {
@@ -43,10 +44,62 @@ Route::get(
 )->name('dashboard');
 
 
-Route::get('/nilai-aset', function () {
 
-    return view('main.nilai');
-})->name('main.nilai');
+
+// ============================================================
+// NILAI ASET
+// ============================================================
+
+Route::get(
+    '/nilai',
+    [NilaiAsetController::class, 'index']
+)->name('main.nilai');
+
+
+Route::post(
+    '/nilai',
+    [NilaiAsetController::class, 'store']
+)->name('nilai.store');
+
+
+Route::get(
+    '/nilai/{nilai}/pdf',
+    [NilaiAsetController::class, 'previewPdf']
+)
+    ->whereNumber('nilai')
+    ->name('nilai.pdf.preview');
+
+
+Route::get(
+    '/nilai/{nilai}/pdf/download',
+    [NilaiAsetController::class, 'downloadPdf']
+)
+    ->whereNumber('nilai')
+    ->name('nilai.pdf.download');
+
+
+Route::get(
+    '/nilai/{nilai}',
+    [NilaiAsetController::class, 'show']
+)
+    ->whereNumber('nilai')
+    ->name('nilai.show');
+
+
+Route::put(
+    '/nilai/{nilai}',
+    [NilaiAsetController::class, 'update']
+)
+    ->whereNumber('nilai')
+    ->name('nilai.update');
+
+
+Route::delete(
+    '/nilai/{nilai}',
+    [NilaiAsetController::class, 'destroy']
+)
+    ->whereNumber('nilai')
+    ->name('nilai.destroy');
 
 
 Route::get('/arsip', function () {
