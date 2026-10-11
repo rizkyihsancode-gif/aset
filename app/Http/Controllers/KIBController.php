@@ -1666,9 +1666,12 @@ class KIBController extends Controller
                         'id_nilai_aktiva' => 'Transaksi Tanah tidak tersedia atau sudah diproses.'
                     ]);
                 }
-                if ((int) $source->jenisn !== 1) {
+                // Keduanya merupakan transaksi Tanah pending yang perlu
+                // dilengkapi oleh petugas: penambahan aset (1) dan nilai (2).
+                // Lokasi wajib tetap berasal dari database, bukan dari browser.
+                if (!in_array((int) $source->jenisn, [1, 2], true)) {
                     throw ValidationException::withMessages([
-                        'id_nilai_aktiva' => 'Penambahan Nilai bukan sertifikat baru. Pilih transaksi Penambahan Aset.'
+                        'id_nilai_aktiva' => 'Jenis transaksi Tanah tidak didukung.'
                     ]);
                 }
                 if (DB::table('tanahs')->where('nilai_aktiva_id', $source->id)->exists()) {

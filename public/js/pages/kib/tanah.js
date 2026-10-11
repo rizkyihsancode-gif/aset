@@ -103,15 +103,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const sourceBody=$('#tanahSourceBody');
   const setField=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value??'';};
   function showSource(source) {
-    setField('tanahNilaiAktivaId',source.id);
-    setField('tanahLokasiId',source.id_lokasi);
-    setField('tanahLokasiName',source.lokasi);
-    setField('tanahAlamat',source.alamat);
-    setField('tanahTahun',source.tahun);
-    $('#tanahSelectedSource').hidden=false;
-    $('#tanahSelectedTitle').textContent=`${source.lokasi||'-'} · ${source.no_voucher||'-'}`;
-    $('#tanahSelectedMeta').textContent=`${source.departemen||'-'} / ${source.divisi||'-'} · ${money(source.nilai)}`;
-    $('#tanahSourceSection').hidden=true;
+    // Semua transaksi pending kategori Tanah (jenisn 1 maupun 2)
+    // masuk ke form yang sama. Hanya identitas lokasi dan alamat
+    // yang terisi otomatis; tahun dan data pertanahan diisi petugas.
+    if (!source?.id || !source?.id_lokasi) {
+      notify('Transaksi ini belum mempunyai ID atau lokasi yang valid.', true);
+      return;
+    }
+    setField('tanahNilaiAktivaId', source.id);
+    setField('tanahLokasiId', source.id_lokasi);
+    setField('tanahLokasiName', source.lokasi || '');
+    setField('tanahAlamat', source.alamat || '');
+    setField('tanahTahun', '');
+
+    $('#tanahSelectedSource').hidden = false;
+    $('#tanahSelectedTitle').textContent = `${source.lokasi || '-'} · ${source.no_voucher || '-'}`;
+    const jenis = Number(source.jenisn) === 2 ? 'Penambahan Nilai' : 'Penambahan Aset';
+    $('#tanahSelectedMeta').textContent =
+      `${jenis} · Tahun transaksi ${source.tahun || '-'} · ${source.departemen || '-'} / ${source.divisi || '-'} · ${money(source.nilai)}`;
+    $('#tanahSourceSection').hidden = true;
+
+    const informasi = $$('.tanah-form-section', form)[1];
+    informasi?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
   function resetForm() {
     form?.reset();
@@ -128,35 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const q=($('#tanahSourceSearch')?.value||'').trim().toLowerCase();
     return pending.filter(p=>[p.no_voucher,p.lokasi,p.alamat,p.departemen,p.divisi,p.tahun,p.urai,p.nilai].join(' ').toLowerCase().includes(q));
   }
-  /* ===========================================================
-     AKSI TRANSAKSI PENDING
-     - jenisn=1 : Tambah sertifikat baru -> Pilih
-     - jenisn=2 : Penambahan nilai -> Tinjau riwayat, bukan sertifikat baru
-     - lainnya : Tinjau data transaksi
-     =========================================================== */
-  function reviewPending(item) {
-    if (item.id_lokasi) {
-      // Gunakan popup riwayat Nilai Tanah lama, dan tandai voucher terpilih.
-      openNilai(item.id_lokasi, item.lokasi || 'Lokasi Tanah', item);
-      return;
-    }
-
-    // Data historis yang tidak terhubung ke master lokasi tetap dapat dilihat.
-    $('#tanahNilaiTitle').textContent = `Detail Nilai Aset • ${item.no_voucher || '#' + item.id}`;
-    $('#tanahNilaiTotal').textContent = money(item.nilai);
-    const body = $('#tanahNilaiBody');
-    body.replaceChildren();
-    const row = document.createElement('tr');
-    row.className = 'tanah-nilai-selected';
-    row.innerHTML = `<td>1</td><td>${escape(item.no_voucher || '-')}</td>
-      <td>${escape(dateText(item.tgl_voucher))}</td><td>${escape(item.tahun || '-')}</td>
-      <td>${escape(item.aktiva_nama || item.aktiva_kode || '-')}</td>
-      <td class="tanah-text-wrap">${escape(item.urai || '-')}</td>
-      <td class="tanah-value-cell">${money(item.nilai)}</td><td>-</td>`;
-    body.append(row);
-    open('tanahNilaiModal');
-  }
-
+  /* Semua transaksi pending Tanah dipilih ke form, tanpa popup nilai. */
   function renderPending() {
     if (!sourceBody) return;
     sourceBody.replaceChildren();
@@ -168,10 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     data.forEach((item, i) => {
-      const isNew = Number(item.jenisn) === 1;
-      const isValue = Number(item.jenisn) === 2;
-      const btnLabel = isNew ? 'Pilih' : (isValue ? 'Tinjau Nilai' : 'Lihat Detail');
-      const btnClass = isNew ? 'tanah-source-select' : 'tanah-source-review';
+      // Tidak dibatasi jenisn=1: Penambahan Nilai juga boleh dipilih.
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${i + 1}</td>
@@ -182,11 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${escape(item.tahun || '-')}</td>
         <td><strong>${money(item.nilai)}</strong></td>
         <td>${escape(item.urai || '-')}</td>
-        <td><button type="button" class="${btnClass}" title="${escape(isNew ? 'Buat sertifikat Tanah baru' : 'Lihat riwayat dan dokumen nilai pada lokasi ini')}">${btnLabel}</button></td>`;
-      $('button', tr).addEventListener('click', () => {
-        if (isNew) showSource(item);
-        else reviewPending(item);
-      });
+        <td><button type="button" class="tanah-source-select" title="Pilih transaksi, lalu isi data Tanah">Pilih</button></td>`;
+      $('.tanah-source-select', tr).addEventListener('click', () => showSource(item));
       sourceBody.append(tr);
     });
   }
@@ -216,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('kib:source-selected',e=>{
     if(!e.detail)return;
     resetForm();open('tanahFormModal');
-    if(Number(e.detail.jenisn)!==1){reviewPending(e.detail);return;}
     showSource(e.detail);
   });
   function selectValue(id,value){const el=$(id);if(!el)return;const v=String(value??'');if(el.tagName==='SELECT'&&v&&!Array.from(el.options).some(o=>o.value===v)){el.add(new Option(v,v));}el.value=v;}
