@@ -1,2637 +1,3487 @@
-/* =========================================================
-   KIB TANAH
-   GROUP BY LOKASI
-   IMAGE SOURCE = LOKASIS.IMG
-========================================================= */
-
-let tanahCurrentPage = 1;
-
-let tanahPreviousOverflow = '';
-
-let tanahDetailItems = [];
-
-let tanahDetailAbortController = null;
-
-let tanahNilaiAbortController = null;
-
-
-/* =========================================================
-   INIT
-========================================================= */
-
 document.addEventListener(
     'DOMContentLoaded',
     function () {
 
-        if (
-            !document.querySelector(
-                '.tanah-page'
-            )
-        ) {
+        'use strict';
+
+
+        /* =========================================================
+           ROOT
+        ========================================================= */
+
+        const page =
+            document.getElementById(
+                'tanahPage'
+            );
+
+
+        if (!page) {
             return;
         }
 
 
-        updateTanahDate();
+        const STORE_URL =
+            page.dataset.storeUrl
+            || '/kib/tanah';
 
 
-        window.setInterval(
-            updateTanahDate,
-            1000
+        const RECORD_BASE_URL =
+            page.dataset.recordBaseUrl
+            || '/kib/tanah';
+
+
+        const LOCATION_BASE_URL =
+            page.dataset.locationBaseUrl
+            || '/kib/tanah/lokasi';
+
+
+        const PENDING_URL =
+            page.dataset.pendingUrl
+            || '/kib/pending/tanah';
+
+
+        /* =========================================================
+           HELPER
+        ========================================================= */
+
+        const $ = (
+            selector,
+            root = document
+        ) => root.querySelector(
+            selector
         );
 
 
-        bindTanahEvents();
-
-
-        renderTanahTable();
-
-
-        refreshTanahIcons();
-    }
-);
-
-
-/* =========================================================
-   EVENT
-========================================================= */
-
-function bindTanahEvents() {
-
-    document
-        .getElementById(
-            'tanahSearch'
-        )
-        ?.addEventListener(
-            'input',
-            tanahFilterChanged
+        const $$ = (
+            selector,
+            root = document
+        ) => Array.from(
+            root.querySelectorAll(
+                selector
+            )
         );
 
 
-    document
-        .getElementById(
-            'tanahJumlahFilter'
-        )
-        ?.addEventListener(
-            'change',
-            tanahFilterChanged
-        );
+        function refreshIcons()
+        {
+            if (
+                window.lucide
+                &&
+                typeof window
+                    .lucide
+                    .createIcons
+                    === 'function'
+            ) {
 
-
-    document
-        .getElementById(
-            'tanahPageSize'
-        )
-        ?.addEventListener(
-            'change',
-            tanahFilterChanged
-        );
-
-
-    document
-        .getElementById(
-            'tanahResetButton'
-        )
-        ?.addEventListener(
-            'click',
-            resetTanahFilter
-        );
-
-
-    document
-        .getElementById(
-            'tanahExportButton'
-        )
-        ?.addEventListener(
-            'click',
-            exportTanahCsv
-        );
-
-
-    document
-        .getElementById(
-            'tanahTable'
-        )
-        ?.addEventListener(
-            'click',
-            handleTanahTableClick
-        );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | MODAL DETAIL
-    |--------------------------------------------------------------------------
-    */
-
-    document
-        .getElementById(
-            'tanahViewClose'
-        )
-        ?.addEventListener(
-            'click',
-            closeTanahView
-        );
-
-
-    document
-        .getElementById(
-            'tanahViewCloseBottom'
-        )
-        ?.addEventListener(
-            'click',
-            closeTanahView
-        );
-
-
-    const detailModal =
-        document.getElementById(
-            'tanahViewModal'
-        );
-
-
-    detailModal
-        ?.addEventListener(
-            'click',
-            function (event) {
-
-                if (
-                    event.target
-                    ===
-                    detailModal
-                ) {
-
-                    closeTanahView();
-                }
+                window.lucide
+                    .createIcons();
             }
-        );
+        }
 
 
-    detailModal
-        ?.addEventListener(
-            'close',
-            function () {
-
-                if (
-                    tanahDetailAbortController
-                ) {
-
-                    tanahDetailAbortController
-                        .abort();
+        function escapeHtml(
+            value
+        ) {
+            const div =
+                document.createElement(
+                    'div'
+                );
 
 
-                    tanahDetailAbortController =
-                        null;
+            div.textContent =
+                value ?? '';
+
+
+            return div.innerHTML;
+        }
+
+
+        function formatRupiah(
+            value
+        ) {
+            return (
+                'Rp ' +
+                new Intl.NumberFormat(
+                    'id-ID',
+                    {
+                        maximumFractionDigits:
+                            0,
+                    }
+                )
+                    .format(
+                        Number(value)
+                        || 0
+                    )
+            );
+        }
+
+
+        function formatNumber(
+            value
+        ) {
+            return new Intl.NumberFormat(
+                'id-ID',
+                {
+                    maximumFractionDigits:
+                        2,
                 }
+            )
+                .format(
+                    Number(value)
+                    || 0
+                );
+        }
 
 
-                restoreTanahBodyOverflow();
+        function formatDate(
+            value
+        ) {
+            if (!value) {
+                return '-';
             }
-        );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | PILIH TANAH / SERTIFIKAT
-    |--------------------------------------------------------------------------
-    */
-
-    document
-        .getElementById(
-            'tanahDetailItemsBody'
-        )
-        ?.addEventListener(
-            'click',
-            function (event) {
-
-                const row =
-                    event.target.closest(
-                        'tr[data-detail-index]'
+            const raw =
+                String(value)
+                    .substring(
+                        0,
+                        10
                     );
 
 
-                if (!row) {
+            const parts =
+                raw.split('-');
+
+
+            if (
+                parts.length
+                !== 3
+            ) {
+
+                return raw;
+            }
+
+
+            return (
+                parts[2]
+                +
+                '/'
+                +
+                parts[1]
+                +
+                '/'
+                +
+                parts[0]
+            );
+        }
+
+
+        function dateInputValue(
+            value
+        ) {
+            if (!value) {
+                return '';
+            }
+
+
+            return String(value)
+                .substring(
+                    0,
+                    10
+                );
+        }
+
+
+        function unwrapData(
+            payload
+        ) {
+            if (
+                payload
+                &&
+                typeof payload
+                    === 'object'
+                &&
+                'data' in payload
+            ) {
+
+                return payload.data;
+            }
+
+
+            return payload;
+        }
+
+
+        async function fetchJson(
+            url
+        ) {
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method:
+                            'GET',
+
+                        headers: {
+                            'Accept':
+                                'application/json',
+                        },
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    'HTTP '
+                    +
+                    response.status
+                );
+            }
+
+
+            return response.json();
+        }
+
+
+        /* =========================================================
+           TOAST
+        ========================================================= */
+
+        const toast =
+            $('#tanahToast');
+
+
+        const toastMessage =
+            $('#tanahToastMessage');
+
+
+        let toastTimer =
+            null;
+
+
+        function showToast(
+            message,
+            type = 'info'
+        ) {
+            if (
+                !toast
+                ||
+                !toastMessage
+            ) {
+
+                return;
+            }
+
+
+            clearTimeout(
+                toastTimer
+            );
+
+
+            toast.classList
+                .remove(
+                    'is-error',
+                    'is-success'
+                );
+
+
+            if (
+                type === 'error'
+            ) {
+
+                toast.classList
+                    .add(
+                        'is-error'
+                    );
+
+            } else if (
+                type === 'success'
+            ) {
+
+                toast.classList
+                    .add(
+                        'is-success'
+                    );
+            }
+
+
+            toastMessage.textContent =
+                message;
+
+
+            toast.hidden =
+                false;
+
+
+            toastTimer =
+                setTimeout(
+                    function () {
+
+                        toast.hidden =
+                            true;
+
+                    },
+                    3800
+                );
+        }
+
+
+        /* =========================================================
+           DIALOG
+        ========================================================= */
+
+        function openDialog(
+            dialog
+        ) {
+            if (!dialog) {
+                return;
+            }
+
+
+            if (
+                typeof dialog.showModal
+                === 'function'
+                &&
+                !dialog.open
+            ) {
+
+                dialog.showModal();
+            }
+
+
+            refreshIcons();
+        }
+
+
+        function closeDialog(
+            dialog
+        ) {
+            if (
+                !dialog
+                ||
+                !dialog.open
+            ) {
+
+                return;
+            }
+
+
+            if (
+                typeof dialog.close
+                === 'function'
+            ) {
+
+                dialog.close();
+            }
+        }
+
+
+        $$(
+            '[data-close-dialog]'
+        )
+            .forEach(
+                function (
+                    button
+                ) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            const id =
+                                button.dataset
+                                    .closeDialog;
+
+
+                            closeDialog(
+                                document
+                                    .getElementById(
+                                        id
+                                    )
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        $$('dialog')
+            .forEach(
+                function (
+                    dialog
+                ) {
+
+                    dialog.addEventListener(
+                        'click',
+                        function (
+                            event
+                        ) {
+
+                            if (
+                                event.target
+                                === dialog
+                            ) {
+
+                                closeDialog(
+                                    dialog
+                                );
+                            }
+                        }
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           MAIN TABLE FILTER + PAGINATION
+        ========================================================= */
+
+        const tableRows =
+            $$(
+                '.tanah-data-row'
+            );
+
+
+        const searchInput =
+            $('#tanahSearch');
+
+
+        const perPageSelect =
+            $('#tanahPerPage');
+
+
+        const resetButton =
+            $('#tanahResetButton');
+
+
+        const tableInfo =
+            $('#tanahTableInfo');
+
+
+        const pagination =
+            $('#tanahPagination');
+
+
+        let currentPage =
+            1;
+
+
+        function getFilteredRows()
+        {
+            const keyword =
+                (
+                    searchInput?.value
+                    || ''
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            if (!keyword) {
+
+                return tableRows;
+            }
+
+
+            return tableRows.filter(
+                function (
+                    row
+                ) {
+
+                    return (
+                        row.dataset
+                            .search
+                        || ''
+                    )
+                        .toLowerCase()
+                        .includes(
+                            keyword
+                        );
+                }
+            );
+        }
+
+
+        function createPageButton(
+            label,
+            pageNumber,
+            options = {}
+        ) {
+            const button =
+                document.createElement(
+                    'button'
+                );
+
+
+            button.type =
+                'button';
+
+
+            button.className =
+                'tanah-page-button';
+
+
+            if (
+                options.active
+            ) {
+
+                button.classList
+                    .add(
+                        'active'
+                    );
+            }
+
+
+            if (
+                options.disabled
+            ) {
+
+                button.disabled =
+                    true;
+            }
+
+
+            if (
+                options.icon
+            ) {
+
+                button.innerHTML =
+                    `<i data-lucide="${options.icon}"></i>`;
+
+            } else {
+
+                button.textContent =
+                    label;
+            }
+
+
+            if (
+                !options.disabled
+                &&
+                !options.active
+            ) {
+
+                button.addEventListener(
+                    'click',
+                    function () {
+
+                        currentPage =
+                            pageNumber;
+
+
+                        renderMainTable();
+                    }
+                );
+            }
+
+
+            return button;
+        }
+
+
+        function renderMainPagination(
+            totalPages
+        ) {
+            if (!pagination) {
+                return;
+            }
+
+
+            pagination.innerHTML =
+                '';
+
+
+            if (
+                totalPages <= 1
+            ) {
+
+                return;
+            }
+
+
+            pagination.appendChild(
+                createPageButton(
+                    '',
+                    Math.max(
+                        1,
+                        currentPage - 1
+                    ),
+                    {
+                        icon:
+                            'chevron-left',
+
+                        disabled:
+                            currentPage
+                            === 1,
+                    }
+                )
+            );
+
+
+            const start =
+                Math.max(
+                    1,
+                    currentPage - 2
+                );
+
+
+            const end =
+                Math.min(
+                    totalPages,
+                    currentPage + 2
+                );
+
+
+            if (
+                start > 1
+            ) {
+
+                pagination.appendChild(
+                    createPageButton(
+                        '1',
+                        1,
+                        {
+                            active:
+                                currentPage
+                                === 1,
+                        }
+                    )
+                );
+
+
+                if (
+                    start > 2
+                ) {
+
+                    const dots =
+                        document
+                            .createElement(
+                                'span'
+                            );
+
+
+                    dots.textContent =
+                        '...';
+
+
+                    pagination.appendChild(
+                        dots
+                    );
+                }
+            }
+
+
+            for (
+                let pageNumber =
+                    start;
+
+                pageNumber <= end;
+
+                pageNumber++
+            ) {
+
+                pagination.appendChild(
+                    createPageButton(
+                        String(
+                            pageNumber
+                        ),
+                        pageNumber,
+                        {
+                            active:
+                                currentPage
+                                ===
+                                pageNumber,
+                        }
+                    )
+                );
+            }
+
+
+            if (
+                end < totalPages
+            ) {
+
+                if (
+                    end
+                    <
+                    totalPages - 1
+                ) {
+
+                    const dots =
+                        document
+                            .createElement(
+                                'span'
+                            );
+
+
+                    dots.textContent =
+                        '...';
+
+
+                    pagination.appendChild(
+                        dots
+                    );
+                }
+
+
+                pagination.appendChild(
+                    createPageButton(
+                        String(
+                            totalPages
+                        ),
+                        totalPages,
+                        {
+                            active:
+                                currentPage
+                                ===
+                                totalPages,
+                        }
+                    )
+                );
+            }
+
+
+            pagination.appendChild(
+                createPageButton(
+                    '',
+                    Math.min(
+                        totalPages,
+                        currentPage + 1
+                    ),
+                    {
+                        icon:
+                            'chevron-right',
+
+                        disabled:
+                            currentPage
+                            === totalPages,
+                    }
+                )
+            );
+
+
+            refreshIcons();
+        }
+
+
+        function renderMainTable()
+        {
+            const filtered =
+                getFilteredRows();
+
+
+            const perPage =
+                Math.max(
+                    1,
+                    Number(
+                        perPageSelect
+                            ?.value
+                        || 20
+                    )
+                );
+
+
+            const totalPages =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        filtered.length
+                        /
+                        perPage
+                    )
+                );
+
+
+            if (
+                currentPage
+                > totalPages
+            ) {
+
+                currentPage =
+                    totalPages;
+            }
+
+
+            tableRows.forEach(
+                function (
+                    row
+                ) {
+
+                    row.hidden =
+                        true;
+                }
+            );
+
+
+            const start =
+                (
+                    currentPage - 1
+                )
+                *
+                perPage;
+
+
+            const end =
+                Math.min(
+                    start
+                    +
+                    perPage,
+                    filtered.length
+                );
+
+
+            filtered
+                .slice(
+                    start,
+                    end
+                )
+                .forEach(
+                    function (
+                        row,
+                        index
+                    ) {
+
+                        row.hidden =
+                            false;
+
+
+                        const numberCell =
+                            row.querySelector(
+                                '.tanah-row-number'
+                            );
+
+
+                        if (
+                            numberCell
+                        ) {
+
+                            numberCell
+                                .textContent =
+                                start
+                                +
+                                index
+                                +
+                                1;
+                        }
+                    }
+                );
+
+
+            if (tableInfo) {
+
+                if (
+                    filtered.length
+                    === 0
+                ) {
+
+                    tableInfo.textContent =
+                        'Tidak ada data yang sesuai';
+
+                } else {
+
+                    tableInfo.textContent =
+                        'Menampilkan '
+                        +
+                        (
+                            start + 1
+                        )
+                            .toLocaleString(
+                                'id-ID'
+                            )
+                        +
+                        ' - '
+                        +
+                        end
+                            .toLocaleString(
+                                'id-ID'
+                            )
+                        +
+                        ' dari '
+                        +
+                        filtered.length
+                            .toLocaleString(
+                                'id-ID'
+                            )
+                        +
+                        ' data';
+                }
+            }
+
+
+            renderMainPagination(
+                filtered.length
+                === 0
+                    ? 0
+                    : totalPages
+            );
+        }
+
+
+        searchInput
+            ?.addEventListener(
+                'input',
+                function () {
+
+                    currentPage =
+                        1;
+
+
+                    renderMainTable();
+                }
+            );
+
+
+        perPageSelect
+            ?.addEventListener(
+                'change',
+                function () {
+
+                    currentPage =
+                        1;
+
+
+                    renderMainTable();
+                }
+            );
+
+
+        resetButton
+            ?.addEventListener(
+                'click',
+                function () {
+
+                    if (
+                        searchInput
+                    ) {
+
+                        searchInput.value =
+                            '';
+                    }
+
+
+                    if (
+                        perPageSelect
+                    ) {
+
+                        perPageSelect.value =
+                            '20';
+                    }
+
+
+                    currentPage =
+                        1;
+
+
+                    renderMainTable();
+                }
+            );
+
+
+        renderMainTable();
+
+
+        /* =========================================================
+           EXPORT CSV
+        ========================================================= */
+
+        $('#tanahExportButton')
+            ?.addEventListener(
+                'click',
+                function () {
+
+                    const rows =
+                        getFilteredRows();
+
+
+                    if (
+                        !rows.length
+                    ) {
+
+                        showToast(
+                            'Tidak ada data untuk diekspor.',
+                            'error'
+                        );
+
+                        return;
+                    }
+
+
+                    const csvRows = [
+                        [
+                            'No',
+                            'Lokasi',
+                            'Alamat',
+                            'Barang',
+                            'Penggunaan',
+                            'Penunjukan',
+                        ],
+                    ];
+
+
+                    rows.forEach(
+                        function (
+                            row,
+                            index
+                        ) {
+
+                            const cells =
+                                Array.from(
+                                    row.querySelectorAll(
+                                        'td'
+                                    )
+                                );
+
+
+                            csvRows.push([
+                                index + 1,
+
+                                cells[1]
+                                    ?.innerText
+                                    ?.trim()
+                                    || '',
+
+                                cells[2]
+                                    ?.innerText
+                                    ?.trim()
+                                    || '',
+
+                                cells[3]
+                                    ?.innerText
+                                    ?.trim()
+                                    || '',
+
+                                cells[4]
+                                    ?.innerText
+                                    ?.trim()
+                                    || '',
+
+                                cells[5]
+                                    ?.innerText
+                                    ?.trim()
+                                    || '',
+                            ]);
+                        }
+                    );
+
+
+                    const content =
+                        csvRows
+                            .map(
+                                function (
+                                    row
+                                ) {
+
+                                    return row
+                                        .map(
+                                            function (
+                                                value
+                                            ) {
+
+                                                return (
+                                                    '"'
+                                                    +
+                                                    String(
+                                                        value
+                                                        ?? ''
+                                                    )
+                                                        .replace(
+                                                            /"/g,
+                                                            '""'
+                                                        )
+                                                    +
+                                                    '"'
+                                                );
+                                            }
+                                        )
+                                        .join(',');
+                                }
+                            )
+                            .join(
+                                '\r\n'
+                            );
+
+
+                    const blob =
+                        new Blob(
+                            [
+                                '\uFEFF'
+                                +
+                                content,
+                            ],
+                            {
+                                type:
+                                    'text/csv;charset=utf-8;',
+                            }
+                        );
+
+
+                    const url =
+                        URL.createObjectURL(
+                            blob
+                        );
+
+
+                    const link =
+                        document.createElement(
+                            'a'
+                        );
+
+
+                    link.href =
+                        url;
+
+
+                    link.download =
+                        'data-kib-tanah.csv';
+
+
+                    document.body
+                        .appendChild(
+                            link
+                        );
+
+
+                    link.click();
+
+
+                    link.remove();
+
+
+                    URL.revokeObjectURL(
+                        url
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           PENDING NILAI ASET
+        ========================================================= */
+
+        const incomingCard =
+            $('#tanahIncomingCard');
+
+
+        const incomingCount =
+            $('#tanahIncomingCount');
+
+
+        const incomingNew =
+            $('#tanahIncomingNew');
+
+
+        const incomingValue =
+            $('#tanahIncomingValue');
+
+
+        const incomingText =
+            $('#tanahIncomingText');
+
+
+        const incomingButton =
+            $('#tanahIncomingButton');
+
+
+        const sourceBody =
+            $('#tanahSourceBody');
+
+
+        const sourceSearch =
+            $('#tanahSourceSearch');
+
+
+        const sourceTotal =
+            $('#tanahSourceTotal');
+
+
+        let pendingRows =
+            [];
+
+
+        function getFallbackPending()
+        {
+            const script =
+                $('#tanahPendingFallback');
+
+
+            if (!script) {
+                return [];
+            }
+
+
+            try {
+
+                const parsed =
+                    JSON.parse(
+                        script.textContent
+                        || '[]'
+                    );
+
+
+                return Array.isArray(
+                    parsed
+                )
+                    ? parsed
+                    : [];
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    'Fallback pending JSON:',
+                    error
+                );
+
+
+                return [];
+            }
+        }
+
+
+        function normalizePendingPayload(
+            payload
+        ) {
+            if (
+                payload
+                &&
+                Array.isArray(
+                    payload.data
+                )
+            ) {
+
+                return payload;
+            }
+
+
+            if (
+                Array.isArray(
+                    payload
+                )
+            ) {
+
+                return {
+                    count:
+                        payload.length,
+
+                    aset_baru:
+                        payload
+                            .filter(
+                                item =>
+                                    Number(
+                                        item.jenisn
+                                    )
+                                    === 1
+                            )
+                            .length,
+
+                    penambahan_nilai:
+                        payload
+                            .filter(
+                                item =>
+                                    Number(
+                                        item.jenisn
+                                    )
+                                    === 2
+                            )
+                            .length,
+
+                    data:
+                        payload,
+                };
+            }
+
+
+            return {
+                count:
+                    0,
+
+                aset_baru:
+                    0,
+
+                penambahan_nilai:
+                    0,
+
+                data:
+                    [],
+            };
+        }
+
+
+        function updateIncomingCard(
+            summary
+        ) {
+            const total =
+                Number(
+                    summary.count
+                    || 0
+                );
+
+
+            const asetBaru =
+                Number(
+                    summary.aset_baru
+                    || 0
+                );
+
+
+            const tambahNilai =
+                Number(
+                    summary.penambahan_nilai
+                    || 0
+                );
+
+
+            if (
+                incomingCount
+            ) {
+
+                incomingCount.textContent =
+                    total > 999
+                        ? '999+'
+                        : total
+                            .toLocaleString(
+                                'id-ID'
+                            );
+            }
+
+
+            if (
+                incomingNew
+            ) {
+
+                incomingNew.textContent =
+                    asetBaru
+                        .toLocaleString(
+                            'id-ID'
+                        );
+            }
+
+
+            if (
+                incomingValue
+            ) {
+
+                incomingValue.textContent =
+                    tambahNilai
+                        .toLocaleString(
+                            'id-ID'
+                        );
+            }
+
+
+            incomingCard
+                ?.classList
+                .toggle(
+                    'is-empty',
+                    total === 0
+                );
+
+
+            if (
+                incomingText
+            ) {
+
+                incomingText.textContent =
+                    total > 0
+
+                        ? (
+                            'Ada '
+                            +
+                            total
+                                .toLocaleString(
+                                    'id-ID'
+                                )
+                            +
+                            ' transaksi Nilai Aset kategori Tanah yang belum diproses.'
+                        )
+
+                        : 'Tidak ada transaksi Tanah yang menunggu diproses.';
+            }
+
+
+            if (
+                incomingButton
+            ) {
+
+                incomingButton.disabled =
+                    total === 0;
+            }
+        }
+
+
+        async function loadPendingData()
+        {
+            try {
+
+                const payload =
+                    await fetchJson(
+                        PENDING_URL
+                    );
+
+
+                const summary =
+                    normalizePendingPayload(
+                        payload
+                    );
+
+
+                pendingRows =
+                    summary.data;
+
+
+                updateIncomingCard(
+                    summary
+                );
+
+
+                renderSourceRows();
+
+            } catch (
+                error
+            ) {
+
+                console.warn(
+                    'Endpoint pending belum tersedia, menggunakan fallback.',
+                    error
+                );
+
+
+                pendingRows =
+                    getFallbackPending();
+
+
+                const summary =
+                    normalizePendingPayload(
+                        pendingRows
+                    );
+
+
+                updateIncomingCard(
+                    summary
+                );
+
+
+                renderSourceRows();
+            }
+        }
+
+
+        /* =========================================================
+           SOURCE TABLE
+        ========================================================= */
+
+        function getFilteredSourceRows()
+        {
+            const keyword =
+                (
+                    sourceSearch
+                        ?.value
+                    || ''
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            if (!keyword) {
+
+                return pendingRows;
+            }
+
+
+            return pendingRows
+                .filter(
+                    function (
+                        item
+                    ) {
+
+                        const haystack = [
+
+                            item.no_voucher,
+
+                            item.lokasi,
+
+                            item.alamat,
+
+                            item.departemen,
+
+                            item.divisi,
+
+                            item.tahun,
+
+                            item.nilai_label,
+
+                            item.urai,
+
+                        ]
+                            .join(' ')
+                            .toLowerCase();
+
+
+                        return haystack
+                            .includes(
+                                keyword
+                            );
+                    }
+                );
+        }
+
+
+        function renderSourceRows()
+        {
+            if (!sourceBody) {
+                return;
+            }
+
+
+            const rows =
+                getFilteredSourceRows();
+
+
+            sourceBody.innerHTML =
+                '';
+
+
+            if (
+                sourceTotal
+            ) {
+
+                sourceTotal.textContent =
+                    rows.length
+                        .toLocaleString(
+                            'id-ID'
+                        )
+                    +
+                    ' data';
+            }
+
+
+            if (
+                rows.length === 0
+            ) {
+
+                sourceBody.innerHTML = `
+                    <tr>
+
+                        <td
+                            colspan="9"
+                            class="tanah-source-empty"
+                        >
+
+                            Tidak ada transaksi Tanah yang tersedia.
+
+                        </td>
+
+                    </tr>
+                `;
+
+
+                return;
+            }
+
+
+            rows.forEach(
+                function (
+                    item,
+                    index
+                ) {
+
+                    const tr =
+                        document
+                            .createElement(
+                                'tr'
+                            );
+
+
+                    const nominal =
+                        item.nilai_label
+                        ||
+                        formatRupiah(
+                            item.nilai
+                        );
+
+
+                    tr.innerHTML = `
+
+                        <td>
+                            ${index + 1}
+                        </td>
+
+                        <td>
+
+                            <strong>
+                                ${escapeHtml(
+                                    item.no_voucher
+                                    || '-'
+                                )}
+                            </strong>
+
+                            <small>
+
+                                ${escapeHtml(
+                                    formatDate(
+                                        item.tgl_voucher
+                                    )
+                                )}
+
+                            </small>
+
+                        </td>
+
+                        <td>
+
+                            <strong>
+
+                                ${escapeHtml(
+                                    item.lokasi
+                                    || '-'
+                                )}
+
+                            </strong>
+
+                            <small>
+
+                                ${escapeHtml(
+                                    item.alamat
+                                    || '-'
+                                )}
+
+                            </small>
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                item.departemen
+                                || '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                item.divisi
+                                || '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                item.tahun
+                                || '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            <strong>
+                                ${escapeHtml(
+                                    nominal
+                                )}
+                            </strong>
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                item.urai
+                                || '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            <button
+                                type="button"
+                                class="tanah-source-select"
+                            >
+
+                                Pilih
+
+                            </button>
+
+                        </td>
+                    `;
+
+
+                    tr
+                        .querySelector(
+                            '.tanah-source-select'
+                        )
+                        ?.addEventListener(
+                            'click',
+                            function () {
+
+                                selectSource(
+                                    item
+                                );
+                            }
+                        );
+
+
+                    sourceBody
+                        .appendChild(
+                            tr
+                        );
+                }
+            );
+        }
+
+
+        sourceSearch
+            ?.addEventListener(
+                'input',
+                renderSourceRows
+            );
+
+
+        /* =========================================================
+           SOURCE TOGGLE
+        ========================================================= */
+
+        const sourcePanel =
+            $('#tanahSourcePanel');
+
+
+        const sourceToggle =
+            $('#tanahSourceToggle');
+
+
+        function setSourcePanel(
+            open
+        ) {
+            if (
+                !sourcePanel
+                ||
+                !sourceToggle
+            ) {
+
+                return;
+            }
+
+
+            sourcePanel.hidden =
+                !open;
+
+
+            const icon =
+                sourceToggle
+                    .querySelector(
+                        'svg'
+                    );
+
+
+            const text =
+                sourceToggle
+                    .querySelector(
+                        'span'
+                    );
+
+
+            if (
+                icon
+            ) {
+
+                icon.setAttribute(
+                    'data-lucide',
+                    open
+                        ? 'chevron-up'
+                        : 'chevron-down'
+                );
+            }
+
+
+            if (
+                text
+            ) {
+
+                text.textContent =
+                    open
+                        ? 'Sembunyikan'
+                        : 'Tampilkan';
+            }
+
+
+            refreshIcons();
+        }
+
+
+        sourceToggle
+            ?.addEventListener(
+                'click',
+                function () {
+
+                    setSourcePanel(
+                        sourcePanel
+                            ?.hidden
+                        === true
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           FORM
+        ========================================================= */
+
+        const formModal =
+            $('#tanahFormModal');
+
+
+        const form =
+            $('#tanahForm');
+
+
+        const formMethod =
+            $('#tanahFormMethod');
+
+
+        const formTitle =
+            $('#tanahFormTitle');
+
+
+        const nilaiAktivaId =
+            $('#tanahNilaiAktivaId');
+
+
+        const lokasiId =
+            $('#tanahLokasiId');
+
+
+        const lokasiName =
+            $('#tanahLokasiName');
+
+
+        const alamat =
+            $('#tanahAlamat');
+
+
+        const barang =
+            $('#tanahBarang');
+
+
+        const tahun =
+            $('#tanahTahun');
+
+
+        const guna =
+            $('#tanahGuna');
+
+
+        const noTunjuk =
+            $('#tanahNoTunjuk');
+
+
+        const tglTunjuk =
+            $('#tanahTglTunjuk');
+
+
+        const luasTunjuk =
+            $('#tanahLuasTunjuk');
+
+
+        const sertifikat =
+            $('#tanahSertifikat');
+
+
+        const tglSertifikat =
+            $('#tanahTglSertifikat');
+
+
+        const luasSertifikat =
+            $('#tanahLuasSertifikat');
+
+
+        const noGambar =
+            $('#tanahNoGambar');
+
+
+        const tglGambar =
+            $('#tanahTglGambar');
+
+
+        const luasGambar =
+            $('#tanahLuasGambar');
+
+
+        const asal =
+            $('#tanahAsal');
+
+
+        const hak =
+            $('#tanahHak');
+
+
+        const pemilik =
+            $('#tanahPemilik');
+
+
+        const keterangan =
+            $('#tanahKeterangan');
+
+
+        const selectedSource =
+            $('#tanahSelectedSource');
+
+
+        const selectedTitle =
+            $('#tanahSelectedTitle');
+
+
+        const selectedMeta =
+            $('#tanahSelectedMeta');
+
+
+        const changeSource =
+            $('#tanahChangeSourceButton');
+
+
+        let selectedSourceData =
+            null;
+
+
+        function clearTechnicalFields()
+        {
+            if (barang) {
+                barang.value =
+                    '';
+            }
+
+
+            if (guna) {
+                guna.value =
+                    '';
+            }
+
+
+            if (noTunjuk) {
+                noTunjuk.value =
+                    '';
+            }
+
+
+            if (tglTunjuk) {
+                tglTunjuk.value =
+                    '';
+            }
+
+
+            if (luasTunjuk) {
+                luasTunjuk.value =
+                    '';
+            }
+
+
+            if (sertifikat) {
+                sertifikat.value =
+                    '';
+            }
+
+
+            if (tglSertifikat) {
+                tglSertifikat.value =
+                    '';
+            }
+
+
+            if (luasSertifikat) {
+                luasSertifikat.value =
+                    '';
+            }
+
+
+            if (noGambar) {
+                noGambar.value =
+                    '';
+            }
+
+
+            if (tglGambar) {
+                tglGambar.value =
+                    '';
+            }
+
+
+            if (luasGambar) {
+                luasGambar.value =
+                    '';
+            }
+
+
+            if (asal) {
+                asal.value =
+                    '';
+            }
+
+
+            if (hak) {
+                hak.value =
+                    '';
+            }
+
+
+            if (pemilik) {
+                pemilik.value =
+                    '';
+            }
+
+
+            if (keterangan) {
+                keterangan.value =
+                    '';
+            }
+        }
+
+
+        function resetCreateForm()
+        {
+            if (!form) {
+                return;
+            }
+
+
+            form.reset();
+
+
+            form.action =
+                STORE_URL;
+
+
+            if (
+                formMethod
+            ) {
+
+                formMethod.value =
+                    '';
+            }
+
+
+            if (
+                formTitle
+            ) {
+
+                formTitle.textContent =
+                    'Tambah Data Tanah';
+            }
+
+
+            if (
+                nilaiAktivaId
+            ) {
+
+                nilaiAktivaId.value =
+                    '';
+            }
+
+
+            if (
+                lokasiId
+            ) {
+
+                lokasiId.value =
+                    '';
+            }
+
+
+            if (
+                lokasiName
+            ) {
+
+                lokasiName.value =
+                    '';
+            }
+
+
+            if (
+                alamat
+            ) {
+
+                alamat.value =
+                    '';
+            }
+
+
+            if (
+                tahun
+            ) {
+
+                tahun.value =
+                    '';
+            }
+
+
+            selectedSourceData =
+                null;
+
+
+            if (
+                selectedSource
+            ) {
+
+                selectedSource.hidden =
+                    true;
+            }
+
+
+            setSourcePanel(
+                true
+            );
+
+
+            clearTechnicalFields();
+        }
+
+
+        function selectSource(
+            item
+        ) {
+            selectedSourceData =
+                item;
+
+
+            if (
+                nilaiAktivaId
+            ) {
+
+                nilaiAktivaId.value =
+                    item.id
+                    ?? '';
+            }
+
+
+            if (
+                lokasiId
+            ) {
+
+                lokasiId.value =
+                    item.id_lokasi
+                    ?? '';
+            }
+
+
+            if (
+                lokasiName
+            ) {
+
+                lokasiName.value =
+                    item.lokasi
+                    ?? '';
+            }
+
+
+            if (
+                alamat
+            ) {
+
+                alamat.value =
+                    item.alamat
+                    ?? '';
+            }
+
+
+            if (
+                tahun
+            ) {
+
+                tahun.value =
+                    item.tahun
+                    ?? '';
+            }
+
+
+            if (
+                selectedTitle
+            ) {
+
+                selectedTitle.textContent =
+                    (
+                        item.lokasi
+                        || 'Lokasi'
+                    )
+                    +
+                    ' • '
+                    +
+                    (
+                        item.no_voucher
+                        || 'Tanpa Voucher'
+                    );
+            }
+
+
+            if (
+                selectedMeta
+            ) {
+
+                selectedMeta.textContent =
+                    (
+                        item.departemen
+                        || '-'
+                    )
+                    +
+                    ' / '
+                    +
+                    (
+                        item.divisi
+                        || '-'
+                    )
+                    +
+                    ' • '
+                    +
+                    (
+                        item.nilai_label
+                        ||
+                        formatRupiah(
+                            item.nilai
+                        )
+                    );
+            }
+
+
+            if (
+                selectedSource
+            ) {
+
+                selectedSource.hidden =
+                    false;
+            }
+
+
+            setSourcePanel(
+                false
+            );
+
+
+            document
+                .querySelector(
+                    '.tanah-form-section'
+                )
+                ?.scrollIntoView(
+                    {
+                        behavior:
+                            'smooth',
+
+                        block:
+                            'start',
+                    }
+                );
+
+
+            refreshIcons();
+        }
+
+
+        changeSource
+            ?.addEventListener(
+                'click',
+                function () {
+
+                    setSourcePanel(
+                        true
+                    );
+
+
+                    sourceSearch
+                        ?.focus();
+                }
+            );
+
+
+        $('#tanahAddButton')
+            ?.addEventListener(
+                'click',
+                function () {
+
+                    resetCreateForm();
+
+                    openDialog(
+                        formModal
+                    );
+                }
+            );
+
+
+        incomingButton
+            ?.addEventListener(
+                'click',
+                function () {
+
+                    resetCreateForm();
+
+                    openDialog(
+                        formModal
+                    );
+
+
+                    setSourcePanel(
+                        true
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           FORM VALIDATION BEFORE SUBMIT
+        ========================================================= */
+
+        form
+            ?.addEventListener(
+                'submit',
+                function (
+                    event
+                ) {
+
+                    const isCreate =
+                        !formMethod
+                        ||
+                        formMethod.value
+                        !== 'PUT';
+
+
+                    if (
+                        isCreate
+                        &&
+                        !nilaiAktivaId
+                            ?.value
+                    ) {
+
+                        event.preventDefault();
+
+
+                        showToast(
+                            'Pilih sumber transaksi Nilai Aset terlebih dahulu.',
+                            'error'
+                        );
+
+
+                        setSourcePanel(
+                            true
+                        );
+
+
+                        sourceSearch
+                            ?.focus();
+
+
+                        return;
+                    }
+
+
+                    if (
+                        !lokasiId
+                            ?.value
+                    ) {
+
+                        event.preventDefault();
+
+
+                        showToast(
+                            'Lokasi Tanah belum tersedia.',
+                            'error'
+                        );
+                    }
+                }
+            );
+
+
+        /* =========================================================
+           LOCATION DETAILS
+        ========================================================= */
+
+        const locationModal =
+            $('#tanahLocationModal');
+
+
+        const locationTitle =
+            $('#tanahLocationTitle');
+
+
+        const locationBody =
+            $('#tanahLocationBody');
+
+
+        async function openLocationDetail(
+            locationIdValue,
+            locationNameValue
+        ) {
+            if (
+                !locationIdValue
+            ) {
+
+                showToast(
+                    'ID lokasi tidak tersedia.',
+                    'error'
+                );
+
+                return;
+            }
+
+
+            if (
+                locationTitle
+            ) {
+
+                locationTitle.textContent =
+                    locationNameValue
+                    || 'Detail Lokasi';
+            }
+
+
+            if (
+                locationBody
+            ) {
+
+                locationBody.innerHTML = `
+                    <tr>
+
+                        <td
+                            colspan="7"
+                            class="tanah-location-empty"
+                        >
+
+                            Memuat data lokasi...
+
+                        </td>
+
+                    </tr>
+                `;
+            }
+
+
+            openDialog(
+                locationModal
+            );
+
+
+            try {
+
+                const payload =
+                    await fetchJson(
+                        LOCATION_BASE_URL
+                        +
+                        '/'
+                        +
+                        encodeURIComponent(
+                            locationIdValue
+                        )
+                    );
+
+
+                const data =
+                    unwrapData(
+                        payload
+                    );
+
+
+                const records =
+                    Array.isArray(
+                        data
+                    )
+                        ? data
+                        : [];
+
+
+                renderLocationRecords(
+                    records
+                );
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    'Location detail:',
+                    error
+                );
+
+
+                if (
+                    locationBody
+                ) {
+
+                    locationBody.innerHTML = `
+                        <tr>
+
+                            <td
+                                colspan="7"
+                                class="tanah-location-empty"
+                            >
+
+                                Data lokasi gagal dimuat.
+
+                            </td>
+
+                        </tr>
+                    `;
+                }
+            }
+        }
+
+
+        function recordId(
+            record
+        ) {
+            return (
+                record.id
+                ??
+                record.idT
+                ??
+                record.id_tanah
+                ??
+                null
+            );
+        }
+
+
+        function renderLocationRecords(
+            records
+        ) {
+            if (!locationBody) {
+                return;
+            }
+
+
+            locationBody.innerHTML =
+                '';
+
+
+            if (
+                records.length === 0
+            ) {
+
+                locationBody.innerHTML = `
+                    <tr>
+
+                        <td
+                            colspan="7"
+                            class="tanah-location-empty"
+                        >
+
+                            Tidak ada detail tanah pada lokasi ini.
+
+                        </td>
+
+                    </tr>
+                `;
+
+
+                return;
+            }
+
+
+            records.forEach(
+                function (
+                    record,
+                    index
+                ) {
+
+                    const id =
+                        recordId(
+                            record
+                        );
+
+
+                    const tr =
+                        document
+                            .createElement(
+                                'tr'
+                            );
+
+
+                    tr.innerHTML = `
+
+                        <td>
+                            ${index + 1}
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                record.nama_barang
+                                ||
+                                record.barang
+                                ||
+                                '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                record.guna
+                                || '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                record.pemilik
+                                || '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                formatNumber(
+                                    record.luas_sertifikat
+                                )
+                            )}
+
+                            m²
+
+                        </td>
+
+                        <td>
+
+                            ${escapeHtml(
+                                record.hak
+                                || '-'
+                            )}
+
+                        </td>
+
+                        <td>
+
+                            <div class="tanah-record-actions">
+
+                                <button
+                                    type="button"
+                                    class="view js-record-view"
+                                    title="Lihat"
+                                >
+
+                                    <i data-lucide="eye"></i>
+
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    class="edit js-record-edit"
+                                    title="Edit"
+                                >
+
+                                    <i data-lucide="pencil"></i>
+
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    class="delete js-record-delete"
+                                    title="Hapus"
+                                >
+
+                                    <i data-lucide="trash-2"></i>
+
+                                </button>
+
+                            </div>
+
+                        </td>
+                    `;
+
+
+                    tr
+                        .querySelector(
+                            '.js-record-view'
+                        )
+                        ?.addEventListener(
+                            'click',
+                            function () {
+
+                                openRecordView(
+                                    id
+                                );
+                            }
+                        );
+
+
+                    tr
+                        .querySelector(
+                            '.js-record-edit'
+                        )
+                        ?.addEventListener(
+                            'click',
+                            function () {
+
+                                openEditForm(
+                                    id
+                                );
+                            }
+                        );
+
+
+                    tr
+                        .querySelector(
+                            '.js-record-delete'
+                        )
+                        ?.addEventListener(
+                            'click',
+                            function () {
+
+                                openDeleteDialog(
+                                    id,
+                                    record.lokasi
+                                    ||
+                                    record.nama_barang
+                                    ||
+                                    'Data Tanah'
+                                );
+                            }
+                        );
+
+
+                    locationBody
+                        .appendChild(
+                            tr
+                        );
+                }
+            );
+
+
+            refreshIcons();
+        }
+
+
+        $$('.js-tanah-location-detail')
+            .forEach(
+                function (
+                    button
+                ) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            openLocationDetail(
+
+                                button.dataset
+                                    .locationId,
+
+                                button.dataset
+                                    .locationName
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           RECORD DETAIL
+        ========================================================= */
+
+        const detailModal =
+            $('#tanahDetailModal');
+
+
+        function setDetailText(
+            selector,
+            value
+        ) {
+            const element =
+                $(selector);
+
+
+            if (
+                element
+            ) {
+
+                element.textContent =
+                    value
+                    ??
+                    '-';
+            }
+        }
+
+
+        function fillDetailModal(
+            data
+        ) {
+            setDetailText(
+                '#detailTanahLokasi',
+                data.lokasi
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahAlamat',
+                data.alamat
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahBarang',
+                data.nama_barang
+                ||
+                data.barang
+                ||
+                '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahTahun',
+                data.tahun
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahGuna',
+                data.guna
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahNoTunjuk',
+                data.no_tunjuk
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahTglTunjuk',
+                formatDate(
+                    data.tgl_tunjuk
+                )
+            );
+
+
+            setDetailText(
+                '#detailTanahLuasTunjuk',
+                data.luas_tunjuk
+
+                    ? (
+                        formatNumber(
+                            data.luas_tunjuk
+                        )
+                        +
+                        ' m²'
+                    )
+
+                    : '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahSertifikat',
+                data.sertifikat
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahTglSertifikat',
+                formatDate(
+                    data.tgl_sertifikat
+                )
+            );
+
+
+            setDetailText(
+                '#detailTanahLuasSertifikat',
+                data.luas_sertifikat
+
+                    ? (
+                        formatNumber(
+                            data.luas_sertifikat
+                        )
+                        +
+                        ' m²'
+                    )
+
+                    : '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahNoGambar',
+                data.no_gambar
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahTglGambar',
+                formatDate(
+                    data.tgl_gambar
+                )
+            );
+
+
+            setDetailText(
+                '#detailTanahLuasGambar',
+                data.luas_gambar
+
+                    ? (
+                        formatNumber(
+                            data.luas_gambar
+                        )
+                        +
+                        ' m²'
+                    )
+
+                    : '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahAsal',
+                data.asal
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahHak',
+                data.hak
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahPemilik',
+                data.pemilik
+                || '-'
+            );
+
+
+            setDetailText(
+                '#detailTanahKeterangan',
+                data.ket
+                ||
+                data.keterangan
+                ||
+                '-'
+            );
+        }
+
+
+        async function loadRecord(
+            id
+        ) {
+            if (!id) {
+
+                throw new Error(
+                    'ID Tanah tidak tersedia.'
+                );
+            }
+
+
+            const payload =
+                await fetchJson(
+                    RECORD_BASE_URL
+                    +
+                    '/'
+                    +
+                    encodeURIComponent(
+                        id
+                    )
+                );
+
+
+            return unwrapData(
+                payload
+            );
+        }
+
+
+        async function openRecordView(
+            id
+        ) {
+            try {
+
+                const data =
+                    await loadRecord(
+                        id
+                    );
+
+
+                fillDetailModal(
+                    data
+                );
+
+
+                closeDialog(
+                    locationModal
+                );
+
+
+                openDialog(
+                    detailModal
+                );
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    'View Tanah:',
+                    error
+                );
+
+
+                showToast(
+                    'Detail data Tanah gagal dimuat.',
+                    'error'
+                );
+            }
+        }
+
+
+        /* =========================================================
+           EDIT
+        ========================================================= */
+
+        function setValue(
+            element,
+            value
+        ) {
+            if (!element) {
+                return;
+            }
+
+
+            element.value =
+                value
+                ??
+                '';
+        }
+
+
+        function fillEditForm(
+            data
+        ) {
+            selectedSourceData =
+                null;
+
+
+            form.action =
+                RECORD_BASE_URL
+                +
+                '/'
+                +
+                encodeURIComponent(
+                    data.id
+                    ??
+                    data.idT
+                    ??
+                    data.id_tanah
+                );
+
+
+            formMethod.value =
+                'PUT';
+
+
+            formTitle.textContent =
+                'Edit Data Tanah';
+
+
+            setValue(
+                nilaiAktivaId,
+                data.id_nilai_aktiva
+            );
+
+
+            setValue(
+                lokasiId,
+                data.id_lokasi
+            );
+
+
+            setValue(
+                lokasiName,
+                data.lokasi
+            );
+
+
+            setValue(
+                alamat,
+                data.alamat
+            );
+
+
+            setValue(
+                barang,
+                data.id_barang
+            );
+
+
+            setValue(
+                tahun,
+                data.tahun
+            );
+
+
+            setValue(
+                guna,
+                data.guna
+            );
+
+
+            setValue(
+                noTunjuk,
+                data.no_tunjuk
+            );
+
+
+            setValue(
+                tglTunjuk,
+                dateInputValue(
+                    data.tgl_tunjuk
+                )
+            );
+
+
+            setValue(
+                luasTunjuk,
+                data.luas_tunjuk
+            );
+
+
+            setValue(
+                sertifikat,
+                data.sertifikat
+            );
+
+
+            setValue(
+                tglSertifikat,
+                dateInputValue(
+                    data.tgl_sertifikat
+                )
+            );
+
+
+            setValue(
+                luasSertifikat,
+                data.luas_sertifikat
+            );
+
+
+            setValue(
+                noGambar,
+                data.no_gambar
+            );
+
+
+            setValue(
+                tglGambar,
+                dateInputValue(
+                    data.tgl_gambar
+                )
+            );
+
+
+            setValue(
+                luasGambar,
+                data.luas_gambar
+            );
+
+
+            setValue(
+                asal,
+                data.asal
+            );
+
+
+            setValue(
+                hak,
+                data.hak
+            );
+
+
+            setValue(
+                pemilik,
+                data.pemilik
+            );
+
+
+            setValue(
+                keterangan,
+                data.ket
+                ??
+                data.keterangan
+            );
+
+
+            /*
+            | Edit tidak perlu memilih ulang
+            | sumber Nilai Aset.
+            */
+
+            setSourcePanel(
+                false
+            );
+
+
+            if (
+                selectedSource
+            ) {
+
+                selectedSource.hidden =
+                    false;
+            }
+
+
+            if (
+                selectedTitle
+            ) {
+
+                selectedTitle.textContent =
+                    data.lokasi
+                    ||
+                    'Data Tanah';
+            }
+
+
+            if (
+                selectedMeta
+            ) {
+
+                selectedMeta.textContent =
+                    data.id_nilai_aktiva
+
+                        ? (
+                            'Sumber Nilai Aset #'
+                            +
+                            data.id_nilai_aktiva
+                        )
+
+                        : 'Data existing tanpa referensi Nilai Aset';
+            }
+        }
+
+
+        async function openEditForm(
+            id
+        ) {
+            try {
+
+                const data =
+                    await loadRecord(
+                        id
+                    );
+
+
+                closeDialog(
+                    locationModal
+                );
+
+
+                fillEditForm(
+                    data
+                );
+
+
+                openDialog(
+                    formModal
+                );
+
+            } catch (
+                error
+            ) {
+
+                console.error(
+                    'Edit Tanah:',
+                    error
+                );
+
+
+                showToast(
+                    'Data Tanah gagal dimuat untuk diedit.',
+                    'error'
+                );
+            }
+        }
+
+
+        /* =========================================================
+           DELETE
+        ========================================================= */
+
+        const deleteModal =
+            $('#tanahDeleteModal');
+
+
+        const deleteForm =
+            $('#tanahDeleteForm');
+
+
+        const deleteName =
+            $('#tanahDeleteName');
+
+
+        function openDeleteDialog(
+            id,
+            name
+        ) {
+            if (
+                !id
+                ||
+                !deleteForm
+            ) {
+
+                showToast(
+                    'ID data Tanah tidak tersedia.',
+                    'error'
+                );
+
+                return;
+            }
+
+
+            deleteForm.action =
+                RECORD_BASE_URL
+                +
+                '/'
+                +
+                encodeURIComponent(
+                    id
+                );
+
+
+            if (
+                deleteName
+            ) {
+
+                deleteName.textContent =
+                    name
+                    ||
+                    'Data Tanah';
+            }
+
+
+            openDialog(
+                deleteModal
+            );
+        }
+
+
+        /* =========================================================
+           OPTIONAL DIRECT ACTIONS
+        ========================================================= */
+
+        $$('[data-tanah-record-view]')
+            .forEach(
+                function (
+                    button
+                ) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            openRecordView(
+                                button.dataset
+                                    .tanahRecordView
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        $$('[data-tanah-record-edit]')
+            .forEach(
+                function (
+                    button
+                ) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            openEditForm(
+                                button.dataset
+                                    .tanahRecordEdit
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        /* =========================================================
+           GENERIC EVENT FROM GLOBAL KIB NOTIFICATION
+        ========================================================= */
+
+        window.addEventListener(
+            'kib:source-selected',
+            function (
+                event
+            ) {
+
+                const item =
+                    event.detail;
+
+
+                if (!item) {
                     return;
                 }
 
 
-                selectTanahDetailItem(
-                    Number(
-                        row.dataset.detailIndex
-                    )
+                /*
+                | Pastikan hanya data Tanah.
+                | Jika global modal dipakai dari halaman lain,
+                | tetap aman.
+                */
+
+                resetCreateForm();
+
+
+                openDialog(
+                    formModal
+                );
+
+
+                selectSource(
+                    item
                 );
             }
         );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | NILAI
-    |--------------------------------------------------------------------------
-    */
-
-    document
-        .getElementById(
-            'tanahNilaiClose'
-        )
-        ?.addEventListener(
-            'click',
-            closeTanahNilaiModal
-        );
-
-
-    document
-        .getElementById(
-            'tanahNilaiCloseBottom'
-        )
-        ?.addEventListener(
-            'click',
-            closeTanahNilaiModal
-        );
-
-
-    const nilaiModal =
-        document.getElementById(
-            'tanahNilaiModal'
-        );
-
-
-    nilaiModal
-        ?.addEventListener(
-            'click',
-            function (event) {
-
-                if (
-                    event.target
-                    ===
-                    nilaiModal
-                ) {
-
-                    closeTanahNilaiModal();
-                }
-            }
-        );
-
-
-    nilaiModal
-        ?.addEventListener(
-            'close',
-            function () {
-
-                if (
-                    tanahNilaiAbortController
-                ) {
-
-                    tanahNilaiAbortController
-                        .abort();
-
-
-                    tanahNilaiAbortController =
-                        null;
-                }
-
-
-                restoreTanahBodyOverflow();
-            }
-        );
-}
-
-
-/* =========================================================
-   WITA
-========================================================= */
-
-function updateTanahDate() {
-
-    const date =
-        document.getElementById(
-            'tanahCurrentDate'
-        );
-
-
-    const time =
-        document.getElementById(
-            'tanahCurrentTime'
-        );
-
-
-    if (
-        !date
-        ||
-        !time
-    ) {
-        return;
-    }
-
-
-    const now =
-        new Date();
-
-
-    date.textContent =
-        new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone:
-                    'Asia/Makassar',
-
-                weekday:
-                    'long',
-
-                day:
-                    'numeric',
-
-                month:
-                    'long',
-
-                year:
-                    'numeric'
-            }
-        )
-        .format(now);
-
-
-    time.textContent =
-        new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone:
-                    'Asia/Makassar',
-
-                hour:
-                    '2-digit',
-
-                minute:
-                    '2-digit',
-
-                second:
-                    '2-digit',
-
-                hourCycle:
-                    'h23'
-            }
-        )
-        .format(now)
-        .replace(
-            /\./g,
-            ':'
-        )
-        +
-        ' WITA';
-}
-
-
-/* =========================================================
-   ROWS
-========================================================= */
-
-function getTanahRows() {
-
-    return Array.from(
-        document.querySelectorAll(
-            '#tanahTable tbody tr[data-record]'
-        )
-    );
-}
-
-
-function normalizeTanahText(
-    value
-) {
-
-    return String(
-        value ?? ''
-    )
-    .trim()
-    .toLocaleLowerCase(
-        'id-ID'
-    );
-}
-
-
-/* =========================================================
-   FILTER
-========================================================= */
-
-function getFilteredTanahRows() {
-
-    const search =
-        normalizeTanahText(
-            document
-                .getElementById(
-                    'tanahSearch'
-                )
-                ?.value
-        );
-
-
-    const jumlahFilter =
-        document
-            .getElementById(
-                'tanahJumlahFilter'
-            )
-            ?.value
-        ??
-        '';
-
-
-    return getTanahRows()
-        .filter(
-            function (row) {
-
-                const searchable =
-                    normalizeTanahText(
-                        [
-                            row.dataset.lokasi,
-                            row.dataset.alamat,
-                            row.dataset.guna,
-                            row.dataset.tahun
-                        ]
-                        .join(' ')
-                    );
-
-
-                const searchMatch =
-                    !search
-                    ||
-                    searchable.includes(
-                        search
-                    );
-
-
-                const jumlah =
-                    Number(
-                        row.dataset.jumlahData
-                    )
-                    ||
-                    0;
-
-
-                let jumlahMatch =
-                    true;
-
-
-                if (
-                    jumlahFilter
-                    ===
-                    'single'
-                ) {
-
-                    jumlahMatch =
-                        jumlah === 1;
-                }
-
-
-                if (
-                    jumlahFilter
-                    ===
-                    'multiple'
-                ) {
-
-                    jumlahMatch =
-                        jumlah > 1;
-                }
-
-
-                return (
-                    searchMatch
-                    &&
-                    jumlahMatch
-                );
-            }
-        );
-}
-
-
-function tanahFilterChanged() {
-
-    tanahCurrentPage =
-        1;
-
-
-    renderTanahTable();
-}
-
-
-function resetTanahFilter() {
-
-    const search =
-        document.getElementById(
-            'tanahSearch'
-        );
-
-
-    const jumlah =
-        document.getElementById(
-            'tanahJumlahFilter'
-        );
-
-
-    const pageSize =
-        document.getElementById(
-            'tanahPageSize'
-        );
-
-
-    if (search) {
-        search.value = '';
-    }
-
-
-    if (jumlah) {
-        jumlah.value = '';
-    }
-
-
-    if (pageSize) {
-        pageSize.value = '10';
-    }
-
-
-    tanahCurrentPage =
-        1;
-
-
-    renderTanahTable();
-}
-
-
-/* =========================================================
-   TABLE
-========================================================= */
-
-function renderTanahTable() {
-
-    const rows =
-        getTanahRows();
-
-
-    const filtered =
-        getFilteredTanahRows();
-
-
-    const pageSize =
-        Number(
-            document
-                .getElementById(
-                    'tanahPageSize'
-                )
-                ?.value
-        )
-        ||
-        10;
-
-
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                filtered.length
-                /
-                pageSize
-            )
-        );
-
-
-    tanahCurrentPage =
-        Math.min(
-            Math.max(
-                tanahCurrentPage,
-                1
-            ),
-            totalPages
-        );
-
-
-    const start =
-        (
-            tanahCurrentPage
-            -
-            1
-        )
-        *
-        pageSize;
-
-
-    const visible =
-        filtered.slice(
-            start,
-            start + pageSize
-        );
-
-
-    rows.forEach(
-        function (row) {
-
-            row.hidden =
-                true;
-        }
-    );
-
-
-    visible.forEach(
-        function (
-            row,
-            index
-        ) {
-
-            row.hidden =
-                false;
-
-
-            const number =
-                row.querySelector(
-                    '.tanah-row-number'
-                );
-
-
-            if (number) {
-
-                number.textContent =
-                    start
-                    +
-                    index
-                    +
-                    1;
-            }
-        }
-    );
-
-
-    const empty =
-        document.getElementById(
-            'tanahFilterEmpty'
-        );
-
-
-    if (empty) {
-
-        empty.hidden =
-            !(
-                rows.length > 0
-                &&
-                filtered.length === 0
-            );
-    }
-
-
-    const from =
-        filtered.length
-            ?
-            start + 1
-            :
-            0;
-
-
-    const to =
-        Math.min(
-            start + pageSize,
-            filtered.length
-        );
-
-
-    const info =
-        document.getElementById(
-            'tanahTableInfo'
-        );
-
-
-    if (info) {
-
-        info.textContent =
-            `Menampilkan ${from}–${to} dari ${filtered.length} lokasi`;
-    }
-
-
-    renderTanahPagination(
-        totalPages
-    );
-}
-
-
-/* =========================================================
-   PAGINATION
-========================================================= */
-
-function renderTanahPagination(
-    totalPages
-) {
-
-    const container =
-        document.getElementById(
-            'tanahPagination'
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    container.replaceChildren();
-
-
-    createTanahPageButton(
-        container,
-        '‹',
-        tanahCurrentPage - 1,
-        tanahCurrentPage === 1
-    );
-
-
-    let first =
-        Math.max(
-            1,
-            tanahCurrentPage - 2
-        );
-
-
-    let last =
-        Math.min(
-            totalPages,
-            first + 4
-        );
-
-
-    first =
-        Math.max(
-            1,
-            last - 4
-        );
-
-
-    for (
-        let page = first;
-        page <= last;
-        page++
-    ) {
-
-        createTanahPageButton(
-            container,
-            String(page),
-            page,
-            false,
-            page === tanahCurrentPage
-        );
-    }
-
-
-    createTanahPageButton(
-        container,
-        '›',
-        tanahCurrentPage + 1,
-        tanahCurrentPage === totalPages
-    );
-}
-
-
-function createTanahPageButton(
-    container,
-    label,
-    page,
-    disabled = false,
-    active = false
-) {
-
-    const button =
-        document.createElement(
-            'button'
-        );
-
-
-    button.type =
-        'button';
-
-
-    button.textContent =
-        label;
-
-
-    button.disabled =
-        disabled;
-
-
-    if (active) {
-
-        button.classList.add(
-            'active'
-        );
-    }
-
-
-    button.addEventListener(
-        'click',
-        function () {
-
-            tanahCurrentPage =
-                page;
-
-
-            renderTanahTable();
-        }
-    );
-
-
-    container.appendChild(
-        button
-    );
-}
-
-
-/* =========================================================
-   TABLE ACTION
-========================================================= */
-
-function handleTanahTableClick(
-    event
-) {
-
-    const button =
-        event.target.closest(
-            '[data-action]'
-        );
-
-
-    if (!button) {
-        return;
-    }
-
-
-    const row =
-        button.closest(
-            'tr[data-record]'
-        );
-
-
-    if (!row) {
-        return;
-    }
-
-
-    if (
-        button.dataset.action
-        ===
-        'view'
-    ) {
-
-        openTanahView(
-            row
-        );
-
-
-        return;
-    }
-
-
-    if (
-        button.dataset.action
-        ===
-        'nilai'
-    ) {
-
-        openTanahNilaiModal(
-            row
-        );
-    }
-}
-
-
-/* =========================================================
-   OPEN VIEW
-========================================================= */
-
-async function openTanahView(
-    row
-) {
-
-    const modal =
-        document.getElementById(
-            'tanahViewModal'
-        );
-
-
-    if (!modal) {
-        return;
-    }
-
-
-    tanahDetailItems =
-        [];
-
-
-    document
-        .getElementById(
-            'tanahDetailItemsBody'
-        )
-        ?.replaceChildren();
-
-
-    setTanahText(
-        'detailTanahHeaderLocation',
-        row.dataset.lokasi
-    );
-
-
-    setTanahText(
-        'detailLokasiNama',
-        row.dataset.lokasi
-    );
-
-
-    setTanahText(
-        'detailLokasiAlamat',
-        row.dataset.alamat
-    );
-
-
-    setTanahText(
-        'detailLokasiJumlah',
-        row.dataset.jumlahData
-    );
-
-
-    setTanahText(
-        'detailLokasiNilai',
-        formatTanahRupiah(
-            row.dataset.nilai
-        )
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESET GAMBAR
-    |--------------------------------------------------------------------------
-    */
-
-    setTanahDetailImage(
-        '',
-        row.dataset.lokasi
-    );
-
-
-    setElementHidden(
-        'tanahDetailContent',
-        true
-    );
-
-
-    setElementHidden(
-        'tanahDetailError',
-        true
-    );
-
-
-    setElementHidden(
-        'tanahDetailLoading',
-        false
-    );
-
-
-    lockTanahBody();
-
-
-    if (!modal.open) {
-
-        modal.showModal();
-    }
-
-
-    refreshTanahIcons();
-
-
-    if (
-        tanahDetailAbortController
-    ) {
-
-        tanahDetailAbortController
-            .abort();
-    }
-
-
-    tanahDetailAbortController =
-        new AbortController();
-
-
-    try {
-
-        const endpoint =
-            window.TANAH_ENDPOINTS
-                ?.detail;
-
-
-        if (!endpoint) {
-
-            throw new Error(
-                'Endpoint detail Tanah tidak tersedia.'
-            );
-        }
-
-
-        const id =
-            row.dataset.idLokasi;
-
-
-        const url =
-            String(endpoint)
-                .replace(
-                    '__ID__',
-                    encodeURIComponent(id)
-                );
-
-
-        const response =
-            await fetch(
-                url,
-                {
-
-                    method:
-                        'GET',
-
-                    headers: {
-
-                        'Accept':
-                            'application/json',
-
-                        'X-Requested-With':
-                            'XMLHttpRequest'
-
-                    },
-
-                    signal:
-                        tanahDetailAbortController
-                            .signal
-
-                }
-            );
-
-
-        const result =
-            await readTanahJsonResponse(
-                response
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.message
-                ||
-                `HTTP ${response.status}`
-            );
-        }
-
-
-        renderTanahDetailData(
-            result
-        );
-
-
-    } catch (error) {
+        /* =========================================================
+           VALIDATION ERROR
+        ========================================================= */
 
         if (
-            error.name
-            ===
-            'AbortError'
-        ) {
-            return;
-        }
-
-
-        console.error(
-            'DETAIL TANAH:',
-            error
-        );
-
-
-        setElementHidden(
-            'tanahDetailContent',
-            true
-        );
-
-
-        showTanahError(
-            'tanahDetailError',
-            'tanahDetailErrorText',
-            error.message
-            ||
-            'Detail tanah gagal dimuat.'
-        );
-
-
-    } finally {
-
-        setElementHidden(
-            'tanahDetailLoading',
-            true
-        );
-    }
-}
-
-
-/* =========================================================
-   RENDER DETAIL
-========================================================= */
-
-function renderTanahDetailData(
-    result
-) {
-
-    const items =
-        Array.isArray(
-            result.data
-        )
-            ?
-            result.data
-            :
-            [];
-
-
-    tanahDetailItems =
-        items;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | INFORMASI LOKASI
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-        result.lokasi
-    ) {
-
-        setTanahText(
-            'detailLokasiNama',
-            result.lokasi.lokasi
-        );
-
-
-        setTanahText(
-            'detailLokasiAlamat',
-            result.lokasi.alamat
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | GAMBAR LOKASIS.IMG
-        |--------------------------------------------------------------------------
-        |
-        | Hanya dijalankan sekali saat modal dibuka.
-        |
-        */
-
-        setTanahDetailImage(
-
-            result.lokasi.image_url
-            ||
-            '',
-
-            result.lokasi.lokasi
-
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DEBUG
-        |--------------------------------------------------------------------------
-        */
-
-        console.log(
-            '[LOKASI IMAGE]',
-            {
-                lokasi:
-                    result.lokasi.lokasi,
-
-                database:
-                    result.lokasi.img,
-
-                url:
-                    result.lokasi.image_url
-            }
-        );
-    }
-
-
-    setTanahText(
-        'detailLokasiJumlah',
-        String(
-            result.jumlah
-            ??
-            items.length
-        )
-    );
-
-
-    const tbody =
-        document.getElementById(
-            'tanahDetailItemsBody'
-        );
-
-
-    if (!tbody) {
-        return;
-    }
-
-
-    tbody.replaceChildren();
-
-
-    if (!items.length) {
-
-        setElementHidden(
-            'tanahDetailContent',
-            true
-        );
-
-
-        showTanahError(
-            'tanahDetailError',
-            'tanahDetailErrorText',
-            'Tidak ada data Tanah pada lokasi ini.'
-        );
-
-
-        return;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | LIST PEMILIK / TANAH
-    |--------------------------------------------------------------------------
-    */
-
-    items.forEach(
-        function (
-            item,
-            index
+            page.dataset
+                .hasErrors
+            === '1'
         ) {
 
-            const tr =
-                document.createElement(
-                    'tr'
-                );
-
-
-            tr.dataset.detailIndex =
-                String(index);
-
-
-            appendTextCell(
-                tr,
-                index + 1
-            );
-
-
-            appendTextCell(
-                tr,
-                item.pemilik
-                ||
-                '—'
-            );
-
-
-            appendTextCell(
-                tr,
-                formatTanahArea(
-                    item.luas_sertifikat
-                    ||
-                    item.luas_tunjuk
-                )
-            );
-
-
-            appendTextCell(
-                tr,
-                item.guna
-                ||
-                '—'
-            );
-
-
-            tbody.appendChild(
-                tr
-            );
-        }
-    );
-
-
-    setElementHidden(
-        'tanahDetailError',
-        true
-    );
-
-
-    setElementHidden(
-        'tanahDetailContent',
-        false
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | PILIH DATA PERTAMA
-    |--------------------------------------------------------------------------
-    */
-
-    selectTanahDetailItem(
-        0
-    );
-}
-
-
-/* =========================================================
-   SELECT DETAIL TANAH
-========================================================= */
-
-function selectTanahDetailItem(
-    index
-) {
-
-    const item =
-        tanahDetailItems[index];
-
-
-    if (!item) {
-        return;
-    }
-
-
-    document
-        .querySelectorAll(
-            '#tanahDetailItemsBody tr[data-detail-index]'
-        )
-        .forEach(
-            function (row) {
-
-                row.classList.toggle(
-
-                    'active',
-
-                    Number(
-                        row.dataset.detailIndex
-                    )
-                    ===
-                    index
-
-                );
-            }
-        );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | PENTING
-    |--------------------------------------------------------------------------
-    |
-    | JANGAN mengubah gambar di sini.
-    |
-    | Gambar adalah milik LOKASI:
-    |
-    | lokasis.img
-    |
-    */
-
-
-    setTanahText(
-        'detailTanahId',
-
-        item.id
-            ?
-            `#${item.id}`
-            :
-            '—'
-    );
-
-
-    setTanahText(
-        'detailTanahGunaTitle',
-        item.guna
-    );
-
-
-    setTanahText(
-        'detailTanahAlamat',
-
-        document
-            .getElementById(
-                'detailLokasiAlamat'
-            )
-            ?.textContent
-    );
-
-
-    setTanahText(
-        'detailTanahBarang',
-        item.nama_barang
-    );
-
-
-    setTanahText(
-        'detailTanahKode',
-        item.kode_barang
-    );
-
-
-    setTanahText(
-        'detailTanahAsal',
-        item.asal
-    );
-
-
-    setTanahText(
-        'detailTanahTahun',
-        item.tahun
-    );
-
-
-    setTanahText(
-        'detailTanahGuna',
-        item.guna
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | PENUNJUKAN
-    |--------------------------------------------------------------------------
-    */
-
-    setTanahText(
-        'detailNoTunjuk',
-        item.no_tunjuk
-    );
-
-
-    setTanahText(
-        'detailTglTunjuk',
-
-        formatTanahDateOnly(
-            item.tgl_tunjuk
-        )
-    );
-
-
-    setTanahText(
-        'detailLuasTunjuk',
-
-        formatTanahArea(
-            item.luas_tunjuk
-        )
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | SERTIFIKAT
-    |--------------------------------------------------------------------------
-    */
-
-    setTanahText(
-        'detailSertifikat',
-        item.sertifikat
-    );
-
-
-    setTanahText(
-        'detailTglSertifikat',
-
-        formatTanahDateOnly(
-            item.tgl_sertifikat
-        )
-    );
-
-
-    setTanahText(
-        'detailLuasSertifikat',
-
-        formatTanahArea(
-            item.luas_sertifikat
-        )
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | GAMBAR SITUASI
-    |--------------------------------------------------------------------------
-    */
-
-    setTanahText(
-        'detailNoGambar',
-        item.no_gambar
-    );
-
-
-    setTanahText(
-        'detailTglGambar',
-
-        formatTanahDateOnly(
-            item.tgl_gambar
-        )
-    );
-
-
-    setTanahText(
-        'detailLuasGambar',
-
-        formatTanahArea(
-            item.luas_gambar
-        )
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | HAK
-    |--------------------------------------------------------------------------
-    */
-
-    setTanahText(
-        'detailTanahHak',
-        item.hak
-    );
-
-
-    setTanahText(
-        'detailTanahPemilik',
-        item.pemilik
-    );
-
-
-    setTanahText(
-        'detailTanahKet',
-        item.ket
-    );
-}
-
-
-/* =========================================================
-   GAMBAR LOKASI
-========================================================= */
-
-function setTanahDetailImage(
-    url,
-    lokasi
-) {
-
-    const image =
-        document.getElementById(
-            'detailTanahImage'
-        );
-
-
-    const empty =
-        document.getElementById(
-            'detailTanahImageEmpty'
-        );
-
-
-    if (
-        !image
-        ||
-        !empty
-    ) {
-        return;
-    }
-
-
-    const source =
-        String(
-            url
-            ??
-            ''
-        )
-        .trim();
-
-
-    image.onload =
-        null;
-
-
-    image.onerror =
-        null;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | KOSONG
-    |--------------------------------------------------------------------------
-    */
-
-    if (!source) {
-
-        image.hidden =
-            true;
-
-
-        image.removeAttribute(
-            'src'
-        );
-
-
-        empty.hidden =
-            false;
-
-
-        return;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOAD
-    |--------------------------------------------------------------------------
-    */
-
-    image.hidden =
-        true;
-
-
-    empty.hidden =
-        false;
-
-
-    image.alt =
-        `Foto ${lokasi || 'lokasi tanah'}`;
-
-
-    image.onload =
-        function () {
-
-            image.hidden =
-                false;
-
-
-            empty.hidden =
-                true;
-        };
-
-
-    image.onerror =
-        function () {
-
-            console.error(
-                '[GAMBAR LOKASI GAGAL]',
-                source
-            );
-
-
-            image.hidden =
-                true;
-
-
-            empty.hidden =
-                false;
-
-
-            image.removeAttribute(
-                'src'
-            );
-        };
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Browser memanggil endpoint Laravel
-    |--------------------------------------------------------------------------
-    */
-
-    image.src =
-        source;
-}
-
-
-/* =========================================================
-   CLOSE DETAIL
-========================================================= */
-
-function closeTanahView() {
-
-    const modal =
-        document.getElementById(
-            'tanahViewModal'
-        );
-
-
-    if (
-        modal
-        &&
-        modal.open
-    ) {
-
-        modal.close();
-    }
-}
-
-
-/* =========================================================
-   NILAI
-========================================================= */
-
-async function openTanahNilaiModal(
-    row
-) {
-
-    const modal =
-        document.getElementById(
-            'tanahNilaiModal'
-        );
-
-
-    if (!modal) {
-        return;
-    }
-
-
-    resetTanahNilaiModal();
-
-
-    setTanahText(
-        'nilaiTanahLokasi',
-
-        `${row.dataset.lokasi || '—'} • ${row.dataset.alamat || '—'}`
-    );
-
-
-    setTanahText(
-        'nilaiTanahTotal',
-
-        formatTanahRupiah(
-            row.dataset.nilai
-        )
-    );
-
-
-    setTanahText(
-        'nilaiTanahJumlah',
-        row.dataset.jumlahTransaksi
-    );
-
-
-    lockTanahBody();
-
-
-    if (!modal.open) {
-
-        modal.showModal();
-    }
-
-
-    setElementHidden(
-        'tanahNilaiLoading',
-        false
-    );
-
-
-    refreshTanahIcons();
-
-
-    if (
-        tanahNilaiAbortController
-    ) {
-
-        tanahNilaiAbortController
-            .abort();
-    }
-
-
-    tanahNilaiAbortController =
-        new AbortController();
-
-
-    try {
-
-        const endpoint =
-            window.TANAH_ENDPOINTS
-                ?.nilai;
-
-
-        if (!endpoint) {
-
-            throw new Error(
-                'Endpoint nilai belum tersedia.'
+            openDialog(
+                formModal
             );
         }
 
 
-        const url =
-            String(endpoint)
-                .replace(
-                    '__ID__',
-                    encodeURIComponent(
-                        row.dataset.idLokasi
-                    )
-                );
+        /* =========================================================
+           INITIAL LOAD
+        ========================================================= */
 
+        loadPendingData();
 
-        const response =
-            await fetch(
-                url,
-                {
-
-                    method:
-                        'GET',
-
-                    headers: {
-
-                        'Accept':
-                            'application/json',
-
-                        'X-Requested-With':
-                            'XMLHttpRequest'
-
-                    },
-
-                    signal:
-                        tanahNilaiAbortController
-                            .signal
-                }
-            );
-
-
-        const result =
-            await readTanahJsonResponse(
-                response
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.message
-                ||
-                `HTTP ${response.status}`
-            );
-        }
-
-
-        renderTanahNilaiData(
-            result
-        );
-
-
-    } catch (error) {
-
-        if (
-            error.name
-            ===
-            'AbortError'
-        ) {
-            return;
-        }
-
-
-        console.error(
-            'NILAI TANAH:',
-            error
-        );
-
-
-        showTanahError(
-            'tanahNilaiError',
-            'tanahNilaiErrorText',
-            error.message
-        );
-
-
-    } finally {
-
-        setElementHidden(
-            'tanahNilaiLoading',
-            true
-        );
+        refreshIcons();
     }
-}
-
-
-/* =========================================================
-   RENDER NILAI
-========================================================= */
-
-function renderTanahNilaiData(
-    result
-) {
-
-    const records =
-        Array.isArray(
-            result.data
-        )
-            ?
-            result.data
-            :
-            [];
-
-
-    setTanahText(
-        'nilaiTanahTotal',
-
-        formatTanahRupiah(
-            result.total
-        )
-    );
-
-
-    setTanahText(
-        'nilaiTanahJumlah',
-
-        String(
-            result.jumlah_transaksi
-            ??
-            records.length
-        )
-    );
-
-
-    if (result.lokasi) {
-
-        setTanahText(
-            'nilaiTanahLokasi',
-
-            `${result.lokasi.lokasi || '—'} • ${result.lokasi.alamat || '—'}`
-        );
-    }
-
-
-    const tbody =
-        document.getElementById(
-            'tanahNilaiTableBody'
-        );
-
-
-    if (!tbody) {
-        return;
-    }
-
-
-    tbody.replaceChildren();
-
-
-    setElementHidden(
-        'tanahNilaiError',
-        true
-    );
-
-
-    if (!records.length) {
-
-        setElementHidden(
-            'tanahNilaiTableWrap',
-            true
-        );
-
-
-        setElementHidden(
-            'tanahNilaiEmpty',
-            false
-        );
-
-
-        refreshTanahIcons();
-
-
-        return;
-    }
-
-
-    records.forEach(
-        function (
-            item,
-            index
-        ) {
-
-            const row =
-                document.createElement(
-                    'tr'
-                );
-
-
-            appendTextCell(
-                row,
-                index + 1
-            );
-
-
-            appendTextCell(
-                row,
-                item.kode_aktiva
-                ||
-                '—',
-                'nilai-code'
-            );
-
-
-            appendTextCell(
-                row,
-                item.nama_aktiva
-                ||
-                '—'
-            );
-
-
-            appendTextCell(
-                row,
-
-                formatTanahDateOnly(
-                    item.tgl_voucher
-                )
-            );
-
-
-            appendTextCell(
-                row,
-                item.tahun
-                ||
-                '—'
-            );
-
-
-            appendTextCell(
-                row,
-
-                formatTanahRupiah(
-                    item.nilai
-                ),
-
-                'nilai-money'
-            );
-
-
-            appendTextCell(
-                row,
-                item.urai
-                ||
-                '—',
-                'nilai-uraian'
-            );
-
-
-            tbody.appendChild(
-                row
-            );
-        }
-    );
-
-
-    setElementHidden(
-        'tanahNilaiEmpty',
-        true
-    );
-
-
-    setElementHidden(
-        'tanahNilaiTableWrap',
-        false
-    );
-}
-
-
-/* =========================================================
-   NILAI RESET/CLOSE
-========================================================= */
-
-function resetTanahNilaiModal() {
-
-    document
-        .getElementById(
-            'tanahNilaiTableBody'
-        )
-        ?.replaceChildren();
-
-
-    setElementHidden(
-        'tanahNilaiTableWrap',
-        true
-    );
-
-
-    setElementHidden(
-        'tanahNilaiEmpty',
-        true
-    );
-
-
-    setElementHidden(
-        'tanahNilaiError',
-        true
-    );
-}
-
-
-function closeTanahNilaiModal() {
-
-    const modal =
-        document.getElementById(
-            'tanahNilaiModal'
-        );
-
-
-    if (
-        modal
-        &&
-        modal.open
-    ) {
-
-        modal.close();
-    }
-}
-
-
-/* =========================================================
-   HELPER
-========================================================= */
-
-function appendTextCell(
-    row,
-    value,
-    className = ''
-) {
-
-    const td =
-        document.createElement(
-            'td'
-        );
-
-
-    td.textContent =
-        String(
-            value
-            ??
-            '—'
-        );
-
-
-    if (className) {
-
-        td.className =
-            className;
-    }
-
-
-    row.appendChild(
-        td
-    );
-}
-
-
-function showTanahError(
-    boxId,
-    textId,
-    message
-) {
-
-    const box =
-        document.getElementById(
-            boxId
-        );
-
-
-    const text =
-        document.getElementById(
-            textId
-        );
-
-
-    if (text) {
-
-        text.textContent =
-            message
-            ||
-            'Terjadi kesalahan.';
-    }
-
-
-    if (box) {
-
-        box.hidden =
-            false;
-    }
-
-
-    refreshTanahIcons();
-}
-
-
-async function readTanahJsonResponse(
-    response
-) {
-
-    const text =
-        await response.text();
-
-
-    if (!text) {
-        return {};
-    }
-
-
-    try {
-
-        return JSON.parse(
-            text
-        );
-
-    } catch (_) {
-
-        throw new Error(
-            `Respons server tidak valid (HTTP ${response.status}).`
-        );
-    }
-}
-
-
-/* =========================================================
-   FORMAT
-========================================================= */
-
-function formatTanahRupiah(
-    value
-) {
-
-    return new Intl.NumberFormat(
-        'id-ID',
-        {
-            style:
-                'currency',
-
-            currency:
-                'IDR',
-
-            maximumFractionDigits:
-                0
-        }
-    )
-    .format(
-        Number(value)
-        ||
-        0
-    );
-}
-
-
-function formatTanahArea(
-    value
-) {
-
-    const clean =
-        String(
-            value
-            ??
-            ''
-        )
-        .trim();
-
-
-    if (!clean) {
-        return '—';
-    }
-
-
-    return `${clean} m²`;
-}
-
-
-function formatTanahDateOnly(
-    value
-) {
-
-    if (!value) {
-        return '—';
-    }
-
-
-    const text =
-        String(value)
-            .trim();
-
-
-    const match =
-        text.match(
-            /^(\d{4})-(\d{2})-(\d{2})/
-        );
-
-
-    if (!match) {
-        return text;
-    }
-
-
-    const date =
-        new Date(
-            Date.UTC(
-                Number(match[1]),
-                Number(match[2]) - 1,
-                Number(match[3])
-            )
-        );
-
-
-    return new Intl.DateTimeFormat(
-        'id-ID',
-        {
-            timeZone:
-                'UTC',
-
-            day:
-                '2-digit',
-
-            month:
-                'short',
-
-            year:
-                'numeric'
-        }
-    )
-    .format(date);
-}
-
-
-/* =========================================================
-   ELEMENT
-========================================================= */
-
-function setTanahText(
-    id,
-    value
-) {
-
-    const element =
-        document.getElementById(
-            id
-        );
-
-
-    if (!element) {
-        return;
-    }
-
-
-    const clean =
-        String(
-            value
-            ??
-            ''
-        )
-        .trim();
-
-
-    element.textContent =
-        clean
-        ||
-        '—';
-}
-
-
-function setElementHidden(
-    id,
-    hidden
-) {
-
-    const element =
-        document.getElementById(
-            id
-        );
-
-
-    if (element) {
-
-        element.hidden =
-            hidden;
-    }
-}
-
-
-/* =========================================================
-   BODY
-========================================================= */
-
-function lockTanahBody() {
-
-    tanahPreviousOverflow =
-        document.body.style.overflow;
-
-
-    document.body.style.overflow =
-        'hidden';
-}
-
-
-function restoreTanahBodyOverflow() {
-
-    document.body.style.overflow =
-        tanahPreviousOverflow;
-}
-
-
-/* =========================================================
-   ICON
-========================================================= */
-
-function refreshTanahIcons() {
-
-    if (window.lucide) {
-
-        window.lucide.createIcons();
-    }
-}
-
-
-/* =========================================================
-   EXPORT
-========================================================= */
-
-function exportTanahCsv() {
-
-    const rows =
-        getFilteredTanahRows();
-
-
-    if (!rows.length) {
-        return;
-    }
-
-
-    const records = [[
-
-        'No',
-
-        'ID Lokasi',
-
-        'Lokasi',
-
-        'Alamat',
-
-        'Penggunaan',
-
-        'Jumlah Data Tanah',
-
-        'Rentang Tahun',
-
-        'Jumlah Transaksi Nilai',
-
-        'Nilai Tanah'
-
-    ]];
-
-
-    rows.forEach(
-        function (
-            row,
-            index
-        ) {
-
-            records.push([
-
-                index + 1,
-
-                row.dataset.idLokasi
-                ||
-                '',
-
-                row.dataset.lokasi
-                ||
-                '',
-
-                row.dataset.alamat
-                ||
-                '',
-
-                row.dataset.guna
-                ||
-                '',
-
-                row.dataset.jumlahData
-                ||
-                '0',
-
-                row.dataset.tahun
-                ||
-                '',
-
-                row.dataset.jumlahTransaksi
-                ||
-                '0',
-
-                row.dataset.nilai
-                ||
-                '0'
-
-            ]);
-        }
-    );
-
-
-    const csv =
-        records
-
-            .map(
-                row =>
-                    row
-                        .map(
-                            tanahCsvCell
-                        )
-                        .join(',')
-            )
-
-            .join(
-                '\r\n'
-            );
-
-
-    const blob =
-        new Blob(
-            [
-                '\uFEFF'
-                +
-                csv
-            ],
-            {
-                type:
-                    'text/csv;charset=utf-8;'
-            }
-        );
-
-
-    const url =
-        URL.createObjectURL(
-            blob
-        );
-
-
-    const link =
-        document.createElement(
-            'a'
-        );
-
-
-    link.href =
-        url;
-
-
-    link.download =
-        'data-lokasi-tanah.csv';
-
-
-    document.body.appendChild(
-        link
-    );
-
-
-    link.click();
-
-
-    link.remove();
-
-
-    window.setTimeout(
-        function () {
-
-            URL.revokeObjectURL(
-                url
-            );
-
-        },
-        500
-    );
-}
-
-
-function tanahCsvCell(
-    value
-) {
-
-    let text =
-        String(
-            value
-            ??
-            ''
-        );
-
-
-    if (
-        /^[\s]*[=+@-]/.test(
-            text
-        )
-    ) {
-
-        text =
-            "'"
-            +
-            text;
-    }
-
-
-    return (
-        '"'
-        +
-        text.replace(
-            /"/g,
-            '""'
-        )
-        +
-        '"'
-    );
-}
+);

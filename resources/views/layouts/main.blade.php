@@ -21,12 +21,19 @@
     {{-- CSS GLOBAL --}}
     <link rel="stylesheet" href="{{ asset('css/aset.css') }}">
 
+    <link rel="stylesheet"
+        href="{{ asset('css/components/kib-notification.css') }}?v={{ file_exists(public_path('css/components/kib-notification.css')) ? filemtime(public_path('css/components/kib-notification.css')) : time() }}">
 
     {{-- CSS PER HALAMAN --}}
     @stack('styles')
 
 </head>
 
+@include('components.kib.pending-modal')
+
+<script
+    src="{{ asset('js/components/kib-notification.js') }}?v={{ file_exists(public_path('js/components/kib-notification.js')) ? filemtime(public_path('js/components/kib-notification.js')) : time() }}">
+</script>
 
 <body>
 
@@ -69,6 +76,16 @@
     {{-- JS PER HALAMAN --}}
     @stack('scripts')
 
+
+    @stack('scripts')
+
+    @include('components.kib.pending-modal')
+
+    <script
+        src="{{ asset('js/components/kib-notification.js') }}?v={{ file_exists(public_path('js/components/kib-notification.js')) ? filemtime(public_path('js/components/kib-notification.js')) : time() }}">
+    </script>
+
+    @include('layouts.footer')
 
 </body>
 

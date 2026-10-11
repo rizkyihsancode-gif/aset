@@ -6,6 +6,7 @@ use App\Http\Controllers\MasterController;
 use App\Http\Controllers\KIBController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NilaiAsetController;
+use App\Http\Controllers\KibNotificationController;
 
 
 Route::get('/', function () {
@@ -100,7 +101,26 @@ Route::delete(
 )
     ->whereNumber('nilai')
     ->name('nilai.destroy');
+/*
+|--------------------------------------------------------------------------
+| K.I.B - DATA NILAI ASET BELUM DIPROSES
+|--------------------------------------------------------------------------
+*/
 
+Route::get(
+    '/kib/pending/{module}',
+    [
+        KibNotificationController::class,
+        'pending'
+    ]
+)
+    ->where(
+        'module',
+        'tanah|mesin|gedung|jalan|aset_tetap|konstruksi|kir'
+    )
+    ->name(
+        'kib.pending'
+    );
 
 Route::get('/arsip', function () {
 

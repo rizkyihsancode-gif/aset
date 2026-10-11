@@ -1,94 +1,145 @@
 @extends('layouts.main')
 
-@section('title', 'Tanah')
-
-
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kib/tanah.css') }}">
-@endpush
-
-
 @section('content')
 
     @php
 
-        $tanahRows = collect($tanahs ?? []);
+        /*
+    |--------------------------------------------------------------------------
+    | DATA COMPATIBILITY
+    |--------------------------------------------------------------------------
+    |
+    | Dibuat kompatibel dengan nama variabel controller lama maupun controller
+    | baru agar proses transisi tidak langsung merusak halaman.
+    |
+    */
 
-        $totalLokasiValue = (int) ($totalLokasiTanah ?? $tanahRows->count());
+        $rawTanahRows = $tanahRows ?? ($tanahs ?? ($tanah ?? collect()));
 
-        $totalDataValue = (int) ($totalDataTanah ?? 0);
+        if (is_object($rawTanahRows) && method_exists($rawTanahRows, 'items')) {
+            $tanahRows = collect($rawTanahRows->items());
+        } else {
+            $tanahRows = collect($rawTanahRows);
+        }
 
-        $totalLuasValue = (float) ($totalLuasTanah ?? 0);
+        $barangRows = collect($barangOptions ?? ($barangs ?? []));
 
-        $totalNilaiValue = (float) ($totalNilaiTanah ?? 0);
-
-        $updateLabel = $updateTerakhirLabel ?? 'Belum ada data';
-
-        $updateDetail = $updateTerakhirDetail ?? 'Belum ada perubahan';
+        $pendingRows = collect($baru ?? ($pendingTanah ?? []));
 
         /*
     |--------------------------------------------------------------------------
-    | RESOLVE GAMBAR LEGACY / MODERN
+    | FORMATTER
     |--------------------------------------------------------------------------
     */
 
-        $resolveTanahImage = function ($img) {
-            if (empty($img)) {
-                return null;
-            }
-
-            $raw = trim(str_replace('\\', '/', (string) $img));
-
-            if (\Illuminate\Support\Str::startsWith($raw, ['http://', 'https://', 'data:'])) {
-                return $raw;
-            }
-
-            $base = basename($raw);
-
-            $candidates = [];
-
-            if (!str_contains($raw, '..')) {
-                $candidates[] = ltrim($raw, '/');
-            }
-
-            $candidates = array_merge($candidates, [
-                'uploads/lokasi/' . $base,
-                'assets/img/lokasi/' . $base,
-                'assets/img/' . $base,
-                'images/lokasi/' . $base,
-                'img/lokasi/' . $base,
-            ]);
-
-            foreach (array_unique($candidates) as $candidate) {
-                if ($candidate !== '' && file_exists(public_path($candidate))) {
-                    return asset($candidate);
-                }
-            }
-
-            return null;
+        $formatRupiah = function ($value) {
+            return 'Rp ' . number_format((int) ($value ?? 0), 0, ',', '.');
         };
+
+        $formatNumber = function ($value) {
+            return number_format((float) ($value ?? 0), 0, ',', '.');
+        };
+
+        /*
+    |--------------------------------------------------------------------------
+    | KPI
+    |--------------------------------------------------------------------------
+    */
+
+        $jumlahLokasiTanah =
+            $jumlahLokasiTanah ??
+            $tanahRows
+                ->map(fn($row) => data_get($row, 'idLok', data_get($row, 'id_lokasi')))
+                ->filter()
+                ->unique()
+                ->count();
+
+        $jumlahDataTanah = $jumlahDataTanah ?? $tanahRows->count();
+
+        $totalLuasTanah =
+            $totalLuasTanah ?? $tanahRows->sum(fn($row) => (float) (data_get($row, 'luas_sertifikat', 0) ?? 0));
+
+        $totalNilaiTanah = $totalNilaiTanah ?? ($totalTanah ?? 0);
+
+        $pendingCount = $pendingCount ?? ($notif ?? $pendingRows->count());
+
+        $updateTerakhir = $updateTerakhirLabel ?? ($updateTerakhir ?? '-');
+
+        /*
+    |--------------------------------------------------------------------------
+    | PENDING FALLBACK
+    |--------------------------------------------------------------------------
+    |
+    | Dipakai kalau endpoint pending belum tersedia pada saat pengembangan.
+    |
+    */
+
+        $pendingFallback = $pendingRows
+            ->map(function ($row) {
+                return [
+                    'id' => data_get($row, 'id', data_get($row, 'idAk')),
+
+                    'no_voucher' => data_get($row, 'no_voucher', '-'),
+
+                    'tgl_voucher' => data_get($row, 'tgl_voucher'),
+
+                    'id_lokasi' => data_get($row, 'id_lokasi', data_get($row, 'idLok')),
+
+                    'lokasi' => data_get($row, 'lokasi', data_get($row, 'lok', '-')),
+
+                    'alamat' => data_get($row, 'alamat', '-'),
+
+                    'dep' => data_get($row, 'dep', data_get($row, 'idDep')),
+
+                    'departemen' => data_get($row, 'departemen', data_get($row, 'dep', '-')),
+
+                    'div' => data_get($row, 'div', data_get($row, 'idDiv')),
+
+                    'divisi' => data_get($row, 'divisi', data_get($row, 'namDiv', '-')),
+
+                    'tahun' => data_get($row, 'tahun', ''),
+
+                    'nilai' => (int) (data_get($row, 'nilai', 0) ?? 0),
+
+                    'urai' => data_get($row, 'urai', '-'),
+
+                    'jenisn' => (int) data_get($row, 'jenisn', 1),
+
+                    'jenis_label' => (int) data_get($row, 'jenisn', 1) === 2 ? 'Penambahan Nilai' : 'Penambahan Aset',
+                ];
+            })
+            ->values();
     @endphp
 
 
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/tanah.css') }}?v={{ file_exists(public_path('css/pages/kib/tanah.css')) ? filemtime(public_path('css/pages/kib/tanah.css')) : time() }}">
 
-    <section class="content tanah-page">
 
-        {{-- =====================================================
+    <div id="tanahPage" class="tanah-page" data-store-url="{{ url('/kib/tanah') }}"
+        data-record-base-url="{{ url('/kib/tanah') }}" data-location-base-url="{{ url('/kib/tanah/lokasi') }}"
+        data-pending-url="{{ url('/kib/pending/tanah') }}" data-has-errors="{{ $errors->any() ? '1' : '0' }}">
+
+
+        {{-- =========================================================
          HERO
-    ====================================================== --}}
+    ========================================================== --}}
 
-        <section class="tanah-hero">
+        <section class="tanah-hero" style="--tanah-hero-image: url('{{ asset('images/master/pdam4.png') }}');">
 
             <div class="tanah-hero-overlay"></div>
 
+
             <div class="tanah-hero-top">
 
-                <div>
+                <div class="tanah-heading">
 
-                    <nav class="tanah-breadcrumb">
+                    <div class="tanah-breadcrumb">
 
-                        <a href="{{ route('dashboard') }}">
+                        <a href="{{ url('/dashboard') }}">
+
                             <i data-lucide="house"></i>
+
                         </a>
 
                         <i data-lucide="chevron-right"></i>
@@ -103,42 +154,64 @@
                             Tanah
                         </strong>
 
-                    </nav>
-
-
-                    <div class="tanah-heading">
-
-                        <h1>
-                            Tanah
-                        </h1>
-
-                        <p>
-                            Kelola data Kartu Inventaris Barang Tanah
-                            berdasarkan lokasi aset Perumda Tirta Kencana.
-                        </p>
-
                     </div>
+
+
+                    <h1>
+                        Tanah
+                    </h1>
+
+
+                    <p>
+
+                        Kelola Kartu Inventaris Barang Tanah,
+                        dokumen sertifikat, penunjukan, gambar situasi
+                        dan informasi kepemilikan aset tanah.
+
+                    </p>
 
                 </div>
 
 
-                <div class="tanah-date-card">
+                <div class="tanah-hero-actions">
 
-                    <div class="tanah-date-icon">
-                        <i data-lucide="calendar-days"></i>
+                    <div class="tanah-date-card">
+
+                        <div class="tanah-date-icon">
+
+                            <i data-lucide="calendar-days"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+
+                                {{ now('Asia/Makassar')->locale('id')->translatedFormat('l d F Y') }}
+
+                            </strong>
+
+                            <span>
+
+                                {{ now('Asia/Makassar')->format('H:i:s') }}
+
+                                WITA
+
+                            </span>
+
+                        </div>
+
                     </div>
 
-                    <div>
 
-                        <strong id="tanahCurrentDate">
-                            -
-                        </strong>
+                    <button type="button" class="tanah-add-button" id="tanahAddButton">
 
-                        <span id="tanahCurrentTime">
-                            -
-                        </span>
+                        <i data-lucide="plus"></i>
 
-                    </div>
+                        Tambah Data Tanah
+
+                    </button>
 
                 </div>
 
@@ -152,8 +225,11 @@
                 <article class="tanah-kpi-card">
 
                     <div class="tanah-kpi-icon">
-                        <i data-lucide="map-pinned"></i>
+
+                        <i data-lucide="map-pin"></i>
+
                     </div>
+
 
                     <div class="tanah-kpi-content">
 
@@ -162,12 +238,13 @@
                         </span>
 
                         <strong>
-                            {{ number_format($totalLokasiValue, 0, ',', '.') }}
+
+                            {{ number_format($jumlahLokasiTanah, 0, ',', '.') }}
+
                         </strong>
 
                         <p>
-                            {{ number_format($totalDataValue, 0, ',', '.') }}
-                            data tanah / sertifikat
+                            Lokasi aset tanah terdaftar
                         </p>
 
                     </div>
@@ -178,8 +255,11 @@
                 <article class="tanah-kpi-card">
 
                     <div class="tanah-kpi-icon">
+
                         <i data-lucide="ruler"></i>
+
                     </div>
+
 
                     <div class="tanah-kpi-content">
 
@@ -188,12 +268,15 @@
                         </span>
 
                         <strong>
-                            {{ number_format($totalLuasValue, 0, ',', '.') }}
+
+                            {{ number_format($totalLuasTanah, 0, ',', '.') }}
+
                             <small>m²</small>
+
                         </strong>
 
                         <p>
-                            luas penunjukan seluruh data
+                            Berdasarkan luas sertifikat
                         </p>
 
                     </div>
@@ -204,8 +287,11 @@
                 <article class="tanah-kpi-card">
 
                     <div class="tanah-kpi-icon">
+
                         <i data-lucide="banknote"></i>
+
                     </div>
+
 
                     <div class="tanah-kpi-content">
 
@@ -213,13 +299,14 @@
                             Total Nilai Tanah
                         </span>
 
-                        <strong class="tanah-kpi-money">
-                            Rp
-                            {{ number_format($totalNilaiValue, 0, ',', '.') }}
+                        <strong title="{{ $formatRupiah($totalNilaiTanah) }}">
+
+                            {{ $formatRupiah($totalNilaiTanah) }}
+
                         </strong>
 
                         <p>
-                            hanya KIB TANAH
+                            Berdasarkan transaksi Nilai Aset
                         </p>
 
                     </div>
@@ -230,8 +317,11 @@
                 <article class="tanah-kpi-card">
 
                     <div class="tanah-kpi-icon">
-                        <i data-lucide="clock-3"></i>
+
+                        <i data-lucide="history"></i>
+
                     </div>
+
 
                     <div class="tanah-kpi-content">
 
@@ -240,11 +330,13 @@
                         </span>
 
                         <strong class="tanah-kpi-update">
-                            {{ $updateLabel }}
+
+                            {{ $updateTerakhir }}
+
                         </strong>
 
                         <p>
-                            {{ $updateDetail }}
+                            Aktivitas data K.I.B Tanah
                         </p>
 
                     </div>
@@ -256,10 +348,160 @@
         </section>
 
 
+        {{-- =========================================================
+         ALERT
+    ========================================================== --}}
 
-        {{-- =====================================================
+        @if (session('success'))
+            <div class="tanah-alert tanah-alert-success">
+
+                <i data-lucide="circle-check"></i>
+
+                <span>
+                    {{ session('success') }}
+                </span>
+
+            </div>
+        @endif
+
+
+        @if (session('error'))
+            <div class="tanah-alert tanah-alert-danger">
+
+                <i data-lucide="circle-alert"></i>
+
+                <span>
+                    {{ session('error') }}
+                </span>
+
+            </div>
+        @endif
+
+
+        @if ($errors->any())
+            <div class="tanah-alert tanah-alert-danger">
+
+                <i data-lucide="circle-alert"></i>
+
+                <div>
+
+                    <strong>
+                        Data belum dapat disimpan.
+                    </strong>
+
+                    <ul>
+
+                        @foreach ($errors->all() as $error)
+                            <li>
+                                {{ $error }}
+                            </li>
+                        @endforeach
+
+                    </ul>
+
+                </div>
+
+            </div>
+        @endif
+
+
+        {{-- =========================================================
+         DATA MASUK NILAI ASET
+    ========================================================== --}}
+
+        <section class="tanah-incoming-card" id="tanahIncomingCard">
+
+            <div class="tanah-incoming-icon">
+
+                <i data-lucide="bell-ring"></i>
+
+            </div>
+
+
+            <div class="tanah-incoming-content">
+
+                <div class="tanah-incoming-title-row">
+
+                    <div>
+
+                        <span class="tanah-incoming-eyebrow">
+                            NILAI ASET
+                        </span>
+
+                        <h3>
+                            Data Tanah Menunggu Diproses
+                        </h3>
+
+                    </div>
+
+
+                    <span class="tanah-incoming-count" id="tanahIncomingCount">
+
+                        {{ $pendingCount }}
+
+                    </span>
+
+                </div>
+
+
+                <p id="tanahIncomingText">
+
+                    Ada transaksi Nilai Aset kategori Tanah
+                    yang belum dilengkapi menjadi data K.I.B Tanah.
+
+                </p>
+
+
+                <div class="tanah-incoming-meta">
+
+                    <span class="is-green">
+
+                        <i data-lucide="package-plus"></i>
+
+                        <strong id="tanahIncomingNew">
+                            0
+                        </strong>
+
+                        Penambahan Aset
+
+                    </span>
+
+
+                    <span class="is-blue">
+
+                        <i data-lucide="circle-dollar-sign"></i>
+
+                        <strong id="tanahIncomingValue">
+                            0
+                        </strong>
+
+                        Penambahan Nilai
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="tanah-incoming-action">
+
+                <button type="button" id="tanahIncomingButton">
+
+                    <i data-lucide="inbox"></i>
+
+                    Lihat Data Masuk
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        {{-- =========================================================
          FILTER
-    ====================================================== --}}
+    ========================================================== --}}
 
         <section class="tanah-card tanah-filter-card">
 
@@ -267,19 +509,24 @@
 
                 <div>
 
-                    <h2>
+                    <h3>
                         Filter Data Tanah
-                    </h2>
+                    </h3>
 
                     <p>
-                        Satu baris mewakili satu lokasi tanah.
+                        Cari data berdasarkan lokasi,
+                        alamat, barang atau penggunaan.
                     </p>
 
                 </div>
 
+
                 <button type="button" class="tanah-export-button" id="tanahExportButton">
+
                     <i data-lucide="download"></i>
-                    Export
+
+                    Export CSV
+
                 </button>
 
             </div>
@@ -287,34 +534,38 @@
 
             <div class="tanah-filter-grid">
 
-                <label class="tanah-search">
+                <div class="tanah-search">
 
                     <i data-lucide="search"></i>
 
-                    <input type="search" id="tanahSearch" autocomplete="off"
-                        placeholder="Cari lokasi, alamat atau penggunaan...">
+                    <input type="search" id="tanahSearch" placeholder="Cari lokasi, alamat, barang atau penggunaan..."
+                        autocomplete="off">
 
-                </label>
+                </div>
 
 
                 <div class="tanah-select-group">
 
-                    <label for="tanahJumlahFilter">
+                    <label for="tanahPerPage">
                         Jumlah data
                     </label>
 
-                    <select id="tanahJumlahFilter">
+                    <select id="tanahPerPage">
 
-                        <option value="">
-                            Semua
+                        <option value="10">
+                            10
                         </option>
 
-                        <option value="single">
-                            1 data
+                        <option value="20" selected>
+                            20
                         </option>
 
-                        <option value="multiple">
-                            Lebih dari 1
+                        <option value="50">
+                            50
+                        </option>
+
+                        <option value="100">
+                            100
                         </option>
 
                     </select>
@@ -323,8 +574,11 @@
 
 
                 <button type="button" class="tanah-reset-button" id="tanahResetButton">
+
                     <i data-lucide="refresh-cw"></i>
+
                     Reset
+
                 </button>
 
             </div>
@@ -332,28 +586,28 @@
         </section>
 
 
+        {{-- =========================================================
+         TABLE
+    ========================================================== --}}
 
-        {{-- =====================================================
-         TABLE UTAMA - SATU LOKASI SATU BARIS
-    ====================================================== --}}
-
-        <section class="tanah-card tanah-table-card" id="tanahList">
+        <section class="tanah-card tanah-table-card">
 
             <div class="tanah-table-header">
 
                 <div>
 
-                    <h2>
+                    <h3>
                         Daftar Lokasi Tanah
-                    </h2>
+                    </h3>
 
                     <p>
-                        Data telah dikelompokkan berdasarkan lokasi.
+                        Data K.I.B Tanah yang telah tersimpan pada sistem.
                     </p>
 
                 </div>
 
-                <span class="tanah-db-badge">
+
+                <span class="tanah-database-badge">
 
                     <i data-lucide="database"></i>
 
@@ -364,7 +618,7 @@
             </div>
 
 
-            <div class="table-responsive">
+            <div class="tanah-table-scroll">
 
                 <table class="tanah-table" id="tanahTable">
 
@@ -385,19 +639,15 @@
                             </th>
 
                             <th>
+                                Barang
+                            </th>
+
+                            <th>
                                 Penggunaan
                             </th>
 
                             <th>
-                                Data Tanah
-                            </th>
-
-                            <th>
-                                Tahun
-                            </th>
-
-                            <th>
-                                Nilai
+                                Penunjukan
                             </th>
 
                             <th class="tanah-col-action">
@@ -409,201 +659,161 @@
                     </thead>
 
 
-                    <tbody>
+                    <tbody id="tanahTableBody">
 
-                        @forelse ($tanahRows as $item)
-                            @php
+                        @if ($tanahRows->count() > 0)
+                            @foreach ($tanahRows as $row)
+                                @php
 
-                                $imageUrl = $resolveTanahImage($item->lokasi_img ?? null);
+                                    $rowId = data_get($row, 'id_tanah', data_get($row, 'id'));
 
-                                $nilai = is_numeric($item->nilai_tanah ?? null) ? (float) $item->nilai_tanah : 0;
+                                    $locationId = data_get($row, 'idLok', data_get($row, 'id_lokasi'));
 
-                                $jumlahData = (int) ($item->jumlah_data_tanah ?? 0);
+                                    $lokasi = data_get($row, 'lokasi', '-');
 
-                                $jumlahTransaksi = (int) ($item->jumlah_transaksi_nilai ?? 0);
+                                    $alamat = data_get($row, 'alamat', '-');
 
-                                $tahunAwal = $item->tahun_awal ?? null;
+                                    $barang = data_get($row, 'nama_barang', '-');
 
-                                $tahunAkhir = $item->tahun_akhir ?? null;
+                                    $guna = data_get($row, 'guna', '-');
 
-                                $tahunLabel = '—';
+                                    $noTunjuk = data_get($row, 'no_tunjuk', '-');
 
-                                if ($tahunAwal && $tahunAkhir) {
-                                    $tahunLabel = (string) $tahunAwal;
+                                    $tglTunjuk = data_get($row, 'tgl_tunjuk');
 
-                                    if ((string) $tahunAwal !== (string) $tahunAkhir) {
-                                        $tahunLabel .= ' - ' . $tahunAkhir;
-                                    }
-                                }
-                            @endphp
+                                    $searchText = mb_strtolower(
+                                        implode(' ', [$lokasi, $alamat, $barang, $guna, $noTunjuk]),
+                                    );
 
-
-                            <tr data-record data-id-lokasi="{{ $item->id_lokasi }}"
-                                data-lokasi="{{ trim((string) ($item->lokasi ?? '')) }}"
-                                data-alamat="{{ trim((string) ($item->alamat ?? '')) }}"
-                                data-guna="{{ trim((string) ($item->guna_ringkas ?? '')) }}"
-                                data-jumlah-data="{{ $jumlahData }}" data-tahun="{{ $tahunLabel }}"
-                                data-nilai="{{ $nilai }}" data-jumlah-transaksi="{{ $jumlahTransaksi }}"
-                                data-image-url="{{ $imageUrl ?? '' }}">
-
-                                <td class="tanah-row-number">
-                                    -
-                                </td>
+                                @endphp
 
 
-                                <td>
+                                <tr class="tanah-data-row" data-search="{{ $searchText }}"
+                                    data-location-id="{{ $locationId }}" data-record-id="{{ $rowId }}">
 
-                                    <div class="tanah-location-cell">
+                                    <td class="tanah-row-number">
 
-                                        <div class="tanah-location-icon">
-                                            <i data-lucide="map-pin"></i>
-                                        </div>
+                                        {{ $loop->iteration }}
 
-                                        <div>
-
-                                            <strong>
-                                                {{ trim((string) ($item->lokasi ?? '')) ?: 'Lokasi tidak diketahui' }}
-                                            </strong>
-
-                                            <small>
-                                                ID Lokasi #{{ $item->id_lokasi }}
-                                            </small>
-
-                                        </div>
-
-                                    </div>
-
-                                </td>
+                                    </td>
 
 
-                                <td>
+                                    <td>
 
-                                    <span class="tanah-address">
+                                        <div class="tanah-location-cell">
 
-                                        {{ trim((string) ($item->alamat ?? '')) ?: '—' }}
+                                            <span class="tanah-location-icon">
 
-                                    </span>
+                                                <i data-lucide="map-pin"></i>
 
-                                </td>
-
-
-                                <td>
-
-                                    {{ trim((string) ($item->guna_ringkas ?? '')) ?: '—' }}
-
-                                </td>
-
-
-                                <td>
-
-                                    <button type="button" class="tanah-count-button" data-action="view">
-
-                                        <i data-lucide="files"></i>
-
-                                        <div>
-
-                                            <strong>
-                                                {{ $jumlahData }}
-                                                data
-                                            </strong>
-
-                                            <span>
-                                                Lihat sertifikat
                                             </span>
 
+
+                                            <div>
+
+                                                <strong>
+                                                    {{ $lokasi }}
+                                                </strong>
+
+                                                <small>
+
+                                                    ID Lokasi
+                                                    #{{ $locationId ?? '-' }}
+
+                                                </small>
+
+                                            </div>
+
                                         </div>
 
-                                    </button>
-
-                                </td>
+                                    </td>
 
 
-                                <td>
-                                    {{ $tahunLabel }}
-                                </td>
+                                    <td class="tanah-wrap-cell">
+
+                                        {{ $alamat }}
+
+                                    </td>
 
 
-                                <td>
+                                    <td>
 
-                                    <button type="button" class="tanah-value-button" data-action="nilai"
-                                        title="Lihat rincian nilai">
+                                        <span class="tanah-value-main">
 
-                                        <div>
+                                            {{ $barang }}
 
-                                            <strong>
-                                                Rp
-                                                {{ number_format($nilai, 0, ',', '.') }}
-                                            </strong>
+                                        </span>
 
-                                            <small>
-                                                {{ number_format($jumlahTransaksi, 0, ',', '.') }}
-                                                transaksi tanah
+                                    </td>
+
+
+                                    <td class="tanah-wrap-cell">
+
+                                        {{ $guna }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong class="tanah-document-number">
+
+                                            {{ $noTunjuk ?: '-' }}
+
+                                        </strong>
+
+
+                                        @if ($tglTunjuk)
+                                            <small class="tanah-document-date">
+
+                                                {{ \Carbon\Carbon::parse($tglTunjuk)->format('d/m/Y') }}
+
                                             </small>
+                                        @endif
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <div class="tanah-actions">
+
+                                            <button type="button" class="view js-tanah-location-detail"
+                                                title="Lihat data lokasi" data-location-id="{{ $locationId }}"
+                                                data-location-name="{{ $lokasi }}">
+
+                                                <i data-lucide="eye"></i>
+
+                                            </button>
 
                                         </div>
 
-                                        <i data-lucide="external-link"></i>
+                                    </td>
 
-                                    </button>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr id="tanahEmptyDatabaseRow">
 
-                                </td>
-
-
-                                <td>
-
-                                    <div class="tanah-actions">
-
-                                        <button type="button" class="tanah-action-view" data-action="view"
-                                            title="Lihat seluruh data tanah">
-                                            <i data-lucide="eye"></i>
-                                        </button>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-
-
-                        @empty
-
-                            <tr id="tanahServerEmpty">
-
-                                <td colspan="8" class="tanah-empty">
+                                <td colspan="7" class="tanah-empty">
 
                                     <i data-lucide="database-zap"></i>
 
                                     <strong>
-                                        Data tanah belum tersedia.
+                                        Belum ada data Tanah
                                     </strong>
 
                                     <span>
-                                        Tidak ada data yang dapat ditampilkan.
+
+                                        Pilih transaksi Nilai Aset
+                                        untuk membuat data K.I.B Tanah.
+
                                     </span>
 
                                 </td>
 
                             </tr>
-                        @endforelse
-
-
-                        <tr id="tanahFilterEmpty" hidden>
-
-                            <td colspan="8" class="tanah-empty">
-
-                                <i data-lucide="search-x"></i>
-
-                                <strong>
-                                    Data tidak ditemukan.
-                                </strong>
-
-                                <span>
-                                    Ubah kata pencarian atau filter.
-                                </span>
-
-                            </td>
-
-                        </tr>
+                        @endif
 
                     </tbody>
 
@@ -614,573 +824,1296 @@
 
             <div class="tanah-table-footer">
 
-                <span id="tanahTableInfo">
-                    Menampilkan data...
-                </span>
+                <div class="tanah-table-info" id="tanahTableInfo">
 
-
-                <div class="tanah-pagination-area">
-
-                    <select id="tanahPageSize">
-
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-
-                    </select>
-
-                    <span>
-                        data per halaman
-                    </span>
-
-                    <div class="tanah-pagination" id="tanahPagination"></div>
+                    Menampilkan 0 data
 
                 </div>
+
+
+                <div class="tanah-pagination" id="tanahPagination"></div>
 
             </div>
 
         </section>
 
 
+        {{-- =========================================================
+         MODAL CREATE / EDIT
+    ========================================================== --}}
 
-        {{-- =====================================================
-         MODAL DETAIL TANAH PER LOKASI
-    ====================================================== --}}
+        <dialog class="tanah-modal tanah-form-modal" id="tanahFormModal">
 
-        <dialog class="tanah-detail-modal" id="tanahViewModal">
+            <form id="tanahForm" action="{{ url('/kib/tanah') }}" method="POST">
 
-            <div class="tanah-detail-dialog">
+                @csrf
 
-                <header class="tanah-detail-header">
+
+                <input type="hidden" name="_method" id="tanahFormMethod" value="">
+
+
+                <input type="hidden" name="id_nilai_aktiva" id="tanahNilaiAktivaId"
+                    value="{{ old('id_nilai_aktiva') }}">
+
+
+                <input type="hidden" name="id_lokasi" id="tanahLokasiId" value="{{ old('id_lokasi') }}">
+
+
+                <div class="tanah-modal-header">
 
                     <div>
 
-                        <span class="tanah-modal-kicker">
-                            KARTU INVENTARIS BARANG
+                        <span class="tanah-modal-eyebrow">
+                            K.I.B A
                         </span>
 
-                        <h3>
-                            Detail Aset Tanah
+                        <h3 id="tanahFormTitle">
+                            Tambah Data Tanah
                         </h3>
 
-                        <p id="detailTanahHeaderLocation">
-                            -
+                        <p>
+
+                            Pilih sumber transaksi Nilai Aset,
+                            lalu lengkapi informasi pertanahan.
+
                         </p>
 
                     </div>
 
 
-                    <button type="button" class="tanah-detail-close" id="tanahViewClose">
+                    <button type="button" class="tanah-modal-close" data-close-dialog="tanahFormModal">
+
                         <i data-lucide="x"></i>
+
                     </button>
 
-                </header>
+                </div>
 
 
-                <div class="tanah-detail-summary">
+                <div class="tanah-modal-body">
 
-                    <div>
 
-                        <i data-lucide="map-pin"></i>
+                    {{-- =================================================
+                     SOURCE TRANSACTION
+                ================================================== --}}
 
-                        <div>
-                            <span>Lokasi</span>
-                            <strong id="detailLokasiNama">-</strong>
+                    <section class="tanah-source-section" id="tanahSourceSection">
+
+                        <div class="tanah-section-header">
+
+                            <div>
+
+                                <span class="tanah-section-number">
+                                    1
+                                </span>
+
+                                <div>
+
+                                    <h4>
+                                        Pilih Sumber Nilai Aset
+                                    </h4>
+
+                                    <p>
+
+                                        Hanya transaksi Tanah yang
+                                        belum diproses yang ditampilkan.
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <button type="button" class="tanah-source-toggle" id="tanahSourceToggle">
+
+                                <i data-lucide="chevron-up"></i>
+
+                                <span>
+                                    Sembunyikan
+                                </span>
+
+                            </button>
+
                         </div>
 
-                    </div>
+
+                        <div class="tanah-source-panel" id="tanahSourcePanel">
+
+                            <div class="tanah-source-toolbar">
+
+                                <div class="tanah-source-search">
+
+                                    <i data-lucide="search"></i>
+
+                                    <input type="search" id="tanahSourceSearch"
+                                        placeholder="Cari lokasi, departemen, divisi, voucher atau uraian..."
+                                        autocomplete="off">
+
+                                </div>
 
 
-                    <div>
-                        <span>Alamat</span>
-                        <strong id="detailLokasiAlamat">-</strong>
-                    </div>
+                                <span class="tanah-source-total" id="tanahSourceTotal">
+
+                                    0 data
+
+                                </span>
+
+                            </div>
 
 
-                    <div>
-                        <span>Jumlah Data Tanah</span>
-                        <strong id="detailLokasiJumlah">0</strong>
-                    </div>
+                            <div class="tanah-source-table-wrap">
+
+                                <table class="tanah-source-table">
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>No</th>
+
+                                            <th>Voucher</th>
+
+                                            <th>Lokasi</th>
+
+                                            <th>Departemen</th>
+
+                                            <th>Divisi</th>
+
+                                            <th>Tahun</th>
+
+                                            <th>Nilai</th>
+
+                                            <th>Uraian</th>
+
+                                            <th>Aksi</th>
+
+                                        </tr>
+
+                                    </thead>
 
 
-                    <div>
-                        <span>Total Nilai Tanah</span>
-                        <strong id="detailLokasiNilai">Rp 0</strong>
-                    </div>
+                                    <tbody id="tanahSourceBody">
+
+                                        <tr>
+
+                                            <td colspan="9" class="tanah-source-empty">
+
+                                                Memuat data Nilai Aset...
+
+                                            </td>
+
+                                        </tr>
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    {{-- =================================================
+                     SELECTED SOURCE
+                ================================================== --}}
+
+                    <section class="tanah-selected-source" id="tanahSelectedSource" hidden>
+
+                        <div class="tanah-selected-icon">
+
+                            <i data-lucide="circle-check-big"></i>
+
+                        </div>
+
+
+                        <div class="tanah-selected-content">
+
+                            <span>
+                                Sumber Nilai Aset Terpilih
+                            </span>
+
+                            <strong id="tanahSelectedTitle">
+                                -
+                            </strong>
+
+                            <small id="tanahSelectedMeta">
+                                -
+                            </small>
+
+                        </div>
+
+
+                        <button type="button" id="tanahChangeSourceButton">
+
+                            Ganti
+
+                        </button>
+
+                    </section>
+
+
+                    {{-- =================================================
+                     BASIC DATA
+                ================================================== --}}
+
+                    <section class="tanah-form-section">
+
+                        <div class="tanah-section-header">
+
+                            <div>
+
+                                <span class="tanah-section-number">
+                                    2
+                                </span>
+
+                                <div>
+
+                                    <h4>
+                                        Informasi Tanah
+                                    </h4>
+
+                                    <p>
+
+                                        Lokasi dan alamat berasal
+                                        dari transaksi Nilai Aset.
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="tanah-form-grid">
+
+
+                            <div class="tanah-field">
+
+                                <label>
+                                    Lokasi
+                                    <span>*</span>
+                                </label>
+
+                                <input type="text" id="tanahLokasiName" value="{{ old('lokasi') }}"
+                                    placeholder="Pilih sumber Nilai Aset" readonly>
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label>
+                                    Alamat
+                                    <span>*</span>
+                                </label>
+
+                                <input type="text" id="tanahAlamat" value="{{ old('alamat') }}"
+                                    placeholder="Terisi otomatis dari lokasi" readonly>
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahBarang">
+                                    Barang
+                                    <span>*</span>
+                                </label>
+
+                                <select name="id_barang" id="tanahBarang" required>
+
+                                    <option value="">
+                                        - PILIH BARANG -
+                                    </option>
+
+
+                                    @foreach ($barangRows as $barang)
+                                        @php
+
+                                            $barangId = data_get($barang, 'id');
+
+                                            $kodeBarang = data_get(
+                                                $barang,
+                                                'kode_barang',
+                                                data_get($barang, 'kode', ''),
+                                            );
+
+                                            $namaBarang = data_get(
+                                                $barang,
+                                                'nama_barang',
+                                                data_get($barang, 'barang', '-'),
+                                            );
+
+                                        @endphp
+
+
+                                        <option value="{{ $barangId }}" @selected(old('id_barang') == $barangId)>
+
+                                            @if ($kodeBarang)
+                                                {{ $kodeBarang }}
+                                                —
+                                            @endif
+
+                                            {{ $namaBarang }}
+
+                                        </option>
+                                    @endforeach
+
+                                </select>
+
+
+                                @if ($barangRows->count() === 0)
+                                    <small class="tanah-field-help is-warning">
+
+                                        Master Barang belum dikirim
+                                        dari Controller.
+
+                                    </small>
+                                @endif
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahTahun">
+                                    Tahun
+                                    <span>*</span>
+                                </label>
+
+                                <input type="number" name="tahun" id="tanahTahun" min="1900" max="2200"
+                                    value="{{ old('tahun') }}" required>
+
+                            </div>
+
+
+                            <div class="tanah-field tanah-field-full">
+
+                                <label for="tanahGuna">
+                                    Penggunaan
+                                    <span>*</span>
+                                </label>
+
+                                <textarea name="guna" id="tanahGuna" rows="3" required
+                                    placeholder="Contoh: Reservoir, IPA, kantor, lahan pengembangan, dan lain-lain.">{{ old('guna') }}</textarea>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    {{-- =================================================
+                     PENUNJUKAN
+                ================================================== --}}
+
+                    <section class="tanah-form-section">
+
+                        <div class="tanah-section-header">
+
+                            <div>
+
+                                <span class="tanah-section-number">
+                                    3
+                                </span>
+
+                                <div>
+
+                                    <h4>
+                                        Penunjukan
+                                    </h4>
+
+                                    <p>
+                                        Data surat penunjukan tanah.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="tanah-form-grid tanah-form-grid-3">
+
+                            <div class="tanah-field">
+
+                                <label for="tanahNoTunjuk">
+                                    No. Surat
+                                </label>
+
+                                <input type="text" name="no_tunjuk" id="tanahNoTunjuk"
+                                    value="{{ old('no_tunjuk') }}" placeholder="Nomor penunjukan">
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahTglTunjuk">
+                                    Tanggal Surat
+                                </label>
+
+                                <input type="date" name="tgl_tunjuk" id="tanahTglTunjuk"
+                                    value="{{ old('tgl_tunjuk') }}">
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahLuasTunjuk">
+                                    Luas
+                                </label>
+
+                                <div class="tanah-unit-input">
+
+                                    <input type="number" name="luas_tunjuk" id="tanahLuasTunjuk" min="0"
+                                        step="0.01" value="{{ old('luas_tunjuk') }}" placeholder="0">
+
+                                    <span>
+                                        m²
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    {{-- =================================================
+                     SERTIFIKAT
+                ================================================== --}}
+
+                    <section class="tanah-form-section">
+
+                        <div class="tanah-section-header">
+
+                            <div>
+
+                                <span class="tanah-section-number">
+                                    4
+                                </span>
+
+                                <div>
+
+                                    <h4>
+                                        Sertifikat / SPPT / SPHAT / SPJBT
+                                    </h4>
+
+                                    <p>
+
+                                        Informasi dokumen kepemilikan
+                                        atau penguasaan tanah.
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="tanah-form-grid tanah-form-grid-3">
+
+                            <div class="tanah-field">
+
+                                <label for="tanahSertifikat">
+                                    No. Sertifikat / Surat
+                                </label>
+
+                                <input type="text" name="sertifikat" id="tanahSertifikat"
+                                    value="{{ old('sertifikat') }}" placeholder="Nomor sertifikat / surat">
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahTglSertifikat">
+                                    Tanggal
+                                </label>
+
+                                <input type="date" name="tgl_sertifikat" id="tanahTglSertifikat"
+                                    value="{{ old('tgl_sertifikat') }}">
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahLuasSertifikat">
+                                    Luas Sertifikat
+                                </label>
+
+                                <div class="tanah-unit-input">
+
+                                    <input type="number" name="luas_sertifikat" id="tanahLuasSertifikat" min="0"
+                                        step="0.01" value="{{ old('luas_sertifikat') }}" placeholder="0">
+
+                                    <span>
+                                        m²
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    {{-- =================================================
+                     GAMBAR SITUASI
+                ================================================== --}}
+
+                    <section class="tanah-form-section">
+
+                        <div class="tanah-section-header">
+
+                            <div>
+
+                                <span class="tanah-section-number">
+                                    5
+                                </span>
+
+                                <div>
+
+                                    <h4>
+                                        Gambar Situasi
+                                    </h4>
+
+                                    <p>
+
+                                        Data dokumen atau nomor
+                                        gambar situasi tanah.
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="tanah-form-grid tanah-form-grid-3">
+
+                            <div class="tanah-field">
+
+                                <label for="tanahNoGambar">
+                                    No. Gambar
+                                </label>
+
+                                <input type="text" name="no_gambar" id="tanahNoGambar"
+                                    value="{{ old('no_gambar') }}" placeholder="Nomor gambar situasi">
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahTglGambar">
+                                    Tanggal
+                                </label>
+
+                                <input type="date" name="tgl_gambar" id="tanahTglGambar"
+                                    value="{{ old('tgl_gambar') }}">
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahLuasGambar">
+                                    Luas
+                                </label>
+
+                                <div class="tanah-unit-input">
+
+                                    <input type="number" name="luas_gambar" id="tanahLuasGambar" min="0"
+                                        step="0.01" value="{{ old('luas_gambar') }}" placeholder="0">
+
+                                    <span>
+                                        m²
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    {{-- =================================================
+                     LEGAL
+                ================================================== --}}
+
+                    <section class="tanah-form-section">
+
+                        <div class="tanah-section-header">
+
+                            <div>
+
+                                <span class="tanah-section-number">
+                                    6
+                                </span>
+
+                                <div>
+
+                                    <h4>
+                                        Status dan Kepemilikan
+                                    </h4>
+
+                                    <p>
+
+                                        Lengkapi asal, hak,
+                                        pemilik dan keterangan tanah.
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="tanah-form-grid">
+
+                            <div class="tanah-field">
+
+                                <label for="tanahAsal">
+                                    Asal
+                                </label>
+
+                                <select name="asal" id="tanahAsal">
+
+                                    <option value="">
+                                        - PILIH ASAL -
+                                    </option>
+
+                                    <option value="Pembelian" @selected(old('asal') === 'Pembelian')>
+                                        Pembelian
+                                    </option>
+
+                                    <option value="Hibah" @selected(old('asal') === 'Hibah')>
+                                        Hibah
+                                    </option>
+
+                                    <option value="Penyerahan" @selected(old('asal') === 'Penyerahan')>
+                                        Penyerahan
+                                    </option>
+
+                                    <option value="Perolehan Lainnya" @selected(old('asal') === 'Perolehan Lainnya')>
+                                        Perolehan Lainnya
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="tanah-field">
+
+                                <label for="tanahHak">
+                                    Hak
+                                </label>
+
+                                <select name="hak" id="tanahHak">
+
+                                    <option value="">
+                                        - PILIH HAK -
+                                    </option>
+
+                                    <option value="Hak Milik" @selected(old('hak') === 'Hak Milik')>
+                                        Hak Milik
+                                    </option>
+
+                                    <option value="HGB" @selected(old('hak') === 'HGB')>
+                                        HGB
+                                    </option>
+
+                                    <option value="HGU" @selected(old('hak') === 'HGU')>
+                                        HGU
+                                    </option>
+
+                                    <option value="Hak Pakai" @selected(old('hak') === 'Hak Pakai')>
+                                        Hak Pakai
+                                    </option>
+
+                                    <option value="Belum Bersertifikat" @selected(old('hak') === 'Belum Bersertifikat')>
+                                        Belum Bersertifikat
+                                    </option>
+
+                                    <option value="Lainnya" @selected(old('hak') === 'Lainnya')>
+                                        Lainnya
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="tanah-field tanah-field-full">
+
+                                <label for="tanahPemilik">
+                                    Pemilik Asal
+                                </label>
+
+                                <input type="text" name="pemilik" id="tanahPemilik" value="{{ old('pemilik') }}"
+                                    placeholder="Nama pemilik asal / pihak sebelumnya">
+
+                            </div>
+
+
+                            <div class="tanah-field tanah-field-full">
+
+                                <label for="tanahKeterangan">
+                                    Keterangan
+                                </label>
+
+                                <textarea name="ket" id="tanahKeterangan" rows="4" placeholder="Catatan tambahan terkait status tanah...">{{ old('ket') }}</textarea>
+
+                            </div>
+
+                        </div>
+
+                    </section>
 
                 </div>
 
 
-                <div class="tanah-detail-loading" id="tanahDetailLoading" hidden>
+                <div class="tanah-modal-footer">
 
-                    <span class="tanah-loading-spinner"></span>
+                    <button type="button" class="tanah-button-secondary" data-close-dialog="tanahFormModal">
 
-                    <strong>
-                        Memuat seluruh data tanah...
-                    </strong>
+                        Batal
+
+                    </button>
+
+
+                    <button type="submit" class="tanah-button-primary" id="tanahSaveButton">
+
+                        <i data-lucide="save"></i>
+
+                        Simpan Data Tanah
+
+                    </button>
 
                 </div>
 
+            </form>
 
-                <div class="tanah-detail-error" id="tanahDetailError" hidden>
+        </dialog>
 
-                    <i data-lucide="circle-alert"></i>
 
-                    <span id="tanahDetailErrorText">
-                        Data gagal dimuat.
+        {{-- =========================================================
+         LOCATION DETAIL MODAL
+    ========================================================== --}}
+
+        <dialog class="tanah-modal tanah-location-modal" id="tanahLocationModal">
+
+            <div class="tanah-modal-header">
+
+                <div>
+
+                    <span class="tanah-modal-eyebrow">
+                        DATA TANAH
                     </span>
 
-                </div>
+                    <h3 id="tanahLocationTitle">
+                        Detail Lokasi
+                    </h3>
 
+                    <p>
 
-                <div class="tanah-detail-layout" id="tanahDetailContent" hidden>
+                        Daftar sertifikat atau data tanah
+                        pada lokasi terpilih.
 
-                    {{-- LEFT LIST --}}
-
-                    <aside class="tanah-detail-list">
-
-                        <div class="tanah-detail-list-header">
-
-                            <div>
-
-                                <strong>
-                                    Data Tanah
-                                </strong>
-
-                                <span>
-                                    Pilih data untuk melihat detail.
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="table-responsive">
-
-                            <table class="tanah-detail-list-table">
-
-                                <thead>
-
-                                    <tr>
-
-                                        <th>No</th>
-                                        <th>Pemilik Asal</th>
-                                        <th>Luas</th>
-                                        <th>Penggunaan</th>
-
-                                    </tr>
-
-                                </thead>
-
-
-                                <tbody id="tanahDetailItemsBody"></tbody>
-
-                            </table>
-
-                        </div>
-
-                    </aside>
-
-
-                    {{-- RIGHT DETAIL --}}
-
-                    <main class="tanah-detail-main">
-
-                        <div class="tanah-detail-main-title">
-
-                            <div>
-
-                                <span>
-                                    Data Terpilih
-                                </span>
-
-                                <h4 id="detailTanahGunaTitle">
-                                    -
-                                </h4>
-
-                            </div>
-
-
-                            <span class="tanah-detail-id-badge">
-
-                                ID Tanah
-                                <strong id="detailTanahId">
-                                    -
-                                </strong>
-
-                            </span>
-
-                        </div>
-
-
-                        {{-- IMAGE --}}
-
-                        <div class="tanah-detail-image-wrap">
-
-                            <img id="detailTanahImage" alt="Foto lokasi tanah" hidden>
-
-
-                            <div class="tanah-detail-image-empty" id="detailTanahImageEmpty">
-
-                                <i data-lucide="image-off"></i>
-
-                                <strong>
-                                    Gambar belum tersedia
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        {{-- INFO --}}
-
-                        <div class="tanah-detail-basic-grid">
-
-
-                            <section class="tanah-detail-info-card">
-
-                                <div>
-                                    <span>Letak</span>
-                                    <strong id="detailTanahAlamat">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Nama Barang</span>
-                                    <strong id="detailTanahBarang">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Kode Barang</span>
-                                    <strong id="detailTanahKode">-</strong>
-                                </div>
-
-                            </section>
-
-
-                            <section class="tanah-detail-info-card">
-
-                                <div>
-                                    <span>Asal Usul</span>
-                                    <strong id="detailTanahAsal">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Tahun Pengadaan</span>
-                                    <strong id="detailTanahTahun">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Penggunaan</span>
-                                    <strong id="detailTanahGuna">-</strong>
-                                </div>
-
-                            </section>
-
-                        </div>
-
-
-                        {{-- PENUNJUKAN --}}
-
-                        <section class="tanah-legal-card">
-
-                            <header>
-                                <i data-lucide="file-check-2"></i>
-                                PENUNJUKAN
-                            </header>
-
-                            <div class="tanah-legal-grid">
-
-                                <div>
-                                    <span>Nomor Surat</span>
-                                    <strong id="detailNoTunjuk">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Tanggal</span>
-                                    <strong id="detailTglTunjuk">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Luas</span>
-                                    <strong id="detailLuasTunjuk">-</strong>
-                                </div>
-
-                            </div>
-
-                        </section>
-
-
-                        {{-- SERTIFIKAT --}}
-
-                        <section class="tanah-legal-card">
-
-                            <header>
-                                <i data-lucide="badge-check"></i>
-                                SERTIFIKAT / SPT / SPHAT / SPJBT
-                            </header>
-
-                            <div class="tanah-legal-grid">
-
-                                <div>
-                                    <span>Nomor Surat</span>
-                                    <strong id="detailSertifikat">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Tanggal</span>
-                                    <strong id="detailTglSertifikat">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Luas</span>
-                                    <strong id="detailLuasSertifikat">-</strong>
-                                </div>
-
-                            </div>
-
-                        </section>
-
-
-                        {{-- GAMBAR SITUASI --}}
-
-                        <section class="tanah-legal-card">
-
-                            <header>
-                                <i data-lucide="map"></i>
-                                GAMBAR SITUASI
-                            </header>
-
-                            <div class="tanah-legal-grid">
-
-                                <div>
-                                    <span>Nomor Surat</span>
-                                    <strong id="detailNoGambar">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Tanggal</span>
-                                    <strong id="detailTglGambar">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Luas</span>
-                                    <strong id="detailLuasGambar">-</strong>
-                                </div>
-
-                            </div>
-
-                        </section>
-
-
-                        <div class="tanah-detail-dual">
-
-                            <section class="tanah-detail-info-card">
-
-                                <div>
-                                    <span>Hak</span>
-                                    <strong id="detailTanahHak">-</strong>
-                                </div>
-
-                                <div>
-                                    <span>Pemilik Asal</span>
-                                    <strong id="detailTanahPemilik">-</strong>
-                                </div>
-
-                            </section>
-
-
-                            <section class="tanah-detail-info-card">
-
-                                <div class="tanah-detail-keterangan">
-                                    <span>Keterangan</span>
-                                    <strong id="detailTanahKet">-</strong>
-                                </div>
-
-                            </section>
-
-                        </div>
-
-                    </main>
+                    </p>
 
                 </div>
 
 
-                <footer class="tanah-detail-footer">
+                <button type="button" class="tanah-modal-close" data-close-dialog="tanahLocationModal">
 
-                    <button type="button" class="tanah-modal-close-button" id="tanahViewCloseBottom">
-                        Tutup
-                    </button>
+                    <i data-lucide="x"></i>
 
-                </footer>
+                </button>
+
+            </div>
+
+
+            <div class="tanah-modal-body">
+
+                <div class="tanah-location-table-wrap">
+
+                    <table class="tanah-location-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>No</th>
+
+                                <th>Barang</th>
+
+                                <th>Penggunaan</th>
+
+                                <th>Pemilik</th>
+
+                                <th>Luas Sertifikat</th>
+
+                                <th>Hak</th>
+
+                                <th>Aksi</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="tanahLocationBody">
+
+                            <tr>
+
+                                <td colspan="7" class="tanah-location-empty">
+
+                                    Memuat data...
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <div class="tanah-modal-footer">
+
+                <button type="button" class="tanah-button-secondary" data-close-dialog="tanahLocationModal">
+
+                    Tutup
+
+                </button>
 
             </div>
 
         </dialog>
 
 
+        {{-- =========================================================
+         RECORD VIEW MODAL
+    ========================================================== --}}
 
-        {{-- =====================================================
-         MODAL NILAI
-    ====================================================== --}}
+        <dialog class="tanah-modal tanah-detail-modal" id="tanahDetailModal">
 
-        <dialog class="tanah-nilai-modal" id="tanahNilaiModal">
+            <div class="tanah-modal-header">
 
-            <div class="tanah-nilai-dialog">
+                <div>
 
-                <header class="tanah-nilai-header">
+                    <span class="tanah-modal-eyebrow">
+                        DETAIL K.I.B A
+                    </span>
+
+                    <h3>
+                        Detail Data Tanah
+                    </h3>
+
+                    <p>
+                        Informasi lengkap data pertanahan.
+                    </p>
+
+                </div>
+
+
+                <button type="button" class="tanah-modal-close" data-close-dialog="tanahDetailModal">
+
+                    <i data-lucide="x"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="tanah-modal-body">
+
+                <div class="tanah-detail-grid">
 
                     <div>
 
-                        <span class="tanah-modal-kicker">
-                            NILAI AKTIVA - KIB TANAH
+                        <span>
+                            Lokasi
                         </span>
 
-                        <h3>
-                            Detail Nilai Tanah
-                        </h3>
+                        <strong id="detailTanahLokasi">
+                            -
+                        </strong>
 
-                        <p id="nilaiTanahLokasi">
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Alamat
+                        </span>
+
+                        <strong id="detailTanahAlamat">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Barang
+                        </span>
+
+                        <strong id="detailTanahBarang">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Tahun
+                        </span>
+
+                        <strong id="detailTanahTahun">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="tanah-detail-full">
+
+                        <span>
+                            Penggunaan
+                        </span>
+
+                        <strong id="detailTanahGuna">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            No. Penunjukan
+                        </span>
+
+                        <strong id="detailTanahNoTunjuk">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Tanggal Penunjukan
+                        </span>
+
+                        <strong id="detailTanahTglTunjuk">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Luas Penunjukan
+                        </span>
+
+                        <strong id="detailTanahLuasTunjuk">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            No. Sertifikat
+                        </span>
+
+                        <strong id="detailTanahSertifikat">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Tanggal Sertifikat
+                        </span>
+
+                        <strong id="detailTanahTglSertifikat">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Luas Sertifikat
+                        </span>
+
+                        <strong id="detailTanahLuasSertifikat">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            No. Gambar Situasi
+                        </span>
+
+                        <strong id="detailTanahNoGambar">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Tanggal Gambar
+                        </span>
+
+                        <strong id="detailTanahTglGambar">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Luas Gambar
+                        </span>
+
+                        <strong id="detailTanahLuasGambar">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Asal
+                        </span>
+
+                        <strong id="detailTanahAsal">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Hak
+                        </span>
+
+                        <strong id="detailTanahHak">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Pemilik Asal
+                        </span>
+
+                        <strong id="detailTanahPemilik">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="tanah-detail-full">
+
+                        <span>
+                            Keterangan
+                        </span>
+
+                        <p id="detailTanahKeterangan">
                             -
                         </p>
 
                     </div>
 
-
-                    <button type="button" class="tanah-nilai-close" id="tanahNilaiClose">
-                        <i data-lucide="x"></i>
-                    </button>
-
-                </header>
-
-
-                <div class="tanah-nilai-body">
-
-                    <div class="tanah-nilai-summary">
-
-                        <div>
-
-                            <span>
-                                Total Nilai
-                            </span>
-
-                            <strong id="nilaiTanahTotal">
-                                Rp 0
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <span>
-                                Jumlah Transaksi
-                            </span>
-
-                            <strong id="nilaiTanahJumlah">
-                                0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="tanah-nilai-loading" id="tanahNilaiLoading" hidden>
-
-                        <span class="tanah-loading-spinner"></span>
-
-                        <strong>
-                            Memuat rincian nilai...
-                        </strong>
-
-                    </div>
-
-
-                    <div class="tanah-detail-error" id="tanahNilaiError" hidden>
-
-                        <i data-lucide="circle-alert"></i>
-
-                        <span id="tanahNilaiErrorText">
-                            Data gagal dimuat.
-                        </span>
-
-                    </div>
-
-
-                    <div class="table-responsive tanah-nilai-table-wrap" id="tanahNilaiTableWrap" hidden>
-
-                        <table class="tanah-nilai-table">
-
-                            <thead>
-
-                                <tr>
-
-                                    <th>No</th>
-                                    <th>Kode Perkiraan</th>
-                                    <th>Nama Aktiva</th>
-                                    <th>Tanggal</th>
-                                    <th>Tahun</th>
-                                    <th>Nilai</th>
-                                    <th>Uraian</th>
-
-                                </tr>
-
-                            </thead>
-
-
-                            <tbody id="tanahNilaiTableBody"></tbody>
-
-                        </table>
-
-                    </div>
-
-
-                    <div class="tanah-nilai-empty" id="tanahNilaiEmpty" hidden>
-
-                        <i data-lucide="receipt-text"></i>
-
-                        <strong>
-                            Belum ada transaksi nilai Tanah.
-                        </strong>
-
-                        <span>
-                            Tidak ditemukan nilai aktiva
-                            dengan KIB TANAH pada lokasi ini.
-                        </span>
-
-                    </div>
-
                 </div>
 
+            </div>
 
-                <footer class="tanah-detail-footer">
 
-                    <button type="button" class="tanah-modal-close-button" id="tanahNilaiCloseBottom">
-                        Tutup
-                    </button>
+            <div class="tanah-modal-footer">
 
-                </footer>
+                <button type="button" class="tanah-button-secondary" data-close-dialog="tanahDetailModal">
+
+                    Tutup
+
+                </button>
 
             </div>
 
         </dialog>
 
-    </section>
 
-@endsection
+        {{-- =========================================================
+         DELETE MODAL
+    ========================================================== --}}
+
+        <dialog class="tanah-modal tanah-delete-modal" id="tanahDeleteModal">
+
+            <form method="POST" id="tanahDeleteForm">
+
+                @csrf
+                @method('DELETE')
 
 
+                <div class="tanah-delete-body">
 
-@push('scripts')
-    <script>
-        window.TANAH_ENDPOINTS = {
-            detail: @json(url('/kib/tanah/lokasi/__ID__/detail')),
+                    <div class="tanah-delete-icon">
 
-            nilai: @json(url('/kib/tanah/lokasi/__ID__/nilai'))
-        };
+                        <i data-lucide="triangle-alert"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Hapus Data Tanah?
+                    </h3>
+
+
+                    <p>
+
+                        Data
+
+                        <strong id="tanahDeleteName">
+                            ini
+                        </strong>
+
+                        akan dihapus dari K.I.B Tanah.
+
+                        Transaksi Nilai Aset sumber
+                        tidak ikut dihapus dan dapat
+                        tersedia kembali untuk diproses.
+
+                    </p>
+
+                </div>
+
+
+                <div class="tanah-modal-footer">
+
+                    <button type="button" class="tanah-button-secondary" data-close-dialog="tanahDeleteModal">
+
+                        Batal
+
+                    </button>
+
+
+                    <button type="submit" class="tanah-button-danger">
+
+                        <i data-lucide="trash-2"></i>
+
+                        Ya, Hapus
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </dialog>
+
+
+        {{-- =========================================================
+         TOAST
+    ========================================================== --}}
+
+        <div class="tanah-toast" id="tanahToast" hidden>
+
+            <i data-lucide="info"></i>
+
+            <span id="tanahToastMessage"></span>
+
+        </div>
+
+
+        {{-- =========================================================
+         FALLBACK DATA PENDING
+    ========================================================== --}}
+
+        <script
+        type="application/json"
+        id="tanahPendingFallback"
+    >{!! json_encode(
+        $pendingFallback,
+        JSON_UNESCAPED_UNICODE
+        | JSON_UNESCAPED_SLASHES
+        | JSON_HEX_TAG
+        | JSON_HEX_AMP
+        | JSON_HEX_APOS
+        | JSON_HEX_QUOT
+    ) !!}</script>
+
+    </div>
+
+
+    <script
+        src="{{ asset('js/pages/kib/tanah.js') }}?v={{ file_exists(public_path('js/pages/kib/tanah.js')) ? filemtime(public_path('js/pages/kib/tanah.js')) : time() }}">
     </script>
 
-    <script src="{{ asset('js/pages/kib/tanah.js') }}"></script>
-@endpush
+@endsection
