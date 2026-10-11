@@ -4,25 +4,17 @@
 
 .tanah-page {
     --tanah-primary: #086ad8;
-    --tanah-primary-dark: #0555b0;
+    --tanah-primary-dark: #0557b3;
     --tanah-primary-light: #eaf4ff;
 
     --tanah-success: #15905c;
-    --tanah-success-light: #e9f8ef;
+    --tanah-warning: #ee9200;
+    --tanah-danger: #dc3545;
 
-    --tanah-warning: #ef9300;
-    --tanah-warning-light: #fff4df;
-
-    --tanah-danger: #df3d49;
-    --tanah-danger-light: #fff0f2;
-
-    --tanah-text: #142d4f;
-    --tanah-text-soft: #4d6888;
-    --tanah-muted: #788aa2;
-
-    --tanah-border: #dce7f1;
+    --tanah-text: #173552;
+    --tanah-muted: #71839a;
+    --tanah-border: #dce6ef;
     --tanah-background: #f5f8fc;
-    --tanah-surface: #ffffff;
 
     min-height: calc(100vh - 60px);
 
@@ -50,15 +42,11 @@
     background-image:
         var(--tanah-hero-image);
 
-    background-position:
-        right center;
-
-    background-size:
-        cover;
-
-    background-repeat:
-        no-repeat;
+    background-position: right center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
+
 
 .tanah-hero-overlay {
     position: absolute;
@@ -69,14 +57,15 @@
         linear-gradient(
             90deg,
             rgba(245,250,255,.99) 0%,
-            rgba(239,248,255,.97) 27%,
-            rgba(225,241,255,.89) 53%,
-            rgba(212,235,253,.56) 72%,
+            rgba(239,248,255,.97) 28%,
+            rgba(226,241,255,.89) 55%,
+            rgba(213,235,253,.54) 76%,
             rgba(207,232,252,.16) 100%
         );
 
     pointer-events: none;
 }
+
 
 .tanah-hero-top {
     position: relative;
@@ -84,6 +73,7 @@
     z-index: 2;
 
     display: flex;
+
     align-items: flex-start;
     justify-content: space-between;
 
@@ -93,12 +83,14 @@
 }
 
 
-/* =========================================================
-   BREADCRUMB
-========================================================= */
+.tanah-heading {
+    min-width: 0;
+}
+
 
 .tanah-breadcrumb {
     display: flex;
+
     align-items: center;
 
     gap: 7px;
@@ -110,19 +102,19 @@
     font-size: 12px;
 }
 
+
 .tanah-breadcrumb a {
     display: inline-flex;
-    align-items: center;
 
     color: #416995;
-
-    text-decoration: none;
 }
+
 
 .tanah-breadcrumb svg {
     width: 13px;
     height: 13px;
 }
+
 
 .tanah-breadcrumb > svg {
     width: 11px;
@@ -131,20 +123,13 @@
     color: #93a4b7;
 }
 
+
 .tanah-breadcrumb strong {
     color: #375777;
 
     font-weight: 700;
 }
 
-
-/* =========================================================
-   HEADING
-========================================================= */
-
-.tanah-heading {
-    min-width: 0;
-}
 
 .tanah-heading h1 {
     margin: 0;
@@ -157,25 +142,27 @@
     line-height: 1.05;
 }
 
+
 .tanah-heading p {
-    max-width: 720px;
+    max-width: 760px;
 
     margin: 7px 0 0;
 
     color: #567092;
 
-    font-size: 12.5px;
+    font-size: 13px;
 
     line-height: 1.5;
 }
 
 
 /* =========================================================
-   HERO ACTIONS
+   HERO ACTION
 ========================================================= */
 
 .tanah-hero-actions {
     display: flex;
+
     align-items: center;
 
     gap: 10px;
@@ -183,42 +170,40 @@
     flex-shrink: 0;
 }
 
+
 .tanah-date-card {
     min-width: 220px;
 
     display: flex;
+
     align-items: center;
 
     gap: 10px;
 
     padding: 10px 13px;
 
-    border:
-        1px solid
-        rgba(220,232,244,.92);
+    border: 1px solid rgba(220,232,244,.92);
 
     border-radius: 10px;
 
-    background:
-        rgba(255,255,255,.92);
+    background: rgba(255,255,255,.93);
 
-    backdrop-filter:
-        blur(8px);
+    backdrop-filter: blur(8px);
 
     box-shadow:
         0 7px 22px
         rgba(27,75,118,.07);
 }
 
+
 .tanah-date-icon {
     width: 39px;
     height: 39px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
-
-    flex-shrink: 0;
 
     border-radius: 8px;
 
@@ -227,10 +212,12 @@
     color: #086ad3;
 }
 
+
 .tanah-date-icon svg {
     width: 18px;
     height: 18px;
 }
+
 
 .tanah-date-card strong {
     display: block;
@@ -240,6 +227,7 @@
     font-size: 12px;
     font-weight: 700;
 }
+
 
 .tanah-date-card span {
     display: block;
@@ -251,10 +239,12 @@
     font-size: 11px;
 }
 
+
 .tanah-add-button {
     min-height: 43px;
 
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
@@ -263,6 +253,7 @@
     padding: 0 16px;
 
     border: 0;
+
     border-radius: 8px;
 
     background:
@@ -286,10 +277,11 @@
         rgba(8,106,216,.18);
 }
 
+
 .tanah-add-button:hover {
-    background:
-        var(--tanah-primary-dark);
+    background: var(--tanah-primary-dark);
 }
+
 
 .tanah-add-button svg {
     width: 15px;
@@ -309,46 +301,43 @@
     display: grid;
 
     grid-template-columns:
-        repeat(
-            4,
-            minmax(0,1fr)
-        );
+        repeat(4, minmax(0,1fr));
 
     gap: 12px;
 }
+
 
 .tanah-kpi-card {
     min-height: 96px;
 
     display: flex;
+
     align-items: center;
 
     gap: 13px;
 
     padding: 14px 15px;
 
-    border:
-        1px solid
-        rgba(217,230,242,.94);
+    border: 1px solid rgba(217,230,242,.94);
 
     border-radius: 11px;
 
-    background:
-        rgba(255,255,255,.95);
+    background: rgba(255,255,255,.95);
 
-    backdrop-filter:
-        blur(9px);
+    backdrop-filter: blur(9px);
 
     box-shadow:
         0 8px 24px
         rgba(28,67,105,.06);
 }
 
+
 .tanah-kpi-icon {
     width: 49px;
     height: 49px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -366,10 +355,12 @@
     color: white;
 }
 
+
 .tanah-kpi-icon svg {
     width: 23px;
     height: 23px;
 }
+
 
 .tanah-kpi-content {
     min-width: 0;
@@ -377,14 +368,16 @@
     flex: 1;
 }
 
+
 .tanah-kpi-content > span {
     display: block;
 
     color: #1a365c;
 
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
 }
+
 
 .tanah-kpi-content > strong {
     display: block;
@@ -395,19 +388,21 @@
 
     color: #071b4b;
 
-    font-size: 24px;
+    font-size: 25px;
     font-weight: 800;
 
     line-height: 1.1;
 
     text-overflow: ellipsis;
+
     white-space: nowrap;
 }
 
+
 .tanah-kpi-content > strong small {
     font-size: 12px;
-    font-weight: 700;
 }
+
 
 .tanah-kpi-content > strong.tanah-kpi-update {
     font-size: 15px;
@@ -415,12 +410,13 @@
     white-space: normal;
 }
 
+
 .tanah-kpi-content p {
-    margin: 4px 0 0;
+    margin: 5px 0 0;
 
     color: #73849c;
 
-    font-size: 10.5px;
+    font-size: 11px;
 }
 
 
@@ -430,20 +426,22 @@
 
 .tanah-alert {
     display: flex;
+
     align-items: flex-start;
 
     gap: 9px;
 
     margin-bottom: 14px;
 
-    padding: 11px 13px;
+    padding: 12px 14px;
 
     border-radius: 9px;
 
-    font-size: 12px;
+    font-size: 13px;
 
     line-height: 1.5;
 }
+
 
 .tanah-alert svg {
     width: 17px;
@@ -452,39 +450,27 @@
     flex-shrink: 0;
 }
 
+
 .tanah-alert-success {
-    border:
-        1px solid
-        #bce8d0;
+    border: 1px solid #bce8d0;
 
-    background:
-        #edf9f2;
+    background: #edf9f2;
 
-    color:
-        #157447;
+    color: #157447;
 }
+
 
 .tanah-alert-danger {
-    border:
-        1px solid
-        #f1c5cb;
+    border: 1px solid #f1c5cb;
 
-    background:
-        #fff1f3;
+    background: #fff1f3;
 
-    color:
-        #aa303d;
-}
-
-.tanah-alert ul {
-    margin: 5px 0 0;
-
-    padding-left: 17px;
+    color: #aa303d;
 }
 
 
 /* =========================================================
-   INCOMING NOTIFICATION
+   INCOMING
 ========================================================= */
 
 .tanah-incoming-card {
@@ -497,23 +483,21 @@
 
     align-items: center;
 
-    gap: 13px;
+    gap: 14px;
 
     margin-bottom: 14px;
 
-    padding: 13px 15px;
+    padding: 14px 16px;
 
-    border:
-        1px solid
-        #c9def3;
+    border: 1px solid #c9def3;
 
     border-radius: 11px;
 
     background:
         linear-gradient(
             110deg,
-            #ffffff 0%,
-            #f6fbff 100%
+            #ffffff,
+            #f7fbff
         );
 
     box-shadow:
@@ -521,55 +505,50 @@
         rgba(23,65,103,.045);
 }
 
-.tanah-incoming-card.is-empty {
-    border-color:
-        #dfe8f1;
 
-    background:
-        #ffffff;
+.tanah-incoming-card.is-empty {
+    border-color: #dfe8f1;
+
+    background: white;
 }
+
 
 .tanah-incoming-icon {
     width: 47px;
     height: 47px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
     border-radius: 10px;
 
-    background:
-        var(--tanah-warning-light);
+    background: #fff3dd;
 
-    color:
-        var(--tanah-warning);
+    color: #ee9200;
 }
 
-.tanah-incoming-card.is-empty
-.tanah-incoming-icon {
-    background:
-        var(--tanah-success-light);
-
-    color:
-        var(--tanah-success);
-}
 
 .tanah-incoming-icon svg {
     width: 22px;
     height: 22px;
 }
 
+
 .tanah-incoming-content {
     min-width: 0;
 }
 
+
 .tanah-incoming-title-row {
     display: flex;
+
     align-items: flex-start;
 
     gap: 8px;
 }
+
 
 .tanah-incoming-eyebrow {
     display: block;
@@ -578,26 +557,29 @@
 
     color: #697f9a;
 
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 800;
 
     letter-spacing: .09em;
 }
+
 
 .tanah-incoming-title-row h3 {
     margin: 0;
 
     color: #102a51;
 
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 800;
 }
+
 
 .tanah-incoming-count {
     min-width: 27px;
     height: 23px;
 
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
@@ -605,119 +587,110 @@
 
     border-radius: 999px;
 
-    background:
-        #ef4444;
+    background: #ef4444;
 
-    color:
-        white;
+    color: white;
 
     font-size: 10px;
     font-weight: 800;
 }
 
-.tanah-incoming-card.is-empty
-.tanah-incoming-count {
-    display: none;
-}
 
 .tanah-incoming-content p {
-    margin: 4px 0 0;
+    margin: 5px 0 0;
 
     color: #657d98;
 
-    font-size: 11.5px;
+    font-size: 12px;
 
-    line-height: 1.45;
+    line-height: 1.5;
 }
+
 
 .tanah-incoming-meta {
     display: flex;
+
     align-items: center;
 
-    gap: 6px;
+    gap: 7px;
 
-    margin-top: 7px;
+    margin-top: 8px;
 
     flex-wrap: wrap;
 }
 
+
 .tanah-incoming-meta > span {
-    min-height: 26px;
+    min-height: 27px;
 
     display: inline-flex;
+
     align-items: center;
 
-    gap: 4px;
+    gap: 5px;
 
-    padding: 0 7px;
+    padding: 0 8px;
 
     border-radius: 6px;
 
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
 }
 
+
 .tanah-incoming-meta svg {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
 }
+
 
 .tanah-incoming-meta .is-green {
-    background:
-        #eaf9f0;
+    background: #eaf9f0;
 
-    color:
-        #16804b;
+    color: #16804b;
 }
+
 
 .tanah-incoming-meta .is-blue {
-    background:
-        #eaf4ff;
+    background: #eaf4ff;
 
-    color:
-        #0868c4;
+    color: #0868c4;
 }
 
+
 .tanah-incoming-action button {
-    min-height: 38px;
+    min-height: 39px;
 
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
     gap: 6px;
 
-    padding: 0 12px;
+    padding: 0 13px;
 
-    border:
-        1px solid
-        #bdd7ef;
+    border: 1px solid #bdd7ef;
 
     border-radius: 7px;
 
-    background:
-        white;
+    background: white;
 
-    color:
-        #0868c4;
+    color: #0868c4;
 
     font-family: inherit;
 
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
 
     cursor: pointer;
 }
 
+
 .tanah-incoming-action button:disabled {
     opacity: .45;
 
     cursor: not-allowed;
-}
-
-.tanah-incoming-action svg {
-    width: 13px;
-    height: 13px;
 }
 
 
@@ -726,15 +699,11 @@
 ========================================================= */
 
 .tanah-card {
-    border:
-        1px solid
-        #dfe8f1;
+    border: 1px solid #dfe8f1;
 
-    border-radius:
-        11px;
+    border-radius: 11px;
 
-    background:
-        rgba(255,255,255,.98);
+    background: rgba(255,255,255,.98);
 
     box-shadow:
         0 5px 18px
@@ -749,696 +718,668 @@
 .tanah-filter-card {
     margin-bottom: 14px;
 
-    padding: 14px 15px;
+    padding: 15px 16px;
 }
+
 
 .tanah-filter-header {
     display: flex;
+
     align-items: flex-start;
     justify-content: space-between;
 
     gap: 15px;
 
-    margin-bottom: 12px;
+    margin-bottom: 13px;
 }
+
 
 .tanah-filter-header h3 {
     margin: 0;
 
     color: #10264d;
 
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 800;
 }
+
 
 .tanah-filter-header p {
     margin: 4px 0 0;
 
     color: #71839d;
 
-    font-size: 11px;
+    font-size: 12px;
 }
 
-.tanah-export-button,
-.tanah-reset-button {
-    min-height: 38px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 6px;
-
-    padding: 0 12px;
-
-    border:
-        1px solid
-        #d5e1ed;
-
-    border-radius: 7px;
-
-    background:
-        white;
-
-    color:
-        #3e5d7d;
-
-    font-family:
-        inherit;
-
-    font-size: 11px;
-    font-weight: 700;
-
-    cursor: pointer;
-}
-
-.tanah-export-button svg,
-.tanah-reset-button svg {
-    width: 13px;
-    height: 13px;
-}
 
 .tanah-filter-grid {
     display: grid;
 
     grid-template-columns:
-        minmax(260px,1fr)
-        170px
+        minmax(280px,1fr)
+        180px
         auto;
 
     align-items: end;
 
-    gap: 9px;
+    gap: 10px;
 }
+
 
 .tanah-search {
     position: relative;
 }
 
+
 .tanah-search svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 
     position: absolute;
 
-    left: 12px;
+    left: 13px;
     top: 50%;
 
-    transform:
-        translateY(-50%);
+    transform: translateY(-50%);
 
-    color:
-        #637d9b;
+    color: #637d9b;
 }
+
 
 .tanah-search input,
 .tanah-select-group select {
     width: 100%;
-    height: 40px;
+    height: 42px;
 
-    border:
-        1px solid
-        #d6e2ed;
+    border: 1px solid #d6e2ed;
 
-    border-radius:
-        7px;
+    border-radius: 7px;
 
-    outline:
-        none;
+    outline: none;
 
-    background:
-        white;
+    background: white;
 
-    color:
-        #355372;
+    color: #355372;
 
-    font-family:
-        inherit;
+    font-family: inherit;
 
-    font-size:
-        12px;
+    font-size: 13px;
 }
+
 
 .tanah-search input {
-    padding:
-        0 11px
-        0 37px;
+    padding: 0 12px 0 39px;
 }
+
 
 .tanah-select-group label {
     display: block;
 
-    margin-bottom:
-        5px;
+    margin-bottom: 6px;
 
-    color:
-        #344e70;
+    color: #344e70;
 
-    font-size:
-        10.5px;
-
-    font-weight:
-        700;
+    font-size: 12px;
+    font-weight: 700;
 }
 
+
 .tanah-select-group select {
-    padding:
-        0 10px;
+    padding: 0 11px;
+}
+
+
+.tanah-export-button,
+.tanah-reset-button {
+    min-height: 42px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 14px;
+
+    border: 1px solid #d5e1ed;
+
+    border-radius: 7px;
+
+    background: white;
+
+    color: #3e5d7d;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
 }
 
 
 /* =========================================================
-   MAIN TABLE
+   TABLE HEADER
 ========================================================= */
 
 .tanah-table-card {
-    overflow:
-        hidden;
+    overflow: hidden;
 }
+
 
 .tanah-table-header {
     display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 16px;
+}
+
+
+.tanah-table-header h3 {
+    margin: 0;
+
+    color: #10264d;
+
+    font-size: 18px;
+    font-weight: 800;
+}
+
+
+.tanah-table-header p {
+    margin: 4px 0 0;
+
+    color: #71839d;
+
+    font-size: 12px;
+}
+
+
+.tanah-database-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 6px 9px;
+
+    border: 1px solid #bad9f5;
+
+    border-radius: 6px;
+
+    background: #edf7ff;
+
+    color: #1266ae;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.tanah-table-scroll {
+    width: 100%;
+
+    overflow-x: auto;
+
+    padding: 0 14px;
+}
+
+
+.tanah-table {
+    width: 100%;
+
+    min-width: 1180px;
+
+    border-collapse: collapse;
+}
+
+
+.tanah-table thead th {
+    padding: 14px;
+
+    border: 1px solid #d9e4ee;
+
+    background: #eaf4ff;
+
+    color: #122f55;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    line-height: 1.4;
+
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+
+.tanah-table tbody td {
+    padding: 13px 14px;
+
+    border: 1px solid #e1e9f1;
+
+    color: #294866;
+
+    font-size: 13px;
+
+    line-height: 1.55;
+
+    vertical-align: middle;
+}
+
+
+.tanah-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+
+.tanah-table tbody tr:hover {
+    background: #f1f7fd;
+}
+
+
+.tanah-col-no {
+    width: 58px;
+
+    text-align: center !important;
+}
+
+
+.tanah-col-lokasi {
+    min-width: 250px;
+}
+
+
+.tanah-col-alamat {
+    min-width: 275px;
+}
+
+
+.tanah-col-penggunaan {
+    min-width: 230px;
+}
+
+
+.tanah-col-nilai {
+    width: 180px;
+
+    text-align: right !important;
+}
+
+
+.tanah-col-pdf {
+    width: 120px;
+
+    text-align: center !important;
+}
+
+
+.tanah-col-action {
+    width: 155px;
+
+    text-align: center !important;
+}
+
+
+.tanah-row-number {
+    text-align: center;
+
+    color: #506982 !important;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   LOCATION
+========================================================= */
+
+.tanah-location-cell {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-width: 220px;
+}
+
+
+.tanah-location-icon {
+    width: 35px;
+    height: 35px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #eaf4ff;
+
+    color: #0870dc;
+}
+
+
+.tanah-location-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+.tanah-location-cell strong {
+    display: block;
+
+    color: #12375f;
+
+    font-size: 13px;
+    font-weight: 750;
+
+    line-height: 1.4;
+}
+
+
+.tanah-location-cell small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #8495aa;
+
+    font-size: 11px;
+}
+
+
+.tanah-address-cell,
+.tanah-usage-cell {
+    white-space: normal;
+}
+
+
+/* =========================================================
+   NILAI
+========================================================= */
+
+.tanah-value-cell {
+    text-align: right;
+
+    white-space: nowrap;
+}
+
+
+.tanah-value-cell strong {
+    color: #0864c7;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   PDF
+========================================================= */
+
+.tanah-pdf-cell {
+    text-align: center;
+}
+
+
+.tanah-pdf-button {
+    min-width: 76px;
+    height: 35px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 10px;
+
+    border: 1px solid #c6dff7;
+
+    border-radius: 7px;
+
+    background: #edf7ff;
+
+    color: #086bd2;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 750;
+
+    cursor: pointer;
+}
+
+
+.tanah-pdf-button:hover {
+    border-color: #72afe9;
+
+    background: #dff0ff;
+}
+
+
+.tanah-pdf-button svg {
+    width: 15px;
+    height: 15px;
+}
+
+
+.tanah-pdf-empty {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+
+    color: #98a7b7;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.tanah-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+}
+
+
+.tanah-actions button {
+    width: 35px;
+    height: 35px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    transition:
+        transform .16s ease,
+        filter .16s ease;
+}
+
+
+.tanah-actions button:hover {
+    transform: translateY(-1px);
+}
+
+
+.tanah-actions button svg {
+    width: 15px;
+    height: 15px;
+}
+
+
+.tanah-actions .view {
+    background: #e6f3ff;
+
+    color: #0870d9;
+}
+
+
+.tanah-actions .edit {
+    background: #fff1d8;
+
+    color: #e58a00;
+}
+
+
+.tanah-actions .delete {
+    background: #ffe6e9;
+
+    color: #dc3545;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.tanah-empty {
+    height: 190px;
+
+    padding: 35px !important;
+
+    text-align: center !important;
+
+    color: #7f90a4 !important;
+}
+
+
+.tanah-empty svg {
+    width: 30px;
+    height: 30px;
+
+    display: block;
+
+    margin: 0 auto 8px;
+}
+
+
+.tanah-empty strong {
+    display: block;
+
+    color: #3e5d7b;
+
+    font-size: 14px;
+}
+
+
+.tanah-empty span {
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.tanah-table-footer {
+    min-height: 62px;
+
+    display: flex;
+
     align-items: center;
     justify-content: space-between;
 
     gap: 14px;
 
-    padding:
-        14px 15px;
+    padding: 11px 14px;
 }
 
-.tanah-table-header h3 {
-    margin: 0;
 
-    color:
-        #10264d;
+.tanah-table-info {
+    color: #647a95;
 
-    font-size:
-        16px;
-
-    font-weight:
-        800;
+    font-size: 12px;
 }
 
-.tanah-table-header p {
-    margin:
-        3px 0 0;
 
-    color:
-        #71839d;
+.tanah-pagination {
+    display: flex;
 
-    font-size:
-        10.5px;
-}
-
-.tanah-database-badge {
-    display: inline-flex;
     align-items: center;
 
     gap: 5px;
-
-    padding:
-        5px 8px;
-
-    border:
-        1px solid
-        #bad9f5;
-
-    border-radius:
-        6px;
-
-    background:
-        #edf7ff;
-
-    color:
-        #1266ae;
-
-    font-size:
-        10px;
-
-    font-weight:
-        700;
 }
 
-.tanah-database-badge svg {
-    width:
-        12px;
-
-    height:
-        12px;
-}
-
-.tanah-table-scroll {
-    width:
-        100%;
-
-    overflow-x:
-        auto;
-
-    padding:
-        0 13px;
-}
-
-.tanah-table {
-    width:
-        100%;
-
-    min-width:
-        1080px;
-
-    border-collapse:
-        collapse;
-}
-
-.tanah-table th {
-    padding:
-        11px 10px;
-
-    border:
-        1px solid
-        #dce6f0;
-
-    background:
-        #eaf4ff;
-
-    color:
-        #18365b;
-
-    font-size:
-        11.5px;
-
-    font-weight:
-        800;
-
-    text-align:
-        left;
-
-    white-space:
-        nowrap;
-}
-
-.tanah-table td {
-    padding:
-        10px;
-
-    border:
-        1px solid
-        #e3eaf2;
-
-    color:
-        #365371;
-
-    font-size:
-        11.5px;
-
-    line-height:
-        1.45;
-
-    vertical-align:
-        middle;
-}
-
-.tanah-table tbody tr:nth-child(even) {
-    background:
-        #fbfdff;
-}
-
-.tanah-table tbody tr:hover {
-    background:
-        #f3f8fe;
-}
-
-.tanah-col-no {
-    width:
-        55px;
-
-    text-align:
-        center !important;
-}
-
-.tanah-row-number {
-    text-align:
-        center;
-}
-
-.tanah-col-action {
-    width:
-        80px;
-
-    text-align:
-        center !important;
-}
-
-.tanah-location-cell {
-    min-width:
-        190px;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        8px;
-}
-
-.tanah-location-icon {
-    width:
-        30px;
-
-    height:
-        30px;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    flex-shrink:
-        0;
-
-    border-radius:
-        7px;
-
-    background:
-        #eaf4ff;
-
-    color:
-        #086bd6;
-}
-
-.tanah-location-icon svg {
-    width:
-        14px;
-
-    height:
-        14px;
-}
-
-.tanah-location-cell strong {
-    display:
-        block;
-
-    color:
-        #15375f;
-
-    font-size:
-        11.5px;
-}
-
-.tanah-location-cell small {
-    display:
-        block;
-
-    margin-top:
-        2px;
-
-    color:
-        #8797aa;
-
-    font-size:
-        9.5px;
-}
-
-.tanah-wrap-cell {
-    max-width:
-        260px;
-
-    white-space:
-        normal;
-}
-
-.tanah-value-main {
-    color:
-        #24496f;
-
-    font-weight:
-        700;
-}
-
-.tanah-document-number {
-    display:
-        block;
-
-    color:
-        #234c75;
-
-    font-size:
-        11px;
-}
-
-.tanah-document-date {
-    display:
-        block;
-
-    margin-top:
-        2px;
-
-    color:
-        #7d90a8;
-
-    font-size:
-        9.5px;
-}
-
-.tanah-actions {
-    display:
-        flex;
-
-    justify-content:
-        center;
-
-    gap:
-        5px;
-}
-
-.tanah-actions button,
-.tanah-record-actions button {
-    width:
-        30px;
-
-    height:
-        30px;
-
-    display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    border:
-        0;
-
-    border-radius:
-        6px;
-
-    cursor:
-        pointer;
-}
-
-.tanah-actions svg,
-.tanah-record-actions svg {
-    width:
-        13px;
-
-    height:
-        13px;
-}
-
-.tanah-actions .view,
-.tanah-record-actions .view {
-    background:
-        #e7f3ff;
-
-    color:
-        #0870d4;
-}
-
-.tanah-record-actions .edit {
-    background:
-        #fff2db;
-
-    color:
-        #e48a00;
-}
-
-.tanah-record-actions .delete {
-    background:
-        #ffe7ea;
-
-    color:
-        #dd3c49;
-}
-
-.tanah-empty {
-    height:
-        180px;
-
-    text-align:
-        center !important;
-
-    color:
-        #7c8da3 !important;
-}
-
-.tanah-empty svg {
-    width:
-        29px;
-
-    height:
-        29px;
-
-    display:
-        block;
-
-    margin:
-        0 auto 7px;
-}
-
-.tanah-empty strong,
-.tanah-empty span {
-    display:
-        block;
-}
-
-.tanah-empty strong {
-    color:
-        #42617f;
-}
-
-.tanah-empty span {
-    margin-top:
-        3px;
-
-    font-size:
-        10.5px;
-}
-
-
-/* =========================================================
-   TABLE FOOTER / PAGINATION
-========================================================= */
-
-.tanah-table-footer {
-    min-height:
-        59px;
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        space-between;
-
-    gap:
-        15px;
-
-    padding:
-        10px 14px;
-}
-
-.tanah-table-info {
-    color:
-        #667b98;
-
-    font-size:
-        10.5px;
-}
-
-.tanah-pagination {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        5px;
-
-    flex-wrap:
-        wrap;
-}
 
 .tanah-page-button {
-    min-width:
-        32px;
+    min-width: 35px;
+    height: 35px;
 
-    height:
-        32px;
+    display: inline-flex;
 
-    display:
-        inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    align-items:
-        center;
+    padding: 0 8px;
 
-    justify-content:
-        center;
+    border: 1px solid #d8e2ed;
 
-    padding:
-        0 8px;
+    border-radius: 6px;
 
-    border:
-        1px solid
-        #d8e2ed;
+    background: white;
 
-    border-radius:
-        6px;
+    color: #496481;
 
-    background:
-        white;
+    font-family: inherit;
 
-    color:
-        #496481;
+    font-size: 12px;
+    font-weight: 650;
 
-    font-family:
-        inherit;
-
-    font-size:
-        10.5px;
-
-    font-weight:
-        650;
-
-    cursor:
-        pointer;
+    cursor: pointer;
 }
+
 
 .tanah-page-button.active {
-    border-color:
-        var(--tanah-primary);
+    border-color: #086ad8;
 
-    background:
-        var(--tanah-primary);
+    background: #086ad8;
 
-    color:
-        white;
+    color: white;
 }
+
 
 .tanah-page-button:disabled {
-    opacity:
-        .42;
+    opacity: .42;
 
-    cursor:
-        not-allowed;
-}
-
-.tanah-page-button svg {
-    width:
-        13px;
-
-    height:
-        13px;
+    cursor: not-allowed;
 }
 
 
@@ -1447,85 +1388,59 @@
 ========================================================= */
 
 .tanah-modal {
-    width:
-        min(
-            980px,
-            calc(100% - 28px)
-        );
+    width: min(980px, calc(100% - 28px));
 
-    max-height:
-        calc(100dvh - 28px);
+    max-height: calc(100dvh - 28px);
 
-    margin:
-        auto;
+    margin: auto;
 
-    padding:
-        0;
+    padding: 0;
 
-    overflow:
-        auto;
+    overflow: auto;
 
-    border:
-        0;
+    border: 0;
 
-    border-radius:
-        14px;
+    border-radius: 14px;
 
-    background:
-        #ffffff;
+    background: white;
 
-    color:
-        var(--tanah-text);
+    color: #173552;
 
     box-shadow:
         0 28px 90px
         rgba(4,25,50,.31);
 }
 
-.tanah-modal::backdrop {
-    background:
-        rgba(4,20,39,.54);
 
-    backdrop-filter:
-        blur(3px);
+.tanah-modal::backdrop {
+    background: rgba(4,20,39,.54);
+
+    backdrop-filter: blur(3px);
 }
+
 
 .tanah-form-modal {
-    width:
-        min(
-            1120px,
-            calc(100% - 26px)
-        );
+    width: min(1120px, calc(100% - 28px));
 }
 
+
 .tanah-modal-header {
-    position:
-        sticky;
+    position: sticky;
 
-    top:
-        0;
+    top: 0;
 
-    z-index:
-        20;
+    z-index: 20;
 
-    display:
-        flex;
+    display: flex;
 
-    align-items:
-        flex-start;
+    align-items: flex-start;
+    justify-content: space-between;
 
-    justify-content:
-        space-between;
+    gap: 14px;
 
-    gap:
-        14px;
+    padding: 18px 20px;
 
-    padding:
-        17px 19px;
-
-    border-bottom:
-        1px solid
-        #e3ebf3;
+    border-bottom: 1px solid #e3ebf3;
 
     background:
         linear-gradient(
@@ -1535,715 +1450,154 @@
         );
 }
 
+
 .tanah-modal-eyebrow {
-    display:
-        block;
+    display: block;
 
-    margin-bottom:
-        3px;
+    margin-bottom: 3px;
 
-    color:
-        #086ad8;
+    color: #086ad8;
 
-    font-size:
-        9.5px;
+    font-size: 10px;
+    font-weight: 800;
 
-    font-weight:
-        800;
-
-    letter-spacing:
-        .10em;
+    letter-spacing: .10em;
 }
+
 
 .tanah-modal-header h3 {
-    margin:
-        0;
+    margin: 0;
 
-    color:
-        #102950;
+    color: #102950;
 
-    font-size:
-        18px;
-
-    font-weight:
-        800;
+    font-size: 19px;
+    font-weight: 800;
 }
+
 
 .tanah-modal-header p {
-    margin:
-        4px 0 0;
+    margin: 4px 0 0;
 
-    color:
-        #75869d;
+    color: #75869d;
 
-    font-size:
-        11px;
+    font-size: 12px;
 }
+
 
 .tanah-modal-close {
-    width:
-        34px;
+    width: 35px;
+    height: 35px;
 
-    height:
-        34px;
+    display: flex;
 
-    display:
-        flex;
+    align-items: center;
+    justify-content: center;
 
-    align-items:
-        center;
+    border: 0;
 
-    justify-content:
-        center;
+    border-radius: 7px;
 
-    flex-shrink:
-        0;
+    background: #f0f5fa;
 
-    border:
-        0;
+    color: #607894;
 
-    border-radius:
-        7px;
-
-    background:
-        #f0f5fa;
-
-    color:
-        #607894;
-
-    cursor:
-        pointer;
+    cursor: pointer;
 }
 
-.tanah-modal-close svg {
-    width:
-        17px;
-
-    height:
-        17px;
-}
 
 .tanah-modal-body {
-    padding:
-        17px 19px;
+    padding: 18px 20px;
 }
+
 
 .tanah-modal-footer {
-    position:
-        sticky;
+    position: sticky;
 
-    bottom:
-        0;
+    bottom: 0;
 
-    z-index:
-        20;
+    z-index: 20;
 
-    display:
-        flex;
+    display: flex;
 
-    align-items:
-        center;
+    align-items: center;
+    justify-content: flex-end;
 
-    justify-content:
-        flex-end;
+    gap: 9px;
 
-    gap:
-        8px;
+    padding: 13px 20px;
 
-    padding:
-        12px 19px;
+    border-top: 1px solid #e3ebf3;
 
-    border-top:
-        1px solid
-        #e3ebf3;
-
-    background:
-        #fafcff;
+    background: #fafcff;
 }
 
 
 /* =========================================================
-   FORM SECTIONS
+   FORM SECTION
 ========================================================= */
 
-.tanah-form-section,
-.tanah-source-section {
-    margin-bottom:
-        14px;
+.tanah-form-section {
+    margin-bottom: 15px;
 
-    padding:
-        14px;
+    padding: 15px;
 
-    border:
-        1px solid
-        #dde7f1;
+    border: 1px solid #dde7f1;
 
-    border-radius:
-        10px;
+    border-radius: 10px;
 
-    background:
-        #ffffff;
-}
-
-.tanah-section-header {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        space-between;
-
-    gap:
-        12px;
-
-    margin-bottom:
-        13px;
-}
-
-.tanah-section-header > div {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        9px;
-}
-
-.tanah-section-number {
-    width:
-        28px;
-
-    height:
-        28px;
-
-    display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    flex-shrink:
-        0;
-
-    border-radius:
-        7px;
-
-    background:
-        #eaf4ff;
-
-    color:
-        #086ad8;
-
-    font-size:
-        11px;
-
-    font-weight:
-        800;
-}
-
-.tanah-section-header h4 {
-    margin:
-        0;
-
-    color:
-        #17365c;
-
-    font-size:
-        13px;
-
-    font-weight:
-        800;
-}
-
-.tanah-section-header p {
-    margin:
-        2px 0 0;
-
-    color:
-        #7a8ca3;
-
-    font-size:
-        10px;
+    background: white;
 }
 
 
-/* =========================================================
-   SOURCE
-========================================================= */
+.tanah-section-title {
+    display: flex;
 
-.tanah-source-section {
-    border-color:
-        #c6ddf5;
+    align-items: center;
 
-    background:
-        #fbfdff;
-}
+    gap: 10px;
 
-.tanah-source-toggle {
-    min-height:
-        32px;
-
-    display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    gap:
-        4px;
-
-    padding:
-        0 9px;
-
-    border:
-        1px solid
-        #d2e0ed;
-
-    border-radius:
-        6px;
-
-    background:
-        white;
-
-    color:
-        #476785;
-
-    font-family:
-        inherit;
-
-    font-size:
-        10px;
-
-    font-weight:
-        700;
-
-    cursor:
-        pointer;
-}
-
-.tanah-source-toggle svg {
-    width:
-        12px;
-
-    height:
-        12px;
-}
-
-.tanah-source-panel[hidden] {
-    display:
-        none !important;
-}
-
-.tanah-source-toolbar {
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        space-between;
-
-    gap:
-        10px;
-
-    margin-bottom:
-        9px;
-}
-
-.tanah-source-search {
-    position:
-        relative;
-
-    flex:
-        1;
-}
-
-.tanah-source-search svg {
-    width:
-        14px;
-
-    height:
-        14px;
-
-    position:
-        absolute;
-
-    left:
-        11px;
-
-    top:
-        50%;
-
-    transform:
-        translateY(-50%);
-
-    color:
-        #687f9a;
-}
-
-.tanah-source-search input {
-    width:
-        100%;
-
-    height:
-        38px;
-
-    padding:
-        0 11px
-        0 35px;
-
-    border:
-        1px solid
-        #d5e1ed;
-
-    border-radius:
-        7px;
-
-    outline:
-        none;
-
-    background:
-        white;
-
-    color:
-        #365371;
-
-    font-family:
-        inherit;
-
-    font-size:
-        11px;
-}
-
-.tanah-source-total {
-    flex-shrink:
-        0;
-
-    color:
-        #647c97;
-
-    font-size:
-        10px;
-}
-
-.tanah-source-table-wrap {
-    max-height:
-        320px;
-
-    overflow:
-        auto;
-
-    border:
-        1px solid
-        #dde6ef;
-
-    border-radius:
-        8px;
-}
-
-.tanah-source-table {
-    width:
-        100%;
-
-    min-width:
-        1120px;
-
-    border-collapse:
-        collapse;
-}
-
-.tanah-source-table th {
-    position:
-        sticky;
-
-    top:
-        0;
-
-    z-index:
-        2;
-
-    padding:
-        9px;
-
-    border:
-        1px solid
-        #dce6f0;
-
-    background:
-        #eaf4ff;
-
-    color:
-        #18375e;
-
-    font-size:
-        10px;
-
-    font-weight:
-        800;
-
-    text-align:
-        left;
-
-    white-space:
-        nowrap;
-}
-
-.tanah-source-table td {
-    padding:
-        9px;
-
-    border:
-        1px solid
-        #e4ebf2;
-
-    color:
-        #385572;
-
-    font-size:
-        10.5px;
-
-    line-height:
-        1.4;
-
-    vertical-align:
-        top;
-}
-
-.tanah-source-table
-tbody tr:nth-child(even) {
-    background:
-        #fbfdff;
-}
-
-.tanah-source-table
-tbody tr:hover {
-    background:
-        #f2f8fe;
-}
-
-.tanah-source-table strong {
-    display:
-        block;
-
-    color:
-        #1c416b;
-}
-
-.tanah-source-table small {
-    display:
-        block;
-
-    margin-top:
-        2px;
-
-    color:
-        #8192a6;
-
-    font-size:
-        9px;
-}
-
-.tanah-source-empty {
-    height:
-        130px;
-
-    text-align:
-        center;
-
-    vertical-align:
-        middle !important;
-
-    color:
-        #778ba3 !important;
-}
-
-.tanah-source-select {
-    min-height:
-        30px;
-
-    padding:
-        0 10px;
-
-    border:
-        0;
-
-    border-radius:
-        6px;
-
-    background:
-        #168d5b;
-
-    color:
-        white;
-
-    font-family:
-        inherit;
-
-    font-size:
-        10px;
-
-    font-weight:
-        700;
-
-    cursor:
-        pointer;
+    margin-bottom: 14px;
 }
 
 
-/* =========================================================
-   SELECTED SOURCE
-========================================================= */
+.tanah-section-title > span {
+    width: 30px;
+    height: 30px;
 
-.tanah-selected-source {
-    display:
-        grid;
+    display: inline-flex;
 
-    grid-template-columns:
-        auto
-        minmax(0,1fr)
-        auto;
+    align-items: center;
+    justify-content: center;
 
-    align-items:
-        center;
+    flex-shrink: 0;
 
-    gap:
-        10px;
+    border-radius: 7px;
 
-    margin-bottom:
-        14px;
+    background: #eaf4ff;
 
-    padding:
-        11px 12px;
+    color: #086ad8;
 
-    border:
-        1px solid
-        #bae4cd;
-
-    border-radius:
-        9px;
-
-    background:
-        #effaf4;
+    font-size: 12px;
+    font-weight: 800;
 }
 
-.tanah-selected-source[hidden] {
-    display:
-        none !important;
+
+.tanah-section-title h4 {
+    margin: 0;
+
+    color: #17365c;
+
+    font-size: 14px;
+    font-weight: 800;
 }
 
-.tanah-selected-icon {
-    width:
-        36px;
 
-    height:
-        36px;
+.tanah-section-title p {
+    margin: 3px 0 0;
 
-    display:
-        flex;
+    color: #7a8ca3;
 
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    border-radius:
-        8px;
-
-    background:
-        #ddf6e8;
-
-    color:
-        #13804d;
-}
-
-.tanah-selected-icon svg {
-    width:
-        18px;
-
-    height:
-        18px;
-}
-
-.tanah-selected-content span,
-.tanah-selected-content strong,
-.tanah-selected-content small {
-    display:
-        block;
-}
-
-.tanah-selected-content span {
-    color:
-        #668576;
-
-    font-size:
-        9px;
-
-    font-weight:
-        700;
-}
-
-.tanah-selected-content strong {
-    margin-top:
-        2px;
-
-    color:
-        #185a3b;
-
-    font-size:
-        12px;
-}
-
-.tanah-selected-content small {
-    margin-top:
-        2px;
-
-    color:
-        #648274;
-
-    font-size:
-        9.5px;
-}
-
-.tanah-selected-source button {
-    min-height:
-        32px;
-
-    padding:
-        0 9px;
-
-    border:
-        1px solid
-        #addbbf;
-
-    border-radius:
-        6px;
-
-    background:
-        white;
-
-    color:
-        #137445;
-
-    font-family:
-        inherit;
-
-    font-size:
-        10px;
-
-    font-weight:
-        700;
-
-    cursor:
-        pointer;
+    font-size: 11px;
 }
 
 
@@ -2252,477 +1606,776 @@ tbody tr:hover {
 ========================================================= */
 
 .tanah-form-grid {
-    display:
-        grid;
+    display: grid;
 
     grid-template-columns:
-        repeat(
-            2,
-            minmax(0,1fr)
-        );
+        repeat(2, minmax(0,1fr));
 
-    gap:
-        11px;
+    gap: 12px;
 }
 
-.tanah-form-grid-3 {
+
+.tanah-grid-3 {
     grid-template-columns:
-        repeat(
-            3,
-            minmax(0,1fr)
-        );
+        repeat(3, minmax(0,1fr));
 }
+
 
 .tanah-field-full {
-    grid-column:
-        1 / -1;
+    grid-column: 1 / -1;
 }
+
 
 .tanah-field label {
-    display:
-        block;
+    display: block;
 
-    margin-bottom:
-        5px;
+    margin-bottom: 6px;
 
-    color:
-        #355372;
+    color: #355372;
 
-    font-size:
-        10.5px;
-
-    font-weight:
-        700;
+    font-size: 12px;
+    font-weight: 700;
 }
 
-.tanah-field label span {
-    color:
-        #db3946;
+
+.tanah-field label b {
+    color: #dc3545;
 }
+
 
 .tanah-field input,
 .tanah-field select,
 .tanah-field textarea {
-    width:
-        100%;
+    width: 100%;
 
-    border:
-        1px solid
-        #d5e1ec;
+    border: 1px solid #d5e1ec;
 
-    border-radius:
-        7px;
+    border-radius: 7px;
 
-    outline:
-        none;
+    outline: none;
 
-    background:
-        #ffffff;
+    background: white;
 
-    color:
-        #34516f;
+    color: #34516f;
 
-    font-family:
-        inherit;
+    font-family: inherit;
 
-    font-size:
-        11.5px;
-
-    transition:
-        border-color .16s ease,
-        box-shadow .16s ease;
+    font-size: 13px;
 }
+
 
 .tanah-field input,
 .tanah-field select {
-    height:
-        40px;
+    height: 42px;
 
-    padding:
-        0 10px;
+    padding: 0 11px;
 }
+
 
 .tanah-field textarea {
-    min-height:
-        80px;
+    min-height: 85px;
 
-    padding:
-        10px;
+    padding: 11px;
 
-    resize:
-        vertical;
+    resize: vertical;
 
-    line-height:
-        1.5;
+    line-height: 1.55;
 }
+
 
 .tanah-field input:focus,
 .tanah-field select:focus,
 .tanah-field textarea:focus {
-    border-color:
-        #4691e6;
+    border-color: #4691e6;
 
     box-shadow:
         0 0 0 3px
         rgba(8,106,216,.08);
 }
 
+
 .tanah-field input[readonly] {
-    background:
-        #f4f7fa;
-
-    color:
-        #5e738d;
-
-    cursor:
-        default;
+    background: #f4f7fa;
 }
 
-.tanah-field-help {
-    display:
-        block;
 
-    margin-top:
-        4px;
-
-    color:
-        #758aa4;
-
-    font-size:
-        9px;
-}
-
-.tanah-field-help.is-warning {
-    color:
-        #bc7400;
-}
-
-.tanah-unit-input {
-    display:
-        grid;
+.tanah-unit-field {
+    display: grid;
 
     grid-template-columns:
         minmax(0,1fr)
-        auto;
+        46px;
 }
 
-.tanah-unit-input input {
-    border-radius:
-        7px 0 0 7px;
+
+.tanah-unit-field input {
+    border-radius: 7px 0 0 7px;
 }
 
-.tanah-unit-input span {
-    min-width:
-        44px;
 
-    height:
-        40px;
+.tanah-unit-field span {
+    display: flex;
 
-    display:
-        flex;
+    align-items: center;
+    justify-content: center;
 
-    align-items:
-        center;
+    border: 1px solid #d5e1ec;
 
-    justify-content:
-        center;
+    border-left: 0;
 
-    border:
-        1px solid
-        #d5e1ec;
+    border-radius: 0 7px 7px 0;
 
-    border-left:
-        0;
+    background: #f3f7fb;
 
-    border-radius:
-        0 7px 7px 0;
+    color: #55708e;
 
-    background:
-        #f3f7fb;
-
-    color:
-        #55708e;
-
-    font-size:
-        10px;
-
-    font-weight:
-        700;
+    font-size: 11px;
+    font-weight: 700;
 }
 
 
 /* =========================================================
-   MODAL BUTTON
+   SOURCE
+========================================================= */
+
+.tanah-source-section {
+    border-color: #c6ddf5;
+
+    background: #fbfdff;
+}
+
+
+.tanah-source-toolbar {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 10px;
+}
+
+
+.tanah-source-toolbar .tanah-search {
+    flex: 1;
+}
+
+
+.tanah-source-toolbar > span {
+    color: #647c97;
+
+    font-size: 12px;
+}
+
+
+.tanah-source-scroll {
+    max-height: 330px;
+
+    overflow: auto;
+
+    border: 1px solid #dde6ef;
+
+    border-radius: 8px;
+}
+
+
+.tanah-source-table {
+    width: 100%;
+
+    min-width: 1100px;
+
+    border-collapse: collapse;
+}
+
+
+.tanah-source-table th {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 3;
+
+    padding: 11px 10px;
+
+    border: 1px solid #dce6f0;
+
+    background: #eaf4ff;
+
+    color: #18375e;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    text-align: left;
+}
+
+
+.tanah-source-table td {
+    padding: 10px;
+
+    border: 1px solid #e4ebf2;
+
+    color: #385572;
+
+    font-size: 11.5px;
+
+    line-height: 1.5;
+
+    vertical-align: top;
+}
+
+
+.tanah-source-table strong {
+    display: block;
+
+    color: #1c416b;
+}
+
+
+.tanah-source-table small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #8192a6;
+
+    font-size: 10px;
+}
+
+
+.tanah-source-empty {
+    height: 140px;
+
+    text-align: center;
+
+    vertical-align: middle !important;
+
+    color: #778ba3 !important;
+}
+
+
+.tanah-source-select {
+    min-height: 32px;
+
+    padding: 0 11px;
+
+    border: 0;
+
+    border-radius: 6px;
+
+    background: #168d5b;
+
+    color: white;
+
+    font-family: inherit;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   SELECTED SOURCE
+========================================================= */
+
+.tanah-selected-source {
+    display: grid;
+
+    grid-template-columns:
+        auto
+        minmax(0,1fr)
+        auto;
+
+    align-items: center;
+
+    gap: 11px;
+
+    margin-bottom: 15px;
+
+    padding: 12px 13px;
+
+    border: 1px solid #bae4cd;
+
+    border-radius: 9px;
+
+    background: #effaf4;
+}
+
+
+.tanah-selected-source[hidden] {
+    display: none !important;
+}
+
+
+.tanah-selected-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #ddf6e8;
+
+    color: #13804d;
+}
+
+
+.tanah-selected-source span,
+.tanah-selected-source strong,
+.tanah-selected-source small {
+    display: block;
+}
+
+
+.tanah-selected-source span {
+    color: #668576;
+
+    font-size: 10px;
+}
+
+
+.tanah-selected-source strong {
+    margin-top: 2px;
+
+    color: #185a3b;
+
+    font-size: 13px;
+}
+
+
+.tanah-selected-source small {
+    margin-top: 3px;
+
+    color: #648274;
+
+    font-size: 11px;
+}
+
+
+.tanah-selected-source button {
+    min-height: 34px;
+
+    padding: 0 10px;
+
+    border: 1px solid #addbbf;
+
+    border-radius: 6px;
+
+    background: white;
+
+    color: #137445;
+
+    font-family: inherit;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   UPLOAD
+========================================================= */
+
+.tanah-upload-box {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 1px dashed #a9cbea;
+
+    border-radius: 9px;
+
+    background: #f8fcff;
+}
+
+
+.tanah-upload-icon {
+    width: 43px;
+    height: 43px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #e7f3ff;
+
+    color: #086ad8;
+}
+
+
+.tanah-upload-content {
+    flex: 1;
+}
+
+
+.tanah-upload-content strong {
+    display: block;
+
+    color: #234769;
+
+    font-size: 13px;
+}
+
+
+.tanah-upload-content span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #7a8da3;
+
+    font-size: 11px;
+}
+
+
+.tanah-upload-button {
+    min-height: 36px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 11px;
+
+    border-radius: 7px;
+
+    background: #086ad8;
+
+    color: white;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.tanah-file-selected {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-top: 9px;
+
+    padding: 9px 11px;
+
+    border-radius: 7px;
+
+    background: #ecf8f1;
+
+    color: #17784a;
+
+    font-size: 11px;
+}
+
+
+.tanah-file-selected[hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
+   BUTTON
 ========================================================= */
 
 .tanah-button-primary,
 .tanah-button-secondary,
 .tanah-button-danger {
-    min-height:
-        39px;
+    min-height: 40px;
 
-    display:
-        inline-flex;
+    display: inline-flex;
 
-    align-items:
-        center;
+    align-items: center;
+    justify-content: center;
 
-    justify-content:
-        center;
+    gap: 6px;
 
-    gap:
-        6px;
+    padding: 0 15px;
 
-    padding:
-        0 14px;
+    border-radius: 7px;
 
-    border-radius:
-        7px;
+    font-family: inherit;
 
-    font-family:
-        inherit;
+    font-size: 12px;
+    font-weight: 700;
 
-    font-size:
-        11px;
-
-    font-weight:
-        700;
-
-    cursor:
-        pointer;
+    cursor: pointer;
 }
+
 
 .tanah-button-primary {
-    border:
-        1px solid
-        var(--tanah-primary);
+    border: 1px solid #086ad8;
 
-    background:
-        var(--tanah-primary);
+    background: #086ad8;
 
-    color:
-        white;
+    color: white;
 }
+
 
 .tanah-button-secondary {
-    border:
-        1px solid
-        #d4e0eb;
+    border: 1px solid #d4e0eb;
 
-    background:
-        white;
+    background: white;
 
-    color:
-        #526b88;
+    color: #526b88;
 }
+
 
 .tanah-button-danger {
-    border:
-        1px solid
-        var(--tanah-danger);
+    border: 1px solid #dc3545;
 
-    background:
-        var(--tanah-danger);
+    background: #dc3545;
 
-    color:
-        white;
-}
-
-.tanah-button-primary svg,
-.tanah-button-danger svg {
-    width:
-        14px;
-
-    height:
-        14px;
+    color: white;
 }
 
 
 /* =========================================================
-   LOCATION DETAIL
-========================================================= */
-
-.tanah-location-modal {
-    width:
-        min(
-            1020px,
-            calc(100% - 28px)
-        );
-}
-
-.tanah-location-table-wrap {
-    overflow-x:
-        auto;
-}
-
-.tanah-location-table {
-    width:
-        100%;
-
-    min-width:
-        820px;
-
-    border-collapse:
-        collapse;
-}
-
-.tanah-location-table th {
-    padding:
-        10px;
-
-    border:
-        1px solid
-        #dce6f0;
-
-    background:
-        #eaf4ff;
-
-    color:
-        #18365c;
-
-    font-size:
-        10.5px;
-
-    font-weight:
-        800;
-
-    text-align:
-        left;
-}
-
-.tanah-location-table td {
-    padding:
-        10px;
-
-    border:
-        1px solid
-        #e3eaf2;
-
-    color:
-        #365371;
-
-    font-size:
-        10.5px;
-
-    vertical-align:
-        middle;
-}
-
-.tanah-location-empty {
-    height:
-        130px;
-
-    text-align:
-        center;
-
-    color:
-        #778ba2 !important;
-}
-
-.tanah-record-actions {
-    display:
-        flex;
-
-    gap:
-        5px;
-
-    justify-content:
-        center;
-}
-
-
-/* =========================================================
-   DETAIL MODAL
+   DETAIL
 ========================================================= */
 
 .tanah-detail-modal {
-    width:
-        min(
-            780px,
-            calc(100% - 28px)
-        );
+    width: min(800px, calc(100% - 28px));
 }
+
 
 .tanah-detail-grid {
-    display:
-        grid;
+    display: grid;
 
     grid-template-columns:
-        repeat(
-            3,
-            minmax(0,1fr)
-        );
+        repeat(3,minmax(0,1fr));
 
-    gap:
-        9px;
+    gap: 10px;
 }
+
 
 .tanah-detail-grid > div {
-    min-width:
-        0;
+    padding: 11px 12px;
 
-    padding:
-        10px 11px;
+    border: 1px solid #e0e9f2;
 
-    border:
-        1px solid
-        #e0e9f2;
+    border-radius: 8px;
 
-    border-radius:
-        8px;
-
-    background:
-        #fafcff;
+    background: #fafcff;
 }
+
 
 .tanah-detail-grid span {
-    display:
-        block;
+    display: block;
 
-    margin-bottom:
-        4px;
+    margin-bottom: 5px;
 
-    color:
-        #7b8da4;
+    color: #7b8da4;
 
-    font-size:
-        9.5px;
+    font-size: 11px;
 }
+
 
 .tanah-detail-grid strong {
-    display:
-        block;
+    display: block;
 
-    color:
-        #294a6f;
+    color: #294a6f;
 
-    font-size:
-        11.5px;
+    font-size: 13px;
 
-    line-height:
-        1.45;
-
-    word-break:
-        break-word;
+    line-height: 1.5;
 }
+
 
 .tanah-detail-full {
-    grid-column:
-        1 / -1;
+    grid-column: 1 / -1;
 }
 
+
 .tanah-detail-full p {
-    margin:
-        0;
+    margin: 0;
 
-    color:
-        #365471;
+    color: #365471;
 
-    font-size:
-        11.5px;
+    font-size: 13px;
 
-    line-height:
-        1.6;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   PDF MODAL
+========================================================= */
+
+.tanah-pdf-modal {
+    width: min(1100px, calc(100% - 30px));
+
+    height: min(850px, calc(100dvh - 30px));
+
+    overflow: hidden;
+}
+
+
+.tanah-pdf-modal[open] {
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.tanah-pdf-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    padding: 15px 18px;
+
+    border-bottom: 1px solid #e2eaf2;
+
+    background: #fff;
+}
+
+
+.tanah-pdf-title {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.tanah-pdf-title > div {
+    width: 41px;
+    height: 41px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #eaf4ff;
+
+    color: #086ad8;
+}
+
+
+.tanah-pdf-title section span {
+    display: block;
+
+    color: #71869e;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: .08em;
+}
+
+
+.tanah-pdf-title section h3 {
+    margin: 2px 0 0;
+
+    color: #123056;
+
+    font-size: 16px;
+}
+
+
+.tanah-pdf-toolbar {
+    min-height: 55px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 9px 18px;
+
+    border-bottom: 1px solid #e3ebf3;
+
+    background: #f8fbfe;
+
+    color: #657d98;
+
+    font-size: 12px;
+}
+
+
+.tanah-pdf-toolbar > span {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+}
+
+
+.tanah-pdf-download {
+    min-height: 37px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 13px;
+
+    border-radius: 7px;
+
+    background: #086ad8;
+
+    color: white !important;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-decoration: none;
+}
+
+
+.tanah-pdf-viewer {
+    flex: 1;
+
+    min-height: 0;
+
+    background: #eef2f6;
+}
+
+
+.tanah-pdf-viewer iframe {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    border: 0;
+
+    background: white;
 }
 
 
@@ -2731,81 +2384,53 @@ tbody tr:hover {
 ========================================================= */
 
 .tanah-delete-modal {
-    width:
-        min(
-            440px,
-            calc(100% - 28px)
-        );
+    width: min(450px, calc(100% - 28px));
 }
 
-.tanah-delete-body {
-    padding:
-        29px 24px 23px;
 
-    text-align:
-        center;
+.tanah-delete-content {
+    padding: 30px 25px 24px;
+
+    text-align: center;
 }
 
-.tanah-delete-icon {
-    width:
-        56px;
 
-    height:
-        56px;
+.tanah-delete-content > div {
+    width: 57px;
+    height: 57px;
 
-    display:
-        flex;
+    display: flex;
 
-    align-items:
-        center;
+    align-items: center;
+    justify-content: center;
 
-    justify-content:
-        center;
+    margin: 0 auto 14px;
 
-    margin:
-        0 auto 13px;
+    border-radius: 50%;
 
-    border-radius:
-        50%;
+    background: #fff0f2;
 
-    background:
-        var(--tanah-danger-light);
-
-    color:
-        var(--tanah-danger);
+    color: #dc3545;
 }
 
-.tanah-delete-icon svg {
-    width:
-        25px;
 
-    height:
-        25px;
+.tanah-delete-content h3 {
+    margin: 0;
+
+    color: #173453;
+
+    font-size: 19px;
 }
 
-.tanah-delete-body h3 {
-    margin:
-        0;
 
-    color:
-        #173453;
+.tanah-delete-content p {
+    margin: 8px 0 0;
 
-    font-size:
-        18px;
-}
+    color: #71839a;
 
-.tanah-delete-body p {
-    margin:
-        8px 0 0;
+    font-size: 13px;
 
-    color:
-        #71839a;
-
-    font-size:
-        11.5px;
-
-    line-height:
-        1.6;
+    line-height: 1.6;
 }
 
 
@@ -2814,111 +2439,50 @@ tbody tr:hover {
 ========================================================= */
 
 .tanah-toast {
-    position:
-        fixed;
+    position: fixed;
 
-    right:
-        20px;
+    right: 20px;
+    bottom: 20px;
 
-    bottom:
-        20px;
+    z-index: 99999;
 
-    z-index:
-        99999;
+    max-width: 380px;
 
-    max-width:
-        380px;
+    display: flex;
 
-    display:
-        flex;
+    align-items: center;
 
-    align-items:
-        center;
+    gap: 8px;
 
-    gap:
-        8px;
+    padding: 12px 14px;
 
-    padding:
-        11px 13px;
+    border: 1px solid #c7ddef;
 
-    border:
-        1px solid
-        #c7ddef;
+    border-radius: 8px;
 
-    border-radius:
-        8px;
+    background: white;
 
-    background:
-        #ffffff;
+    color: #355372;
 
-    color:
-        #355372;
-
-    font-size:
-        11px;
+    font-size: 12px;
 
     box-shadow:
         0 12px 40px
         rgba(14,46,80,.16);
 }
 
+
 .tanah-toast[hidden] {
-    display:
-        none !important;
+    display: none !important;
 }
+
 
 .tanah-toast.is-error {
-    border-color:
-        #efc6cb;
+    border-color: #efc6cb;
 
-    background:
-        #fff5f6;
+    background: #fff5f6;
 
-    color:
-        #aa3440;
-}
-
-.tanah-toast.is-success {
-    border-color:
-        #bce6cf;
-
-    background:
-        #f0faf4;
-
-    color:
-        #177346;
-}
-
-.tanah-toast svg {
-    width:
-        16px;
-
-    height:
-        16px;
-
-    flex-shrink:
-        0;
-}
-
-
-/* =========================================================
-   FOCUS
-========================================================= */
-
-.tanah-page
-:is(
-    button,
-    a,
-    input,
-    select,
-    textarea
-):focus-visible {
-    outline:
-        3px solid
-        rgba(8,106,216,.25);
-
-    outline-offset:
-        2px;
+    color: #aa3440;
 }
 
 
@@ -2930,65 +2494,59 @@ tbody tr:hover {
 
     .tanah-kpi-grid {
         grid-template-columns:
-            repeat(
-                2,
-                minmax(0,1fr)
-            );
+            repeat(2,minmax(0,1fr));
     }
 
 }
 
 
-@media (max-width: 1000px) {
+@media (max-width: 900px) {
 
     .tanah-hero-top {
-        flex-direction:
-            column;
+        flex-direction: column;
     }
+
 
     .tanah-hero-actions {
-        width:
-            100%;
+        width: 100%;
     }
+
 
     .tanah-date-card {
-        flex:
-            1;
+        flex: 1;
     }
 
-    .tanah-form-grid-3 {
+
+    .tanah-grid-3 {
         grid-template-columns:
-            repeat(
-                2,
-                minmax(0,1fr)
-            );
+            repeat(2,minmax(0,1fr));
     }
+
 
     .tanah-detail-grid {
         grid-template-columns:
-            repeat(
-                2,
-                minmax(0,1fr)
-            );
+            repeat(2,minmax(0,1fr));
     }
 
 }
 
 
-@media (max-width: 800px) {
+@media (max-width: 760px) {
 
     .tanah-page {
         padding:
-            0 15px 25px;
+            0 14px 25px;
     }
+
 
     .tanah-hero {
         margin:
-            0 -15px 15px;
+            0 -14px 15px;
 
         padding:
-            17px 15px;
+            17px 14px;
     }
+
 
     .tanah-incoming-card {
         grid-template-columns:
@@ -2996,109 +2554,79 @@ tbody tr:hover {
             minmax(0,1fr);
     }
 
+
     .tanah-incoming-action {
         grid-column:
             1 / -1;
     }
 
+
     .tanah-incoming-action button {
-        width:
-            100%;
+        width: 100%;
     }
+
 
     .tanah-filter-grid {
         grid-template-columns:
             1fr;
     }
 
-    .tanah-table-footer {
-        align-items:
-            flex-start;
 
-        flex-direction:
-            column;
+    .tanah-table-footer {
+        align-items: flex-start;
+
+        flex-direction: column;
     }
 
 }
 
 
-@media (max-width: 650px) {
-
-    .tanah-page {
-        padding:
-            0 11px 22px;
-    }
-
-    .tanah-hero {
-        margin:
-            0 -11px 14px;
-
-        padding:
-            15px 11px;
-    }
+@media (max-width: 600px) {
 
     .tanah-heading h1 {
-        font-size:
-            28px;
+        font-size: 28px;
     }
+
 
     .tanah-hero-actions {
-        align-items:
-            stretch;
+        align-items: stretch;
 
-        flex-direction:
-            column;
+        flex-direction: column;
     }
+
 
     .tanah-date-card,
     .tanah-add-button {
-        width:
-            100%;
+        width: 100%;
     }
+
 
     .tanah-kpi-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
     }
+
 
     .tanah-form-grid,
-    .tanah-form-grid-3 {
-        grid-template-columns:
-            1fr;
+    .tanah-grid-3 {
+        grid-template-columns: 1fr;
     }
 
-    .tanah-field-full {
-        grid-column:
-            auto;
+
+    .tanah-field-full,
+    .tanah-detail-full {
+        grid-column: auto;
     }
+
 
     .tanah-detail-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
     }
 
-    .tanah-detail-full {
-        grid-column:
-            auto;
-    }
 
-    .tanah-source-toolbar {
-        align-items:
-            stretch;
+    .tanah-upload-box {
+        align-items: stretch;
 
-        flex-direction:
-            column;
-    }
-
-    .tanah-selected-source {
-        grid-template-columns:
-            auto
-            minmax(0,1fr);
-    }
-
-    .tanah-selected-source button {
-        grid-column:
-            1 / -1;
+        flex-direction: column;
     }
 
 }

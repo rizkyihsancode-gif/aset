@@ -30,11 +30,6 @@ document.addEventListener(
             || '/kib/tanah';
 
 
-        const LOCATION_BASE_URL =
-            page.dataset.locationBaseUrl
-            || '/kib/tanah/lokasi';
-
-
         const PENDING_URL =
             page.dataset.pendingUrl
             || '/kib/pending/tanah';
@@ -100,13 +95,10 @@ document.addEventListener(
             value
         ) {
             return (
-                'Rp ' +
+                'Rp '
+                +
                 new Intl.NumberFormat(
-                    'id-ID',
-                    {
-                        maximumFractionDigits:
-                            0,
-                    }
+                    'id-ID'
                 )
                     .format(
                         Number(value)
@@ -122,8 +114,7 @@ document.addEventListener(
             return new Intl.NumberFormat(
                 'id-ID',
                 {
-                    maximumFractionDigits:
-                        2,
+                    maximumFractionDigits: 2,
                 }
             )
                 .format(
@@ -154,8 +145,7 @@ document.addEventListener(
 
 
             if (
-                parts.length
-                !== 3
+                parts.length !== 3
             ) {
 
                 return raw;
@@ -176,19 +166,16 @@ document.addEventListener(
         }
 
 
-        function dateInputValue(
+        function dateInput(
             value
         ) {
-            if (!value) {
-                return '';
-            }
-
-
-            return String(value)
-                .substring(
-                    0,
-                    10
-                );
+            return value
+                ? String(value)
+                    .substring(
+                        0,
+                        10
+                    )
+                : '';
         }
 
 
@@ -219,11 +206,8 @@ document.addEventListener(
                 await fetch(
                     url,
                     {
-                        method:
-                            'GET',
-
                         headers: {
-                            'Accept':
+                            Accept:
                                 'application/json',
                         },
                     }
@@ -281,8 +265,7 @@ document.addEventListener(
 
             toast.classList
                 .remove(
-                    'is-error',
-                    'is-success'
+                    'is-error'
                 );
 
 
@@ -293,15 +276,6 @@ document.addEventListener(
                 toast.classList
                     .add(
                         'is-error'
-                    );
-
-            } else if (
-                type === 'success'
-            ) {
-
-                toast.classList
-                    .add(
-                        'is-success'
                     );
             }
 
@@ -322,7 +296,7 @@ document.addEventListener(
                             true;
 
                     },
-                    3800
+                    3500
                 );
         }
 
@@ -358,18 +332,12 @@ document.addEventListener(
             dialog
         ) {
             if (
-                !dialog
-                ||
-                !dialog.open
-            ) {
-
-                return;
-            }
-
-
-            if (
+                dialog
+                &&
+                dialog.open
+                &&
                 typeof dialog.close
-                === 'function'
+                    === 'function'
             ) {
 
                 dialog.close();
@@ -381,24 +349,17 @@ document.addEventListener(
             '[data-close-dialog]'
         )
             .forEach(
-                function (
-                    button
-                ) {
+                function (button) {
 
                     button.addEventListener(
                         'click',
                         function () {
 
-                            const id =
-                                button.dataset
-                                    .closeDialog;
-
-
                             closeDialog(
-                                document
-                                    .getElementById(
-                                        id
-                                    )
+                                document.getElementById(
+                                    button.dataset
+                                        .closeDialog
+                                )
                             );
                         }
                     );
@@ -408,15 +369,11 @@ document.addEventListener(
 
         $$('dialog')
             .forEach(
-                function (
-                    dialog
-                ) {
+                function (dialog) {
 
                     dialog.addEventListener(
                         'click',
-                        function (
-                            event
-                        ) {
+                        function (event) {
 
                             if (
                                 event.target
@@ -434,7 +391,7 @@ document.addEventListener(
 
 
         /* =========================================================
-           MAIN TABLE FILTER + PAGINATION
+           MAIN TABLE
         ========================================================= */
 
         const tableRows =
@@ -447,12 +404,8 @@ document.addEventListener(
             $('#tanahSearch');
 
 
-        const perPageSelect =
+        const perPage =
             $('#tanahPerPage');
-
-
-        const resetButton =
-            $('#tanahResetButton');
 
 
         const tableInfo =
@@ -467,7 +420,7 @@ document.addEventListener(
             1;
 
 
-        function getFilteredRows()
+        function filteredRows()
         {
             const keyword =
                 (
@@ -479,17 +432,13 @@ document.addEventListener(
 
 
             if (!keyword) {
-
                 return tableRows;
             }
 
 
             return tableRows.filter(
-                function (
-                    row
-                ) {
-
-                    return (
+                row =>
+                    (
                         row.dataset
                             .search
                         || ''
@@ -497,15 +446,14 @@ document.addEventListener(
                         .toLowerCase()
                         .includes(
                             keyword
-                        );
-                }
+                        )
             );
         }
 
 
-        function createPageButton(
+        function pageButton(
             label,
-            pageNumber,
+            target,
             options = {}
         ) {
             const button =
@@ -522,9 +470,7 @@ document.addEventListener(
                 'tanah-page-button';
 
 
-            if (
-                options.active
-            ) {
+            if (options.active) {
 
                 button.classList
                     .add(
@@ -533,18 +479,13 @@ document.addEventListener(
             }
 
 
-            if (
-                options.disabled
-            ) {
-
-                button.disabled =
-                    true;
-            }
+            button.disabled =
+                Boolean(
+                    options.disabled
+                );
 
 
-            if (
-                options.icon
-            ) {
+            if (options.icon) {
 
                 button.innerHTML =
                     `<i data-lucide="${options.icon}"></i>`;
@@ -557,7 +498,7 @@ document.addEventListener(
 
 
             if (
-                !options.disabled
+                !button.disabled
                 &&
                 !options.active
             ) {
@@ -567,10 +508,10 @@ document.addEventListener(
                     function () {
 
                         currentPage =
-                            pageNumber;
+                            target;
 
 
-                        renderMainTable();
+                        renderTable();
                     }
                 );
             }
@@ -580,7 +521,7 @@ document.addEventListener(
         }
 
 
-        function renderMainPagination(
+        function renderPagination(
             totalPages
         ) {
             if (!pagination) {
@@ -601,19 +542,15 @@ document.addEventListener(
 
 
             pagination.appendChild(
-                createPageButton(
+                pageButton(
                     '',
-                    Math.max(
-                        1,
-                        currentPage - 1
-                    ),
+                    currentPage - 1,
                     {
                         icon:
                             'chevron-left',
 
                         disabled:
-                            currentPage
-                            === 1,
+                            currentPage === 1,
                     }
                 )
             );
@@ -633,109 +570,22 @@ document.addEventListener(
                 );
 
 
-            if (
-                start > 1
-            ) {
-
-                pagination.appendChild(
-                    createPageButton(
-                        '1',
-                        1,
-                        {
-                            active:
-                                currentPage
-                                === 1,
-                        }
-                    )
-                );
-
-
-                if (
-                    start > 2
-                ) {
-
-                    const dots =
-                        document
-                            .createElement(
-                                'span'
-                            );
-
-
-                    dots.textContent =
-                        '...';
-
-
-                    pagination.appendChild(
-                        dots
-                    );
-                }
-            }
-
-
             for (
-                let pageNumber =
-                    start;
+                let number = start;
 
-                pageNumber <= end;
+                number <= end;
 
-                pageNumber++
+                number++
             ) {
 
                 pagination.appendChild(
-                    createPageButton(
-                        String(
-                            pageNumber
-                        ),
-                        pageNumber,
+                    pageButton(
+                        String(number),
+                        number,
                         {
                             active:
-                                currentPage
-                                ===
-                                pageNumber,
-                        }
-                    )
-                );
-            }
-
-
-            if (
-                end < totalPages
-            ) {
-
-                if (
-                    end
-                    <
-                    totalPages - 1
-                ) {
-
-                    const dots =
-                        document
-                            .createElement(
-                                'span'
-                            );
-
-
-                    dots.textContent =
-                        '...';
-
-
-                    pagination.appendChild(
-                        dots
-                    );
-                }
-
-
-                pagination.appendChild(
-                    createPageButton(
-                        String(
-                            totalPages
-                        ),
-                        totalPages,
-                        {
-                            active:
-                                currentPage
-                                ===
-                                totalPages,
+                                number
+                                === currentPage,
                         }
                     )
                 );
@@ -743,12 +593,9 @@ document.addEventListener(
 
 
             pagination.appendChild(
-                createPageButton(
+                pageButton(
                     '',
-                    Math.min(
-                        totalPages,
-                        currentPage + 1
-                    ),
+                    currentPage + 1,
                     {
                         icon:
                             'chevron-right',
@@ -765,20 +612,16 @@ document.addEventListener(
         }
 
 
-        function renderMainTable()
+        function renderTable()
         {
-            const filtered =
-                getFilteredRows();
+            const rows =
+                filteredRows();
 
 
-            const perPage =
-                Math.max(
-                    1,
-                    Number(
-                        perPageSelect
-                            ?.value
-                        || 20
-                    )
+            const size =
+                Number(
+                    perPage?.value
+                    || 20
                 );
 
 
@@ -786,9 +629,9 @@ document.addEventListener(
                 Math.max(
                     1,
                     Math.ceil(
-                        filtered.length
+                        rows.length
                         /
-                        perPage
+                        size
                     )
                 );
 
@@ -804,10 +647,7 @@ document.addEventListener(
 
 
             tableRows.forEach(
-                function (
-                    row
-                ) {
-
+                row => {
                     row.hidden =
                         true;
                 }
@@ -819,19 +659,17 @@ document.addEventListener(
                     currentPage - 1
                 )
                 *
-                perPage;
+                size;
 
 
             const end =
                 Math.min(
-                    start
-                    +
-                    perPage,
-                    filtered.length
+                    start + size,
+                    rows.length
                 );
 
 
-            filtered
+            rows
                 .slice(
                     start,
                     end
@@ -868,11 +706,12 @@ document.addEventListener(
                 );
 
 
-            if (tableInfo) {
+            if (
+                tableInfo
+            ) {
 
                 if (
-                    filtered.length
-                    === 0
+                    rows.length === 0
                 ) {
 
                     tableInfo.textContent =
@@ -899,7 +738,7 @@ document.addEventListener(
                         +
                         ' dari '
                         +
-                        filtered.length
+                        rows.length
                             .toLocaleString(
                                 'id-ID'
                             )
@@ -909,11 +748,10 @@ document.addEventListener(
             }
 
 
-            renderMainPagination(
-                filtered.length
-                === 0
-                    ? 0
-                    : totalPages
+            renderPagination(
+                rows.length
+                    ? totalPages
+                    : 0
             );
         }
 
@@ -926,13 +764,12 @@ document.addEventListener(
                     currentPage =
                         1;
 
-
-                    renderMainTable();
+                    renderTable();
                 }
             );
 
 
-        perPageSelect
+        perPage
             ?.addEventListener(
                 'change',
                 function () {
@@ -940,45 +777,34 @@ document.addEventListener(
                     currentPage =
                         1;
 
-
-                    renderMainTable();
+                    renderTable();
                 }
             );
 
 
-        resetButton
+        $('#tanahResetButton')
             ?.addEventListener(
                 'click',
                 function () {
 
-                    if (
-                        searchInput
-                    ) {
-
-                        searchInput.value =
-                            '';
-                    }
+                    searchInput.value =
+                        '';
 
 
-                    if (
-                        perPageSelect
-                    ) {
-
-                        perPageSelect.value =
-                            '20';
-                    }
+                    perPage.value =
+                        '20';
 
 
                     currentPage =
                         1;
 
 
-                    renderMainTable();
+                    renderTable();
                 }
             );
 
 
-        renderMainTable();
+        renderTable();
 
 
         /* =========================================================
@@ -991,12 +817,10 @@ document.addEventListener(
                 function () {
 
                     const rows =
-                        getFilteredRows();
+                        filteredRows();
 
 
-                    if (
-                        !rows.length
-                    ) {
+                    if (!rows.length) {
 
                         showToast(
                             'Tidak ada data untuk diekspor.',
@@ -1007,16 +831,13 @@ document.addEventListener(
                     }
 
 
-                    const csvRows = [
-                        [
-                            'No',
-                            'Lokasi',
-                            'Alamat',
-                            'Barang',
-                            'Penggunaan',
-                            'Penunjukan',
-                        ],
-                    ];
+                    const data = [[
+                        'No',
+                        'Lokasi',
+                        'Alamat',
+                        'Penggunaan',
+                        'Nilai',
+                    ]];
 
 
                     rows.forEach(
@@ -1026,14 +847,12 @@ document.addEventListener(
                         ) {
 
                             const cells =
-                                Array.from(
-                                    row.querySelectorAll(
-                                        'td'
-                                    )
+                                row.querySelectorAll(
+                                    'td'
                                 );
 
 
-                            csvRows.push([
+                            data.push([
                                 index + 1,
 
                                 cells[1]
@@ -1055,47 +874,31 @@ document.addEventListener(
                                     ?.innerText
                                     ?.trim()
                                     || '',
-
-                                cells[5]
-                                    ?.innerText
-                                    ?.trim()
-                                    || '',
                             ]);
                         }
                     );
 
 
-                    const content =
-                        csvRows
+                    const csv =
+                        data
                             .map(
-                                function (
+                                row =>
                                     row
-                                ) {
-
-                                    return row
                                         .map(
-                                            function (
-                                                value
-                                            ) {
-
-                                                return (
-                                                    '"'
-                                                    +
-                                                    String(
-                                                        value
-                                                        ?? ''
+                                            value =>
+                                                '"'
+                                                +
+                                                String(
+                                                    value
+                                                )
+                                                    .replace(
+                                                        /"/g,
+                                                        '""'
                                                     )
-                                                        .replace(
-                                                            /"/g,
-                                                            '""'
-                                                        )
-                                                    +
-                                                    '"'
-                                                );
-                                            }
+                                                +
+                                                '"'
                                         )
-                                        .join(',');
-                                }
+                                        .join(',')
                             )
                             .join(
                                 '\r\n'
@@ -1107,7 +910,7 @@ document.addEventListener(
                             [
                                 '\uFEFF'
                                 +
-                                content,
+                                csv,
                             ],
                             {
                                 type:
@@ -1133,7 +936,7 @@ document.addEventListener(
 
 
                     link.download =
-                        'data-kib-tanah.csv';
+                        'data-tanah.csv';
 
 
                     document.body
@@ -1143,7 +946,6 @@ document.addEventListener(
 
 
                     link.click();
-
 
                     link.remove();
 
@@ -1199,117 +1001,78 @@ document.addEventListener(
             [];
 
 
-        function getFallbackPending()
+        function fallbackPending()
         {
-            const script =
-                $('#tanahPendingFallback');
-
-
-            if (!script) {
-                return [];
-            }
-
-
             try {
 
-                const parsed =
-                    JSON.parse(
-                        script.textContent
-                        || '[]'
-                    );
-
-
-                return Array.isArray(
-                    parsed
-                )
-                    ? parsed
-                    : [];
+                return JSON.parse(
+                    $('#tanahPendingFallback')
+                        ?.textContent
+                    || '[]'
+                );
 
             } catch (
                 error
             ) {
 
-                console.error(
-                    'Fallback pending JSON:',
-                    error
-                );
-
-
                 return [];
             }
         }
 
 
-        function normalizePendingPayload(
-            payload
+        function pendingSummary(
+            data
         ) {
             if (
-                payload
+                data
                 &&
                 Array.isArray(
-                    payload.data
+                    data.data
                 )
             ) {
 
-                return payload;
+                return data;
             }
 
 
-            if (
+            const rows =
                 Array.isArray(
-                    payload
+                    data
                 )
-            ) {
-
-                return {
-                    count:
-                        payload.length,
-
-                    aset_baru:
-                        payload
-                            .filter(
-                                item =>
-                                    Number(
-                                        item.jenisn
-                                    )
-                                    === 1
-                            )
-                            .length,
-
-                    penambahan_nilai:
-                        payload
-                            .filter(
-                                item =>
-                                    Number(
-                                        item.jenisn
-                                    )
-                                    === 2
-                            )
-                            .length,
-
-                    data:
-                        payload,
-                };
-            }
+                    ? data
+                    : [];
 
 
             return {
+
                 count:
-                    0,
+                    rows.length,
 
                 aset_baru:
-                    0,
+                    rows.filter(
+                        row =>
+                            Number(
+                                row.jenisn
+                            )
+                            === 1
+                    ).length,
 
                 penambahan_nilai:
-                    0,
+                    rows.filter(
+                        row =>
+                            Number(
+                                row.jenisn
+                            )
+                            === 2
+                    ).length,
 
                 data:
-                    [],
+                    rows,
             };
         }
 
 
-        function updateIncomingCard(
+        function updateIncoming(
             summary
         ) {
             const total =
@@ -1319,99 +1082,53 @@ document.addEventListener(
                 );
 
 
-            const asetBaru =
+            incomingCount.textContent =
+                total > 99
+                    ? '99+'
+                    : total;
+
+
+            incomingNew.textContent =
                 Number(
                     summary.aset_baru
                     || 0
                 );
 
 
-            const tambahNilai =
+            incomingValue.textContent =
                 Number(
                     summary.penambahan_nilai
                     || 0
                 );
 
 
-            if (
-                incomingCount
-            ) {
-
-                incomingCount.textContent =
-                    total > 999
-                        ? '999+'
-                        : total
-                            .toLocaleString(
-                                'id-ID'
-                            );
-            }
-
-
-            if (
-                incomingNew
-            ) {
-
-                incomingNew.textContent =
-                    asetBaru
-                        .toLocaleString(
-                            'id-ID'
-                        );
-            }
-
-
-            if (
-                incomingValue
-            ) {
-
-                incomingValue.textContent =
-                    tambahNilai
-                        .toLocaleString(
-                            'id-ID'
-                        );
-            }
-
-
-            incomingCard
-                ?.classList
+            incomingCard.classList
                 .toggle(
                     'is-empty',
                     total === 0
                 );
 
 
-            if (
-                incomingText
-            ) {
-
-                incomingText.textContent =
-                    total > 0
-
-                        ? (
-                            'Ada '
-                            +
-                            total
-                                .toLocaleString(
-                                    'id-ID'
-                                )
-                            +
-                            ' transaksi Nilai Aset kategori Tanah yang belum diproses.'
-                        )
-
-                        : 'Tidak ada transaksi Tanah yang menunggu diproses.';
-            }
+            incomingButton.disabled =
+                total === 0;
 
 
-            if (
-                incomingButton
-            ) {
+            incomingText.textContent =
+                total > 0
 
-                incomingButton.disabled =
-                    total === 0;
-            }
+                    ? (
+                        'Ada '
+                        +
+                        total
+                        +
+                        ' transaksi Nilai Aset kategori Tanah yang belum diproses.'
+                    )
+
+                    : 'Tidak ada transaksi Tanah yang menunggu diproses.';
         }
 
 
-        async function loadPendingData()
+        async function loadPending()
         {
             try {
 
@@ -1422,7 +1139,7 @@ document.addEventListener(
 
 
                 const summary =
-                    normalizePendingPayload(
+                    pendingSummary(
                         payload
                     );
 
@@ -1431,53 +1148,36 @@ document.addEventListener(
                     summary.data;
 
 
-                updateIncomingCard(
+                updateIncoming(
                     summary
                 );
 
-
-                renderSourceRows();
 
             } catch (
                 error
             ) {
 
-                console.warn(
-                    'Endpoint pending belum tersedia, menggunakan fallback.',
-                    error
-                );
-
-
                 pendingRows =
-                    getFallbackPending();
+                    fallbackPending();
 
 
-                const summary =
-                    normalizePendingPayload(
+                updateIncoming(
+                    pendingSummary(
                         pendingRows
-                    );
-
-
-                updateIncomingCard(
-                    summary
+                    )
                 );
-
-
-                renderSourceRows();
             }
+
+
+            renderSourceRows();
         }
 
 
-        /* =========================================================
-           SOURCE TABLE
-        ========================================================= */
-
-        function getFilteredSourceRows()
+        function filteredSource()
         {
             const keyword =
                 (
-                    sourceSearch
-                        ?.value
+                    sourceSearch?.value
                     || ''
                 )
                     .trim()
@@ -1485,46 +1185,29 @@ document.addEventListener(
 
 
             if (!keyword) {
-
                 return pendingRows;
             }
 
 
-            return pendingRows
-                .filter(
-                    function (
-                        item
-                    ) {
+            return pendingRows.filter(
+                function (item) {
 
-                        const haystack = [
-
-                            item.no_voucher,
-
-                            item.lokasi,
-
-                            item.alamat,
-
-                            item.departemen,
-
-                            item.divisi,
-
-                            item.tahun,
-
-                            item.nilai_label,
-
-                            item.urai,
-
-                        ]
-                            .join(' ')
-                            .toLowerCase();
-
-
-                        return haystack
-                            .includes(
-                                keyword
-                            );
-                    }
-                );
+                    return [
+                        item.no_voucher,
+                        item.lokasi,
+                        item.alamat,
+                        item.departemen,
+                        item.divisi,
+                        item.tahun,
+                        item.urai,
+                    ]
+                        .join(' ')
+                        .toLowerCase()
+                        .includes(
+                            keyword
+                        );
+                }
+            );
         }
 
 
@@ -1536,46 +1219,31 @@ document.addEventListener(
 
 
             const rows =
-                getFilteredSourceRows();
+                filteredSource();
+
+
+            sourceTotal.textContent =
+                rows.length
+                +
+                ' data';
 
 
             sourceBody.innerHTML =
                 '';
 
 
-            if (
-                sourceTotal
-            ) {
-
-                sourceTotal.textContent =
-                    rows.length
-                        .toLocaleString(
-                            'id-ID'
-                        )
-                    +
-                    ' data';
-            }
-
-
-            if (
-                rows.length === 0
-            ) {
+            if (!rows.length) {
 
                 sourceBody.innerHTML = `
                     <tr>
-
                         <td
                             colspan="9"
                             class="tanah-source-empty"
                         >
-
-                            Tidak ada transaksi Tanah yang tersedia.
-
+                            Tidak ada transaksi Tanah.
                         </td>
-
                     </tr>
                 `;
-
 
                 return;
             }
@@ -1588,17 +1256,8 @@ document.addEventListener(
                 ) {
 
                     const tr =
-                        document
-                            .createElement(
-                                'tr'
-                            );
-
-
-                    const nominal =
-                        item.nilai_label
-                        ||
-                        formatRupiah(
-                            item.nilai
+                        document.createElement(
+                            'tr'
                         );
 
 
@@ -1609,7 +1268,6 @@ document.addEventListener(
                         </td>
 
                         <td>
-
                             <strong>
                                 ${escapeHtml(
                                     item.no_voucher
@@ -1618,104 +1276,84 @@ document.addEventListener(
                             </strong>
 
                             <small>
-
                                 ${escapeHtml(
                                     formatDate(
                                         item.tgl_voucher
                                     )
                                 )}
-
                             </small>
-
                         </td>
 
                         <td>
-
                             <strong>
-
                                 ${escapeHtml(
                                     item.lokasi
                                     || '-'
                                 )}
-
                             </strong>
 
                             <small>
-
                                 ${escapeHtml(
                                     item.alamat
                                     || '-'
                                 )}
-
                             </small>
-
                         </td>
 
                         <td>
-
                             ${escapeHtml(
                                 item.departemen
                                 || '-'
                             )}
-
                         </td>
 
                         <td>
-
                             ${escapeHtml(
                                 item.divisi
                                 || '-'
                             )}
-
                         </td>
 
                         <td>
-
                             ${escapeHtml(
                                 item.tahun
                                 || '-'
                             )}
-
                         </td>
 
                         <td>
-
                             <strong>
                                 ${escapeHtml(
-                                    nominal
+                                    item.nilai_label
+                                    ||
+                                    formatRupiah(
+                                        item.nilai
+                                    )
                                 )}
                             </strong>
-
                         </td>
 
                         <td>
-
                             ${escapeHtml(
                                 item.urai
                                 || '-'
                             )}
-
                         </td>
 
                         <td>
-
                             <button
                                 type="button"
                                 class="tanah-source-select"
                             >
-
                                 Pilih
-
                             </button>
-
                         </td>
                     `;
 
 
-                    tr
-                        .querySelector(
-                            '.tanah-source-select'
-                        )
+                    tr.querySelector(
+                        '.tanah-source-select'
+                    )
                         ?.addEventListener(
                             'click',
                             function () {
@@ -1744,91 +1382,6 @@ document.addEventListener(
 
 
         /* =========================================================
-           SOURCE TOGGLE
-        ========================================================= */
-
-        const sourcePanel =
-            $('#tanahSourcePanel');
-
-
-        const sourceToggle =
-            $('#tanahSourceToggle');
-
-
-        function setSourcePanel(
-            open
-        ) {
-            if (
-                !sourcePanel
-                ||
-                !sourceToggle
-            ) {
-
-                return;
-            }
-
-
-            sourcePanel.hidden =
-                !open;
-
-
-            const icon =
-                sourceToggle
-                    .querySelector(
-                        'svg'
-                    );
-
-
-            const text =
-                sourceToggle
-                    .querySelector(
-                        'span'
-                    );
-
-
-            if (
-                icon
-            ) {
-
-                icon.setAttribute(
-                    'data-lucide',
-                    open
-                        ? 'chevron-up'
-                        : 'chevron-down'
-                );
-            }
-
-
-            if (
-                text
-            ) {
-
-                text.textContent =
-                    open
-                        ? 'Sembunyikan'
-                        : 'Tampilkan';
-            }
-
-
-            refreshIcons();
-        }
-
-
-        sourceToggle
-            ?.addEventListener(
-                'click',
-                function () {
-
-                    setSourcePanel(
-                        sourcePanel
-                            ?.hidden
-                        === true
-                    );
-                }
-            );
-
-
-        /* =========================================================
            FORM
         ========================================================= */
 
@@ -1840,7 +1393,7 @@ document.addEventListener(
             $('#tanahForm');
 
 
-        const formMethod =
+        const method =
             $('#tanahFormMethod');
 
 
@@ -1876,58 +1429,6 @@ document.addEventListener(
             $('#tanahGuna');
 
 
-        const noTunjuk =
-            $('#tanahNoTunjuk');
-
-
-        const tglTunjuk =
-            $('#tanahTglTunjuk');
-
-
-        const luasTunjuk =
-            $('#tanahLuasTunjuk');
-
-
-        const sertifikat =
-            $('#tanahSertifikat');
-
-
-        const tglSertifikat =
-            $('#tanahTglSertifikat');
-
-
-        const luasSertifikat =
-            $('#tanahLuasSertifikat');
-
-
-        const noGambar =
-            $('#tanahNoGambar');
-
-
-        const tglGambar =
-            $('#tanahTglGambar');
-
-
-        const luasGambar =
-            $('#tanahLuasGambar');
-
-
-        const asal =
-            $('#tanahAsal');
-
-
-        const hak =
-            $('#tanahHak');
-
-
-        const pemilik =
-            $('#tanahPemilik');
-
-
-        const keterangan =
-            $('#tanahKeterangan');
-
-
         const selectedSource =
             $('#tanahSelectedSource');
 
@@ -1940,114 +1441,8 @@ document.addEventListener(
             $('#tanahSelectedMeta');
 
 
-        const changeSource =
-            $('#tanahChangeSourceButton');
-
-
-        let selectedSourceData =
-            null;
-
-
-        function clearTechnicalFields()
+        function resetForm()
         {
-            if (barang) {
-                barang.value =
-                    '';
-            }
-
-
-            if (guna) {
-                guna.value =
-                    '';
-            }
-
-
-            if (noTunjuk) {
-                noTunjuk.value =
-                    '';
-            }
-
-
-            if (tglTunjuk) {
-                tglTunjuk.value =
-                    '';
-            }
-
-
-            if (luasTunjuk) {
-                luasTunjuk.value =
-                    '';
-            }
-
-
-            if (sertifikat) {
-                sertifikat.value =
-                    '';
-            }
-
-
-            if (tglSertifikat) {
-                tglSertifikat.value =
-                    '';
-            }
-
-
-            if (luasSertifikat) {
-                luasSertifikat.value =
-                    '';
-            }
-
-
-            if (noGambar) {
-                noGambar.value =
-                    '';
-            }
-
-
-            if (tglGambar) {
-                tglGambar.value =
-                    '';
-            }
-
-
-            if (luasGambar) {
-                luasGambar.value =
-                    '';
-            }
-
-
-            if (asal) {
-                asal.value =
-                    '';
-            }
-
-
-            if (hak) {
-                hak.value =
-                    '';
-            }
-
-
-            if (pemilik) {
-                pemilik.value =
-                    '';
-            }
-
-
-            if (keterangan) {
-                keterangan.value =
-                    '';
-            }
-        }
-
-
-        function resetCreateForm()
-        {
-            if (!form) {
-                return;
-            }
-
-
             form.reset();
 
 
@@ -2055,243 +1450,107 @@ document.addEventListener(
                 STORE_URL;
 
 
-            if (
-                formMethod
-            ) {
-
-                formMethod.value =
-                    '';
-            }
+            method.value =
+                '';
 
 
-            if (
-                formTitle
-            ) {
-
-                formTitle.textContent =
-                    'Tambah Data Tanah';
-            }
+            formTitle.textContent =
+                'Tambah Data Tanah';
 
 
-            if (
-                nilaiAktivaId
-            ) {
-
-                nilaiAktivaId.value =
-                    '';
-            }
+            nilaiAktivaId.value =
+                '';
 
 
-            if (
-                lokasiId
-            ) {
-
-                lokasiId.value =
-                    '';
-            }
+            lokasiId.value =
+                '';
 
 
-            if (
-                lokasiName
-            ) {
-
-                lokasiName.value =
-                    '';
-            }
+            lokasiName.value =
+                '';
 
 
-            if (
-                alamat
-            ) {
-
-                alamat.value =
-                    '';
-            }
+            alamat.value =
+                '';
 
 
-            if (
-                tahun
-            ) {
-
-                tahun.value =
-                    '';
-            }
+            selectedSource.hidden =
+                true;
 
 
-            selectedSourceData =
-                null;
-
-
-            if (
-                selectedSource
-            ) {
-
-                selectedSource.hidden =
-                    true;
-            }
-
-
-            setSourcePanel(
-                true
-            );
-
-
-            clearTechnicalFields();
+            $('#tanahFileSelected').hidden =
+                true;
         }
 
 
         function selectSource(
             item
         ) {
-            selectedSourceData =
-                item;
+            nilaiAktivaId.value =
+                item.id
+                ?? '';
 
 
-            if (
-                nilaiAktivaId
-            ) {
-
-                nilaiAktivaId.value =
-                    item.id
-                    ?? '';
-            }
+            lokasiId.value =
+                item.id_lokasi
+                ?? '';
 
 
-            if (
-                lokasiId
-            ) {
-
-                lokasiId.value =
-                    item.id_lokasi
-                    ?? '';
-            }
+            lokasiName.value =
+                item.lokasi
+                ?? '';
 
 
-            if (
-                lokasiName
-            ) {
+            alamat.value =
+                item.alamat
+                ?? '';
 
-                lokasiName.value =
+
+            tahun.value =
+                item.tahun
+                ?? '';
+
+
+            selectedTitle.textContent =
+                (
                     item.lokasi
-                    ?? '';
-            }
-
-
-            if (
-                alamat
-            ) {
-
-                alamat.value =
-                    item.alamat
-                    ?? '';
-            }
-
-
-            if (
-                tahun
-            ) {
-
-                tahun.value =
-                    item.tahun
-                    ?? '';
-            }
-
-
-            if (
-                selectedTitle
-            ) {
-
-                selectedTitle.textContent =
-                    (
-                        item.lokasi
-                        || 'Lokasi'
-                    )
-                    +
-                    ' • '
-                    +
-                    (
-                        item.no_voucher
-                        || 'Tanpa Voucher'
-                    );
-            }
-
-
-            if (
-                selectedMeta
-            ) {
-
-                selectedMeta.textContent =
-                    (
-                        item.departemen
-                        || '-'
-                    )
-                    +
-                    ' / '
-                    +
-                    (
-                        item.divisi
-                        || '-'
-                    )
-                    +
-                    ' • '
-                    +
-                    (
-                        item.nilai_label
-                        ||
-                        formatRupiah(
-                            item.nilai
-                        )
-                    );
-            }
-
-
-            if (
-                selectedSource
-            ) {
-
-                selectedSource.hidden =
-                    false;
-            }
-
-
-            setSourcePanel(
-                false
-            );
-
-
-            document
-                .querySelector(
-                    '.tanah-form-section'
+                    || '-'
                 )
-                ?.scrollIntoView(
-                    {
-                        behavior:
-                            'smooth',
-
-                        block:
-                            'start',
-                    }
+                +
+                ' • '
+                +
+                (
+                    item.no_voucher
+                    || '-'
                 );
+
+
+            selectedMeta.textContent =
+                (
+                    item.departemen
+                    || '-'
+                )
+                +
+                ' / '
+                +
+                (
+                    item.divisi
+                    || '-'
+                )
+                +
+                ' • '
+                +
+                formatRupiah(
+                    item.nilai
+                );
+
+
+            selectedSource.hidden =
+                false;
 
 
             refreshIcons();
         }
-
-
-        changeSource
-            ?.addEventListener(
-                'click',
-                function () {
-
-                    setSourcePanel(
-                        true
-                    );
-
-
-                    sourceSearch
-                        ?.focus();
-                }
-            );
 
 
         $('#tanahAddButton')
@@ -2299,7 +1558,7 @@ document.addEventListener(
                 'click',
                 function () {
 
-                    resetCreateForm();
+                    resetForm();
 
                     openDialog(
                         formModal
@@ -2313,77 +1572,63 @@ document.addEventListener(
                 'click',
                 function () {
 
-                    resetCreateForm();
+                    resetForm();
 
                     openDialog(
                         formModal
-                    );
-
-
-                    setSourcePanel(
-                        true
                     );
                 }
             );
 
 
-        /* =========================================================
-           FORM VALIDATION BEFORE SUBMIT
-        ========================================================= */
+        $('#tanahChangeSourceButton')
+            ?.addEventListener(
+                'click',
+                function () {
+
+                    sourceSearch
+                        ?.focus();
+                }
+            );
+
 
         form
             ?.addEventListener(
                 'submit',
-                function (
-                    event
-                ) {
+                function (event) {
 
-                    const isCreate =
-                        !formMethod
-                        ||
-                        formMethod.value
-                        !== 'PUT';
+                    const isEdit =
+                        method.value
+                        === 'PUT';
 
 
                     if (
-                        isCreate
+                        !isEdit
                         &&
-                        !nilaiAktivaId
-                            ?.value
+                        !nilaiAktivaId.value
                     ) {
 
                         event.preventDefault();
 
 
                         showToast(
-                            'Pilih sumber transaksi Nilai Aset terlebih dahulu.',
+                            'Pilih data Nilai Aset terlebih dahulu.',
                             'error'
                         );
-
-
-                        setSourcePanel(
-                            true
-                        );
-
-
-                        sourceSearch
-                            ?.focus();
-
 
                         return;
                     }
 
 
                     if (
-                        !lokasiId
-                            ?.value
+                        !lokasiId.value
                     ) {
 
                         event.preventDefault();
 
 
                         showToast(
-                            'Lokasi Tanah belum tersedia.',
+                            'Lokasi belum tersedia.',
                             'error'
                         );
                     }
@@ -2392,599 +1637,108 @@ document.addEventListener(
 
 
         /* =========================================================
-           LOCATION DETAILS
+           PDF INPUT
         ========================================================= */
 
-        const locationModal =
-            $('#tanahLocationModal');
+        const pdfInput =
+            $('#tanahPdfInput');
 
 
-        const locationTitle =
-            $('#tanahLocationTitle');
+        pdfInput
+            ?.addEventListener(
+                'change',
+                function () {
+
+                    const file =
+                        pdfInput.files?.[0];
 
 
-        const locationBody =
-            $('#tanahLocationBody');
+                    const selected =
+                        $('#tanahFileSelected');
 
 
-        async function openLocationDetail(
-            locationIdValue,
-            locationNameValue
-        ) {
-            if (
-                !locationIdValue
-            ) {
-
-                showToast(
-                    'ID lokasi tidak tersedia.',
-                    'error'
-                );
-
-                return;
-            }
+                    const name =
+                        $('#tanahFileName');
 
 
-            if (
-                locationTitle
-            ) {
+                    if (!file) {
 
-                locationTitle.textContent =
-                    locationNameValue
-                    || 'Detail Lokasi';
-            }
+                        selected.hidden =
+                            true;
+
+                        return;
+                    }
 
 
-            if (
-                locationBody
-            ) {
+                    if (
+                        file.type
+                        !== 'application/pdf'
+                    ) {
 
-                locationBody.innerHTML = `
-                    <tr>
+                        pdfInput.value =
+                            '';
 
-                        <td
-                            colspan="7"
-                            class="tanah-location-empty"
+
+                        selected.hidden =
+                            true;
+
+
+                        showToast(
+                            'Dokumen harus berformat PDF.',
+                            'error'
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        file.size
                         >
+                        15
+                        *
+                        1024
+                        *
+                        1024
+                    ) {
 
-                            Memuat data lokasi...
-
-                        </td>
-
-                    </tr>
-                `;
-            }
-
-
-            openDialog(
-                locationModal
-            );
+                        pdfInput.value =
+                            '';
 
 
-            try {
-
-                const payload =
-                    await fetchJson(
-                        LOCATION_BASE_URL
-                        +
-                        '/'
-                        +
-                        encodeURIComponent(
-                            locationIdValue
-                        )
-                    );
+                        selected.hidden =
+                            true;
 
 
-                const data =
-                    unwrapData(
-                        payload
-                    );
-
-
-                const records =
-                    Array.isArray(
-                        data
-                    )
-                        ? data
-                        : [];
-
-
-                renderLocationRecords(
-                    records
-                );
-
-            } catch (
-                error
-            ) {
-
-                console.error(
-                    'Location detail:',
-                    error
-                );
-
-
-                if (
-                    locationBody
-                ) {
-
-                    locationBody.innerHTML = `
-                        <tr>
-
-                            <td
-                                colspan="7"
-                                class="tanah-location-empty"
-                            >
-
-                                Data lokasi gagal dimuat.
-
-                            </td>
-
-                        </tr>
-                    `;
-                }
-            }
-        }
-
-
-        function recordId(
-            record
-        ) {
-            return (
-                record.id
-                ??
-                record.idT
-                ??
-                record.id_tanah
-                ??
-                null
-            );
-        }
-
-
-        function renderLocationRecords(
-            records
-        ) {
-            if (!locationBody) {
-                return;
-            }
-
-
-            locationBody.innerHTML =
-                '';
-
-
-            if (
-                records.length === 0
-            ) {
-
-                locationBody.innerHTML = `
-                    <tr>
-
-                        <td
-                            colspan="7"
-                            class="tanah-location-empty"
-                        >
-
-                            Tidak ada detail tanah pada lokasi ini.
-
-                        </td>
-
-                    </tr>
-                `;
-
-
-                return;
-            }
-
-
-            records.forEach(
-                function (
-                    record,
-                    index
-                ) {
-
-                    const id =
-                        recordId(
-                            record
+                        showToast(
+                            'Ukuran PDF maksimal 15 MB.',
+                            'error'
                         );
 
-
-                    const tr =
-                        document
-                            .createElement(
-                                'tr'
-                            );
+                        return;
+                    }
 
 
-                    tr.innerHTML = `
-
-                        <td>
-                            ${index + 1}
-                        </td>
-
-                        <td>
-
-                            ${escapeHtml(
-                                record.nama_barang
-                                ||
-                                record.barang
-                                ||
-                                '-'
-                            )}
-
-                        </td>
-
-                        <td>
-
-                            ${escapeHtml(
-                                record.guna
-                                || '-'
-                            )}
-
-                        </td>
-
-                        <td>
-
-                            ${escapeHtml(
-                                record.pemilik
-                                || '-'
-                            )}
-
-                        </td>
-
-                        <td>
-
-                            ${escapeHtml(
-                                formatNumber(
-                                    record.luas_sertifikat
-                                )
-                            )}
-
-                            m²
-
-                        </td>
-
-                        <td>
-
-                            ${escapeHtml(
-                                record.hak
-                                || '-'
-                            )}
-
-                        </td>
-
-                        <td>
-
-                            <div class="tanah-record-actions">
-
-                                <button
-                                    type="button"
-                                    class="view js-record-view"
-                                    title="Lihat"
-                                >
-
-                                    <i data-lucide="eye"></i>
-
-                                </button>
+                    name.textContent =
+                        file.name;
 
 
-                                <button
-                                    type="button"
-                                    class="edit js-record-edit"
-                                    title="Edit"
-                                >
-
-                                    <i data-lucide="pencil"></i>
-
-                                </button>
+                    selected.hidden =
+                        false;
 
 
-                                <button
-                                    type="button"
-                                    class="delete js-record-delete"
-                                    title="Hapus"
-                                >
-
-                                    <i data-lucide="trash-2"></i>
-
-                                </button>
-
-                            </div>
-
-                        </td>
-                    `;
-
-
-                    tr
-                        .querySelector(
-                            '.js-record-view'
-                        )
-                        ?.addEventListener(
-                            'click',
-                            function () {
-
-                                openRecordView(
-                                    id
-                                );
-                            }
-                        );
-
-
-                    tr
-                        .querySelector(
-                            '.js-record-edit'
-                        )
-                        ?.addEventListener(
-                            'click',
-                            function () {
-
-                                openEditForm(
-                                    id
-                                );
-                            }
-                        );
-
-
-                    tr
-                        .querySelector(
-                            '.js-record-delete'
-                        )
-                        ?.addEventListener(
-                            'click',
-                            function () {
-
-                                openDeleteDialog(
-                                    id,
-                                    record.lokasi
-                                    ||
-                                    record.nama_barang
-                                    ||
-                                    'Data Tanah'
-                                );
-                            }
-                        );
-
-
-                    locationBody
-                        .appendChild(
-                            tr
-                        );
-                }
-            );
-
-
-            refreshIcons();
-        }
-
-
-        $$('.js-tanah-location-detail')
-            .forEach(
-                function (
-                    button
-                ) {
-
-                    button.addEventListener(
-                        'click',
-                        function () {
-
-                            openLocationDetail(
-
-                                button.dataset
-                                    .locationId,
-
-                                button.dataset
-                                    .locationName
-                            );
-                        }
-                    );
+                    refreshIcons();
                 }
             );
 
 
         /* =========================================================
-           RECORD DETAIL
+           LOAD RECORD
         ========================================================= */
-
-        const detailModal =
-            $('#tanahDetailModal');
-
-
-        function setDetailText(
-            selector,
-            value
-        ) {
-            const element =
-                $(selector);
-
-
-            if (
-                element
-            ) {
-
-                element.textContent =
-                    value
-                    ??
-                    '-';
-            }
-        }
-
-
-        function fillDetailModal(
-            data
-        ) {
-            setDetailText(
-                '#detailTanahLokasi',
-                data.lokasi
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahAlamat',
-                data.alamat
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahBarang',
-                data.nama_barang
-                ||
-                data.barang
-                ||
-                '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahTahun',
-                data.tahun
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahGuna',
-                data.guna
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahNoTunjuk',
-                data.no_tunjuk
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahTglTunjuk',
-                formatDate(
-                    data.tgl_tunjuk
-                )
-            );
-
-
-            setDetailText(
-                '#detailTanahLuasTunjuk',
-                data.luas_tunjuk
-
-                    ? (
-                        formatNumber(
-                            data.luas_tunjuk
-                        )
-                        +
-                        ' m²'
-                    )
-
-                    : '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahSertifikat',
-                data.sertifikat
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahTglSertifikat',
-                formatDate(
-                    data.tgl_sertifikat
-                )
-            );
-
-
-            setDetailText(
-                '#detailTanahLuasSertifikat',
-                data.luas_sertifikat
-
-                    ? (
-                        formatNumber(
-                            data.luas_sertifikat
-                        )
-                        +
-                        ' m²'
-                    )
-
-                    : '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahNoGambar',
-                data.no_gambar
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahTglGambar',
-                formatDate(
-                    data.tgl_gambar
-                )
-            );
-
-
-            setDetailText(
-                '#detailTanahLuasGambar',
-                data.luas_gambar
-
-                    ? (
-                        formatNumber(
-                            data.luas_gambar
-                        )
-                        +
-                        ' m²'
-                    )
-
-                    : '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahAsal',
-                data.asal
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahHak',
-                data.hak
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahPemilik',
-                data.pemilik
-                || '-'
-            );
-
-
-            setDetailText(
-                '#detailTanahKeterangan',
-                data.ket
-                ||
-                data.keterangan
-                ||
-                '-'
-            );
-        }
-
 
         async function loadRecord(
             id
         ) {
-            if (!id) {
-
-                throw new Error(
-                    'ID Tanah tidak tersedia.'
-                );
-            }
-
-
             const payload =
                 await fetchJson(
                     RECORD_BASE_URL
@@ -3003,6 +1757,186 @@ document.addEventListener(
         }
 
 
+        /* =========================================================
+           VIEW
+        ========================================================= */
+
+        const detailModal =
+            $('#tanahDetailModal');
+
+
+        function detailText(
+            selector,
+            value
+        ) {
+            const element =
+                $(selector);
+
+
+            if (
+                element
+            ) {
+
+                element.textContent =
+                    value
+                    ||
+                    '-';
+            }
+        }
+
+
+        function fillDetail(
+            data
+        ) {
+            detailText(
+                '#detailTanahLokasi',
+                data.lokasi
+            );
+
+
+            detailText(
+                '#detailTanahAlamat',
+                data.alamat
+            );
+
+
+            detailText(
+                '#detailTanahBarang',
+                data.nama_barang
+                ||
+                data.barang
+            );
+
+
+            detailText(
+                '#detailTanahTahun',
+                data.tahun
+            );
+
+
+            detailText(
+                '#detailTanahGuna',
+                data.guna
+            );
+
+
+            detailText(
+                '#detailTanahNilai',
+                formatRupiah(
+                    data.nilai
+                    ||
+                    data.total_nilai
+                    ||
+                    0
+                )
+            );
+
+
+            detailText(
+                '#detailTanahNoTunjuk',
+                data.no_tunjuk
+            );
+
+
+            detailText(
+                '#detailTanahTglTunjuk',
+                formatDate(
+                    data.tgl_tunjuk
+                )
+            );
+
+
+            detailText(
+                '#detailTanahLuasTunjuk',
+                data.luas_tunjuk
+                    ? formatNumber(
+                        data.luas_tunjuk
+                    )
+                        +
+                        ' m²'
+                    : '-'
+            );
+
+
+            detailText(
+                '#detailTanahSertifikat',
+                data.sertifikat
+            );
+
+
+            detailText(
+                '#detailTanahTglSertifikat',
+                formatDate(
+                    data.tgl_sertifikat
+                )
+            );
+
+
+            detailText(
+                '#detailTanahLuasSertifikat',
+                data.luas_sertifikat
+                    ? formatNumber(
+                        data.luas_sertifikat
+                    )
+                        +
+                        ' m²'
+                    : '-'
+            );
+
+
+            detailText(
+                '#detailTanahNoGambar',
+                data.no_gambar
+            );
+
+
+            detailText(
+                '#detailTanahTglGambar',
+                formatDate(
+                    data.tgl_gambar
+                )
+            );
+
+
+            detailText(
+                '#detailTanahLuasGambar',
+                data.luas_gambar
+                    ? formatNumber(
+                        data.luas_gambar
+                    )
+                        +
+                        ' m²'
+                    : '-'
+            );
+
+
+            detailText(
+                '#detailTanahAsal',
+                data.asal
+            );
+
+
+            detailText(
+                '#detailTanahHak',
+                data.hak
+            );
+
+
+            detailText(
+                '#detailTanahPemilik',
+                data.pemilik
+            );
+
+
+            detailText(
+                '#detailTanahKeterangan',
+                data.ket
+                ||
+                data.keterangan
+            );
+        }
+
+
         async function openRecordView(
             id
         ) {
@@ -3014,13 +1948,8 @@ document.addEventListener(
                     );
 
 
-                fillDetailModal(
+                fillDetail(
                     data
-                );
-
-
-                closeDialog(
-                    locationModal
                 );
 
 
@@ -3033,7 +1962,6 @@ document.addEventListener(
             ) {
 
                 console.error(
-                    'View Tanah:',
                     error
                 );
 
@@ -3050,27 +1978,34 @@ document.addEventListener(
            EDIT
         ========================================================= */
 
-        function setValue(
-            element,
-            value
+        function value(
+            selector,
+            data
         ) {
-            if (!element) {
-                return;
+            const element =
+                $(selector);
+
+
+            if (
+                element
+            ) {
+
+                element.value =
+                    data
+                    ?? '';
             }
-
-
-            element.value =
-                value
-                ??
-                '';
         }
 
 
-        function fillEditForm(
+        function fillEdit(
             data
         ) {
-            selectedSourceData =
-                null;
+            const id =
+                data.id
+                ??
+                data.idT
+                ??
+                data.id_tanah;
 
 
             form.action =
@@ -3079,15 +2014,11 @@ document.addEventListener(
                 '/'
                 +
                 encodeURIComponent(
-                    data.id
-                    ??
-                    data.idT
-                    ??
-                    data.id_tanah
+                    id
                 );
 
 
-            formMethod.value =
+            method.value =
                 'PUT';
 
 
@@ -3095,183 +2026,156 @@ document.addEventListener(
                 'Edit Data Tanah';
 
 
-            setValue(
-                nilaiAktivaId,
+            value(
+                '#tanahNilaiAktivaId',
                 data.id_nilai_aktiva
             );
 
 
-            setValue(
-                lokasiId,
+            value(
+                '#tanahLokasiId',
                 data.id_lokasi
             );
 
 
-            setValue(
-                lokasiName,
+            value(
+                '#tanahLokasiName',
                 data.lokasi
             );
 
 
-            setValue(
-                alamat,
+            value(
+                '#tanahAlamat',
                 data.alamat
             );
 
 
-            setValue(
-                barang,
+            value(
+                '#tanahBarang',
                 data.id_barang
             );
 
 
-            setValue(
-                tahun,
+            value(
+                '#tanahTahun',
                 data.tahun
             );
 
 
-            setValue(
-                guna,
+            value(
+                '#tanahGuna',
                 data.guna
             );
 
 
-            setValue(
-                noTunjuk,
+            value(
+                '#tanahNoTunjuk',
                 data.no_tunjuk
             );
 
 
-            setValue(
-                tglTunjuk,
-                dateInputValue(
+            value(
+                '#tanahTglTunjuk',
+                dateInput(
                     data.tgl_tunjuk
                 )
             );
 
 
-            setValue(
-                luasTunjuk,
+            value(
+                '#tanahLuasTunjuk',
                 data.luas_tunjuk
             );
 
 
-            setValue(
-                sertifikat,
+            value(
+                '#tanahSertifikat',
                 data.sertifikat
             );
 
 
-            setValue(
-                tglSertifikat,
-                dateInputValue(
+            value(
+                '#tanahTglSertifikat',
+                dateInput(
                     data.tgl_sertifikat
                 )
             );
 
 
-            setValue(
-                luasSertifikat,
+            value(
+                '#tanahLuasSertifikat',
                 data.luas_sertifikat
             );
 
 
-            setValue(
-                noGambar,
+            value(
+                '#tanahNoGambar',
                 data.no_gambar
             );
 
 
-            setValue(
-                tglGambar,
-                dateInputValue(
+            value(
+                '#tanahTglGambar',
+                dateInput(
                     data.tgl_gambar
                 )
             );
 
 
-            setValue(
-                luasGambar,
+            value(
+                '#tanahLuasGambar',
                 data.luas_gambar
             );
 
 
-            setValue(
-                asal,
+            value(
+                '#tanahAsal',
                 data.asal
             );
 
 
-            setValue(
-                hak,
+            value(
+                '#tanahHak',
                 data.hak
             );
 
 
-            setValue(
-                pemilik,
+            value(
+                '#tanahPemilik',
                 data.pemilik
             );
 
 
-            setValue(
-                keterangan,
+            value(
+                '#tanahKeterangan',
                 data.ket
                 ??
                 data.keterangan
             );
 
 
-            /*
-            | Edit tidak perlu memilih ulang
-            | sumber Nilai Aset.
-            */
-
-            setSourcePanel(
-                false
-            );
+            selectedTitle.textContent =
+                data.lokasi
+                ||
+                'Data Tanah';
 
 
-            if (
-                selectedSource
-            ) {
-
-                selectedSource.hidden =
-                    false;
-            }
-
-
-            if (
-                selectedTitle
-            ) {
-
-                selectedTitle.textContent =
-                    data.lokasi
-                    ||
-                    'Data Tanah';
-            }
+            selectedMeta.textContent =
+                data.id_nilai_aktiva
+                    ? (
+                        'Sumber Nilai Aset #'
+                        +
+                        data.id_nilai_aktiva
+                    )
+                    : 'Data existing';
 
 
-            if (
-                selectedMeta
-            ) {
-
-                selectedMeta.textContent =
-                    data.id_nilai_aktiva
-
-                        ? (
-                            'Sumber Nilai Aset #'
-                            +
-                            data.id_nilai_aktiva
-                        )
-
-                        : 'Data existing tanpa referensi Nilai Aset';
-            }
+            selectedSource.hidden =
+                false;
         }
 
 
-        async function openEditForm(
+        async function openEdit(
             id
         ) {
             try {
@@ -3282,12 +2186,10 @@ document.addEventListener(
                     );
 
 
-                closeDialog(
-                    locationModal
-                );
+                resetForm();
 
 
-                fillEditForm(
+                fillEdit(
                     data
                 );
 
@@ -3301,7 +2203,6 @@ document.addEventListener(
             ) {
 
                 console.error(
-                    'Edit Tanah:',
                     error
                 );
 
@@ -3326,22 +2227,14 @@ document.addEventListener(
             $('#tanahDeleteForm');
 
 
-        const deleteName =
-            $('#tanahDeleteName');
-
-
-        function openDeleteDialog(
+        function openDelete(
             id,
             name
         ) {
-            if (
-                !id
-                ||
-                !deleteForm
-            ) {
+            if (!id) {
 
                 showToast(
-                    'ID data Tanah tidak tersedia.',
+                    'ID Tanah tidak tersedia.',
                     'error'
                 );
 
@@ -3359,15 +2252,10 @@ document.addEventListener(
                 );
 
 
-            if (
-                deleteName
-            ) {
-
-                deleteName.textContent =
-                    name
-                    ||
-                    'Data Tanah';
-            }
+            $('#tanahDeleteName')
+                .textContent =
+                name
+                || 'Data Tanah';
 
 
             openDialog(
@@ -3377,14 +2265,14 @@ document.addEventListener(
 
 
         /* =========================================================
-           OPTIONAL DIRECT ACTIONS
+           TABLE ACTION EVENTS
         ========================================================= */
 
-        $$('[data-tanah-record-view]')
+        $$(
+            '.js-tanah-view'
+        )
             .forEach(
-                function (
-                    button
-                ) {
+                function (button) {
 
                     button.addEventListener(
                         'click',
@@ -3392,7 +2280,7 @@ document.addEventListener(
 
                             openRecordView(
                                 button.dataset
-                                    .tanahRecordView
+                                    .recordId
                             );
                         }
                     );
@@ -3400,19 +2288,43 @@ document.addEventListener(
             );
 
 
-        $$('[data-tanah-record-edit]')
+        $$(
+            '.js-tanah-edit'
+        )
             .forEach(
-                function (
-                    button
-                ) {
+                function (button) {
 
                     button.addEventListener(
                         'click',
                         function () {
 
-                            openEditForm(
+                            openEdit(
                                 button.dataset
-                                    .tanahRecordEdit
+                                    .recordId
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        $$(
+            '.js-tanah-delete'
+        )
+            .forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            openDelete(
+
+                                button.dataset
+                                    .recordId,
+
+                                button.dataset
+                                    .recordName
                             );
                         }
                     );
@@ -3421,31 +2333,130 @@ document.addEventListener(
 
 
         /* =========================================================
-           GENERIC EVENT FROM GLOBAL KIB NOTIFICATION
+           PDF PREVIEW
+        ========================================================= */
+
+        const pdfModal =
+            $('#tanahPdfModal');
+
+
+        const pdfFrame =
+            $('#tanahPdfFrame');
+
+
+        const pdfTitle =
+            $('#tanahPdfTitle');
+
+
+        const pdfDownload =
+            $('#tanahPdfDownload');
+
+
+        $$(
+            '.js-tanah-pdf'
+        )
+            .forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            const url =
+                                button.dataset
+                                    .pdfUrl;
+
+
+                            if (!url) {
+
+                                showToast(
+                                    'Dokumen PDF tidak tersedia.',
+                                    'error'
+                                );
+
+                                return;
+                            }
+
+
+                            pdfFrame.src =
+                                url;
+
+
+                            pdfTitle.textContent =
+                                button.dataset
+                                    .pdfName
+                                ||
+                                'Dokumen Tanah';
+
+
+                            pdfDownload.href =
+                                button.dataset
+                                    .pdfDownload
+                                ||
+                                url;
+
+
+                            openDialog(
+                                pdfModal
+                            );
+                        }
+                    );
+                }
+            );
+
+
+        function closePdf()
+        {
+            closeDialog(
+                pdfModal
+            );
+
+
+            if (
+                pdfFrame
+            ) {
+
+                pdfFrame.src =
+                    '';
+            }
+        }
+
+
+        $('#tanahPdfClose')
+            ?.addEventListener(
+                'click',
+                closePdf
+            );
+
+
+        pdfModal
+            ?.addEventListener(
+                'close',
+                function () {
+
+                    pdfFrame.src =
+                        '';
+                }
+            );
+
+
+        /* =========================================================
+           GLOBAL SOURCE EVENT
         ========================================================= */
 
         window.addEventListener(
             'kib:source-selected',
-            function (
-                event
-            ) {
+            function (event) {
 
-                const item =
-                    event.detail;
+                if (
+                    !event.detail
+                ) {
 
-
-                if (!item) {
                     return;
                 }
 
 
-                /*
-                | Pastikan hanya data Tanah.
-                | Jika global modal dipakai dari halaman lain,
-                | tetap aman.
-                */
-
-                resetCreateForm();
+                resetForm();
 
 
                 openDialog(
@@ -3454,7 +2465,7 @@ document.addEventListener(
 
 
                 selectSource(
-                    item
+                    event.detail
                 );
             }
         );
@@ -3477,10 +2488,10 @@ document.addEventListener(
 
 
         /* =========================================================
-           INITIAL LOAD
+           INITIAL
         ========================================================= */
 
-        loadPendingData();
+        loadPending();
 
         refreshIcons();
     }

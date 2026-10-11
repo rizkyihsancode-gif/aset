@@ -2,13 +2,41 @@
 
 @php
 
+    /*
+    |--------------------------------------------------------------------------
+    | K.I.B NOTIFICATION
+    |--------------------------------------------------------------------------
+    */
+
     $kibNotification = $kibNotificationService->summary();
 
     $kibTotalNotification = (int) ($kibNotification['_total'] ?? 0);
 
+    /*
+    |--------------------------------------------------------------------------
+    | ACTIVE GROUP
+    |--------------------------------------------------------------------------
+    */
+
     $masterOpen = request()->is('master-data/*');
 
     $kibOpen = request()->is('kib/*');
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPER BADGE
+    |--------------------------------------------------------------------------
+    */
+
+    $badgeValue = function ($value) {
+        $value = (int) ($value ?? 0);
+
+        if ($value > 99) {
+            return '99+';
+        }
+
+        return (string) $value;
+    };
 @endphp
 
 
@@ -20,7 +48,7 @@
 
     <div class="sidebar-brand">
 
-        <img src="{{ asset('images/logo.png') }}" alt="Logo Perumda Tirta Kencana" width="50">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Sistem Aset" class="sidebar-brand-logo">
 
 
         <div class="sidebar-brand-text">
@@ -45,10 +73,12 @@
     <nav class="sidebar-menu">
 
 
-        {{-- OVERVIEW --}}
+        {{-- ========================================================
+             OVERVIEW
+        ========================================================= --}}
 
         <div class="sidebar-section-title">
-            Overview
+            OVERVIEW
         </div>
 
 
@@ -59,8 +89,11 @@
             ">
 
             <span class="sidebar-menu-icon">
+
                 <i data-lucide="house"></i>
+
             </span>
+
 
             <span class="sidebar-menu-text">
                 Dashboard
@@ -69,13 +102,15 @@
         </a>
 
 
+
         {{-- ========================================================
              PENGELOLAAN
         ========================================================= --}}
 
         <div class="sidebar-section-title">
-            Pengelolaan
+            PENGELOLAAN
         </div>
+
 
 
         {{-- ========================================================
@@ -97,15 +132,21 @@
                 onclick="toggleMenu('masterGroup')">
 
                 <span class="sidebar-menu-icon">
+
                     <i data-lucide="database"></i>
+
                 </span>
+
 
                 <span class="sidebar-menu-text">
                     Master Data
                 </span>
 
+
                 <span class="sidebar-arrow">
+
                     <i data-lucide="chevron-down"></i>
+
                 </span>
 
             </button>
@@ -114,6 +155,8 @@
             <div class="sidebar-submenu">
 
 
+                {{-- BARANG --}}
+
                 <a href="{{ url('/master-data/barang') }}"
                     class="
                         sidebar-submenu-item
@@ -121,8 +164,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="package"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Barang
@@ -131,6 +177,9 @@
                 </a>
 
 
+
+                {{-- DEPARTEMEN --}}
+
                 <a href="{{ url('/master-data/departemen') }}"
                     class="
                         sidebar-submenu-item
@@ -138,8 +187,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="building-2"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Departemen
@@ -148,6 +200,9 @@
                 </a>
 
 
+
+                {{-- DIVISI --}}
+
                 <a href="{{ url('/master-data/divisi') }}"
                     class="
                         sidebar-submenu-item
@@ -155,8 +210,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="network"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Divisi
@@ -165,6 +223,9 @@
                 </a>
 
 
+
+                {{-- RUANGAN --}}
+
                 <a href="{{ url('/master-data/ruangan') }}"
                     class="
                         sidebar-submenu-item
@@ -172,8 +233,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="door-open"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Ruangan
@@ -182,6 +246,9 @@
                 </a>
 
 
+
+                {{-- SDM --}}
+
                 <a href="{{ url('/master-data/sdm-pendukung') }}"
                     class="
                         sidebar-submenu-item
@@ -189,8 +256,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="user-round"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         SDM Pendukung
@@ -199,6 +269,9 @@
                 </a>
 
 
+
+                {{-- LOKASI --}}
+
                 <a href="{{ url('/master-data/lokasi') }}"
                     class="
                         sidebar-submenu-item
@@ -206,8 +279,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="map-pin"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Lokasi
@@ -216,6 +292,9 @@
                 </a>
 
 
+
+                {{-- BAHAN --}}
+
                 <a href="{{ url('/master-data/bahan') }}"
                     class="
                         sidebar-submenu-item
@@ -223,8 +302,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="component"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Bahan
@@ -233,6 +315,9 @@
                 </a>
 
 
+
+                {{-- KODE AKTIVA --}}
+
                 <a href="{{ url('/master-data/aktiva') }}"
                     class="
                         sidebar-submenu-item
@@ -240,8 +325,11 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="badge-check"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Kode Aktiva
@@ -249,9 +337,11 @@
 
                 </a>
 
+
             </div>
 
         </div>
+
 
 
         {{-- ========================================================
@@ -273,7 +363,9 @@
                 onclick="toggleMenu('kibGroup')">
 
                 <span class="sidebar-menu-icon">
+
                     <i data-lucide="library"></i>
+
                 </span>
 
 
@@ -282,18 +374,22 @@
                 </span>
 
 
+                {{-- TOTAL NOTIFIKASI KIB --}}
+
                 @if ($kibTotalNotification > 0)
                     <span class="sidebar-kib-parent-count"
                         title="{{ number_format($kibTotalNotification, 0, ',', '.') }} data menunggu diproses">
 
-                        {{ $kibTotalNotification > 99 ? '99+' : $kibTotalNotification }}
+                        {{ $badgeValue($kibTotalNotification) }}
 
                     </span>
                 @endif
 
 
                 <span class="sidebar-arrow">
+
                     <i data-lucide="chevron-down"></i>
+
                 </span>
 
             </button>
@@ -302,7 +398,15 @@
             <div class="sidebar-submenu">
 
 
-                {{-- TANAH --}}
+                {{-- =================================================
+                     TANAH
+                ================================================== --}}
+
+                @php
+
+                    $notifTanah = (int) ($kibNotification['tanah']['total'] ?? 0);
+                @endphp
+
 
                 <a href="{{ url('/kib/tanah') }}"
                     class="
@@ -311,18 +415,22 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="map"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Tanah
                     </span>
 
 
-                    @if (($kibNotification['tanah']['total'] ?? 0) > 0)
-                        <span class="sidebar-kib-count">
+                    @if ($notifTanah > 0)
+                        <span class="sidebar-kib-count"
+                            title="{{ number_format($notifTanah, 0, ',', '.') }} data Tanah belum diproses">
 
-                            {{ $kibNotification['tanah']['total'] > 99 ? '99+' : $kibNotification['tanah']['total'] }}
+                            {{ $badgeValue($notifTanah) }}
 
                         </span>
                     @endif
@@ -330,7 +438,16 @@
                 </a>
 
 
-                {{-- MESIN --}}
+
+                {{-- =================================================
+                     PERALATAN DAN MESIN
+                ================================================== --}}
+
+                @php
+
+                    $notifMesin = (int) ($kibNotification['mesin']['total'] ?? 0);
+                @endphp
+
 
                 <a href="{{ url('/kib/mesin') }}"
                     class="
@@ -339,18 +456,22 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="settings"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Peralatan & Mesin
                     </span>
 
 
-                    @if (($kibNotification['mesin']['total'] ?? 0) > 0)
-                        <span class="sidebar-kib-count">
+                    @if ($notifMesin > 0)
+                        <span class="sidebar-kib-count"
+                            title="{{ number_format($notifMesin, 0, ',', '.') }} data Mesin belum diproses">
 
-                            {{ $kibNotification['mesin']['total'] > 99 ? '99+' : $kibNotification['mesin']['total'] }}
+                            {{ $badgeValue($notifMesin) }}
 
                         </span>
                     @endif
@@ -358,7 +479,16 @@
                 </a>
 
 
-                {{-- GEDUNG --}}
+
+                {{-- =================================================
+                     GEDUNG
+                ================================================== --}}
+
+                @php
+
+                    $notifGedung = (int) ($kibNotification['gedung']['total'] ?? 0);
+                @endphp
+
 
                 <a href="{{ url('/kib/gedung') }}"
                     class="
@@ -367,18 +497,22 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="building-2"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Gedung & Bangunan
                     </span>
 
 
-                    @if (($kibNotification['gedung']['total'] ?? 0) > 0)
-                        <span class="sidebar-kib-count">
+                    @if ($notifGedung > 0)
+                        <span class="sidebar-kib-count"
+                            title="{{ number_format($notifGedung, 0, ',', '.') }} data Gedung belum diproses">
 
-                            {{ $kibNotification['gedung']['total'] > 99 ? '99+' : $kibNotification['gedung']['total'] }}
+                            {{ $badgeValue($notifGedung) }}
 
                         </span>
                     @endif
@@ -386,7 +520,16 @@
                 </a>
 
 
-                {{-- JALAN --}}
+
+                {{-- =================================================
+                     JALAN
+                ================================================== --}}
+
+                @php
+
+                    $notifJalan = (int) ($kibNotification['jalan']['total'] ?? 0);
+                @endphp
+
 
                 <a href="{{ url('/kib/jalan') }}"
                     class="
@@ -395,18 +538,22 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="route"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Jalan, Irigasi & Jaringan
                     </span>
 
 
-                    @if (($kibNotification['jalan']['total'] ?? 0) > 0)
-                        <span class="sidebar-kib-count">
+                    @if ($notifJalan > 0)
+                        <span class="sidebar-kib-count"
+                            title="{{ number_format($notifJalan, 0, ',', '.') }} data Jalan belum diproses">
 
-                            {{ $kibNotification['jalan']['total'] > 99 ? '99+' : $kibNotification['jalan']['total'] }}
+                            {{ $badgeValue($notifJalan) }}
 
                         </span>
                     @endif
@@ -414,7 +561,16 @@
                 </a>
 
 
-                {{-- ASET TETAP --}}
+
+                {{-- =================================================
+                     ASET TETAP LAINNYA
+                ================================================== --}}
+
+                @php
+
+                    $notifAsetTetap = (int) ($kibNotification['aset_tetap']['total'] ?? 0);
+                @endphp
+
 
                 <a href="{{ url('/kib/aset-tetap') }}"
                     class="
@@ -423,18 +579,22 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="package-open"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Aset Tetap Lainnya
                     </span>
 
 
-                    @if (($kibNotification['aset_tetap']['total'] ?? 0) > 0)
-                        <span class="sidebar-kib-count">
+                    @if ($notifAsetTetap > 0)
+                        <span class="sidebar-kib-count"
+                            title="{{ number_format($notifAsetTetap, 0, ',', '.') }} data Aset Tetap belum diproses">
 
-                            {{ $kibNotification['aset_tetap']['total'] > 99 ? '99+' : $kibNotification['aset_tetap']['total'] }}
+                            {{ $badgeValue($notifAsetTetap) }}
 
                         </span>
                     @endif
@@ -442,7 +602,16 @@
                 </a>
 
 
-                {{-- KONSTRUKSI --}}
+
+                {{-- =================================================
+                     KONSTRUKSI
+                ================================================== --}}
+
+                @php
+
+                    $notifKonstruksi = (int) ($kibNotification['konstruksi']['total'] ?? 0);
+                @endphp
+
 
                 <a href="{{ url('/kib/konstruksi') }}"
                     class="
@@ -451,18 +620,22 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="construction"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         Konstruksi
                     </span>
 
 
-                    @if (($kibNotification['konstruksi']['total'] ?? 0) > 0)
-                        <span class="sidebar-kib-count">
+                    @if ($notifKonstruksi > 0)
+                        <span class="sidebar-kib-count"
+                            title="{{ number_format($notifKonstruksi, 0, ',', '.') }} data Konstruksi belum diproses">
 
-                            {{ $kibNotification['konstruksi']['total'] > 99 ? '99+' : $kibNotification['konstruksi']['total'] }}
+                            {{ $badgeValue($notifKonstruksi) }}
 
                         </span>
                     @endif
@@ -470,7 +643,16 @@
                 </a>
 
 
-                {{-- KIR --}}
+
+                {{-- =================================================
+                     K.I.R
+                ================================================== --}}
+
+                @php
+
+                    $notifKir = (int) ($kibNotification['kir']['total'] ?? 0);
+                @endphp
+
 
                 <a href="{{ url('/kib/kir') }}"
                     class="
@@ -479,27 +661,33 @@
                     ">
 
                     <span class="sidebar-submenu-icon">
+
                         <i data-lucide="clipboard-list"></i>
+
                     </span>
+
 
                     <span class="sidebar-submenu-text">
                         K.I.R
                     </span>
 
 
-                    @if (($kibNotification['kir']['total'] ?? 0) > 0)
-                        <span class="sidebar-kib-count">
+                    @if ($notifKir > 0)
+                        <span class="sidebar-kib-count"
+                            title="{{ number_format($notifKir, 0, ',', '.') }} data K.I.R belum diproses">
 
-                            {{ $kibNotification['kir']['total'] > 99 ? '99+' : $kibNotification['kir']['total'] }}
+                            {{ $badgeValue($notifKir) }}
 
                         </span>
                     @endif
 
                 </a>
 
+
             </div>
 
         </div>
+
 
 
         {{-- ========================================================
@@ -513,14 +701,18 @@
             ">
 
             <span class="sidebar-menu-icon">
+
                 <i data-lucide="badge-dollar-sign"></i>
+
             </span>
+
 
             <span class="sidebar-menu-text">
                 Nilai Aset
             </span>
 
         </a>
+
 
 
         {{-- ========================================================
@@ -534,8 +726,11 @@
             ">
 
             <span class="sidebar-menu-icon">
+
                 <i data-lucide="archive"></i>
+
             </span>
+
 
             <span class="sidebar-menu-text">
                 Arsip
@@ -543,7 +738,9 @@
 
         </a>
 
+
     </nav>
+
 
 
     {{-- ============================================================
@@ -551,6 +748,7 @@
     ============================================================= --}}
 
     <div class="sidebar-footer">
+
 
         <div class="sidebar-user-card">
 
@@ -576,15 +774,25 @@
         </div>
 
 
+
+        {{-- LOGOUT --}}
+
         <a href="{{ url('/logout') }}" class="sidebar-logout"
             onclick="
                 event.preventDefault();
-                document.getElementById('sidebarLogoutForm').submit();
+                document
+                    .getElementById(
+                        'sidebarLogoutForm'
+                    )
+                    .submit();
             ">
 
             <span>
+
                 <i data-lucide="log-out"></i>
+
             </span>
+
 
             <span class="sidebar-menu-text">
                 Logout
@@ -598,6 +806,7 @@
             @csrf
 
         </form>
+
 
     </div>
 
