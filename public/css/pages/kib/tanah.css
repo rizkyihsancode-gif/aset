@@ -2695,3 +2695,149 @@
   .tanah-heading p,.tanah-filter-header p { font-size:13px; }
   .tanah-modal .tanah-modal-body { padding:13px; }
 }
+
+/* ========================================================================
+   RESTORASI DESAIN TABEL PERTAMA + KOLOM PDF
+   No | Lokasi | Alamat | Penggunaan | Data Tanah | Tahun | Nilai | PDF | Aksi
+   ======================================================================== */
+.tanah-table-card .tanah-table { min-width: 1280px; }
+.tanah-table-card .tanah-col-no { width: 48px; }
+.tanah-table-card .tanah-col-lokasi { min-width: 205px; }
+.tanah-table-card .tanah-col-alamat { min-width: 185px; }
+.tanah-table-card .tanah-col-penggunaan { min-width: 165px; }
+.tanah-table-card .tanah-col-data { min-width: 125px; }
+.tanah-table-card .tanah-col-tahun { min-width: 110px; }
+.tanah-table-card .tanah-col-nilai { width: 175px; text-align:left !important; }
+.tanah-table-card .tanah-col-pdf { width: 110px; text-align:center !important; }
+.tanah-table-card .tanah-col-action { width: 130px; text-align:center !important; }
+.tanah-table-card .tanah-table thead th { font-size: 13.5px; font-weight: 800; }
+.tanah-table-card .tanah-table tbody td { font-size: 13.5px; line-height: 1.55; }
+.tanah-data-cell { text-align:left; }
+.tanah-data-button {
+    display:inline-flex; align-items:center; gap:9px; padding:7px 10px;
+    border:1px solid #cce2f7; border-radius:8px; background:#f6fbff;
+    font-family:inherit; color:#0761b7; text-align:left; cursor:pointer;
+    transition:background .16s, border-color .16s;
+}
+.tanah-data-button:hover,.tanah-data-button:focus-visible { background:#e9f5ff; border-color:#93c1eb; }
+.tanah-data-button > svg { flex-shrink:0; width:19px; height:19px; }
+.tanah-data-button span { display:flex; flex-direction:column; gap:1px; }
+.tanah-data-button strong { font-size:13px; font-weight:800; white-space:nowrap; }
+.tanah-data-button small { font-size:11px; color:#6988a5; white-space:nowrap; }
+.tanah-year-cell { font-weight:600; color:#496788 !important; white-space:nowrap; }
+.tanah-table-card .tanah-value-cell { text-align:left; }
+.tanah-table-card .tanah-nilai-button {
+    display:inline-flex; align-items:center; justify-content:space-between; gap:8px;
+    min-width:145px; min-height:49px; padding:7px 9px;
+    border:1px solid #bedcf6; border-radius:8px;
+    background:#edf7ff; color:#065cad; text-decoration:none;
+    box-shadow:none; white-space:normal;
+}
+.tanah-table-card .tanah-nilai-button:hover { border-color:#86bbe8; background:#e1f1ff; }
+.tanah-nilai-caption { display:flex; flex-direction:column; gap:2px; text-align:left; }
+.tanah-nilai-caption strong { font-size:13.5px; font-weight:800; white-space:nowrap; }
+.tanah-nilai-caption small { color:#708ba6; font-size:10.5px; font-weight:500; white-space:nowrap; }
+.tanah-table-card .tanah-actions { gap:6px; }
+.tanah-table-card .tanah-actions button { width:32px; height:34px; }
+.tanah-table-card .tanah-pdf-button { padding:0 9px; height:35px; font-size:12px; }
+.tanah-table-card .tanah-pdf-empty { font-size:11px; white-space:nowrap; }
+
+/* ========================================================================
+   DETAIL VIEW: DUA PANEL SEPERTI WEB ASET LAMA, WARNA & TIPOGRAFI MODERN
+   ======================================================================== */
+.tanah-page .tanah-location-modal {
+    width:min(1440px,calc(100vw - 32px));
+    height:min(870px,calc(100dvh - 26px));
+    max-height:calc(100dvh - 26px);
+    padding:0; border-radius:14px; overflow:hidden;
+}
+.tanah-page .tanah-location-modal[open] { display:flex; flex-direction:column; }
+.tanah-legacy-topbar {
+    display:flex; align-items:center; justify-content:space-between; gap:18px;
+    flex:0 0 auto; padding:16px 22px;
+    background:linear-gradient(110deg,#f9fcff,#f0f7ff);
+    border-bottom:1px solid #dce8f3;
+}
+.tanah-legacy-topbar-title h3 { margin:4px 0; font-size:20px; font-weight:800; color:#102e53; }
+.tanah-legacy-topbar-title p { margin:0; font-size:13px; color:#667e97; line-height:1.55; }
+.tanah-legacy-workspace { flex:1 1 auto; min-height:0; display:grid; grid-template-columns:315px minmax(0,1fr); }
+.tanah-legacy-list-pane {
+    min-height:0; display:flex; flex-direction:column;
+    background:#f8fbff; border-right:1px solid #dbe6f1;
+}
+.tanah-legacy-pane-header { display:flex; justify-content:space-between; align-items:center; gap:7px; padding:17px 15px; border-bottom:1px solid #e1eaf2; }
+.tanah-legacy-pane-header strong { display:block; font-size:15px; color:#123354; font-weight:800; }
+.tanah-legacy-pane-header small { display:block; margin-top:4px; font-size:11.5px; color:#7b90a4; line-height:1.5; }
+.tanah-legacy-total { padding:5px 8px; border-radius:16px; background:#e5f1ff; color:#1267b9; font-size:11px; font-weight:800; white-space:nowrap; }
+.tanah-legacy-list-table-head,.tanah-legacy-list-row { display:grid; grid-template-columns:32px minmax(0,1fr) 84px; gap:7px; align-items:center; }
+.tanah-legacy-list-table-head { padding:10px 13px; background:#e9f4ff; color:#315474; font-size:12px; font-weight:800; border-bottom:1px solid #d7e4f1; }
+.tanah-legacy-list-table-head span:last-child { text-align:right; }
+.tanah-legacy-list { flex:1; min-height:0; overflow-y:auto; }
+.tanah-legacy-list-row { width:100%; padding:12px 13px; border:0; border-bottom:1px solid #e3ecf5; background:#fff; text-align:left; font-family:inherit; cursor:pointer; transition:background .15s; }
+.tanah-legacy-list-row:hover { background:#edf7ff; }
+.tanah-legacy-list-row.active { background:#e3f1ff; box-shadow:inset 3px 0 0 #0873dc; }
+.tanah-legacy-list-no { font-size:12px; color:#637c98; font-weight:700; }
+.tanah-legacy-list-owner { display:block; min-width:0; }
+.tanah-legacy-list-owner strong { display:block; font-size:12.5px; font-weight:800; color:#1360aa; overflow-wrap:anywhere; line-height:1.35; }
+.tanah-legacy-list-owner small { display:block; margin-top:3px; font-size:11px; color:#7c90a3; }
+.tanah-legacy-list-area { font-size:12px; color:#405f80; font-weight:700; text-align:right; white-space:nowrap; }
+.tanah-legacy-pane-foot { display:flex; align-items:flex-start; gap:7px; padding:13px; border-top:1px solid #e1eaf2; background:#f5faff; color:#7489a0; font-size:11px; line-height:1.5; }
+.tanah-legacy-pane-foot svg { width:15px; height:15px; flex-shrink:0; color:#4883b8; }
+.tanah-legacy-loading { font-size:13px; color:#8193a8; padding:23px 14px; text-align:center; }
+.tanah-legacy-detail-pane { min-width:0; min-height:0; overflow:auto; padding:17px 24px 25px; background:#fff; }
+.tanah-legacy-empty { min-height:360px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:9px; text-align:center; color:#8293a8; }
+.tanah-legacy-empty svg { width:32px; height:32px; color:#7cb5ea; }
+.tanah-legacy-empty strong { color:#315579; font-size:17px; }
+.tanah-legacy-empty span { font-size:13px; }
+.tanah-legacy-detail-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; padding-bottom:13px; border-bottom:1px solid #e3ebf3; }
+.tanah-legacy-detail-heading h4 { margin:2px 0 4px; font-size:17px; color:#0d315a; font-weight:800; line-height:1.35; }
+.tanah-legacy-detail-heading small { font-size:12px; color:#778ca3; }
+.tanah-legacy-detail-actions { display:flex; gap:7px; flex-shrink:0; }
+.tanah-legacy-mini-button { height:35px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; gap:5px; border:1px solid #d8e5f1; border-radius:7px; background:#f3f8ff; color:#22649f; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+.tanah-legacy-mini-button.edit { color:#b77908; background:#fff6e6; border-color:#f2dfb8; }
+.tanah-legacy-mini-button.delete { color:#c9394b; background:#fff0f2; border-color:#f0ccd1; }
+.tanah-legacy-mini-button svg { width:14px; height:14px; }
+.tanah-legacy-photo-wrap { display:flex; justify-content:center; align-items:center; min-height:235px; margin:14px 0; padding:10px; border:1px solid #e0e9f1; border-radius:10px; background:#f7faff; }
+.tanah-legacy-photo-wrap img { display:block; width:auto; max-width:100%; max-height:280px; border-radius:8px; object-fit:contain; box-shadow:0 8px 22px rgba(19,50,81,.12); }
+.tanah-legacy-photo-empty { min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; color:#8094a9; font-size:13px; }
+.tanah-legacy-photo-empty svg { width:34px; height:34px; }
+.tanah-legacy-info-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0; }
+.tanah-legacy-info-panel,.tanah-legacy-document-section { border:1px solid #b8d5f0; border-radius:9px; background:#fff; overflow:hidden; }
+.tanah-legacy-info-panel h5,.tanah-legacy-document-section h5 { margin:0; padding:9px 12px; background:#edf6ff; border-bottom:1px solid #c9ddf0; color:#155389; font-size:13px; font-weight:800; }
+.tanah-legacy-info-panel dl { margin:0; padding:7px 10px; }
+.tanah-legacy-info-panel dl>div { display:grid; grid-template-columns:125px minmax(0,1fr); gap:8px; align-items:start; padding:7px 0; border-bottom:1px solid #eef2f6; }
+.tanah-legacy-info-panel dl>div:last-child { border-bottom:0; }
+.tanah-legacy-info-panel dt { font-size:11.5px; font-weight:750; color:#385a78; }
+.tanah-legacy-info-panel dd { margin:0; font-size:12.5px; color:#284d70; font-weight:600; overflow-wrap:anywhere; }
+.tanah-legacy-document-section { margin:13px 0; }
+.tanah-legacy-document-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,.85fr); gap:12px; padding:12px; }
+.tanah-legacy-document-grid>div { min-width:0; padding:10px; border:1px solid #e0e8f0; border-radius:6px; background:#f9fbfd; }
+.tanah-legacy-document-grid span { display:block; color:#748aa0; font-size:11px; margin-bottom:5px; }
+.tanah-legacy-document-grid strong { display:block; color:#294969; font-weight:700; font-size:12.5px; line-height:1.4; overflow-wrap:anywhere; }
+.tanah-legacy-note { margin:0; padding:13px; color:#3d5b77; font-size:12.5px; line-height:1.6; overflow-wrap:anywhere; }
+.tanah-legacy-pdf-section h5 { display:flex; align-items:center; gap:7px; }
+.tanah-legacy-pdf-section h5 svg { width:15px; height:15px; }
+.tanah-legacy-documents { display:flex; flex-direction:column; gap:8px; padding:12px; }
+.tanah-legacy-doc-item { display:flex; align-items:center; gap:8px; padding:9px; border:1px solid #e1e9f1; border-radius:7px; background:#fafcff; }
+.tanah-legacy-doc-item span { flex:1; min-width:0; color:#355371; font-size:12px; font-weight:650; overflow-wrap:anywhere; }
+.tanah-legacy-doc-preview,.tanah-legacy-doc-download { display:inline-flex; justify-content:center; align-items:center; min-height:32px; border-radius:6px; padding:0 10px; border:1px solid #c8def5; background:#eaf4ff; color:#0b61ad; font-family:inherit; font-size:11px; font-weight:700; text-decoration:none; white-space:nowrap; cursor:pointer; }
+.tanah-legacy-doc-download { background:#f1f5fb; color:#3c5d7d; border-color:#d8e4ef; }
+.tanah-legacy-doc-empty { color:#8b9eb1; font-size:12px; }
+@media(max-width:1050px) {
+    .tanah-legacy-workspace { grid-template-columns:265px minmax(0,1fr); }
+    .tanah-legacy-detail-pane { padding:14px; }
+    .tanah-legacy-info-panel dl>div { grid-template-columns:100px minmax(0,1fr); }
+}
+@media(max-width:850px) {
+    .tanah-page .tanah-location-modal { width:calc(100vw - 16px); height:calc(100dvh - 16px); max-height:calc(100dvh - 16px); }
+    .tanah-legacy-workspace { display:block; overflow:auto; }
+    .tanah-legacy-list-pane { min-height:0; max-height:260px; border-right:0; border-bottom:1px solid #dbe6f1; }
+    .tanah-legacy-list { max-height:170px; }
+    .tanah-legacy-detail-pane { overflow:visible; }
+    .tanah-legacy-detail-heading { flex-wrap:wrap; }
+    .tanah-legacy-info-grid { grid-template-columns:1fr; }
+    .tanah-legacy-document-grid { grid-template-columns:1fr; gap:8px; }
+    .tanah-legacy-photo-wrap { min-height:160px; }
+    .tanah-legacy-photo-wrap img { max-height:200px; }
+    .tanah-legacy-pane-foot { display:none; }
+}

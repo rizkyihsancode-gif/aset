@@ -90,8 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
   paginate();
   $('#tanahExportButton')?.addEventListener('click',()=>{
     const rows=matching();if(!rows.length){notify('Belum ada data untuk diekspor.',true);return;}
-    const csv=[['No','Lokasi','Alamat','Penggunaan','Nilai']];
-    rows.forEach((r,i)=>{const t=$$('td',r);csv.push([i+1,t[1]?.innerText?.trim(),t[2]?.innerText?.trim(),t[3]?.innerText?.trim(),t[4]?.innerText?.trim()]);});
+    const csv=[['No','Lokasi','Alamat','Penggunaan','Data Tanah','Tahun','Nilai','PDF']];
+    rows.forEach((r,i)=>{const t=$$('td',r);csv.push([i+1,t[1]?.innerText?.trim(),t[2]?.innerText?.trim(),t[3]?.innerText?.trim(),r.dataset.jumlah+' sertifikat',r.dataset.tahun,money(r.dataset.nilai),r.dataset.pdf+' PDF']);});
     const content='\uFEFF'+csv.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
     const u=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));
     const a=document.createElement('a');a.href=u;a.download='kib-tanah.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),100);
@@ -213,40 +213,166 @@ document.addEventListener('DOMContentLoaded', () => {
     showPdf({view_url:blobUrl,download_url:blobUrl,nama:f.name},true);
   });
 
-  /* ---- Main actions act on a LOCATION, never MIN(t.id) ---- */
-  async function openLocation(loc,name) {
-    $('#tanahLocationTitle').textContent=`Daftar Sertifikat • ${name||'Lokasi'}`;
-    $('#tanahLocationBody').innerHTML='<tr><td colspan="8" class="tanah-empty">Memuat sertifikat...</td></tr>';
-    const photo=$('#tanahLocationPhoto');if(photo){photo.hidden=true;photo.removeAttribute('src');}
+  /* ---- Modal View seperti web aset lama: kiri daftar, kanan detail. ---- */
+  let legacyLocation = null;
+  let legacyName = '';
+  let activeCertificate = null;
+  let legacyRows = [];
+  let legacyOpenSeq = 0;
+
+  // Semua teks bersumber database disisipkan dengan textContent agar aman.
+  function legacyText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value === null || value === undefined || String(value).trim() === ''
+      ? '-' : String(value);
+  }
+  function legacyArea(value) {
+    const s = value === null || value === undefined ? '' : String(value).trim();
+    return s && s !== '-' ? `${s} m²` : '-';
+  }
+  function showLegacyPhoto(url) {
+    const image = $('#tanahLegacyPhoto');
+    const empty = $('#tanahLegacyPhotoEmpty');
+    if (!image || !empty) return;
+    image.onerror = () => { image.hidden = true; empty.hidden = false; };
+    if (url) {
+      image.src = url;
+      image.hidden = false;
+      empty.hidden = true;
+    } else {
+      image.removeAttribute('src');
+      image.hidden = true;
+      empty.hidden = false;
+    }
+  }
+  function selectLegacyCertificate(record) {
+    if (!record) return;
+    activeCertificate = record;
+    $$('.tanah-legacy-list-row', $('#tanahLegacyList')).forEach(button => {
+      const active = String(button.dataset.id) === String(record.id);
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    const mapping = {
+      tanahLegacyGuna: record.guna,
+      tanahLegacyKode: `Sertifikat #${record.id} • ${record.sertifikat || 'Tanpa nomor sertifikat'}`,
+      tanahLegacyAlamat: record.alamat || '-',
+      tanahLegacyBarang: record.nama_barang,
+      tanahLegacyKodeBarang: record.kode_barang,
+      tanahLegacyAsal: record.asal,
+      tanahLegacyTahun: record.tahun,
+      tanahLegacyPenggunaan: record.guna,
+      tanahLegacyNoTunjuk: record.no_tunjuk,
+      tanahLegacyTglTunjuk: dateText(record.tgl_tunjuk),
+      tanahLegacyLuasTunjuk: legacyArea(record.luas_tunjuk),
+      tanahLegacySertifikat: record.sertifikat,
+      tanahLegacyTglSertifikat: dateText(record.tgl_sertifikat),
+      tanahLegacyLuasSertifikat: legacyArea(record.luas_sertifikat),
+      tanahLegacyNoGambar: record.no_gambar,
+      tanahLegacyTglGambar: dateText(record.tgl_gambar),
+      tanahLegacyLuasGambar: legacyArea(record.luas_gambar),
+      tanahLegacyHak: record.hak,
+      tanahLegacyPemilik: record.pemilik,
+      tanahLegacyKeterangan: record.ket
+    };
+    Object.entries(mapping).forEach(([id, value]) => legacyText(id, value));
+    const docs = $('#tanahLegacyDocuments');
+    if (docs) {
+      docs.replaceChildren();
+      if (!Array.isArray(record.pdfs) || !record.pdfs.length) {
+        const span = document.createElement('span');
+        span.className = 'tanah-legacy-doc-empty';
+        span.textContent = 'Belum ada PDF untuk sertifikat ini.';
+        docs.append(span);
+      } else {
+        record.pdfs.forEach(pdf => {
+          const group = document.createElement('div');
+          group.className = 'tanah-legacy-doc-item';
+          const filename = document.createElement('span');
+          filename.textContent = pdf.nama || 'Dokumen Tanah';
+          filename.title = pdf.nama || 'Dokumen Tanah';
+          const preview = document.createElement('button');
+          preview.type = 'button';
+          preview.className = 'tanah-legacy-doc-preview';
+          preview.textContent = 'Lihat PDF';
+          preview.addEventListener('click', () => showPdf(pdf));
+          const download = document.createElement('a');
+          download.className = 'tanah-legacy-doc-download';
+          download.textContent = 'Unduh';
+          download.href = pdf.download_url;
+          group.append(filename, preview, download);
+          docs.append(group);
+        });
+      }
+    }
+    $('#tanahLegacyEmpty').hidden = true;
+    $('#tanahLegacyDetails').hidden = false;
+    // Pada layar kecil detail digulirkan ke area yang dipilih.
+    if (window.innerWidth <= 850) $('#tanahLegacyDetails')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  async function openLocation(loc, name, preferredId = null) {
+    legacyLocation = String(loc);
+    legacyName = name || 'Lokasi';
+    activeCertificate = null;
+    legacyRows = [];
+    const requestId = ++legacyOpenSeq;
+    legacyText('tanahLocationTitle', `DATA TANAH • ${legacyName}`);
+    legacyText('tanahLegacyLocationAddress', 'Memuat data lokasi...');
+    legacyText('tanahLegacyRecordCount', '0 data');
+    $('#tanahLegacyList').innerHTML = '<p class="tanah-legacy-loading">Memuat daftar sertifikat...</p>';
+    $('#tanahLegacyEmpty').hidden = false;
+    $('#tanahLegacyDetails').hidden = true;
+    showLegacyPhoto(null);
     open('tanahLocationModal');
     try {
-      const data=await json(`${LOC}/${encodeURIComponent(loc)}/sertifikat`);
-      const rows=Array.isArray(data.data)?data.data:[];
-      const body=$('#tanahLocationBody');body.replaceChildren();
-      if(!rows.length){body.innerHTML='<tr><td colspan="8" class="tanah-empty">Belum ada sertifikat pada lokasi ini.</td></tr>';return;}
-      rows.forEach((r,i)=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${i+1}</td><td>${escape(r.nama_barang||'-')}</td><td>${escape(r.guna||'-')}</td>
-          <td>${escape(r.tahun||'-')}</td><td>${escape(r.sertifikat||'-')}</td><td>${escape(r.luas_sertifikat||'-')} m²</td>
-          <td>${r.pdfs?.length?'<button type="button" class="tanah-pdf-button" data-do="pdf">PDF ('+r.pdfs.length+')</button>':'<span class="tanah-pdf-empty">Belum ada</span>'}</td>
-          <td><div class="tanah-actions"><button type="button" class="view" data-do="view" title="Detail"><i data-lucide="eye"></i></button>
-          <button type="button" class="edit" data-do="edit" title="Edit"><i data-lucide="square-pen"></i></button>
-          <button type="button" class="delete" data-do="delete" title="Hapus"><i data-lucide="trash-2"></i></button></div></td>`;
-        tr.addEventListener('click',e=>{
-          const b=e.target.closest('button[data-do]');if(!b)return;
-          const action=b.dataset.do;
-          if(action==='pdf')openDocuments(loc,name);
-          if(action==='view')viewRecord(r.id);
-          if(action==='edit')editRecord(r.id);
-          if(action==='delete')askDelete(r.id,`${r.sertifikat||'-'} (${r.lokasi||name})`);
-        });body.append(tr);
-      });icons();
-      // Retain photo location behavior from the original KIBController.
-      json(`${LOC}/${encodeURIComponent(loc)}/detail`).then(detail=>{
-        if(detail.lokasi?.image_url&&photo){photo.src=detail.lokasi.image_url;photo.hidden=false;photo.onerror=()=>photo.hidden=true;}
-      }).catch(()=>{});
-    } catch(e){fail(e,'Daftar sertifikat gagal dimuat');$('#tanahLocationBody').innerHTML='<tr><td colspan="8" class="tanah-empty">Gagal memuat sertifikat.</td></tr>';}
+      const result = await json(`${LOC}/${encodeURIComponent(loc)}/sertifikat`);
+      if (requestId !== legacyOpenSeq) return;
+      const rows = Array.isArray(result.data) ? result.data : [];
+      legacyRows = rows;
+      legacyText('tanahLegacyLocationAddress', result.lokasi?.alamat || `Lokasi: ${legacyName}`);
+      legacyText('tanahLegacyRecordCount', `${idLocale.format(rows.length)} data`);
+      const list = $('#tanahLegacyList');
+      list.replaceChildren();
+      if (!rows.length) {
+        list.innerHTML = '<p class="tanah-legacy-loading">Belum ada sertifikat pada lokasi ini.</p>';
+      }
+      rows.forEach((r, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tanah-legacy-list-row';
+        b.dataset.id = r.id;
+        b.setAttribute('aria-pressed', 'false');
+        b.innerHTML = `<span class="tanah-legacy-list-no">${i+1}</span>
+          <span class="tanah-legacy-list-owner"><strong>${escape(r.pemilik && r.pemilik !== '-' ? r.pemilik : r.nama_barang || 'Tanah')}</strong><small>Tahun ${escape(r.tahun||'-')}</small></span>
+          <span class="tanah-legacy-list-area">${escape(legacyArea(r.luas_sertifikat))}</span>`;
+        b.addEventListener('click', () => selectLegacyCertificate(r));
+        list.append(b);
+      });
+      if (rows.length) {
+        selectLegacyCertificate(rows.find(r => String(r.id) === String(preferredId)) || rows[0]);
+      }
+      icons();
+      // Tetap pakai endpoint foto lokasi yang sudah dimiliki KIBController.
+      json(`${LOC}/${encodeURIComponent(loc)}/detail`).then(detail => {
+        if (requestId !== legacyOpenSeq) return;
+        showLegacyPhoto(detail.lokasi?.image_url || null);
+      }).catch(() => showLegacyPhoto(null));
+    } catch (e) {
+      fail(e, 'Detail Tanah gagal dimuat');
+      $('#tanahLegacyList').innerHTML = '<p class="tanah-legacy-loading">Gagal memuat daftar sertifikat.</p>';
+      legacyText('tanahLegacyLocationAddress', 'Silakan periksa koneksi atau log Laravel.');
+    }
   }
+  $('#tanahLegacyEditButton')?.addEventListener('click', () => {
+    if (activeCertificate) editRecord(activeCertificate.id);
+  });
+  $('#tanahLegacyDeleteButton')?.addEventListener('click', () => {
+    if (activeCertificate) askDelete(activeCertificate.id, `${activeCertificate.pemilik || activeCertificate.sertifikat || 'Sertifikat'} (${legacyName})`);
+  });
+  $('#tanahLegacyNilaiButton')?.addEventListener('click', () => {
+    if (legacyLocation) openNilai(legacyLocation, legacyName);
+  });
+
   $('#tanahTableBody')?.addEventListener('click',e=>{
     const row=e.target.closest('.tanah-data-row');if(!row)return;
     const loc=row.dataset.locationId;
@@ -260,47 +386,35 @@ document.addEventListener('DOMContentLoaded', () => {
   async function openNilai(loc,name) {
     $('#tanahNilaiTitle').textContent=`Riwayat Nilai • ${name}`;
     $('#tanahNilaiTotal').textContent='Memuat...';
-    $('#tanahNilaiBody').innerHTML='<tr><td colspan="7" class="tanah-empty">Memuat transaksi...</td></tr>';
+    $('#tanahNilaiBody').innerHTML='<tr><td colspan="8" class="tanah-empty">Memuat transaksi...</td></tr>';
     open('tanahNilaiModal');
     try {
       const data=await json(`${LOC}/${encodeURIComponent(loc)}/nilai`);
       const rows=Array.isArray(data.data)?data.data:[];
       $('#tanahNilaiTotal').textContent=money(data.total);
       const body=$('#tanahNilaiBody');body.replaceChildren();
-      if(!rows.length){body.innerHTML='<tr><td colspan="7" class="tanah-empty">Belum ada transaksi Nilai Aset.</td></tr>';return;}
+      if(!rows.length){body.innerHTML='<tr><td colspan="8" class="tanah-empty">Belum ada transaksi Nilai Aset.</td></tr>';return;}
       rows.forEach((r,i)=>{
         const tr=document.createElement('tr');
         tr.innerHTML=`<td>${i+1}</td><td>${escape(r.no_voucher||'-')}</td><td>${dateText(r.tgl_voucher)}</td><td>${escape(r.tahun||'-')}</td>
-          <td>${escape(r.nama_aktiva||r.aktiva||'-')}</td><td class="tanah-text-wrap">${escape(r.urai||'-')}</td><td class="tanah-value-cell">${money(r.nilai)}</td>`;
+          <td>${escape(r.nama_aktiva||r.aktiva||'-')}</td><td class="tanah-text-wrap">${escape(r.urai||'-')}</td><td class="tanah-value-cell">${money(r.nilai)}</td>
+          <td>${r.pdf_preview_url ? '<button type="button" class="tanah-pdf-button js-nilai-pdf"><i data-lucide="file-text"></i> PDF</button>' : '<span class="tanah-pdf-empty">-</span>'}</td>`;
+        if(r.pdf_preview_url){$('.js-nilai-pdf',tr)?.addEventListener('click',()=>showPdf({view_url:r.pdf_preview_url,download_url:r.pdf_download_url,nama:r.pdf_nama||'Dokumen Nilai Aset'}));}
         body.append(tr);
-      });
-    } catch(e){fail(e,'Riwayat nilai gagal dimuat');$('#tanahNilaiBody').innerHTML='<tr><td colspan="7" class="tanah-empty">Gagal memuat nilai.</td></tr>';}
+      });icons();
+    } catch(e){fail(e,'Riwayat nilai gagal dimuat');$('#tanahNilaiBody').innerHTML='<tr><td colspan="8" class="tanah-empty">Gagal memuat nilai.</td></tr>';}
   }
 
   async function fetchRecord(id) {
     const payload=await json(`${BASE}/${encodeURIComponent(id)}`);
     return payload.data;
   }
-  const detailFields={detailTanahLokasi:'lokasi',detailTanahAlamat:'alamat',detailTanahBarang:'nama_barang',detailTanahTahun:'tahun',
-    detailTanahGuna:'guna',detailTanahNoTunjuk:'no_tunjuk',detailTanahTglTunjuk:'tgl_tunjuk',detailTanahLuasTunjuk:'luas_tunjuk',
-    detailTanahSertifikat:'sertifikat',detailTanahTglSertifikat:'tgl_sertifikat',detailTanahLuasSertifikat:'luas_sertifikat',
-    detailTanahNoGambar:'no_gambar',detailTanahTglGambar:'tgl_gambar',detailTanahLuasGambar:'luas_gambar',
-    detailTanahAsal:'asal',detailTanahHak:'hak',detailTanahPemilik:'pemilik',detailTanahKeterangan:'ket'};
+  // Tautan View langsung masuk ke detail dua panel, tidak membuka popup lain.
   async function viewRecord(id) {
     try {
-      const r=await fetchRecord(id);
-      for(const [key,field] of Object.entries(detailFields)){
-        const el=document.getElementById(key);if(!el)continue;
-        let v=r[field];if(field.startsWith('tgl_'))v=dateText(v);
-        if(field.startsWith('luas_')&&v&&v!=='-')v=`${v} m²`;
-        el.textContent=v??'-';
-      }
-      $('#detailTanahNilai').textContent=r.nilai!=null?money(r.nilai):'Lihat rincian Nilai per lokasi';
-      const detailPdf=$('#tanahDetailPdfButton');
-      detailPdf.hidden=!(r.pdfs && r.pdfs.length);
-      detailPdf.onclick=()=>{close('tanahDetailModal');openDocuments(r.id_lokasi,r.lokasi||'Tanah');};
-      close('tanahLocationModal');open('tanahDetailModal');
-    }catch(e){fail(e,'Detail sertifikat gagal dimuat');}
+      const record = await fetchRecord(id);
+      await openLocation(record.id_lokasi, record.lokasi || 'Lokasi', record.id);
+    } catch (e) { fail(e, 'Detail sertifikat gagal dimuat'); }
   }
   async function editRecord(id) {
     try { const r=await fetchRecord(id);close('tanahLocationModal');fillEdit(r);open('tanahFormModal'); }

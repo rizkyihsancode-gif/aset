@@ -590,13 +590,12 @@
                 <div>
 
                     <h3>
-                        Daftar Data Tanah
+                        Daftar Lokasi Tanah
                     </h3>
 
                     <p>
 
-                        Informasi lokasi, alamat, penggunaan,
-                        nilai dan dokumen aset Tanah.
+                        Data K.I.B Tanah dikelompokkan berdasarkan lokasi, seperti web aset lama.
 
                     </p>
 
@@ -638,6 +637,14 @@
                                 Penggunaan
                             </th>
 
+                            <th class="tanah-col-data">
+                                Data Tanah
+                            </th>
+
+                            <th class="tanah-col-tahun">
+                                Tahun
+                            </th>
+
                             <th class="tanah-col-nilai">
                                 Nilai
                             </th>
@@ -673,12 +680,25 @@
 
                                     $nilai = (float) data_get($row, 'nilai_tanah', 0);
                                     $pdfCount = (int) data_get($row, 'pdf_count', 0);
+                                    $jumlahData = (int) data_get($row, 'jumlah_data_tanah', 0);
+                                    $jumlahTransaksi = (int) data_get($row, 'jumlah_transaksi_nilai', 0);
+                                    $tahunAwal = trim((string) data_get($row, 'tahun_awal', ''));
+                                    $tahunAkhir = trim((string) data_get($row, 'tahun_akhir', ''));
+                                    $tahunLabel =
+                                        $tahunAwal === $tahunAkhir || $tahunAkhir === ''
+                                            ? ($tahunAwal ?:
+                                            '-')
+                                            : $tahunAwal . ' – ' . $tahunAkhir;
 
-                                    $searchText = mb_strtolower(implode(' ', [$lokasi, $alamat, $penggunaan, $nilai]));
+                                    $searchText = mb_strtolower(
+                                        implode(' ', [$lokasi, $alamat, $penggunaan, $tahunLabel, $nilai]),
+                                    );
                                 @endphp
 
 
                                 <tr class="tanah-data-row" data-search="{{ $searchText }}"
+                                    data-nilai="{{ $nilai }}" data-tahun="{{ $tahunLabel }}"
+                                    data-jumlah="{{ $jumlahData }}" data-pdf="{{ $pdfCount }}"
                                     data-record-id="{{ $rowId }}" data-location-id="{{ $locationId }}">
 
                                     {{-- NO --}}
@@ -741,15 +761,32 @@
                                     </td>
 
 
-                                    {{-- NILAI --}}
+                                    {{-- DATA TANAH: sertifikat dikelompokkan berdasarkan lokasi --}}
+                                    <td class="tanah-data-cell">
+                                        <button type="button" class="tanah-data-button js-tanah-view"
+                                            data-location-id="{{ $locationId }}"
+                                            data-location-name="{{ $lokasi }}"
+                                            title="Lihat {{ $jumlahData }} data sertifikat Tanah">
+                                            <i data-lucide="files"></i>
+                                            <span><strong>{{ $jumlahData }} data</strong><small>Lihat
+                                                    sertifikat</small></span>
+                                        </button>
+                                    </td>
 
+                                    {{-- TAHUN: berasal dari tanahs.tahun --}}
+                                    <td class="tanah-year-cell">{{ $tahunLabel }}</td>
+
+                                    {{-- NILAI: tetap dapat diklik untuk riwayat voucher --}}
                                     <td class="tanah-value-cell">
 
                                         <button type="button" class="tanah-nilai-button js-tanah-nilai"
                                             data-location-id="{{ $locationId }}"
                                             data-location-name="{{ $lokasi }}"
                                             title="Lihat rincian transaksi Nilai Aset">
-                                            {{ $rupiah($nilai) }}
+                                            <span class="tanah-nilai-caption">
+                                                <strong>{{ $rupiah($nilai) }}</strong>
+                                                <small>{{ $jumlahTransaksi }} transaksi tanah</small>
+                                            </span>
                                             <i data-lucide="external-link"></i>
                                         </button>
 
@@ -814,7 +851,7 @@
                         @else
                             <tr>
 
-                                <td colspan="7" class="tanah-empty">
+                                <td colspan="9" class="tanah-empty">
 
                                     <i data-lucide="database-zap"></i>
 
@@ -1620,43 +1657,161 @@
         {{-- =========================================================
              DAFTAR SERTIFIKAT PER LOKASI
         ========================================================== --}}
-        <dialog class="tanah-modal tanah-location-modal" id="tanahLocationModal">
-            <div class="tanah-modal-header">
-                <div><span class="tanah-modal-eyebrow">K.I.B A • DETAIL LOKASI</span>
-                    <h3 id="tanahLocationTitle">Daftar Sertifikat</h3>
-                    <p>Setiap lokasi bisa mempunyai lebih dari satu sertifikat. Pilih sertifikat sebelum Edit atau Hapus.
-                    </p>
+        <dialog class="tanah-modal tanah-location-modal" id="tanahLocationModal" aria-labelledby="tanahLocationTitle">
+            <div class="tanah-legacy-topbar">
+                <div class="tanah-legacy-topbar-title">
+                    <span class="tanah-modal-eyebrow">K.I.B A / DATA TANAH</span>
+                    <h3 id="tanahLocationTitle">Detail Lokasi Tanah</h3>
+                    <p id="tanahLegacyLocationAddress">Pilih sertifikat di sebelah kiri untuk melihat data lengkap.</p>
                 </div>
                 <button type="button" class="tanah-modal-close" data-close-dialog="tanahLocationModal"
-                    aria-label="Tutup"><i data-lucide="x"></i></button>
+                    aria-label="Tutup detail tanah">
+                    <i data-lucide="x"></i>
+                </button>
             </div>
-            <div class="tanah-modal-body">
-                <img id="tanahLocationPhoto" class="tanah-location-photo" alt="Foto lokasi tanah" hidden>
-                <div class="tanah-table-scroll">
-                    <table class="tanah-table tanah-location-table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Barang</th>
-                                <th>Penggunaan</th>
-                                <th>Tahun</th>
-                                <th>Sertifikat</th>
-                                <th>Luas</th>
-                                <th>PDF</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tanahLocationBody">
-                            <tr>
-                                <td colspan="8" class="tanah-empty">Memuat data...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="tanah-modal-footer">
-                <button type="button" class="tanah-button-secondary"
-                    data-close-dialog="tanahLocationModal">Tutup</button>
+
+            <div class="tanah-legacy-workspace">
+                {{-- KIRI: DAFTAR SERTIFIKAT SEPERTI WEB LAMA --}}
+                <aside class="tanah-legacy-list-pane" aria-label="Daftar sertifikat dalam lokasi">
+                    <div class="tanah-legacy-pane-header">
+                        <div><strong>Daftar Sertifikat</strong><small>Klik pemilik asal untuk melihat detail</small></div>
+                        <span id="tanahLegacyRecordCount" class="tanah-legacy-total">0 data</span>
+                    </div>
+                    <div class="tanah-legacy-list-table-head">
+                        <span>No</span><span>Pemilik Asal</span><span>Ukuran</span>
+                    </div>
+                    <div class="tanah-legacy-list" id="tanahLegacyList" role="group"
+                        aria-label="Pilih sertifikat tanah">
+                        <p class="tanah-legacy-loading">Memuat daftar sertifikat...</p>
+                    </div>
+                    <div class="tanah-legacy-pane-foot">
+                        <i data-lucide="info"></i>
+                        Aksi Edit dan Hapus berlaku untuk sertifikat yang dipilih, bukan seluruh lokasi.
+                    </div>
+                </aside>
+
+                {{-- KANAN: DETAIL SERTIFIKAT DAN FOTO LOKASI --}}
+                <section class="tanah-legacy-detail-pane" aria-label="Detail sertifikat terpilih">
+                    <div id="tanahLegacyEmpty" class="tanah-legacy-empty">
+                        <i data-lucide="mouse-pointer-click"></i>
+                        <strong>Pilih data sertifikat</strong>
+                        <span>Informasi lengkap akan ditampilkan di bagian ini.</span>
+                    </div>
+
+                    <div id="tanahLegacyDetails" hidden>
+                        <div class="tanah-legacy-detail-heading">
+                            <div>
+                                <span class="tanah-modal-eyebrow">RINCIAN SERTIFIKAT</span>
+                                <h4 id="tanahLegacyGuna">-</h4>
+                                <small id="tanahLegacyKode">-</small>
+                            </div>
+                            <div class="tanah-legacy-detail-actions">
+                                <button type="button" class="tanah-legacy-mini-button view" id="tanahLegacyNilaiButton"
+                                    title="Rincian Nilai Aset"><i data-lucide="banknote"></i> Nilai</button>
+                                <button type="button" class="tanah-legacy-mini-button edit" id="tanahLegacyEditButton"
+                                    title="Edit sertifikat"><i data-lucide="square-pen"></i> Edit</button>
+                                <button type="button" class="tanah-legacy-mini-button delete"
+                                    id="tanahLegacyDeleteButton" title="Hapus sertifikat"><i
+                                        data-lucide="trash-2"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="tanah-legacy-photo-wrap">
+                            <img id="tanahLegacyPhoto" alt="Foto lokasi aset tanah" hidden>
+                            <div id="tanahLegacyPhotoEmpty" class="tanah-legacy-photo-empty"><i
+                                    data-lucide="image-off"></i><span>Foto lokasi belum tersedia</span></div>
+                        </div>
+
+                        <div class="tanah-legacy-info-grid">
+                            <section class="tanah-legacy-info-panel">
+                                <h5>Informasi Tanah</h5>
+                                <dl>
+                                    <div>
+                                        <dt>Letak / Alamat</dt>
+                                        <dd id="tanahLegacyAlamat">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Nama Barang</dt>
+                                        <dd id="tanahLegacyBarang">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Kode Barang</dt>
+                                        <dd id="tanahLegacyKodeBarang">-</dd>
+                                    </div>
+                                </dl>
+                            </section>
+                            <section class="tanah-legacy-info-panel">
+                                <h5>Perolehan & Penggunaan</h5>
+                                <dl>
+                                    <div>
+                                        <dt>Asal Usul</dt>
+                                        <dd id="tanahLegacyAsal">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Tahun Pengadaan</dt>
+                                        <dd id="tanahLegacyTahun">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Penggunaan</dt>
+                                        <dd id="tanahLegacyPenggunaan">-</dd>
+                                    </div>
+                                </dl>
+                            </section>
+                        </div>
+
+                        <section class="tanah-legacy-document-section">
+                            <h5>Penunjukan</h5>
+                            <div class="tanah-legacy-document-grid">
+                                <div><span>Nomor Surat</span><strong id="tanahLegacyNoTunjuk">-</strong></div>
+                                <div><span>Tanggal</span><strong id="tanahLegacyTglTunjuk">-</strong></div>
+                                <div><span>Luas</span><strong id="tanahLegacyLuasTunjuk">-</strong></div>
+                            </div>
+                        </section>
+                        <section class="tanah-legacy-document-section">
+                            <h5>SPPT / SPHAT / SPJBT / Sertifikat</h5>
+                            <div class="tanah-legacy-document-grid">
+                                <div><span>Nomor Surat</span><strong id="tanahLegacySertifikat">-</strong></div>
+                                <div><span>Tanggal</span><strong id="tanahLegacyTglSertifikat">-</strong></div>
+                                <div><span>Luas</span><strong id="tanahLegacyLuasSertifikat">-</strong></div>
+                            </div>
+                        </section>
+                        <section class="tanah-legacy-document-section">
+                            <h5>Gambar Situasi</h5>
+                            <div class="tanah-legacy-document-grid">
+                                <div><span>Nomor Gambar</span><strong id="tanahLegacyNoGambar">-</strong></div>
+                                <div><span>Tanggal</span><strong id="tanahLegacyTglGambar">-</strong></div>
+                                <div><span>Luas</span><strong id="tanahLegacyLuasGambar">-</strong></div>
+                            </div>
+                        </section>
+
+                        <div class="tanah-legacy-info-grid">
+                            <section class="tanah-legacy-info-panel">
+                                <h5>Kepemilikan</h5>
+                                <dl>
+                                    <div>
+                                        <dt>Hak</dt>
+                                        <dd id="tanahLegacyHak">-</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Pemilik Asal</dt>
+                                        <dd id="tanahLegacyPemilik">-</dd>
+                                    </div>
+                                </dl>
+                            </section>
+                            <section class="tanah-legacy-info-panel">
+                                <h5>Keterangan</h5>
+                                <p class="tanah-legacy-note" id="tanahLegacyKeterangan">-</p>
+                            </section>
+                        </div>
+
+                        <section class="tanah-legacy-document-section tanah-legacy-pdf-section">
+                            <h5><i data-lucide="file-text"></i> Dokumen PDF & Hasil Scan</h5>
+                            <div id="tanahLegacyDocuments" class="tanah-legacy-documents">
+                                <span>Belum ada dokumen untuk sertifikat ini.</span>
+                            </div>
+                        </section>
+                    </div>
+                </section>
             </div>
         </dialog>
 
@@ -1685,11 +1840,12 @@
                                 <th>Aktiva</th>
                                 <th>Uraian</th>
                                 <th>Nilai</th>
+                                <th>PDF</th>
                             </tr>
                         </thead>
                         <tbody id="tanahNilaiBody">
                             <tr>
-                                <td colspan="7" class="tanah-empty">Memuat riwayat...</td>
+                                <td colspan="8" class="tanah-empty">Memuat riwayat...</td>
                             </tr>
                         </tbody>
                     </table>

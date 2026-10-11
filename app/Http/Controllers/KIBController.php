@@ -366,8 +366,23 @@ class KIBController extends Controller
             ->groupBy('t.id_lokasi')
             ->pluck('jumlah_pdf', 'id_lokasi');
 
-        $tanahs->each(function ($row) use ($pdfLokasi) {
-            $row->pdf_count = (int) ($pdfLokasi[$row->id_lokasi] ?? 0);
+        // PDF yang diunggah langsung dari halaman Nilai Aset juga dihitung.
+        $pdfNilaiLokasi = collect();
+        if (Schema::hasColumn('nilai_aktivas', 'dokumen_pdf')) {
+            $pdfNilaiLokasi = DB::table('nilai_aktivas as n')
+                ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+                ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
+                ->whereNotNull('n.dokumen_pdf')
+                ->whereRaw("BTRIM(n.dokumen_pdf) <> ''")
+                ->select('n.id_lokasi')
+                ->selectRaw('COUNT(n.id) AS jumlah_pdf')
+                ->groupBy('n.id_lokasi')
+                ->pluck('jumlah_pdf', 'id_lokasi');
+        }
+
+        $tanahs->each(function ($row) use ($pdfLokasi, $pdfNilaiLokasi) {
+            $row->pdf_count = (int) ($pdfLokasi[$row->id_lokasi] ?? 0)
+                + (int) ($pdfNilaiLokasi[$row->id_lokasi] ?? 0);
         });
 
         return view(
@@ -853,6 +868,23 @@ class KIBController extends Controller
 
             ->get();
 
+
+        // Tautan PDF yang pernah diupload melalui halaman Nilai Aset.
+        if (Schema::hasColumn('nilai_aktivas', 'dokumen_pdf')) {
+            $pdfByNilaiId = DB::table('nilai_aktivas')
+                ->whereIn('id', $nilaiAktivas->pluck('id')->all())
+                ->whereNotNull('dokumen_pdf')
+                ->get(['id', 'dokumen_pdf', 'dokumen_pdf_nama_asli'])
+                ->keyBy('id');
+            $nilaiAktivas->each(function ($item) use ($pdfByNilaiId) {
+                $hasPdf = isset($pdfByNilaiId[$item->id]);
+                $item->pdf_preview_url = $hasPdf ? route('nilai.pdf.preview', $item->id) : null;
+                $item->pdf_download_url = $hasPdf ? route('nilai.pdf.download', $item->id) : null;
+                $item->pdf_nama = $hasPdf
+                    ? ($pdfByNilaiId[$item->id]->dokumen_pdf_nama_asli ?: 'Dokumen Nilai Aset')
+                    : null;
+            });
+        }
 
         $total =
             $nilaiAktivas->sum(
@@ -1443,11 +1475,29 @@ class KIBController extends Controller
     private function serialize(\stdClass $row): array
     {
         $result = (array) $row;
+        $result['pdfs'] = $this->pdfData((int) $row->id);
 
-        $result['pdfs'] = $this->pdfData(
-            (int) $row->id
-        );
-
+        // PDF sumber Nilai Aset juga terlihat pada sertifikat yang terhubung.
+        if (
+            Schema::hasColumn('tanahs', 'nilai_aktiva_id')
+            && Schema::hasColumn('nilai_aktivas', 'dokumen_pdf')
+            && !empty($row->nilai_aktiva_id)
+        ) {
+            $source = DB::table('nilai_aktivas as n')
+                ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+                ->where('n.id', $row->nilai_aktiva_id)
+                ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
+                ->whereNotNull('n.dokumen_pdf')
+                ->first(['n.id', 'n.dokumen_pdf', 'n.dokumen_pdf_nama_asli']);
+            if ($source && trim((string) $source->dokumen_pdf) !== '') {
+                $result['pdfs'][] = [
+                    'id' => 'nilai-' . $source->id,
+                    'nama' => $source->dokumen_pdf_nama_asli ?: 'Dokumen Nilai Aset',
+                    'view_url' => route('nilai.pdf.preview', $source->id),
+                    'download_url' => route('nilai.pdf.download', $source->id),
+                ];
+            }
+        }
         return $result;
     }
 
@@ -1481,6 +1531,30 @@ class KIBController extends Controller
                     'sertifikat' => $row->sertifikat,
                     'penggunaan' => $row->guna,
                     'tahun' => $row->tahun,
+                ];
+            }
+        }
+        // Dokumen yang dibuat pada saat input Nilai Aset juga ditampilkan.
+        if (Schema::hasColumn('nilai_aktivas', 'dokumen_pdf')) {
+            $nilaiDocs = DB::table('nilai_aktivas as n')
+                ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+                ->where('n.id_lokasi', $lokasi)
+                ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
+                ->whereNotNull('n.dokumen_pdf')
+                ->whereRaw("BTRIM(n.dokumen_pdf) <> ''")
+                ->select('n.id', 'n.tahun', 'n.no_voucher', 'n.dokumen_pdf_nama_asli')
+                ->orderByDesc('n.id')
+                ->get();
+            foreach ($nilaiDocs as $doc) {
+                $data[] = [
+                    'id' => 'nilai-' . $doc->id,
+                    'tanah_id' => null,
+                    'nama' => $doc->dokumen_pdf_nama_asli ?: 'Dokumen Nilai Aset',
+                    'sertifikat' => 'Nilai Aset / Voucher ' . ($doc->no_voucher ?: '-'),
+                    'penggunaan' => 'Dokumen transaksi Nilai Aset',
+                    'tahun' => $doc->tahun,
+                    'view_url' => route('nilai.pdf.preview', $doc->id),
+                    'download_url' => route('nilai.pdf.download', $doc->id),
                 ];
             }
         }
