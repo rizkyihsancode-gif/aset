@@ -128,20 +128,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const q=($('#tanahSourceSearch')?.value||'').trim().toLowerCase();
     return pending.filter(p=>[p.no_voucher,p.lokasi,p.alamat,p.departemen,p.divisi,p.tahun,p.urai,p.nilai].join(' ').toLowerCase().includes(q));
   }
+  /* ===========================================================
+     AKSI TRANSAKSI PENDING
+     - jenisn=1 : Tambah sertifikat baru -> Pilih
+     - jenisn=2 : Penambahan nilai -> Tinjau riwayat, bukan sertifikat baru
+     - lainnya : Tinjau data transaksi
+     =========================================================== */
+  function reviewPending(item) {
+    if (item.id_lokasi) {
+      // Gunakan popup riwayat Nilai Tanah lama, dan tandai voucher terpilih.
+      openNilai(item.id_lokasi, item.lokasi || 'Lokasi Tanah', item);
+      return;
+    }
+
+    // Data historis yang tidak terhubung ke master lokasi tetap dapat dilihat.
+    $('#tanahNilaiTitle').textContent = `Detail Nilai Aset • ${item.no_voucher || '#' + item.id}`;
+    $('#tanahNilaiTotal').textContent = money(item.nilai);
+    const body = $('#tanahNilaiBody');
+    body.replaceChildren();
+    const row = document.createElement('tr');
+    row.className = 'tanah-nilai-selected';
+    row.innerHTML = `<td>1</td><td>${escape(item.no_voucher || '-')}</td>
+      <td>${escape(dateText(item.tgl_voucher))}</td><td>${escape(item.tahun || '-')}</td>
+      <td>${escape(item.aktiva_nama || item.aktiva_kode || '-')}</td>
+      <td class="tanah-text-wrap">${escape(item.urai || '-')}</td>
+      <td class="tanah-value-cell">${money(item.nilai)}</td><td>-</td>`;
+    body.append(row);
+    open('tanahNilaiModal');
+  }
+
   function renderPending() {
     if (!sourceBody) return;
     sourceBody.replaceChildren();
-    const data=filteredPending();
-    $('#tanahSourceTotal').textContent=`${idLocale.format(data.length)} data`;
-    if (!data.length) { sourceBody.innerHTML='<tr><td colspan="9" class="tanah-source-empty">Tidak ada transaksi yang sesuai.</td></tr>';return; }
-    data.forEach((r,i)=>{
-      const tr=document.createElement('tr'), allowed=Number(r.jenisn)===1;
-      tr.innerHTML=`<td>${i+1}</td><td><strong>${escape(r.no_voucher||'-')}</strong><small>${dateText(r.tgl_voucher)}</small></td>
-      <td><strong>${escape(r.lokasi||'-')}</strong><small>${escape(r.alamat||'-')}</small></td>
-      <td>${escape(r.departemen||'-')}</td><td>${escape(r.divisi||'-')}</td><td>${escape(r.tahun||'-')}</td>
-      <td><strong>${money(r.nilai)}</strong></td><td>${escape(r.urai||'-')}</td>
-      <td>${allowed?'<button type="button" class="tanah-source-select">Pilih</button>':'<span class="tanah-source-review">Penambahan Nilai</span>'}</td>`;
-      if(allowed)$('.tanah-source-select',tr)?.addEventListener('click',()=>showSource(r));
+    const data = filteredPending();
+    $('#tanahSourceTotal').textContent = `${idLocale.format(data.length)} data`;
+    if (!data.length) {
+      sourceBody.innerHTML = '<tr><td colspan="9" class="tanah-source-empty">Tidak ada transaksi yang sesuai.</td></tr>';
+      return;
+    }
+
+    data.forEach((item, i) => {
+      const isNew = Number(item.jenisn) === 1;
+      const isValue = Number(item.jenisn) === 2;
+      const btnLabel = isNew ? 'Pilih' : (isValue ? 'Tinjau Nilai' : 'Lihat Detail');
+      const btnClass = isNew ? 'tanah-source-select' : 'tanah-source-review';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td><strong>${escape(item.no_voucher || '-')}</strong><small>${escape(dateText(item.tgl_voucher))}</small></td>
+        <td><strong>${escape(item.lokasi || '-')}</strong><small>${escape(item.alamat || '-')}</small></td>
+        <td>${escape(item.departemen || '-')}</td>
+        <td>${escape(item.divisi || '-')}</td>
+        <td>${escape(item.tahun || '-')}</td>
+        <td><strong>${money(item.nilai)}</strong></td>
+        <td>${escape(item.urai || '-')}</td>
+        <td><button type="button" class="${btnClass}" title="${escape(isNew ? 'Buat sertifikat Tanah baru' : 'Lihat riwayat dan dokumen nilai pada lokasi ini')}">${btnLabel}</button></td>`;
+      $('button', tr).addEventListener('click', () => {
+        if (isNew) showSource(item);
+        else reviewPending(item);
+      });
       sourceBody.append(tr);
     });
   }
@@ -171,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('kib:source-selected',e=>{
     if(!e.detail)return;
     resetForm();open('tanahFormModal');
-    if(Number(e.detail.jenisn)===2){notify('Penambahan Nilai perlu ditinjau melalui riwayat Nilai, bukan membuat sertifikat baru.',true);return;}
+    if(Number(e.detail.jenisn)!==1){reviewPending(e.detail);return;}
     showSource(e.detail);
   });
   function selectValue(id,value){const el=$(id);if(!el)return;const v=String(value??'');if(el.tagName==='SELECT'&&v&&!Array.from(el.options).some(o=>o.value===v)){el.add(new Option(v,v));}el.value=v;}
@@ -383,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ---- Clicked Nilai: use EXISTING KIBController detailNilaiTanahLokasi ---- */
-  async function openNilai(loc,name) {
+  async function openNilai(loc,name,selectedItem=null) {
     $('#tanahNilaiTitle').textContent=`Riwayat Nilai • ${name}`;
     $('#tanahNilaiTotal').textContent='Memuat...';
     $('#tanahNilaiBody').innerHTML='<tr><td colspan="8" class="tanah-empty">Memuat transaksi...</td></tr>';
@@ -391,17 +436,28 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const data=await json(`${LOC}/${encodeURIComponent(loc)}/nilai`);
       const rows=Array.isArray(data.data)?data.data:[];
+      // Jika transaksi pending belum tergabung dalam filter KIB lama,
+      // tampilkan voucher yang dipilih tanpa menambah angka total database.
+      if (selectedItem && !rows.some(r => String(r.id) === String(selectedItem.id))) {
+        rows.unshift(selectedItem);
+      }
       $('#tanahNilaiTotal').textContent=money(data.total);
       const body=$('#tanahNilaiBody');body.replaceChildren();
       if(!rows.length){body.innerHTML='<tr><td colspan="8" class="tanah-empty">Belum ada transaksi Nilai Aset.</td></tr>';return;}
+      let selectedRow = null;
       rows.forEach((r,i)=>{
         const tr=document.createElement('tr');
+        if (selectedItem && String(r.id) === String(selectedItem.id)) {
+          tr.classList.add('tanah-nilai-selected');
+          selectedRow = tr;
+        }
         tr.innerHTML=`<td>${i+1}</td><td>${escape(r.no_voucher||'-')}</td><td>${dateText(r.tgl_voucher)}</td><td>${escape(r.tahun||'-')}</td>
           <td>${escape(r.nama_aktiva||r.aktiva||'-')}</td><td class="tanah-text-wrap">${escape(r.urai||'-')}</td><td class="tanah-value-cell">${money(r.nilai)}</td>
           <td>${r.pdf_preview_url ? '<button type="button" class="tanah-pdf-button js-nilai-pdf"><i data-lucide="file-text"></i> PDF</button>' : '<span class="tanah-pdf-empty">-</span>'}</td>`;
         if(r.pdf_preview_url){$('.js-nilai-pdf',tr)?.addEventListener('click',()=>showPdf({view_url:r.pdf_preview_url,download_url:r.pdf_download_url,nama:r.pdf_nama||'Dokumen Nilai Aset'}));}
         body.append(tr);
       });icons();
+      if (selectedRow) selectedRow.scrollIntoView({block:'nearest'});
     } catch(e){fail(e,'Riwayat nilai gagal dimuat');$('#tanahNilaiBody').innerHTML='<tr><td colspan="8" class="tanah-empty">Gagal memuat nilai.</td></tr>';}
   }
 

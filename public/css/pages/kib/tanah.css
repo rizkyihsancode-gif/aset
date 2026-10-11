@@ -2841,3 +2841,36 @@
     .tanah-legacy-photo-wrap img { max-height:200px; }
     .tanah-legacy-pane-foot { display:none; }
 }
+
+
+/* Tombol Tinjau Nilai: benar-benar interaktif, bukan badge pasif. */
+.tanah-source-review {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    min-height: 35px;
+    padding: 7px 12px;
+    border: 1px solid #e9bb72;
+    border-radius: 7px;
+    background: #fff1dc;
+    color: #865000;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+.tanah-source-review:hover {
+    background: #ffe2ad;
+    border-color: #d99b45;
+}
+.tanah-source-review:focus-visible {
+    outline: 3px solid rgba(215,150,45,.35);
+    outline-offset: 2px;
+}
+.tanah-nilai-table tr.tanah-nilai-selected > td {
+    background: #e4f1ff !important;
+    border-top: 2px solid #1871cf;
+    border-bottom: 2px solid #1871cf;
+}
