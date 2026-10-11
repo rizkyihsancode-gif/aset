@@ -437,6 +437,58 @@ Route::prefix('kib')
         )
             ->whereNumber('id')
             ->name('tanah.image');
+        /*
+        |--------------------------------------------------------------
+        | CRUD SERTIFIKAT DAN PDF TANAH — CONTROLLER YANG SAMA
+        |--------------------------------------------------------------
+        */
+        Route::get(
+            '/tanah/lokasi/{lokasi}/sertifikat',
+            [KIBController::class, 'lokasiSertifikat']
+        )
+            ->whereNumber('lokasi')->name('tanah.sertifikat');
+
+        Route::get(
+            '/tanah/lokasi/{lokasi}/pdf',
+            [KIBController::class, 'lokasiPdf']
+        )
+            ->whereNumber('lokasi')->name('tanah.lokasi.pdf');
+
+        Route::get(
+            '/tanah/pdf/{pdf}/view',
+            [KIBController::class, 'viewPdf']
+        )
+            ->whereNumber('pdf')->name('tanah.pdf.view');
+
+        Route::get(
+            '/tanah/pdf/{pdf}/download',
+            [KIBController::class, 'downloadPdf']
+        )
+            ->whereNumber('pdf')->name('tanah.pdf.download');
+
+        Route::post(
+            '/tanah',
+            [KIBController::class, 'store']
+        )
+            ->name('tanah.store');
+
+        Route::get(
+            '/tanah/{tanah}',
+            [KIBController::class, 'show']
+        )
+            ->whereNumber('tanah')->name('tanah.show');
+
+        Route::put(
+            '/tanah/{tanah}',
+            [KIBController::class, 'update']
+        )
+            ->whereNumber('tanah')->name('tanah.update');
+
+        Route::delete(
+            '/tanah/{tanah}',
+            [KIBController::class, 'destroy']
+        )
+            ->whereNumber('tanah')->name('tanah.destroy');
     });
 
 Route::get('/kib/mesin', function () {

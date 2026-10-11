@@ -18,7 +18,7 @@
             $tanahRows = collect($rawTanah);
         }
 
-        $barangRows = collect($barangOptions ?? ($barangs ?? []));
+        $barangRows = collect($barangRows ?? ($barangOptions ?? ($barangs ?? [])));
 
         $pendingRows = collect($pendingTanah ?? ($baru ?? []));
 
@@ -669,26 +669,10 @@
 
                                     $alamat = data_get($row, 'alamat', '-');
 
-                                    $penggunaan = data_get($row, 'guna', data_get($row, 'penggunaan', '-'));
+                                    $penggunaan = data_get($row, 'guna_ringkas', data_get($row, 'guna', '-'));
 
-                                    $nilai =
-                                        (int) (data_get(
-                                            $row,
-                                            'nilai',
-                                            data_get($row, 'total_nilai', data_get($row, 'totalNilai', 0)),
-                                        ) ?? 0);
-
-                                    /*
-                                |--------------------------------------------------------------------------
-                                | PDF
-                                |--------------------------------------------------------------------------
-                                */
-
-                                    $pdfUrl = data_get($row, 'pdf_url', data_get($row, 'dokumen_url'));
-
-                                    $pdfDownloadUrl = data_get($row, 'pdf_download_url', $pdfUrl);
-
-                                    $pdfName = data_get($row, 'pdf_name', 'Dokumen Tanah - ' . $lokasi);
+                                    $nilai = (float) data_get($row, 'nilai_tanah', 0);
+                                    $pdfCount = (int) data_get($row, 'pdf_count', 0);
 
                                     $searchText = mb_strtolower(implode(' ', [$lokasi, $alamat, $penggunaan, $nilai]));
                                 @endphp
@@ -761,42 +745,30 @@
 
                                     <td class="tanah-value-cell">
 
-                                        <strong>
-
+                                        <button type="button" class="tanah-nilai-button js-tanah-nilai"
+                                            data-location-id="{{ $locationId }}"
+                                            data-location-name="{{ $lokasi }}"
+                                            title="Lihat rincian transaksi Nilai Aset">
                                             {{ $rupiah($nilai) }}
-
-                                        </strong>
+                                            <i data-lucide="external-link"></i>
+                                        </button>
 
                                     </td>
 
 
-                                    {{-- PDF --}}
-
+                                    {{-- PDF PER LOKASI --}}
                                     <td class="tanah-pdf-cell">
-
-                                        @if ($pdfUrl)
-                                            <button type="button" class="tanah-pdf-button js-tanah-pdf"
-                                                data-pdf-url="{{ $pdfUrl }}"
-                                                data-pdf-download="{{ $pdfDownloadUrl }}"
-                                                data-pdf-name="{{ $pdfName }}" title="Preview PDF">
-
-                                                <i data-lucide="file-text"></i>
-
-                                                PDF
-
+                                        @if ($pdfCount > 0)
+                                            <button type="button" class="tanah-pdf-button js-tanah-pdf-list"
+                                                data-location-id="{{ $locationId }}"
+                                                data-location-name="{{ $lokasi }}"
+                                                title="Daftar PDF untuk lokasi ini">
+                                                <i data-lucide="file-text"></i> PDF ({{ $pdfCount }})
                                             </button>
                                         @else
-                                            <span class="tanah-pdf-empty">
-
-                                                <i data-lucide="file-x-2"></i>
-
-                                                Belum ada
-
-                                            </span>
+                                            <span class="tanah-pdf-empty"><i data-lucide="file-x-2"></i> Belum ada</span>
                                         @endif
-
                                     </td>
-
 
                                     {{-- AKSI --}}
 
@@ -807,7 +779,8 @@
                                             <button type="button" class="view js-tanah-view"
                                                 data-record-id="{{ $rowId }}"
                                                 data-location-id="{{ $locationId }}"
-                                                data-location-name="{{ $lokasi }}" title="Lihat Detail">
+                                                data-location-name="{{ $lokasi }}"
+                                                title="Lihat semua sertifikat pada lokasi">
 
                                                 <i data-lucide="eye"></i>
 
@@ -815,7 +788,8 @@
 
 
                                             <button type="button" class="edit js-tanah-edit"
-                                                data-record-id="{{ $rowId }}" title="Edit Data">
+                                                data-record-id="{{ $rowId }}"
+                                                title="Pilih sertifikat untuk diedit">
 
                                                 <i data-lucide="square-pen"></i>
 
@@ -824,7 +798,8 @@
 
                                             <button type="button" class="delete js-tanah-delete"
                                                 data-record-id="{{ $rowId }}"
-                                                data-record-name="{{ $lokasi }}" title="Hapus Data">
+                                                data-record-name="{{ $lokasi }}"
+                                                title="Pilih sertifikat untuk dihapus">
 
                                                 <i data-lucide="trash-2"></i>
 
@@ -893,7 +868,8 @@
                 @csrf
 
 
-                <input type="hidden" name="_method" id="tanahFormMethod" value="">
+                <input type="hidden" name="_method" id="tanahFormMethod" value="" disabled>
+                <input type="hidden" name="tanah_id" id="tanahEditingId" value="">
 
 
                 <input type="hidden" name="id_nilai_aktiva" id="tanahNilaiAktivaId">
@@ -1163,7 +1139,8 @@
                                     Tahun
                                 </label>
 
-                                <input type="number" name="tahun" id="tanahTahun" min="1900" max="2200">
+                                <input type="number" name="tahun" id="tanahTahun" min="1900" max="2200"
+                                    required>
 
                             </div>
 
@@ -1230,7 +1207,7 @@
                                     Tanggal Surat
                                 </label>
 
-                                <input type="date" name="tgl_tunjuk" id="tanahTglTunjuk">
+                                <input type="date" name="tgl_tunjuk" id="tanahTglTunjuk" required>
 
                             </div>
 
@@ -1304,7 +1281,7 @@
                                     Tanggal
                                 </label>
 
-                                <input type="date" name="tgl_sertifikat" id="tanahTglSertifikat">
+                                <input type="date" name="tgl_sertifikat" id="tanahTglSertifikat" required>
 
                             </div>
 
@@ -1606,6 +1583,10 @@
                             <span id="tanahFileName"></span>
 
                         </div>
+                        <button type="button" id="tanahPreviewSelectedPdf" class="tanah-button-secondary" hidden>
+                            <i data-lucide="eye"></i> Preview PDF sebelum simpan
+                        </button>
+
 
                     </section>
 
@@ -1635,6 +1616,124 @@
 
         </dialog>
 
+
+        {{-- =========================================================
+             DAFTAR SERTIFIKAT PER LOKASI
+        ========================================================== --}}
+        <dialog class="tanah-modal tanah-location-modal" id="tanahLocationModal">
+            <div class="tanah-modal-header">
+                <div><span class="tanah-modal-eyebrow">K.I.B A • DETAIL LOKASI</span>
+                    <h3 id="tanahLocationTitle">Daftar Sertifikat</h3>
+                    <p>Setiap lokasi bisa mempunyai lebih dari satu sertifikat. Pilih sertifikat sebelum Edit atau Hapus.
+                    </p>
+                </div>
+                <button type="button" class="tanah-modal-close" data-close-dialog="tanahLocationModal"
+                    aria-label="Tutup"><i data-lucide="x"></i></button>
+            </div>
+            <div class="tanah-modal-body">
+                <img id="tanahLocationPhoto" class="tanah-location-photo" alt="Foto lokasi tanah" hidden>
+                <div class="tanah-table-scroll">
+                    <table class="tanah-table tanah-location-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Barang</th>
+                                <th>Penggunaan</th>
+                                <th>Tahun</th>
+                                <th>Sertifikat</th>
+                                <th>Luas</th>
+                                <th>PDF</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tanahLocationBody">
+                            <tr>
+                                <td colspan="8" class="tanah-empty">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tanah-modal-footer">
+                <button type="button" class="tanah-button-secondary"
+                    data-close-dialog="tanahLocationModal">Tutup</button>
+            </div>
+        </dialog>
+
+        {{-- =========================================================
+             POPUP RINCIAN NILAI ASET PER LOKASI
+        ========================================================== --}}
+        <dialog class="tanah-modal tanah-nilai-modal" id="tanahNilaiModal">
+            <div class="tanah-modal-header">
+                <div>
+                    <span class="tanah-modal-eyebrow">RIWAYAT NILAI ASET</span>
+                    <h3 id="tanahNilaiTitle">Rincian Nilai Aset</h3>
+                    <p>Klik nominal pada daftar utama untuk melihat voucher per tahun.</p>
+                </div><button type="button" class="tanah-modal-close" data-close-dialog="tanahNilaiModal"
+                    aria-label="Tutup"><i data-lucide="x"></i></button>
+            </div>
+            <div class="tanah-modal-body">
+                <div class="tanah-nilai-summary">Total Nilai Tanah: <strong id="tanahNilaiTotal">Rp 0</strong></div>
+                <div class="tanah-table-scroll">
+                    <table class="tanah-table tanah-nilai-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Voucher</th>
+                                <th>Tanggal</th>
+                                <th>Tahun</th>
+                                <th>Aktiva</th>
+                                <th>Uraian</th>
+                                <th>Nilai</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tanahNilaiBody">
+                            <tr>
+                                <td colspan="7" class="tanah-empty">Memuat riwayat...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tanah-modal-footer"><button type="button" class="tanah-button-secondary"
+                    data-close-dialog="tanahNilaiModal">Tutup</button></div>
+        </dialog>
+
+        {{-- =========================================================
+             DAFTAR PDF PER LOKASI
+        ========================================================== --}}
+        <dialog class="tanah-modal tanah-documents-modal" id="tanahDocumentsModal">
+            <div class="tanah-modal-header">
+                <div>
+                    <span class="tanah-modal-eyebrow">ARSIP SERTIFIKAT</span>
+                    <h3 id="tanahDocumentsTitle">Dokumen Tanah</h3>
+                    <p>Pilih dokumen untuk preview dan download.</p>
+                </div><button type="button" class="tanah-modal-close" data-close-dialog="tanahDocumentsModal"
+                    aria-label="Tutup"><i data-lucide="x"></i></button>
+            </div>
+            <div class="tanah-modal-body">
+                <div class="tanah-table-scroll">
+                    <table class="tanah-table tanah-documents-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Sertifikat</th>
+                                <th>Tahun</th>
+                                <th>Dokumen</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tanahDocumentsBody">
+                            <tr>
+                                <td colspan="5" class="tanah-empty">Memuat dokumen...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tanah-modal-footer"><button type="button" class="tanah-button-secondary"
+                    data-close-dialog="tanahDocumentsModal">Tutup</button></div>
+        </dialog>
 
         {{-- =========================================================
          DETAIL
@@ -1775,7 +1874,9 @@
 
 
             <div class="tanah-modal-footer">
-
+                <button type="button" class="tanah-pdf-button" id="tanahDetailPdfButton" hidden>
+                    <i data-lucide="file-text"></i> Lihat Dokumen PDF
+                </button>
                 <button type="button" class="tanah-button-secondary" data-close-dialog="tanahDetailModal">
                     Tutup
                 </button>
@@ -1947,6 +2048,8 @@
         | JSON_HEX_APOS
         | JSON_HEX_QUOT
     ) !!}</script>
+
+        <script type="application/json" id="tanahOldInput">{!! json_encode(old(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
 
     </div>
 

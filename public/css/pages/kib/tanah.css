@@ -2630,3 +2630,68 @@
     }
 
 }
+/* =========================================================
+   FINAL POLISH - TANAH (berdasarkan kode proyek asli)
+   Kolom tidak diubah: Lokasi, Alamat, Penggunaan, Nilai, PDF, Aksi
+========================================================= */
+.tanah-page { font-size: 14px; }
+.tanah-heading p,.tanah-filter-header p,.tanah-incoming-content p { font-size: 14px; line-height: 1.55; }
+.tanah-table-header h3,.tanah-filter-header h3 { font-size: 18px; }
+.tanah-table thead th { font-size: 14px; padding: 14px 15px; }
+.tanah-table tbody td { font-size: 14px; padding: 13px 15px; }
+.tanah-table .tanah-location-cell strong { font-size: 14px; }
+.tanah-table .tanah-location-cell small { font-size: 12px; }
+.tanah-table .tanah-row-number { font-size: 14px; }
+.tanah-table .tanah-address-cell,.tanah-table .tanah-usage-cell { font-size: 14px; }
+.tanah-search input,.tanah-select-group select,.tanah-field input,.tanah-field select,.tanah-field textarea { font-size: 14px; }
+.tanah-field label,.tanah-form-section .tanah-section-title p { font-size: 13px; }
+.tanah-form-section .tanah-section-title h4 { font-size: 16px; }
+.tanah-source-table td,.tanah-source-table th { font-size: 13px; }
+.tanah-incoming-title-row h3 { font-size: 16px; }
+.tanah-incoming-meta > span { font-size: 12px; }
+.tanah-source-review { display:inline-block; white-space:nowrap; padding:7px 10px; border-radius:7px; background:#fff1dc; color:#915600; font-weight:700; font-size:12px; }
+.tanah-nilai-button {
+    display:inline-flex; align-items:center; justify-content:flex-end; gap:7px;
+    padding:7px 4px; border:0; background:transparent; color:#0867d3;
+    cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; line-height:1.4; text-decoration:underline;
+    text-underline-offset:3px; white-space:nowrap;
+}
+.tanah-nilai-button:hover { color:#034b99; }
+.tanah-nilai-button svg { width:15px; height:15px; flex-shrink:0; }
+.tanah-value-cell { text-align:right; }
+.tanah-pdf-button { font-size:13px; white-space:nowrap; }
+.tanah-page [hidden] { display:none !important; }
+.tanah-data-row[hidden] { display:none !important; }
+.tanah-location-modal { width:min(1200px, calc(100% - 28px)); }
+.tanah-nilai-modal { width:min(1150px, calc(100% - 28px)); }
+.tanah-documents-modal { width:min(900px, calc(100% - 28px)); }
+.tanah-location-table { min-width:1120px; }
+.tanah-nilai-table { min-width:940px; }
+.tanah-documents-table { min-width:660px; }
+.tanah-text-wrap { white-space:normal; min-width:220px; }
+.tanah-nilai-summary {
+    margin-bottom:14px; padding:14px 16px; border:1px solid #d5e8fb;
+    background:#eff7ff; border-radius:9px; color:#294969; font-size:15px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.tanah-nilai-summary strong { color:#075bb7; font-size:20px; }
+.tanah-location-photo { display:block; width:min(100%,540px); max-height:240px;
+    object-fit:cover; border:1px solid #dbe6f1; border-radius:10px; margin-bottom:16px; }
+.tanah-documents-table .tanah-actions { justify-content:flex-start; }
+.tanah-documents-table .tanah-pdf-button { display:inline-flex; align-items:center; gap:7px; min-height:35px; padding:0 12px; text-decoration:none; }
+.tanah-documents-table .tanah-pdf-button svg { width:15px; height:15px; }
+.tanah-modal-header h3 { font-size:20px; }
+.tanah-modal-header p { font-size:13px; line-height:1.5; }
+.tanah-detail-grid span { font-size:12px; }
+.tanah-detail-grid strong,.tanah-detail-full p { font-size:14px; }
+.tanah-modal .tanah-table-scroll { padding:0; }
+.tanah-form-modal .tanah-modal-body { padding:20px; }
+.tanah-form-modal .tanah-form-section { margin-bottom:17px; }
+.tanah-modal :is(button,a,input,select,textarea):focus-visible,.tanah-nilai-button:focus-visible {
+    outline:3px solid rgba(8,106,216,.35); outline-offset:2px;
+}
+@media (max-width:760px) {
+  .tanah-nilai-summary { flex-direction:column; align-items:flex-start; }
+  .tanah-heading p,.tanah-filter-header p { font-size:13px; }
+  .tanah-modal .tanah-modal-body { padding:13px; }
+}

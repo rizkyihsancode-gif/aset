@@ -6,6 +6,11 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use App\Services\KibNotificationService;
 
 class KIBController extends Controller
 {
@@ -213,7 +218,7 @@ class KIBController extends Controller
             DB::table('tanahs')
 
             ->pluck(
-                'luas_tunjuk'
+                'luas_sertifikat'
             )
 
             ->sum(
@@ -347,10 +352,29 @@ class KIBController extends Controller
         }
 
 
+        // Master barang asli untuk dropdown Create/Edit.
+        $barangRows = DB::table('barangs')
+            ->select('id', 'kode_barang', 'nama_barang')
+            ->orderBy('nama_barang')->get();
+
+        // PDF per lokasi; satu lokasi dapat memiliki beberapa sertifikat.
+        $pdfLokasi = DB::table('pdfs as p')
+            ->join('tanahs as t', 't.id', '=', 'p.id_tanah')
+            ->whereRaw("LOWER(BTRIM(p.gol)) IN ('tanah','kib a','a','1')")
+            ->select('t.id_lokasi')
+            ->selectRaw('COUNT(p.id) AS jumlah_pdf')
+            ->groupBy('t.id_lokasi')
+            ->pluck('jumlah_pdf', 'id_lokasi');
+
+        $tanahs->each(function ($row) use ($pdfLokasi) {
+            $row->pdf_count = (int) ($pdfLokasi[$row->id_lokasi] ?? 0);
+        });
+
         return view(
             'kib.tanah',
             compact(
                 'tanahs',
+                'barangRows',
                 'totalLokasiTanah',
                 'totalDataTanah',
                 'totalLuasTanah',
@@ -1373,5 +1397,325 @@ class KIBController extends Controller
             (float) $value
             :
             0;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CRUD SERTIFIKAT TANAH DAN DOKUMEN PDF (SATU KIBCONTROLLER)
+    |--------------------------------------------------------------------------
+    | Method lama dataTanah(), detailTanahLokasi(), detailNilaiTanahLokasi()
+    | dan gambarTanahLokasi() tetap dipertahankan.
+    */
+
+    private function sertifikatQuery()
+    {
+        return DB::table('tanahs as t')
+            ->leftJoin('lokasis as l', 'l.id', '=', 't.id_lokasi')
+            ->leftJoin('barangs as b', 'b.id', '=', 't.id_barang')
+            ->select('t.*')
+            ->selectRaw('BTRIM(l.lokasi) AS lokasi')
+            ->selectRaw('BTRIM(l.alamat) AS alamat')
+            ->selectRaw('BTRIM(b.nama_barang) AS nama_barang')
+            ->selectRaw('BTRIM(b.kode_barang) AS kode_barang');
+    }
+
+    /** PDFs from the existing pdfs table: one certificate can have many scans. */
+    private function pdfQuery()
+    {
+        return DB::table('pdfs as p')
+            ->whereRaw("LOWER(BTRIM(p.gol)) IN ('tanah', 'kib a', 'a', '1')");
+    }
+
+    private function pdfData(int $tanahId): array
+    {
+        return $this->pdfQuery()
+            ->where('p.id_tanah', $tanahId)
+            ->orderByDesc('p.id')
+            ->get(['p.id', 'p.dok'])
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'nama' => basename((string) ($p->dok ?: 'Dokumen tanah.pdf')),
+                'view_url' => route('kib.tanah.pdf.view', $p->id),
+                'download_url' => route('kib.tanah.pdf.download', $p->id),
+            ])->all();
+    }
+
+    private function serialize(\stdClass $row): array
+    {
+        $result = (array) $row;
+
+        $result['pdfs'] = $this->pdfData(
+            (int) $row->id
+        );
+
+        return $result;
+    }
+
+    public function lokasiSertifikat(int $lokasi)
+    {
+        $l = DB::table('lokasis')->where('id', $lokasi)->first(['id', 'lokasi', 'alamat']);
+        abort_unless($l, 404);
+
+        $rows = $this->sertifikatQuery()
+            ->where('t.id_lokasi', $lokasi)
+            ->orderBy('t.id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'lokasi' => ['id' => $l->id, 'lokasi' => trim($l->lokasi), 'alamat' => trim($l->alamat)],
+            'data' => $rows->map(fn($row) => $this->serialize($row))->values(),
+        ]);
+    }
+
+    public function lokasiPdf(int $lokasi)
+    {
+        abort_unless(DB::table('lokasis')->where('id', $lokasi)->exists(), 404);
+        $rows = $this->sertifikatQuery()->where('t.id_lokasi', $lokasi)->orderBy('t.id')->get();
+        $data = [];
+        foreach ($rows as $row) {
+            foreach ($this->pdfData((int) $row->id) as $pdf) {
+                $data[] = [
+                    ...$pdf,
+                    'tanah_id' => $row->id,
+                    'sertifikat' => $row->sertifikat,
+                    'penggunaan' => $row->guna,
+                    'tahun' => $row->tahun,
+                ];
+            }
+        }
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function show(int $tanah)
+    {
+        $row = $this->sertifikatQuery()->where('t.id', $tanah)->first();
+        abort_unless($row, 404);
+        return response()->json(['success' => true, 'data' => $this->serialize($row)]);
+    }
+
+    private function validateInput(Request $request, bool $editing = false): array
+    {
+        return $request->validate([
+            'id_nilai_aktiva' => [$editing ? 'nullable' : 'required', 'integer', 'exists:nilai_aktivas,id'],
+            'id_barang' => ['required', 'integer', 'exists:barangs,id'],
+            'tahun' => ['required', 'digits:4'],
+            'guna' => ['required', 'string', 'max:255'],
+            'no_tunjuk' => ['nullable', 'string', 'max:255'],
+            'tgl_tunjuk' => ['required', 'date'],
+            'luas_tunjuk' => ['nullable', 'numeric', 'min:0'],
+            'sertifikat' => ['nullable', 'string', 'max:255'],
+            'tgl_sertifikat' => ['required', 'date'],
+            'luas_sertifikat' => ['nullable', 'numeric', 'min:0'],
+            'no_gambar' => ['nullable', 'string', 'max:255'],
+            'tgl_gambar' => ['nullable', 'date'],
+            'luas_gambar' => ['nullable', 'numeric', 'min:0'],
+            'hak' => ['nullable', 'string', 'max:255'],
+            'asal' => ['nullable', 'string', 'max:255'],
+            'pemilik' => ['nullable', 'string', 'max:255'],
+            'ket' => ['nullable', 'string'],
+            'dokumen_pdf' => ['nullable', 'file', 'mimetypes:application/pdf', 'max:15360'],
+        ]);
+    }
+
+    private function tanahFields(array $input): array
+    {
+        $data = [
+            'id_barang' => (int) $input['id_barang'],
+            'tahun' => (string) $input['tahun'],
+            'guna' => $input['guna'],
+            'tgl_tunjuk' => $input['tgl_tunjuk'],
+            'tgl_sertifikat' => $input['tgl_sertifikat'],
+            'ket' => $input['ket'] ?? null,
+        ];
+        // Legacy SQL contains NOT NULL varchar columns; blank text uses '-'.
+        foreach (
+            [
+                'no_tunjuk',
+                'luas_tunjuk',
+                'sertifikat',
+                'luas_sertifikat',
+                'no_gambar',
+                'tgl_gambar',
+                'luas_gambar',
+                'hak',
+                'asal',
+                'pemilik'
+            ] as $name
+        ) {
+            $data[$name] = isset($input[$name]) && (string) $input[$name] !== ''
+                ? (string) $input[$name] : '-';
+        }
+        return $data;
+    }
+
+    private function uploadPdf(Request $request, int $tanahId): ?string
+    {
+        if (!$request->hasFile('dokumen_pdf')) return null;
+        $path = $request->file('dokumen_pdf')->store('tanah/sertifikat', 'local');
+        try {
+            DB::table('pdfs')->insert([
+                'id_tanah' => $tanahId,
+                'dok' => $path,
+                'gol' => 'TANAH',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Storage::disk('local')->delete($path);
+            throw $e;
+        }
+        return $path;
+    }
+
+    public function store(Request $request, KibNotificationService $notifications)
+    {
+        $input = $this->validateInput($request);
+        $categoryId = $notifications->categoryId('tanah');
+        $newFile = null;
+
+        try {
+            DB::transaction(function () use ($input, $request, $categoryId, &$newFile) {
+                // Lock pending transaction; no browser-provided location is trusted.
+                $source = DB::table('nilai_aktivas as n')
+                    ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+                    ->where('n.id', $input['id_nilai_aktiva'])
+                    ->where('n.stat', 0)
+                    ->where('n.cat', $categoryId)
+                    ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
+                    ->select('n.id', 'n.id_lokasi', 'n.jenisn')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$source || !$source->id_lokasi) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' => 'Transaksi Tanah tidak tersedia atau sudah diproses.'
+                    ]);
+                }
+                if ((int) $source->jenisn !== 1) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' => 'Penambahan Nilai bukan sertifikat baru. Pilih transaksi Penambahan Aset.'
+                    ]);
+                }
+                if (DB::table('tanahs')->where('nilai_aktiva_id', $source->id)->exists()) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' => 'Transaksi ini sudah terhubung dengan data Tanah.'
+                    ]);
+                }
+
+                $data = $this->tanahFields($input);
+                $data['id_lokasi'] = $source->id_lokasi;
+                $data['nilai_aktiva_id'] = $source->id;
+                // Legacy tanahs.nilai is only INTEGER; source values may exceed 2.1B.
+                // Keep original Tanah values empty, use nilai_aktivas for aggregated values.
+                $data['nilai'] = null;
+                $data['nilai_now'] = null;
+                $data['user'] = Auth::id();
+                $data['created_at'] = now();
+                $data['updated_at'] = now();
+                $id = DB::table('tanahs')->insertGetId($data);
+                $newFile = $this->uploadPdf($request, (int) $id);
+                DB::table('nilai_aktivas')->where('id', $source->id)->update(['stat' => 1]);
+            });
+        } catch (\Throwable $e) {
+            if ($newFile) Storage::disk('local')->delete($newFile);
+            throw $e;
+        }
+        return redirect()->route('kib.tanah')->with('success', 'Sertifikat Tanah berhasil disimpan.');
+    }
+
+    public function update(Request $request, int $tanah)
+    {
+        $row = DB::table('tanahs')->where('id', $tanah)->first();
+        abort_unless($row, 404);
+        $input = $this->validateInput($request, true);
+        $newFile = null;
+        try {
+            DB::transaction(function () use ($input, $request, $tanah, &$newFile) {
+                $data = $this->tanahFields($input);
+                $data['updated_at'] = now();
+                // Original id_lokasi, nilai_aktiva_id and nilai are never overwritten by form.
+                DB::table('tanahs')->where('id', $tanah)->update($data);
+                $newFile = $this->uploadPdf($request, $tanah);
+            });
+        } catch (\Throwable $e) {
+            if ($newFile) Storage::disk('local')->delete($newFile);
+            throw $e;
+        }
+        return redirect()->route('kib.tanah')->with('success', 'Sertifikat Tanah berhasil diperbarui.');
+    }
+
+    public function destroy(int $tanah)
+    {
+        $paths = [];
+        DB::transaction(function () use ($tanah, &$paths) {
+            $row = DB::table('tanahs')->where('id', $tanah)->lockForUpdate()->first();
+            abort_unless($row, 404);
+            // Legacy app preserved historical PDF records when deleting Tanah.
+            // Delete only NEW documents managed by this module; do not destroy old archive.
+            $newPdfQuery = $this->pdfQuery()->where('p.id_tanah', $tanah)
+                ->where('p.dok', 'like', 'tanah/sertifikat/%');
+            $paths = (clone $newPdfQuery)->pluck('p.dok')->all();
+            $newPdfQuery->delete();
+            DB::table('tanahs')->where('id', $tanah)->delete();
+            if ($row->nilai_aktiva_id) {
+                DB::table('nilai_aktivas')->where('id', $row->nilai_aktiva_id)->update(['stat' => 0]);
+            }
+        });
+        foreach ($paths as $path) {
+            if (is_string($path) && str_starts_with($path, 'tanah/sertifikat/')) {
+                Storage::disk('local')->delete($path);
+            }
+        }
+        return redirect()->route('kib.tanah')->with('success', 'Sertifikat Tanah berhasil dihapus.');
+    }
+
+    /** Resolve only files under approved roots; prevent path traversal. */
+    private function pdfFile(string $file): ?string
+    {
+        $file = trim(str_replace('\\', '/', $file));
+        if ($file === '' || preg_match('~(^/|^[a-zA-Z]:/|(^|/)\.\.(/|$)|[\x00-\x1f])~', $file)) return null;
+        $candidates = [
+            storage_path('app/private/' . $file),
+            storage_path('app/public/' . $file),
+            storage_path('app/' . $file),
+            public_path($file),
+            // Arsip PDF legacy: pdfs.dok hanya nama file; old app menyimpan
+            // di public/assets/img/lokasi/{nama_file.pdf}.
+            public_path('assets/img/lokasi/' . $file),
+        ];
+        foreach ($candidates as $candidate) {
+            $real = realpath($candidate);
+            if (!$real || !is_file($real) || strtolower(pathinfo($real, PATHINFO_EXTENSION)) !== 'pdf') continue;
+            foreach ([storage_path('app/private'), storage_path('app/public'), storage_path('app'), public_path()] as $root) {
+                $allowed = realpath($root);
+                if ($allowed && str_starts_with($real, rtrim($allowed, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) return $real;
+            }
+        }
+        return null;
+    }
+
+    private function deliverPdf(int $pdf, bool $download)
+    {
+        $row = $this->pdfQuery()->where('p.id', $pdf)->first(['p.id', 'p.dok']);
+        abort_unless($row, 404);
+        $file = $this->pdfFile((string) $row->dok);
+        abort_unless($file, 404, 'File PDF belum tersedia pada penyimpanan server.');
+        $name = 'sertifikat-tanah-' . $pdf . '.pdf';
+        return response()->file($file, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => ($download ? 'attachment' : 'inline') . '; filename="' . $name . '"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
+    public function viewPdf(int $pdf)
+    {
+        return $this->deliverPdf($pdf, false);
+    }
+    public function downloadPdf(int $pdf)
+    {
+        return $this->deliverPdf($pdf, true);
     }
 }
