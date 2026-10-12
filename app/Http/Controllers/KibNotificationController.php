@@ -8,10 +8,29 @@ use Illuminate\Support\Facades\DB;
 
 class KibNotificationController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | DATA NILAI ASET YANG BOLEH DIPILIH OLEH K.I.B
+    |--------------------------------------------------------------------------
+    |
+    | Hanya:
+    |
+    | jenisn = 1 → Penambahan Aset
+    | stat   = 0 → Belum diproses
+    | cat          sesuai module
+    |
+    */
+
     public function pending(
         string $module,
         KibNotificationService $service
     ): JsonResponse {
+
+        /*
+        |--------------------------------------------------------------------------
+        | KONFIGURASI MODULE
+        |--------------------------------------------------------------------------
+        */
 
         $modules = config(
             'kib.modules',
@@ -33,15 +52,24 @@ class KibNotificationController extends Controller
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | CATEGORY MODULE
+        |--------------------------------------------------------------------------
+        */
+
         $cat =
             $service->categoryId(
                 $module
             );
 
 
-        if ($cat === null) {
+        if (
+            $cat === null
+        ) {
 
             return response()->json([
+
                 'success' =>
                 true,
 
@@ -49,7 +77,13 @@ class KibNotificationController extends Controller
                 $module,
 
                 'label' =>
-                $modules[$module]['label'],
+                $modules[$module]['label']
+                    ?? ucfirst(
+                        $module
+                    ),
+
+                'category_id' =>
+                null,
 
                 'count' =>
                 0,
@@ -66,9 +100,21 @@ class KibNotificationController extends Controller
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | QUERY
+        |--------------------------------------------------------------------------
+        */
+
         $rows = DB::table(
             'nilai_aktivas as n'
         )
+
+            /*
+            |--------------------------------------------------------------------------
+            | LOKASI
+            |--------------------------------------------------------------------------
+            */
 
             ->leftJoin(
                 'lokasis as l',
@@ -77,12 +123,26 @@ class KibNotificationController extends Controller
                 'n.id_lokasi'
             )
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | DEPARTEMEN
+            |--------------------------------------------------------------------------
+            */
+
             ->leftJoin(
                 'departemens as d',
                 'd.id',
                 '=',
                 'n.dep'
             )
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | DIVISI
+            |--------------------------------------------------------------------------
+            */
 
             ->leftJoin(
                 'divisis as dv',
@@ -91,12 +151,26 @@ class KibNotificationController extends Controller
                 'n.div'
             )
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | GOLONGAN
+            |--------------------------------------------------------------------------
+            */
+
             ->leftJoin(
                 'golongans as g',
                 'g.id',
                 '=',
                 'n.cat'
             )
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | AKTIVA
+            |--------------------------------------------------------------------------
+            */
 
             ->leftJoin(
                 'aktivas as a',
@@ -105,15 +179,48 @@ class KibNotificationController extends Controller
                 'n.id_aktiva'
             )
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | BELUM DIPROSES
+            |--------------------------------------------------------------------------
+            */
+
             ->where(
                 'n.stat',
                 0
             )
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | HANYA PENAMBAHAN ASET
+            |--------------------------------------------------------------------------
+            */
+
+            ->where(
+                'n.jenisn',
+                1
+            )
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | SESUAI GOLONGAN
+            |--------------------------------------------------------------------------
+            */
+
             ->where(
                 'n.cat',
                 $cat
             )
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | DATA YANG DIKIRIM KE FRONTEND
+            |--------------------------------------------------------------------------
+            */
 
             ->select([
 
@@ -197,27 +304,21 @@ class KibNotificationController extends Controller
                 'n.id'
             )
 
-            ->limit(1000)
+            ->limit(
+                1000
+            )
 
             ->get();
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | FORMAT JSON
+        |--------------------------------------------------------------------------
+        */
+
         $data = $rows->map(
-            function ($row) {
-
-                $jenisLabel =
-                    match ((int) $row->jenisn) {
-
-                        1 =>
-                        'Penambahan Aset',
-
-                        2 =>
-                        'Penambahan Nilai',
-
-                        default =>
-                        'Lainnya',
-                    };
-
+            function ($row): array {
 
                 return [
 
@@ -232,7 +333,9 @@ class KibNotificationController extends Controller
                     $row->tgl_voucher,
 
                     'id_aktiva' =>
-                    $row->id_aktiva,
+                    $row->id_aktiva !== null
+                        ? (int) $row->id_aktiva
+                        : null,
 
                     'aktiva_kode' =>
                     $row->aktiva_kode
@@ -249,7 +352,8 @@ class KibNotificationController extends Controller
                     ),
 
                     'nilai_label' =>
-                    'Rp ' .
+                    'Rp '
+                        .
                         number_format(
                             (int) (
                                 $row->nilai
@@ -269,7 +373,9 @@ class KibNotificationController extends Controller
                         ?: '-',
 
                     'id_lokasi' =>
-                    $row->id_lokasi,
+                    $row->id_lokasi !== null
+                        ? (int) $row->id_lokasi
+                        : null,
 
                     'lokasi' =>
                     $row->lokasi
@@ -280,35 +386,57 @@ class KibNotificationController extends Controller
                         ?: '-',
 
                     'dep' =>
-                    $row->dep,
+                    $row->dep !== null
+                        ? (int) $row->dep
+                        : null,
 
                     'departemen' =>
                     $row->departemen
                         ?: '-',
 
                     'div' =>
-                    $row->div,
+                    $row->div !== null
+                        ? (int) $row->div
+                        : null,
 
                     'divisi' =>
                     $row->divisi
                         ?: '-',
 
                     'cat' =>
-                    $row->cat,
+                    $row->cat !== null
+                        ? (int) $row->cat
+                        : null,
 
                     'golongan' =>
                     $row->golongan
                         ?: '-',
 
+                    /*
+                     * Endpoint ini hanya mengirim
+                     * Penambahan Aset.
+                     */
                     'jenisn' =>
-                    (int) $row->jenisn,
+                    1,
 
                     'jenis_label' =>
-                    $jenisLabel,
+                    'Penambahan Aset',
+
+                    'stat' =>
+                    (int) (
+                        $row->stat
+                        ?? 0
+                    ),
                 ];
             }
         );
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESPONSE
+        |--------------------------------------------------------------------------
+        */
 
         return response()->json([
 
@@ -319,32 +447,32 @@ class KibNotificationController extends Controller
             $module,
 
             'label' =>
-            $modules[$module]['label'],
+            $modules[$module]['label']
+                ?? ucfirst(
+                    $module
+                ),
 
             'category_id' =>
-            $cat,
+            (int) $cat,
 
             'count' =>
             $data->count(),
 
+            /*
+             * Seluruh data adalah Penambahan Aset.
+             */
             'aset_baru' =>
-            $data
-                ->where(
-                    'jenisn',
-                    1
-                )
-                ->count(),
+            $data->count(),
 
+            /*
+             * Penambahan Nilai tidak masuk endpoint K.I.B.
+             */
             'penambahan_nilai' =>
-            $data
-                ->where(
-                    'jenisn',
-                    2
-                )
-                ->count(),
+            0,
 
             'data' =>
-            $data->values(),
+            $data
+                ->values(),
         ]);
     }
 }

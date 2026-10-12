@@ -1642,63 +1642,403 @@ class KIBController extends Controller
         return $path;
     }
 
-    public function store(Request $request, KibNotificationService $notifications)
-    {
-        $input = $this->validateInput($request);
-        $categoryId = $notifications->categoryId('tanah');
+    /*
+|--------------------------------------------------------------------------
+| STORE K.I.B TANAH
+|--------------------------------------------------------------------------
+|
+| Hanya transaksi:
+|
+| jenisn = 1
+| stat   = 0
+| cat    = Tanah
+|
+| yang boleh membuat data Tanah.
+|
+*/
+
+    public function store(
+        Request $request,
+        KibNotificationService $notifications
+    ) {
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDASI FORM TANAH
+    |--------------------------------------------------------------------------
+    */
+
+        $input =
+            $this->validateInput(
+                $request
+            );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CATEGORY TANAH
+    |--------------------------------------------------------------------------
+    */
+
+        $categoryId =
+            $notifications
+            ->categoryId(
+                'tanah'
+            );
+
+
+        if (
+            $categoryId === null
+        ) {
+
+            throw ValidationException::withMessages([
+                'id_nilai_aktiva' =>
+                'Golongan K.I.B Tanah tidak ditemukan.',
+            ]);
+        }
+
+
         $newFile = null;
 
+
         try {
-            DB::transaction(function () use ($input, $request, $categoryId, &$newFile) {
-                // Lock pending transaction; no browser-provided location is trusted.
-                $source = DB::table('nilai_aktivas as n')
-                    ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
-                    ->where('n.id', $input['id_nilai_aktiva'])
-                    ->where('n.stat', 0)
-                    ->where('n.cat', $categoryId)
-                    ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
-                    ->select('n.id', 'n.id_lokasi', 'n.jenisn')
-                    ->lockForUpdate()
-                    ->first();
 
-                if (!$source || !$source->id_lokasi) {
-                    throw ValidationException::withMessages([
-                        'id_nilai_aktiva' => 'Transaksi Tanah tidak tersedia atau sudah diproses.'
-                    ]);
-                }
-                // Keduanya merupakan transaksi Tanah pending yang perlu
-                // dilengkapi oleh petugas: penambahan aset (1) dan nilai (2).
-                // Lokasi wajib tetap berasal dari database, bukan dari browser.
-                if (!in_array((int) $source->jenisn, [1, 2], true)) {
-                    throw ValidationException::withMessages([
-                        'id_nilai_aktiva' => 'Jenis transaksi Tanah tidak didukung.'
-                    ]);
-                }
-                if (DB::table('tanahs')->where('nilai_aktiva_id', $source->id)->exists()) {
-                    throw ValidationException::withMessages([
-                        'id_nilai_aktiva' => 'Transaksi ini sudah terhubung dengan data Tanah.'
-                    ]);
-                }
+            DB::transaction(
+                function () use (
+                    $input,
+                    $request,
+                    $categoryId,
+                    &$newFile
+                ) {
 
-                $data = $this->tanahFields($input);
-                $data['id_lokasi'] = $source->id_lokasi;
-                $data['nilai_aktiva_id'] = $source->id;
-                // Legacy tanahs.nilai is only INTEGER; source values may exceed 2.1B.
-                // Keep original Tanah values empty, use nilai_aktivas for aggregated values.
-                $data['nilai'] = null;
-                $data['nilai_now'] = null;
-                $data['user'] = Auth::id();
-                $data['created_at'] = now();
-                $data['updated_at'] = now();
-                $id = DB::table('tanahs')->insertGetId($data);
-                $newFile = $this->uploadPdf($request, (int) $id);
-                DB::table('nilai_aktivas')->where('id', $source->id)->update(['stat' => 1]);
-            });
-        } catch (\Throwable $e) {
-            if ($newFile) Storage::disk('local')->delete($newFile);
-            throw $e;
+                    /*
+                |--------------------------------------------------------------------------
+                | AMBIL TRANSAKSI SUMBER
+                |--------------------------------------------------------------------------
+                |
+                | Jangan percaya id_lokasi dari browser.
+                | Lokasi diambil langsung dari nilai_aktivas.
+                |
+                */
+
+                    $source = DB::table(
+                        'nilai_aktivas as n'
+                    )
+
+                        ->join(
+                            'aktivas as a',
+                            'a.id',
+                            '=',
+                            'n.id_aktiva'
+                        )
+
+                        ->where(
+                            'n.id',
+                            $input['id_nilai_aktiva']
+                        )
+
+                        /*
+                    |--------------------------------------------------------------------------
+                    | BELUM DIPROSES
+                    |--------------------------------------------------------------------------
+                    */
+
+                        ->where(
+                            'n.stat',
+                            0
+                        )
+
+                        /*
+                    |--------------------------------------------------------------------------
+                    | PENAMBAHAN ASET SAJA
+                    |--------------------------------------------------------------------------
+                    */
+
+                        ->where(
+                            'n.jenisn',
+                            1
+                        )
+
+                        /*
+                    |--------------------------------------------------------------------------
+                    | GOLONGAN TANAH
+                    |--------------------------------------------------------------------------
+                    */
+
+                        ->where(
+                            'n.cat',
+                            $categoryId
+                        )
+
+                        /*
+                    |--------------------------------------------------------------------------
+                    | VALIDASI AKTIVA K.I.B TANAH
+                    |--------------------------------------------------------------------------
+                    */
+
+                        ->whereRaw(
+                            'UPPER(BTRIM(a.kib)) = ?',
+                            [
+                                'TANAH',
+                            ]
+                        )
+
+                        ->select(
+                            'n.id',
+                            'n.id_lokasi',
+                            'n.jenisn',
+                            'n.stat',
+                            'n.cat'
+                        )
+
+                        /*
+                     * Mencegah transaksi yang sama
+                     * diproses bersamaan oleh dua request.
+                     */
+                        ->lockForUpdate()
+
+                        ->first();
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | SUMBER TIDAK VALID
+                |--------------------------------------------------------------------------
+                */
+
+                    if (
+                        !$source
+                        ||
+                        !$source->id_lokasi
+                    ) {
+
+                        throw ValidationException::withMessages([
+
+                            'id_nilai_aktiva' =>
+                            'Transaksi Penambahan Aset Tanah tidak tersedia atau sudah diproses.',
+
+                        ]);
+                    }
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | DOUBLE CHECK JENIS
+                |--------------------------------------------------------------------------
+                */
+
+                    if (
+                        (int) $source->jenisn
+                        !== 1
+                    ) {
+
+                        throw ValidationException::withMessages([
+
+                            'id_nilai_aktiva' =>
+                            'Hanya transaksi Penambahan Aset yang dapat dibuat menjadi data K.I.B Tanah.',
+
+                        ]);
+                    }
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | CEGAH DUPLIKASI
+                |--------------------------------------------------------------------------
+                */
+
+                    if (
+                        DB::table(
+                            'tanahs'
+                        )
+                        ->where(
+                            'nilai_aktiva_id',
+                            $source->id
+                        )
+                        ->exists()
+                    ) {
+
+                        throw ValidationException::withMessages([
+
+                            'id_nilai_aktiva' =>
+                            'Transaksi Nilai Aset ini sudah terhubung dengan data Tanah.',
+
+                        ]);
+                    }
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | DATA TANAH
+                |--------------------------------------------------------------------------
+                */
+
+                    $data =
+                        $this->tanahFields(
+                            $input
+                        );
+
+
+                    /*
+                 * Lokasi berasal dari transaksi Nilai Aset,
+                 * bukan input hidden browser.
+                 */
+                    $data['id_lokasi'] =
+                        (int) $source->id_lokasi;
+
+
+                    /*
+                 * Simpan hubungan transaksi sumber.
+                 */
+                    $data['nilai_aktiva_id'] =
+                        (int) $source->id;
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | NILAI LEGACY
+                |--------------------------------------------------------------------------
+                |
+                | Nilai Tanah sekarang dihitung dari nilai_aktivas.
+                |
+                | Jangan copy nilai transaksi ke tanahs.nilai
+                | karena kolom lama INTEGER dapat overflow.
+                |
+                */
+
+                    $data['nilai'] = null;
+
+
+                    $data['nilai_now'] = null;
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | USER DAN TIMESTAMP
+                |--------------------------------------------------------------------------
+                */
+
+                    $data['user'] =
+                        Auth::id();
+
+
+                    $data['created_at'] =
+                        now();
+
+
+                    $data['updated_at'] =
+                        now();
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | INSERT TANAH
+                |--------------------------------------------------------------------------
+                */
+
+                    $tanahId =
+                        DB::table(
+                            'tanahs'
+                        )
+                        ->insertGetId(
+                            $data
+                        );
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | PDF SERTIFIKAT
+                |--------------------------------------------------------------------------
+                */
+
+                    $newFile =
+                        $this->uploadPdf(
+                            $request,
+                            (int) $tanahId
+                        );
+
+
+                    /*
+                |--------------------------------------------------------------------------
+                | TRANSAKSI SELESAI DIPROSES
+                |--------------------------------------------------------------------------
+                |
+                | Ini membuat:
+                |
+                | stat 0 → 1
+                |
+                | sehingga:
+                |
+                | - badge berkurang
+                | - transaksi hilang dari daftar Pilih
+                |
+                */
+
+                    DB::table(
+                        'nilai_aktivas'
+                    )
+                        ->where(
+                            'id',
+                            $source->id
+                        )
+                        ->update([
+                            'stat' =>
+                            1,
+
+                            'updated_at' =>
+                            now(),
+                        ]);
+                }
+            );
+        } catch (\Throwable $exception) {
+
+            /*
+        |--------------------------------------------------------------------------
+        | CLEANUP FILE
+        |--------------------------------------------------------------------------
+        */
+
+            if (
+                $newFile
+                &&
+                Storage::disk(
+                    'local'
+                )->exists(
+                    $newFile
+                )
+            ) {
+
+                Storage::disk(
+                    'local'
+                )->delete(
+                    $newFile
+                );
+            }
+
+
+            throw $exception;
         }
-        return redirect()->route('kib.tanah')->with('success', 'Sertifikat Tanah berhasil disimpan.');
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | CLEAR CACHE SERVICE
+    |--------------------------------------------------------------------------
+    */
+
+        $notifications
+            ->clearCache();
+
+
+        return redirect()
+
+            ->route(
+                'kib.tanah'
+            )
+
+            ->with(
+                'success',
+                'Data K.I.B Tanah berhasil disimpan.'
+            );
     }
 
     public function update(Request $request, int $tanah)
@@ -1722,29 +2062,179 @@ class KIBController extends Controller
         return redirect()->route('kib.tanah')->with('success', 'Sertifikat Tanah berhasil diperbarui.');
     }
 
-    public function destroy(int $tanah)
-    {
+    /*
+|--------------------------------------------------------------------------
+| DELETE DATA TANAH
+|--------------------------------------------------------------------------
+*/
+
+    public function destroy(
+        int $tanah
+    ) {
         $paths = [];
-        DB::transaction(function () use ($tanah, &$paths) {
-            $row = DB::table('tanahs')->where('id', $tanah)->lockForUpdate()->first();
-            abort_unless($row, 404);
-            // Legacy app preserved historical PDF records when deleting Tanah.
-            // Delete only NEW documents managed by this module; do not destroy old archive.
-            $newPdfQuery = $this->pdfQuery()->where('p.id_tanah', $tanah)
-                ->where('p.dok', 'like', 'tanah/sertifikat/%');
-            $paths = (clone $newPdfQuery)->pluck('p.dok')->all();
-            $newPdfQuery->delete();
-            DB::table('tanahs')->where('id', $tanah)->delete();
-            if ($row->nilai_aktiva_id) {
-                DB::table('nilai_aktivas')->where('id', $row->nilai_aktiva_id)->update(['stat' => 0]);
+
+
+        DB::transaction(
+            function () use (
+                $tanah,
+                &$paths
+            ) {
+
+                $row =
+                    DB::table(
+                        'tanahs'
+                    )
+
+                    ->where(
+                        'id',
+                        $tanah
+                    )
+
+                    ->lockForUpdate()
+
+                    ->first();
+
+
+                abort_unless(
+                    $row,
+                    404
+                );
+
+
+                /*
+            |--------------------------------------------------------------------------
+            | PDF BARU YANG DIKELOLA APLIKASI BARU
+            |--------------------------------------------------------------------------
+            */
+
+                $newPdfQuery =
+                    $this
+                    ->pdfQuery()
+
+                    ->where(
+                        'p.id_tanah',
+                        $tanah
+                    )
+
+                    ->where(
+                        'p.dok',
+                        'like',
+                        'tanah/sertifikat/%'
+                    );
+
+
+                $paths =
+                    (clone $newPdfQuery)
+
+                    ->pluck(
+                        'p.dok'
+                    )
+
+                    ->all();
+
+
+                $newPdfQuery
+                    ->delete();
+
+
+                /*
+            |--------------------------------------------------------------------------
+            | DELETE TANAH
+            |--------------------------------------------------------------------------
+            */
+
+                DB::table(
+                    'tanahs'
+                )
+                    ->where(
+                        'id',
+                        $tanah
+                    )
+                    ->delete();
+
+
+                /*
+            |--------------------------------------------------------------------------
+            | KEMBALIKAN SUMBER MENJADI PENDING
+            |--------------------------------------------------------------------------
+            |
+            | Jika sertifikat yang dibuat dari Nilai Aset dihapus,
+            | Penambahan Aset tersebut harus dapat diproses kembali.
+            |
+            */
+
+                if (
+                    !empty($row->nilai_aktiva_id)
+                ) {
+
+                    DB::table(
+                        'nilai_aktivas'
+                    )
+
+                        ->where(
+                            'id',
+                            $row->nilai_aktiva_id
+                        )
+
+                        ->where(
+                            'jenisn',
+                            1
+                        )
+
+                        ->update([
+
+                            'stat' =>
+                            0,
+
+                            'updated_at' =>
+                            now(),
+                        ]);
+                }
             }
-        });
-        foreach ($paths as $path) {
-            if (is_string($path) && str_starts_with($path, 'tanah/sertifikat/')) {
-                Storage::disk('local')->delete($path);
+        );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | DELETE FILE FISIK
+    |--------------------------------------------------------------------------
+    */
+
+        foreach (
+            $paths
+            as $path
+        ) {
+
+            if (
+                is_string(
+                    $path
+                )
+                &&
+                str_starts_with(
+                    $path,
+                    'tanah/sertifikat/'
+                )
+            ) {
+
+                Storage::disk(
+                    'local'
+                )->delete(
+                    $path
+                );
             }
         }
-        return redirect()->route('kib.tanah')->with('success', 'Sertifikat Tanah berhasil dihapus.');
+
+
+        return redirect()
+
+            ->route(
+                'kib.tanah'
+            )
+
+            ->with(
+                'success',
+                'Sertifikat Tanah berhasil dihapus.'
+            );
     }
 
     /** Resolve only files under approved roots; prevent path traversal. */

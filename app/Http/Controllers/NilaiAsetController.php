@@ -823,6 +823,21 @@ class NilaiAsetController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /*
+|--------------------------------------------------------------------------
+| STORE NILAI ASET
+|--------------------------------------------------------------------------
+|
+| PENAMBAHAN ASET
+| jenisn = 1
+| stat   = 0
+|
+| PENAMBAHAN NILAI
+| jenisn = 2
+| stat   = 1
+|
+*/
+
     public function store(Request $request)
     {
         $validated =
@@ -830,36 +845,95 @@ class NilaiAsetController extends Controller
                 $request
             );
 
+
         $pdf =
             $request->file(
                 'dokumen_pdf'
             );
 
+
         unset(
             $validated['dokumen_pdf']
         );
 
-        /*
-        | Status baru sesuai mekanisme lama.
-        */
-        $validated['stat'] =
-            0;
 
-        $validated['user'] =
-            Auth::id();
+        /*
+    |--------------------------------------------------------------------------
+    | TENTUKAN STATUS
+    |--------------------------------------------------------------------------
+    */
+
+        $jenis =
+            (int) $validated['jenisn'];
+
+
+        $validated['stat'] =
+            $jenis === 1
+            ? 0
+            : 1;
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | USER
+    |--------------------------------------------------------------------------
+    */
+
+        $validated['user'] = Auth::id();
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | SIMPAN
+    |--------------------------------------------------------------------------
+    */
 
         $record =
             NilaiAktiva::create(
                 $validated
             );
 
+
+        /*
+    |--------------------------------------------------------------------------
+    | PDF
+    |--------------------------------------------------------------------------
+    */
+
         if ($pdf) {
 
-            $this->storePdf(
-                $record,
-                $pdf
-            );
+            try {
+
+                $this->storePdf(
+                    $record,
+                    $pdf
+                );
+            } catch (\Throwable $exception) {
+
+                /*
+             * Jika upload PDF gagal,
+             * jangan tinggalkan transaksi setengah jadi.
+             */
+                $record->delete();
+
+                throw $exception;
+            }
         }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | MESSAGE
+    |--------------------------------------------------------------------------
+    */
+
+        $message =
+            $jenis === 1
+
+            ? 'Penambahan Aset berhasil disimpan dan masuk ke antrian K.I.B sesuai golongan.'
+
+            : 'Penambahan Nilai berhasil disimpan pada Nilai Aset.';
+
 
         return redirect()
 
@@ -869,7 +943,7 @@ class NilaiAsetController extends Controller
 
             ->with(
                 'success',
-                'Data Nilai Aset berhasil ditambahkan.'
+                $message
             );
     }
 
@@ -878,6 +952,12 @@ class NilaiAsetController extends Controller
     | UPDATE
     |--------------------------------------------------------------------------
     */
+
+    /*
+|--------------------------------------------------------------------------
+| UPDATE NILAI ASET
+|--------------------------------------------------------------------------
+*/
 
     public function update(
         Request $request,
@@ -888,35 +968,133 @@ class NilaiAsetController extends Controller
                 $nilai
             );
 
+
         $validated =
             $this->validateData(
                 $request
             );
+
 
         $pdf =
             $request->file(
                 'dokumen_pdf'
             );
 
+
         unset(
             $validated['dokumen_pdf']
         );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | JENIS BARU
+    |--------------------------------------------------------------------------
+    */
+
+        $jenisBaru =
+            (int) $validated['jenisn'];
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | STATUS BARU
+    |--------------------------------------------------------------------------
+    |
+    | Penambahan Nilai:
+    | selalu stat = 1.
+    |
+    | Penambahan Aset baru:
+    | stat = 0.
+    |
+    | Jika Penambahan Aset sebelumnya sudah diproses K.I.B:
+    | pertahankan stat = 1.
+    |
+    */
+
+        if (
+            $jenisBaru === 2
+        ) {
+
+            $validated['stat'] = 1;
+        } elseif (
+            (int) $record->jenisn === 1
+            &&
+            (int) $record->stat === 1
+        ) {
+
+            /*
+         * Sudah pernah diproses K.I.B.
+         * Jangan munculkan kembali sebagai pending.
+         */
+            $validated['stat'] = 1;
+        } else {
+
+            /*
+         * Penambahan Aset yang belum pernah diproses.
+         */
+            $validated['stat'] = 0;
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE DATABASE
+    |--------------------------------------------------------------------------
+    */
 
         $record->update(
             $validated
         );
 
+
+        /*
+    |--------------------------------------------------------------------------
+    | GANTI PDF
+    |--------------------------------------------------------------------------
+    */
+
         if ($pdf) {
 
-            $this->deletePdf(
-                $record
-            );
+            $oldPdf =
+                $record->dokumen_pdf;
 
+
+            /*
+         * Upload file baru lebih dahulu.
+         */
             $this->storePdf(
                 $record,
                 $pdf
             );
+
+
+            /*
+         * Setelah PDF baru berhasil tersimpan,
+         * hapus PDF lama.
+         */
+            if (
+                $oldPdf
+                &&
+                $oldPdf !==
+                $record->fresh()
+                ->dokumen_pdf
+                &&
+                Storage::disk(
+                    'local'
+                )->exists(
+                    $oldPdf
+                )
+            ) {
+
+                Storage::disk(
+                    'local'
+                )->delete(
+                    $oldPdf
+                );
+            }
         }
+
 
         return redirect()
 

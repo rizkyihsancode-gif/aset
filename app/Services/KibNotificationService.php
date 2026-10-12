@@ -2,19 +2,35 @@
 
 namespace App\Services;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class KibNotificationService
 {
+    /**
+     * Cache summary selama satu request.
+     */
     private ?array $summaryCache = null;
 
+    /**
+     * Cache mapping module K.I.B → category ID.
+     */
     private ?array $categoryCache = null;
 
 
     /*
     |--------------------------------------------------------------------------
-    | NORMALIZE
+    | NORMALIZE TEXT
     |--------------------------------------------------------------------------
+    |
+    | Digunakan untuk menyamakan penulisan nama golongan.
+    |
+    | Contoh:
+    |
+    | KIB A - TANAH
+    | menjadi:
+    | KIB A TANAH
+    |
     */
 
     private function normalize(?string $value): string
@@ -48,13 +64,57 @@ class KibNotificationService
 
     /*
     |--------------------------------------------------------------------------
-    | RESOLVE CATEGORY IDs
+    | QUERY DASAR PENDING K.I.B
     |--------------------------------------------------------------------------
+    |
+    | HANYA:
+    |
+    | stat   = 0
+    | jenisn = 1
+    |
+    | Artinya hanya Penambahan Aset yang belum diproses.
+    |
+    */
+
+    private function pendingBaseQuery(): Builder
+    {
+        return DB::table(
+            'nilai_aktivas'
+        )
+            ->where(
+                'stat',
+                0
+            )
+            ->where(
+                'jenisn',
+                1
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESOLVE CATEGORY
+    |--------------------------------------------------------------------------
+    |
+    | Hasil contoh:
+    |
+    | tanah      => 1
+    | mesin      => 2
+    | gedung     => 3
+    | jalan      => 4
+    | aset_tetap => 5
+    | konstruksi => 6
+    | kir        => 7
+    |
     */
 
     public function categories(): array
     {
-        if ($this->categoryCache !== null) {
+        if (
+            $this->categoryCache
+            !== null
+        ) {
             return $this->categoryCache;
         }
 
@@ -65,37 +125,73 @@ class KibNotificationService
         );
 
 
+        if (
+            empty($modules)
+        ) {
+            $this->categoryCache = [];
+
+            return [];
+        }
+
+
         $golongans = DB::table(
             'golongans'
         )
-            ->select([
+            ->select(
                 'id',
-                'nama',
-            ])
-            ->orderBy('id')
+                'nama'
+            )
+            ->orderBy(
+                'id'
+            )
             ->get();
 
 
         $resolved = [];
 
 
-        foreach ($modules as $module => $config) {
+        foreach (
+            $modules
+            as $module => $moduleConfig
+        ) {
 
             $resolvedId = null;
 
 
+            /*
+            |--------------------------------------------------------------------------
+            | ALIASES
+            |--------------------------------------------------------------------------
+            */
+
             $aliases = collect(
-                $config['aliases'] ?? []
+                $moduleConfig['aliases']
+                    ?? []
             )
                 ->map(
                     fn($alias) =>
-                    $this->normalize($alias)
+                    $this->normalize(
+                        $alias
+                    )
                 )
-                ->filter()
+                ->filter(
+                    fn($alias) =>
+                    $alias !== ''
+                )
+                ->unique()
                 ->values();
 
 
-            foreach ($golongans as $golongan) {
+            /*
+            |--------------------------------------------------------------------------
+            | CARI DI TABEL GOLONGANS
+            |--------------------------------------------------------------------------
+            */
+
+            foreach (
+                $golongans
+                as $golongan
+            ) {
 
                 $golonganName =
                     $this->normalize(
@@ -103,19 +199,61 @@ class KibNotificationService
                     );
 
 
-                foreach ($aliases as $alias) {
+                if (
+                    $golonganName === ''
+                ) {
+                    continue;
+                }
+
+
+                foreach (
+                    $aliases
+                    as $alias
+                ) {
 
                     if (
+                        $alias === ''
+                    ) {
+                        continue;
+                    }
+
+
+                    /*
+                     * Prioritas pertama:
+                     * harus sama persis.
+                     */
+                    if (
                         $golonganName === $alias
-                        ||
-                        str_contains(
-                            $golonganName,
+                    ) {
+                        $resolvedId =
+                            (int) $golongan->id;
+
+                        break 2;
+                    }
+
+
+                    /*
+                     * Prioritas kedua:
+                     * contains.
+                     *
+                     * Alias pendek tidak dipakai agar
+                     * mengurangi kemungkinan salah cocok.
+                     */
+                    if (
+                        mb_strlen(
                             $alias
-                        )
-                        ||
-                        str_contains(
-                            $alias,
-                            $golonganName
+                        ) >= 4
+                        &&
+                        (
+                            str_contains(
+                                $golonganName,
+                                $alias
+                            )
+                            ||
+                            str_contains(
+                                $alias,
+                                $golonganName
+                            )
                         )
                     ) {
 
@@ -128,10 +266,18 @@ class KibNotificationService
             }
 
 
-            if ($resolvedId === null) {
+            /*
+            |--------------------------------------------------------------------------
+            | FALLBACK
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $resolvedId === null
+            ) {
 
                 $fallback =
-                    $config['cat_fallback']
+                    $moduleConfig['cat_fallback']
                     ?? null;
 
 
@@ -142,8 +288,7 @@ class KibNotificationService
             }
 
 
-            $resolved[$module] =
-                $resolvedId;
+            $resolved[$module] = $resolvedId;
         }
 
 
@@ -165,14 +310,37 @@ class KibNotificationService
         string $module
     ): ?int {
 
-        return $this->categories()[$module] ?? null;
+        $categories =
+            $this->categories();
+
+
+        if (
+            !array_key_exists(
+                $module,
+                $categories
+            )
+        ) {
+            return null;
+        }
+
+
+        return $categories[$module] !== null
+            ? (int) $categories[$module]
+            : null;
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | SUMMARY
+    | SUMMARY NOTIFIKASI
     |--------------------------------------------------------------------------
+    |
+    | Digunakan sidebar dan card notifikasi K.I.B.
+    |
+    | Penting:
+    |
+    | Penambahan Nilai TIDAK dihitung.
+    |
     */
 
     public function summary(): array
@@ -181,7 +349,6 @@ class KibNotificationService
             $this->summaryCache
             !== null
         ) {
-
             return $this->summaryCache;
         }
 
@@ -196,10 +363,9 @@ class KibNotificationService
             $this->categories();
 
 
-        $categoryIds =
-            collect(
-                $categories
-            )
+        $categoryIds = collect(
+            $categories
+        )
             ->filter(
                 fn($id) =>
                 $id !== null
@@ -213,48 +379,18 @@ class KibNotificationService
             ->all();
 
 
-        $rows = collect();
-
-
-        if (!empty($categoryIds)) {
-
-            $rows = DB::table(
-                'nilai_aktivas'
-            )
-
-                ->selectRaw(
-                    '
-                    cat,
-                    COALESCE(jenisn, 0) AS jenisn,
-                    COUNT(*) AS total
-                    '
-                )
-
-                ->where(
-                    'stat',
-                    0
-                )
-
-                ->whereIn(
-                    'cat',
-                    $categoryIds
-                )
-
-                ->groupBy(
-                    'cat',
-                    'jenisn'
-                )
-
-                ->get();
-        }
-
+        /*
+        |--------------------------------------------------------------------------
+        | DEFAULT RESULT
+        |--------------------------------------------------------------------------
+        */
 
         $result = [];
 
 
         foreach (
             $modules
-            as $module => $config
+            as $module => $moduleConfig
         ) {
 
             $result[$module] = [
@@ -263,16 +399,26 @@ class KibNotificationService
                 $module,
 
                 'cat' =>
-                $categories[$module] ?? null,
+                $categories[$module]
+                    ?? null,
 
                 'label' =>
-                $config['label'],
+                $moduleConfig['label']
+                    ?? ucfirst(
+                        str_replace(
+                            '_',
+                            ' ',
+                            $module
+                        )
+                    ),
 
                 'url' =>
-                $config['url'],
+                $moduleConfig['url']
+                    ?? '#',
 
                 'icon' =>
-                $config['icon'],
+                $moduleConfig['icon']
+                    ?? 'bell',
 
                 'total' =>
                 0,
@@ -280,6 +426,10 @@ class KibNotificationService
                 'aset_baru' =>
                 0,
 
+                /*
+                 * Tetap ada supaya Blade lama
+                 * tidak error.
+                 */
                 'penambahan_nilai' =>
                 0,
 
@@ -289,66 +439,108 @@ class KibNotificationService
         }
 
 
-        foreach ($rows as $row) {
+        /*
+        |--------------------------------------------------------------------------
+        | QUERY JUMLAH PENDING
+        |--------------------------------------------------------------------------
+        */
 
-            $cat =
-                (int) $row->cat;
+        if (
+            !empty($categoryIds)
+        ) {
 
-            $jenis =
-                (int) $row->jenisn;
+            $rows =
+                $this
+                ->pendingBaseQuery()
 
-            $total =
-                (int) $row->total;
+                ->whereIn(
+                    'cat',
+                    $categoryIds
+                )
+
+                ->select(
+                    'cat'
+                )
+
+                ->selectRaw(
+                    'COUNT(*) AS total'
+                )
+
+                ->groupBy(
+                    'cat'
+                )
+
+                ->get();
 
 
             foreach (
-                $categories
-                as $module => $categoryId
+                $rows
+                as $row
             ) {
 
-                if (
-                    $categoryId === null
-                    ||
-                    (int) $categoryId
-                    !== $cat
+                $cat =
+                    (int) $row->cat;
+
+
+                $total =
+                    (int) $row->total;
+
+
+                foreach (
+                    $categories
+                    as $module => $categoryId
                 ) {
 
-                    continue;
+                    if (
+                        $categoryId === null
+                        ||
+                        (int) $categoryId
+                        !==
+                        $cat
+                    ) {
+                        continue;
+                    }
+
+
+                    /*
+                     * Karena query hanya jenisn = 1,
+                     * total = jumlah Penambahan Aset.
+                     */
+                    $result[$module]['total'] = $total;
+
+
+                    $result[$module]['aset_baru'] = $total;
+
+
+                    break;
                 }
-
-
-                $result[$module]['total'] += $total;
-
-
-                if ($jenis === 1) {
-
-                    $result[$module]['aset_baru'] += $total;
-                } elseif ($jenis === 2) {
-
-                    $result[$module]['penambahan_nilai'] += $total;
-                } else {
-
-                    $result[$module]['lainnya'] += $total;
-                }
-
-
-                break;
             }
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL PARENT K.I.B
+        |--------------------------------------------------------------------------
+        */
+
         $grandTotal = 0;
 
 
-        foreach ($result as $item) {
+        foreach (
+            $result
+            as $item
+        ) {
 
             $grandTotal +=
-                (int) $item['total'];
+                (int) (
+                    $item['total']
+                    ?? 0
+                );
         }
 
 
-        $result['_total'] =
-            $grandTotal;
+        $result['_total'] = $grandTotal;
 
 
         $this->summaryCache =
@@ -378,7 +570,6 @@ class KibNotificationService
                 $summary[$module]
             )
         ) {
-
             return $summary[$module];
         }
 
@@ -392,7 +583,13 @@ class KibNotificationService
             null,
 
             'label' =>
-            ucfirst($module),
+            ucfirst(
+                str_replace(
+                    '_',
+                    ' ',
+                    $module
+                )
+            ),
 
             'url' =>
             '#',
@@ -412,5 +609,59 @@ class KibNotificationService
             'lainnya' =>
             0,
         ];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOTAL NOTIFIKASI
+    |--------------------------------------------------------------------------
+    */
+
+    public function total(): int
+    {
+        return (int) (
+            $this
+                ->summary()['_total']
+            ?? 0
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CEK NOTIFIKASI MODULE
+    |--------------------------------------------------------------------------
+    */
+
+    public function hasNotification(
+        string $module
+    ): bool {
+
+        return (
+            (int) (
+                $this
+                    ->module(
+                        $module
+                    )['total']
+                ?? 0
+            )
+        ) > 0;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLEAR CACHE
+    |--------------------------------------------------------------------------
+    */
+
+    public function clearCache(): void
+    {
+        $this->summaryCache =
+            null;
+
+        $this->categoryCache =
+            null;
     }
 }
