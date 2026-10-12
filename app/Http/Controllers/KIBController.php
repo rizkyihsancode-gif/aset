@@ -1656,6 +1656,20 @@ class KIBController extends Controller
      *
      * Penambahan Nilai baru tidak akan masuk karena disimpan stat=1.
      */
+
+    /**
+     * ================================================================
+     * STORE DATA K.I.B TANAH
+     * ================================================================
+     *
+     * Kompatibilitas:
+     * - Menerima transaksi stat=0 sesuai web lama.
+     * - Hanya kategori Tanah.
+     * - Menggunakan lokasi dari sumber Nilai Aset.
+     * - Setelah berhasil, status sumber menjadi stat=1.
+     *
+     * Penambahan Nilai baru tidak akan masuk karena disimpan stat=1.
+     */
     public function store(
         Request $request,
         KibNotificationService $notifications
@@ -1837,6 +1851,7 @@ class KIBController extends Controller
     }
 
 
+
     public function update(Request $request, int $tanah)
     {
         $row = DB::table('tanahs')->where('id', $tanah)->first();
@@ -1863,6 +1878,7 @@ class KIBController extends Controller
 | DELETE DATA TANAH
 |--------------------------------------------------------------------------
 */
+
 
 
     /**
@@ -1960,6 +1976,7 @@ class KIBController extends Controller
                 'Data Tanah berhasil dihapus.'
             );
     }
+
 
 
     /** Resolve only files under approved roots; prevent path traversal. */

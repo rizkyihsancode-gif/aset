@@ -8,471 +8,262 @@ use Illuminate\Support\Facades\DB;
 
 class KibNotificationController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | DATA NILAI ASET YANG BOLEH DIPILIH OLEH K.I.B
-    |--------------------------------------------------------------------------
-    |
-    | Hanya:
-    |
-    | jenisn = 1 → Penambahan Aset
-    | stat   = 0 → Belum diproses
-    | cat          sesuai module
-    |
-    */
-
+    /**
+     * ============================================================
+     * DATA PENDING K.I.B
+     * ============================================================
+     *
+     * Data lama dan baru:
+     *   stat = 0 → masuk pending K.I.B
+     *   cat      → menentukan module
+     *
+     * Penambahan Nilai yang BARU disimpan stat = 1,
+     * jadi tidak akan masuk ke sini.
+     */
     public function pending(
         string $module,
         KibNotificationService $service
     ): JsonResponse {
+        // --------------------------------------------------------
+        // 01. VALIDASI MODULE
+        // --------------------------------------------------------
+        $modules = config('kib.modules', []);
 
-        /*
-        |--------------------------------------------------------------------------
-        | KONFIGURASI MODULE
-        |--------------------------------------------------------------------------
-        */
-
-        $modules = config(
-            'kib.modules',
-            []
+        abort_unless(
+            array_key_exists($module, $modules),
+            404,
+            'Modul K.I.B tidak ditemukan.'
         );
 
+        $moduleConfig = $modules[$module];
+        $cat = $service->categoryId($module);
 
-        if (
-            !array_key_exists(
-                $module,
-                $modules
-            )
-        ) {
-
-            abort(
-                404,
-                'Modul K.I.B tidak ditemukan.'
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CATEGORY MODULE
-        |--------------------------------------------------------------------------
-        */
-
-        $cat =
-            $service->categoryId(
-                $module
-            );
-
-
-        if (
-            $cat === null
-        ) {
-
+        // --------------------------------------------------------
+        // 02. RESPONSE JIKA CATEGORY TIDAK DITEMUKAN
+        // --------------------------------------------------------
+        if ($cat === null) {
             return response()->json([
-
-                'success' =>
-                true,
-
-                'module' =>
-                $module,
-
-                'label' =>
-                $modules[$module]['label']
-                    ?? ucfirst(
-                        $module
-                    ),
-
-                'category_id' =>
-                null,
-
-                'count' =>
-                0,
-
-                'aset_baru' =>
-                0,
-
-                'penambahan_nilai' =>
-                0,
-
-                'data' =>
-                [],
+                'success' => true,
+                'module' => $module,
+                'label' => $moduleConfig['label'] ?? ucfirst($module),
+                'category_id' => null,
+                'count' => 0,
+                'aset_baru' => 0,
+                'penambahan_nilai' => 0,
+                'data' => [],
             ]);
         }
 
+        // --------------------------------------------------------
+        // 03. QUERY DASAR PENDING
+        // --------------------------------------------------------
+        //
+        // Jangan tambahkan where('jenisn', 1) di sini,
+        // karena akan menyembunyikan histori web lama.
+        //
+        $pending = DB::table('nilai_aktivas')
+            ->where('stat', 0)
+            ->where('cat', $cat);
 
-        /*
-        |--------------------------------------------------------------------------
-        | QUERY
-        |--------------------------------------------------------------------------
-        */
+        // Jumlah seluruh data untuk badge dan response.
+        $totalPending = (clone $pending)->count();
 
-        $rows = DB::table(
-            'nilai_aktivas as n'
-        )
+        // Jumlah per jenis untuk badge rincian.
+        $jenisCounts = (clone $pending)
+            ->selectRaw(
+                'COALESCE(jenisn, 0) AS jenis, COUNT(*) AS total'
+            )
+            ->groupBy('jenisn')
+            ->pluck('total', 'jenis');
 
-            /*
-            |--------------------------------------------------------------------------
-            | LOKASI
-            |--------------------------------------------------------------------------
-            */
-
+        // --------------------------------------------------------
+        // 04. QUERY DETAIL TRANSAKSI
+        // --------------------------------------------------------
+        $rows = DB::table('nilai_aktivas as n')
             ->leftJoin(
                 'lokasis as l',
                 'l.id',
                 '=',
                 'n.id_lokasi'
             )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | DEPARTEMEN
-            |--------------------------------------------------------------------------
-            */
-
             ->leftJoin(
                 'departemens as d',
                 'd.id',
                 '=',
                 'n.dep'
             )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | DIVISI
-            |--------------------------------------------------------------------------
-            */
-
             ->leftJoin(
                 'divisis as dv',
                 'dv.id',
                 '=',
                 'n.div'
             )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | GOLONGAN
-            |--------------------------------------------------------------------------
-            */
-
             ->leftJoin(
                 'golongans as g',
                 'g.id',
                 '=',
                 'n.cat'
             )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | AKTIVA
-            |--------------------------------------------------------------------------
-            */
-
             ->leftJoin(
                 'aktivas as a',
                 'a.id',
                 '=',
                 'n.id_aktiva'
             )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | BELUM DIPROSES
-            |--------------------------------------------------------------------------
-            */
-
-            ->where(
-                'n.stat',
-                0
-            )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | HANYA PENAMBAHAN ASET
-            |--------------------------------------------------------------------------
-            */
-
-            ->where(
-                'n.jenisn',
-                1
-            )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | SESUAI GOLONGAN
-            |--------------------------------------------------------------------------
-            */
-
-            ->where(
-                'n.cat',
-                $cat
-            )
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | DATA YANG DIKIRIM KE FRONTEND
-            |--------------------------------------------------------------------------
-            */
-
+            ->where('n.stat', 0)
+            ->where('n.cat', $cat)
             ->select([
-
                 'n.id',
-
                 'n.no_voucher',
-
                 'n.tgl_voucher',
-
                 'n.id_aktiva',
-
                 'n.nilai',
-
                 'n.urai',
-
                 'n.tahun',
-
                 'n.id_lokasi',
-
                 'n.dep',
-
                 'n.div',
-
                 'n.cat',
-
                 'n.stat',
-
                 'n.jenisn',
 
                 'l.lokasi',
-
                 'l.alamat',
 
                 'a.kode as aktiva_kode',
-
                 'a.aktiva as aktiva_nama',
 
-                DB::raw(
-                    "
+                DB::raw("
                     TRIM(
                         COALESCE(
                             d.nama_dep,
                             d.kode_dep,
                             ''
                         )
-                    )
-                    AS departemen
-                    "
-                ),
+                    ) AS departemen
+                "),
 
-                DB::raw(
-                    "
+                DB::raw("
                     TRIM(
                         COALESCE(
                             dv.nama_div,
                             ''
                         )
-                    )
-                    AS divisi
-                    "
-                ),
+                    ) AS divisi
+                "),
 
-                DB::raw(
-                    "
+                DB::raw("
                     TRIM(
                         COALESCE(
                             g.nama,
                             ''
                         )
-                    )
-                    AS golongan
-                    "
-                ),
+                    ) AS golongan
+                "),
             ])
-
-            ->orderByDesc(
-                'n.tgl_voucher'
-            )
-
-            ->orderByDesc(
-                'n.id'
-            )
-
-            ->limit(
-                1000
-            )
-
+            ->orderByDesc('n.tgl_voucher')
+            ->orderByDesc('n.id')
+            ->limit(1000)
             ->get();
 
+        // --------------------------------------------------------
+        // 05. FORMAT DATA AGAR SESUAI DENGAN TANAH.JS
+        // --------------------------------------------------------
+        $data = $rows->map(function ($row): array {
+            $jenis = (int) ($row->jenisn ?? 0);
 
-        /*
-        |--------------------------------------------------------------------------
-        | FORMAT JSON
-        |--------------------------------------------------------------------------
-        */
+            $jenisLabel = match ($jenis) {
+                1 => 'Penambahan Aset',
+                2 => 'Penambahan Nilai (data lama)',
+                default => 'Jenis lama / tidak ditentukan',
+            };
 
-        $data = $rows->map(
-            function ($row): array {
+            return [
+                'id' => (int) $row->id,
 
-                return [
+                // Voucher.
+                'no_voucher' => $row->no_voucher ?: '-',
+                'tgl_voucher' => $row->tgl_voucher,
 
-                    'id' =>
-                    (int) $row->id,
+                // Kode Aktiva.
+                'id_aktiva' => $row->id_aktiva !== null
+                    ? (int) $row->id_aktiva
+                    : null,
 
-                    'no_voucher' =>
-                    $row->no_voucher
-                        ?: '-',
+                'aktiva_kode' => $row->aktiva_kode ?: '-',
+                'aktiva_nama' => $row->aktiva_nama ?: '-',
 
-                    'tgl_voucher' =>
-                    $row->tgl_voucher,
+                // Nominal.
+                'nilai' => (int) ($row->nilai ?? 0),
 
-                    'id_aktiva' =>
-                    $row->id_aktiva !== null
-                        ? (int) $row->id_aktiva
-                        : null,
-
-                    'aktiva_kode' =>
-                    $row->aktiva_kode
-                        ?: '-',
-
-                    'aktiva_nama' =>
-                    $row->aktiva_nama
-                        ?: '-',
-
-                    'nilai' =>
-                    (int) (
-                        $row->nilai
-                        ?? 0
-                    ),
-
-                    'nilai_label' =>
-                    'Rp '
-                        .
-                        number_format(
-                            (int) (
-                                $row->nilai
-                                ?? 0
-                            ),
-                            0,
-                            ',',
-                            '.'
-                        ),
-
-                    'urai' =>
-                    $row->urai
-                        ?: '-',
-
-                    'tahun' =>
-                    $row->tahun
-                        ?: '-',
-
-                    'id_lokasi' =>
-                    $row->id_lokasi !== null
-                        ? (int) $row->id_lokasi
-                        : null,
-
-                    'lokasi' =>
-                    $row->lokasi
-                        ?: '-',
-
-                    'alamat' =>
-                    $row->alamat
-                        ?: '-',
-
-                    'dep' =>
-                    $row->dep !== null
-                        ? (int) $row->dep
-                        : null,
-
-                    'departemen' =>
-                    $row->departemen
-                        ?: '-',
-
-                    'div' =>
-                    $row->div !== null
-                        ? (int) $row->div
-                        : null,
-
-                    'divisi' =>
-                    $row->divisi
-                        ?: '-',
-
-                    'cat' =>
-                    $row->cat !== null
-                        ? (int) $row->cat
-                        : null,
-
-                    'golongan' =>
-                    $row->golongan
-                        ?: '-',
-
-                    /*
-                     * Endpoint ini hanya mengirim
-                     * Penambahan Aset.
-                     */
-                    'jenisn' =>
-                    1,
-
-                    'jenis_label' =>
-                    'Penambahan Aset',
-
-                    'stat' =>
-                    (int) (
-                        $row->stat
-                        ?? 0
-                    ),
-                ];
-            }
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | RESPONSE
-        |--------------------------------------------------------------------------
-        */
-
-        return response()->json([
-
-            'success' =>
-            true,
-
-            'module' =>
-            $module,
-
-            'label' =>
-            $modules[$module]['label']
-                ?? ucfirst(
-                    $module
+                'nilai_label' => 'Rp ' . number_format(
+                    (int) ($row->nilai ?? 0),
+                    0,
+                    ',',
+                    '.'
                 ),
 
-            'category_id' =>
-            (int) $cat,
+                // Uraian dan tahun.
+                'urai' => $row->urai ?: '-',
+                'tahun' => $row->tahun ?: '-',
 
-            'count' =>
-            $data->count(),
+                // Lokasi dan alamat.
+                'id_lokasi' => $row->id_lokasi !== null
+                    ? (int) $row->id_lokasi
+                    : null,
 
-            /*
-             * Seluruh data adalah Penambahan Aset.
-             */
-            'aset_baru' =>
-            $data->count(),
+                'lokasi' => $row->lokasi ?: '-',
+                'alamat' => $row->alamat ?: '-',
 
-            /*
-             * Penambahan Nilai tidak masuk endpoint K.I.B.
-             */
-            'penambahan_nilai' =>
-            0,
+                // Departemen.
+                'dep' => $row->dep !== null
+                    ? (int) $row->dep
+                    : null,
 
-            'data' =>
-            $data
-                ->values(),
+                'departemen' => $row->departemen ?: '-',
+
+                // Divisi.
+                'div' => $row->div !== null
+                    ? (int) $row->div
+                    : null,
+
+                'divisi' => $row->divisi ?: '-',
+
+                // Golongan.
+                'cat' => $row->cat !== null
+                    ? (int) $row->cat
+                    : null,
+
+                'golongan' => $row->golongan ?: '-',
+
+                // Jenis dan status.
+                'jenisn' => $jenis,
+                'jenis_label' => $jenisLabel,
+                'stat' => (int) ($row->stat ?? 0),
+            ];
+        });
+
+        // --------------------------------------------------------
+        // 06. RESPONSE JSON
+        // --------------------------------------------------------
+        return response()->json([
+            'success' => true,
+            'module' => $module,
+
+            'label' => $moduleConfig['label']
+                ?? ucfirst($module),
+
+            'category_id' => (int) $cat,
+
+            // Count seluruh transaksi, tidak dibatasi limit tabel.
+            'count' => $totalPending,
+
+            // Rincian jenis transaksi.
+            'aset_baru' => (int) ($jenisCounts[1] ?? 0),
+            'penambahan_nilai' => (int) ($jenisCounts[2] ?? 0),
+
+            // Maksimal 1000 baris untuk tampilan modal.
+            'data' => $data->values(),
         ]);
     }
 }

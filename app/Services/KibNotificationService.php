@@ -7,661 +7,294 @@ use Illuminate\Support\Facades\DB;
 
 class KibNotificationService
 {
-    /**
-     * Cache summary selama satu request.
-     */
     private ?array $summaryCache = null;
 
-    /**
-     * Cache mapping module K.I.B → category ID.
-     */
     private ?array $categoryCache = null;
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | NORMALIZE TEXT
-    |--------------------------------------------------------------------------
-    |
-    | Digunakan untuk menyamakan penulisan nama golongan.
-    |
-    | Contoh:
-    |
-    | KIB A - TANAH
-    | menjadi:
-    | KIB A TANAH
-    |
-    */
-
+    /**
+     * ============================================================
+     * 01. NORMALISASI NAMA GOLONGAN
+     * ============================================================
+     */
     private function normalize(?string $value): string
     {
-        $value = strtoupper(
-            trim(
-                (string) $value
-            )
-        );
+        $value = mb_strtoupper(trim((string) $value));
 
-        $value = str_replace(
-            [
-                '.',
-                ',',
-                '-',
-                '_',
-                '&',
-                '/',
-            ],
-            ' ',
-            $value
-        );
+        $value = preg_replace('/[.,\-_&\/]+/u', ' ', $value);
 
-        return preg_replace(
-            '/\s+/',
-            ' ',
-            $value
-        ) ?: '';
+        return trim(preg_replace('/\s+/u', ' ', $value) ?? '');
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | QUERY DASAR PENDING K.I.B
-    |--------------------------------------------------------------------------
-    |
-    | HANYA:
-    |
-    | stat   = 0
-    | jenisn = 1
-    |
-    | Artinya hanya Penambahan Aset yang belum diproses.
-    |
-    */
-
+    /**
+     * ============================================================
+     * 02. QUERY DASAR PENDING K.I.B
+     * ============================================================
+     *
+     * Kompatibel dengan web lama:
+     * - stat = 0 berarti transaksi belum diproses K.I.B
+     * - termasuk transaksi historis jenisn = 2
+     *
+     * Transaksi Penambahan Nilai BARU harus disimpan stat = 1
+     * oleh NilaiAsetController, sehingga tidak masuk ke sini.
+     */
     private function pendingBaseQuery(): Builder
     {
-        return DB::table(
-            'nilai_aktivas'
-        )
-            ->where(
-                'stat',
-                0
-            )
-            ->where(
-                'jenisn',
-                1
-            );
+        return DB::table('nilai_aktivas')
+            ->where('stat', 0);
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESOLVE CATEGORY
-    |--------------------------------------------------------------------------
-    |
-    | Hasil contoh:
-    |
-    | tanah      => 1
-    | mesin      => 2
-    | gedung     => 3
-    | jalan      => 4
-    | aset_tetap => 5
-    | konstruksi => 6
-    | kir        => 7
-    |
-    */
-
+    /**
+     * ============================================================
+     * 03. RESOLVE CATEGORY ID
+     * ============================================================
+     *
+     * Mapping module didasarkan pada config/kib.php,
+     * nama asli golongan di database, dan cat_fallback.
+     */
     public function categories(): array
     {
-        if (
-            $this->categoryCache
-            !== null
-        ) {
+        if ($this->categoryCache !== null) {
             return $this->categoryCache;
         }
 
+        $modules = config('kib.modules', []);
 
-        $modules = config(
-            'kib.modules',
-            []
-        );
-
-
-        if (
-            empty($modules)
-        ) {
-            $this->categoryCache = [];
-
-            return [];
+        if (empty($modules)) {
+            return $this->categoryCache = [];
         }
 
-
-        $golongans = DB::table(
-            'golongans'
-        )
-            ->select(
-                'id',
-                'nama'
-            )
-            ->orderBy(
-                'id'
-            )
+        $golongans = DB::table('golongans')
+            ->select('id', 'nama')
+            ->orderBy('id')
             ->get();
-
 
         $resolved = [];
 
-
-        foreach (
-            $modules
-            as $module => $moduleConfig
-        ) {
-
+        foreach ($modules as $module => $moduleConfig) {
             $resolvedId = null;
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | ALIASES
-            |--------------------------------------------------------------------------
-            */
-
-            $aliases = collect(
-                $moduleConfig['aliases']
-                    ?? []
-            )
-                ->map(
-                    fn($alias) =>
-                    $this->normalize(
-                        $alias
-                    )
-                )
-                ->filter(
-                    fn($alias) =>
-                    $alias !== ''
-                )
+            $aliases = collect($moduleConfig['aliases'] ?? [])
+                ->map(fn($alias) => $this->normalize($alias))
+                ->filter(fn($alias) => $alias !== '')
                 ->unique()
                 ->values();
 
+            // Prioritas 1: nama golongan cocok persis.
+            foreach ($golongans as $golongan) {
+                $nama = $this->normalize($golongan->nama);
 
-            /*
-            |--------------------------------------------------------------------------
-            | CARI DI TABEL GOLONGANS
-            |--------------------------------------------------------------------------
-            */
-
-            foreach (
-                $golongans
-                as $golongan
-            ) {
-
-                $golonganName =
-                    $this->normalize(
-                        $golongan->nama
-                    );
-
-
-                if (
-                    $golonganName === ''
-                ) {
+                if ($nama === '') {
                     continue;
                 }
 
+                if ($aliases->contains($nama)) {
+                    $resolvedId = (int) $golongan->id;
+                    break;
+                }
+            }
 
-                foreach (
-                    $aliases
-                    as $alias
-                ) {
+            // Prioritas 2: cocok sebagian.
+            if ($resolvedId === null) {
+                foreach ($golongans as $golongan) {
+                    $nama = $this->normalize($golongan->nama);
 
-                    if (
-                        $alias === ''
-                    ) {
+                    if ($nama === '') {
                         continue;
                     }
 
-
-                    /*
-                     * Prioritas pertama:
-                     * harus sama persis.
-                     */
-                    if (
-                        $golonganName === $alias
-                    ) {
-                        $resolvedId =
-                            (int) $golongan->id;
-
-                        break 2;
-                    }
-
-
-                    /*
-                     * Prioritas kedua:
-                     * contains.
-                     *
-                     * Alias pendek tidak dipakai agar
-                     * mengurangi kemungkinan salah cocok.
-                     */
-                    if (
-                        mb_strlen(
-                            $alias
-                        ) >= 4
-                        &&
-                        (
-                            str_contains(
-                                $golonganName,
-                                $alias
+                    foreach ($aliases as $alias) {
+                        if (
+                            mb_strlen($alias) >= 4
+                            &&
+                            (
+                                str_contains($nama, $alias)
+                                || str_contains($alias, $nama)
                             )
-                            ||
-                            str_contains(
-                                $alias,
-                                $golonganName
-                            )
-                        )
-                    ) {
-
-                        $resolvedId =
-                            (int) $golongan->id;
-
-                        break 2;
+                        ) {
+                            $resolvedId = (int) $golongan->id;
+                            break 2;
+                        }
                     }
                 }
             }
 
+            // Prioritas 3: ID fallback.
+            if ($resolvedId === null) {
+                $fallback = $moduleConfig['cat_fallback'] ?? null;
 
-            /*
-            |--------------------------------------------------------------------------
-            | FALLBACK
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                $resolvedId === null
-            ) {
-
-                $fallback =
-                    $moduleConfig['cat_fallback']
-                    ?? null;
-
-
-                $resolvedId =
-                    $fallback !== null
+                $resolvedId = $fallback !== null
                     ? (int) $fallback
                     : null;
             }
 
-
             $resolved[$module] = $resolvedId;
         }
 
-
-        $this->categoryCache =
-            $resolved;
-
-
-        return $resolved;
+        return $this->categoryCache = $resolved;
     }
 
+    /**
+     * ============================================================
+     * 04. CATEGORY SATU MODULE
+     * ============================================================
+     */
+    public function categoryId(string $module): ?int
+    {
+        $categories = $this->categories();
 
-    /*
-    |--------------------------------------------------------------------------
-    | CATEGORY ID PER MODULE
-    |--------------------------------------------------------------------------
-    */
-
-    public function categoryId(
-        string $module
-    ): ?int {
-
-        $categories =
-            $this->categories();
-
-
-        if (
-            !array_key_exists(
-                $module,
-                $categories
-            )
-        ) {
+        if (!array_key_exists($module, $categories)) {
             return null;
         }
-
 
         return $categories[$module] !== null
             ? (int) $categories[$module]
             : null;
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | SUMMARY NOTIFIKASI
-    |--------------------------------------------------------------------------
-    |
-    | Digunakan sidebar dan card notifikasi K.I.B.
-    |
-    | Penting:
-    |
-    | Penambahan Nilai TIDAK dihitung.
-    |
-    */
-
+    /**
+     * ============================================================
+     * 05. SUMMARY NOTIFIKASI SELURUH K.I.B
+     * ============================================================
+     *
+     * total             = seluruh transaksi stat=0
+     * aset_baru         = jenisn=1, stat=0
+     * penambahan_nilai  = jenisn=2, stat=0 (histori)
+     * lainnya           = jenisn selain 1/2 atau NULL
+     *
+     * Struktur response lama tidak diubah.
+     */
     public function summary(): array
     {
-        if (
-            $this->summaryCache
-            !== null
-        ) {
+        if ($this->summaryCache !== null) {
             return $this->summaryCache;
         }
 
+        $modules = config('kib.modules', []);
+        $categories = $this->categories();
 
-        $modules = config(
-            'kib.modules',
-            []
-        );
-
-
-        $categories =
-            $this->categories();
-
-
-        $categoryIds = collect(
-            $categories
-        )
-            ->filter(
-                fn($id) =>
-                $id !== null
-            )
-            ->map(
-                fn($id) =>
-                (int) $id
-            )
+        $categoryIds = collect($categories)
+            ->filter(fn($id) => $id !== null)
+            ->map(fn($id) => (int) $id)
             ->unique()
             ->values()
             ->all();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | DEFAULT RESULT
-        |--------------------------------------------------------------------------
-        */
-
         $result = [];
 
-
-        foreach (
-            $modules
-            as $module => $moduleConfig
-        ) {
-
+        foreach ($modules as $module => $config) {
             $result[$module] = [
-
-                'module' =>
-                $module,
-
-                'cat' =>
-                $categories[$module]
-                    ?? null,
-
-                'label' =>
-                $moduleConfig['label']
-                    ?? ucfirst(
-                        str_replace(
-                            '_',
-                            ' ',
-                            $module
-                        )
-                    ),
-
-                'url' =>
-                $moduleConfig['url']
-                    ?? '#',
-
-                'icon' =>
-                $moduleConfig['icon']
-                    ?? 'bell',
-
-                'total' =>
-                0,
-
-                'aset_baru' =>
-                0,
-
-                /*
-                 * Tetap ada supaya Blade lama
-                 * tidak error.
-                 */
-                'penambahan_nilai' =>
-                0,
-
-                'lainnya' =>
-                0,
+                'module' => $module,
+                'cat' => $categories[$module] ?? null,
+                'label' => $config['label'] ?? ucfirst($module),
+                'url' => $config['url'] ?? '#',
+                'icon' => $config['icon'] ?? 'bell',
+                'total' => 0,
+                'aset_baru' => 0,
+                'penambahan_nilai' => 0,
+                'lainnya' => 0,
             ];
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | QUERY JUMLAH PENDING
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            !empty($categoryIds)
-        ) {
-
-            $rows =
-                $this
-                ->pendingBaseQuery()
-
-                ->whereIn(
-                    'cat',
-                    $categoryIds
-                )
-
-                ->select(
-                    'cat'
-                )
-
+        if (!empty($categoryIds)) {
+            $rows = $this->pendingBaseQuery()
+                ->whereIn('cat', $categoryIds)
+                ->select('cat')
                 ->selectRaw(
-                    'COUNT(*) AS total'
+                    'COALESCE(jenisn, 0) AS jenisn, COUNT(*) AS total'
                 )
-
-                ->groupBy(
-                    'cat'
-                )
-
+                ->groupBy('cat', 'jenisn')
                 ->get();
 
+            foreach ($rows as $row) {
+                $cat = (int) $row->cat;
+                $jenis = (int) $row->jenisn;
+                $jumlah = (int) $row->total;
 
-            foreach (
-                $rows
-                as $row
-            ) {
-
-                $cat =
-                    (int) $row->cat;
-
-
-                $total =
-                    (int) $row->total;
-
-
-                foreach (
-                    $categories
-                    as $module => $categoryId
-                ) {
-
+                foreach ($categories as $module => $categoryId) {
                     if (
                         $categoryId === null
-                        ||
-                        (int) $categoryId
-                        !==
-                        $cat
+                        || (int) $categoryId !== $cat
                     ) {
                         continue;
                     }
 
+                    $result[$module]['total'] += $jumlah;
 
-                    /*
-                     * Karena query hanya jenisn = 1,
-                     * total = jumlah Penambahan Aset.
-                     */
-                    $result[$module]['total'] = $total;
-
-
-                    $result[$module]['aset_baru'] = $total;
-
+                    if ($jenis === 1) {
+                        $result[$module]['aset_baru'] += $jumlah;
+                    } elseif ($jenis === 2) {
+                        $result[$module]['penambahan_nilai'] += $jumlah;
+                    } else {
+                        $result[$module]['lainnya'] += $jumlah;
+                    }
 
                     break;
                 }
             }
         }
 
+        $result['_total'] = collect($result)
+            ->sum(
+                fn(array $item) => (int) $item['total']
+            );
 
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL PARENT K.I.B
-        |--------------------------------------------------------------------------
-        */
-
-        $grandTotal = 0;
-
-
-        foreach (
-            $result
-            as $item
-        ) {
-
-            $grandTotal +=
-                (int) (
-                    $item['total']
-                    ?? 0
-                );
-        }
-
-
-        $result['_total'] = $grandTotal;
-
-
-        $this->summaryCache =
-            $result;
-
-
-        return $result;
+        return $this->summaryCache = $result;
     }
 
+    /**
+     * ============================================================
+     * 06. NOTIFIKASI SATU MODULE
+     * ============================================================
+     */
+    public function module(string $module): array
+    {
+        $summary = $this->summary();
 
-    /*
-    |--------------------------------------------------------------------------
-    | SINGLE MODULE
-    |--------------------------------------------------------------------------
-    */
-
-    public function module(
-        string $module
-    ): array {
-
-        $summary =
-            $this->summary();
-
-
-        if (
-            isset(
-                $summary[$module]
-            )
-        ) {
+        if (isset($summary[$module])) {
             return $summary[$module];
         }
 
-
         return [
-
-            'module' =>
-            $module,
-
-            'cat' =>
-            null,
-
-            'label' =>
-            ucfirst(
-                str_replace(
-                    '_',
-                    ' ',
-                    $module
-                )
-            ),
-
-            'url' =>
-            '#',
-
-            'icon' =>
-            'bell',
-
-            'total' =>
-            0,
-
-            'aset_baru' =>
-            0,
-
-            'penambahan_nilai' =>
-            0,
-
-            'lainnya' =>
-            0,
+            'module' => $module,
+            'cat' => null,
+            'label' => ucfirst(str_replace('_', ' ', $module)),
+            'url' => '#',
+            'icon' => 'bell',
+            'total' => 0,
+            'aset_baru' => 0,
+            'penambahan_nilai' => 0,
+            'lainnya' => 0,
         ];
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | TOTAL NOTIFIKASI
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * ============================================================
+     * 07. TOTAL BADGE SELURUH MODULE
+     * ============================================================
+     */
     public function total(): int
     {
-        return (int) (
-            $this
-                ->summary()['_total']
-            ?? 0
-        );
+        return (int) ($this->summary()['_total'] ?? 0);
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | CEK NOTIFIKASI MODULE
-    |--------------------------------------------------------------------------
-    */
-
-    public function hasNotification(
-        string $module
-    ): bool {
-
-        return (
-            (int) (
-                $this
-                    ->module(
-                        $module
-                    )['total']
-                ?? 0
-            )
-        ) > 0;
+    /**
+     * ============================================================
+     * 08. CEK MODULE MEMILIKI NOTIFIKASI
+     * ============================================================
+     */
+    public function hasNotification(string $module): bool
+    {
+        return (int) ($this->module($module)['total'] ?? 0) > 0;
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | CLEAR CACHE
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * ============================================================
+     * 09. RESET CACHE
+     * ============================================================
+     */
     public function clearCache(): void
     {
-        $this->summaryCache =
-            null;
-
-        $this->categoryCache =
-            null;
+        $this->summaryCache = null;
+        $this->categoryCache = null;
     }
 }
