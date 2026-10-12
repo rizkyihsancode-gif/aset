@@ -107,7 +107,7 @@ class KibNotificationController extends Controller
 
             ->where(
                 'n.stat',
-                1
+                0
             )
 
             ->where(
