@@ -1642,402 +1642,200 @@ class KIBController extends Controller
         return $path;
     }
 
-    /*
-|--------------------------------------------------------------------------
-| STORE K.I.B TANAH
-|--------------------------------------------------------------------------
-|
-| Hanya transaksi:
-|
-| jenisn = 1
-| stat   = 0
-| cat    = Tanah
-|
-| yang boleh membuat data Tanah.
-|
-*/
 
+    /**
+     * ================================================================
+     * STORE DATA K.I.B TANAH
+     * ================================================================
+     *
+     * Kompatibilitas:
+     * - Menerima transaksi stat=0 sesuai web lama.
+     * - Hanya kategori Tanah.
+     * - Menggunakan lokasi dari sumber Nilai Aset.
+     * - Setelah berhasil, status sumber menjadi stat=1.
+     *
+     * Penambahan Nilai baru tidak akan masuk karena disimpan stat=1.
+     */
     public function store(
         Request $request,
         KibNotificationService $notifications
     ) {
-        /*
-    |--------------------------------------------------------------------------
-    | VALIDASI FORM TANAH
-    |--------------------------------------------------------------------------
-    */
+        // ------------------------------------------------------------
+        // 01. VALIDASI FORM TANAH
+        // ------------------------------------------------------------
+        $input = $this->validateInput($request);
 
-        $input =
-            $this->validateInput(
-                $request
-            );
+        // ------------------------------------------------------------
+        // 02. CATEGORY TANAH
+        // ------------------------------------------------------------
+        $categoryId = $notifications->categoryId('tanah');
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | CATEGORY TANAH
-    |--------------------------------------------------------------------------
-    */
-
-        $categoryId =
-            $notifications
-            ->categoryId(
-                'tanah'
-            );
-
-
-        if (
-            $categoryId === null
-        ) {
-
+        if ($categoryId === null) {
             throw ValidationException::withMessages([
                 'id_nilai_aktiva' =>
                 'Golongan K.I.B Tanah tidak ditemukan.',
             ]);
         }
 
-
         $newFile = null;
 
-
         try {
+            DB::transaction(function () use (
+                $input,
+                $request,
+                $categoryId,
+                &$newFile
+            ): void {
 
-            DB::transaction(
-                function () use (
-                    $input,
-                    $request,
-                    $categoryId,
-                    &$newFile
-                ) {
-
-                    /*
-                |--------------------------------------------------------------------------
-                | AMBIL TRANSAKSI SUMBER
-                |--------------------------------------------------------------------------
-                |
-                | Jangan percaya id_lokasi dari browser.
-                | Lokasi diambil langsung dari nilai_aktivas.
-                |
-                */
-
-                    $source = DB::table(
-                        'nilai_aktivas as n'
+                // ----------------------------------------------------
+                // 03. CARI TRANSAKSI SUMBER
+                // ----------------------------------------------------
+                //
+                // Penting:
+                // Tidak memakai filter jenisn=1 agar transaksi historis
+                // yang berasal dari web lama tetap dapat diproses.
+                //
+                $source = DB::table('nilai_aktivas as n')
+                    ->where(
+                        'n.id',
+                        (int) $input['id_nilai_aktiva']
                     )
+                    ->where('n.stat', 0)
+                    ->where('n.cat', $categoryId)
+                    ->select([
+                        'n.id',
+                        'n.id_lokasi',
+                        'n.jenisn',
+                        'n.stat',
+                        'n.cat',
+                    ])
+                    ->lockForUpdate()
+                    ->first();
 
-                        ->join(
-                            'aktivas as a',
-                            'a.id',
-                            '=',
-                            'n.id_aktiva'
-                        )
-
-                        ->where(
-                            'n.id',
-                            $input['id_nilai_aktiva']
-                        )
-
-                        /*
-                    |--------------------------------------------------------------------------
-                    | BELUM DIPROSES
-                    |--------------------------------------------------------------------------
-                    */
-
-                        ->where(
-                            'n.stat',
-                            0
-                        )
-
-                        /*
-                    |--------------------------------------------------------------------------
-                    | PENAMBAHAN ASET SAJA
-                    |--------------------------------------------------------------------------
-                    */
-
-                        ->where(
-                            'n.jenisn',
-                            1
-                        )
-
-                        /*
-                    |--------------------------------------------------------------------------
-                    | GOLONGAN TANAH
-                    |--------------------------------------------------------------------------
-                    */
-
-                        ->where(
-                            'n.cat',
-                            $categoryId
-                        )
-
-                        /*
-                    |--------------------------------------------------------------------------
-                    | VALIDASI AKTIVA K.I.B TANAH
-                    |--------------------------------------------------------------------------
-                    */
-
-                        ->whereRaw(
-                            "TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)",
-                            ['TANAH', 'KIB A TANAH']
-                        )
-
-                        ->select(
-                            'n.id',
-                            'n.id_lokasi',
-                            'n.jenisn',
-                            'n.stat',
-                            'n.cat'
-                        )
-
-                        /*
-                     * Mencegah transaksi yang sama
-                     * diproses bersamaan oleh dua request.
-                     */
-                        ->lockForUpdate()
-
-                        ->first();
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | SUMBER TIDAK VALID
-                |--------------------------------------------------------------------------
-                */
-
-                    if (
-                        !$source
-                        ||
-                        !$source->id_lokasi
-                    ) {
-
-                        throw ValidationException::withMessages([
-
-                            'id_nilai_aktiva' =>
-                            'Transaksi Penambahan Aset Tanah tidak tersedia atau sudah diproses.',
-
-                        ]);
-                    }
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | DOUBLE CHECK JENIS
-                |--------------------------------------------------------------------------
-                */
-
-                    if (
-                        (int) $source->jenisn
-                        !== 1
-                    ) {
-
-                        throw ValidationException::withMessages([
-
-                            'id_nilai_aktiva' =>
-                            'Hanya transaksi Penambahan Aset yang dapat dibuat menjadi data K.I.B Tanah.',
-
-                        ]);
-                    }
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | CEGAH DUPLIKASI
-                |--------------------------------------------------------------------------
-                */
-
-                    if (
-                        DB::table(
-                            'tanahs'
-                        )
-                        ->where(
-                            'nilai_aktiva_id',
-                            $source->id
-                        )
-                        ->exists()
-                    ) {
-
-                        throw ValidationException::withMessages([
-
-                            'id_nilai_aktiva' =>
-                            'Transaksi Nilai Aset ini sudah terhubung dengan data Tanah.',
-
-                        ]);
-                    }
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | DATA TANAH
-                |--------------------------------------------------------------------------
-                */
-
-                    $data =
-                        $this->tanahFields(
-                            $input
-                        );
-
-
-                    /*
-                 * Lokasi berasal dari transaksi Nilai Aset,
-                 * bukan input hidden browser.
-                 */
-                    $data['id_lokasi'] =
-                        (int) $source->id_lokasi;
-
-
-                    /*
-                 * Simpan hubungan transaksi sumber.
-                 */
-                    $data['nilai_aktiva_id'] =
-                        (int) $source->id;
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | NILAI LEGACY
-                |--------------------------------------------------------------------------
-                |
-                | Nilai Tanah sekarang dihitung dari nilai_aktivas.
-                |
-                | Jangan copy nilai transaksi ke tanahs.nilai
-                | karena kolom lama INTEGER dapat overflow.
-                |
-                */
-
-                    $data['nilai'] = null;
-
-
-                    $data['nilai_now'] = null;
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | USER DAN TIMESTAMP
-                |--------------------------------------------------------------------------
-                */
-
-                    $data['user'] =
-                        Auth::id();
-
-
-                    $data['created_at'] =
-                        now();
-
-
-                    $data['updated_at'] =
-                        now();
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | INSERT TANAH
-                |--------------------------------------------------------------------------
-                */
-
-                    $tanahId =
-                        DB::table(
-                            'tanahs'
-                        )
-                        ->insertGetId(
-                            $data
-                        );
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | PDF SERTIFIKAT
-                |--------------------------------------------------------------------------
-                */
-
-                    $newFile =
-                        $this->uploadPdf(
-                            $request,
-                            (int) $tanahId
-                        );
-
-
-                    /*
-                |--------------------------------------------------------------------------
-                | TRANSAKSI SELESAI DIPROSES
-                |--------------------------------------------------------------------------
-                |
-                | Ini membuat:
-                |
-                | stat 0 → 1
-                |
-                | sehingga:
-                |
-                | - badge berkurang
-                | - transaksi hilang dari daftar Pilih
-                |
-                */
-
-                    DB::table(
-                        'nilai_aktivas'
-                    )
-                        ->where(
-                            'id',
-                            $source->id
-                        )
-                        ->update([
-                            'stat' =>
-                            1,
-
-                            'updated_at' =>
-                            now(),
-                        ]);
+                // ----------------------------------------------------
+                // 04. VALIDASI SUMBER
+                // ----------------------------------------------------
+                if (!$source || !$source->id_lokasi) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' =>
+                        'Transaksi pending Tanah tidak ditemukan, tidak memiliki lokasi, atau sudah diproses.',
+                    ]);
                 }
-            );
+
+                // ----------------------------------------------------
+                // 05. CEGAH TRANSAKSI DIPAKAI DUA KALI
+                // ----------------------------------------------------
+                $sudahTerhubung = DB::table('tanahs')
+                    ->where(
+                        'nilai_aktiva_id',
+                        $source->id
+                    )
+                    ->exists();
+
+                if ($sudahTerhubung) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' =>
+                        'Transaksi Nilai Aset ini sudah terhubung dengan data Tanah.',
+                    ]);
+                }
+
+                // ----------------------------------------------------
+                // 06. PERSIAPKAN DATA INVENTARIS TANAH
+                // ----------------------------------------------------
+                //
+                // Fungsi tanahFields() menggunakan field yang telah
+                // diisi petugas di formulir.
+                //
+                $data = $this->tanahFields($input);
+
+                // Lokasi wajib berasal dari Nilai Aset,
+                // bukan dari input browser.
+                $data['id_lokasi'] = (int) $source->id_lokasi;
+
+                // Hubungkan sertifikat dengan transaksi sumber.
+                $data['nilai_aktiva_id'] = (int) $source->id;
+
+                // Nilai uang dihitung dari nilai_aktivas.
+                // Jangan disalin ke INTEGER legacy tanahs.nilai.
+                $data['nilai'] = null;
+                $data['nilai_now'] = null;
+
+                // Metadata.
+                $data['user'] = Auth::id();
+                $data['created_at'] = now();
+                $data['updated_at'] = now();
+
+                // ----------------------------------------------------
+                // 07. INSERT DATA TANAH
+                // ----------------------------------------------------
+                $tanahId = DB::table('tanahs')
+                    ->insertGetId($data);
+
+                // ----------------------------------------------------
+                // 08. UPLOAD PDF
+                // ----------------------------------------------------
+                //
+                // Fungsi uploadPdf() yang sudah ada tetap dipakai.
+                //
+                $newFile = $this->uploadPdf(
+                    $request,
+                    (int) $tanahId
+                );
+
+                // ----------------------------------------------------
+                // 09. TANDAI TRANSAKSI SUDAH DIPROSES
+                // ----------------------------------------------------
+                //
+                // Transaksi menghilang dari pending setelah seluruh
+                // operasi di dalam transaction berhasil.
+                //
+                $updated = DB::table('nilai_aktivas')
+                    ->where('id', $source->id)
+                    ->where('stat', 0)
+                    ->update([
+                        'stat' => 1,
+                        'updated_at' => now(),
+                    ]);
+
+                if ($updated !== 1) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' =>
+                        'Status transaksi gagal diperbarui. Penyimpanan Tanah dibatalkan.',
+                    ]);
+                }
+            });
         } catch (\Throwable $exception) {
 
-            /*
-        |--------------------------------------------------------------------------
-        | CLEANUP FILE
-        |--------------------------------------------------------------------------
-        */
-
+            // --------------------------------------------------------
+            // 10. HAPUS FILE BARU APABILA TRANSAKSI GAGAL
+            // --------------------------------------------------------
             if (
                 $newFile
                 &&
-                Storage::disk(
-                    'local'
-                )->exists(
-                    $newFile
-                )
+                Storage::disk('local')->exists($newFile)
             ) {
-
-                Storage::disk(
-                    'local'
-                )->delete(
-                    $newFile
-                );
+                Storage::disk('local')->delete($newFile);
             }
-
 
             throw $exception;
         }
 
+        // ------------------------------------------------------------
+        // 11. RESET CACHE NOTIFIKASI
+        // ------------------------------------------------------------
+        $notifications->clearCache();
 
-        /*
-    |--------------------------------------------------------------------------
-    | CLEAR CACHE SERVICE
-    |--------------------------------------------------------------------------
-    */
-
-        $notifications
-            ->clearCache();
-
-
+        // ------------------------------------------------------------
+        // 12. SELESAI
+        // ------------------------------------------------------------
         return redirect()
-
-            ->route(
-                'kib.tanah'
-            )
-
+            ->route('kib.tanah')
             ->with(
                 'success',
-                'Data K.I.B Tanah berhasil disimpan.'
+                'Data K.I.B Tanah berhasil disimpan dan transaksi Nilai Aset telah diproses.'
             );
     }
+
 
     public function update(Request $request, int $tanah)
     {
@@ -2066,174 +1864,103 @@ class KIBController extends Controller
 |--------------------------------------------------------------------------
 */
 
-    public function destroy(
-        int $tanah
-    ) {
+
+    /**
+     * ================================================================
+     * DELETE DATA K.I.B TANAH
+     * ================================================================
+     *
+     * - Hapus dokumen PDF baru yang terkait.
+     * - Hapus data Tanah.
+     * - Jika ada sumber Nilai Aset, kembalikan stat menjadi 0.
+     * - Jangan menghapus transaksi keuangan Nilai Aset.
+     */
+    public function destroy(int $tanah)
+    {
         $paths = [];
 
+        DB::transaction(function () use (
+            $tanah,
+            &$paths
+        ): void {
 
-        DB::transaction(
-            function () use (
-                $tanah,
-                &$paths
-            ) {
+            // --------------------------------------------------------
+            // 01. CARI DATA TANAH
+            // --------------------------------------------------------
+            $row = DB::table('tanahs')
+                ->where('id', $tanah)
+                ->lockForUpdate()
+                ->first();
 
-                $row =
-                    DB::table(
-                        'tanahs'
-                    )
+            abort_unless($row, 404);
 
-                    ->where(
-                        'id',
-                        $tanah
-                    )
-
-                    ->lockForUpdate()
-
-                    ->first();
-
-
-                abort_unless(
-                    $row,
-                    404
+            // --------------------------------------------------------
+            // 02. CARI PDF BARU YANG TERHUBUNG
+            // --------------------------------------------------------
+            $pdfQuery = $this->pdfQuery()
+                ->where('p.id_tanah', $tanah)
+                ->where(
+                    'p.dok',
+                    'like',
+                    'tanah/sertifikat/%'
                 );
 
+            $paths = (clone $pdfQuery)
+                ->pluck('p.dok')
+                ->all();
 
-                /*
-            |--------------------------------------------------------------------------
-            | PDF BARU YANG DIKELOLA APLIKASI BARU
-            |--------------------------------------------------------------------------
-            */
+            // --------------------------------------------------------
+            // 03. HAPUS REFERENSI PDF
+            // --------------------------------------------------------
+            $pdfQuery->delete();
 
-                $newPdfQuery =
-                    $this
-                    ->pdfQuery()
+            // --------------------------------------------------------
+            // 04. HAPUS DATA TANAH
+            // --------------------------------------------------------
+            DB::table('tanahs')
+                ->where('id', $tanah)
+                ->delete();
 
-                    ->where(
-                        'p.id_tanah',
-                        $tanah
-                    )
-
-                    ->where(
-                        'p.dok',
-                        'like',
-                        'tanah/sertifikat/%'
-                    );
-
-
-                $paths =
-                    (clone $newPdfQuery)
-
-                    ->pluck(
-                        'p.dok'
-                    )
-
-                    ->all();
-
-
-                $newPdfQuery
-                    ->delete();
-
-
-                /*
-            |--------------------------------------------------------------------------
-            | DELETE TANAH
-            |--------------------------------------------------------------------------
-            */
-
-                DB::table(
-                    'tanahs'
-                )
+            // --------------------------------------------------------
+            // 05. KEMBALIKAN STATUS SUMBER
+            // --------------------------------------------------------
+            if (!empty($row->nilai_aktiva_id)) {
+                DB::table('nilai_aktivas')
                     ->where(
                         'id',
-                        $tanah
+                        $row->nilai_aktiva_id
                     )
-                    ->delete();
-
-
-                /*
-            |--------------------------------------------------------------------------
-            | KEMBALIKAN SUMBER MENJADI PENDING
-            |--------------------------------------------------------------------------
-            |
-            | Jika sertifikat yang dibuat dari Nilai Aset dihapus,
-            | Penambahan Aset tersebut harus dapat diproses kembali.
-            |
-            */
-
-                if (
-                    !empty($row->nilai_aktiva_id)
-                ) {
-
-                    DB::table(
-                        'nilai_aktivas'
-                    )
-
-                        ->where(
-                            'id',
-                            $row->nilai_aktiva_id
-                        )
-
-                        ->where(
-                            'jenisn',
-                            1
-                        )
-
-                        ->update([
-
-                            'stat' =>
-                            0,
-
-                            'updated_at' =>
-                            now(),
-                        ]);
-                }
+                    ->update([
+                        'stat' => 0,
+                        'updated_at' => now(),
+                    ]);
             }
-        );
+        });
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | DELETE FILE FISIK
-    |--------------------------------------------------------------------------
-    */
-
-        foreach (
-            $paths
-            as $path
-        ) {
-
+        // ------------------------------------------------------------
+        // 06. HAPUS FILE PDF FISIK SETELAH DATABASE BERHASIL
+        // ------------------------------------------------------------
+        foreach ($paths as $path) {
             if (
-                is_string(
-                    $path
-                )
+                is_string($path)
                 &&
                 str_starts_with(
                     $path,
                     'tanah/sertifikat/'
                 )
             ) {
-
-                Storage::disk(
-                    'local'
-                )->delete(
-                    $path
-                );
+                Storage::disk('local')->delete($path);
             }
         }
 
-
         return redirect()
-
-            ->route(
-                'kib.tanah'
-            )
-
+            ->route('kib.tanah')
             ->with(
                 'success',
-                'Sertifikat Tanah berhasil dihapus.'
+                'Data Tanah berhasil dihapus.'
             );
     }
+
 
     /** Resolve only files under approved roots; prevent path traversal. */
     private function pdfFile(string $file): ?string
