@@ -1,6 +1,39 @@
-/* =========================================================
-   K.I.B A - TANAH
-========================================================= */
+/**
+ * ============================================================================
+ * K.I.B A - TANAH
+ * Sistem Aset Perumda Tirta Kencana
+ * ============================================================================
+ *
+ * STRUKTUR:
+ * 01. Variable & halaman utama
+ * 02. Hero
+ * 03. Header action
+ * 04. KPI
+ * 05. Alert
+ * 06. Notifikasi Nilai Aset
+ * 07. Card
+ * 08. Filter
+ * 09. Tabel Tanah
+ * 10. Data Tanah & Nilai
+ * 11. PDF
+ * 12. Action button
+ * 13. Pagination
+ * 14. Modal
+ * 15. Form
+ * 16. Tabel Nilai Aset
+ * 17. Selected source
+ * 18. Upload PDF
+ * 19. Detail / PDF / Delete
+ * 20. View klasik seperti web lama
+ * 21. Responsive
+ *
+ * ============================================================================
+ */
+
+
+/* ==========================================================================
+   01. VARIABLE & HALAMAN UTAMA
+   ========================================================================== */
 
 .tanah-page {
     --tanah-primary: #086ad8;
@@ -23,12 +56,24 @@
     background: var(--tanah-background);
 
     color: var(--tanah-text);
+
+    font-size: 14px;
 }
 
 
-/* =========================================================
-   HERO
-========================================================= */
+.tanah-page [hidden] {
+    display: none !important;
+}
+
+
+.tanah-data-row[hidden] {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   02. HERO
+   ========================================================================== */
 
 .tanah-hero {
     position: relative;
@@ -39,9 +84,7 @@
 
     padding: 18px 22px 17px;
 
-    background-image:
-        var(--tanah-hero-image);
-
+    background-image: var(--tanah-hero-image);
     background-position: right center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -56,11 +99,11 @@
     background:
         linear-gradient(
             90deg,
-            rgba(245,250,255,.99) 0%,
-            rgba(239,248,255,.97) 28%,
-            rgba(226,241,255,.89) 55%,
-            rgba(213,235,253,.54) 76%,
-            rgba(207,232,252,.16) 100%
+            rgba(245, 250, 255, .99) 0%,
+            rgba(239, 248, 255, .97) 28%,
+            rgba(226, 241, 255, .89) 55%,
+            rgba(213, 235, 253, .54) 76%,
+            rgba(207, 232, 252, .16) 100%
         );
 
     pointer-events: none;
@@ -73,7 +116,6 @@
     z-index: 2;
 
     display: flex;
-
     align-items: flex-start;
     justify-content: space-between;
 
@@ -90,7 +132,6 @@
 
 .tanah-breadcrumb {
     display: flex;
-
     align-items: center;
 
     gap: 7px;
@@ -150,19 +191,18 @@
 
     color: #567092;
 
-    font-size: 13px;
+    font-size: 14px;
 
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 
-/* =========================================================
-   HERO ACTION
-========================================================= */
+/* ==========================================================================
+   03. HEADER ACTION
+   ========================================================================== */
 
 .tanah-hero-actions {
     display: flex;
-
     align-items: center;
 
     gap: 10px;
@@ -175,24 +215,22 @@
     min-width: 220px;
 
     display: flex;
-
     align-items: center;
 
     gap: 10px;
 
     padding: 10px 13px;
 
-    border: 1px solid rgba(220,232,244,.92);
-
+    border: 1px solid rgba(220, 232, 244, .92);
     border-radius: 10px;
 
-    background: rgba(255,255,255,.93);
+    background: rgba(255, 255, 255, .93);
 
     backdrop-filter: blur(8px);
 
     box-shadow:
         0 7px 22px
-        rgba(27,75,118,.07);
+        rgba(27, 75, 118, .07);
 }
 
 
@@ -201,9 +239,10 @@
     height: 39px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
 
     border-radius: 8px;
 
@@ -244,7 +283,6 @@
     min-height: 43px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -253,7 +291,6 @@
     padding: 0 16px;
 
     border: 0;
-
     border-radius: 8px;
 
     background:
@@ -263,10 +300,9 @@
             #0864d4
         );
 
-    color: white;
+    color: #ffffff;
 
     font-family: inherit;
-
     font-size: 12px;
     font-weight: 700;
 
@@ -274,7 +310,7 @@
 
     box-shadow:
         0 8px 20px
-        rgba(8,106,216,.18);
+        rgba(8, 106, 216, .18);
 }
 
 
@@ -289,9 +325,9 @@
 }
 
 
-/* =========================================================
-   KPI
-========================================================= */
+/* ==========================================================================
+   04. KPI
+   ========================================================================== */
 
 .tanah-kpi-grid {
     position: relative;
@@ -301,7 +337,10 @@
     display: grid;
 
     grid-template-columns:
-        repeat(4, minmax(0,1fr));
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
 
     gap: 12px;
 }
@@ -311,24 +350,26 @@
     min-height: 96px;
 
     display: flex;
-
     align-items: center;
 
     gap: 13px;
 
     padding: 14px 15px;
 
-    border: 1px solid rgba(217,230,242,.94);
+    border:
+        1px solid
+        rgba(217, 230, 242, .94);
 
     border-radius: 11px;
 
-    background: rgba(255,255,255,.95);
+    background:
+        rgba(255, 255, 255, .95);
 
     backdrop-filter: blur(9px);
 
     box-shadow:
         0 8px 24px
-        rgba(28,67,105,.06);
+        rgba(28, 67, 105, .06);
 }
 
 
@@ -337,7 +378,6 @@
     height: 49px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -352,7 +392,7 @@
             #0763d7
         );
 
-    color: white;
+    color: #ffffff;
 }
 
 
@@ -420,13 +460,12 @@
 }
 
 
-/* =========================================================
-   ALERT
-========================================================= */
+/* ==========================================================================
+   05. ALERT
+   ========================================================================== */
 
 .tanah-alert {
     display: flex;
-
     align-items: flex-start;
 
     gap: 9px;
@@ -469,16 +508,16 @@
 }
 
 
-/* =========================================================
-   INCOMING
-========================================================= */
+/* ==========================================================================
+   06. NOTIFIKASI NILAI ASET
+   ========================================================================== */
 
 .tanah-incoming-card {
     display: grid;
 
     grid-template-columns:
         auto
-        minmax(0,1fr)
+        minmax(0, 1fr)
         auto;
 
     align-items: center;
@@ -490,7 +529,6 @@
     padding: 14px 16px;
 
     border: 1px solid #c9def3;
-
     border-radius: 11px;
 
     background:
@@ -502,14 +540,14 @@
 
     box-shadow:
         0 6px 20px
-        rgba(23,65,103,.045);
+        rgba(23, 65, 103, .045);
 }
 
 
 .tanah-incoming-card.is-empty {
     border-color: #dfe8f1;
 
-    background: white;
+    background: #ffffff;
 }
 
 
@@ -518,7 +556,6 @@
     height: 47px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -543,7 +580,6 @@
 
 .tanah-incoming-title-row {
     display: flex;
-
     align-items: flex-start;
 
     gap: 8px;
@@ -569,7 +605,7 @@
 
     color: #102a51;
 
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 800;
 }
 
@@ -579,7 +615,6 @@
     height: 23px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -589,7 +624,7 @@
 
     background: #ef4444;
 
-    color: white;
+    color: #ffffff;
 
     font-size: 10px;
     font-weight: 800;
@@ -601,15 +636,14 @@
 
     color: #657d98;
 
-    font-size: 12px;
+    font-size: 14px;
 
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 
 .tanah-incoming-meta {
     display: flex;
-
     align-items: center;
 
     gap: 7px;
@@ -624,7 +658,6 @@
     min-height: 27px;
 
     display: inline-flex;
-
     align-items: center;
 
     gap: 5px;
@@ -633,7 +666,7 @@
 
     border-radius: 6px;
 
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
 }
 
@@ -662,7 +695,6 @@
     min-height: 39px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -671,15 +703,13 @@
     padding: 0 13px;
 
     border: 1px solid #bdd7ef;
-
     border-radius: 7px;
 
-    background: white;
+    background: #ffffff;
 
     color: #0868c4;
 
     font-family: inherit;
-
     font-size: 12px;
     font-weight: 700;
 
@@ -687,33 +717,26 @@
 }
 
 
-.tanah-incoming-action button:disabled {
-    opacity: .45;
-
-    cursor: not-allowed;
-}
-
-
-/* =========================================================
-   CARD
-========================================================= */
+/* ==========================================================================
+   07. CARD UMUM
+   ========================================================================== */
 
 .tanah-card {
     border: 1px solid #dfe8f1;
-
     border-radius: 11px;
 
-    background: rgba(255,255,255,.98);
+    background:
+        rgba(255, 255, 255, .98);
 
     box-shadow:
         0 5px 18px
-        rgba(30,70,110,.035);
+        rgba(30, 70, 110, .035);
 }
 
 
-/* =========================================================
-   FILTER
-========================================================= */
+/* ==========================================================================
+   08. FILTER
+   ========================================================================== */
 
 .tanah-filter-card {
     margin-bottom: 14px;
@@ -724,7 +747,6 @@
 
 .tanah-filter-header {
     display: flex;
-
     align-items: flex-start;
     justify-content: space-between;
 
@@ -739,7 +761,7 @@
 
     color: #10264d;
 
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 800;
 }
 
@@ -749,7 +771,9 @@
 
     color: #71839d;
 
-    font-size: 12px;
+    font-size: 14px;
+
+    line-height: 1.55;
 }
 
 
@@ -757,7 +781,7 @@
     display: grid;
 
     grid-template-columns:
-        minmax(280px,1fr)
+        minmax(280px, 1fr)
         180px
         auto;
 
@@ -781,7 +805,8 @@
     left: 13px;
     top: 50%;
 
-    transform: translateY(-50%);
+    transform:
+        translateY(-50%);
 
     color: #637d9b;
 }
@@ -793,18 +818,16 @@
     height: 42px;
 
     border: 1px solid #d6e2ed;
-
     border-radius: 7px;
 
     outline: none;
 
-    background: white;
+    background: #ffffff;
 
     color: #355372;
 
     font-family: inherit;
-
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -835,7 +858,6 @@
     min-height: 42px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -844,15 +866,13 @@
     padding: 0 14px;
 
     border: 1px solid #d5e1ed;
-
     border-radius: 7px;
 
-    background: white;
+    background: #ffffff;
 
     color: #3e5d7d;
 
     font-family: inherit;
-
     font-size: 12px;
     font-weight: 700;
 
@@ -860,9 +880,9 @@
 }
 
 
-/* =========================================================
-   TABLE HEADER
-========================================================= */
+/* ==========================================================================
+   09. TABLE HEADER
+   ========================================================================== */
 
 .tanah-table-card {
     overflow: hidden;
@@ -871,7 +891,6 @@
 
 .tanah-table-header {
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
@@ -902,7 +921,6 @@
 
 .tanah-database-badge {
     display: inline-flex;
-
     align-items: center;
 
     gap: 5px;
@@ -910,7 +928,6 @@
     padding: 6px 9px;
 
     border: 1px solid #bad9f5;
-
     border-radius: 6px;
 
     background: #edf7ff;
@@ -922,9 +939,23 @@
 }
 
 
-/* =========================================================
-   TABLE
-========================================================= */
+/* ==========================================================================
+   10. TABEL UTAMA TANAH
+   ========================================================================== */
+
+/**
+ * Kolom:
+ *
+ * No
+ * Lokasi
+ * Alamat
+ * Penggunaan
+ * Data Tanah
+ * Tahun
+ * Nilai
+ * PDF
+ * Aksi
+ */
 
 .tanah-table-scroll {
     width: 100%;
@@ -938,14 +969,14 @@
 .tanah-table {
     width: 100%;
 
-    min-width: 1180px;
+    min-width: 1280px;
 
     border-collapse: collapse;
 }
 
 
 .tanah-table thead th {
-    padding: 14px;
+    padding: 14px 15px;
 
     border: 1px solid #d9e4ee;
 
@@ -953,7 +984,7 @@
 
     color: #122f55;
 
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 800;
 
     line-height: 1.4;
@@ -965,13 +996,13 @@
 
 
 .tanah-table tbody td {
-    padding: 13px 14px;
+    padding: 13px 15px;
 
     border: 1px solid #e1e9f1;
 
     color: #294866;
 
-    font-size: 13px;
+    font-size: 13.5px;
 
     line-height: 1.55;
 
@@ -989,44 +1020,56 @@
 }
 
 
+/* Ukuran kolom */
+
 .tanah-col-no {
-    width: 58px;
+    width: 48px;
 
     text-align: center !important;
 }
 
 
 .tanah-col-lokasi {
-    min-width: 250px;
+    min-width: 205px;
 }
 
 
 .tanah-col-alamat {
-    min-width: 275px;
+    min-width: 185px;
 }
 
 
 .tanah-col-penggunaan {
-    min-width: 230px;
+    min-width: 165px;
+}
+
+
+.tanah-col-data {
+    min-width: 125px;
+}
+
+
+.tanah-col-tahun {
+    min-width: 110px;
 }
 
 
 .tanah-col-nilai {
-    width: 180px;
+    width: 175px;
 
-    text-align: right !important;
+    text-align: left !important;
 }
 
 
 .tanah-col-pdf {
-    width: 120px;
+    width: 110px;
 
     text-align: center !important;
 }
 
 
 .tanah-col-action {
-    width: 155px;
+    width: 130px;
 
     text-align: center !important;
 }
@@ -1037,22 +1080,22 @@
 
     color: #506982 !important;
 
+    font-size: 14px;
     font-weight: 650;
 }
 
 
-/* =========================================================
-   LOCATION
-========================================================= */
+/* ==========================================================================
+   11. LOKASI
+   ========================================================================== */
 
 .tanah-location-cell {
     display: flex;
-
     align-items: center;
 
     gap: 10px;
 
-    min-width: 220px;
+    min-width: 200px;
 }
 
 
@@ -1061,7 +1104,6 @@
     height: 35px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -1086,7 +1128,7 @@
 
     color: #12375f;
 
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 750;
 
     line-height: 1.4;
@@ -1100,38 +1142,188 @@
 
     color: #8495aa;
 
-    font-size: 11px;
+    font-size: 12px;
 }
 
 
 .tanah-address-cell,
 .tanah-usage-cell {
+    font-size: 14px;
+
     white-space: normal;
 }
 
 
-/* =========================================================
-   NILAI
-========================================================= */
+/* ==========================================================================
+   12. DATA TANAH
+   ========================================================================== */
 
-.tanah-value-cell {
-    text-align: right;
+.tanah-data-cell {
+    text-align: left;
+}
+
+
+.tanah-data-button {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #cce2f7;
+    border-radius: 8px;
+
+    background: #f6fbff;
+
+    color: #0761b7;
+
+    font-family: inherit;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background .16s ease,
+        border-color .16s ease;
+}
+
+
+.tanah-data-button:hover,
+.tanah-data-button:focus-visible {
+    border-color: #93c1eb;
+
+    background: #e9f5ff;
+}
+
+
+.tanah-data-button > svg {
+    width: 19px;
+    height: 19px;
+
+    flex-shrink: 0;
+}
+
+
+.tanah-data-button span {
+    display: flex;
+    flex-direction: column;
+
+    gap: 1px;
+}
+
+
+.tanah-data-button strong {
+    font-size: 13px;
+    font-weight: 800;
 
     white-space: nowrap;
 }
 
 
-.tanah-value-cell strong {
-    color: #0864c7;
+.tanah-data-button small {
+    color: #6988a5;
 
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 11px;
+
+    white-space: nowrap;
 }
 
 
-/* =========================================================
-   PDF
-========================================================= */
+.tanah-year-cell {
+    color: #496788 !important;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================================
+   13. NILAI TANAH
+   ========================================================================== */
+
+.tanah-value-cell {
+    text-align: left;
+}
+
+
+.tanah-nilai-button {
+    min-width: 145px;
+    min-height: 49px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 7px 9px;
+
+    border: 1px solid #bedcf6;
+    border-radius: 8px;
+
+    background: #edf7ff;
+
+    color: #065cad;
+
+    font-family: inherit;
+
+    cursor: pointer;
+
+    text-decoration: none;
+
+    white-space: normal;
+}
+
+
+.tanah-nilai-button:hover {
+    border-color: #86bbe8;
+
+    background: #e1f1ff;
+}
+
+
+.tanah-nilai-button svg {
+    width: 15px;
+    height: 15px;
+
+    flex-shrink: 0;
+}
+
+
+.tanah-nilai-caption {
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+
+    text-align: left;
+}
+
+
+.tanah-nilai-caption strong {
+    font-size: 13.5px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+
+.tanah-nilai-caption small {
+    color: #708ba6;
+
+    font-size: 10.5px;
+    font-weight: 500;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================================
+   14. PDF
+   ========================================================================== */
 
 .tanah-pdf-cell {
     text-align: center;
@@ -1143,16 +1335,14 @@
     height: 35px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
     gap: 6px;
 
-    padding: 0 10px;
+    padding: 0 9px;
 
     border: 1px solid #c6dff7;
-
     border-radius: 7px;
 
     background: #edf7ff;
@@ -1160,9 +1350,12 @@
     color: #086bd2;
 
     font-family: inherit;
-
     font-size: 12px;
     font-weight: 750;
+
+    text-decoration: none;
+
+    white-space: nowrap;
 
     cursor: pointer;
 }
@@ -1183,7 +1376,6 @@
 
 .tanah-pdf-empty {
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -1192,34 +1384,33 @@
     color: #98a7b7;
 
     font-size: 11px;
+
+    white-space: nowrap;
 }
 
 
-/* =========================================================
-   ACTION
-========================================================= */
+/* ==========================================================================
+   15. ACTION BUTTON
+   ========================================================================== */
 
 .tanah-actions {
     display: flex;
-
     align-items: center;
     justify-content: center;
 
-    gap: 7px;
+    gap: 6px;
 }
 
 
 .tanah-actions button {
-    width: 35px;
-    height: 35px;
+    width: 32px;
+    height: 34px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
     border: 0;
-
     border-radius: 7px;
 
     cursor: pointer;
@@ -1231,7 +1422,8 @@
 
 
 .tanah-actions button:hover {
-    transform: translateY(-1px);
+    transform:
+        translateY(-1px);
 }
 
 
@@ -1262,14 +1454,14 @@
 }
 
 
-/* =========================================================
-   EMPTY
-========================================================= */
+/* ==========================================================================
+   16. EMPTY STATE
+   ========================================================================== */
 
 .tanah-empty {
-    height: 190px;
+    height: 160px;
 
-    padding: 35px !important;
+    padding: 30px !important;
 
     text-align: center !important;
 
@@ -1305,15 +1497,14 @@
 }
 
 
-/* =========================================================
-   FOOTER
-========================================================= */
+/* ==========================================================================
+   17. FOOTER TABEL & PAGINATION
+   ========================================================================== */
 
 .tanah-table-footer {
     min-height: 62px;
 
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
@@ -1332,7 +1523,6 @@
 
 .tanah-pagination {
     display: flex;
-
     align-items: center;
 
     gap: 5px;
@@ -1344,22 +1534,19 @@
     height: 35px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
     padding: 0 8px;
 
     border: 1px solid #d8e2ed;
-
     border-radius: 6px;
 
-    background: white;
+    background: #ffffff;
 
     color: #496481;
 
     font-family: inherit;
-
     font-size: 12px;
     font-weight: 650;
 
@@ -1372,7 +1559,7 @@
 
     background: #086ad8;
 
-    color: white;
+    color: #ffffff;
 }
 
 
@@ -1383,14 +1570,19 @@
 }
 
 
-/* =========================================================
-   MODAL BASE
-========================================================= */
+/* ==========================================================================
+   18. MODAL DASAR
+   ========================================================================== */
 
 .tanah-modal {
-    width: min(980px, calc(100% - 28px));
+    width:
+        min(
+            980px,
+            calc(100% - 28px)
+        );
 
-    max-height: calc(100dvh - 28px);
+    max-height:
+        calc(100dvh - 28px);
 
     margin: auto;
 
@@ -1399,28 +1591,33 @@
     overflow: auto;
 
     border: 0;
-
     border-radius: 14px;
 
-    background: white;
+    background: #ffffff;
 
     color: #173552;
 
     box-shadow:
         0 28px 90px
-        rgba(4,25,50,.31);
+        rgba(4, 25, 50, .31);
 }
 
 
 .tanah-modal::backdrop {
-    background: rgba(4,20,39,.54);
+    background:
+        rgba(4, 20, 39, .54);
 
-    backdrop-filter: blur(3px);
+    backdrop-filter:
+        blur(3px);
 }
 
 
 .tanah-form-modal {
-    width: min(1120px, calc(100% - 28px));
+    width:
+        min(
+            1120px,
+            calc(100% - 28px)
+        );
 }
 
 
@@ -1432,7 +1629,6 @@
     z-index: 20;
 
     display: flex;
-
     align-items: flex-start;
     justify-content: space-between;
 
@@ -1440,7 +1636,8 @@
 
     padding: 18px 20px;
 
-    border-bottom: 1px solid #e3ebf3;
+    border-bottom:
+        1px solid #e3ebf3;
 
     background:
         linear-gradient(
@@ -1470,7 +1667,7 @@
 
     color: #102950;
 
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 800;
 }
 
@@ -1480,7 +1677,9 @@
 
     color: #75869d;
 
-    font-size: 12px;
+    font-size: 13px;
+
+    line-height: 1.5;
 }
 
 
@@ -1489,12 +1688,12 @@
     height: 35px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
-    border: 0;
+    flex-shrink: 0;
 
+    border: 0;
     border-radius: 7px;
 
     background: #f0f5fa;
@@ -1518,7 +1717,6 @@
     z-index: 20;
 
     display: flex;
-
     align-items: center;
     justify-content: flex-end;
 
@@ -1526,32 +1724,31 @@
 
     padding: 13px 20px;
 
-    border-top: 1px solid #e3ebf3;
+    border-top:
+        1px solid #e3ebf3;
 
     background: #fafcff;
 }
 
 
-/* =========================================================
-   FORM SECTION
-========================================================= */
+/* ==========================================================================
+   19. FORM SECTION
+   ========================================================================== */
 
 .tanah-form-section {
-    margin-bottom: 15px;
+    margin-bottom: 17px;
 
     padding: 15px;
 
     border: 1px solid #dde7f1;
-
     border-radius: 10px;
 
-    background: white;
+    background: #ffffff;
 }
 
 
 .tanah-section-title {
     display: flex;
-
     align-items: center;
 
     gap: 10px;
@@ -1565,7 +1762,6 @@
     height: 30px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -1587,7 +1783,7 @@
 
     color: #17365c;
 
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 800;
 }
 
@@ -1597,19 +1793,22 @@
 
     color: #7a8ca3;
 
-    font-size: 11px;
+    font-size: 13px;
 }
 
 
-/* =========================================================
-   FORM
-========================================================= */
+/* ==========================================================================
+   20. FORM INPUT
+   ========================================================================== */
 
 .tanah-form-grid {
     display: grid;
 
     grid-template-columns:
-        repeat(2, minmax(0,1fr));
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
 
     gap: 12px;
 }
@@ -1617,7 +1816,10 @@
 
 .tanah-grid-3 {
     grid-template-columns:
-        repeat(3, minmax(0,1fr));
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
 }
 
 
@@ -1633,7 +1835,7 @@
 
     color: #355372;
 
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
 }
 
@@ -1649,18 +1851,16 @@
     width: 100%;
 
     border: 1px solid #d5e1ec;
-
     border-radius: 7px;
 
     outline: none;
 
-    background: white;
+    background: #ffffff;
 
     color: #34516f;
 
     font-family: inherit;
-
-    font-size: 13px;
+    font-size: 14px;
 }
 
 
@@ -1690,12 +1890,14 @@
 
     box-shadow:
         0 0 0 3px
-        rgba(8,106,216,.08);
+        rgba(8, 106, 216, .08);
 }
 
 
 .tanah-field input[readonly] {
     background: #f4f7fa;
+
+    color: #5d7085;
 }
 
 
@@ -1703,27 +1905,27 @@
     display: grid;
 
     grid-template-columns:
-        minmax(0,1fr)
+        minmax(0, 1fr)
         46px;
 }
 
 
 .tanah-unit-field input {
-    border-radius: 7px 0 0 7px;
+    border-radius:
+        7px 0 0 7px;
 }
 
 
 .tanah-unit-field span {
     display: flex;
-
     align-items: center;
     justify-content: center;
 
     border: 1px solid #d5e1ec;
-
     border-left: 0;
 
-    border-radius: 0 7px 7px 0;
+    border-radius:
+        0 7px 7px 0;
 
     background: #f3f7fb;
 
@@ -1734,9 +1936,9 @@
 }
 
 
-/* =========================================================
-   SOURCE
-========================================================= */
+/* ==========================================================================
+   21. DAFTAR NILAI ASET DI FORM TAMBAH
+   ========================================================================== */
 
 .tanah-source-section {
     border-color: #c6ddf5;
@@ -1747,7 +1949,6 @@
 
 .tanah-source-toolbar {
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
@@ -1766,6 +1967,8 @@
     color: #647c97;
 
     font-size: 12px;
+
+    white-space: nowrap;
 }
 
 
@@ -1775,7 +1978,6 @@
     overflow: auto;
 
     border: 1px solid #dde6ef;
-
     border-radius: 8px;
 }
 
@@ -1804,10 +2006,12 @@
 
     color: #18375e;
 
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
 
     text-align: left;
+
+    white-space: nowrap;
 }
 
 
@@ -1818,7 +2022,7 @@
 
     color: #385572;
 
-    font-size: 11.5px;
+    font-size: 13px;
 
     line-height: 1.5;
 
@@ -1840,7 +2044,7 @@
 
     color: #8192a6;
 
-    font-size: 10px;
+    font-size: 11px;
 }
 
 
@@ -1855,38 +2059,60 @@
 }
 
 
+/**
+ * Tombol PILIH.
+ *
+ * Ini tombol yang digunakan untuk memasukkan
+ * transaksi Nilai Aset ke form Tanah.
+ */
+
 .tanah-source-select {
-    min-height: 32px;
+    min-height: 35px;
 
-    padding: 0 11px;
+    padding: 0 13px;
 
-    border: 0;
-
-    border-radius: 6px;
+    border: 1px solid #0f8351;
+    border-radius: 7px;
 
     background: #168d5b;
 
-    color: white;
+    color: #ffffff;
 
     font-family: inherit;
-
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
 
     cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        transform .15s ease;
 }
 
 
-/* =========================================================
-   SELECTED SOURCE
-========================================================= */
+.tanah-source-select:hover {
+    border-color: #087345;
+
+    background: #0f7d4e;
+
+    transform:
+        translateY(-1px);
+}
+
+
+/* ==========================================================================
+   22. SUMBER NILAI ASET YANG TERPILIH
+   ========================================================================== */
 
 .tanah-selected-source {
     display: grid;
 
     grid-template-columns:
         auto
-        minmax(0,1fr)
+        minmax(0, 1fr)
         auto;
 
     align-items: center;
@@ -1898,7 +2124,6 @@
     padding: 12px 13px;
 
     border: 1px solid #bae4cd;
-
     border-radius: 9px;
 
     background: #effaf4;
@@ -1915,7 +2140,6 @@
     height: 38px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -1965,15 +2189,13 @@
     padding: 0 10px;
 
     border: 1px solid #addbbf;
-
     border-radius: 6px;
 
-    background: white;
+    background: #ffffff;
 
     color: #137445;
 
     font-family: inherit;
-
     font-size: 11px;
     font-weight: 700;
 
@@ -1981,13 +2203,12 @@
 }
 
 
-/* =========================================================
-   UPLOAD
-========================================================= */
+/* ==========================================================================
+   23. UPLOAD PDF
+   ========================================================================== */
 
 .tanah-upload-box {
     display: flex;
-
     align-items: center;
 
     gap: 12px;
@@ -1995,7 +2216,6 @@
     padding: 14px;
 
     border: 1px dashed #a9cbea;
-
     border-radius: 9px;
 
     background: #f8fcff;
@@ -2007,7 +2227,6 @@
     height: 43px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -2048,7 +2267,6 @@
     min-height: 36px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -2060,7 +2278,7 @@
 
     background: #086ad8;
 
-    color: white;
+    color: #ffffff;
 
     font-size: 11px;
     font-weight: 700;
@@ -2071,7 +2289,6 @@
 
 .tanah-file-selected {
     display: flex;
-
     align-items: center;
 
     gap: 7px;
@@ -2095,9 +2312,9 @@
 }
 
 
-/* =========================================================
-   BUTTON
-========================================================= */
+/* ==========================================================================
+   24. BUTTON FORM
+   ========================================================================== */
 
 .tanah-button-primary,
 .tanah-button-secondary,
@@ -2105,7 +2322,6 @@
     min-height: 40px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -2116,7 +2332,6 @@
     border-radius: 7px;
 
     font-family: inherit;
-
     font-size: 12px;
     font-weight: 700;
 
@@ -2129,14 +2344,14 @@
 
     background: #086ad8;
 
-    color: white;
+    color: #ffffff;
 }
 
 
 .tanah-button-secondary {
     border: 1px solid #d4e0eb;
 
-    background: white;
+    background: #ffffff;
 
     color: #526b88;
 }
@@ -2147,86 +2362,126 @@
 
     background: #dc3545;
 
-    color: white;
+    color: #ffffff;
 }
 
 
-/* =========================================================
-   DETAIL
-========================================================= */
+/* ==========================================================================
+   25. MODAL NILAI
+   ========================================================================== */
 
-.tanah-detail-modal {
-    width: min(800px, calc(100% - 28px));
+.tanah-nilai-modal {
+    width:
+        min(
+            1150px,
+            calc(100% - 28px)
+        );
 }
 
 
-.tanah-detail-grid {
-    display: grid;
+.tanah-nilai-table {
+    min-width: 940px;
+}
 
-    grid-template-columns:
-        repeat(3,minmax(0,1fr));
+
+.tanah-nilai-summary {
+    margin-bottom: 14px;
+
+    padding: 14px 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
     gap: 10px;
+
+    border: 1px solid #d5e8fb;
+    border-radius: 9px;
+
+    background: #eff7ff;
+
+    color: #294969;
+
+    font-size: 15px;
 }
 
 
-.tanah-detail-grid > div {
-    padding: 11px 12px;
+.tanah-nilai-summary strong {
+    color: #075bb7;
 
-    border: 1px solid #e0e9f2;
-
-    border-radius: 8px;
-
-    background: #fafcff;
+    font-size: 20px;
 }
 
 
-.tanah-detail-grid span {
-    display: block;
+.tanah-nilai-table
+tr.tanah-nilai-selected
+> td {
+    background:
+        #e4f1ff !important;
 
-    margin-bottom: 5px;
+    border-top:
+        2px solid #1871cf;
 
-    color: #7b8da4;
-
-    font-size: 11px;
+    border-bottom:
+        2px solid #1871cf;
 }
 
 
-.tanah-detail-grid strong {
-    display: block;
+.tanah-text-wrap {
+    min-width: 220px;
 
-    color: #294a6f;
-
-    font-size: 13px;
-
-    line-height: 1.5;
+    white-space: normal;
 }
 
 
-.tanah-detail-full {
-    grid-column: 1 / -1;
+/* ==========================================================================
+   26. MODAL DAFTAR DOKUMEN
+   ========================================================================== */
+
+.tanah-documents-modal {
+    width:
+        min(
+            900px,
+            calc(100% - 28px)
+        );
 }
 
 
-.tanah-detail-full p {
-    margin: 0;
-
-    color: #365471;
-
-    font-size: 13px;
-
-    line-height: 1.6;
+.tanah-documents-table {
+    min-width: 660px;
 }
 
 
-/* =========================================================
-   PDF MODAL
-========================================================= */
+.tanah-documents-table
+.tanah-actions {
+    justify-content: flex-start;
+}
+
+
+.tanah-documents-table
+.tanah-pdf-button {
+    min-height: 35px;
+
+    padding: 0 12px;
+}
+
+
+/* ==========================================================================
+   27. PDF MODAL
+   ========================================================================== */
 
 .tanah-pdf-modal {
-    width: min(1100px, calc(100% - 30px));
+    width:
+        min(
+            1100px,
+            calc(100% - 30px)
+        );
 
-    height: min(850px, calc(100dvh - 30px));
+    height:
+        min(
+            850px,
+            calc(100dvh - 30px)
+        );
 
     overflow: hidden;
 }
@@ -2234,14 +2489,12 @@
 
 .tanah-pdf-modal[open] {
     display: flex;
-
     flex-direction: column;
 }
 
 
 .tanah-pdf-header {
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
@@ -2249,15 +2502,15 @@
 
     padding: 15px 18px;
 
-    border-bottom: 1px solid #e2eaf2;
+    border-bottom:
+        1px solid #e2eaf2;
 
-    background: #fff;
+    background: #ffffff;
 }
 
 
 .tanah-pdf-title {
     display: flex;
-
     align-items: center;
 
     gap: 10px;
@@ -2269,7 +2522,6 @@
     height: 41px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -2306,7 +2558,6 @@
     min-height: 55px;
 
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
@@ -2314,7 +2565,8 @@
 
     padding: 9px 18px;
 
-    border-bottom: 1px solid #e3ebf3;
+    border-bottom:
+        1px solid #e3ebf3;
 
     background: #f8fbfe;
 
@@ -2326,7 +2578,6 @@
 
 .tanah-pdf-toolbar > span {
     display: flex;
-
     align-items: center;
 
     gap: 6px;
@@ -2337,7 +2588,6 @@
     min-height: 37px;
 
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
@@ -2349,7 +2599,7 @@
 
     background: #086ad8;
 
-    color: white !important;
+    color: #ffffff !important;
 
     font-size: 12px;
     font-weight: 700;
@@ -2375,16 +2625,20 @@
 
     border: 0;
 
-    background: white;
+    background: #ffffff;
 }
 
 
-/* =========================================================
-   DELETE
-========================================================= */
+/* ==========================================================================
+   28. DELETE MODAL
+   ========================================================================== */
 
 .tanah-delete-modal {
-    width: min(450px, calc(100% - 28px));
+    width:
+        min(
+            450px,
+            calc(100% - 28px)
+        );
 }
 
 
@@ -2400,7 +2654,6 @@
     height: 57px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -2434,9 +2687,9 @@
 }
 
 
-/* =========================================================
-   TOAST
-========================================================= */
+/* ==========================================================================
+   29. TOAST
+   ========================================================================== */
 
 .tanah-toast {
     position: fixed;
@@ -2449,7 +2702,6 @@
     max-width: 380px;
 
     display: flex;
-
     align-items: center;
 
     gap: 8px;
@@ -2457,10 +2709,9 @@
     padding: 12px 14px;
 
     border: 1px solid #c7ddef;
-
     border-radius: 8px;
 
-    background: white;
+    background: #ffffff;
 
     color: #355372;
 
@@ -2468,7 +2719,7 @@
 
     box-shadow:
         0 12px 40px
-        rgba(14,46,80,.16);
+        rgba(14, 46, 80, .16);
 }
 
 
@@ -2486,15 +2737,872 @@
 }
 
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+/* ==========================================================================
+   30. VIEW DETAIL MODEL WEB ASET LAMA
+   ========================================================================== */
+
+.tanah-location-modal {
+    width:
+        min(
+            1440px,
+            calc(100vw - 32px)
+        ) !important;
+
+    height:
+        min(
+            870px,
+            calc(100dvh - 26px)
+        );
+
+    max-height:
+        calc(100dvh - 26px);
+
+    padding: 0;
+
+    overflow: hidden;
+
+    border-radius: 14px;
+}
+
+
+.tanah-location-modal[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* Header View */
+
+.tanah-legacy-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 18px;
+
+    flex: 0 0 auto;
+
+    padding: 16px 22px;
+
+    border-bottom:
+        1px solid #dce8f3;
+
+    background:
+        linear-gradient(
+            110deg,
+            #f9fcff,
+            #f0f7ff
+        );
+}
+
+
+.tanah-legacy-topbar-title h3 {
+    margin: 4px 0;
+
+    color: #102e53;
+
+    font-size: 20px;
+    font-weight: 800;
+}
+
+
+.tanah-legacy-topbar-title p {
+    margin: 0;
+
+    color: #667e97;
+
+    font-size: 13px;
+
+    line-height: 1.55;
+}
+
+
+/* Workspace */
+
+.tanah-legacy-workspace {
+    flex: 1 1 auto;
+
+    min-height: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        315px
+        minmax(0, 1fr);
+}
+
+
+/* Panel kiri */
+
+.tanah-legacy-list-pane {
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    border-right:
+        1px solid #dbe6f1;
+
+    background: #f8fbff;
+}
+
+
+.tanah-legacy-pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 7px;
+
+    padding: 17px 15px;
+
+    border-bottom:
+        1px solid #e1eaf2;
+}
+
+
+.tanah-legacy-pane-header strong {
+    display: block;
+
+    color: #123354;
+
+    font-size: 15px;
+    font-weight: 800;
+}
+
+
+.tanah-legacy-pane-header small {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #7b90a4;
+
+    font-size: 11.5px;
+
+    line-height: 1.5;
+}
+
+
+.tanah-legacy-total {
+    padding: 5px 8px;
+
+    border-radius: 16px;
+
+    background: #e5f1ff;
+
+    color: #1267b9;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+
+.tanah-legacy-list-table-head,
+.tanah-legacy-list-row {
+    display: grid;
+
+    grid-template-columns:
+        32px
+        minmax(0, 1fr)
+        84px;
+
+    gap: 7px;
+
+    align-items: center;
+}
+
+
+.tanah-legacy-list-table-head {
+    padding: 10px 13px;
+
+    border-bottom:
+        1px solid #d7e4f1;
+
+    background: #e9f4ff;
+
+    color: #315474;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+
+.tanah-legacy-list-table-head
+span:last-child {
+    text-align: right;
+}
+
+
+.tanah-legacy-list {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+}
+
+
+.tanah-legacy-list-row {
+    width: 100%;
+
+    padding: 12px 13px;
+
+    border: 0;
+    border-bottom:
+        1px solid #e3ecf5;
+
+    background: #ffffff;
+
+    font-family: inherit;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background .15s ease;
+}
+
+
+.tanah-legacy-list-row:hover {
+    background: #edf7ff;
+}
+
+
+.tanah-legacy-list-row.active {
+    background: #e3f1ff;
+
+    box-shadow:
+        inset 3px 0 0
+        #0873dc;
+}
+
+
+.tanah-legacy-list-no {
+    color: #637c98;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.tanah-legacy-list-owner {
+    display: block;
+
+    min-width: 0;
+}
+
+
+.tanah-legacy-list-owner strong {
+    display: block;
+
+    overflow-wrap: anywhere;
+
+    color: #1360aa;
+
+    font-size: 12.5px;
+    font-weight: 800;
+
+    line-height: 1.35;
+}
+
+
+.tanah-legacy-list-owner small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #7c90a3;
+
+    font-size: 11px;
+}
+
+
+.tanah-legacy-list-area {
+    color: #405f80;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: right;
+
+    white-space: nowrap;
+}
+
+
+.tanah-legacy-pane-foot {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 7px;
+
+    padding: 13px;
+
+    border-top:
+        1px solid #e1eaf2;
+
+    background: #f5faff;
+
+    color: #7489a0;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+.tanah-legacy-pane-foot svg {
+    width: 15px;
+    height: 15px;
+
+    flex-shrink: 0;
+
+    color: #4883b8;
+}
+
+
+.tanah-legacy-loading {
+    padding: 23px 14px;
+
+    color: #8193a8;
+
+    font-size: 13px;
+
+    text-align: center;
+}
+
+
+/* Panel kanan */
+
+.tanah-legacy-detail-pane {
+    min-width: 0;
+    min-height: 0;
+
+    overflow: auto;
+
+    padding: 17px 24px 25px;
+
+    background: #ffffff;
+}
+
+
+.tanah-legacy-empty {
+    min-height: 360px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    color: #8293a8;
+
+    text-align: center;
+}
+
+
+.tanah-legacy-empty svg {
+    width: 32px;
+    height: 32px;
+
+    color: #7cb5ea;
+}
+
+
+.tanah-legacy-empty strong {
+    color: #315579;
+
+    font-size: 17px;
+}
+
+
+.tanah-legacy-empty span {
+    font-size: 13px;
+}
+
+
+.tanah-legacy-detail-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding-bottom: 13px;
+
+    border-bottom:
+        1px solid #e3ebf3;
+}
+
+
+.tanah-legacy-detail-heading h4 {
+    margin: 2px 0 4px;
+
+    color: #0d315a;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    line-height: 1.35;
+}
+
+
+.tanah-legacy-detail-heading small {
+    color: #778ca3;
+
+    font-size: 12px;
+}
+
+
+.tanah-legacy-detail-actions {
+    display: flex;
+
+    gap: 7px;
+
+    flex-shrink: 0;
+}
+
+
+.tanah-legacy-mini-button {
+    height: 35px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+
+    padding: 0 10px;
+
+    border: 1px solid #d8e5f1;
+    border-radius: 7px;
+
+    background: #f3f8ff;
+
+    color: #22649f;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.tanah-legacy-mini-button.edit {
+    border-color: #f2dfb8;
+
+    background: #fff6e6;
+
+    color: #b77908;
+}
+
+
+.tanah-legacy-mini-button.delete {
+    border-color: #f0ccd1;
+
+    background: #fff0f2;
+
+    color: #c9394b;
+}
+
+
+.tanah-legacy-mini-button svg {
+    width: 14px;
+    height: 14px;
+}
+
+
+/* Foto lokasi */
+
+.tanah-legacy-photo-wrap {
+    min-height: 235px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 14px 0;
+
+    padding: 10px;
+
+    border: 1px solid #e0e9f1;
+    border-radius: 10px;
+
+    background: #f7faff;
+}
+
+
+.tanah-legacy-photo-wrap img {
+    width: auto;
+    max-width: 100%;
+    max-height: 280px;
+
+    display: block;
+
+    object-fit: contain;
+
+    border-radius: 8px;
+
+    box-shadow:
+        0 8px 22px
+        rgba(19, 50, 81, .12);
+}
+
+
+.tanah-legacy-photo-empty {
+    min-height: 180px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    color: #8094a9;
+
+    font-size: 13px;
+}
+
+
+.tanah-legacy-photo-empty svg {
+    width: 34px;
+    height: 34px;
+}
+
+
+/* Informasi */
+
+.tanah-legacy-info-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 12px;
+
+    margin: 14px 0;
+}
+
+
+.tanah-legacy-info-panel,
+.tanah-legacy-document-section {
+    overflow: hidden;
+
+    border: 1px solid #b8d5f0;
+    border-radius: 9px;
+
+    background: #ffffff;
+}
+
+
+.tanah-legacy-info-panel h5,
+.tanah-legacy-document-section h5 {
+    margin: 0;
+
+    padding: 9px 12px;
+
+    border-bottom:
+        1px solid #c9ddf0;
+
+    background: #edf6ff;
+
+    color: #155389;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+.tanah-legacy-info-panel dl {
+    margin: 0;
+
+    padding: 7px 10px;
+}
+
+
+.tanah-legacy-info-panel
+dl > div {
+    display: grid;
+
+    grid-template-columns:
+        125px
+        minmax(0, 1fr);
+
+    gap: 8px;
+
+    align-items: start;
+
+    padding: 7px 0;
+
+    border-bottom:
+        1px solid #eef2f6;
+}
+
+
+.tanah-legacy-info-panel
+dl > div:last-child {
+    border-bottom: 0;
+}
+
+
+.tanah-legacy-info-panel dt {
+    color: #385a78;
+
+    font-size: 11.5px;
+    font-weight: 750;
+}
+
+
+.tanah-legacy-info-panel dd {
+    margin: 0;
+
+    overflow-wrap: anywhere;
+
+    color: #284d70;
+
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+
+/* Penunjukan / sertifikat / gambar situasi */
+
+.tanah-legacy-document-section {
+    margin: 13px 0;
+}
+
+
+.tanah-legacy-document-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(0, 1.2fr)
+        minmax(0, .85fr);
+
+    gap: 12px;
+
+    padding: 12px;
+}
+
+
+.tanah-legacy-document-grid > div {
+    min-width: 0;
+
+    padding: 10px;
+
+    border: 1px solid #e0e8f0;
+    border-radius: 6px;
+
+    background: #f9fbfd;
+}
+
+
+.tanah-legacy-document-grid span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #748aa0;
+
+    font-size: 11px;
+}
+
+
+.tanah-legacy-document-grid strong {
+    display: block;
+
+    overflow-wrap: anywhere;
+
+    color: #294969;
+
+    font-size: 12.5px;
+    font-weight: 700;
+
+    line-height: 1.4;
+}
+
+
+.tanah-legacy-note {
+    margin: 0;
+
+    padding: 13px;
+
+    overflow-wrap: anywhere;
+
+    color: #3d5b77;
+
+    font-size: 12.5px;
+
+    line-height: 1.6;
+}
+
+
+/* PDF di detail */
+
+.tanah-legacy-pdf-section h5 {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+}
+
+
+.tanah-legacy-pdf-section h5 svg {
+    width: 15px;
+    height: 15px;
+}
+
+
+.tanah-legacy-documents {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    padding: 12px;
+}
+
+
+.tanah-legacy-doc-item {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 9px;
+
+    border: 1px solid #e1e9f1;
+    border-radius: 7px;
+
+    background: #fafcff;
+}
+
+
+.tanah-legacy-doc-item span {
+    flex: 1;
+
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+
+    color: #355371;
+
+    font-size: 12px;
+    font-weight: 650;
+}
+
+
+.tanah-legacy-doc-preview,
+.tanah-legacy-doc-download {
+    min-height: 32px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 10px;
+
+    border: 1px solid #c8def5;
+    border-radius: 6px;
+
+    background: #eaf4ff;
+
+    color: #0b61ad;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+
+.tanah-legacy-doc-download {
+    border-color: #d8e4ef;
+
+    background: #f1f5fb;
+
+    color: #3c5d7d;
+}
+
+
+.tanah-legacy-doc-empty {
+    color: #8b9eb1;
+
+    font-size: 12px;
+}
+
+
+/* ==========================================================================
+   31. FOCUS ACCESSIBILITY
+   ========================================================================== */
+
+.tanah-page
+:is(
+    button,
+    a,
+    input,
+    select,
+    textarea
+):focus-visible {
+    outline:
+        3px solid
+        rgba(8, 106, 216, .30);
+
+    outline-offset: 2px;
+}
+
+
+/* ==========================================================================
+   32. RESPONSIVE
+   ========================================================================== */
 
 @media (max-width: 1250px) {
 
     .tanah-kpi-grid {
         grid-template-columns:
-            repeat(2,minmax(0,1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+}
+
+
+@media (max-width: 1050px) {
+
+    .tanah-legacy-workspace {
+        grid-template-columns:
+            265px
+            minmax(0, 1fr);
+    }
+
+
+    .tanah-legacy-detail-pane {
+        padding: 14px;
+    }
+
+
+    .tanah-legacy-info-panel
+    dl > div {
+        grid-template-columns:
+            100px
+            minmax(0, 1fr);
     }
 
 }
@@ -2519,13 +3627,90 @@
 
     .tanah-grid-3 {
         grid-template-columns:
-            repeat(2,minmax(0,1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+}
+
+
+@media (max-width: 850px) {
+
+    .tanah-location-modal {
+        width:
+            calc(100vw - 16px)
+            !important;
+
+        height:
+            calc(100dvh - 16px);
+
+        max-height:
+            calc(100dvh - 16px);
     }
 
 
-    .tanah-detail-grid {
+    .tanah-legacy-workspace {
+        display: block;
+
+        overflow: auto;
+    }
+
+
+    .tanah-legacy-list-pane {
+        min-height: 0;
+
+        max-height: 260px;
+
+        border-right: 0;
+
+        border-bottom:
+            1px solid #dbe6f1;
+    }
+
+
+    .tanah-legacy-list {
+        max-height: 170px;
+    }
+
+
+    .tanah-legacy-detail-pane {
+        overflow: visible;
+    }
+
+
+    .tanah-legacy-detail-heading {
+        flex-wrap: wrap;
+    }
+
+
+    .tanah-legacy-info-grid {
         grid-template-columns:
-            repeat(2,minmax(0,1fr));
+            1fr;
+    }
+
+
+    .tanah-legacy-document-grid {
+        grid-template-columns:
+            1fr;
+
+        gap: 8px;
+    }
+
+
+    .tanah-legacy-photo-wrap {
+        min-height: 160px;
+    }
+
+
+    .tanah-legacy-photo-wrap img {
+        max-height: 200px;
+    }
+
+
+    .tanah-legacy-pane-foot {
+        display: none;
     }
 
 }
@@ -2551,7 +3736,7 @@
     .tanah-incoming-card {
         grid-template-columns:
             auto
-            minmax(0,1fr);
+            minmax(0, 1fr);
     }
 
 
@@ -2578,6 +3763,24 @@
         flex-direction: column;
     }
 
+
+    .tanah-nilai-summary {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .tanah-modal-body {
+        padding: 13px;
+    }
+
+
+    .tanah-heading p,
+    .tanah-filter-header p {
+        font-size: 13px;
+    }
+
 }
 
 
@@ -2602,24 +3805,20 @@
 
 
     .tanah-kpi-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            1fr;
     }
 
 
     .tanah-form-grid,
     .tanah-grid-3 {
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            1fr;
     }
 
 
-    .tanah-field-full,
-    .tanah-detail-full {
+    .tanah-field-full {
         grid-column: auto;
-    }
-
-
-    .tanah-detail-grid {
-        grid-template-columns: 1fr;
     }
 
 
@@ -2629,248 +3828,17 @@
         flex-direction: column;
     }
 
-}
-/* =========================================================
-   FINAL POLISH - TANAH (berdasarkan kode proyek asli)
-   Kolom tidak diubah: Lokasi, Alamat, Penggunaan, Nilai, PDF, Aksi
-========================================================= */
-.tanah-page { font-size: 14px; }
-.tanah-heading p,.tanah-filter-header p,.tanah-incoming-content p { font-size: 14px; line-height: 1.55; }
-.tanah-table-header h3,.tanah-filter-header h3 { font-size: 18px; }
-.tanah-table thead th { font-size: 14px; padding: 14px 15px; }
-.tanah-table tbody td { font-size: 14px; padding: 13px 15px; }
-.tanah-table .tanah-location-cell strong { font-size: 14px; }
-.tanah-table .tanah-location-cell small { font-size: 12px; }
-.tanah-table .tanah-row-number { font-size: 14px; }
-.tanah-table .tanah-address-cell,.tanah-table .tanah-usage-cell { font-size: 14px; }
-.tanah-search input,.tanah-select-group select,.tanah-field input,.tanah-field select,.tanah-field textarea { font-size: 14px; }
-.tanah-field label,.tanah-form-section .tanah-section-title p { font-size: 13px; }
-.tanah-form-section .tanah-section-title h4 { font-size: 16px; }
-.tanah-source-table td,.tanah-source-table th { font-size: 13px; }
-.tanah-incoming-title-row h3 { font-size: 16px; }
-.tanah-incoming-meta > span { font-size: 12px; }
-.tanah-source-review { display:inline-block; white-space:nowrap; padding:7px 10px; border-radius:7px; background:#fff1dc; color:#915600; font-weight:700; font-size:12px; }
-.tanah-nilai-button {
-    display:inline-flex; align-items:center; justify-content:flex-end; gap:7px;
-    padding:7px 4px; border:0; background:transparent; color:#0867d3;
-    cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; line-height:1.4; text-decoration:underline;
-    text-underline-offset:3px; white-space:nowrap;
-}
-.tanah-nilai-button:hover { color:#034b99; }
-.tanah-nilai-button svg { width:15px; height:15px; flex-shrink:0; }
-.tanah-value-cell { text-align:right; }
-.tanah-pdf-button { font-size:13px; white-space:nowrap; }
-.tanah-page [hidden] { display:none !important; }
-.tanah-data-row[hidden] { display:none !important; }
-.tanah-location-modal { width:min(1200px, calc(100% - 28px)); }
-.tanah-nilai-modal { width:min(1150px, calc(100% - 28px)); }
-.tanah-documents-modal { width:min(900px, calc(100% - 28px)); }
-.tanah-location-table { min-width:1120px; }
-.tanah-nilai-table { min-width:940px; }
-.tanah-documents-table { min-width:660px; }
-.tanah-text-wrap { white-space:normal; min-width:220px; }
-.tanah-nilai-summary {
-    margin-bottom:14px; padding:14px 16px; border:1px solid #d5e8fb;
-    background:#eff7ff; border-radius:9px; color:#294969; font-size:15px;
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-}
-.tanah-nilai-summary strong { color:#075bb7; font-size:20px; }
-.tanah-location-photo { display:block; width:min(100%,540px); max-height:240px;
-    object-fit:cover; border:1px solid #dbe6f1; border-radius:10px; margin-bottom:16px; }
-.tanah-documents-table .tanah-actions { justify-content:flex-start; }
-.tanah-documents-table .tanah-pdf-button { display:inline-flex; align-items:center; gap:7px; min-height:35px; padding:0 12px; text-decoration:none; }
-.tanah-documents-table .tanah-pdf-button svg { width:15px; height:15px; }
-.tanah-modal-header h3 { font-size:20px; }
-.tanah-modal-header p { font-size:13px; line-height:1.5; }
-.tanah-detail-grid span { font-size:12px; }
-.tanah-detail-grid strong,.tanah-detail-full p { font-size:14px; }
-.tanah-modal .tanah-table-scroll { padding:0; }
-.tanah-form-modal .tanah-modal-body { padding:20px; }
-.tanah-form-modal .tanah-form-section { margin-bottom:17px; }
-.tanah-modal :is(button,a,input,select,textarea):focus-visible,.tanah-nilai-button:focus-visible {
-    outline:3px solid rgba(8,106,216,.35); outline-offset:2px;
-}
-@media (max-width:760px) {
-  .tanah-nilai-summary { flex-direction:column; align-items:flex-start; }
-  .tanah-heading p,.tanah-filter-header p { font-size:13px; }
-  .tanah-modal .tanah-modal-body { padding:13px; }
-}
 
-/* ========================================================================
-   RESTORASI DESAIN TABEL PERTAMA + KOLOM PDF
-   No | Lokasi | Alamat | Penggunaan | Data Tanah | Tahun | Nilai | PDF | Aksi
-   ======================================================================== */
-.tanah-table-card .tanah-table { min-width: 1280px; }
-.tanah-table-card .tanah-col-no { width: 48px; }
-.tanah-table-card .tanah-col-lokasi { min-width: 205px; }
-.tanah-table-card .tanah-col-alamat { min-width: 185px; }
-.tanah-table-card .tanah-col-penggunaan { min-width: 165px; }
-.tanah-table-card .tanah-col-data { min-width: 125px; }
-.tanah-table-card .tanah-col-tahun { min-width: 110px; }
-.tanah-table-card .tanah-col-nilai { width: 175px; text-align:left !important; }
-.tanah-table-card .tanah-col-pdf { width: 110px; text-align:center !important; }
-.tanah-table-card .tanah-col-action { width: 130px; text-align:center !important; }
-.tanah-table-card .tanah-table thead th { font-size: 13.5px; font-weight: 800; }
-.tanah-table-card .tanah-table tbody td { font-size: 13.5px; line-height: 1.55; }
-.tanah-data-cell { text-align:left; }
-.tanah-data-button {
-    display:inline-flex; align-items:center; gap:9px; padding:7px 10px;
-    border:1px solid #cce2f7; border-radius:8px; background:#f6fbff;
-    font-family:inherit; color:#0761b7; text-align:left; cursor:pointer;
-    transition:background .16s, border-color .16s;
-}
-.tanah-data-button:hover,.tanah-data-button:focus-visible { background:#e9f5ff; border-color:#93c1eb; }
-.tanah-data-button > svg { flex-shrink:0; width:19px; height:19px; }
-.tanah-data-button span { display:flex; flex-direction:column; gap:1px; }
-.tanah-data-button strong { font-size:13px; font-weight:800; white-space:nowrap; }
-.tanah-data-button small { font-size:11px; color:#6988a5; white-space:nowrap; }
-.tanah-year-cell { font-weight:600; color:#496788 !important; white-space:nowrap; }
-.tanah-table-card .tanah-value-cell { text-align:left; }
-.tanah-table-card .tanah-nilai-button {
-    display:inline-flex; align-items:center; justify-content:space-between; gap:8px;
-    min-width:145px; min-height:49px; padding:7px 9px;
-    border:1px solid #bedcf6; border-radius:8px;
-    background:#edf7ff; color:#065cad; text-decoration:none;
-    box-shadow:none; white-space:normal;
-}
-.tanah-table-card .tanah-nilai-button:hover { border-color:#86bbe8; background:#e1f1ff; }
-.tanah-nilai-caption { display:flex; flex-direction:column; gap:2px; text-align:left; }
-.tanah-nilai-caption strong { font-size:13.5px; font-weight:800; white-space:nowrap; }
-.tanah-nilai-caption small { color:#708ba6; font-size:10.5px; font-weight:500; white-space:nowrap; }
-.tanah-table-card .tanah-actions { gap:6px; }
-.tanah-table-card .tanah-actions button { width:32px; height:34px; }
-.tanah-table-card .tanah-pdf-button { padding:0 9px; height:35px; font-size:12px; }
-.tanah-table-card .tanah-pdf-empty { font-size:11px; white-space:nowrap; }
-
-/* ========================================================================
-   DETAIL VIEW: DUA PANEL SEPERTI WEB ASET LAMA, WARNA & TIPOGRAFI MODERN
-   ======================================================================== */
-.tanah-page .tanah-location-modal {
-    width:min(1440px,calc(100vw - 32px));
-    height:min(870px,calc(100dvh - 26px));
-    max-height:calc(100dvh - 26px);
-    padding:0; border-radius:14px; overflow:hidden;
-}
-.tanah-page .tanah-location-modal[open] { display:flex; flex-direction:column; }
-.tanah-legacy-topbar {
-    display:flex; align-items:center; justify-content:space-between; gap:18px;
-    flex:0 0 auto; padding:16px 22px;
-    background:linear-gradient(110deg,#f9fcff,#f0f7ff);
-    border-bottom:1px solid #dce8f3;
-}
-.tanah-legacy-topbar-title h3 { margin:4px 0; font-size:20px; font-weight:800; color:#102e53; }
-.tanah-legacy-topbar-title p { margin:0; font-size:13px; color:#667e97; line-height:1.55; }
-.tanah-legacy-workspace { flex:1 1 auto; min-height:0; display:grid; grid-template-columns:315px minmax(0,1fr); }
-.tanah-legacy-list-pane {
-    min-height:0; display:flex; flex-direction:column;
-    background:#f8fbff; border-right:1px solid #dbe6f1;
-}
-.tanah-legacy-pane-header { display:flex; justify-content:space-between; align-items:center; gap:7px; padding:17px 15px; border-bottom:1px solid #e1eaf2; }
-.tanah-legacy-pane-header strong { display:block; font-size:15px; color:#123354; font-weight:800; }
-.tanah-legacy-pane-header small { display:block; margin-top:4px; font-size:11.5px; color:#7b90a4; line-height:1.5; }
-.tanah-legacy-total { padding:5px 8px; border-radius:16px; background:#e5f1ff; color:#1267b9; font-size:11px; font-weight:800; white-space:nowrap; }
-.tanah-legacy-list-table-head,.tanah-legacy-list-row { display:grid; grid-template-columns:32px minmax(0,1fr) 84px; gap:7px; align-items:center; }
-.tanah-legacy-list-table-head { padding:10px 13px; background:#e9f4ff; color:#315474; font-size:12px; font-weight:800; border-bottom:1px solid #d7e4f1; }
-.tanah-legacy-list-table-head span:last-child { text-align:right; }
-.tanah-legacy-list { flex:1; min-height:0; overflow-y:auto; }
-.tanah-legacy-list-row { width:100%; padding:12px 13px; border:0; border-bottom:1px solid #e3ecf5; background:#fff; text-align:left; font-family:inherit; cursor:pointer; transition:background .15s; }
-.tanah-legacy-list-row:hover { background:#edf7ff; }
-.tanah-legacy-list-row.active { background:#e3f1ff; box-shadow:inset 3px 0 0 #0873dc; }
-.tanah-legacy-list-no { font-size:12px; color:#637c98; font-weight:700; }
-.tanah-legacy-list-owner { display:block; min-width:0; }
-.tanah-legacy-list-owner strong { display:block; font-size:12.5px; font-weight:800; color:#1360aa; overflow-wrap:anywhere; line-height:1.35; }
-.tanah-legacy-list-owner small { display:block; margin-top:3px; font-size:11px; color:#7c90a3; }
-.tanah-legacy-list-area { font-size:12px; color:#405f80; font-weight:700; text-align:right; white-space:nowrap; }
-.tanah-legacy-pane-foot { display:flex; align-items:flex-start; gap:7px; padding:13px; border-top:1px solid #e1eaf2; background:#f5faff; color:#7489a0; font-size:11px; line-height:1.5; }
-.tanah-legacy-pane-foot svg { width:15px; height:15px; flex-shrink:0; color:#4883b8; }
-.tanah-legacy-loading { font-size:13px; color:#8193a8; padding:23px 14px; text-align:center; }
-.tanah-legacy-detail-pane { min-width:0; min-height:0; overflow:auto; padding:17px 24px 25px; background:#fff; }
-.tanah-legacy-empty { min-height:360px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:9px; text-align:center; color:#8293a8; }
-.tanah-legacy-empty svg { width:32px; height:32px; color:#7cb5ea; }
-.tanah-legacy-empty strong { color:#315579; font-size:17px; }
-.tanah-legacy-empty span { font-size:13px; }
-.tanah-legacy-detail-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; padding-bottom:13px; border-bottom:1px solid #e3ebf3; }
-.tanah-legacy-detail-heading h4 { margin:2px 0 4px; font-size:17px; color:#0d315a; font-weight:800; line-height:1.35; }
-.tanah-legacy-detail-heading small { font-size:12px; color:#778ca3; }
-.tanah-legacy-detail-actions { display:flex; gap:7px; flex-shrink:0; }
-.tanah-legacy-mini-button { height:35px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; gap:5px; border:1px solid #d8e5f1; border-radius:7px; background:#f3f8ff; color:#22649f; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; }
-.tanah-legacy-mini-button.edit { color:#b77908; background:#fff6e6; border-color:#f2dfb8; }
-.tanah-legacy-mini-button.delete { color:#c9394b; background:#fff0f2; border-color:#f0ccd1; }
-.tanah-legacy-mini-button svg { width:14px; height:14px; }
-.tanah-legacy-photo-wrap { display:flex; justify-content:center; align-items:center; min-height:235px; margin:14px 0; padding:10px; border:1px solid #e0e9f1; border-radius:10px; background:#f7faff; }
-.tanah-legacy-photo-wrap img { display:block; width:auto; max-width:100%; max-height:280px; border-radius:8px; object-fit:contain; box-shadow:0 8px 22px rgba(19,50,81,.12); }
-.tanah-legacy-photo-empty { min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; color:#8094a9; font-size:13px; }
-.tanah-legacy-photo-empty svg { width:34px; height:34px; }
-.tanah-legacy-info-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:14px 0; }
-.tanah-legacy-info-panel,.tanah-legacy-document-section { border:1px solid #b8d5f0; border-radius:9px; background:#fff; overflow:hidden; }
-.tanah-legacy-info-panel h5,.tanah-legacy-document-section h5 { margin:0; padding:9px 12px; background:#edf6ff; border-bottom:1px solid #c9ddf0; color:#155389; font-size:13px; font-weight:800; }
-.tanah-legacy-info-panel dl { margin:0; padding:7px 10px; }
-.tanah-legacy-info-panel dl>div { display:grid; grid-template-columns:125px minmax(0,1fr); gap:8px; align-items:start; padding:7px 0; border-bottom:1px solid #eef2f6; }
-.tanah-legacy-info-panel dl>div:last-child { border-bottom:0; }
-.tanah-legacy-info-panel dt { font-size:11.5px; font-weight:750; color:#385a78; }
-.tanah-legacy-info-panel dd { margin:0; font-size:12.5px; color:#284d70; font-weight:600; overflow-wrap:anywhere; }
-.tanah-legacy-document-section { margin:13px 0; }
-.tanah-legacy-document-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,.85fr); gap:12px; padding:12px; }
-.tanah-legacy-document-grid>div { min-width:0; padding:10px; border:1px solid #e0e8f0; border-radius:6px; background:#f9fbfd; }
-.tanah-legacy-document-grid span { display:block; color:#748aa0; font-size:11px; margin-bottom:5px; }
-.tanah-legacy-document-grid strong { display:block; color:#294969; font-weight:700; font-size:12.5px; line-height:1.4; overflow-wrap:anywhere; }
-.tanah-legacy-note { margin:0; padding:13px; color:#3d5b77; font-size:12.5px; line-height:1.6; overflow-wrap:anywhere; }
-.tanah-legacy-pdf-section h5 { display:flex; align-items:center; gap:7px; }
-.tanah-legacy-pdf-section h5 svg { width:15px; height:15px; }
-.tanah-legacy-documents { display:flex; flex-direction:column; gap:8px; padding:12px; }
-.tanah-legacy-doc-item { display:flex; align-items:center; gap:8px; padding:9px; border:1px solid #e1e9f1; border-radius:7px; background:#fafcff; }
-.tanah-legacy-doc-item span { flex:1; min-width:0; color:#355371; font-size:12px; font-weight:650; overflow-wrap:anywhere; }
-.tanah-legacy-doc-preview,.tanah-legacy-doc-download { display:inline-flex; justify-content:center; align-items:center; min-height:32px; border-radius:6px; padding:0 10px; border:1px solid #c8def5; background:#eaf4ff; color:#0b61ad; font-family:inherit; font-size:11px; font-weight:700; text-decoration:none; white-space:nowrap; cursor:pointer; }
-.tanah-legacy-doc-download { background:#f1f5fb; color:#3c5d7d; border-color:#d8e4ef; }
-.tanah-legacy-doc-empty { color:#8b9eb1; font-size:12px; }
-@media(max-width:1050px) {
-    .tanah-legacy-workspace { grid-template-columns:265px minmax(0,1fr); }
-    .tanah-legacy-detail-pane { padding:14px; }
-    .tanah-legacy-info-panel dl>div { grid-template-columns:100px minmax(0,1fr); }
-}
-@media(max-width:850px) {
-    .tanah-page .tanah-location-modal { width:calc(100vw - 16px); height:calc(100dvh - 16px); max-height:calc(100dvh - 16px); }
-    .tanah-legacy-workspace { display:block; overflow:auto; }
-    .tanah-legacy-list-pane { min-height:0; max-height:260px; border-right:0; border-bottom:1px solid #dbe6f1; }
-    .tanah-legacy-list { max-height:170px; }
-    .tanah-legacy-detail-pane { overflow:visible; }
-    .tanah-legacy-detail-heading { flex-wrap:wrap; }
-    .tanah-legacy-info-grid { grid-template-columns:1fr; }
-    .tanah-legacy-document-grid { grid-template-columns:1fr; gap:8px; }
-    .tanah-legacy-photo-wrap { min-height:160px; }
-    .tanah-legacy-photo-wrap img { max-height:200px; }
-    .tanah-legacy-pane-foot { display:none; }
-}
+    .tanah-selected-source {
+        grid-template-columns:
+            auto
+            minmax(0, 1fr);
+    }
 
 
-/* Tombol Tinjau Nilai: benar-benar interaktif, bukan badge pasif. */
-.tanah-source-review {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    min-height: 35px;
-    padding: 7px 12px;
-    border: 1px solid #e9bb72;
-    border-radius: 7px;
-    background: #fff1dc;
-    color: #865000;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background .15s ease, border-color .15s ease;
-}
-.tanah-source-review:hover {
-    background: #ffe2ad;
-    border-color: #d99b45;
-}
-.tanah-source-review:focus-visible {
-    outline: 3px solid rgba(215,150,45,.35);
-    outline-offset: 2px;
-}
-.tanah-nilai-table tr.tanah-nilai-selected > td {
-    background: #e4f1ff !important;
-    border-top: 2px solid #1871cf;
-    border-bottom: 2px solid #1871cf;
+    .tanah-selected-source button {
+        grid-column:
+            1 / -1;
+    }
+
 }
