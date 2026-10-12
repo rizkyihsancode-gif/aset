@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\NilaiAktiva;
+use App\Services\KibNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class NilaiAsetController extends Controller
 {
@@ -838,305 +841,219 @@ class NilaiAsetController extends Controller
 |
 */
 
+    /**
+     * ======================================================================
+     * SIMPAN NILAI ASET
+     * ======================================================================
+     * Penambahan Aset  (jenisn=1) => stat=0, antrean K.I.B.
+     * Penambahan Nilai (jenisn=2) => stat=1, hanya Nilai Aset.
+     * Nilai stat tidak pernah diambil dari browser.
+     */
     public function store(Request $request)
     {
-        $validated =
-            $this->validateData(
-                $request
-            );
+        $validated = $this->validateData($request);
+        $this->checkGolonganAktiva($validated);
 
+        $pdf = $request->file('dokumen_pdf');
+        unset($validated['dokumen_pdf']);
 
-        $pdf =
-            $request->file(
-                'dokumen_pdf'
-            );
-
-
-        unset(
-            $validated['dokumen_pdf']
-        );
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | TENTUKAN STATUS
-    |--------------------------------------------------------------------------
-    */
-
-        $jenis =
-            (int) $validated['jenisn'];
-
-
-        $validated['stat'] =
-            $jenis === 1
-            ? 0
-            : 1;
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | USER
-    |--------------------------------------------------------------------------
-    */
-
+        $jenis = (int) $validated['jenisn'];
+        $validated['stat'] = $jenis === 1 ? 0 : 1;
         $validated['user'] = Auth::id();
 
+        $uploadedPath = null;
 
-        /*
-    |--------------------------------------------------------------------------
-    | SIMPAN
-    |--------------------------------------------------------------------------
-    */
+        try {
+            DB::transaction(function () use ($validated, $pdf, &$uploadedPath): void {
+                $record = NilaiAktiva::create($validated);
 
-        $record =
-            NilaiAktiva::create(
-                $validated
-            );
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | PDF
-    |--------------------------------------------------------------------------
-    */
-
-        if ($pdf) {
-
-            try {
-
-                $this->storePdf(
-                    $record,
-                    $pdf
-                );
-            } catch (\Throwable $exception) {
-
-                /*
-             * Jika upload PDF gagal,
-             * jangan tinggalkan transaksi setengah jadi.
-             */
-                $record->delete();
-
-                throw $exception;
+                if ($pdf) {
+                    $uploadedPath = $this->storePdf($record, $pdf);
+                }
+            });
+        } catch (\Throwable $exception) {
+            if ($uploadedPath) {
+                Storage::disk('local')->delete($uploadedPath);
             }
+
+            throw $exception;
         }
 
+        $message = $jenis === 1
+            ? 'Penambahan Aset berhasil disimpan. Data tersedia di antrian K.I.B sesuai golongan.'
+            : 'Penambahan Nilai berhasil disimpan pada Nilai Aset tanpa membuat antrian K.I.B.';
 
-        /*
-    |--------------------------------------------------------------------------
-    | MESSAGE
-    |--------------------------------------------------------------------------
-    */
-
-        $message =
-            $jenis === 1
-
-            ? 'Penambahan Aset berhasil disimpan dan masuk ke antrian K.I.B sesuai golongan.'
-
-            : 'Penambahan Nilai berhasil disimpan pada Nilai Aset.';
-
-
-        return redirect()
-
-            ->route(
-                'main.nilai'
-            )
-
-            ->with(
-                'success',
-                $message
-            );
+        return redirect()->route('main.nilai')->with('success', $message);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * ======================================================================
+     * UPDATE NILAI ASET
+     * ======================================================================
+     * Data Penambahan Aset yang sudah diproses K.I.B tidak boleh diubah
+     * secara mandiri, sebab lokasi/golongan/nilai sudah menjadi referensi K.I.B.
+     */
+    public function update(Request $request, int $nilai)
+    {
+        $validated = $this->validateData($request);
+        $this->checkGolonganAktiva($validated);
 
-    /*
-|--------------------------------------------------------------------------
-| UPDATE NILAI ASET
-|--------------------------------------------------------------------------
-*/
+        $pdf = $request->file('dokumen_pdf');
+        unset($validated['dokumen_pdf']);
 
-    public function update(
-        Request $request,
-        int $nilai
-    ) {
-        $record =
-            NilaiAktiva::findOrFail(
-                $nilai
-            );
+        $oldPdf = null;
+        $newPdf = null;
 
+        try {
+            DB::transaction(function () use ($nilai, $validated, $pdf, &$oldPdf, &$newPdf): void {
+                $record = NilaiAktiva::query()
+                    ->whereKey($nilai)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-        $validated =
-            $this->validateData(
-                $request
-            );
+                $processed = (int) $record->jenisn === 1 && (int) $record->stat === 1;
+                $hasLinkedTanah = Schema::hasColumn('tanahs', 'nilai_aktiva_id')
+                    && DB::table('tanahs')->where('nilai_aktiva_id', $record->id)->exists();
 
+                if ($processed || $hasLinkedTanah) {
+                    throw ValidationException::withMessages([
+                        'jenisn' => 'Penambahan Aset sudah diproses pada K.I.B. Data nilai tidak boleh diedit langsung agar K.I.B tetap konsisten.',
+                    ]);
+                }
 
-        $pdf =
-            $request->file(
-                'dokumen_pdf'
-            );
+                // Jika berubah dari jenis 2 ke jenis 1, masuk antrian (stat=0).
+                // Jika berubah dari jenis 1 ke jenis 2, keluar antrian (stat=1).
+                $jenis = (int) $validated['jenisn'];
+                $validated['stat'] = $jenis === 1 ? 0 : 1;
 
+                $oldPdf = $record->dokumen_pdf;
+                $record->update($validated);
 
-        unset(
-            $validated['dokumen_pdf']
-        );
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | JENIS BARU
-    |--------------------------------------------------------------------------
-    */
-
-        $jenisBaru =
-            (int) $validated['jenisn'];
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | STATUS BARU
-    |--------------------------------------------------------------------------
-    |
-    | Penambahan Nilai:
-    | selalu stat = 1.
-    |
-    | Penambahan Aset baru:
-    | stat = 0.
-    |
-    | Jika Penambahan Aset sebelumnya sudah diproses K.I.B:
-    | pertahankan stat = 1.
-    |
-    */
-
-        if (
-            $jenisBaru === 2
-        ) {
-
-            $validated['stat'] = 1;
-        } elseif (
-            (int) $record->jenisn === 1
-            &&
-            (int) $record->stat === 1
-        ) {
-
-            /*
-         * Sudah pernah diproses K.I.B.
-         * Jangan munculkan kembali sebagai pending.
-         */
-            $validated['stat'] = 1;
-        } else {
-
-            /*
-         * Penambahan Aset yang belum pernah diproses.
-         */
-            $validated['stat'] = 0;
-        }
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | UPDATE DATABASE
-    |--------------------------------------------------------------------------
-    */
-
-        $record->update(
-            $validated
-        );
-
-
-        /*
-    |--------------------------------------------------------------------------
-    | GANTI PDF
-    |--------------------------------------------------------------------------
-    */
-
-        if ($pdf) {
-
-            $oldPdf =
-                $record->dokumen_pdf;
-
-
-            /*
-         * Upload file baru lebih dahulu.
-         */
-            $this->storePdf(
-                $record,
-                $pdf
-            );
-
-
-            /*
-         * Setelah PDF baru berhasil tersimpan,
-         * hapus PDF lama.
-         */
-            if (
-                $oldPdf
-                &&
-                $oldPdf !==
-                $record->fresh()
-                ->dokumen_pdf
-                &&
-                Storage::disk(
-                    'local'
-                )->exists(
-                    $oldPdf
-                )
-            ) {
-
-                Storage::disk(
-                    'local'
-                )->delete(
-                    $oldPdf
-                );
+                if ($pdf) {
+                    $newPdf = $this->storePdf($record, $pdf);
+                }
+            });
+        } catch (\Throwable $exception) {
+            if ($newPdf) {
+                Storage::disk('local')->delete($newPdf);
             }
+
+            throw $exception;
         }
 
+        if ($newPdf && $oldPdf && $oldPdf !== $newPdf) {
+            Storage::disk('local')->delete($oldPdf);
+        }
 
         return redirect()
-
-            ->route(
-                'main.nilai'
-            )
-
-            ->with(
-                'success',
-                'Data Nilai Aset berhasil diperbarui.'
-            );
+            ->route('main.nilai')
+            ->with('success', 'Data Nilai Aset berhasil diperbarui.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * ======================================================================
+     * HAPUS NILAI ASET
+     * ======================================================================
+     * Transaksi Penambahan Aset yang sudah masuk K.I.B tidak boleh dihapus.
+     * File PDF baru dihapus setelah transaksi database berhasil.
+     */
     public function destroy(int $nilai)
     {
-        $record =
-            NilaiAktiva::findOrFail(
-                $nilai
-            );
+        $pdfPath = null;
 
-        $this->deletePdf(
-            $record
-        );
+        DB::transaction(function () use ($nilai, &$pdfPath): void {
+            $record = NilaiAktiva::query()
+                ->whereKey($nilai)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $record->delete();
+            $processed = (int) $record->jenisn === 1 && (int) $record->stat === 1;
+            $hasLinkedTanah = Schema::hasColumn('tanahs', 'nilai_aktiva_id')
+                && DB::table('tanahs')->where('nilai_aktiva_id', $record->id)->exists();
+
+            if ($processed || $hasLinkedTanah) {
+                throw ValidationException::withMessages([
+                    'jenisn' => 'Penambahan Aset sudah diproses dalam K.I.B. Tidak boleh dihapus langsung dari Nilai Aset.',
+                ]);
+            }
+
+            $pdfPath = $record->dokumen_pdf;
+            $record->delete();
+        });
+
+        if ($pdfPath) {
+            Storage::disk('local')->delete($pdfPath);
+        }
 
         return redirect()
+            ->route('main.nilai')
+            ->with('success', 'Data Nilai Aset berhasil dihapus.');
+    }
 
-            ->route(
-                'main.nilai'
-            )
+    /**
+     * ======================================================================
+     * VALIDASI KESESUAIAN KODE AKTIVA DAN GOLONGAN K.I.B
+     * ======================================================================
+     * Mencegah transaksi Golongan Tanah dikirim memakai Kode Aktiva Mesin.
+     * Label aktivas.kib dikenali melalui alias config/kib.php.
+     * Jika label KIB tidak dikenali, tidak dipaksakan menjadi kategori tertentu.
+     */
+    private function checkGolonganAktiva(array $validated): void
+    {
+        $aktivaKib = DB::table('aktivas')
+            ->where('id', (int) $validated['id_aktiva'])
+            ->value('kib');
 
-            ->with(
-                'success',
-                'Data Nilai Aset berhasil dihapus.'
-            );
+        $normalized = static function (?string $value): string {
+            return trim(preg_replace(
+                '/\s+/',
+                ' ',
+                preg_replace('/[^A-Z0-9]+/u', ' ', mb_strtoupper((string) $value))
+            ) ?? '');
+        };
+
+        $sourceLabel = $normalized($aktivaKib);
+        if ($sourceLabel === '') {
+            return;
+        }
+
+        $candidates = [];
+        $modules = config('kib.modules', []);
+        $service = app(KibNotificationService::class);
+
+        foreach ($modules as $module => $config) {
+            $cat = $service->categoryId($module);
+            if ($cat === null) {
+                continue;
+            }
+
+            foreach (($config['aliases'] ?? []) as $alias) {
+                $alias = $normalized($alias);
+                if ($alias === '') {
+                    continue;
+                }
+
+                // Pencocokan nama penuh lebih kuat daripada potongan nama.
+                if ($alias === $sourceLabel) {
+                    $candidates[] = ['cat' => $cat, 'score' => 10000];
+                } elseif (strlen($alias) >= 8 && str_contains($sourceLabel, $alias)) {
+                    $candidates[] = ['cat' => $cat, 'score' => strlen($alias)];
+                }
+            }
+        }
+
+        if ($candidates === []) {
+            return;
+        }
+
+        usort($candidates, fn($a, $b) => $b['score'] <=> $a['score']);
+        $expectedCat = (int) $candidates[0]['cat'];
+
+        if ($expectedCat !== (int) $validated['cat']) {
+            throw ValidationException::withMessages([
+                'cat' => 'Golongan tidak sesuai Kode Aktiva yang dipilih (' . $aktivaKib . '). Pilih golongan dan Kode Aktiva yang sesuai agar antrian K.I.B tidak salah.',
+            ]);
+        }
     }
 
     /*
@@ -1455,7 +1372,7 @@ class NilaiAsetController extends Controller
     private function storePdf(
         NilaiAktiva $record,
         UploadedFile $file
-    ): void {
+    ): string {
 
         $year =
             $record->tahun
@@ -1498,17 +1415,20 @@ class NilaiAsetController extends Controller
                 'local'
             );
 
-        $record->update([
-            'dokumen_pdf' =>
-            $path,
+        try {
+            $record->update([
+                'dokumen_pdf' => $path,
+                'dokumen_pdf_nama_asli' => $file->getClientOriginalName(),
+                'dokumen_pdf_size' => $file->getSize(),
+            ]);
+        } catch (\Throwable $exception) {
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+            throw $exception;
+        }
 
-            'dokumen_pdf_nama_asli' =>
-            $file
-                ->getClientOriginalName(),
-
-            'dokumen_pdf_size' =>
-            $file->getSize(),
-        ]);
+        return $path;
     }
 
     /*

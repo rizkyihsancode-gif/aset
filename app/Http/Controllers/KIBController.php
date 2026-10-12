@@ -80,8 +80,8 @@ class KIBController extends Controller
             )
 
             ->whereRaw(
-                'UPPER(BTRIM(a.kib)) = ?',
-                ['TANAH']
+                "TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)",
+                ['TANAH', 'KIB A TANAH']
             )
 
             ->groupBy(
@@ -246,8 +246,8 @@ class KIBController extends Controller
                 )
 
                 ->whereRaw(
-                    'UPPER(BTRIM(a.kib)) = ?',
-                    ['TANAH']
+                    "TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)",
+                    ['TANAH', 'KIB A TANAH']
                 )
 
                 ->sum(
@@ -371,7 +371,7 @@ class KIBController extends Controller
         if (Schema::hasColumn('nilai_aktivas', 'dokumen_pdf')) {
             $pdfNilaiLokasi = DB::table('nilai_aktivas as n')
                 ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
-                ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
+                ->whereRaw("TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)", ['TANAH', 'KIB A TANAH'])
                 ->whereNotNull('n.dokumen_pdf')
                 ->whereRaw("BTRIM(n.dokumen_pdf) <> ''")
                 ->select('n.id_lokasi')
@@ -824,8 +824,8 @@ class KIBController extends Controller
             )
 
             ->whereRaw(
-                'UPPER(BTRIM(a.kib)) = ?',
-                ['TANAH']
+                "TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)",
+                ['TANAH', 'KIB A TANAH']
             )
 
             ->select(
@@ -1486,7 +1486,7 @@ class KIBController extends Controller
             $source = DB::table('nilai_aktivas as n')
                 ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
                 ->where('n.id', $row->nilai_aktiva_id)
-                ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
+                ->whereRaw("TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)", ['TANAH', 'KIB A TANAH'])
                 ->whereNotNull('n.dokumen_pdf')
                 ->first(['n.id', 'n.dokumen_pdf', 'n.dokumen_pdf_nama_asli']);
             if ($source && trim((string) $source->dokumen_pdf) !== '') {
@@ -1539,7 +1539,7 @@ class KIBController extends Controller
             $nilaiDocs = DB::table('nilai_aktivas as n')
                 ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
                 ->where('n.id_lokasi', $lokasi)
-                ->whereRaw('UPPER(BTRIM(a.kib)) = ?', ['TANAH'])
+                ->whereRaw("TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)", ['TANAH', 'KIB A TANAH'])
                 ->whereNotNull('n.dokumen_pdf')
                 ->whereRaw("BTRIM(n.dokumen_pdf) <> ''")
                 ->select('n.id', 'n.tahun', 'n.no_voucher', 'n.dokumen_pdf_nama_asli')
@@ -1776,10 +1776,8 @@ class KIBController extends Controller
                     */
 
                         ->whereRaw(
-                            'UPPER(BTRIM(a.kib)) = ?',
-                            [
-                                'TANAH',
-                            ]
+                            "TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)",
+                            ['TANAH', 'KIB A TANAH']
                         )
 
                         ->select(
