@@ -8,49 +8,57 @@ use Illuminate\Support\Facades\DB;
 class KibNotificationService
 {
     private ?array $summaryCache = null;
-
     private ?array $categoryCache = null;
 
-    /**
-     * ============================================================
-     * 01. NORMALISASI NAMA GOLONGAN
-     * ============================================================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 01. NORMALISASI NAMA GOLONGAN
+    |--------------------------------------------------------------------------
+    */
+
     private function normalize(?string $value): string
     {
         $value = mb_strtoupper(trim((string) $value));
 
-        $value = preg_replace('/[.,\-_&\/]+/u', ' ', $value);
+        $value = str_replace(
+            ['.', ',', '-', '_', '&', '/'],
+            ' ',
+            $value
+        );
 
-        return trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+        return trim(
+            preg_replace('/\s+/u', ' ', $value) ?? ''
+        );
     }
 
-    /**
-     * ============================================================
-     * 02. QUERY DASAR PENDING K.I.B
-     * ============================================================
-     *
-     * Kompatibel dengan web lama:
-     * - stat = 0 berarti transaksi belum diproses K.I.B
-     * - termasuk transaksi historis jenisn = 2
-     *
-     * Transaksi Penambahan Nilai BARU harus disimpan stat = 1
-     * oleh NilaiAsetController, sehingga tidak masuk ke sini.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 02. QUERY DASAR PENDING
+    |--------------------------------------------------------------------------
+    |
+    | Mengikuti web lama:
+    | stat = 0 berarti transaksi menunggu diproses.
+    |
+    | Transaksi Penambahan Nilai baru memiliki stat = 1,
+    | sehingga tidak masuk query pending.
+    |
+    */
+
     private function pendingBaseQuery(): Builder
     {
         return DB::table('nilai_aktivas')
             ->where('stat', 0);
     }
 
-    /**
-     * ============================================================
-     * 03. RESOLVE CATEGORY ID
-     * ============================================================
-     *
-     * Mapping module didasarkan pada config/kib.php,
-     * nama asli golongan di database, dan cat_fallback.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 03. RESOLVE CATEGORY
+    |--------------------------------------------------------------------------
+    |
+    | Mencocokkan config/kib.php dengan tabel golongans.
+    |
+    */
+
     public function categories(): array
     {
         if ($this->categoryCache !== null) {
@@ -70,30 +78,26 @@ class KibNotificationService
 
         $resolved = [];
 
-        foreach ($modules as $module => $moduleConfig) {
+        foreach ($modules as $module => $config) {
             $resolvedId = null;
 
-            $aliases = collect($moduleConfig['aliases'] ?? [])
+            $aliases = collect($config['aliases'] ?? [])
                 ->map(fn($alias) => $this->normalize($alias))
                 ->filter(fn($alias) => $alias !== '')
                 ->unique()
                 ->values();
 
-            // Prioritas 1: nama golongan cocok persis.
+            // Cari nama golongan yang cocok persis.
             foreach ($golongans as $golongan) {
                 $nama = $this->normalize($golongan->nama);
 
-                if ($nama === '') {
-                    continue;
-                }
-
-                if ($aliases->contains($nama)) {
+                if ($nama !== '' && $aliases->contains($nama)) {
                     $resolvedId = (int) $golongan->id;
                     break;
                 }
             }
 
-            // Prioritas 2: cocok sebagian.
+            // Jika tidak ada, cocokkan berdasarkan alias.
             if ($resolvedId === null) {
                 foreach ($golongans as $golongan) {
                     $nama = $this->normalize($golongan->nama);
@@ -108,7 +112,8 @@ class KibNotificationService
                             &&
                             (
                                 str_contains($nama, $alias)
-                                || str_contains($alias, $nama)
+                                ||
+                                str_contains($alias, $nama)
                             )
                         ) {
                             $resolvedId = (int) $golongan->id;
@@ -118,9 +123,9 @@ class KibNotificationService
                 }
             }
 
-            // Prioritas 3: ID fallback.
+            // Gunakan fallback konfigurasi jika tersedia.
             if ($resolvedId === null) {
-                $fallback = $moduleConfig['cat_fallback'] ?? null;
+                $fallback = $config['cat_fallback'] ?? null;
 
                 $resolvedId = $fallback !== null
                     ? (int) $fallback
@@ -133,36 +138,37 @@ class KibNotificationService
         return $this->categoryCache = $resolved;
     }
 
-    /**
-     * ============================================================
-     * 04. CATEGORY SATU MODULE
-     * ============================================================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 04. CATEGORY ID BERDASARKAN MODULE
+    |--------------------------------------------------------------------------
+    */
+
     public function categoryId(string $module): ?int
     {
         $categories = $this->categories();
 
-        if (!array_key_exists($module, $categories)) {
-            return null;
-        }
+        $id = $categories[$module] ?? null;
 
-        return $categories[$module] !== null
-            ? (int) $categories[$module]
-            : null;
+        return $id !== null ? (int) $id : null;
     }
 
-    /**
-     * ============================================================
-     * 05. SUMMARY NOTIFIKASI SELURUH K.I.B
-     * ============================================================
-     *
-     * total             = seluruh transaksi stat=0
-     * aset_baru         = jenisn=1, stat=0
-     * penambahan_nilai  = jenisn=2, stat=0 (histori)
-     * lainnya           = jenisn selain 1/2 atau NULL
-     *
-     * Struktur response lama tidak diubah.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 05. SUMMARY NOTIFIKASI
+    |--------------------------------------------------------------------------
+    |
+    | TANAH:
+    | - stat = 0
+    | - jenisn IN (1, 2)
+    |
+    | MODULE LAIN:
+    | - stat = 0 (kompatibilitas web lama)
+    |
+    | Data Penambahan Nilai baru tidak ikut karena stat = 1.
+    |
+    */
+
     public function summary(): array
     {
         if ($this->summaryCache !== null) {
@@ -172,12 +178,20 @@ class KibNotificationService
         $modules = config('kib.modules', []);
         $categories = $this->categories();
 
+        $tanahCat = $categories['tanah'] ?? null;
+
         $categoryIds = collect($categories)
             ->filter(fn($id) => $id !== null)
             ->map(fn($id) => (int) $id)
             ->unique()
             ->values()
             ->all();
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEFAULT RESULT
+        |--------------------------------------------------------------------------
+        */
 
         $result = [];
 
@@ -188,6 +202,7 @@ class KibNotificationService
                 'label' => $config['label'] ?? ucfirst($module),
                 'url' => $config['url'] ?? '#',
                 'icon' => $config['icon'] ?? 'bell',
+
                 'total' => 0,
                 'aset_baru' => 0,
                 'penambahan_nilai' => 0,
@@ -195,12 +210,18 @@ class KibNotificationService
             ];
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | QUERY TOTAL BERDASARKAN KATEGORI DAN JENIS
+        |--------------------------------------------------------------------------
+        */
+
         if (!empty($categoryIds)) {
             $rows = $this->pendingBaseQuery()
                 ->whereIn('cat', $categoryIds)
                 ->select('cat')
                 ->selectRaw(
-                    'COALESCE(jenisn, 0) AS jenisn, COUNT(*) AS total'
+                    'COALESCE(jenisn, 0) AS jenisn, COUNT(*) AS jumlah'
                 )
                 ->groupBy('cat', 'jenisn')
                 ->get();
@@ -208,12 +229,43 @@ class KibNotificationService
             foreach ($rows as $row) {
                 $cat = (int) $row->cat;
                 $jenis = (int) $row->jenisn;
-                $jumlah = (int) $row->total;
+                $jumlah = (int) $row->jumlah;
+
+                /*
+                |--------------------------------------------------------------------------
+                | FILTER KHUSUS TANAH
+                |--------------------------------------------------------------------------
+                |
+                | Data contoh:
+                | 1  Penambahan Aset
+                | 15 Penambahan Nilai historis
+                | 1  Jenis lainnya (dikecualikan)
+                |
+                | Total antrian = 16.
+                |
+                */
+
+                if (
+                    $tanahCat !== null
+                    &&
+                    $cat === (int) $tanahCat
+                    &&
+                    !in_array($jenis, [1, 2], true)
+                ) {
+                    continue;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | COCOKKAN DENGAN MODULE
+                |--------------------------------------------------------------------------
+                */
 
                 foreach ($categories as $module => $categoryId) {
                     if (
                         $categoryId === null
-                        || (int) $categoryId !== $cat
+                        ||
+                        (int) $categoryId !== $cat
                     ) {
                         continue;
                     }
@@ -233,6 +285,12 @@ class KibNotificationService
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | TOTAL SELURUH NOTIFIKASI K.I.B
+        |--------------------------------------------------------------------------
+        */
+
         $result['_total'] = collect($result)
             ->sum(
                 fn(array $item) => (int) $item['total']
@@ -241,11 +299,12 @@ class KibNotificationService
         return $this->summaryCache = $result;
     }
 
-    /**
-     * ============================================================
-     * 06. NOTIFIKASI SATU MODULE
-     * ============================================================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 06. SUMMARY SATU MODULE
+    |--------------------------------------------------------------------------
+    */
+
     public function module(string $module): array
     {
         $summary = $this->summary();
@@ -260,6 +319,7 @@ class KibNotificationService
             'label' => ucfirst(str_replace('_', ' ', $module)),
             'url' => '#',
             'icon' => 'bell',
+
             'total' => 0,
             'aset_baru' => 0,
             'penambahan_nilai' => 0,
@@ -267,31 +327,34 @@ class KibNotificationService
         ];
     }
 
-    /**
-     * ============================================================
-     * 07. TOTAL BADGE SELURUH MODULE
-     * ============================================================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 07. TOTAL NOTIFIKASI SEMUA MODULE
+    |--------------------------------------------------------------------------
+    */
+
     public function total(): int
     {
         return (int) ($this->summary()['_total'] ?? 0);
     }
 
-    /**
-     * ============================================================
-     * 08. CEK MODULE MEMILIKI NOTIFIKASI
-     * ============================================================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 08. CEK NOTIFIKASI MODULE
+    |--------------------------------------------------------------------------
+    */
+
     public function hasNotification(string $module): bool
     {
         return (int) ($this->module($module)['total'] ?? 0) > 0;
     }
 
-    /**
-     * ============================================================
-     * 09. RESET CACHE
-     * ============================================================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 09. HAPUS CACHE SERVICE
+    |--------------------------------------------------------------------------
+    */
+
     public function clearCache(): void
     {
         $this->summaryCache = null;

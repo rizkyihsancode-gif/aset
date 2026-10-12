@@ -1607,158 +1607,151 @@ document.addEventListener('DOMContentLoaded', function () {
      * ========================================================================
      */
 
-    async function loadPending()
-    {
-        try {
+    /**
+ * ========================================================================
+ * LOAD DATA NILAI ASET PENDING TANAH
+ * ========================================================================
+ *
+ * Endpoint:
+ * /kib/pending/tanah
+ *
+ * Kompatibilitas:
+ * - Penambahan Aset yang belum diproses
+ * - Penambahan Nilai historis yang masih stat = 0
+ *
+ * Jumlah pending ditampilkan sebagai satu badge.
+ *
+ */
 
-            const response =
-                await getJson(
-                    PENDING_URL
-                );
+async function loadPending()
+{
+    try {
 
+        /*
+        |--------------------------------------------------------------------------
+        | 01. AMBIL DATA DARI SERVER
+        |--------------------------------------------------------------------------
+        */
 
-            pendingTransactions =
-                Array.isArray(
-                    response.data
-                )
-                    ? response.data
-                    : [];
+        const response = await getJson(PENDING_URL);
 
-
-            const total =
-                Number(
-                    response.count
-                    ??
-                    pendingTransactions.length
-                );
-
-
-            const newAssetCount =
-                Number(
-                    response.aset_baru
-                    ??
-                    pendingTransactions
-                        .filter(
-                            item =>
-                                Number(
-                                    item.jenisn
-                                )
-                                === 1
-                        )
-                        .length
-                );
-
-
-            const additionalValueCount =
-                Number(
-                    response.penambahan_nilai
-                    ??
-                    pendingTransactions
-                        .filter(
-                            item =>
-                                Number(
-                                    item.jenisn
-                                )
-                                === 2
-                        )
-                        .length
-                );
-
-
-            const incomingCount =
-                $('#tanahIncomingCount');
-
-
-            if (incomingCount) {
-
-                incomingCount.textContent =
-                    total > 99
-                        ? '99+'
-                        : integerFormatter.format(
-                            total
-                        );
-
-            }
-
-
-            const incomingNew =
-                $('#tanahIncomingNew');
-
-
-            if (incomingNew) {
-                incomingNew.textContent =
-                    integerFormatter.format(
-                        newAssetCount
-                    );
-            }
-
-
-            const incomingValue =
-                $('#tanahIncomingValue');
-
-
-            if (incomingValue) {
-                incomingValue.textContent =
-                    integerFormatter.format(
-                        additionalValueCount
-                    );
-            }
-
-
-            const incomingText =
-                $('#tanahIncomingText');
-
-
-            if (incomingText) {
-
-                incomingText.textContent =
-                    total > 0
-                        ? (
-                            `Ada ${
-                                integerFormatter.format(
-                                    total
-                                )
-                            } transaksi Nilai Aset kategori Tanah yang menunggu diproses.`
-                        )
-                        : 'Tidak ada transaksi Tanah yang menunggu diproses.';
-
-            }
-
-
-            $('#tanahIncomingCard')
-                ?.classList
-                .toggle(
-                    'is-empty',
-                    total === 0
-                );
-
-        } catch (error) {
-
-            console.error(
-                'Pending Tanah:',
-                error
+        if (!response.success) {
+            throw new Error(
+                'Endpoint pending tidak mengembalikan status sukses.'
             );
-
-
-            const incomingText =
-                $('#tanahIncomingText');
-
-
-            if (incomingText) {
-                incomingText.textContent =
-                    'Notifikasi belum bisa dimuat. Periksa koneksi dan log Laravel.';
-            }
-
-
-            pendingTransactions =
-                [];
-
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | 02. SIMPAN ARRAY TRANSAKSI
+        |--------------------------------------------------------------------------
+        */
 
-        renderPending();
+        pendingTransactions = Array.isArray(response.data)
+            ? response.data
+            : [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | 03. TOTAL PENDING
+        |--------------------------------------------------------------------------
+        */
+
+        const total = Math.max(
+            0,
+            Number(
+                response.pending_inventaris
+                ?? response.count
+                ?? pendingTransactions.length
+            ) || 0
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | 04. UPDATE BADGE TOTAL
+        |--------------------------------------------------------------------------
+        */
+
+        const incomingCount = $('#tanahIncomingCount');
+
+        if (incomingCount) {
+            incomingCount.textContent = total > 99
+                ? '99+'
+                : integerFormatter.format(total);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 05. UPDATE SATU BADGE PENDING
+        |--------------------------------------------------------------------------
+        */
+
+        const incomingNew = $('#tanahIncomingNew');
+
+        if (incomingNew) {
+            incomingNew.textContent =
+                integerFormatter.format(total);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 06. UPDATE KETERANGAN
+        |--------------------------------------------------------------------------
+        */
+
+        const incomingText = $('#tanahIncomingText');
+
+        if (incomingText) {
+            incomingText.textContent = total > 0
+                ? `Ada ${
+                    integerFormatter.format(total)
+                } transaksi Nilai Aset kategori Tanah yang menunggu pendataan K.I.B.`
+                : 'Tidak ada transaksi Tanah yang menunggu diproses.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 07. STATUS KARTU
+        |--------------------------------------------------------------------------
+        */
+
+        $('#tanahIncomingCard')
+            ?.classList.toggle(
+                'is-empty',
+                total === 0
+            );
+
+    } catch (error) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | 08. PENANGANAN ERROR
+        |--------------------------------------------------------------------------
+        */
+
+        console.error(
+            'Gagal memuat Pending Tanah:',
+            error
+        );
+
+        pendingTransactions = [];
+
+        const incomingText = $('#tanahIncomingText');
+
+        if (incomingText) {
+            incomingText.textContent =
+                'Notifikasi belum bisa dimuat. Periksa koneksi dan log Laravel.';
+        }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | 09. RENDER TABEL PILIH DATA NILAI ASET
+    |--------------------------------------------------------------------------
+    */
+
+    renderPending();
+}
 
     /**
      * ========================================================================

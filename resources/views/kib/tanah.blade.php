@@ -400,8 +400,13 @@
          NILAI ASET PENDING
     ========================================================== --}}
 
+        {{-- =========================================================
+     NOTIFIKASI PENDING TANAH
+========================================================== --}}
+
         <section class="tanah-incoming-card" id="tanahIncomingCard">
 
+            {{-- ICON --}}
             <div class="tanah-incoming-icon">
 
                 <i data-lucide="bell-ring"></i>
@@ -409,8 +414,10 @@
             </div>
 
 
+            {{-- CONTENT --}}
             <div class="tanah-incoming-content">
 
+                {{-- JUDUL --}}
                 <div class="tanah-incoming-title-row">
 
                     <div>
@@ -426,23 +433,24 @@
                     </div>
 
 
+                    {{-- TOTAL NOTIFIKASI --}}
                     <span class="tanah-incoming-count" id="tanahIncomingCount">
-
                         {{ $pendingCount }}
-
                     </span>
 
                 </div>
 
 
+                {{-- DESKRIPSI --}}
                 <p id="tanahIncomingText">
 
-                    Ada transaksi Nilai Aset kategori Tanah
-                    yang belum dilengkapi menjadi data K.I.B Tanah.
+                    Ada {{ $pendingCount }} transaksi Nilai Aset
+                    kategori Tanah yang menunggu pendataan K.I.B.
 
                 </p>
 
 
+                {{-- SATU BADGE --}}
                 <div class="tanah-incoming-meta">
 
                     <span class="is-green">
@@ -450,23 +458,10 @@
                         <i data-lucide="package-plus"></i>
 
                         <strong id="tanahIncomingNew">
-                            0
+                            {{ $pendingCount }}
                         </strong>
 
-                        Penambahan Aset
-
-                    </span>
-
-
-                    <span class="is-blue">
-
-                        <i data-lucide="circle-dollar-sign"></i>
-
-                        <strong id="tanahIncomingValue">
-                            0
-                        </strong>
-
-                        Penambahan Nilai
+                        Data Pending Tanah
 
                     </span>
 
@@ -475,6 +470,7 @@
             </div>
 
 
+            {{-- TOMBOL LIHAT DATA --}}
             <div class="tanah-incoming-action">
 
                 <button type="button" id="tanahIncomingButton">

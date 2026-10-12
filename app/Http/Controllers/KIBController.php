@@ -1643,45 +1643,40 @@ class KIBController extends Controller
     }
 
 
-    /**
-     * ================================================================
-     * STORE DATA K.I.B TANAH
-     * ================================================================
-     *
-     * Kompatibilitas:
-     * - Menerima transaksi stat=0 sesuai web lama.
-     * - Hanya kategori Tanah.
-     * - Menggunakan lokasi dari sumber Nilai Aset.
-     * - Setelah berhasil, status sumber menjadi stat=1.
-     *
-     * Penambahan Nilai baru tidak akan masuk karena disimpan stat=1.
-     */
+    /*
+|--------------------------------------------------------------------------
+| STORE DATA K.I.B TANAH
+|--------------------------------------------------------------------------
+|
+| Mengambil transaksi dari nilai_aktivas:
+|
+| - cat = Tanah
+| - stat = 0
+| - jenisn = 1 atau 2 (untuk transaksi historis)
+|
+| Setelah data Tanah berhasil disimpan:
+| stat 0 -> 1
+|
+*/
 
-    /**
-     * ================================================================
-     * STORE DATA K.I.B TANAH
-     * ================================================================
-     *
-     * Kompatibilitas:
-     * - Menerima transaksi stat=0 sesuai web lama.
-     * - Hanya kategori Tanah.
-     * - Menggunakan lokasi dari sumber Nilai Aset.
-     * - Setelah berhasil, status sumber menjadi stat=1.
-     *
-     * Penambahan Nilai baru tidak akan masuk karena disimpan stat=1.
-     */
     public function store(
         Request $request,
         KibNotificationService $notifications
     ) {
-        // ------------------------------------------------------------
-        // 01. VALIDASI FORM TANAH
-        // ------------------------------------------------------------
+        /*
+    |--------------------------------------------------------------------------
+    | 01. VALIDASI FORM
+    |--------------------------------------------------------------------------
+    */
+
         $input = $this->validateInput($request);
 
-        // ------------------------------------------------------------
-        // 02. CATEGORY TANAH
-        // ------------------------------------------------------------
+        /*
+    |--------------------------------------------------------------------------
+    | 02. CATEGORY TANAH
+    |--------------------------------------------------------------------------
+    */
+
         $categoryId = $notifications->categoryId('tanah');
 
         if ($categoryId === null) {
@@ -1701,20 +1696,19 @@ class KIBController extends Controller
                 &$newFile
             ): void {
 
-                // ----------------------------------------------------
-                // 03. CARI TRANSAKSI SUMBER
-                // ----------------------------------------------------
-                //
-                // Penting:
-                // Tidak memakai filter jenisn=1 agar transaksi historis
-                // yang berasal dari web lama tetap dapat diproses.
-                //
+                /*
+            |--------------------------------------------------------------------------
+            | 03. AMBIL TRANSAKSI SUMBER
+            |--------------------------------------------------------------------------
+            */
+
                 $source = DB::table('nilai_aktivas as n')
                     ->where(
                         'n.id',
                         (int) $input['id_nilai_aktiva']
                     )
                     ->where('n.stat', 0)
+                    ->whereIn('n.jenisn', [1, 2])
                     ->where('n.cat', $categoryId)
                     ->select([
                         'n.id',
@@ -1726,19 +1720,25 @@ class KIBController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                // ----------------------------------------------------
-                // 04. VALIDASI SUMBER
-                // ----------------------------------------------------
+                /*
+            |--------------------------------------------------------------------------
+            | 04. PASTIKAN SUMBER MASIH TERSEDIA
+            |--------------------------------------------------------------------------
+            */
+
                 if (!$source || !$source->id_lokasi) {
                     throw ValidationException::withMessages([
                         'id_nilai_aktiva' =>
-                        'Transaksi pending Tanah tidak ditemukan, tidak memiliki lokasi, atau sudah diproses.',
+                        'Transaksi Tanah tidak ditemukan, tidak memiliki lokasi, atau sudah diproses.',
                     ]);
                 }
 
-                // ----------------------------------------------------
-                // 05. CEGAH TRANSAKSI DIPAKAI DUA KALI
-                // ----------------------------------------------------
+                /*
+            |--------------------------------------------------------------------------
+            | 05. CEGAH DUPLIKASI TRANSAKSI
+            |--------------------------------------------------------------------------
+            */
+
                 $sudahTerhubung = DB::table('tanahs')
                     ->where(
                         'nilai_aktiva_id',
@@ -1749,60 +1749,73 @@ class KIBController extends Controller
                 if ($sudahTerhubung) {
                     throw ValidationException::withMessages([
                         'id_nilai_aktiva' =>
-                        'Transaksi Nilai Aset ini sudah terhubung dengan data Tanah.',
+                        'Transaksi Nilai Aset ini sudah digunakan untuk data Tanah.',
                     ]);
                 }
 
-                // ----------------------------------------------------
-                // 06. PERSIAPKAN DATA INVENTARIS TANAH
-                // ----------------------------------------------------
-                //
-                // Fungsi tanahFields() menggunakan field yang telah
-                // diisi petugas di formulir.
-                //
+                /*
+            |--------------------------------------------------------------------------
+            | 06. DATA FORM TANAH
+            |--------------------------------------------------------------------------
+            */
+
                 $data = $this->tanahFields($input);
 
-                // Lokasi wajib berasal dari Nilai Aset,
-                // bukan dari input browser.
+                // Lokasi berasal dari transaksi, bukan browser.
                 $data['id_lokasi'] = (int) $source->id_lokasi;
 
-                // Hubungkan sertifikat dengan transaksi sumber.
+                // Hubungan Tanah dengan transaksi Nilai Aset.
                 $data['nilai_aktiva_id'] = (int) $source->id;
 
-                // Nilai uang dihitung dari nilai_aktivas.
-                // Jangan disalin ke INTEGER legacy tanahs.nilai.
+                /*
+            |--------------------------------------------------------------------------
+            | 07. NILAI UANG
+            |--------------------------------------------------------------------------
+            |
+            | Nilai uang tetap berasal dari nilai_aktivas.
+            | Tidak disalin ke kolom INTEGER lama tanahs.nilai.
+            |
+            */
+
                 $data['nilai'] = null;
                 $data['nilai_now'] = null;
 
-                // Metadata.
+                /*
+            |--------------------------------------------------------------------------
+            | 08. METADATA
+            |--------------------------------------------------------------------------
+            */
+
                 $data['user'] = Auth::id();
                 $data['created_at'] = now();
                 $data['updated_at'] = now();
 
-                // ----------------------------------------------------
-                // 07. INSERT DATA TANAH
-                // ----------------------------------------------------
+                /*
+            |--------------------------------------------------------------------------
+            | 09. SIMPAN DATA TANAH
+            |--------------------------------------------------------------------------
+            */
+
                 $tanahId = DB::table('tanahs')
                     ->insertGetId($data);
 
-                // ----------------------------------------------------
-                // 08. UPLOAD PDF
-                // ----------------------------------------------------
-                //
-                // Fungsi uploadPdf() yang sudah ada tetap dipakai.
-                //
+                /*
+            |--------------------------------------------------------------------------
+            | 10. UPLOAD PDF
+            |--------------------------------------------------------------------------
+            */
+
                 $newFile = $this->uploadPdf(
                     $request,
                     (int) $tanahId
                 );
 
-                // ----------------------------------------------------
-                // 09. TANDAI TRANSAKSI SUDAH DIPROSES
-                // ----------------------------------------------------
-                //
-                // Transaksi menghilang dari pending setelah seluruh
-                // operasi di dalam transaction berhasil.
-                //
+                /*
+            |--------------------------------------------------------------------------
+            | 11. TRANSAKSI SUDAH DIPROSES
+            |--------------------------------------------------------------------------
+            */
+
                 $updated = DB::table('nilai_aktivas')
                     ->where('id', $source->id)
                     ->where('stat', 0)
@@ -1820,36 +1833,40 @@ class KIBController extends Controller
             });
         } catch (\Throwable $exception) {
 
-            // --------------------------------------------------------
-            // 10. HAPUS FILE BARU APABILA TRANSAKSI GAGAL
-            // --------------------------------------------------------
-            if (
-                $newFile
-                &&
-                Storage::disk('local')->exists($newFile)
-            ) {
+            /*
+        |--------------------------------------------------------------------------
+        | 12. BERSIHKAN FILE BARU JIKA GAGAL
+        |--------------------------------------------------------------------------
+        */
+
+            if ($newFile) {
                 Storage::disk('local')->delete($newFile);
             }
 
             throw $exception;
         }
 
-        // ------------------------------------------------------------
-        // 11. RESET CACHE NOTIFIKASI
-        // ------------------------------------------------------------
+        /*
+    |--------------------------------------------------------------------------
+    | 13. HAPUS CACHE NOTIFIKASI
+    |--------------------------------------------------------------------------
+    */
+
         $notifications->clearCache();
 
-        // ------------------------------------------------------------
-        // 12. SELESAI
-        // ------------------------------------------------------------
+        /*
+    |--------------------------------------------------------------------------
+    | 14. RESPONSE
+    |--------------------------------------------------------------------------
+    */
+
         return redirect()
             ->route('kib.tanah')
             ->with(
                 'success',
-                'Data K.I.B Tanah berhasil disimpan dan transaksi Nilai Aset telah diproses.'
+                'Data Tanah berhasil disimpan dan transaksi Nilai Aset telah diproses.'
             );
     }
-
 
 
     public function update(Request $request, int $tanah)
@@ -1891,6 +1908,15 @@ class KIBController extends Controller
      * - Jika ada sumber Nilai Aset, kembalikan stat menjadi 0.
      * - Jangan menghapus transaksi keuangan Nilai Aset.
      */
+    /*
+|--------------------------------------------------------------------------
+| DELETE DATA K.I.B TANAH
+|--------------------------------------------------------------------------
+|
+| Menghapus data Tanah tetapi mempertahankan transaksi Nilai Aset.
+|
+*/
+
     public function destroy(int $tanah)
     {
         $paths = [];
@@ -1900,9 +1926,12 @@ class KIBController extends Controller
             &$paths
         ): void {
 
-            // --------------------------------------------------------
-            // 01. CARI DATA TANAH
-            // --------------------------------------------------------
+            /*
+        |--------------------------------------------------------------------------
+        | 01. CARI DATA TANAH
+        |--------------------------------------------------------------------------
+        */
+
             $row = DB::table('tanahs')
                 ->where('id', $tanah)
                 ->lockForUpdate()
@@ -1910,9 +1939,12 @@ class KIBController extends Controller
 
             abort_unless($row, 404);
 
-            // --------------------------------------------------------
-            // 02. CARI PDF BARU YANG TERHUBUNG
-            // --------------------------------------------------------
+            /*
+        |--------------------------------------------------------------------------
+        | 02. PDF YANG DIKELOLA APLIKASI
+        |--------------------------------------------------------------------------
+        */
+
             $pdfQuery = $this->pdfQuery()
                 ->where('p.id_tanah', $tanah)
                 ->where(
@@ -1925,27 +1957,37 @@ class KIBController extends Controller
                 ->pluck('p.dok')
                 ->all();
 
-            // --------------------------------------------------------
-            // 03. HAPUS REFERENSI PDF
-            // --------------------------------------------------------
+            /*
+        |--------------------------------------------------------------------------
+        | 03. HAPUS REFERENSI PDF
+        |--------------------------------------------------------------------------
+        */
+
             $pdfQuery->delete();
 
-            // --------------------------------------------------------
-            // 04. HAPUS DATA TANAH
-            // --------------------------------------------------------
+            /*
+        |--------------------------------------------------------------------------
+        | 04. HAPUS DATA TANAH
+        |--------------------------------------------------------------------------
+        */
+
             DB::table('tanahs')
                 ->where('id', $tanah)
                 ->delete();
 
-            // --------------------------------------------------------
-            // 05. KEMBALIKAN STATUS SUMBER
-            // --------------------------------------------------------
+            /*
+        |--------------------------------------------------------------------------
+        | 05. KEMBALIKAN STATUS TRANSAKSI SUMBER
+        |--------------------------------------------------------------------------
+        */
+
             if (!empty($row->nilai_aktiva_id)) {
                 DB::table('nilai_aktivas')
                     ->where(
                         'id',
                         $row->nilai_aktiva_id
                     )
+                    ->whereIn('jenisn', [1, 2])
                     ->update([
                         'stat' => 0,
                         'updated_at' => now(),
@@ -1953,9 +1995,12 @@ class KIBController extends Controller
             }
         });
 
-        // ------------------------------------------------------------
-        // 06. HAPUS FILE PDF FISIK SETELAH DATABASE BERHASIL
-        // ------------------------------------------------------------
+        /*
+    |--------------------------------------------------------------------------
+    | 06. HAPUS FILE FISIK SETELAH DATABASE BERHASIL
+    |--------------------------------------------------------------------------
+    */
+
         foreach ($paths as $path) {
             if (
                 is_string($path)
@@ -1968,6 +2013,12 @@ class KIBController extends Controller
                 Storage::disk('local')->delete($path);
             }
         }
+
+        /*
+    |--------------------------------------------------------------------------
+    | 07. RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
         return redirect()
             ->route('kib.tanah')
