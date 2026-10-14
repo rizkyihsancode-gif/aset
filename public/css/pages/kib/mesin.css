@@ -263,27 +263,30 @@
 /* 05. BUTTON */
 
 .mesin-button {
+min-height: 39px;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    min-height: 37px;
-    padding: 9px 13px;
-    background: white;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: #214f86;
-    font-size: 13px;
+
+    gap: 6px;
+
+    padding: 0 13px;
+
+    border: 1px solid #bdd7ef;
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #0868c4;
+
+    font-family: inherit;
+    font-size: 12px;
     font-weight: 700;
-    line-height: 1.3;
-    white-space: nowrap;
-    text-decoration: none;
+
     cursor: pointer;
-    transition:
-        background .18s ease,
-        border-color .18s ease,
-        transform .18s ease;
 }
+
 
 .mesin-button:hover {
     transform: translateY(-1px);
@@ -1171,5 +1174,1069 @@
         align-items: flex-start;
         flex-direction: column;
         gap: 10px;
+    }
+}
+
+/* =====================================================
+   MESIN — PENYESUAIAN DESAIN DENGAN K.I.B TANAH
+   ===================================================== */
+
+/* CARD TANGGAL */
+
+#mesinPage .mesin-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+#mesinPage .mesin-hero-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+#mesinPage .mesin-date-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 226px;
+    padding: 10px 13px;
+
+    border: 1px solid rgba(220, 232, 244, .92);
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, .93);
+
+    box-shadow:
+        0 7px 22px rgba(27, 75, 118, .07);
+
+    backdrop-filter: blur(8px);
+}
+
+#mesinPage .mesin-date-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+
+    width: 39px;
+    height: 39px;
+
+    border-radius: 8px;
+    background: #eaf3ff;
+    color: #086ad3;
+}
+
+#mesinPage .mesin-date-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+#mesinPage .mesin-date-card strong {
+    display: block;
+    color: #1d3357;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-date-card span:not(.mesin-date-icon) {
+    display: block;
+    margin-top: 3px;
+    color: #778aa6;
+    font-size: 11px;
+}
+
+/* ==========================================
+   CARD DATA MASUK
+========================================== */
+
+#mesinPage .mesin-incoming-card {
+    display: grid;
+    grid-template-columns:
+        auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+
+    padding: 14px 16px;
+
+    border: 1px solid #c9def3;
+    border-radius: 11px;
+
+    background: linear-gradient(
+        110deg,
+        #ffffff,
+        #f7fbff
+    );
+
+    box-shadow:
+        0 6px 20px rgba(23, 65, 103, .045);
+}
+
+#mesinPage .mesin-incoming-card.is-empty {
+    border-color: #dfe8f1;
+    background: #ffffff;
+}
+
+#mesinPage .mesin-incoming-icon {
+    width: 47px;
+    height: 47px;
+    border-radius: 10px;
+    background: #fff3dd;
+    color: #ee9200;
+}
+
+#mesinPage .mesin-incoming-copy {
+    min-width: 0;
+}
+
+#mesinPage .mesin-incoming-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+#mesinPage .mesin-incoming-eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: #697f9a;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .09em;
+}
+
+#mesinPage .mesin-incoming-title-row h3 {
+    margin: 0;
+    color: #102a51;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-incoming-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 27px;
+    height: 23px;
+    padding: 0 7px;
+
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-incoming-copy p {
+    margin: 5px 0 0;
+    color: #657d98;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+#mesinPage .mesin-incoming-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+#mesinPage .mesin-pending-pill {
+    min-height: 27px;
+    padding: 0 8px;
+    border-radius: 6px;
+
+    background: #eaf9f0;
+    color: #16804b;
+    font-size: 12px;
+}
+
+#mesinPage .mesin-incoming-action .mesin-button {
+    min-height: 39px;
+    padding: 0 13px;
+    border-color: #bdd7ef;
+}
+
+/* ==========================================
+   TABEL PILIH NILAI ASET
+========================================== */
+
+#mesinPage .mesin-source-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#mesinPage .mesin-source-search {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+}
+
+#mesinPage .mesin-source-search svg {
+    position: absolute;
+    left: 12px;
+    color: #7e94ae;
+    pointer-events: none;
+}
+
+#mesinPage .mesin-source-search #mesinPendingSearch {
+    width: 100%;
+    padding-left: 39px;
+    margin: 0;
+}
+
+#mesinPage .mesin-source-toolbar > span {
+    flex-shrink: 0;
+    color: #647c97;
+    font-size: 12px;
+}
+
+#mesinPage .mesin-source-scroll {
+    max-height: 330px;
+    overflow: auto;
+    border: 1px solid #dde6ef;
+    border-radius: 8px;
+}
+
+#mesinPage .mesin-source-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+}
+
+#mesinPage .mesin-source-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+
+    padding: 11px 10px;
+    border: 1px solid #dce6f0;
+
+    background: #eaf4ff;
+    color: #18375e;
+
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+    white-space: nowrap;
+}
+
+#mesinPage .mesin-source-table tbody td {
+    padding: 10px;
+    border: 1px solid #e4ebf2;
+    color: #385572;
+    font-size: 13px;
+    line-height: 1.5;
+    vertical-align: top;
+}
+
+#mesinPage .mesin-source-table strong {
+    display: block;
+    color: #1c416b;
+}
+
+#mesinPage .mesin-source-table small {
+    display: block;
+    margin-top: 3px;
+    color: #8192a6;
+    font-size: 11px;
+}
+
+#mesinPage .mesin-source-type {
+    color: #1873bf !important;
+}
+
+#mesinPage .mesin-source-uraian {
+    min-width: 180px;
+    max-width: 350px;
+    white-space: normal;
+}
+
+/* BARIS TERPILIH */
+
+#mesinPage .mesin-source-table tbody tr.is-selected {
+    background: #eaf9f0;
+}
+
+#mesinPage .mesin-source-table tbody tr.is-selected:hover {
+    background: #e2f5e9;
+}
+
+/* TOMBOL PILIH HIJAU */
+
+#mesinPage .mesin-source-select {
+    min-height: 35px;
+    padding: 0 13px;
+
+    border: 1px solid #0f8351;
+    border-radius: 7px;
+
+    background: #168d5b;
+    color: #ffffff;
+
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    cursor: pointer;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease;
+}
+
+#mesinPage .mesin-source-select:hover {
+    background: #0f7d4e;
+}
+
+#mesinPage .mesin-source-select.is-selected {
+    border-color: #9ed6b6;
+    background: #e0f4e9;
+    color: #146342;
+}
+
+/* ==========================================
+   CARD DATA NILAI ASET TERPILIH
+========================================== */
+
+#mesinPage .mesin-selected-source {
+    display: grid;
+    grid-template-columns:
+        auto minmax(0, 1fr) auto;
+
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 15px;
+    padding: 12px 13px;
+
+    border: 1px solid #bae4cd;
+    border-radius: 9px;
+
+    background: #effaf4;
+}
+
+#mesinPage .mesin-selected-source[hidden] {
+    display: none !important;
+}
+
+#mesinPage .mesin-selected-icon {
+    display: grid;
+    place-items: center;
+
+    width: 38px;
+    height: 38px;
+
+    border-radius: 8px;
+
+    background: #ddf6e8;
+    color: #13804d;
+}
+
+#mesinPage .mesin-selected-info {
+    min-width: 0;
+}
+
+#mesinPage .mesin-selected-info span {
+    display: block;
+    color: #668576;
+    font-size: 10px;
+}
+
+#mesinPage .mesin-selected-info strong {
+    display: block;
+    margin-top: 2px;
+
+    color: #185a3b;
+    font-size: 13px;
+
+    overflow-wrap: anywhere;
+}
+
+#mesinPage .mesin-selected-info small {
+    display: block;
+    margin-top: 3px;
+
+    color: #648274;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+#mesinPage .mesin-selected-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    min-height: 34px;
+    padding: 0 10px;
+
+    border: 1px solid #addbbf;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #177149;
+
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+#mesinPage .mesin-selected-change:hover {
+    background: #e5f8ed;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+    #mesinPage .mesin-hero-top {
+        flex-direction: column;
+    }
+
+    #mesinPage .mesin-date-card {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    #mesinPage .mesin-incoming-card {
+        grid-template-columns: 1fr;
+    }
+
+    #mesinPage .mesin-incoming-action .mesin-button {
+        width: 100%;
+    }
+
+    #mesinPage .mesin-source-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #mesinPage .mesin-selected-source {
+        grid-template-columns:
+            auto minmax(0, 1fr);
+    }
+
+    #mesinPage .mesin-selected-change {
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
+}
+
+/* ============================================================
+   K.I.B MESIN — PENYESUAIAN DENGAN HALAMAN TANAH
+   HANYA:
+   1. Card tanggal
+   2. Card Data Masuk
+   3. Tabel Pilih Nilai Aset
+   4. Status voucher Terpilih
+
+   Desain lainnya tetap dipertahankan.
+   ============================================================ */
+
+
+/* ============================================================
+   1. HEADER DAN CARD TANGGAL
+   ============================================================ */
+
+#mesinPage .mesin-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+#mesinPage .mesin-hero-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+#mesinPage .mesin-date-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    min-width: 226px;
+    padding: 10px 13px;
+
+    border: 1px solid rgba(220, 232, 244, .92);
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, .93);
+
+    box-shadow:
+        0 7px 22px rgba(27, 75, 118, .07);
+
+    backdrop-filter: blur(8px);
+}
+
+#mesinPage .mesin-date-icon {
+    display: grid;
+    place-items: center;
+
+    width: 39px;
+    height: 39px;
+    flex-shrink: 0;
+
+    border-radius: 8px;
+    background: #eaf3ff;
+    color: #086ad3;
+}
+
+#mesinPage .mesin-date-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+#mesinPage .mesin-date-card strong {
+    display: block;
+
+    color: #1d3357;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-date-card div > span {
+    display: block;
+    margin-top: 3px;
+
+    color: #778aa6;
+    font-size: 11px;
+}
+
+
+/* ============================================================
+   2. CARD NOTIFIKASI DATA MASUK SEPERTI TANAH
+   ============================================================ */
+
+#mesinPage .mesin-incoming-card {
+    display: grid;
+
+    grid-template-columns:
+        auto minmax(0, 1fr) auto;
+
+    align-items: center;
+    gap: 14px;
+
+    padding: 14px 16px;
+
+    border: 1px solid #c9def3;
+    border-radius: 11px;
+
+    background: linear-gradient(
+        110deg,
+        #ffffff,
+        #f7fbff
+    );
+
+    box-shadow:
+        0 6px 20px rgba(23, 65, 103, .045);
+}
+
+#mesinPage .mesin-incoming-card.is-empty {
+    border-color: #dfe8f1;
+    background: #ffffff;
+}
+
+#mesinPage .mesin-incoming-icon {
+    display: grid;
+    place-items: center;
+
+    width: 47px;
+    height: 47px;
+    flex-shrink: 0;
+
+    border-radius: 10px;
+    background: #fff3dd;
+    color: #ee9200;
+}
+
+#mesinPage .mesin-incoming-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+#mesinPage .mesin-incoming-copy {
+    min-width: 0;
+}
+
+#mesinPage .mesin-incoming-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+#mesinPage .mesin-incoming-eyebrow {
+    display: block;
+    margin-bottom: 3px;
+
+    color: #697f9a;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .09em;
+}
+
+#mesinPage .mesin-incoming-title-row h3 {
+    margin: 0;
+    color: #102a51;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-incoming-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 27px;
+    height: 23px;
+    padding: 0 7px;
+
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-incoming-copy p {
+    margin: 5px 0 0;
+
+    color: #657d98;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+#mesinPage .mesin-incoming-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    margin-top: 8px;
+}
+
+#mesinPage .mesin-pending-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    min-height: 27px;
+    padding: 0 8px;
+
+    border-radius: 6px;
+    background: #eaf9f0;
+    color: #16804b;
+
+    font-size: 12px;
+}
+
+#mesinPage .mesin-incoming-action {
+    display: flex;
+    align-items: center;
+}
+
+#mesinPage .mesin-incoming-action .mesin-button {
+    min-height: 39px;
+    padding: 0 13px;
+    border-color: #bdd7ef;
+}
+
+
+/* ============================================================
+   3. SEARCH TABEL PILIH NILAI ASET
+   ============================================================ */
+
+#mesinPage .mesin-source-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    margin-bottom: 10px;
+}
+
+#mesinPage .mesin-source-search {
+    position: relative;
+
+    display: flex;
+    flex: 1;
+    align-items: center;
+
+    min-width: 0;
+}
+
+#mesinPage .mesin-source-search svg {
+    position: absolute;
+    left: 12px;
+
+    color: #7e94ae;
+    pointer-events: none;
+}
+
+#mesinPage .mesin-source-search #mesinPendingSearch {
+    width: 100%;
+    min-height: 40px;
+
+    padding: 10px 12px 10px 39px;
+    margin: 0;
+
+    border: 1px solid #d5e3f3;
+    border-radius: 8px;
+    background: #ffffff;
+
+    color: #244568;
+    font-size: 13px;
+}
+
+#mesinPage .mesin-source-search #mesinPendingSearch:focus {
+    border-color: #5797ef;
+    outline: 3px solid rgba(37, 113, 224, .10);
+}
+
+#mesinPage .mesin-source-toolbar > span {
+    flex-shrink: 0;
+
+    color: #647c97;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   4. TABEL PENDING SEPERTI TANAH
+   ============================================================ */
+
+#mesinPage .mesin-source-scroll {
+    width: 100%;
+    max-height: 330px;
+
+    overflow: auto;
+
+    border: 1px solid #dde6ef;
+    border-radius: 8px;
+}
+
+#mesinPage .mesin-source-table {
+    width: 100%;
+    min-width: 1100px;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+#mesinPage .mesin-source-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+
+    padding: 11px 10px;
+
+    border: 1px solid #dce6f0;
+    background: #eaf4ff;
+
+    color: #18375e;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: left;
+    white-space: nowrap;
+}
+
+#mesinPage .mesin-source-table tbody td {
+    padding: 10px;
+
+    border: 1px solid #e4ebf2;
+    color: #385572;
+
+    font-size: 12px;
+    line-height: 1.5;
+    vertical-align: top;
+}
+
+#mesinPage .mesin-source-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+#mesinPage .mesin-source-table tbody tr:hover {
+    background: #f3f8ff;
+}
+
+#mesinPage .mesin-source-table strong {
+    display: block;
+    color: #1c416b;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-source-table small {
+    display: block;
+    margin-top: 3px;
+
+    color: #8192a6;
+    font-size: 11px;
+}
+
+#mesinPage .mesin-source-table .mesin-source-type {
+    color: #1873bf;
+}
+
+#mesinPage .mesin-source-uraian {
+    min-width: 180px;
+    max-width: 350px;
+
+    white-space: normal;
+}
+
+
+/* ============================================================
+   5. STATUS BARIS VOUCHER TERPILIH
+   ============================================================ */
+
+#mesinPage .mesin-source-table tbody tr.is-selected,
+#mesinPage .mesin-source-table tbody tr.is-selected:nth-child(even) {
+    background: #eaf9f0;
+}
+
+#mesinPage .mesin-source-table tbody tr.is-selected:hover {
+    background: #e2f5e9;
+}
+
+#mesinPage .mesin-source-select {
+    min-height: 35px;
+    padding: 0 13px;
+
+    border: 1px solid #0f8351;
+    border-radius: 7px;
+
+    background: #168d5b;
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease;
+}
+
+#mesinPage .mesin-source-select:hover {
+    background: #0f7d4e;
+}
+
+#mesinPage .mesin-source-select.is-selected {
+    background: #e0f4e9;
+    border-color: #9ed6b6;
+    color: #146342;
+}
+
+#mesinPage .mesin-source-select.is-selected:hover {
+    background: #d3eedf;
+}
+
+
+/* ============================================================
+   6. CARD HIJAU DATA NILAI ASET TERPILIH
+   ============================================================ */
+
+#mesinPage .mesin-selected-source {
+    display: grid;
+
+    grid-template-columns:
+        auto minmax(0, 1fr) auto;
+
+    align-items: center;
+    gap: 11px;
+
+    margin: 0 0 15px;
+    padding: 12px 13px;
+
+    border: 1px solid #bae4cd;
+    border-radius: 9px;
+
+    background: #effaf4;
+}
+
+#mesinPage .mesin-selected-source[hidden] {
+    display: none !important;
+}
+
+#mesinPage .mesin-selected-icon {
+    display: grid;
+    place-items: center;
+
+    width: 38px;
+    height: 38px;
+
+    border-radius: 8px;
+    background: #ddf6e8;
+    color: #13804d;
+}
+
+#mesinPage .mesin-selected-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+#mesinPage .mesin-selected-info {
+    min-width: 0;
+}
+
+#mesinPage .mesin-selected-info span {
+    display: block;
+
+    color: #668576;
+    font-size: 10px;
+}
+
+#mesinPage .mesin-selected-info strong {
+    display: block;
+    margin-top: 2px;
+
+    color: #185a3b;
+    font-size: 13px;
+    font-weight: 800;
+
+    overflow-wrap: anywhere;
+}
+
+#mesinPage .mesin-selected-info small {
+    display: block;
+    margin-top: 3px;
+
+    color: #648274;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+#mesinPage .mesin-selected-change {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    min-height: 34px;
+    padding: 0 10px;
+
+    border: 1px solid #addbbf;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #177149;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+#mesinPage .mesin-selected-change:hover {
+    background: #e5f8ed;
+}
+
+
+/* ============================================================
+   7. KOMPATIBILITAS TABEL UTAMA SEBELUMNYA
+   ============================================================ */
+
+/* Tetap memiliki delapan kolom dan garis tabel. */
+#mesinPage #mesinTable {
+    min-width: 1130px;
+}
+
+/* Kolom Tahun tetap menggunakan tampilan sebelumnya. */
+#mesinPage .mesin-year-pill {
+    display: inline-flex;
+    padding: 6px 9px;
+
+    border: 1px solid #dce8f7;
+    border-radius: 7px;
+
+    background: #f7faff;
+    color: #24527c;
+
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Kolom Dokumen tetap menggunakan tombol sebelumnya. */
+#mesinPage .mesin-document-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #cde1fa;
+    border-radius: 8px;
+
+    background: #f1f7ff;
+    color: #145ac4;
+
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#mesinPage .mesin-document-button:hover {
+    background: #e1eeff;
+}
+
+#mesinPage .mesin-muted {
+    color: #8095ac;
+}
+
+/* Modal nilai tetap 10 kolom. */
+#mesinPage .mesin-nilai-table {
+    min-width: 1250px;
+}
+
+
+/* ============================================================
+   8. RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+    #mesinPage .mesin-hero-top {
+        flex-direction: column;
+    }
+
+    #mesinPage .mesin-date-card {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    #mesinPage .mesin-incoming-card {
+        grid-template-columns: 1fr;
+    }
+
+    #mesinPage .mesin-incoming-action .mesin-button {
+        width: 100%;
+    }
+
+    #mesinPage .mesin-source-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #mesinPage .mesin-selected-source {
+        grid-template-columns:
+            auto minmax(0, 1fr);
+    }
+
+    #mesinPage .mesin-selected-change {
+        grid-column: 1 / -1;
+        justify-self: end;
     }
 }
