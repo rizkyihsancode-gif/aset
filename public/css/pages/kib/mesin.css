@@ -2632,3 +2632,331 @@ min-height: 39px;
     }
 }
 
+/* ==========================================================
+   FINAL TABEL MESIN — MENGIKUTI K.I.B TANAH
+   No | Lokasi | Alamat | Nilai | PDF | Aksi
+   ========================================================== */
+
+/* CONTAINER TABEL */
+
+#mesinPage .mesin-main-table-wrap {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+
+    border: 1px solid #dde7f1;
+    border-radius: 8px;
+}
+
+/* STRUKTUR TABEL */
+
+#mesinPage #mesinTable {
+    width: 100%;
+    min-width: 920px;
+    max-width: 100%;
+
+    table-layout: fixed;
+    border-collapse: collapse;
+
+    background: #ffffff;
+}
+
+/* UKURAN KOLOM */
+
+#mesinPage #mesinTable .mesin-col-no {
+    width: 52px;
+}
+
+#mesinPage #mesinTable .mesin-col-lokasi {
+    width: 25%;
+}
+
+#mesinPage #mesinTable .mesin-col-alamat {
+    width: 24%;
+}
+
+#mesinPage #mesinTable .mesin-col-nilai {
+    width: auto;
+}
+
+#mesinPage #mesinTable .mesin-col-pdf {
+    width: 124px;
+}
+
+#mesinPage #mesinTable .mesin-col-aksi {
+    width: 148px;
+}
+
+/* GARIS ANTARKOLOM */
+
+#mesinPage #mesinTable thead th,
+#mesinPage #mesinTable tbody td {
+    min-width: 0;
+
+    padding: 11px 12px;
+
+    border: 1px solid #dae6f3;
+
+    vertical-align: middle;
+}
+
+/* HEADER */
+
+#mesinPage #mesinTable thead th {
+    background: #e8f3ff;
+
+    color: #15355e;
+    font-size: 12px;
+    font-weight: 800;
+
+    text-align: left;
+}
+
+/* WARNA BARIS */
+
+#mesinPage #mesinTable tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+#mesinPage #mesinTable tbody tr:hover {
+    background: #f3f9ff;
+}
+
+/* ==========================================================
+   OVERRIDE LEBAR LAMA
+   Menghapus efek min-width 275px pada Aksi.
+   ========================================================== */
+
+/* NO */
+
+#mesinPage #mesinTable thead th:nth-child(1),
+#mesinPage #mesinTable tbody td:nth-child(1) {
+    width: 52px;
+    min-width: 0;
+
+    text-align: center;
+}
+
+/* LOKASI, ALAMAT, NILAI */
+
+#mesinPage #mesinTable thead th:nth-child(2),
+#mesinPage #mesinTable thead th:nth-child(3),
+#mesinPage #mesinTable thead th:nth-child(4) {
+    min-width: 0;
+}
+
+/* PDF — KOLOM KELIMA */
+
+#mesinPage #mesinTable thead th:nth-child(5),
+#mesinPage #mesinTable tbody td:nth-child(5) {
+    width: 124px;
+    min-width: 0;
+
+    text-align: center;
+}
+
+/* AKSI — KOLOM KEENAM */
+
+#mesinPage #mesinTable thead th:nth-child(6),
+#mesinPage #mesinTable tbody td:nth-child(6) {
+    width: 148px;
+    min-width: 0;
+
+    text-align: center;
+}
+
+/* ==========================================================
+   DATA LOKASI
+   ========================================================== */
+
+#mesinPage #mesinTable .mesin-lokasi-cell strong {
+    display: block;
+
+    color: #153c69;
+    font-weight: 800;
+
+    overflow-wrap: anywhere;
+}
+
+#mesinPage #mesinTable .mesin-alamat-cell {
+    overflow-wrap: anywhere;
+}
+
+/* ==========================================================
+   NILAI
+   ========================================================== */
+
+#mesinPage #mesinTable .mesin-nilai-button {
+    display: inline-flex;
+
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+
+    padding: 7px 9px;
+    gap: 7px;
+
+    border-radius: 6px;
+    text-align: left;
+}
+
+#mesinPage #mesinTable .mesin-nilai-button strong {
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+#mesinPage #mesinTable .mesin-nilai-button small {
+    font-size: 10px;
+}
+
+/* ==========================================================
+   PDF — BIRU MUDA SEPERTI TANAH
+   ========================================================== */
+
+#mesinPage #mesinTable .mesin-pdf-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    width: auto;
+    max-width: 100%;
+    min-height: 34px;
+
+    padding: 6px 10px;
+
+    background: #edf7ff;
+    color: #0868d6;
+
+    border: 1px solid #b9dcff;
+    border-radius: 7px;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+
+    white-space: nowrap;
+    cursor: pointer;
+
+    transition:
+        background-color .15s ease,
+        border-color .15s ease;
+}
+
+#mesinPage #mesinTable .mesin-pdf-button:hover {
+    background: #e2f1ff;
+
+    border-color: #86bdf7;
+    color: #075bbb;
+}
+
+#mesinPage #mesinTable .mesin-pdf-button svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* ==========================================================
+   GRUP AKSI — IKON KECIL SEPERTI TANAH
+   ========================================================== */
+
+#mesinPage #mesinTable .mesin-aksi-group {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+
+/* UKURAN TOMBOL */
+
+#mesinPage #mesinTable .mesin-action-icon {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 33px;
+
+    width: 33px;
+    height: 34px;
+
+    min-width: 33px;
+    min-height: 34px;
+
+    padding: 0;
+
+    border: 1px solid transparent;
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition:
+        background-color .15s ease,
+        transform .15s ease;
+}
+
+#mesinPage #mesinTable .mesin-action-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.1;
+}
+
+/* DETAIL — BIRU */
+
+#mesinPage #mesinTable .mesin-action-view {
+    color: #0b82d8;
+    background: #e7f4ff;
+}
+
+#mesinPage #mesinTable .mesin-action-view:hover {
+    background: #d5ebfe;
+}
+
+/* EDIT — ORANYE */
+
+#mesinPage #mesinTable .mesin-action-edit {
+    color: #dd8a06;
+    background: #fff0d8;
+
+    border-color: transparent;
+}
+
+#mesinPage #mesinTable .mesin-action-edit:hover {
+    background: #ffe5ba;
+    border-color: transparent;
+}
+
+/* HAPUS — MERAH MUDA */
+
+#mesinPage #mesinTable .mesin-action-delete {
+    color: #ed4e60;
+    background: #ffe8ec;
+
+    border-color: transparent;
+}
+
+#mesinPage #mesinTable .mesin-action-delete:hover {
+    background: #ffd7dd;
+    border-color: transparent;
+}
+
+/* AKSESIBILITAS TOMBOL */
+
+#mesinPage #mesinTable .mesin-action-icon:focus-visible,
+#mesinPage #mesinTable .mesin-pdf-button:focus-visible {
+    outline: 2px solid #3789e5;
+    outline-offset: 2px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 980px) {
+    #mesinPage #mesinTable {
+        min-width: 920px;
+        max-width: none;
+    }
+}
+

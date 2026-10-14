@@ -232,14 +232,25 @@
             </div>
 
 
-            {{-- =====================================================
-     TABEL PERALATAN DAN MESIN
-     6 KOLOM: WEB LAMA + PDF
-===================================================== --}}
 
-            <div class="mesin-table-wrap">
+            {{-- ===========================================
+     TABEL K.I.B MESIN — SEPERTI HALAMAN TANAH
+     No | Lokasi | Alamat | Nilai | PDF | Aksi
+=========================================== --}}
+
+            <div class="mesin-table-wrap mesin-main-table-wrap">
 
                 <table id="mesinTable" class="mesin-table">
+
+                    {{-- Mengatur lebar agar proporsional --}}
+                    <colgroup>
+                        <col class="mesin-col-no">
+                        <col class="mesin-col-lokasi">
+                        <col class="mesin-col-alamat">
+                        <col class="mesin-col-nilai">
+                        <col class="mesin-col-pdf">
+                        <col class="mesin-col-aksi">
+                    </colgroup>
 
                     <thead>
                         <tr>
@@ -247,8 +258,8 @@
                             <th scope="col">Lokasi</th>
                             <th scope="col">Alamat</th>
                             <th scope="col">Nilai</th>
-                            <th scope="col">Aksi</th>
                             <th scope="col">PDF</th>
+                            <th scope="col">Aksi</th>
                         </tr>
                     </thead>
 
@@ -262,12 +273,11 @@
                                 data-export-nilai="{{ (int) $row->nilai_total }}"
                                 data-export-pdf="{{ (int) $row->jumlah_dokumen }}">
 
-                                {{-- 1. NOMOR URUT --}}
+                                {{-- NO --}}
                                 <td class="mesin-number"></td>
 
-                                {{-- 2. LOKASI --}}
+                                {{-- LOKASI --}}
                                 <td class="mesin-lokasi-cell">
-
                                     <strong>
                                         {{ trim((string) $row->lokasi) ?: '—' }}
                                     </strong>
@@ -275,17 +285,14 @@
                                     <small>
                                         ID Lokasi #{{ $row->id_lokasi }}
                                     </small>
-
                                 </td>
 
-                                {{-- 3. ALAMAT --}}
+                                {{-- ALAMAT --}}
                                 <td class="mesin-alamat-cell">
-
                                     {{ trim((string) $row->alamat) ?: '—' }}
-
                                 </td>
 
-                                {{-- 4. NILAI --}}
+                                {{-- NILAI --}}
                                 <td class="mesin-nilai-cell">
 
                                     <button type="button" class="mesin-nilai-button"
@@ -310,61 +317,20 @@
 
                                 </td>
 
-                                {{-- 5. AKSI DETAIL --}}
-
-                                {{-- =========================================
-     AKSI DETAIL, EDIT DAN HAPUS MESIN
-========================================= --}}
-
-                                <td class="mesin-aksi-cell">
-
-                                    <div class="mesin-aksi-group" role="group"
-                                        aria-label="Aksi Mesin lokasi {{ trim((string) $row->lokasi) }}">
-
-                                        {{-- DETAIL --}}
-                                        <button type="button" class="mesin-button outline small"
-                                            data-lokasi="{{ $row->id_lokasi }}"
-                                            title="Lihat detail seluruh barang di lokasi ini">
-                                            <i data-lucide="eye"></i>
-                                            Detail
-                                        </button>
-
-                                        {{-- EDIT --}}
-                                        <button type="button" class="mesin-button small mesin-action-edit"
-                                            data-edit-lokasi="{{ $row->id_lokasi }}"
-                                            title="Pilih barang yang akan diedit">
-                                            <i data-lucide="pencil"></i>
-                                            Edit
-                                        </button>
-
-                                        {{-- HAPUS --}}
-                                        <button type="button" class="mesin-button small mesin-action-delete"
-                                            data-delete-lokasi="{{ $row->id_lokasi }}"
-                                            title="Pilih barang yang akan dihapus">
-                                            <i data-lucide="trash-2"></i>
-                                            Hapus
-                                        </button>
-
-                                    </div>
-
-                                </td>
-
-
-                                {{-- 6. PDF --}}
+                                {{-- PDF: SEBELUM AKSI --}}
                                 <td class="mesin-pdf-cell">
 
                                     @if ((int) $row->jumlah_dokumen > 0)
-                                        <button type="button" class="mesin-button mesin-pdf-button small"
+                                        <button type="button" class="mesin-pdf-button"
                                             data-pdf-lokasi="{{ $row->id_lokasi }}"
                                             data-pdf-nama="{{ trim((string) $row->lokasi) }}"
-                                            aria-label="Lihat PDF untuk lokasi {{ trim((string) $row->lokasi) }}">
+                                            title="Lihat {{ (int) $row->jumlah_dokumen }} dokumen PDF"
+                                            aria-label="Lihat PDF lokasi {{ trim((string) $row->lokasi) }}">
 
                                             <i data-lucide="file-text"></i>
 
-                                            PDF
-
-                                            <span class="mesin-pdf-count">
-                                                {{ (int) $row->jumlah_dokumen }}
+                                            <span>
+                                                PDF ({{ (int) $row->jumlah_dokumen }})
                                             </span>
 
                                         </button>
@@ -373,6 +339,37 @@
                                             —
                                         </span>
                                     @endif
+
+                                </td>
+
+                                {{-- AKSI: DETAIL | EDIT | HAPUS --}}
+                                <td class="mesin-aksi-cell">
+
+                                    <div class="mesin-aksi-group" role="group"
+                                        aria-label="Aksi Mesin lokasi {{ trim((string) $row->lokasi) }}">
+
+                                        {{-- DETAIL BIRU --}}
+                                        <button type="button" class="mesin-action-icon mesin-action-view"
+                                            data-lokasi="{{ $row->id_lokasi }}" title="Detail barang"
+                                            aria-label="Lihat detail barang di {{ trim((string) $row->lokasi) }}">
+                                            <i data-lucide="eye"></i>
+                                        </button>
+
+                                        {{-- EDIT ORANYE --}}
+                                        <button type="button" class="mesin-action-icon mesin-action-edit"
+                                            data-edit-lokasi="{{ $row->id_lokasi }}" title="Edit barang"
+                                            aria-label="Pilih barang untuk diedit di {{ trim((string) $row->lokasi) }}">
+                                            <i data-lucide="square-pen"></i>
+                                        </button>
+
+                                        {{-- HAPUS MERAH MUDA --}}
+                                        <button type="button" class="mesin-action-icon mesin-action-delete"
+                                            data-delete-lokasi="{{ $row->id_lokasi }}" title="Hapus barang"
+                                            aria-label="Pilih barang untuk dihapus di {{ trim((string) $row->lokasi) }}">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+
+                                    </div>
 
                                 </td>
 
@@ -393,6 +390,7 @@
                 </table>
 
             </div>
+
 
 
             {{-- PAGINATION TETAP --}}
