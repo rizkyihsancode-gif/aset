@@ -241,6 +241,7 @@
                             <th>Lokasi</th>
                             <th>Alamat</th>
                             <th>Data Mesin</th>
+                            <th>Tahun</th>
                             <th>Nilai</th>
                             <th>Dokumen</th>
                             <th>Aksi</th>
