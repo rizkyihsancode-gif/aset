@@ -1,8 +1,8 @@
 
-/* ==========================================================================
+/* ============================================================
    K.I.B B — PERALATAN DAN MESIN
    PERUMDA TIRTA KENCANA KOTA SAMARINDA
-   ========================================================================== */
+   ============================================================ */
 
 /* 01. HALAMAN UTAMA */
 
@@ -41,7 +41,6 @@
     height: 17px;
 }
 
-
 /* 02. HERO */
 
 .mesin-hero {
@@ -49,7 +48,6 @@
     overflow: hidden;
     margin: 0 -20px 18px;
     padding: 24px 20px 22px;
-
     background-image: url('/images/master/pdam4.png');
     background-position: right center;
     background-size: cover;
@@ -107,7 +105,6 @@
     line-height: 1.6;
 }
 
-
 /* 03. KPI */
 
 .mesin-kpi-grid {
@@ -123,7 +120,6 @@
     min-width: 0;
     min-height: 94px;
     padding: 14px;
-
     background: rgba(255, 255, 255, .97);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -171,7 +167,6 @@
     color: #7188a2;
     font-size: 12px;
 }
-
 
 /* 04. NOTIFIKASI */
 
@@ -265,7 +260,6 @@
     font-weight: 700;
 }
 
-
 /* 05. BUTTON */
 
 .mesin-button {
@@ -275,11 +269,9 @@
     gap: 8px;
     min-height: 37px;
     padding: 9px 13px;
-
     background: white;
     border: 1px solid transparent;
     border-radius: 8px;
-
     color: #214f86;
     font-size: 13px;
     font-weight: 700;
@@ -287,7 +279,6 @@
     white-space: nowrap;
     text-decoration: none;
     cursor: pointer;
-
     transition:
         background .18s ease,
         border-color .18s ease,
@@ -329,7 +320,6 @@
     padding: 6px 10px;
     font-size: 12px;
 }
-
 
 /* 06. TABEL DAN FILTER */
 
@@ -527,7 +517,6 @@
     opacity: .75;
 }
 
-
 /* 07. TOMBOL JUMLAH BARANG DAN NILAI */
 
 .mesin-data-button,
@@ -536,19 +525,15 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-
     min-width: 130px;
     max-width: 100%;
     padding: 9px 11px;
-
     background: #f0f7ff;
     border: 1px solid #cae0f8;
     border-radius: 8px;
-
     color: #1764c9;
     text-align: left;
     cursor: pointer;
-
     transition:
         background .18s ease,
         border-color .18s ease;
@@ -595,7 +580,6 @@
     white-space: nowrap;
 }
 
-
 /* 08. MODAL */
 
 .mesin-dialog {
@@ -603,14 +587,11 @@
     width: min(1020px, calc(100vw - 32px));
     max-width: 1020px;
     max-height: calc(100dvh - 36px);
-
     margin: auto;
     padding: 0;
-
     background: white;
     border: 1px solid #d9e6f6;
     border-radius: 15px;
-
     color: #15345f;
     box-shadow: 0 25px 80px rgba(6, 30, 67, .25);
     overflow: hidden;
@@ -632,9 +613,7 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 20px;
-
     padding: 19px 23px;
-
     background: white;
     border-bottom: 1px solid #e3ecf6;
 }
@@ -665,15 +644,12 @@
 .mesin-close {
     display: grid;
     place-items: center;
-
     width: 36px;
     height: 36px;
     flex-shrink: 0;
-
     background: #f0f5fb;
     border: none;
     border-radius: 9px;
-
     color: #527298;
     cursor: pointer;
 }
@@ -685,16 +661,13 @@
     overscroll-behavior: contain;
 }
 
-
 /* 09. SECTION DAN FORM */
 
 .mesin-section {
     display: flex;
     gap: 14px;
-
     margin-bottom: 17px;
     padding: 17px;
-
     background: #fbfdff;
     border: 1px solid #dfeaf6;
     border-radius: 12px;
@@ -704,13 +677,10 @@
     display: grid;
     place-items: center;
     flex-shrink: 0;
-
     width: 29px;
     height: 29px;
-
     background: #e8f2ff;
     border-radius: 8px;
-
     color: #126cdb;
     font-size: 13px;
     font-weight: 800;
@@ -761,7 +731,6 @@
     flex-direction: column;
     gap: 7px;
     min-width: 0;
-
     color: #325577;
     font-size: 13px;
     font-weight: 700;
@@ -775,11 +744,9 @@
     width: 100%;
     min-height: 40px;
     padding: 10px 12px;
-
     background: white;
     border: 1px solid #d5e3f3;
     border-radius: 8px;
-
     color: #223f67;
     font-size: 13px;
     font-weight: 400;
@@ -832,7 +799,6 @@
     top: 0;
     z-index: 1;
 }
-
 
 /* 10. DETAIL BARANG */
 
@@ -911,7 +877,6 @@
     margin-top: 15px;
 }
 
-
 /* 11. MODAL NILAI MESIN */
 
 .mesin-nilai-summary {
@@ -919,10 +884,8 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-
     padding: 14px 16px;
     margin-bottom: 14px;
-
     background: #f2f8ff;
     border: 1px solid #cae0f8;
     border-radius: 10px;
@@ -960,7 +923,6 @@
     white-space: normal;
     line-height: 1.45;
 }
-
 
 /* 12. RESPONSIVE */
 
@@ -1044,5 +1006,170 @@
 
     .mesin-nilai-summary small {
         margin-left: 0;
+    }
+}
+
+/* ============================================================
+   13. TABEL UTAMA — DESAIN SEPERTI K.I.B TANAH
+   ============================================================ */
+
+/*
+   Hanya tabel utama #mesinTable yang mendapatkan
+   garis vertikal dan horizontal setiap kolom.
+   Tabel dalam modal tetap memakai desain sebelumnya.
+*/
+
+.mesin-page .mesin-workspace > .mesin-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 0;
+    border-radius: 0;
+}
+
+.mesin-page #mesinTable {
+    width: 100%;
+    min-width: 1030px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    background: #ffffff;
+}
+
+.mesin-page #mesinTable thead th {
+    padding: 14px 15px;
+    border: 1px solid #d9e4ee;
+    background: #eaf4ff;
+    color: #122f55;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.4;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.mesin-page #mesinTable tbody td,
+.mesin-page #mesinTable tbody tr:last-child td {
+    padding: 13px 15px;
+    border: 1px solid #e1e9f1;
+    color: #294866;
+    font-size: 13px;
+    line-height: 1.55;
+    vertical-align: middle;
+}
+
+.mesin-page #mesinTable tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+.mesin-page #mesinTable tbody tr:hover {
+    background: #f1f7fd;
+}
+
+.mesin-page #mesinTable thead th:first-child,
+.mesin-page #mesinTable tbody td:first-child {
+    width: 55px;
+    text-align: center;
+}
+
+.mesin-page #mesinTable thead th:nth-child(2) {
+    min-width: 180px;
+}
+
+.mesin-page #mesinTable thead th:nth-child(3) {
+    min-width: 180px;
+}
+
+.mesin-page #mesinTable thead th:nth-child(4) {
+    min-width: 150px;
+}
+
+.mesin-page #mesinTable thead th:nth-child(5) {
+    min-width: 190px;
+}
+
+.mesin-page #mesinTable thead th:last-child,
+.mesin-page #mesinTable tbody td:last-child {
+    min-width: 105px;
+    text-align: center;
+}
+
+/* 14. FOOTER PAGINATION SEPERTI K.I.B TANAH */
+
+.mesin-page .mesin-workspace > .mesin-table-footer {
+    min-height: 62px;
+    margin-top: 0;
+    padding: 13px 2px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-top: 0;
+}
+
+.mesin-page #mesinTableInfo {
+    color: #647a95;
+    font-size: 12px;
+}
+
+.mesin-page #mesinPagination {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.mesin-page #mesinPagination button {
+    min-width: 35px;
+    height: 35px;
+    min-height: 35px;
+    padding: 0 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d8e2ed;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #496481;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    transition:
+        background-color .15s ease,
+        border-color .15s ease;
+}
+
+.mesin-page #mesinPagination button:not(:disabled):hover {
+    border-color: #82afe9;
+    background: #f0f7ff;
+}
+
+.mesin-page #mesinPagination button.active,
+.mesin-page #mesinPagination button.active:hover {
+    border-color: #086ad8;
+    background: #086ad8;
+    color: #ffffff;
+}
+
+.mesin-page #mesinPagination button:disabled:not(.active) {
+    opacity: .42;
+    cursor: not-allowed;
+}
+
+.mesin-page #mesinPagination .mesin-page-ellipsis {
+    display: inline-flex;
+    min-width: 18px;
+    height: 35px;
+    align-items: center;
+    justify-content: center;
+    color: #8093ab;
+    font-size: 12px;
+    user-select: none;
+}
+
+@media (max-width: 640px) {
+    .mesin-page .mesin-workspace > .mesin-table-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
     }
 }

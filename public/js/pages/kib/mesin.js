@@ -67,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const nilaiUrl = id =>
         `${locationUrl(id)}/nilai`;
 
-
     /*
     |--------------------------------------------------------------------------
     | REFERENSI ELEMEN
@@ -91,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let pendingSources = [];
     let currentPage = 1;
-
 
     /*
     |--------------------------------------------------------------------------
@@ -126,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return result;
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -168,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-
     /*
     |--------------------------------------------------------------------------
     | 02. PENCARIAN DAN PAGINATION
@@ -185,53 +181,140 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | PAGINATION - NOMOR HALAMAN SEPERTI K.I.B TANAH
+    |
+    | Perubahan hanya pada tampilan tombol pagination.
+    | Filter, jumlah data, dan pergantian baris tetap sama.
+    |--------------------------------------------------------------------------
+    */
+
     function renderPagination(totalPages) {
         const container = $('#mesinPagination');
 
         container.replaceChildren();
 
-        const buttons = [
-            {
-                label: '‹',
-                page: currentPage - 1,
-                disabled: currentPage === 1
-            },
-            {
-                label: String(currentPage),
-                page: currentPage,
-                disabled: true,
-                active: true
-            },
-            {
-                label: `dari ${totalPages}`,
-                page: currentPage,
-                disabled: true
-            },
-            {
-                label: '›',
-                page: currentPage + 1,
-                disabled: currentPage >= totalPages
-            }
-        ];
+        // Tidak perlu tombol saat hanya satu halaman.
+        if (totalPages < 2) {
+            return;
+        }
 
-        buttons.forEach(item => {
+        function appendButton(
+            label,
+            targetPage,
+            disabled = false
+        ) {
             const button = document.createElement('button');
 
-            button.type = 'button';
-            button.textContent = item.label;
-            button.disabled = item.disabled;
+            const active =
+                targetPage === currentPage &&
+                /^\d+$/.test(label);
 
-            if (item.active) {
-                button.classList.add('active');
+            button.type = 'button';
+            button.textContent = label;
+            button.disabled = disabled;
+
+            button.classList.toggle('active', active);
+
+            if (active) {
+                button.setAttribute(
+                    'aria-current',
+                    'page'
+                );
+            }
+
+            if (label === '‹') {
+                button.setAttribute(
+                    'aria-label',
+                    'Halaman sebelumnya'
+                );
+            } else if (label === '›') {
+                button.setAttribute(
+                    'aria-label',
+                    'Halaman berikutnya'
+                );
+            } else {
+                button.setAttribute(
+                    'aria-label',
+                    `Halaman ${label}`
+                );
             }
 
             button.addEventListener('click', () => {
-                currentPage = item.page;
+                currentPage = targetPage;
                 renderTable();
             });
 
             container.appendChild(button);
+        }
+
+        function appendEllipsis() {
+            const span = document.createElement('span');
+
+            span.className = 'mesin-page-ellipsis';
+            span.textContent = '…';
+
+            span.setAttribute(
+                'aria-hidden',
+                'true'
+            );
+
+            container.appendChild(span);
+        }
+
+        // Halaman sebelumnya.
+        appendButton(
+            '‹',
+            currentPage - 1,
+            currentPage === 1
+        );
+
+        // Selalu tampilkan halaman pertama dan terakhir.
+        const visiblePages = new Set([
+            1,
+            totalPages
+        ]);
+
+        // Tampilkan dua halaman sebelum dan sesudah.
+        for (
+            let page = Math.max(1, currentPage - 2);
+            page <= Math.min(
+                totalPages,
+                currentPage + 2
+            );
+            page++
+        ) {
+            visiblePages.add(page);
+        }
+
+        const orderedPages = [...visiblePages]
+            .sort((a, b) => a - b);
+
+        let previousPage = 0;
+
+        orderedPages.forEach(page => {
+            if (
+                previousPage !== 0 &&
+                page - previousPage > 1
+            ) {
+                appendEllipsis();
+            }
+
+            appendButton(
+                String(page),
+                page
+            );
+
+            previousPage = page;
         });
+
+        // Halaman berikutnya.
+        appendButton(
+            '›',
+            currentPage + 1,
+            currentPage >= totalPages
+        );
     }
 
     function renderTable() {
@@ -249,7 +332,9 @@ document.addEventListener('DOMContentLoaded', () => {
             totalPages
         );
 
-        const startIndex = (currentPage - 1) * size;
+        const startIndex = (
+            currentPage - 1
+        ) * size;
 
         tableRows.forEach(row => {
             row.hidden = true;
@@ -271,8 +356,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-        const start = rows.length ? startIndex + 1 : 0;
-        const end = Math.min(startIndex + size, rows.length);
+        const start = rows.length
+            ? startIndex + 1
+            : 0;
+
+        const end = Math.min(
+            startIndex + size,
+            rows.length
+        );
 
         $('#mesinTableInfo').textContent =
             `Menampilkan ${start}–${end} dari ${rows.length} lokasi`;
@@ -297,7 +388,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPage = 1;
         renderTable();
     });
-
 
     /*
     |--------------------------------------------------------------------------
@@ -353,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         URL.revokeObjectURL(url);
     });
-
 
     /*
     |--------------------------------------------------------------------------
@@ -413,7 +502,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -509,7 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPending
     );
 
-
     /*
     |--------------------------------------------------------------------------
     | 05. TOMBOL PILIH — AUTOFILL
@@ -529,9 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!source) return;
 
         if (
-            !source.id_lokasi
-            || !source.dep
-            || !source.div
+            !source.id_lokasi ||
+            !source.dep ||
+            !source.div
         ) {
             alert(
                 'Lokasi, Departemen, atau Divisi belum lengkap pada transaksi sumber.'
@@ -561,7 +648,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         form.querySelector('[name="id_barang"]')?.focus();
     });
-
 
     /*
     |--------------------------------------------------------------------------
@@ -599,7 +685,6 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingSearch.value = '';
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | BUKA TAMBAH DATA
@@ -624,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
         openCreate
     );
 
-
     /*
     |--------------------------------------------------------------------------
     | VALIDASI SUBMIT
@@ -642,7 +726,6 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
     });
-
 
     /*
     |--------------------------------------------------------------------------
@@ -727,7 +810,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | 07. RINCIAN NILAI MESIN
@@ -805,7 +887,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     return `
                         <tr>
-
                             <td>${index + 1}</td>
 
                             <td>
@@ -843,7 +924,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                     ${money(item.nilai)}
                                 </strong>
                             </td>
-
                         </tr>
                     `;
                 })
@@ -865,7 +945,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -959,9 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <article class="mesin-detail-card">
 
                             <div class="mesin-detail-head">
-
                                 <div>
-
                                     <h3>
                                         ${escapeHtml(
                                             item.nama_barang || 'Barang'
@@ -975,25 +1052,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                         · Register:
                                         ${escapeHtml(item.reg || '-')}
                                     </small>
-
                                 </div>
 
                                 <strong>
                                     ${money(item.harga)}
                                 </strong>
-
                             </div>
-
 
                             <dl class="mesin-detail-grid">
                                 ${detailHtml}
                             </dl>
 
-
                             <div class="mesin-detail-actions">
 
                                 ${documentLink}
-
                                 ${photoLink}
 
                                 <button
@@ -1027,7 +1099,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | 09. EVENT TOMBOL PADA TABEL UTAMA
@@ -1058,7 +1129,6 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
     });
-
 
     /*
     |--------------------------------------------------------------------------
@@ -1099,7 +1169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteForm.submit();
         }
     });
-
 
     /*
     |--------------------------------------------------------------------------
