@@ -1,67 +1,63 @@
-/* =========================================================
-   K.I.B - PERALATAN DAN MESIN
-   mesin.css
 
-   Fokus: body/content page.
-   Tidak menyentuh sidebar, header, atau layout global.
-========================================================= */
+/* ==========================================================================
+   K.I.B B — PERALATAN DAN MESIN
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. PAGE ROOT
+   -------------------------------------------------------------------------- */
+
+.mesin-page {
+    --mesin-primary: #0967e9;
+    --mesin-primary-dark: #0754bc;
+    --mesin-ink: #102956;
+    --mesin-muted: #617b9c;
+    --mesin-border: #dae6f5;
+
+    min-height: 100vh;
+    padding: 0 24px 30px;
+    background: #f4f8fd;
+    color: var(--mesin-ink);
+    font-size: 14px;
+}
 
 .mesin-page,
 .mesin-page * {
     box-sizing: border-box;
 }
 
-.mesin-page {
-    --mesin-primary: #0868e9;
-    --mesin-primary-dark: #0757c7;
-    --mesin-primary-soft: #edf5ff;
-    --mesin-text: #10295a;
-    --mesin-heading: #071d4f;
-    --mesin-muted: #60779a;
-    --mesin-border: #dce7f2;
-    --mesin-border-soft: #e8eef5;
-    --mesin-surface: #ffffff;
-    --mesin-page: #f4f8fd;
-
-    position: relative;
-    min-height: calc(100vh - 60px);
-    color: var(--mesin-text);
-    background: var(--mesin-page);
-}
-
 .mesin-page [hidden] {
     display: none !important;
 }
 
-.mesin-page button,
 .mesin-page input,
-.mesin-page select {
+.mesin-page button,
+.mesin-page select,
+.mesin-page textarea {
     font: inherit;
 }
 
-.mesin-page button {
-    -webkit-tap-highlight-color: transparent;
+.mesin-page svg {
+    width: 17px;
+    height: 17px;
 }
 
-.mesin-page :is(button, input, select, a, .table-responsive):focus-visible {
-    outline: 3px solid rgba(8, 104, 233, .24);
-    outline-offset: 2px;
-}
 
-/* =========================================================
-   HERO
-========================================================= */
+/* --------------------------------------------------------------------------
+   02. HERO
+   -------------------------------------------------------------------------- */
 
 .mesin-hero {
     position: relative;
     overflow: hidden;
-    margin: -21px -24px 16px;
-    padding: 20px 24px 17px;
+    margin: 0 -24px 18px;
+    padding: 26px 24px 22px;
 
-    background:
-        url('/images/master/pdam4.png')
-        right center / cover
-        no-repeat;
+    background-image: url('/images/master/pdam4.png');
+    background-position: right center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 .mesin-hero-overlay {
@@ -70,86 +66,60 @@
 
     background: linear-gradient(
         90deg,
-        rgba(245, 250, 255, .96) 0%,
-        rgba(239, 248, 255, .88) 30%,
-        rgba(225, 241, 255, .60) 55%,
-        rgba(207, 232, 252, .10) 100%
+        rgba(246, 250, 255, 0.98) 0%,
+        rgba(232, 243, 255, 0.90) 55%,
+        rgba(207, 228, 253, 0.36) 100%
     );
 
     pointer-events: none;
 }
 
-
-
 .mesin-hero-inner {
     position: relative;
     z-index: 1;
-    max-width: 100%;
 }
 
 .mesin-breadcrumb {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 0 0 12px;
-    color: #526d96;
+    flex-wrap: wrap;
+    gap: 9px;
+
+    margin-bottom: 15px;
     font-size: 13px;
-    line-height: 1;
+    color: #6280a3;
 }
 
 .mesin-breadcrumb a {
     display: inline-flex;
-    align-items: center;
-    color: #496b98;
-    text-decoration: none;
-}
-
-.mesin-breadcrumb a:hover {
-    color: var(--mesin-primary);
+    color: #4c73a2;
 }
 
 .mesin-breadcrumb strong {
-    color: #3d5d87;
-    font-weight: 650;
-}
-
-.mesin-breadcrumb :is(svg, i) {
-    width: 14px;
-    height: 14px;
-    flex: 0 0 auto;
-}
-
-.mesin-breadcrumb > :is(svg, i) {
-    width: 11px;
-    height: 11px;
-    color: #94a8c2;
-}
-
-.mesin-heading {
-    max-width: 690px;
-    margin-bottom: 14px;
+    color: #1f4b84;
 }
 
 .mesin-heading h1 {
-    margin: 0;
-    color: var(--mesin-heading);
-    font-size: clamp(28px, 2.25vw, 36px);
+    margin: 0 0 8px;
+
+    color: #0b2454;
+    font-size: 30px;
     font-weight: 800;
-    line-height: 1.08;
-    letter-spacing: -.7px;
+    line-height: 1.2;
 }
 
 .mesin-heading p {
-    max-width: 650px;
-    margin: 6px 0 0;
-    color: #4c6791;
+    margin: 0 0 22px;
+
+    color: #506f92;
     font-size: 14px;
-    line-height: 1.48;
+    line-height: 1.65;
 }
 
-/* =========================================================
-   KPI
-========================================================= */
+
+/* --------------------------------------------------------------------------
+   03. KPI CARDS
+   -------------------------------------------------------------------------- */
 
 .mesin-kpi-grid {
     display: grid;
@@ -158,36 +128,43 @@
 }
 
 .mesin-kpi-card {
-    min-width: 0;
-    min-height: 86px;
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 13px 16px;
-    border: 1px solid rgba(214, 228, 241, .94);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, .94);
-    box-shadow: 0 8px 25px rgba(31, 73, 116, .07);
-    backdrop-filter: blur(8px);
+
+    min-width: 0;
+    min-height: 98px;
+    padding: 15px;
+
+    border: 1px solid var(--mesin-border);
+    border-radius: 13px;
+
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 6px 20px rgba(24, 74, 127, 0.06);
 }
 
 .mesin-kpi-icon {
-    width: 52px;
-    height: 52px;
-    flex: 0 0 52px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9px;
-    background: linear-gradient(145deg, #1173f5, #075edb);
+    display: grid;
+    place-items: center;
+
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+
+    border-radius: 11px;
+
+    background: linear-gradient(
+        140deg,
+        #1b7bff,
+        #075bd5
+    );
+
     color: #fff;
-    box-shadow: 0 6px 15px rgba(8, 104, 233, .16);
 }
 
-.mesin-kpi-icon :is(svg, i) {
-    width: 25px;
-    height: 25px;
-    stroke-width: 2;
+.mesin-kpi-icon svg {
+    width: 23px;
+    height: 23px;
 }
 
 .mesin-kpi-card > div:last-child {
@@ -196,976 +173,929 @@
 
 .mesin-kpi-card span {
     display: block;
-    color: #17345f;
+
+    color: #325577;
     font-size: 12px;
-    font-weight: 650;
-    line-height: 1.2;
+    font-weight: 700;
 }
 
 .mesin-kpi-card strong {
     display: block;
-    margin-top: 4px;
-    color: #071a4b;
-    font-size: clamp(22px, 1.7vw, 27px);
+
+    margin: 5px 0;
+
+    color: #112c5c;
+    font-size: 20px;
     font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -.35px;
-    white-space: nowrap;
+
+    overflow-wrap: anywhere;
 }
 
 .mesin-kpi-card p {
-    margin: 2px 0 0;
-    color: #778aa5;
-    font-size: 11px;
-    line-height: 1.2;
+    margin: 0;
+
+    color: #7188a2;
+    font-size: 12px;
+    line-height: 1.4;
 }
 
-.mesin-kpi-inline {
+
+/* --------------------------------------------------------------------------
+   04. ALERT SUKSES DAN ERROR
+   -------------------------------------------------------------------------- */
+
+.mesin-notice {
+    margin: 12px 0;
+    padding: 13px 16px;
+
+    border: 1px solid;
+    border-radius: 11px;
+
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.mesin-notice.success {
+    background: #edf9f2;
+    border-color: #b2dfc4;
+    color: #176b42;
+}
+
+.mesin-notice.error {
+    background: #fff5f3;
+    border-color: #ebc0ba;
+    color: #9e342d;
+}
+
+.mesin-notice ul {
+    margin: 7px 0 0;
+    padding-left: 20px;
+}
+
+
+/* --------------------------------------------------------------------------
+   05. PENDING CARD
+   -------------------------------------------------------------------------- */
+
+.mesin-incoming-card,
+.mesin-card {
+    background: #fff;
+    border: 1px solid var(--mesin-border);
+    border-radius: 13px;
+
+    box-shadow: 0 5px 20px rgba(20, 70, 120, 0.05);
+}
+
+.mesin-incoming-card {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    align-items: center;
+    gap: 17px;
+
+    margin-bottom: 16px;
+    padding: 18px;
+}
+
+.mesin-incoming-icon {
+    display: grid;
+    place-items: center;
+
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+
+    border-radius: 12px;
+    background: #fff1d8;
+    color: #e3910a;
+}
+
+.mesin-incoming-icon svg {
+    width: 23px;
+    height: 23px;
+}
+
+.mesin-incoming-copy {
+    flex: 1;
     min-width: 0;
 }
 
-.mesin-kpi-inline small {
+.mesin-incoming-copy small {
+    color: #6e87a2;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.mesin-incoming-copy h3 {
+    margin: 4px 0 7px;
+
+    color: #102e60;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.mesin-incoming-copy p {
+    margin: 0 0 9px;
+
+    color: var(--mesin-muted);
+    font-size: 13px;
+}
+
+.mesin-pending-pill {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    color: #16a34a;
+    gap: 6px;
+
+    padding: 6px 10px;
+
+    border-radius: 7px;
+    background: #e7f8ed;
+
+    color: #177a44;
     font-size: 12px;
     font-weight: 700;
-    white-space: nowrap;
 }
 
-.mesin-kpi-inline small :is(svg, i) {
-    width: 13px;
-    height: 13px;
-}
 
-.mesin-kpi-inline em {
-    color: #7084a1;
-    font-size: 11px;
-    font-style: normal;
-    white-space: nowrap;
-}
+/* --------------------------------------------------------------------------
+   06. BUTTONS
+   -------------------------------------------------------------------------- */
 
-/* =========================================================
-   WORKSPACE
-========================================================= */
-
-.mesin-card {
-    border: 1px solid #e0e8f1;
-    border-radius: 11px;
-    background: var(--mesin-surface);
-    box-shadow: 0 5px 22px rgba(35, 75, 115, .045);
-}
-
-.mesin-workspace {
-    overflow: hidden;
-    padding: 0 16px 12px;
-}
-
-.mesin-workspace-head {
-    min-height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    border-bottom: 1px solid #e7edf4;
-}
-
-.mesin-tabs {
-    min-width: 0;
-    align-self: stretch;
-    display: flex;
-    align-items: stretch;
-    gap: 4px;
-}
-
-.mesin-tabs button {
-    position: relative;
-    min-width: 104px;
-    padding: 0 12px;
-    border: 0;
-    background: transparent;
-    color: #52698d;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: color .18s ease, background .18s ease;
-}
-
-.mesin-tabs button:hover {
-    color: var(--mesin-primary);
-    background: #f8fbff;
-}
-
-.mesin-tabs button.active {
-    color: var(--mesin-primary);
-    font-weight: 700;
-}
-
-.mesin-tabs button.active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 2px;
-    border-radius: 99px 99px 0 0;
-    background: #0b6bf1;
-}
-
-.mesin-add-button {
-    height: 38px;
-    flex: 0 0 auto;
+.mesin-button {
     display: inline-flex;
-    align-items: center;
     justify-content: center;
-    gap: 7px;
-    padding: 0 17px;
-    border: 0;
-    border-radius: 7px;
-    background: linear-gradient(180deg, #0d70f2, #075fdb);
-    color: #fff;
+    align-items: center;
+    gap: 8px;
+
+    min-height: 38px;
+    padding: 9px 14px;
+
+    border-radius: 9px;
+    border: 1px solid transparent;
+
+    background: #fff;
+    color: #214f86;
+
     font-size: 13px;
-    font-weight: 650;
+    font-weight: 700;
+    line-height: 1.3;
+
+    text-decoration: none;
+    white-space: nowrap;
     cursor: pointer;
-    box-shadow: 0 5px 13px rgba(8, 104, 233, .14);
-    transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease,
+        border-color 0.18s ease;
 }
 
-.mesin-add-button:hover {
-    background: linear-gradient(180deg, #0a68e5, #0556c7);
-    box-shadow: 0 7px 17px rgba(8, 104, 233, .19);
+.mesin-button:hover {
     transform: translateY(-1px);
 }
 
-.mesin-add-button:active {
-    transform: translateY(0);
+.mesin-button.primary {
+    color: #fff;
+
+    background: var(--mesin-primary);
+    border-color: var(--mesin-primary);
 }
 
-.mesin-add-button :is(svg, i) {
-    width: 15px;
-    height: 15px;
+.mesin-button.primary:hover {
+    background: var(--mesin-primary-dark);
 }
 
-/* =========================================================
-   FILTER
-========================================================= */
+.mesin-button.outline {
+    color: #1763d4;
 
-.mesin-filter-row {
-    display: grid;
-    grid-template-columns: minmax(280px, 1.7fr) repeat(4, minmax(145px, .88fr));
-    gap: 10px;
-    padding-top: 10px;
+    background: #fff;
+    border-color: #c7dcf4;
 }
 
-.mesin-search,
-.mesin-year-field {
+.mesin-button.outline:hover {
+    background: #eef5ff;
+}
+
+.mesin-button.danger {
+    color: #d53b42;
+
+    background: #fff2f2;
+    border-color: #f2c5c8;
+}
+
+.mesin-button.danger:hover {
+    background: #ffe2e4;
+}
+
+.mesin-button.small {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+
+/* --------------------------------------------------------------------------
+   07. MAIN WORKSPACE
+   -------------------------------------------------------------------------- */
+
+.mesin-workspace {
+    padding: 18px;
+}
+
+.mesin-workspace-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+
+    margin-bottom: 18px;
+}
+
+.mesin-workspace-head h2 {
+    margin: 0 0 5px;
+
+    color: #102c59;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.mesin-workspace-head p {
+    margin: 0;
+
+    color: #7086a2;
+    font-size: 13px;
+}
+
+.mesin-filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    margin-bottom: 18px;
+}
+
+.mesin-filters > label:not(.mesin-search-box) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    color: #436488;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mesin-search-box {
     position: relative;
-    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    flex: 1;
+    min-width: 240px;
 }
 
-.mesin-search :is(svg, i),
-.mesin-year-field > :is(svg, i) {
+.mesin-search-box svg {
     position: absolute;
-    z-index: 2;
-    top: 50%;
-    width: 15px;
-    height: 15px;
-    transform: translateY(-50%);
+    left: 13px;
+
+    color: #8198b3;
     pointer-events: none;
 }
 
-.mesin-search :is(svg, i) {
-    left: 12px;
-    color: #47698f;
-}
-
-.mesin-year-field > :is(svg, i) {
-    left: 12px;
-    color: #3c5d86;
-}
-
-.mesin-search input,
-.mesin-filter-row select {
+.mesin-search-box input {
     width: 100%;
-    height: 38px;
-    border: 1px solid #d9e4ef;
-    border-radius: 7px;
-    background: #fff;
-    color: #3d577b;
-    font-size: 12px;
+    min-height: 40px;
+    padding: 10px 12px 10px 41px;
+
+    border: 1px solid var(--mesin-border);
+    border-radius: 9px;
+
+    background: #f9fbff;
+    color: #24446e;
+
     outline: none;
-    transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
 
-.mesin-search input {
-    padding: 0 12px 0 38px;
-    background: #f8fbff;
-}
+.mesin-filters select {
+    min-height: 40px;
+    padding: 9px 12px;
 
-.mesin-filter-row select {
-    padding: 0 34px 0 11px;
-    appearance: none;
-    background-image:
-        linear-gradient(45deg, transparent 50%, #58718e 50%),
-        linear-gradient(135deg, #58718e 50%, transparent 50%);
-    background-position:
-        calc(100% - 15px) 16px,
-        calc(100% - 10px) 16px;
-    background-size: 5px 5px, 5px 5px;
-    background-repeat: no-repeat;
-}
+    border: 1px solid var(--mesin-border);
+    border-radius: 9px;
 
-.mesin-year-field select {
-    padding-left: 37px;
-    padding-right: 34px;
-}
-
-.mesin-search input::placeholder {
-    color: #7b91ad;
-}
-
-.mesin-search input:hover,
-.mesin-filter-row select:hover {
-    border-color: #c8d9ea;
-}
-
-.mesin-search input:focus,
-.mesin-filter-row select:focus {
-    border-color: #6ca6ec;
-    box-shadow: 0 0 0 3px rgba(8, 104, 233, .08);
-}
-
-.mesin-filter-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 9px 0;
-}
-
-.mesin-filter-actions > div {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.mesin-secondary-button {
-    min-height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 0 14px;
-    border: 1px solid #d9e4ef;
-    border-radius: 7px;
     background: #fff;
-    color: #25466f;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1;
-    cursor: pointer;
-    transition: border-color .16s ease, background .16s ease, color .16s ease, transform .16s ease;
+    color: #28496f;
 }
 
-.mesin-secondary-button:first-child {
-    background: #f5f9ff;
+.mesin-search-box input:focus,
+.mesin-filters select:focus {
+    border-color: #5797ef;
+    box-shadow: 0 0 0 3px rgba(37, 113, 224, 0.10);
 }
 
-.mesin-secondary-button:hover {
-    border-color: #bfd3e8;
-    background: #f7fbff;
-    color: var(--mesin-primary);
-}
 
-.mesin-secondary-button:active {
-    transform: translateY(1px);
-}
+/* --------------------------------------------------------------------------
+   08. DATA TABLE
+   -------------------------------------------------------------------------- */
 
-.mesin-secondary-button :is(svg, i) {
-    width: 14px;
-    height: 14px;
-    flex: 0 0 auto;
-}
-
-/* =========================================================
-   TABLE
-========================================================= */
-
-.mesin-table-scroll {
+.mesin-table-wrap {
     width: 100%;
     overflow-x: auto;
-    overflow-y: hidden;
-    border: 1px solid #e1e9f2;
-    border-radius: 8px;
-    scrollbar-width: thin;
-    scrollbar-color: #c5d6e8 transparent;
-}
 
-.mesin-table-scroll::-webkit-scrollbar {
-    height: 8px;
-}
-
-.mesin-table-scroll::-webkit-scrollbar-track {
-    background: #f5f8fb;
-}
-
-.mesin-table-scroll::-webkit-scrollbar-thumb {
-    border-radius: 99px;
-    background: #c7d7e8;
+    border: 1px solid #e1ebf6;
+    border-radius: 10px;
 }
 
 .mesin-table {
     width: 100%;
-    min-width: 1160px;
-    table-layout: fixed;
     border-collapse: collapse;
-    background: #fff;
+
+    font-size: 13px;
+    color: #284365;
 }
 
-.mesin-table th,
-.mesin-table td {
-    border-right: 1px solid #e8eef4;
-}
+.mesin-table thead th {
+    padding: 13px 12px;
 
-.mesin-table th:last-child,
-.mesin-table td:last-child {
-    border-right: 0;
-}
+    border-bottom: 1px solid #d9e5f2;
+    background: #eaf2fb;
 
-.mesin-table th {
-    height: 37px;
-    padding: 7px 8px;
-    background: #edf5ff;
-    color: #112b54;
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.2;
+    color: #193b67;
+    font-size: 12px;
+    font-weight: 800;
     text-align: left;
     white-space: nowrap;
 }
 
-.mesin-table td {
-    height: 42px;
-    padding: 5px 8px;
-    border-top: 1px solid #e7edf4;
-    color: #365682;
-    font-size: 11px;
-    line-height: 1.25;
+.mesin-table tbody td {
+    padding: 12px;
+
+    border-bottom: 1px solid #e7eff8;
     vertical-align: middle;
-    overflow-wrap: anywhere;
 }
 
-.mesin-table tbody tr {
-    transition: background .12s ease;
+.mesin-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .mesin-table tbody tr:hover {
-    background: #f8fbff;
+    background: #f7fbff;
 }
 
-.mesin-table th:nth-child(1),
-.mesin-table td:nth-child(1) { width: 36px; text-align: center; }
-.mesin-table th:nth-child(2),
-.mesin-table td:nth-child(2) { width: 38px; text-align: center; }
-.mesin-table th:nth-child(3),
-.mesin-table td:nth-child(3) { width: 104px; }
-.mesin-table th:nth-child(4),
-.mesin-table td:nth-child(4) { width: 52px; text-align: center; }
-.mesin-table th:nth-child(5),
-.mesin-table td:nth-child(5) { width: 116px; }
-.mesin-table th:nth-child(6),
-.mesin-table td:nth-child(6) { width: 108px; }
-.mesin-table th:nth-child(7),
-.mesin-table td:nth-child(7) { width: 104px; }
-.mesin-table th:nth-child(8),
-.mesin-table td:nth-child(8) { width: 52px; text-align: center; }
-.mesin-table th:nth-child(9),
-.mesin-table td:nth-child(9) { width: 124px; }
-.mesin-table th:nth-child(10),
-.mesin-table td:nth-child(10) { width: 112px; }
-.mesin-table th:nth-child(11),
-.mesin-table td:nth-child(11) { width: 102px; }
-.mesin-table th:nth-child(12),
-.mesin-table td:nth-child(12) { width: 80px; text-align: center; }
-.mesin-table th:nth-child(13),
-.mesin-table td:nth-child(13) { width: 112px; text-align: center; }
+.mesin-table tbody td strong {
+    color: #11335f;
+    font-weight: 800;
+}
 
-.mesin-table th:first-child,
-.mesin-table td:first-child {
+.mesin-table tbody td small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #7a91ac;
+    font-size: 11px;
+}
+
+.mesin-data-row[hidden] {
+    display: none !important;
+}
+
+.mesin-number {
+    width: 55px;
     text-align: center;
 }
 
-.mesin-table input[type='checkbox'] {
-    width: 13px;
-    height: 13px;
-    margin: 0;
-    vertical-align: middle;
-    accent-color: #0b68e8;
-    cursor: pointer;
-}
+.mesin-count-pill {
+    display: inline-block;
 
-.mesin-table td:nth-child(2),
-.mesin-table td:nth-child(3),
-.mesin-table td:nth-child(7),
-.mesin-table td:nth-child(8),
-.mesin-table td:nth-child(10),
-.mesin-table td:nth-child(11) {
+    padding: 6px 10px;
+
+    border: 1px solid #cfe2fa;
+    border-radius: 7px;
+
+    background: #f1f7ff;
+    color: #1765c9;
+
+    font-size: 12px;
+    font-weight: 700;
     white-space: nowrap;
 }
 
-.mesin-table td:nth-child(5),
-.mesin-table td:nth-child(6),
-.mesin-table td:nth-child(9) {
-    white-space: normal;
-}
-
-.mesin-thumb-col {
-    width: 52px !important;
-}
-
-.mesin-thumb {
-    width: 36px;
-    height: 30px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #dce6ef;
-    border-radius: 5px;
-    background: linear-gradient(145deg, #f4f8fc, #e8eef5);
-    color: #496c92;
-}
-
-.mesin-thumb :is(svg, i) {
-    width: 18px;
-    height: 18px;
-    stroke-width: 1.8;
-}
-
-.mesin-status {
-    min-width: 58px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px 9px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 650;
-    line-height: 1;
+.mesin-currency {
+    color: #1266d7 !important;
     white-space: nowrap;
-}
-
-.mesin-status.is-good {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.mesin-status.is-fair {
-    background: #fff3d6;
-    color: #d97706;
-}
-
-.mesin-status.is-bad {
-    background: #ffe4e6;
-    color: #dc2626;
-}
-
-.mesin-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.mesin-actions button {
-    width: 31px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border: 0;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: transform .14s ease, filter .14s ease;
-}
-
-.mesin-actions button:hover {
-    filter: brightness(.97);
-    transform: translateY(-1px);
-}
-
-.mesin-actions button:active {
-    transform: translateY(0);
-}
-
-.mesin-actions button :is(svg, i) {
-    width: 14px;
-    height: 14px;
-    stroke-width: 2.2;
-}
-
-.mesin-actions .view {
-    background: #e6f2ff;
-    color: #006be9;
-}
-
-.mesin-actions .edit {
-    background: #fff0d8;
-    color: #f59e0b;
-}
-
-.mesin-actions .delete {
-    background: #ffe5e7;
-    color: #ef4444;
 }
 
 .mesin-empty {
-    padding: 30px 15px !important;
-    color: #70849f !important;
-    text-align: center !important;
+    padding: 30px !important;
+
+    color: #7c90a8;
+    font-size: 13px;
+    text-align: center;
 }
 
-/* =========================================================
-   FOOTER + PAGINATION
-========================================================= */
+
+/* --------------------------------------------------------------------------
+   09. TABLE FOOTER / PAGINATION
+   -------------------------------------------------------------------------- */
 
 .mesin-table-footer {
-    min-height: 57px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 15px;
-    color: #5d7392;
-    font-size: 12px;
-}
-
-#mesinTableInfo {
-    min-width: 0;
-}
-
-.mesin-pagination-area {
-    display: flex;
     align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-}
+    gap: 12px;
+    flex-wrap: wrap;
 
-.mesin-pagination-area > span {
-    color: #607797;
-}
+    margin-top: 15px;
 
-.mesin-pagination-area select {
-    width: 70px;
-    height: 36px;
-    padding: 0 25px 0 10px;
-    border: 1px solid #d9e4ef;
-    border-radius: 6px;
-    background: #fff;
-    color: #375479;
+    color: #6e87a6;
     font-size: 12px;
-    cursor: pointer;
 }
 
 .mesin-pagination {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
-    margin-left: 8px;
 }
 
 .mesin-pagination button {
-    min-width: 34px;
-    height: 34px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 8px;
-    border: 1px solid #dce5ee;
-    border-radius: 6px;
+    min-width: 35px;
+    min-height: 34px;
+    padding: 6px 10px;
+
+    border: 1px solid #d7e5f5;
+    border-radius: 8px;
+
     background: #fff;
-    color: #395777;
+    color: #2b568a;
+
     font-size: 12px;
     cursor: pointer;
-    transition: border-color .15s ease, background .15s ease, color .15s ease;
-}
-
-.mesin-pagination button:hover:not(:disabled):not(.active) {
-    border-color: #bfd4e9;
-    background: #f6faff;
-    color: var(--mesin-primary);
 }
 
 .mesin-pagination button.active {
-    border-color: var(--mesin-primary);
-    background: var(--mesin-primary);
+    background: #0967e9;
+    border-color: #0967e9;
     color: #fff;
-    font-weight: 700;
 }
 
 .mesin-pagination button:disabled {
-    opacity: .42;
-    cursor: not-allowed;
+    cursor: default;
+    opacity: 0.75;
 }
 
-.mesin-pagination button :is(svg, i) {
-    width: 15px;
-    height: 15px;
-}
 
-/* =========================================================
-   MODAL
-========================================================= */
+/* --------------------------------------------------------------------------
+   10. DIALOG / MODAL
+   -------------------------------------------------------------------------- */
 
-.mesin-modal {
-    width: min(760px, calc(100% - 32px));
-    max-width: 760px;
-    max-height: calc(100dvh - 32px);
+.mesin-dialog {
+    position: fixed;
+
+    width: min(1000px, calc(100vw - 32px));
+    max-width: 1000px;
+    max-height: calc(100dvh - 40px);
+
+    padding: 0;
     margin: auto;
-    padding: 0;
+
+    border: 1px solid #d9e6f6;
+    border-radius: 16px;
+
+    background: #fff;
+    color: #15345f;
+
+    box-shadow: 0 25px 80px rgba(6, 30, 67, 0.25);
     overflow: hidden;
-    border: 0;
-    border-radius: 14px;
-    background: #fff;
-    color: var(--mesin-text);
-    box-shadow: 0 25px 75px rgba(7, 35, 70, .25);
 }
 
-.mesin-modal::backdrop {
-    background: rgba(4, 27, 55, .5);
-    backdrop-filter: blur(2px);
+.mesin-dialog.detail {
+    width: min(1100px, calc(100vw - 32px));
+    max-width: 1100px;
 }
 
-.mesin-modal-dialog {
-    max-height: calc(100dvh - 32px);
-    overflow: auto;
-    border-radius: 14px;
+.mesin-dialog::backdrop {
+    background: rgba(10, 27, 52, 0.60);
+    backdrop-filter: blur(3px);
 }
 
-.mesin-modal-header {
+.mesin-dialog-header {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
-    gap: 15px;
-    padding: 17px 20px;
-    border-bottom: 1px solid #e7edf4;
+    align-items: flex-start;
+    gap: 20px;
+
+    padding: 19px 23px;
+
+    border-bottom: 1px solid #e3ecf6;
     background: #fff;
 }
 
-.mesin-modal-header h3 {
+.mesin-dialog-header small {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #176bd9;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+.mesin-dialog-header h2 {
+    margin: 0 0 5px;
+
+    color: #102d5b;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.mesin-dialog-header p {
     margin: 0;
-    color: #10295a;
-    font-size: 17px;
-    font-weight: 750;
-    line-height: 1.25;
+
+    color: #70849d;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
-.mesin-modal-header p {
-    margin: 4px 0 0;
-    color: #71839d;
-    font-size: 12px;
-    line-height: 1.4;
-}
+.mesin-close {
+    display: grid;
+    place-items: center;
 
-.mesin-modal-header > button {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: #58718e;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #f0f5fb;
+    color: #527298;
+
     cursor: pointer;
 }
 
-.mesin-modal-header > button:hover {
-    background: #f1f6fb;
-    color: #173a67;
+.mesin-close:hover {
+    background: #e5effb;
 }
 
-.mesin-modal-header > button :is(svg, i) {
-    width: 17px;
-    height: 17px;
+.mesin-dialog-scroll {
+    max-height: calc(100dvh - 155px);
+    padding: 19px 22px;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
-.mesin-modal-body {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+/* --------------------------------------------------------------------------
+   11. MODAL SECTIONS
+   -------------------------------------------------------------------------- */
+
+.mesin-section {
+    display: flex;
     gap: 14px;
-    padding: 18px 20px;
+
+    margin-bottom: 17px;
+    padding: 17px;
+
+    border: 1px solid #dfeaf6;
+    border-radius: 12px;
+
+    background: #fbfdff;
 }
 
-.mesin-modal-note {
-    grid-column: 1 / -1;
-    margin: 0;
-    padding: 10px 12px;
-    border: 1px solid #d9eaff;
-    border-radius: 7px;
-    background: #edf5ff;
-    color: #1455a0;
-    font-size: 12px;
-    line-height: 1.4;
+.mesin-step {
+    display: grid;
+    place-items: center;
+
+    width: 29px;
+    height: 29px;
+    flex-shrink: 0;
+
+    border-radius: 8px;
+    background: #e8f2ff;
+
+    color: #126cdb;
+    font-size: 13px;
+    font-weight: 800;
 }
 
-.mesin-form-group {
+.mesin-section-body {
+    flex: 1;
     min-width: 0;
 }
 
-.mesin-form-group label {
-    display: block;
-    margin-bottom: 6px;
-    color: #304b70;
-    font-size: 12px;
-    font-weight: 650;
+.mesin-section-body h3 {
+    margin: 0 0 5px;
+
+    color: #15345f;
+    font-size: 16px;
+    font-weight: 800;
 }
 
-.mesin-form-group input,
-.mesin-form-group select {
-    width: 100%;
-    height: 40px;
-    padding: 0 11px;
-    border: 1px solid #d8e2ec;
-    border-radius: 7px;
-    background: #fff;
-    color: #334f72;
+.mesin-section-body > p {
+    margin: 0 0 15px;
+
+    color: #7187a2;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mesin-section-body > small {
+    display: block;
+    margin-top: 9px;
+    color: #6a83a0;
     font-size: 12px;
+}
+
+
+/* --------------------------------------------------------------------------
+   12. FORM
+   -------------------------------------------------------------------------- */
+
+.mesin-form-grid {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 15px;
+}
+
+.mesin-form-grid.cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mesin-form-grid.cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mesin-form-grid label,
+.mesin-full-label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    min-width: 0;
+
+    color: #325577;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.mesin-form-grid input,
+.mesin-form-grid select,
+.mesin-form-grid textarea,
+.mesin-full-label textarea,
+#mesinPendingSearch {
+    display: block;
+
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+
+    border: 1px solid #d5e3f3;
+    border-radius: 8px;
+
+    background: #fff;
+    color: #223f67;
+
+    font-size: 13px;
+    font-weight: 400;
+
     outline: none;
 }
 
-.mesin-form-group input:focus,
-.mesin-form-group select:focus {
-    border-color: #6ca6ec;
-    box-shadow: 0 0 0 3px rgba(8, 104, 233, .08);
+.mesin-form-grid input[readonly] {
+    background: #f2f6fc;
+    color: #5c7594;
+    cursor: default;
 }
 
-.mesin-form-group :is(input[readonly], select:disabled) {
-    background: #f5f7fb;
-    color: #657a98;
-    cursor: not-allowed;
+.mesin-form-grid input:focus,
+.mesin-form-grid select:focus,
+.mesin-full-label textarea:focus,
+#mesinPendingSearch:focus {
+    border-color: #4d95f2;
+    box-shadow: 0 0 0 3px rgba(42, 124, 236, 0.10);
 }
 
-.mesin-modal-footer {
+.mesin-form-grid input[type="file"] {
+    padding: 8px;
+    min-height: 43px;
+}
+
+.mesin-full-label textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+.mesin-form-actions {
     display: flex;
-    align-items: center;
     justify-content: flex-end;
-    gap: 9px;
-    padding: 13px 20px;
-    border-top: 1px solid #e7edf4;
-    background: #fafcff;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    padding: 16px 0 4px;
 }
 
-.mesin-cancel-button,
-.mesin-save-button {
-    min-height: 38px;
-    padding: 0 15px;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 650;
-    cursor: pointer;
+
+/* --------------------------------------------------------------------------
+   13. PENDING SOURCE TABLE
+   -------------------------------------------------------------------------- */
+
+#mesinPendingSearch {
+    margin-bottom: 12px;
 }
 
-.mesin-cancel-button {
-    border: 1px solid #d7e1eb;
+.mesin-pending-wrap {
+    max-height: 330px;
+    overflow: auto;
+}
+
+.mesin-pending-wrap .mesin-table {
+    min-width: 850px;
+}
+
+.mesin-pending-wrap .mesin-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+
+/* --------------------------------------------------------------------------
+   14. DETAIL PERALATAN DAN MESIN
+   -------------------------------------------------------------------------- */
+
+.mesin-detail-list {
+    display: grid;
+    gap: 15px;
+}
+
+.mesin-detail-card {
+    padding: 18px;
+
+    border: 1px solid #dce8f7;
+    border-radius: 12px;
+
     background: #fff;
-    color: #526b89;
 }
 
-.mesin-cancel-button:hover {
-    background: #f7faff;
+.mesin-detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+
+    margin-bottom: 15px;
 }
 
-.mesin-save-button {
-    border: 0;
-    background: #0b63ce;
-    color: #fff;
+.mesin-detail-head h3 {
+    margin: 0 0 5px;
+
+    color: #15345f;
+    font-size: 17px;
+    font-weight: 800;
 }
 
-.mesin-save-button:not(:disabled):hover {
-    background: #0758c4;
+.mesin-detail-head small {
+    color: #6d86a4;
+    font-size: 12px;
 }
 
-.mesin-save-button:disabled {
-    opacity: .5;
-    cursor: not-allowed;
+.mesin-detail-head > strong {
+    color: #1467d1;
+    font-size: 15px;
+    white-space: nowrap;
 }
 
-.mesin-save-button.mesin-delete-button {
-    background: #dc2626;
+.mesin-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+
+    margin: 0;
 }
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+.mesin-detail-grid > div {
+    min-width: 0;
+    padding: 10px 12px;
 
-@media (max-width: 1180px) {
+    border: 1px solid #e1eaf5;
+    border-radius: 9px;
+
+    background: #f7fbff;
+}
+
+.mesin-detail-grid dt {
+    margin-bottom: 4px;
+
+    color: #7890ab;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.mesin-detail-grid dd {
+    margin: 0;
+
+    color: #234467;
+    font-size: 13px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.mesin-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    margin-top: 15px;
+}
+
+
+/* --------------------------------------------------------------------------
+   15. RESPONSIVE
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1200px) {
     .mesin-kpi-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .mesin-filter-row {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+    .mesin-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 900px) {
+    .mesin-page {
+        padding: 0 16px 24px;
+    }
+
     .mesin-hero {
-        margin: -18px -17px 10px;
-        padding: 20px 17px 12px;
+        margin: 0 -16px 16px;
+        padding: 24px 16px;
     }
 
-    .mesin-heading h1 {
-        font-size: 30px;
-    }
-
-    .mesin-workspace-head {
-        align-items: stretch;
-        flex-direction: column;
-        gap: 8px;
-        padding-top: 8px;
-    }
-
-    .mesin-tabs {
-        width: 100%;
-        min-height: 43px;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .mesin-tabs::-webkit-scrollbar {
-        display: none;
-    }
-
-    .mesin-tabs button {
-        min-width: 112px;
-        height: 43px;
-    }
-
-    .mesin-add-button {
-        align-self: flex-end;
-        margin-bottom: 8px;
-    }
-
-    .mesin-filter-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .mesin-table-footer {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 12px 0 2px;
-    }
-
-    .mesin-pagination-area {
-        width: 100%;
+    .mesin-incoming-card {
         flex-wrap: wrap;
     }
 
-    .mesin-pagination {
-        margin-left: 0;
-    }
-}
-
-@media (max-width: 620px) {
-    .mesin-hero {
-        margin: -16px -13px 10px;
-        padding: 17px 13px 12px;
-    }
-
-    .mesin-breadcrumb {
-        gap: 6px;
-        font-size: 12px;
-    }
-
-    .mesin-heading {
-        margin-bottom: 12px;
-    }
-
-    .mesin-heading h1 {
-        font-size: 26px;
-        letter-spacing: -.45px;
-    }
-
-    .mesin-heading p {
-        font-size: 13px;
-    }
-
-    .mesin-kpi-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .mesin-kpi-card {
-        min-height: 78px;
-    }
-
-    .mesin-kpi-icon {
-        width: 48px;
-        height: 48px;
-        flex-basis: 48px;
-    }
-
-    .mesin-kpi-card strong {
-        font-size: 24px;
-    }
-
-    .mesin-workspace {
-        padding: 0 11px 10px;
-    }
-
-    .mesin-filter-row {
-        grid-template-columns: 1fr;
-    }
-
-    .mesin-filter-actions {
-        align-items: stretch;
+    .mesin-workspace-head {
+        align-items: flex-start;
         flex-direction: column;
     }
 
-    .mesin-filter-actions > div {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+    .mesin-form-grid.cols-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .mesin-kpi-grid {
+        grid-template-columns: 1fr;
     }
 
-    .mesin-secondary-button {
+    .mesin-heading h1 {
+        font-size: 25px;
+    }
+
+    .mesin-incoming-card {
+        align-items: flex-start;
+    }
+
+    .mesin-incoming-card > .mesin-button {
         width: 100%;
     }
 
-    .mesin-table-footer {
+    .mesin-workspace {
+        padding: 14px;
+    }
+
+    .mesin-filters > * {
+        width: 100%;
+    }
+
+    .mesin-form-grid.cols-2,
+    .mesin-form-grid.cols-3,
+    .mesin-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mesin-section {
+        padding: 12px;
         gap: 10px;
     }
 
-    .mesin-pagination-area {
-        align-items: center;
-    }
-
-    .mesin-pagination {
-        max-width: 100%;
-        overflow-x: auto;
-        padding-bottom: 2px;
-    }
-
-    .mesin-modal {
-        width: calc(100% - 20px);
-        max-height: calc(100dvh - 20px);
-    }
-
-    .mesin-modal-dialog {
-        max-height: calc(100dvh - 20px);
-    }
-
-    .mesin-modal-body {
-        grid-template-columns: 1fr;
+    .mesin-dialog-header {
         padding: 15px;
     }
 
-    .mesin-modal-footer {
-        padding: 12px 15px;
+    .mesin-dialog-scroll {
+        padding: 13px;
+    }
+
+    .mesin-detail-head {
+        flex-direction: column;
     }
 }

@@ -1,421 +1,1043 @@
+
 @extends('layouts.main')
 
 @section('title', 'Peralatan dan Mesin')
 
-@push('styles')
-    <link rel="stylesheet"
-        href="{{ asset('css/pages/kib/mesin.css') }}?v={{ filemtime(public_path('css/pages/kib/mesin.css')) }}">
-@endpush
-
 @section('content')
-    <section class="content mesin-page">
-        <section class="mesin-hero">
-            <div class="mesin-hero-overlay"></div>
-            <div class="mesin-hero-inner">
-                <nav class="mesin-breadcrumb" aria-label="Breadcrumb">
-                    <a href="{{ route('dashboard') }}" aria-label="Dashboard"><i data-lucide="house"></i></a>
-                    <i data-lucide="chevron-right"></i>
-                    <span>K.I.B</span>
-                    <i data-lucide="chevron-right"></i>
-                    <strong>Peralatan dan Mesin</strong>
-                </nav>
 
-                <div class="mesin-heading">
-                    <h1>Peralatan dan Mesin</h1>
-                    <p>Kelola data aset tetap kategori peralatan dan mesin pada Perumda Tirta Kencana Kota Samarinda.</p>
-                </div>
+@php
+    $rupiah = fn ($nilai) =>
+        'Rp ' . number_format((int) ($nilai ?? 0), 0, ',', '.');
+@endphp
 
-                <div class="mesin-kpi-grid">
-                    <article class="mesin-kpi-card">
-                        <div class="mesin-kpi-icon"><i data-lucide="package"></i></div>
-                        <div>
-                            <span>Total Aset</span>
-                            <div class="mesin-kpi-inline"><strong>1.256</strong><small><i data-lucide="arrow-up"></i>
-                                    +32</small></div>
-                            <p>dari tahun lalu</p>
-                        </div>
-                    </article>
-                    <article class="mesin-kpi-card">
-                        <div class="mesin-kpi-icon"><i data-lucide="building-2"></i></div>
-                        <div><span>Total Nilai Perolehan</span><strong>Rp 85,42 M</strong></div>
-                    </article>
-                    <article class="mesin-kpi-card">
-                        <div class="mesin-kpi-icon"><i data-lucide="chart-no-axes-column-increasing"></i></div>
-                        <div><span>Nilai Buku</span><strong>Rp 62,18 M</strong></div>
-                    </article>
-                    <article class="mesin-kpi-card">
-                        <div class="mesin-kpi-icon"><i data-lucide="pie-chart"></i></div>
-                        <div><span>Jumlah Lokasi</span>
-                            <div class="mesin-kpi-inline"><strong>24</strong><em>lokasi</em></div>
-                        </div>
-                    </article>
-                </div>
-            </div>
-        </section>
+<link
+    rel="stylesheet"
+    href="{{ asset('css/pages/kib/mesin.css') }}?v={{ file_exists(public_path('css/pages/kib/mesin.css')) ? filemtime(public_path('css/pages/kib/mesin.css')) : time() }}"
+>
 
-        <section class="mesin-card mesin-workspace">
-            <div class="mesin-workspace-head">
-                <nav class="mesin-tabs" aria-label="Navigasi data peralatan dan mesin">
-                    <button type="button" class="active" data-mesin-tab="daftar">Daftar Aset</button>
-                    <button type="button" data-mesin-tab="rekapitulasi">Rekapitulasi</button>
-                    <button type="button" data-mesin-tab="grafik">Grafik</button>
-                    <button type="button" data-mesin-tab="penyusutan">Penyusutan</button>
-                </nav>
-                <button type="button" class="mesin-add-button" onclick="openMesinModal('add')">
-                    <i data-lucide="plus"></i> Tambah Aset
-                </button>
-            </div>
+<section
+    class="content mesin-page"
+    id="mesinPage"
+    data-pending-url="{{ route('kib.mesin.pending') }}"
+    data-detail-base="{{ url('/kib/mesin/lokasi') }}"
+    data-record-base="{{ url('/kib/mesin') }}"
+    data-store-url="{{ route('kib.mesin.store') }}"
+>
 
-            <div class="mesin-filter-row">
-                <div class="mesin-search">
-                    <i data-lucide="search"></i>
-                    <input id="mesinSearch" type="search" placeholder="Cari kode, nama aset, merk, atau lokasi...">
-                </div>
-                <select id="mesinDepartemen" aria-label="Filter departemen">
-                    <option value="">Semua Departemen</option>
-                    <option value="Produksi">Produksi</option>
-                    <option value="TI">TI</option>
-                    <option value="Umum">Umum</option>
-                    <option value="Teknik">Teknik</option>
-                </select>
-                <select id="mesinLokasi" aria-label="Filter lokasi">
-                    <option value="">Semua Lokasi</option>
-                    <option value="IPA Gunung Lipan">IPA Gunung Lipan</option>
-                    <option value="Kantor Pusat">Kantor Pusat</option>
-                    <option value="IPA Sungai Kapih">IPA Sungai Kapih</option>
-                    <option value="Kantor Wilayah Sambutan">Kantor Wilayah Sambutan</option>
-                    <option value="Gudang Material">Gudang Material</option>
-                    <option value="Reservoir Lempake">Reservoir Lempake</option>
-                </select>
-                <select id="mesinKondisi" aria-label="Filter kondisi">
-                    <option value="">Semua Kondisi</option>
-                    <option value="Baik">Baik</option>
-                    <option value="Cukup">Cukup</option>
-                    <option value="Rusak">Rusak</option>
-                </select>
-                <div class="mesin-year-field">
-                    <i data-lucide="calendar-days"></i>
-                    <select id="mesinTahun" aria-label="Tahun perolehan">
-                        <option value="">Tahun Perolehan</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                        <option value="2022">2022</option>
-                        <option value="2021">2021</option>
-                        <option value="2020">2020</option>
-                    </select>
-                </div>
+    {{-- ==========================================================
+         01. HEADER & KPI
+    =========================================================== --}}
+
+    <header class="mesin-hero">
+
+        <div class="mesin-hero-overlay"></div>
+
+        <div class="mesin-hero-inner">
+
+            <nav class="mesin-breadcrumb">
+
+                <a href="{{ url('/dashboard') }}">
+                    <i data-lucide="house"></i>
+                </a>
+
+                <i data-lucide="chevron-right"></i>
+
+                <span>K.I.B</span>
+
+                <i data-lucide="chevron-right"></i>
+
+                <strong>Peralatan dan Mesin</strong>
+
+            </nav>
+
+            <div class="mesin-heading">
+
+                <h1>Peralatan dan Mesin</h1>
+
+                <p>
+                    Kelola Kartu Inventaris Barang kategori Peralatan
+                    dan Mesin, data inventaris, lokasi, nilai aset,
+                    dokumen, serta pemrosesan transaksi Nilai Aset.
+                </p>
+
             </div>
 
-            <div class="mesin-filter-actions">
-                <button type="button" class="mesin-secondary-button"><i data-lucide="list-filter"></i> Filter
-                    Lainnya</button>
-                <div>
-                    <button type="button" class="mesin-secondary-button" onclick="resetMesinFilter()"><i
-                            data-lucide="refresh-cw"></i> Reset</button>
-                    <button type="button" class="mesin-secondary-button" onclick="exportMesinCSV()"><i
-                            data-lucide="download"></i> Export <i data-lucide="chevron-down"></i></button>
-                </div>
-            </div>
+            <div class="mesin-kpi-grid">
 
-            <div class="table-responsive mesin-table-scroll" tabindex="0">
-                <table class="mesin-table" id="mesinTable">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" aria-label="Pilih semua"></th>
-                            <th>No</th>
-                            <th>Kode Aset</th>
-                            <th class="mesin-thumb-col"></th>
-                            <th>Nama Aset</th>
-                            <th>Merk / Tipe</th>
-                            <th>No. Seri</th>
-                            <th>Tahun</th>
-                            <th>Lokasi</th>
-                            <th>Nilai Perolehan</th>
-                            <th>Nilai Buku</th>
-                            <th>Kondisi</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr data-record data-departemen="Produksi" data-lokasi="IPA Gunung Lipan" data-kondisi="Baik"
-                            data-tahun="2022">
-                            <td><input type="checkbox"></td>
-                            <td>1</td>
-                            <td>02.01.01.001</td>
-                            <td><span class="mesin-thumb"><i data-lucide="settings"></i></span></td>
-                            <td>Pompa Sentrifugal</td>
-                            <td>Grundfos<br>CR 15-5</td>
-                            <td>9876543210</td>
-                            <td>2022</td>
-                            <td>IPA Gunung Lipan</td>
-                            <td>Rp 45.000.000</td>
-                            <td>Rp 32.500.000</td>
-                            <td><span class="mesin-status is-good">Baik</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="TI" data-lokasi="Kantor Pusat" data-kondisi="Baik"
-                            data-tahun="2023">
-                            <td><input type="checkbox"></td>
-                            <td>2</td>
-                            <td>02.01.01.002</td>
-                            <td><span class="mesin-thumb"><i data-lucide="laptop"></i></span></td>
-                            <td>Laptop</td>
-                            <td>Lenovo<br>ThinkPad E14</td>
-                            <td>PF3B4X2</td>
-                            <td>2023</td>
-                            <td>Kantor Pusat</td>
-                            <td>Rp 12.500.000</td>
-                            <td>Rp 11.000.000</td>
-                            <td><span class="mesin-status is-good">Baik</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="Teknik" data-lokasi="IPA Sungai Kapih" data-kondisi="Cukup"
-                            data-tahun="2021">
-                            <td><input type="checkbox"></td>
-                            <td>3</td>
-                            <td>02.01.02.015</td>
-                            <td><span class="mesin-thumb"><i data-lucide="battery-charging"></i></span></td>
-                            <td>Genset</td>
-                            <td>Perkins<br>100 KVA</td>
-                            <td>PK100-5587</td>
-                            <td>2021</td>
-                            <td>IPA Sungai Kapih</td>
-                            <td>Rp 350.000.000</td>
-                            <td>Rp 210.000.000</td>
-                            <td><span class="mesin-status is-fair">Cukup</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="Umum" data-lokasi="Kantor Wilayah Sambutan" data-kondisi="Baik"
-                            data-tahun="2022">
-                            <td><input type="checkbox"></td>
-                            <td>4</td>
-                            <td>02.01.03.021</td>
-                            <td><span class="mesin-thumb"><i data-lucide="air-vent"></i></span></td>
-                            <td>AC Split</td>
-                            <td>Daikin<br>FTV50CXV</td>
-                            <td>D8847123</td>
-                            <td>2022</td>
-                            <td>Kantor Wilayah Sambutan</td>
-                            <td>Rp 18.000.000</td>
-                            <td>Rp 13.500.000</td>
-                            <td><span class="mesin-status is-good">Baik</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="Umum" data-lokasi="Gudang Material" data-kondisi="Baik"
-                            data-tahun="2020">
-                            <td><input type="checkbox"></td>
-                            <td>5</td>
-                            <td>02.01.04.033</td>
-                            <td><span class="mesin-thumb"><i data-lucide="truck"></i></span></td>
-                            <td>Forklift</td>
-                            <td>Toyota<br>8FD25</td>
-                            <td>8FD25-4581</td>
-                            <td>2020</td>
-                            <td>Gudang Material</td>
-                            <td>Rp 280.000.000</td>
-                            <td>Rp 168.000.000</td>
-                            <td><span class="mesin-status is-good">Baik</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="Produksi" data-lokasi="Reservoir Lempake" data-kondisi="Rusak"
-                            data-tahun="2021">
-                            <td><input type="checkbox"></td>
-                            <td>6</td>
-                            <td>02.01.05.041</td>
-                            <td><span class="mesin-thumb"><i data-lucide="gauge"></i></span></td>
-                            <td>Flow Meter</td>
-                            <td>Endress+Hauser<br>Promag 50</td>
-                            <td>EH2020-7782</td>
-                            <td>2021</td>
-                            <td>Reservoir Lempake</td>
-                            <td>Rp 120.000.000</td>
-                            <td>Rp 72.000.000</td>
-                            <td><span class="mesin-status is-bad">Rusak</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="TI" data-lokasi="Kantor Pusat" data-kondisi="Baik"
-                            data-tahun="2023">
-                            <td><input type="checkbox"></td>
-                            <td>7</td>
-                            <td>02.01.06.052</td>
-                            <td><span class="mesin-thumb"><i data-lucide="printer"></i></span></td>
-                            <td>Printer</td>
-                            <td>Canon<br>iR 2425</td>
-                            <td>CN778245</td>
-                            <td>2023</td>
-                            <td>Kantor Pusat</td>
-                            <td>Rp 15.000.000</td>
-                            <td>Rp 13.500.000</td>
-                            <td><span class="mesin-status is-good">Baik</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="Produksi" data-lokasi="IPA Gunung Lipan" data-kondisi="Cukup"
-                            data-tahun="2021">
-                            <td><input type="checkbox"></td>
-                            <td>8</td>
-                            <td>02.01.07.067</td>
-                            <td><span class="mesin-thumb"><i data-lucide="waves"></i></span></td>
-                            <td>Dosing Pump</td>
-                            <td>SEKO<br>Tekna 603</td>
-                            <td>SK603-1123</td>
-                            <td>2021</td>
-                            <td>IPA Gunung Lipan</td>
-                            <td>Rp 25.000.000</td>
-                            <td>Rp 15.000.000</td>
-                            <td><span class="mesin-status is-fair">Cukup</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="TI" data-lokasi="Kantor Pusat" data-kondisi="Baik"
-                            data-tahun="2024">
-                            <td><input type="checkbox"></td>
-                            <td>9</td>
-                            <td>02.01.08.074</td>
-                            <td><span class="mesin-thumb"><i data-lucide="monitor"></i></span></td>
-                            <td>PC Desktop</td>
-                            <td>Dell<br>OptiPlex 7010</td>
-                            <td>DL7010-3321</td>
-                            <td>2024</td>
-                            <td>Kantor Pusat</td>
-                            <td>Rp 13.750.000</td>
-                            <td>Rp 13.000.000</td>
-                            <td><span class="mesin-status is-good">Baik</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr data-record data-departemen="Umum" data-lokasi="IPA Sungai Kapih" data-kondisi="Baik"
-                            data-tahun="2023">
-                            <td><input type="checkbox"></td>
-                            <td>10</td>
-                            <td>02.01.09.086</td>
-                            <td><span class="mesin-thumb"><i data-lucide="camera"></i></span></td>
-                            <td>CCTV Kamera</td>
-                            <td>Hikvision<br>DS-2CD2043G2</td>
-                            <td>HV2043-9087</td>
-                            <td>2023</td>
-                            <td>IPA Sungai Kapih</td>
-                            <td>Rp 8.500.000</td>
-                            <td>Rp 7.800.000</td>
-                            <td><span class="mesin-status is-good">Baik</span></td>
-                            <td>
-                                <div class="mesin-actions"><button class="view" data-action="view"><i
-                                            data-lucide="eye"></i></button><button class="edit" data-action="edit"><i
-                                            data-lucide="square-pen"></i></button><button class="delete"
-                                        data-action="delete"><i data-lucide="trash-2"></i></button></div>
-                            </td>
-                        </tr>
-                        <tr id="mesinEmptyRow" hidden>
-                            <td colspan="13" class="mesin-empty">Tidak ada data yang sesuai dengan filter.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                <article class="mesin-kpi-card">
 
-            <div class="mesin-table-footer">
-                <div id="mesinTableInfo">Menampilkan 1 - 10 dari 1.256 data</div>
-                <div class="mesin-pagination-area">
-                    <select id="mesinPageSize" aria-label="Data per halaman">
-                        <option>10</option>
-                        <option>25</option>
-                        <option>50</option>
-                    </select>
-                    <span>data per halaman</span>
-                    <nav class="mesin-pagination" id="mesinPagination" aria-label="Pagination"></nav>
-                </div>
-            </div>
-        </section>
+                    <div class="mesin-kpi-icon">
+                        <i data-lucide="package"></i>
+                    </div>
 
-        <dialog class="mesin-modal" id="mesinModal">
-            <div class="mesin-modal-dialog">
-                <header class="mesin-modal-header">
                     <div>
-                        <h3 id="mesinModalTitle">Tambah Aset</h3>
-                        <p id="mesinModalDescription">Tambahkan data peralatan dan mesin.</p>
-                    </div>
-                    <button type="button" onclick="closeMesinModal()" aria-label="Tutup"><i
-                            data-lucide="x"></i></button>
-                </header>
-                <form id="mesinForm">
-                    <div class="mesin-modal-body">
-                        <p class="mesin-modal-note" id="mesinModalNote">Form UI contoh. Penyimpanan database belum
-                            dihubungkan.</p>
-                        <div class="mesin-form-group"><label for="mesinCode">Kode Aset</label><input id="mesinCode"
-                                required></div>
-                        <div class="mesin-form-group"><label for="mesinName">Nama Aset</label><input id="mesinName"
-                                required></div>
-                        <div class="mesin-form-group"><label for="mesinMerk">Merk / Tipe</label><input id="mesinMerk">
-                        </div>
-                        <div class="mesin-form-group"><label for="mesinSerial">No. Seri</label><input id="mesinSerial">
-                        </div>
-                        <div class="mesin-form-group"><label for="mesinFormTahun">Tahun</label><input id="mesinFormTahun"
-                                type="number" min="1900" max="2100"></div>
-                        <div class="mesin-form-group"><label for="mesinFormLokasi">Lokasi</label><input
-                                id="mesinFormLokasi"></div>
-                        <div class="mesin-form-group"><label for="mesinPerolehan">Nilai Perolehan</label><input
-                                id="mesinPerolehan"></div>
-                        <div class="mesin-form-group"><label for="mesinBuku">Nilai Buku</label><input id="mesinBuku">
-                        </div>
-                        <div class="mesin-form-group"><label for="mesinFormKondisi">Kondisi</label><select
-                                id="mesinFormKondisi">
-                                <option>Baik</option>
-                                <option>Cukup</option>
-                                <option>Rusak</option>
-                            </select></div>
-                    </div>
-                    <footer class="mesin-modal-footer">
-                        <button type="button" class="mesin-cancel-button" onclick="closeMesinModal()">Tutup</button>
-                        <button type="submit" class="mesin-save-button" id="mesinSaveButton" disabled>Simpan
-                            Aset</button>
-                    </footer>
-                </form>
-            </div>
-        </dialog>
-    </section>
-@endsection
+                        <span>Total Data Mesin</span>
 
-@push('scripts')
-    <script src="{{ asset('js/pages/kib/mesin.js') }}"></script>
-@endpush
+                        <strong>
+                            {{ number_format($totalAset, 0, ',', '.') }}
+                        </strong>
+
+                        <p>Data inventaris terdaftar</p>
+                    </div>
+
+                </article>
+
+                <article class="mesin-kpi-card">
+
+                    <div class="mesin-kpi-icon">
+                        <i data-lucide="wallet"></i>
+                    </div>
+
+                    <div>
+                        <span>Total Nilai Mesin</span>
+
+                        <strong>
+                            {{ $rupiah($totalNilai) }}
+                        </strong>
+
+                        <p>Berdasarkan transaksi Nilai Aset</p>
+                    </div>
+
+                </article>
+
+                <article class="mesin-kpi-card">
+
+                    <div class="mesin-kpi-icon">
+                        <i data-lucide="map-pin"></i>
+                    </div>
+
+                    <div>
+                        <span>Jumlah Lokasi</span>
+
+                        <strong>
+                            {{ number_format($totalLokasi, 0, ',', '.') }}
+                        </strong>
+
+                        <p>Lokasi yang memiliki barang Mesin</p>
+                    </div>
+
+                </article>
+
+                <article class="mesin-kpi-card">
+
+                    <div class="mesin-kpi-icon">
+                        <i data-lucide="bell"></i>
+                    </div>
+
+                    <div>
+                        <span>Pending Nilai Aset</span>
+
+                        <strong id="mesinPendingTotal">
+                            {{ number_format($totalPending, 0, ',', '.') }}
+                        </strong>
+
+                        <p>Transaksi belum diproses</p>
+                    </div>
+
+                </article>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    {{-- ==========================================================
+         02. NOTIFIKASI VALIDASI & SUKSES
+    =========================================================== --}}
+
+    @if (session('success'))
+
+        <div class="mesin-notice success" role="status">
+            {{ session('success') }}
+        </div>
+
+    @endif
+
+    @if ($errors->any())
+
+        <div class="mesin-notice error" role="alert">
+
+            <strong>Data belum berhasil disimpan:</strong>
+
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+
+        </div>
+
+    @endif
+
+
+    {{-- ==========================================================
+         03. PENDING NILAI ASET
+    =========================================================== --}}
+
+    <section class="mesin-incoming-card">
+
+        <div class="mesin-incoming-icon">
+            <i data-lucide="bell-ring"></i>
+        </div>
+
+        <div class="mesin-incoming-copy">
+
+            <small>NILAI ASET</small>
+
+            <h3>
+                Data Peralatan dan Mesin Menunggu Diproses
+            </h3>
+
+            <p>
+                Ada
+                <strong id="mesinPendingLabel">
+                    {{ $totalPending }}
+                </strong>
+                transaksi Nilai Aset kategori Peralatan
+                dan Mesin yang masih pending.
+            </p>
+
+            <span class="mesin-pending-pill">
+
+                <i data-lucide="inbox"></i>
+
+                <strong id="mesinPendingPill">
+                    {{ $totalPending }}
+                </strong>
+
+                Data Pending Mesin
+
+            </span>
+
+        </div>
+
+        <button
+            type="button"
+            class="mesin-button outline"
+            id="mesinOpenPending"
+        >
+
+            <i data-lucide="list-checks"></i>
+
+            Lihat Data Masuk
+
+        </button>
+
+    </section>
+
+
+    {{-- ==========================================================
+         04. FILTER & TABEL
+    =========================================================== --}}
+
+    <section class="mesin-card mesin-workspace">
+
+        <div class="mesin-workspace-head">
+
+            <div>
+
+                <h2>Daftar Peralatan dan Mesin</h2>
+
+                <p>
+                    Data dikelompokkan berdasarkan lokasi,
+                    mengikuti struktur inventaris pada web aset lama.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="mesin-button primary"
+                id="mesinAddButton"
+            >
+
+                <i data-lucide="plus"></i>
+
+                Tambah Data Mesin
+
+            </button>
+
+        </div>
+
+
+        <div class="mesin-filters">
+
+            <label class="mesin-search-box" for="mesinSearch">
+
+                <i data-lucide="search"></i>
+
+                <input
+                    type="search"
+                    id="mesinSearch"
+                    placeholder="Cari lokasi atau alamat..."
+                >
+
+            </label>
+
+
+            <label for="mesinPageSize">
+
+                Jumlah data
+
+                <select id="mesinPageSize">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+
+            </label>
+
+
+            <button
+                type="button"
+                class="mesin-button outline"
+                id="mesinReset"
+            >
+                <i data-lucide="refresh-cw"></i>
+                Reset
+            </button>
+
+
+            <button
+                type="button"
+                class="mesin-button outline"
+                id="mesinExport"
+            >
+                <i data-lucide="download"></i>
+                Export CSV
+            </button>
+
+        </div>
+
+
+        <div class="mesin-table-wrap">
+
+            <table class="mesin-table" id="mesinTable">
+
+                <thead>
+
+                    <tr>
+                        <th>No</th>
+                        <th>Lokasi</th>
+                        <th>Alamat</th>
+                        <th>Data Mesin</th>
+                        <th>Nilai</th>
+                        <th>Aksi</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @forelse ($mesins as $row)
+
+                        <tr
+                            class="mesin-data-row"
+                            data-search="{{ mb_strtolower(trim($row->lokasi) . ' ' . trim($row->alamat)) }}"
+                        >
+
+                            <td class="mesin-number"></td>
+
+                            <td>
+
+                                <strong>
+                                    {{ trim($row->lokasi) }}
+                                </strong>
+
+                                <small>
+                                    ID Lokasi #{{ $row->id_lokasi }}
+                                </small>
+
+                            </td>
+
+                            <td>
+                                {{ trim($row->alamat) }}
+                            </td>
+
+                            <td>
+
+                                <span class="mesin-count-pill">
+                                    {{ $row->jumlah_barang }} barang
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <strong class="mesin-currency">
+                                    {{ $rupiah($row->nilai_total) }}
+                                </strong>
+
+                            </td>
+
+                            <td>
+
+                                <button
+                                    type="button"
+                                    class="mesin-button outline small"
+                                    data-lokasi="{{ $row->id_lokasi }}"
+                                >
+
+                                    <i data-lucide="eye"></i>
+
+                                    Detail
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+
+                            <td colspan="6" class="mesin-empty">
+                                Belum ada data Peralatan dan Mesin.
+                            </td>
+
+                        </tr>
+
+                    @endforelse
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div class="mesin-table-footer">
+
+            <span id="mesinTableInfo"></span>
+
+            <div
+                id="mesinPagination"
+                class="mesin-pagination"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    {{-- ==========================================================
+         05. MODAL TAMBAH / EDIT MESIN
+    =========================================================== --}}
+
+    <dialog
+        class="mesin-dialog"
+        id="mesinFormDialog"
+    >
+
+        <div class="mesin-dialog-header">
+
+            <div>
+
+                <small>K.I.B B</small>
+
+                <h2 id="mesinFormTitle">
+                    Tambah Data Mesin
+                </h2>
+
+                <p>
+                    Pilih transaksi Nilai Aset lalu lengkapi
+                    data inventaris Mesin.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="mesin-close"
+                data-close="mesinFormDialog"
+                aria-label="Tutup"
+            >
+                <i data-lucide="x"></i>
+            </button>
+
+        </div>
+
+
+        <div class="mesin-dialog-scroll">
+
+            {{-- 05A. PILIH TRANSAKSI PENDING --}}
+
+            <section
+                class="mesin-section"
+                id="mesinPendingSection"
+            >
+
+                <div class="mesin-step">1</div>
+
+                <div class="mesin-section-body">
+
+                    <h3>Pilih Data Nilai Aset</h3>
+
+                    <p>
+                        Pilih transaksi kategori Peralatan dan Mesin
+                        yang belum diproses.
+                    </p>
+
+
+                    <input
+                        type="search"
+                        id="mesinPendingSearch"
+                        placeholder="Cari voucher, lokasi, departemen, divisi, uraian..."
+                    >
+
+
+                    <div class="mesin-table-wrap mesin-pending-wrap">
+
+                        <table class="mesin-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th>No</th>
+                                    <th>Voucher</th>
+                                    <th>Lokasi</th>
+                                    <th>Departemen</th>
+                                    <th>Divisi</th>
+                                    <th>Jenis</th>
+                                    <th>Tahun</th>
+                                    <th>Nilai</th>
+                                    <th>Aksi</th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="mesinPendingBody">
+
+                                <tr>
+                                    <td colspan="9" class="mesin-empty">
+                                        Memuat data...
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <small id="mesinPendingCountText"></small>
+
+                </div>
+
+            </section>
+
+
+            {{-- 05B. FORM INVENTARIS MESIN --}}
+
+            <form
+                id="mesinForm"
+                method="POST"
+                action="{{ route('kib.mesin.store') }}"
+                enctype="multipart/form-data"
+            >
+
+                @csrf
+
+                <input
+                    type="hidden"
+                    name="_method"
+                    id="mesinMethod"
+                    value="PUT"
+                    disabled
+                >
+
+                <input
+                    type="hidden"
+                    name="id_nilai_aktiva"
+                    id="mesinNilaiId"
+                >
+
+
+                {{-- 05C. LOKASI, DEPARTEMEN, DIVISI --}}
+
+                <section class="mesin-section">
+
+                    <div class="mesin-step">2</div>
+
+                    <div class="mesin-section-body">
+
+                        <h3>Informasi Lokasi dan Organisasi</h3>
+
+                        <p>
+                            Informasi berikut otomatis diisi
+                            setelah tombol Pilih ditekan.
+                        </p>
+
+
+                        <div class="mesin-form-grid cols-3">
+
+                            <label>
+
+                                Lokasi
+
+                                <input
+                                    id="mesinLokasiLabel"
+                                    readonly
+                                    placeholder="Pilih transaksi dahulu"
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                Departemen
+
+                                <input
+                                    id="mesinDepartemenLabel"
+                                    readonly
+                                    placeholder="Otomatis dari Nilai Aset"
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                Divisi
+
+                                <input
+                                    id="mesinDivisiLabel"
+                                    readonly
+                                    placeholder="Otomatis dari Nilai Aset"
+                                >
+
+                            </label>
+
+                        </div>
+
+
+                        <div class="mesin-form-grid cols-2">
+
+                            <label>
+
+                                Alamat
+
+                                <input
+                                    id="mesinAlamatLabel"
+                                    readonly
+                                    placeholder="Otomatis dari Lokasi"
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                Voucher Sumber
+
+                                <input
+                                    id="mesinVoucherLabel"
+                                    readonly
+                                    placeholder="Otomatis dari Nilai Aset"
+                                >
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                {{-- 05D. DETAIL BARANG --}}
+
+                <section class="mesin-section">
+
+                    <div class="mesin-step">3</div>
+
+                    <div class="mesin-section-body">
+
+                        <h3>Detail Barang Peralatan dan Mesin</h3>
+
+                        <p>
+                            Kolom berikut dilengkapi oleh petugas K.I.B.
+                        </p>
+
+
+                        <div class="mesin-form-grid cols-2">
+
+                            <label>
+
+                                Nama Barang *
+
+                                <select name="id_barang" required>
+
+                                    <option value="">
+                                        - PILIH BARANG -
+                                    </option>
+
+                                    @foreach ($barangRows as $barang)
+
+                                        <option value="{{ $barang->id }}">
+                                            {{ trim($barang->nama_barang) }}
+                                            ({{ trim($barang->kode_barang) }})
+                                        </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </label>
+
+
+                            <label>
+
+                                Tahun Perolehan *
+
+                                <input
+                                    type="text"
+                                    name="tahun"
+                                    maxlength="4"
+                                    inputmode="numeric"
+                                    required
+                                    placeholder="Contoh: 2026"
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                Kode Inventaris *
+
+                                <input
+                                    type="text"
+                                    name="kode"
+                                    maxlength="255"
+                                    required
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                No. Register
+
+                                <input name="reg" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Merk / Tipe
+
+                                <input name="merk" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Ukuran
+
+                                <input name="ukuran" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Fungsi
+
+                                <input name="fungsi" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Penggunaan
+
+                                <input name="guna" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Bahan
+
+                                <input name="bahan" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Asal
+
+                                <input name="asal" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Kondisi
+
+                                <select name="kondisi">
+
+                                    <option value="">
+                                        - PILIH KONDISI -
+                                    </option>
+
+                                    <option value="Baik">Baik</option>
+
+                                    <option value="Cukup">Cukup</option>
+
+                                    <option value="Rusak Ringan">
+                                        Rusak Ringan
+                                    </option>
+
+                                    <option value="Rusak Berat">
+                                        Rusak Berat
+                                    </option>
+
+                                </select>
+
+                            </label>
+
+
+                            <label>
+
+                                Harga Inventaris
+
+                                <input
+                                    type="number"
+                                    name="harga"
+                                    min="0"
+                                    max="2147483647"
+                                    placeholder="Maksimal 2147483647"
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                Penyusutan
+
+                                <input
+                                    type="number"
+                                    name="susut"
+                                    min="0"
+                                    max="2147483647"
+                                    value="0"
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                Pabrik
+
+                                <input name="pabrik" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Struktur
+
+                                <input name="struktur" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                No. Rangka
+
+                                <input name="rangka" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                No. Mesin
+
+                                <input name="nomor_mesin" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                No. Polisi
+
+                                <input name="polisi" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                No. BPKB
+
+                                <input name="bpkb" maxlength="255">
+
+                            </label>
+
+
+                            <label>
+
+                                Foto Barang — maks. 5 MB
+
+                                <input
+                                    type="file"
+                                    name="foto"
+                                    accept="image/*"
+                                >
+
+                            </label>
+
+
+                            <label>
+
+                                Dokumen PDF — maks. 15 MB
+
+                                <input
+                                    type="file"
+                                    name="dokumen"
+                                    accept="application/pdf"
+                                >
+
+                            </label>
+
+                        </div>
+
+
+                        <label class="mesin-full-label">
+
+                            Keterangan
+
+                            <textarea
+                                name="ket"
+                                rows="3"
+                            ></textarea>
+
+                        </label>
+
+                    </div>
+
+                </section>
+
+
+                {{-- 05E. TOMBOL FORM --}}
+
+                <div class="mesin-form-actions">
+
+                    <button
+                        type="button"
+                        class="mesin-button outline"
+                        data-close="mesinFormDialog"
+                    >
+                        Batal
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="mesin-button primary"
+                    >
+
+                        <i data-lucide="save"></i>
+
+                        Simpan Data Mesin
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </dialog>
+
+
+    {{-- ==========================================================
+         06. MODAL DETAIL LOKASI
+    =========================================================== --}}
+
+    <dialog
+        class="mesin-dialog detail"
+        id="mesinDetailDialog"
+    >
+
+        <div class="mesin-dialog-header">
+
+            <div>
+
+                <small>DETAIL DATA MESIN</small>
+
+                <h2 id="mesinDetailTitle">
+                    Data Peralatan dan Mesin
+                </h2>
+
+                <p id="mesinDetailAddress"></p>
+
+            </div>
+
+            <button
+                type="button"
+                class="mesin-close"
+                data-close="mesinDetailDialog"
+                aria-label="Tutup"
+            >
+                <i data-lucide="x"></i>
+            </button>
+
+        </div>
+
+
+        <div class="mesin-dialog-scroll">
+
+            <div
+                id="mesinDetailBody"
+                class="mesin-detail-list"
+            ></div>
+
+        </div>
+
+    </dialog>
+
+
+    {{-- ==========================================================
+         07. FORM DELETE DENGAN CSRF
+    =========================================================== --}}
+
+    <form
+        id="mesinDeleteForm"
+        method="POST"
+        hidden
+    >
+        @csrf
+        @method('DELETE')
+    </form>
+
+</section>
+
+<script
+    src="{{ asset('js/pages/kib/mesin.js') }}?v={{ file_exists(public_path('js/pages/kib/mesin.js')) ? filemtime(public_path('js/pages/kib/mesin.js')) : time() }}"
+></script>
+
+@endsection

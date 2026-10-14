@@ -2078,4 +2078,882 @@ class KIBController extends Controller
     {
         return $this->deliverPdf($pdf, true);
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | K.I.B B — PERALATAN DAN MESIN
+    |--------------------------------------------------------------------------
+    |
+    | Semua fungsi Mesin berada di KIBController.
+    |
+    | 1. Halaman utama
+    | 2. Transaksi pending
+    | 3. Detail lokasi
+    | 4. Detail satu barang
+    | 5. Validasi
+    | 6. Pemetaan field
+    | 7. Tambah barang
+    | 8. Edit barang
+    | 9. Hapus barang
+    | 10. Akses foto/dokumen
+    |
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | 01. CATEGORY MESIN
+    |--------------------------------------------------------------------------
+    */
+
+    private function mesinKategori(): int
+    {
+        $id = app(KibNotificationService::class)
+            ->categoryId('mesin');
+
+        if ($id === null) {
+            throw new \RuntimeException(
+                'Kategori Peralatan dan Mesin belum tersedia di config/kib.php.'
+            );
+        }
+
+        return (int) $id;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 02. HALAMAN UTAMA MESIN
+    |--------------------------------------------------------------------------
+    |
+    | Satu baris tabel = satu lokasi.
+    | Satu lokasi dapat mempunyai banyak barang Mesin.
+    |
+    */
+
+    public function dataMesin()
+    {
+        $cat = $this->mesinKategori();
+
+        // Total transaksi nilai Mesin berdasarkan lokasi.
+        $nilaiPerLokasi = DB::table('nilai_aktivas')
+            ->where('cat', $cat)
+            ->whereNotNull('id_lokasi')
+            ->select('id_lokasi')
+            ->selectRaw(
+                'COALESCE(SUM(nilai), 0) AS nilai_total'
+            )
+            ->groupBy('id_lokasi');
+
+        // Data mesin dikelompokkan per lokasi seperti web lama.
+        $mesins = DB::table('mesins as m')
+            ->join(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'm.id_lokasi'
+            )
+            ->leftJoinSub(
+                $nilaiPerLokasi,
+                'nl',
+                function ($join) {
+                    $join->on(
+                        'nl.id_lokasi',
+                        '=',
+                        'm.id_lokasi'
+                    );
+                }
+            )
+            ->select('m.id_lokasi')
+            ->selectRaw('MIN(l.lokasi) AS lokasi')
+            ->selectRaw('MIN(l.alamat) AS alamat')
+            ->selectRaw(
+                'COUNT(DISTINCT m.id) AS jumlah_barang'
+            )
+            ->selectRaw(
+                'COALESCE(MAX(nl.nilai_total), 0) AS nilai_total'
+            )
+            ->groupBy('m.id_lokasi')
+            ->orderByRaw('MIN(l.lokasi) ASC')
+            ->get();
+
+        // Master barang untuk dropdown.
+        $barangRows = DB::table('barangs')
+            ->select(
+                'id',
+                'nama_barang',
+                'kode_barang'
+            )
+            ->orderBy('nama_barang')
+            ->get();
+
+        // KPI berasal dari database, bukan data contoh.
+        $totalAset = DB::table('mesins')->count();
+
+        $totalLokasi = $mesins->count();
+
+        // Mencakup Penambahan Aset dan Penambahan Nilai.
+        $totalNilai = DB::table('nilai_aktivas')
+            ->where('cat', $cat)
+            ->sum('nilai');
+
+        // Pending kompatibel dengan transaksi historis web lama.
+        $totalPending = DB::table('nilai_aktivas')
+            ->where('cat', $cat)
+            ->where('stat', 0)
+            ->count();
+
+        return view(
+            'kib.mesin',
+            compact(
+                'mesins',
+                'barangRows',
+                'totalAset',
+                'totalLokasi',
+                'totalNilai',
+                'totalPending'
+            )
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 03. DATA PENDING NILAI ASET MESIN
+    |--------------------------------------------------------------------------
+    |
+    | Endpoint:
+    | GET /kib/mesin/pending
+    |
+    | Mengikuti kondisi pending database:
+    | cat = golongan Mesin
+    | stat = 0
+    |
+    | Jenis transaksi lama dipertahankan.
+    | Penambahan Nilai baru harus disimpan dengan stat=1.
+    |
+    */
+
+    public function pendingMesin()
+    {
+        $cat = $this->mesinKategori();
+
+        $base = DB::table('nilai_aktivas')
+            ->where('cat', $cat)
+            ->where('stat', 0);
+
+        $count = (clone $base)->count();
+
+        $rows = DB::table('nilai_aktivas as n')
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'n.id_lokasi'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'n.dep'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'n.div'
+            )
+            ->where('n.cat', $cat)
+            ->where('n.stat', 0)
+            ->select([
+                'n.id',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.nilai',
+                'n.urai',
+                'n.tahun',
+                'n.id_lokasi',
+                'n.dep',
+                'n.div',
+                'n.jenisn',
+                'l.lokasi',
+                'l.alamat',
+            ])
+            ->selectRaw(
+                "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
+            )
+            ->orderByDesc('n.tgl_voucher')
+            ->orderByDesc('n.id')
+            ->limit(1000)
+            ->get();
+
+        $data = $rows->map(function ($row) {
+            return [
+                'id' => (int) $row->id,
+                'no_voucher' => trim((string) $row->no_voucher),
+                'tgl_voucher' => $row->tgl_voucher,
+
+                'nilai' => (int) ($row->nilai ?? 0),
+                'urai' => $row->urai,
+                'tahun' => $row->tahun,
+
+                'id_lokasi' => $row->id_lokasi,
+                'lokasi' => trim((string) $row->lokasi),
+                'alamat' => trim((string) $row->alamat),
+
+                'dep' => $row->dep,
+                'departemen' => trim((string) $row->departemen),
+
+                'div' => $row->div,
+                'divisi' => trim((string) $row->divisi),
+
+                'jenisn' => (int) ($row->jenisn ?? 0),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'module' => 'mesin',
+            'category_id' => $cat,
+            'count' => $count,
+            'data' => $data->values(),
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 04. DETAIL SEMUA MESIN DALAM SATU LOKASI
+    |--------------------------------------------------------------------------
+    */
+
+    public function detailMesinLokasi(int $lokasi)
+    {
+        $location = DB::table('lokasis')
+            ->where('id', $lokasi)
+            ->first([
+                'id',
+                'lokasi',
+                'alamat'
+            ]);
+
+        abort_unless($location, 404);
+
+        $rows = DB::table('mesins as m')
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'm.id_barang'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'm.id_departemen'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'm.id_div'
+            )
+            ->where('m.id_lokasi', $lokasi)
+            ->select('m.*')
+            ->selectRaw(
+                "BTRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(b.kode_barang, '')) AS kode_barang"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
+            )
+            ->orderByDesc('m.id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'lokasi' => $location,
+            'data' => $rows,
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 05. DETAIL SATU MESIN UNTUK EDIT
+    |--------------------------------------------------------------------------
+    */
+
+    public function showMesin(int $mesin)
+    {
+        $row = DB::table('mesins as m')
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'm.id_barang'
+            )
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'm.id_lokasi'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'm.id_departemen'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'm.id_div'
+            )
+            ->where('m.id', $mesin)
+            ->select('m.*')
+            ->selectRaw(
+                "BTRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(l.lokasi, '')) AS lokasi"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(l.alamat, '')) AS alamat"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
+            )
+            ->first();
+
+        abort_unless($row, 404);
+
+        return response()->json([
+            'success' => true,
+            'data' => $row,
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 06. VALIDASI FORM MESIN
+    |--------------------------------------------------------------------------
+    |
+    | harga dan susut maksimum 2.147.483.647
+    | karena kolom lama menggunakan INTEGER PostgreSQL.
+    |
+    | Nilai transaksi keuangan yang lebih besar tetap berada
+    | pada nilai_aktivas.nilai dengan tipe BIGINT.
+    |
+    */
+
+    private function validasiMesin(
+        Request $request,
+        bool $create
+    ): array {
+        $rules = [
+            'id_barang' => [
+                'required',
+                'integer',
+                'exists:barangs,id'
+            ],
+
+            'kode' => ['required', 'string', 'max:255'],
+            'reg' => ['nullable', 'string', 'max:255'],
+            'tahun' => ['required', 'digits:4'],
+
+            'bahan' => ['nullable', 'string', 'max:255'],
+            'asal' => ['nullable', 'string', 'max:255'],
+            'ukuran' => ['nullable', 'string', 'max:255'],
+            'merk' => ['nullable', 'string', 'max:255'],
+            'pabrik' => ['nullable', 'string', 'max:255'],
+
+            'rangka' => ['nullable', 'string', 'max:255'],
+            'nomor_mesin' => ['nullable', 'string', 'max:255'],
+            'polisi' => ['nullable', 'string', 'max:255'],
+            'bpkb' => ['nullable', 'string', 'max:255'],
+
+            'guna' => ['nullable', 'string', 'max:255'],
+            'fungsi' => ['nullable', 'string', 'max:255'],
+            'struktur' => ['nullable', 'string', 'max:255'],
+            'kondisi' => ['nullable', 'string', 'max:255'],
+            'ket' => ['nullable', 'string'],
+
+            'harga' => [
+                'nullable',
+                'integer',
+                'between:0,2147483647'
+            ],
+
+            'susut' => [
+                'nullable',
+                'integer',
+                'between:0,2147483647'
+            ],
+
+            'foto' => [
+                'nullable',
+                'image',
+                'max:5120'
+            ],
+
+            'dokumen' => [
+                'nullable',
+                'file',
+                'mimes:pdf',
+                'max:15360'
+            ],
+        ];
+
+        if ($create) {
+            $rules['id_nilai_aktiva'] = [
+                'required',
+                'integer',
+                'exists:nilai_aktivas,id'
+            ];
+        }
+
+        return $request->validate($rules);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 07. PEMETAAN FIELD KE TABEL MESINS
+    |--------------------------------------------------------------------------
+    |
+    | Field wajib legacy yang belum diisi memakai '-'.
+    | Informasi organisasi tidak diambil dari input browser.
+    |
+    */
+
+    private function fieldsMesin(array $input): array
+    {
+        $legacy = fn(string $key) =>
+        trim((string) ($input[$key] ?? '')) ?: '-';
+
+        return [
+            'id_barang' => (int) $input['id_barang'],
+
+            'kode' => trim((string) $input['kode']),
+            'reg' => $legacy('reg'),
+            'tahun' => (string) $input['tahun'],
+
+            'harga' => (
+                isset($input['harga'])
+                && $input['harga'] !== ''
+            ) ? (int) $input['harga'] : null,
+
+            'susut' => (
+                isset($input['susut'])
+                && $input['susut'] !== ''
+            ) ? (int) $input['susut'] : 0,
+
+            'bahan' => $legacy('bahan'),
+            'asal' => $legacy('asal'),
+            'ukuran' => $legacy('ukuran'),
+            'merk' => $legacy('merk'),
+            'pabrik' => $input['pabrik'] ?? null,
+
+            'rangka' => $legacy('rangka'),
+            'mesin' => $legacy('nomor_mesin'),
+            'polisi' => $legacy('polisi'),
+            'bpkb' => $legacy('bpkb'),
+
+            'guna' => $input['guna'] ?? null,
+            'fungsi' => $input['fungsi'] ?? null,
+            'struktur' => $input['struktur'] ?? null,
+            'kondisi' => $input['kondisi'] ?? null,
+            'ket' => $input['ket'] ?? null,
+
+            'updated_at' => now(),
+        ];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 08. SIMPAN DATA MESIN
+    |--------------------------------------------------------------------------
+    |
+    | Tombol Pilih:
+    | nilai_aktivas.id → mesins.id_voucher2
+    |
+    | Lokasi:
+    | nilai_aktivas.id_lokasi → mesins.id_lokasi
+    |
+    | Departemen:
+    | nilai_aktivas.dep → mesins.id_departemen
+    |
+    | Divisi:
+    | nilai_aktivas.div → mesins.id_div
+    |
+    | Setelah sukses:
+    | nilai_aktivas.stat = 1
+    |
+    */
+
+    public function storeMesin(Request $request)
+    {
+        $input = $this->validasiMesin($request, true);
+        $cat = $this->mesinKategori();
+
+        $files = [];
+
+        try {
+            DB::transaction(function () use (
+                $request,
+                $input,
+                $cat,
+                &$files
+            ) {
+                // Kunci transaksi sumber agar tidak diproses bersamaan.
+                $source = DB::table('nilai_aktivas')
+                    ->where('id', $input['id_nilai_aktiva'])
+                    ->where('cat', $cat)
+                    ->where('stat', 0)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (
+                    !$source
+                    || !$source->id_lokasi
+                    || !$source->dep
+                    || !$source->div
+                ) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' =>
+                        'Transaksi pending tidak tersedia atau Lokasi, Departemen, Divisi belum lengkap.'
+                    ]);
+                }
+
+                // Cegah satu transaksi dipakai dua barang.
+                $used = DB::table('mesins')
+                    ->where('id_voucher2', $source->id)
+                    ->exists();
+
+                if ($used) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' =>
+                        'Transaksi Nilai Aset ini sudah digunakan oleh data Mesin.'
+                    ]);
+                }
+
+                $data = $this->fieldsMesin($input);
+
+                // Data organisasi berasal dari database.
+                $data['id_lokasi'] = (int) $source->id_lokasi;
+                $data['id_departemen'] = (int) $source->dep;
+                $data['id_div'] = (int) $source->div;
+
+                // Hubungan dengan transaksi Nilai Aset.
+                $data['id_voucher2'] = (int) $source->id;
+                $data['jenis'] = (int) ($source->jenisn ?? 0);
+
+                $data['input'] = 1;
+                $data['id_user'] = Auth::id();
+                $data['created_at'] = now();
+
+                // Dokumen disimpan pada storage privat.
+                if ($request->hasFile('dokumen')) {
+                    $data['dok'] = $request
+                        ->file('dokumen')
+                        ->store(
+                            'kib/mesin/dokumen',
+                            'local'
+                        );
+
+                    $files[] = $data['dok'];
+                }
+
+                // Foto disimpan pada storage privat.
+                if ($request->hasFile('foto')) {
+                    $data['img'] = $request
+                        ->file('foto')
+                        ->store(
+                            'kib/mesin/foto',
+                            'local'
+                        );
+
+                    $files[] = $data['img'];
+                }
+
+                DB::table('mesins')->insert($data);
+
+                // Selesaikan transaksi sumber.
+                $updated = DB::table('nilai_aktivas')
+                    ->where('id', $source->id)
+                    ->where('stat', 0)
+                    ->update([
+                        'stat' => 1,
+                        'updated_at' => now(),
+                    ]);
+
+                if ($updated !== 1) {
+                    throw new \RuntimeException(
+                        'Gagal memperbarui status Nilai Aset.'
+                    );
+                }
+            });
+        } catch (\Throwable $exception) {
+            foreach ($files as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $exception;
+        }
+
+        return redirect()
+            ->route('kib.mesin')
+            ->with(
+                'success',
+                'Data Peralatan dan Mesin berhasil disimpan.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 09. UPDATE DATA MESIN
+    |--------------------------------------------------------------------------
+    |
+    | Mengedit data teknis barang tidak mengubah:
+    | - transaksi sumber
+    | - lokasi
+    | - departemen
+    | - divisi
+    |
+    */
+
+    public function updateMesin(
+        Request $request,
+        int $mesin
+    ) {
+        $input = $this->validasiMesin($request, false);
+
+        $newFiles = [];
+        $oldFiles = [];
+
+        try {
+            DB::transaction(function () use (
+                $request,
+                $input,
+                $mesin,
+                &$newFiles,
+                &$oldFiles
+            ) {
+                $row = DB::table('mesins')
+                    ->where('id', $mesin)
+                    ->lockForUpdate()
+                    ->first();
+
+                abort_unless($row, 404);
+
+                $data = $this->fieldsMesin($input);
+
+                if ($request->hasFile('dokumen')) {
+                    $data['dok'] = $request
+                        ->file('dokumen')
+                        ->store('kib/mesin/dokumen', 'local');
+
+                    $newFiles[] = $data['dok'];
+
+                    if (
+                        $row->dok
+                        && str_starts_with(
+                            $row->dok,
+                            'kib/mesin/dokumen/'
+                        )
+                    ) {
+                        $oldFiles[] = $row->dok;
+                    }
+                }
+
+                if ($request->hasFile('foto')) {
+                    $data['img'] = $request
+                        ->file('foto')
+                        ->store('kib/mesin/foto', 'local');
+
+                    $newFiles[] = $data['img'];
+
+                    if (
+                        $row->img
+                        && str_starts_with(
+                            $row->img,
+                            'kib/mesin/foto/'
+                        )
+                    ) {
+                        $oldFiles[] = $row->img;
+                    }
+                }
+
+                DB::table('mesins')
+                    ->where('id', $mesin)
+                    ->update($data);
+            });
+        } catch (\Throwable $exception) {
+            foreach ($newFiles as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $exception;
+        }
+
+        // Hapus file lama setelah database sukses.
+        foreach ($oldFiles as $path) {
+            Storage::disk('local')->delete($path);
+        }
+
+        return redirect()
+            ->route('kib.mesin')
+            ->with(
+                'success',
+                'Data Mesin berhasil diperbarui.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 10. HAPUS DATA MESIN
+    |--------------------------------------------------------------------------
+    |
+    | Tidak menghapus transaksi keuangan pada nilai_aktivas.
+    | Status sumber dikembalikan ke pending jika barang terkait
+    | sudah tidak ada lagi.
+    |
+    */
+
+    public function destroyMesin(int $mesin)
+    {
+        $files = [];
+
+        DB::transaction(function () use (
+            $mesin,
+            &$files
+        ) {
+            $row = DB::table('mesins')
+                ->where('id', $mesin)
+                ->lockForUpdate()
+                ->first();
+
+            abort_unless($row, 404);
+
+            foreach (
+                [
+                    'dok' => 'kib/mesin/dokumen/',
+                    'img' => 'kib/mesin/foto/',
+                ] as $field => $prefix
+            ) {
+                $path = $row->{$field};
+
+                if (
+                    $path
+                    && str_starts_with($path, $prefix)
+                ) {
+                    $files[] = $path;
+                }
+            }
+
+            DB::table('mesins')
+                ->where('id', $mesin)
+                ->delete();
+
+            // Jangan kembalikan pending jika masih ada barang lain.
+            if (
+                $row->id_voucher2
+                &&
+                !DB::table('mesins')
+                    ->where('id_voucher2', $row->id_voucher2)
+                    ->exists()
+            ) {
+                DB::table('nilai_aktivas')
+                    ->where('id', $row->id_voucher2)
+                    ->update([
+                        'stat' => 0,
+                        'updated_at' => now(),
+                    ]);
+            }
+        });
+
+        // File dihapus setelah commit database sukses.
+        foreach ($files as $path) {
+            Storage::disk('local')->delete($path);
+        }
+
+        return redirect()
+            ->route('kib.mesin')
+            ->with(
+                'success',
+                'Data Mesin berhasil dihapus.'
+            );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 11. FILE FOTO DAN DOKUMEN MESIN
+    |--------------------------------------------------------------------------
+    |
+    | Membatasi akses file yang tersimpan di disk privat.
+    | Memerlukan login Laravel yang sebenarnya.
+    |
+    */
+
+    public function fileMesin(
+        int $mesin,
+        string $jenis
+    ) {
+        abort_unless(
+            Auth::check(),
+            403,
+            'Login diperlukan untuk mengakses dokumen.'
+        );
+
+        abort_unless(
+            in_array($jenis, ['dokumen', 'foto'], true),
+            404
+        );
+
+        $row = DB::table('mesins')
+            ->where('id', $mesin)
+            ->first(['dok', 'img']);
+
+        abort_unless($row, 404);
+
+        $prefix = $jenis === 'dokumen'
+            ? 'kib/mesin/dokumen/'
+            : 'kib/mesin/foto/';
+
+        $path = $jenis === 'dokumen'
+            ? $row->dok
+            : $row->img;
+
+        abort_unless(
+            $path && str_starts_with($path, $prefix),
+            404
+        );
+
+        abort_unless(
+            Storage::disk('local')->exists($path),
+            404
+        );
+
+        return response()->file(
+            Storage::disk('local')->path($path)
+        );
+    }
 }

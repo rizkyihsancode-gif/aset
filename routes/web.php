@@ -9,6 +9,7 @@ use App\Http\Controllers\NilaiAsetController;
 use App\Http\Controllers\KibNotificationController;
 
 
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -491,9 +492,75 @@ Route::prefix('kib')
             ->whereNumber('tanah')->name('tanah.destroy');
     });
 
-Route::get('/kib/mesin', function () {
-    return view('kib.mesin');
-})->name('kib.mesin');
+
+/*
+|--------------------------------------------------------------------------
+| K.I.B B — PERALATAN DAN MESIN
+|--------------------------------------------------------------------------
+|
+| Seluruh fungsi dikelola oleh KIBController.
+| Route tidak memakai Controller Mesin terpisah.
+|
+*/
+
+Route::get('/kib/mesin', [
+    KIBController::class,
+    'dataMesin'
+])->name('kib.mesin');
+
+
+Route::get('/kib/mesin/pending', [
+    KIBController::class,
+    'pendingMesin'
+])->name('kib.mesin.pending');
+
+
+Route::get('/kib/mesin/lokasi/{lokasi}', [
+    KIBController::class,
+    'detailMesinLokasi'
+])
+    ->whereNumber('lokasi')
+    ->name('kib.mesin.lokasi');
+
+
+Route::post('/kib/mesin', [
+    KIBController::class,
+    'storeMesin'
+])->name('kib.mesin.store');
+
+
+Route::get('/kib/mesin/{mesin}', [
+    KIBController::class,
+    'showMesin'
+])
+    ->whereNumber('mesin')
+    ->name('kib.mesin.show');
+
+
+Route::put('/kib/mesin/{mesin}', [
+    KIBController::class,
+    'updateMesin'
+])
+    ->whereNumber('mesin')
+    ->name('kib.mesin.update');
+
+
+Route::delete('/kib/mesin/{mesin}', [
+    KIBController::class,
+    'destroyMesin'
+])
+    ->whereNumber('mesin')
+    ->name('kib.mesin.destroy');
+
+
+Route::get('/kib/mesin/{mesin}/file/{jenis}', [
+    KIBController::class,
+    'fileMesin'
+])
+    ->whereNumber('mesin')
+    ->where('jenis', 'dokumen|foto')
+    ->name('kib.mesin.file');
+
 
 Route::get('/kib/gedung', function () {
     return view('kib.gedung');
