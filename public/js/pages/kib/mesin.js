@@ -1204,6 +1204,154 @@ $('#mesinExport').addEventListener('click', () => {
     }
 
     
+    
+/*
+|--------------------------------------------------------------------------
+| PILIH BARANG UNTUK EDIT ATAU HAPUS
+|--------------------------------------------------------------------------
+|
+| Satu baris tabel utama = satu lokasi.
+| Edit / Hapus harus memilih barang fisik,
+| bukan langsung mengubah seluruh lokasi.
+|
+| Memakai modal dan route yang sudah tersedia.
+|
+*/
+
+async function chooseMesinAction(lokasiId, action) {
+    const isDelete = action === 'delete';
+    const targetId = Number(lokasiId);
+
+    if (
+        !Number.isSafeInteger(targetId) ||
+        targetId < 1
+    ) {
+        return;
+    }
+
+    openDialog(detailDialog);
+
+    const title = isDelete
+        ? 'Pilih Mesin yang Akan Dihapus'
+        : 'Pilih Mesin yang Akan Diedit';
+
+    $('#mesinDetailTitle').textContent = title;
+
+    $('#mesinDetailAddress').textContent =
+        'Pilih satu barang. Lokasi dan barang lain tidak akan diubah.';
+
+    $('#mesinDetailBody').textContent =
+        'Memuat daftar barang...';
+
+    try {
+        // Endpoint detail lokasi yang sudah ada.
+        const result = await getJson(
+            locationUrl(targetId)
+        );
+
+        if (!detailDialog.open) return;
+
+        const location = result.lokasi || {};
+
+        const items = Array.isArray(result.data)
+            ? result.data
+            : [];
+
+        $('#mesinDetailTitle').textContent = title;
+
+        $('#mesinDetailAddress').textContent =
+            `${location.lokasi || 'Lokasi Mesin'} · ` +
+            `${items.length} barang terdaftar`;
+
+        if (!items.length) {
+            $('#mesinDetailBody').textContent =
+                'Belum ada barang Mesin di lokasi ini.';
+            return;
+        }
+
+        $('#mesinDetailBody').innerHTML =
+            items.map(item => {
+
+                const id = Number(item.id);
+
+                if (
+                    !Number.isSafeInteger(id) ||
+                    id < 1
+                ) {
+                    return '';
+                }
+
+                const actionButton = isDelete
+                    ? `
+                        <button
+                            type="button"
+                            class="mesin-button danger small"
+                            data-delete="${id}"
+                        >
+                            <i data-lucide="trash-2"></i>
+                            Hapus Barang
+                        </button>
+                    `
+                    : `
+                        <button
+                            type="button"
+                            class="mesin-button mesin-action-edit small"
+                            data-edit="${id}"
+                        >
+                            <i data-lucide="pencil"></i>
+                            Edit Barang
+                        </button>
+                    `;
+
+                return `
+                    <article class="mesin-action-picker-item">
+
+                        <div class="mesin-action-picker-info">
+
+                            <strong class="mesin-action-picker-name">
+                                ${escapeHtml(
+                                    item.nama_barang || 'Barang Mesin'
+                                )}
+                            </strong>
+
+                            <span>
+                                Kode:
+                                ${escapeHtml(item.kode || '—')}
+                                · Register:
+                                ${escapeHtml(item.reg || '—')}
+                                · Tahun:
+                                ${escapeHtml(item.tahun || '—')}
+                            </span>
+
+                            <small>
+                                Merk:
+                                ${escapeHtml(item.merk || '—')}
+                            </small>
+
+                        </div>
+
+                        ${actionButton}
+
+                    </article>
+                `;
+
+            }).join('');
+
+        refreshIcons();
+
+    } catch (error) {
+        console.error(
+            'Gagal memuat pilihan aksi Mesin:',
+            error
+        );
+
+        $('#mesinDetailBody').textContent =
+            'Daftar Mesin tidak dapat dimuat. ' +
+            'Periksa akses dan log Laravel.';
+    }
+}
+
+
 /*
 |--------------------------------------------------------------------------
 | DOKUMEN PDF MESIN PER LOKASI
@@ -1398,75 +1546,86 @@ async function showPdfLokasi(
 
 
    
+
 /*
 |--------------------------------------------------------------------------
-| EVENT TABEL UTAMA K.I.B MESIN
+| EVENT TABEL UTAMA MESIN
 |--------------------------------------------------------------------------
 |
-| Nilai  -> rincian transaksi Nilai Aset
-| Aksi   -> detail barang per lokasi
-| PDF    -> dokumen PDF per lokasi
+| Nilai  -> Rincian voucher
+| PDF    -> Daftar dokumen PDF
+| Detail -> Rincian seluruh barang
+| Edit   -> Pilih barang untuk diedit
+| Hapus  -> Pilih barang untuk dihapus
 |
 */
 
-$('#mesinTable').addEventListener(
-    'click',
-    event => {
+$('#mesinTable').addEventListener('click', event => {
 
-        // ==================================
-        // 1. TOMBOL NILAI
-        // ==================================
+    // NILAI
+    const nilaiButton = event.target.closest(
+        '[data-nilai-lokasi]'
+    );
 
-        const nilaiButton = event.target.closest(
-            '[data-nilai-lokasi]'
+    if (nilaiButton) {
+        showNilaiMesin(
+            nilaiButton.dataset.nilaiLokasi,
+            nilaiButton.dataset.nilaiNama
         );
-
-        if (nilaiButton) {
-
-            showNilaiMesin(
-                nilaiButton.dataset.nilaiLokasi,
-                nilaiButton.dataset.nilaiNama
-            );
-
-            return;
-        }
-
-        // ==================================
-        // 2. TOMBOL PDF
-        // ==================================
-
-        const pdfButton = event.target.closest(
-            '[data-pdf-lokasi]'
-        );
-
-        if (pdfButton) {
-
-            showPdfLokasi(
-                pdfButton.dataset.pdfLokasi,
-                pdfButton.dataset.pdfNama
-            );
-
-            return;
-        }
-
-        // ==================================
-        // 3. TOMBOL DETAIL
-        // ==================================
-
-        const detailButton = event.target.closest(
-            '[data-lokasi]'
-        );
-
-        if (detailButton) {
-
-            showDetail(
-                detailButton.dataset.lokasi
-            );
-
-            return;
-        }
+        return;
     }
-);
+
+    // PDF
+    const pdfButton = event.target.closest(
+        '[data-pdf-lokasi]'
+    );
+
+    if (pdfButton) {
+        showPdfLokasi(
+            pdfButton.dataset.pdfLokasi,
+            pdfButton.dataset.pdfNama
+        );
+        return;
+    }
+
+    // EDIT
+    const editButton = event.target.closest(
+        '[data-edit-lokasi]'
+    );
+
+    if (editButton) {
+        chooseMesinAction(
+            editButton.dataset.editLokasi,
+            'edit'
+        );
+        return;
+    }
+
+    // HAPUS
+    const deleteButton = event.target.closest(
+        '[data-delete-lokasi]'
+    );
+
+    if (deleteButton) {
+        chooseMesinAction(
+            deleteButton.dataset.deleteLokasi,
+            'delete'
+        );
+        return;
+    }
+
+    // DETAIL
+    const detailButton = event.target.closest(
+        '[data-lokasi]'
+    );
+
+    if (detailButton) {
+        showDetail(
+            detailButton.dataset.lokasi
+        );
+    }
+});
+
 
 
     // ==========================================

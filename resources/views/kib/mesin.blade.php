@@ -311,18 +311,44 @@
                                 </td>
 
                                 {{-- 5. AKSI DETAIL --}}
+
+                                {{-- =========================================
+     AKSI DETAIL, EDIT DAN HAPUS MESIN
+========================================= --}}
+
                                 <td class="mesin-aksi-cell">
 
-                                    <button type="button" class="mesin-button outline small"
-                                        data-lokasi="{{ $row->id_lokasi }}">
+                                    <div class="mesin-aksi-group" role="group"
+                                        aria-label="Aksi Mesin lokasi {{ trim((string) $row->lokasi) }}">
 
-                                        <i data-lucide="eye"></i>
+                                        {{-- DETAIL --}}
+                                        <button type="button" class="mesin-button outline small"
+                                            data-lokasi="{{ $row->id_lokasi }}"
+                                            title="Lihat detail seluruh barang di lokasi ini">
+                                            <i data-lucide="eye"></i>
+                                            Detail
+                                        </button>
 
-                                        Detail
+                                        {{-- EDIT --}}
+                                        <button type="button" class="mesin-button small mesin-action-edit"
+                                            data-edit-lokasi="{{ $row->id_lokasi }}"
+                                            title="Pilih barang yang akan diedit">
+                                            <i data-lucide="pencil"></i>
+                                            Edit
+                                        </button>
 
-                                    </button>
+                                        {{-- HAPUS --}}
+                                        <button type="button" class="mesin-button small mesin-action-delete"
+                                            data-delete-lokasi="{{ $row->id_lokasi }}"
+                                            title="Pilih barang yang akan dihapus">
+                                            <i data-lucide="trash-2"></i>
+                                            Hapus
+                                        </button>
+
+                                    </div>
 
                                 </td>
+
 
                                 {{-- 6. PDF --}}
                                 <td class="mesin-pdf-cell">
