@@ -4,15 +4,15 @@
  * K.I.B B — PERALATAN DAN MESIN
  * ============================================================================
  *
- * Modul:
- * 01. Helper dan modal
+ * 01. Helper
  * 02. Pencarian dan pagination
  * 03. Export CSV
  * 04. Pending Nilai Aset
- * 05. Tombol Pilih / autofill
+ * 05. Autofill tombol Pilih
  * 06. Tambah dan edit
- * 07. Detail lokasi
- * 08. Hapus
+ * 07. Rincian nilai mesin
+ * 08. Detail inventaris mesin
+ * 09. Hapus barang
  *
  * ============================================================================
  */
@@ -22,11 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const root = document.getElementById('mesinPage');
 
-    if (!root || root.dataset.mesinInitialized === '1') {
+    if (!root || root.dataset.initialized === '1') {
         return;
     }
 
-    root.dataset.mesinInitialized = '1';
+    root.dataset.initialized = '1';
 
     /*
     |--------------------------------------------------------------------------
@@ -34,16 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     |--------------------------------------------------------------------------
     */
 
-    const $ = (selector, parent = root) =>
-        parent.querySelector(selector);
+    const $ = (selector, scope = root) =>
+        scope.querySelector(selector);
 
-    const $$ = (selector, parent = root) =>
-        Array.from(parent.querySelectorAll(selector));
+    const $$ = (selector, scope = root) =>
+        Array.from(scope.querySelectorAll(selector));
 
-    const formatter = new Intl.NumberFormat('id-ID');
+    const number = new Intl.NumberFormat('id-ID');
 
     const money = value =>
-        `Rp ${formatter.format(Number(value) || 0)}`;
+        `Rp ${number.format(Number(value) || 0)}`;
 
     const escapeHtml = value =>
         String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -61,14 +61,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const recordUrl = id =>
         `${root.dataset.recordBase}/${encodeURIComponent(id)}`;
 
-    const detailUrl = id =>
+    const locationUrl = id =>
         `${root.dataset.detailBase}/${encodeURIComponent(id)}`;
 
-    const fileUrl = (id, type) =>
-        `${recordUrl(id)}/file/${type}`;
+    const nilaiUrl = id =>
+        `${locationUrl(id)}/nilai`;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REFERENSI ELEMEN
+    |--------------------------------------------------------------------------
+    */
 
     const formDialog = $('#mesinFormDialog');
     const detailDialog = $('#mesinDetailDialog');
+    const nilaiDialog = $('#mesinNilaiDialog');
 
     const form = $('#mesinForm');
     const sourceId = $('#mesinNilaiId');
@@ -79,51 +87,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainSearch = $('#mesinSearch');
     const pageSize = $('#mesinPageSize');
 
-    const mainRows = $$('.mesin-data-row');
+    const tableRows = $$('.mesin-data-row');
 
-    let pendingItems = [];
-    let selectedSource = null;
+    let pendingSources = [];
     let currentPage = 1;
 
 
     /*
     |--------------------------------------------------------------------------
-    | HELPER REQUEST JSON
+    | REQUEST DATA JSON
     |--------------------------------------------------------------------------
     */
 
     async function getJson(url) {
         const response = await fetch(url, {
             method: 'GET',
-
             credentials: 'same-origin',
 
             headers: {
                 Accept: 'application/json',
-
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success === false) {
             throw new Error(
-                data.message || 'Permintaan gagal.'
+                `HTTP ${response.status}`
             );
         }
 
-        return data;
+        const result = await response.json();
+
+        if (result.success === false) {
+            throw new Error(
+                result.message || 'Permintaan gagal.'
+            );
+        }
+
+        return result;
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | HELPER MODAL
+    | MODAL
     |--------------------------------------------------------------------------
     */
 
@@ -145,16 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $$('[data-close]').forEach(button => {
         button.addEventListener('click', () => {
-            const target = $(`#${button.dataset.close}`);
+            const dialog = $(
+                `#${button.dataset.close}`
+            );
 
-            closeDialog(target);
+            closeDialog(dialog);
         });
     });
 
-    [formDialog, detailDialog].forEach(dialog => {
-        if (!dialog) return;
-
-        dialog.addEventListener('click', event => {
+    [formDialog, detailDialog, nilaiDialog].forEach(dialog => {
+        dialog?.addEventListener('click', event => {
             if (event.target === dialog) {
                 closeDialog(dialog);
             }
@@ -164,69 +171,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /*
     |--------------------------------------------------------------------------
-    | 02. PENCARIAN DAN PAGINATION TABEL LOKASI
+    | 02. PENCARIAN DAN PAGINATION
     |--------------------------------------------------------------------------
     */
 
-    function getFilteredRows() {
+    function filteredTableRows() {
         const keyword = mainSearch.value
-            .toLowerCase()
-            .trim();
+            .trim()
+            .toLowerCase();
 
-        return mainRows.filter(row => {
-            const text = row.dataset.search || '';
-
-            return text.includes(keyword);
-        });
-    }
-
-    function renderMainTable() {
-        const rows = getFilteredRows();
-
-        const size = Number(pageSize.value) || 20;
-
-        const totalPages = Math.max(
-            1,
-            Math.ceil(rows.length / size)
+        return tableRows.filter(row =>
+            (row.dataset.search || '').includes(keyword)
         );
-
-        currentPage = Math.max(
-            1,
-            Math.min(currentPage, totalPages)
-        );
-
-        // Sembunyikan seluruh baris asli.
-        mainRows.forEach(row => {
-            row.hidden = true;
-        });
-
-        // Tampilkan halaman saat ini.
-        const startIndex = (currentPage - 1) * size;
-
-        rows
-            .slice(startIndex, startIndex + size)
-            .forEach((row, index) => {
-                row.hidden = false;
-
-                const numberCell = $('.mesin-number', row);
-
-                if (numberCell) {
-                    numberCell.textContent =
-                        startIndex + index + 1;
-                }
-            });
-
-        const start = rows.length ? startIndex + 1 : 0;
-
-        const end = Math.min(
-            startIndex + size,
-            rows.length
-        );
-
-        $('#mesinTableInfo').textContent =
-            `Menampilkan ${start}–${end} dari ${rows.length} lokasi`;
-
-        renderPagination(totalPages);
     }
 
     function renderPagination(totalPages) {
@@ -234,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.replaceChildren();
 
-        const controls = [
+        const buttons = [
             {
                 label: '‹',
                 page: currentPage - 1,
@@ -254,11 +210,11 @@ document.addEventListener('DOMContentLoaded', () => {
             {
                 label: '›',
                 page: currentPage + 1,
-                disabled: currentPage === totalPages
+                disabled: currentPage >= totalPages
             }
         ];
 
-        controls.forEach(item => {
+        buttons.forEach(item => {
             const button = document.createElement('button');
 
             button.type = 'button';
@@ -271,24 +227,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
             button.addEventListener('click', () => {
                 currentPage = item.page;
-
-                renderMainTable();
+                renderTable();
             });
 
             container.appendChild(button);
         });
     }
 
+    function renderTable() {
+        const rows = filteredTableRows();
+
+        const size = Number(pageSize.value) || 20;
+
+        const totalPages = Math.max(
+            1,
+            Math.ceil(rows.length / size)
+        );
+
+        currentPage = Math.min(
+            Math.max(currentPage, 1),
+            totalPages
+        );
+
+        const startIndex = (currentPage - 1) * size;
+
+        tableRows.forEach(row => {
+            row.hidden = true;
+        });
+
+        rows
+            .slice(startIndex, startIndex + size)
+            .forEach((row, index) => {
+                row.hidden = false;
+
+                const numberCell = $(
+                    '.mesin-number',
+                    row
+                );
+
+                if (numberCell) {
+                    numberCell.textContent =
+                        startIndex + index + 1;
+                }
+            });
+
+        const start = rows.length ? startIndex + 1 : 0;
+        const end = Math.min(startIndex + size, rows.length);
+
+        $('#mesinTableInfo').textContent =
+            `Menampilkan ${start}–${end} dari ${rows.length} lokasi`;
+
+        renderPagination(totalPages);
+    }
+
     mainSearch.addEventListener('input', () => {
         currentPage = 1;
-
-        renderMainTable();
+        renderTable();
     });
 
     pageSize.addEventListener('change', () => {
         currentPage = 1;
-
-        renderMainTable();
+        renderTable();
     });
 
     $('#mesinReset').addEventListener('click', () => {
@@ -296,8 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pageSize.value = '20';
 
         currentPage = 1;
-
-        renderMainTable();
+        renderTable();
     });
 
 
@@ -308,25 +306,23 @@ document.addEventListener('DOMContentLoaded', () => {
     */
 
     $('#mesinExport').addEventListener('click', () => {
-        const rows = [
-            [
-                'No',
-                'Lokasi',
-                'Alamat',
-                'Jumlah Barang',
-                'Nilai'
-            ]
-        ];
+        const rows = [[
+            'No',
+            'Lokasi',
+            'Alamat',
+            'Jumlah Barang',
+            'Nilai'
+        ]];
 
-        getFilteredRows().forEach((row, index) => {
+        filteredTableRows().forEach((row, index) => {
             const cells = Array.from(row.cells);
 
             rows.push([
                 index + 1,
-                cells[1].innerText.trim(),
-                cells[2].innerText.trim(),
-                cells[3].innerText.trim(),
-                cells[4].innerText.trim()
+                cells[1]?.innerText.trim() || '',
+                cells[2]?.innerText.trim() || '',
+                cells[3]?.innerText.trim() || '',
+                cells[4]?.innerText.trim() || ''
             ]);
         });
 
@@ -352,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
         link.download = 'kib-peralatan-mesin.csv';
 
         document.body.appendChild(link);
-
         link.click();
         link.remove();
 
@@ -362,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /*
     |--------------------------------------------------------------------------
-    | 04. AMBIL TRANSAKSI PENDING
+    | 04. LOAD PENDING NILAI ASET
     |--------------------------------------------------------------------------
     */
 
@@ -370,67 +365,72 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingBody.innerHTML = `
             <tr>
                 <td colspan="9" class="mesin-empty">
-                    Memuat transaksi pending...
+                    Memuat data pending...
                 </td>
             </tr>
         `;
 
         try {
-            const response = await getJson(
+            const result = await getJson(
                 root.dataset.pendingUrl
             );
 
-            pendingItems = Array.isArray(response.data)
-                ? response.data
+            pendingSources = Array.isArray(result.data)
+                ? result.data
                 : [];
 
-            const count = Number(
-                response.count ?? pendingItems.length
+            const total = Math.max(
+                0,
+                Number(result.count ?? pendingSources.length)
             );
 
             $('#mesinPendingTotal').textContent =
-                formatter.format(count);
+                number.format(total);
 
             $('#mesinPendingLabel').textContent =
-                formatter.format(count);
+                number.format(total);
 
             $('#mesinPendingPill').textContent =
-                formatter.format(count);
+                number.format(total);
 
             renderPending();
 
         } catch (error) {
-            pendingItems = [];
+            console.error(
+                'Gagal mengambil data pending Mesin:',
+                error
+            );
+
+            pendingSources = [];
 
             pendingBody.innerHTML = `
                 <tr>
                     <td colspan="9" class="mesin-empty">
-                        Data pending gagal dimuat.
-                        Periksa endpoint dan permission PostgreSQL.
+                        Gagal memuat data pending.
+                        Periksa route dan log Laravel.
                     </td>
                 </tr>
             `;
-
-            console.error('Pending Mesin:', error);
         }
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | FILTER DAN RENDER TABEL PENDING
+    | FILTER DATA PENDING
     |--------------------------------------------------------------------------
     */
 
     function renderPending() {
         const keyword = pendingSearch.value
-            .toLowerCase()
-            .trim();
+            .trim()
+            .toLowerCase();
 
-        const filtered = pendingItems.filter(item => {
+        const rows = pendingSources.filter(item => {
             const text = [
                 item.no_voucher,
                 item.lokasi,
+                item.alamat,
                 item.departemen,
                 item.divisi,
                 item.tahun,
@@ -443,9 +443,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         $('#mesinPendingCountText').textContent =
-            `${formatter.format(filtered.length)} data ditampilkan`;
+            `${number.format(rows.length)} data ditampilkan`;
 
-        if (!filtered.length) {
+        if (!rows.length) {
             pendingBody.innerHTML = `
                 <tr>
                     <td colspan="9" class="mesin-empty">
@@ -457,69 +457,63 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        pendingBody.innerHTML = filtered
-            .map((item, index) => {
-                const jenis = Number(item.jenisn);
+        pendingBody.innerHTML = rows.map((item, index) => {
+            const jenis = Number(item.jenisn);
 
-                const jenisLabel = jenis === 1
-                    ? 'Penambahan Aset'
-                    : jenis === 2
-                        ? 'Penambahan Nilai (histori)'
-                        : 'Jenis lama';
+            const jenisLabel = jenis === 1
+                ? 'Penambahan Aset'
+                : jenis === 2
+                    ? 'Penambahan Nilai (historis)'
+                    : 'Jenis lainnya';
 
-                return `
-                    <tr>
-                        <td>${index + 1}</td>
+            return `
+                <tr>
+                    <td>${index + 1}</td>
 
-                        <td>${escapeHtml(item.no_voucher)}</td>
+                    <td>
+                        <strong>${escapeHtml(item.no_voucher)}</strong>
+                    </td>
 
-                        <td>${escapeHtml(item.lokasi)}</td>
+                    <td>${escapeHtml(item.lokasi)}</td>
 
-                        <td>${escapeHtml(item.departemen)}</td>
+                    <td>${escapeHtml(item.departemen)}</td>
 
-                        <td>${escapeHtml(item.divisi)}</td>
+                    <td>${escapeHtml(item.divisi)}</td>
 
-                        <td>${jenisLabel}</td>
+                    <td>${escapeHtml(jenisLabel)}</td>
 
-                        <td>${escapeHtml(item.tahun)}</td>
+                    <td>${escapeHtml(item.tahun)}</td>
 
-                        <td>${money(item.nilai)}</td>
+                    <td>
+                        <strong>${money(item.nilai)}</strong>
+                    </td>
 
-                        <td>
-                            <button
-                                type="button"
-                                class="mesin-button primary small"
-                                data-pilih="${Number(item.id)}"
-                            >
-                                Pilih
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            })
-            .join('');
+                    <td>
+                        <button
+                            type="button"
+                            class="mesin-button primary small"
+                            data-pilih="${Number(item.id)}"
+                        >
+                            Pilih
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
 
         refreshIcons();
     }
 
-    pendingSearch.addEventListener('input', renderPending);
+    pendingSearch.addEventListener(
+        'input',
+        renderPending
+    );
 
 
     /*
     |--------------------------------------------------------------------------
     | 05. TOMBOL PILIH — AUTOFILL
     |--------------------------------------------------------------------------
-    |
-    | Yang otomatis terisi:
-    | - ID transaksi
-    | - Lokasi
-    | - Alamat
-    | - Departemen
-    | - Divisi
-    | - No. Voucher
-    |
-    | Detail barang tetap diisi petugas.
-    |
     */
 
     pendingBody.addEventListener('click', event => {
@@ -527,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!button) return;
 
-        const source = pendingItems.find(item =>
+        const source = pendingSources.find(item =>
             Number(item.id) ===
             Number(button.dataset.pilih)
         );
@@ -540,13 +534,11 @@ document.addEventListener('DOMContentLoaded', () => {
             || !source.div
         ) {
             alert(
-                'Lokasi, Departemen, atau Divisi pada transaksi Nilai Aset belum lengkap.'
+                'Lokasi, Departemen, atau Divisi belum lengkap pada transaksi sumber.'
             );
 
             return;
         }
-
-        selectedSource = source;
 
         sourceId.value = source.id;
 
@@ -565,11 +557,9 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#mesinVoucherLabel').value =
             source.no_voucher || '';
 
-        // Sembunyikan daftar pending setelah memilih.
         $('#mesinPendingSection').hidden = true;
 
-        // Fokus ke data barang untuk pengisian manual.
-        form.querySelector('[name="id_barang"]').focus();
+        form.querySelector('[name="id_barang"]')?.focus();
     });
 
 
@@ -582,10 +572,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetForm() {
         form.reset();
 
-        selectedSource = null;
         sourceId.value = '';
 
         $('#mesinMethod').disabled = true;
+        $('#mesinMethod').value = 'PUT';
 
         form.action = root.dataset.storeUrl;
 
@@ -601,7 +591,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'mesinDivisiLabel',
             'mesinVoucherLabel'
         ].forEach(id => {
-            $(`#${id}`).value = '';
+            const field = $(`#${id}`);
+
+            if (field) field.value = '';
         });
 
         pendingSearch.value = '';
@@ -610,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /*
     |--------------------------------------------------------------------------
-    | OPEN FORM TAMBAH
+    | BUKA TAMBAH DATA
     |--------------------------------------------------------------------------
     */
 
@@ -640,29 +632,31 @@ document.addEventListener('DOMContentLoaded', () => {
     */
 
     form.addEventListener('submit', event => {
-        const isCreate = $('#mesinMethod').disabled;
+        const creating = $('#mesinMethod').disabled;
 
-        if (isCreate && !sourceId.value) {
+        if (creating && !sourceId.value) {
             event.preventDefault();
 
-            alert('Pilih transaksi Nilai Aset terlebih dahulu.');
+            alert(
+                'Pilih transaksi Nilai Aset terlebih dahulu.'
+            );
         }
     });
 
 
     /*
     |--------------------------------------------------------------------------
-    | EDIT MESIN
+    | EDIT BARANG MESIN
     |--------------------------------------------------------------------------
     */
 
     async function editMesin(id) {
         try {
-            const response = await getJson(
+            const result = await getJson(
                 recordUrl(id)
             );
 
-            const item = response.data;
+            const item = result.data;
 
             resetForm();
 
@@ -687,6 +681,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             $('#mesinDivisiLabel').value =
                 item.divisi || '';
+
+            $('#mesinVoucherLabel').value = '';
 
             const fields = [
                 'id_barang',
@@ -722,12 +718,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.mesin ?? '';
 
             closeDialog(detailDialog);
-
             openDialog(formDialog);
 
         } catch (error) {
             alert(
-                `Gagal memuat data Mesin: ${error.message}`
+                `Gagal membuka edit Mesin: ${error.message}`
             );
         }
     }
@@ -735,7 +730,146 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /*
     |--------------------------------------------------------------------------
-    | 07. DETAIL MESIN PER LOKASI
+    | 07. RINCIAN NILAI MESIN
+    |--------------------------------------------------------------------------
+    */
+
+    async function showNilaiMesin(
+        lokasiId,
+        lokasiName = ''
+    ) {
+        openDialog(nilaiDialog);
+
+        $('#mesinNilaiTitle').textContent =
+            `Rincian Nilai Mesin — ${lokasiName || 'Lokasi'}`;
+
+        $('#mesinNilaiSubtitle').textContent =
+            'Memuat riwayat transaksi...';
+
+        $('#mesinNilaiTotal').textContent = 'Rp 0';
+
+        $('#mesinNilaiCount').textContent = '0 transaksi';
+
+        $('#mesinNilaiBody').innerHTML = `
+            <tr>
+                <td colspan="8" class="mesin-empty">
+                    Memuat rincian nilai...
+                </td>
+            </tr>
+        `;
+
+        try {
+            const result = await getJson(
+                nilaiUrl(lokasiId)
+            );
+
+            const rows = Array.isArray(result.data)
+                ? result.data
+                : [];
+
+            $('#mesinNilaiTitle').textContent =
+                `Rincian Nilai Mesin — ${
+                    result.lokasi?.nama || lokasiName
+                }`;
+
+            $('#mesinNilaiSubtitle').textContent =
+                result.lokasi?.alamat || '-';
+
+            $('#mesinNilaiTotal').textContent =
+                money(result.total);
+
+            $('#mesinNilaiCount').textContent =
+                `${number.format(result.count ?? rows.length)} transaksi`;
+
+            if (!rows.length) {
+                $('#mesinNilaiBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="mesin-empty">
+                            Tidak ada transaksi nilai pada lokasi ini.
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+            $('#mesinNilaiBody').innerHTML = rows
+                .map((item, index) => {
+                    const jenis = Number(item.jenisn);
+
+                    const label = jenis === 1
+                        ? 'Penambahan Aset'
+                        : jenis === 2
+                            ? 'Penambahan Nilai'
+                            : 'Jenis lainnya';
+
+                    return `
+                        <tr>
+
+                            <td>${index + 1}</td>
+
+                            <td>
+                                <strong>
+                                    ${escapeHtml(item.no_voucher || '-')}
+                                </strong>
+                            </td>
+
+                            <td>
+                                ${escapeHtml(item.tgl_voucher || '-')}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(item.tahun || '-')}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    ${escapeHtml(item.kode_aktiva || '-')}
+                                </strong>
+
+                                <small>
+                                    ${escapeHtml(item.nama_aktiva || '')}
+                                </small>
+                            </td>
+
+                            <td class="mesin-nilai-uraian">
+                                ${escapeHtml(item.urai || '-')}
+                            </td>
+
+                            <td>${escapeHtml(label)}</td>
+
+                            <td>
+                                <strong class="mesin-currency">
+                                    ${money(item.nilai)}
+                                </strong>
+                            </td>
+
+                        </tr>
+                    `;
+                })
+                .join('');
+
+        } catch (error) {
+            console.error(
+                'Rincian nilai Mesin:',
+                error
+            );
+
+            $('#mesinNilaiBody').innerHTML = `
+                <tr>
+                    <td colspan="8" class="mesin-empty">
+                        Gagal mengambil rincian nilai Mesin.
+                        Periksa route dan log Laravel.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 08. DETAIL INVENTARIS PER LOKASI
     |--------------------------------------------------------------------------
     */
 
@@ -743,34 +877,35 @@ document.addEventListener('DOMContentLoaded', () => {
         openDialog(detailDialog);
 
         $('#mesinDetailBody').innerHTML =
-            '<p>Memuat data Mesin...</p>';
+            '<p>Memuat data inventaris...</p>';
 
         try {
-            const response = await getJson(
-                detailUrl(lokasiId)
+            const result = await getJson(
+                locationUrl(lokasiId)
             );
 
-            const lokasi = response.lokasi;
-            const items = Array.isArray(response.data)
-                ? response.data
+            const location = result.lokasi || {};
+
+            const items = Array.isArray(result.data)
+                ? result.data
                 : [];
 
             $('#mesinDetailTitle').textContent =
-                lokasi.lokasi || 'Peralatan dan Mesin';
+                location.lokasi || 'Peralatan dan Mesin';
 
             $('#mesinDetailAddress').textContent =
-                lokasi.alamat || '-';
+                location.alamat || '-';
 
             if (!items.length) {
                 $('#mesinDetailBody').innerHTML =
-                    '<p>Belum ada barang pada lokasi ini.</p>';
+                    '<p>Belum ada data barang di lokasi ini.</p>';
 
                 return;
             }
 
             $('#mesinDetailBody').innerHTML = items
                 .map(item => {
-                    const fields = [
+                    const details = [
                         ['Merk / Tipe', item.merk],
                         ['Tahun', item.tahun],
                         ['Departemen', item.departemen],
@@ -788,7 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ['Keterangan', item.ket]
                     ];
 
-                    const details = fields
+                    const detailHtml = details
                         .map(([label, value]) => `
                             <div>
                                 <dt>${escapeHtml(label)}</dt>
@@ -799,36 +934,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const id = Number(item.id);
 
-                    const dokumen = item.dok
-                        && String(item.dok).startsWith(
-                            'kib/mesin/dokumen/'
-                        )
-                        ? `
-                            <a
-                                class="mesin-button outline small"
-                                href="${fileUrl(id, 'dokumen')}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Dokumen
-                            </a>
-                        `
+                    const fileLink = (type, label) => `
+                        <a
+                            class="mesin-button outline small"
+                            href="${recordUrl(id)}/file/${type}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            ${label}
+                        </a>
+                    `;
+
+                    const documentLink = String(item.dok || '')
+                        .startsWith('kib/mesin/dokumen/')
+                        ? fileLink('dokumen', 'Dokumen')
                         : '';
 
-                    const foto = item.img
-                        && String(item.img).startsWith(
-                            'kib/mesin/foto/'
-                        )
-                        ? `
-                            <a
-                                class="mesin-button outline small"
-                                href="${fileUrl(id, 'foto')}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Foto
-                            </a>
-                        `
+                    const photoLink = String(item.img || '')
+                        .startsWith('kib/mesin/foto/')
+                        ? fileLink('foto', 'Foto')
                         : '';
 
                     return `
@@ -837,14 +961,21 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="mesin-detail-head">
 
                                 <div>
+
                                     <h3>
-                                        ${escapeHtml(item.nama_barang || 'Barang')}
+                                        ${escapeHtml(
+                                            item.nama_barang || 'Barang'
+                                        )}
                                     </h3>
 
                                     <small>
-                                        Kode: ${escapeHtml(item.kode)}
-                                        · Register: ${escapeHtml(item.reg)}
+                                        Kode:
+                                        ${escapeHtml(item.kode || '-')}
+
+                                        · Register:
+                                        ${escapeHtml(item.reg || '-')}
                                     </small>
+
                                 </div>
 
                                 <strong>
@@ -853,15 +984,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             </div>
 
+
                             <dl class="mesin-detail-grid">
-                                ${details}
+                                ${detailHtml}
                             </dl>
+
 
                             <div class="mesin-detail-actions">
 
-                                ${dokumen}
+                                ${documentLink}
 
-                                ${foto}
+                                ${photoLink}
 
                                 <button
                                     type="button"
@@ -890,38 +1023,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             $('#mesinDetailBody').textContent =
-                `Gagal memuat detail: ${error.message}`;
+                `Gagal mengambil detail: ${error.message}`;
         }
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | BUKA DETAIL DARI TABEL
+    | 09. EVENT TOMBOL PADA TABEL UTAMA
     |--------------------------------------------------------------------------
     */
 
     $('#mesinTable').addEventListener('click', event => {
-        const button = event.target.closest('[data-lokasi]');
+        const nilaiButton = event.target.closest(
+            '[data-nilai-lokasi]'
+        );
 
-        if (!button) return;
+        if (nilaiButton) {
+            showNilaiMesin(
+                nilaiButton.dataset.nilaiLokasi,
+                nilaiButton.dataset.nilaiNama
+            );
 
-        showDetail(button.dataset.lokasi);
+            return;
+        }
+
+        const detailButton = event.target.closest(
+            '[data-lokasi]'
+        );
+
+        if (detailButton) {
+            showDetail(
+                detailButton.dataset.lokasi
+            );
+        }
     });
 
 
     /*
     |--------------------------------------------------------------------------
-    | 08. EDIT / HAPUS DARI MODAL DETAIL
+    | EVENT EDIT DAN HAPUS
     |--------------------------------------------------------------------------
     */
 
     $('#mesinDetailBody').addEventListener('click', event => {
-        const editButton = event.target.closest('[data-edit]');
-        const deleteButton = event.target.closest('[data-delete]');
+        const editButton = event.target.closest(
+            '[data-edit]'
+        );
+
+        const deleteButton = event.target.closest(
+            '[data-delete]'
+        );
 
         if (editButton) {
-            editMesin(editButton.dataset.edit);
+            editMesin(
+                editButton.dataset.edit
+            );
+
+            return;
         }
 
         if (deleteButton) {
@@ -944,14 +1103,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /*
     |--------------------------------------------------------------------------
-    | 09. INITIALIZATION
+    | INITIALIZATION
     |--------------------------------------------------------------------------
     */
 
-    renderMainTable();
-
+    renderTable();
     refreshIcons();
-
     loadPending();
 
     if ($('.mesin-notice.error')) {

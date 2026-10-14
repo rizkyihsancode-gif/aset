@@ -2121,63 +2121,124 @@ class KIBController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 02. HALAMAN UTAMA MESIN
-    |--------------------------------------------------------------------------
-    |
-    | Satu baris tabel = satu lokasi.
-    | Satu lokasi dapat mempunyai banyak barang Mesin.
-    |
-    */
 
+    /**
+     * ===================================================
+     * QUERY NILAI MESIN - LOGIKA WEBSITE LAMA
+     * ===================================================
+     *
+     * nilai_aktivas.id_aktiva -> aktivas.id
+     * aktivas.kib -> KIB B - PERALATAN DAN MESIN
+     *
+     * Dipakai oleh KPI, tabel lokasi, dan rincian nilai.
+     */
+    private function queryNilaiMesin(): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('nilai_aktivas as n')
+            ->join(
+                'aktivas as a',
+                'a.id',
+                '=',
+                'n.id_aktiva'
+            )
+            ->where(
+                'a.kib',
+                'KIB B - PERALATAN DAN MESIN'
+            );
+    }
+
+    /**
+     * ===================================================
+     * HALAMAN UTAMA K.I.B PERALATAN DAN MESIN
+     * ===================================================
+     */
     public function dataMesin()
     {
         $cat = $this->mesinKategori();
 
-        // Total transaksi nilai Mesin berdasarkan lokasi.
-        $nilaiPerLokasi = DB::table('nilai_aktivas')
-            ->where('cat', $cat)
-            ->whereNotNull('id_lokasi')
-            ->select('id_lokasi')
+        // Agregasi transaksi dilakukan sebelum JOIN
+        // dengan mesins, untuk mencegah double counting.
+        $nilaiLokasi = $this->queryNilaiMesin()
+            ->whereNotNull('n.id_lokasi')
+            ->select('n.id_lokasi')
             ->selectRaw(
-                'COALESCE(SUM(nilai), 0) AS nilai_total'
+                'COALESCE(SUM(n.nilai), 0) AS nilai_total'
             )
-            ->groupBy('id_lokasi');
+            ->selectRaw(
+                'COUNT(n.id) AS jumlah_transaksi'
+            )
+            ->groupBy('n.id_lokasi');
 
-        // Data mesin dikelompokkan per lokasi seperti web lama.
+        // Daftar barang Mesin dikelompokkan per lokasi.
         $mesins = DB::table('mesins as m')
-            ->join(
+            ->leftJoin(
                 'lokasis as l',
                 'l.id',
                 '=',
                 'm.id_lokasi'
             )
             ->leftJoinSub(
-                $nilaiPerLokasi,
-                'nl',
+                $nilaiLokasi,
+                'v',
                 function ($join) {
                     $join->on(
-                        'nl.id_lokasi',
+                        'v.id_lokasi',
                         '=',
                         'm.id_lokasi'
                     );
                 }
             )
-            ->select('m.id_lokasi')
-            ->selectRaw('MIN(l.lokasi) AS lokasi')
-            ->selectRaw('MIN(l.alamat) AS alamat')
+            ->whereNotNull('m.id_lokasi')
+            ->select(
+                'm.id_lokasi',
+                'l.lokasi',
+                'l.alamat'
+            )
             ->selectRaw(
                 'COUNT(DISTINCT m.id) AS jumlah_barang'
             )
             ->selectRaw(
-                'COALESCE(MAX(nl.nilai_total), 0) AS nilai_total'
+                'COALESCE(MAX(v.nilai_total), 0) AS nilai_total'
             )
-            ->groupBy('m.id_lokasi')
-            ->orderByRaw('MIN(l.lokasi) ASC')
+            ->selectRaw(
+                'COALESCE(MAX(v.jumlah_transaksi), 0) AS jumlah_transaksi'
+            )
+            ->selectRaw(
+                "MIN(
+                CASE
+                    WHEN BTRIM(m.tahun::text) ~ '^[0-9]{4}$'
+                    THEN BTRIM(m.tahun::text)
+                END
+            ) AS tahun_awal"
+            )
+            ->selectRaw(
+                "MAX(
+                CASE
+                    WHEN BTRIM(m.tahun::text) ~ '^[0-9]{4}$'
+                    THEN BTRIM(m.tahun::text)
+                END
+            ) AS tahun_akhir"
+            )
+            ->selectRaw(
+                "COUNT(DISTINCT
+                CASE
+                    WHEN NULLIF(
+                        BTRIM(COALESCE(m.dok::text, '')),
+                        ''
+                    ) IS NOT NULL
+                    THEN m.id
+                END
+            ) AS jumlah_dokumen"
+            )
+            ->groupBy(
+                'm.id_lokasi',
+                'l.lokasi',
+                'l.alamat'
+            )
+            ->orderBy('l.lokasi')
             ->get();
 
-        // Master barang untuk dropdown.
+        // Master Data Barang.
         $barangRows = DB::table('barangs')
             ->select(
                 'id',
@@ -2187,17 +2248,19 @@ class KIBController extends Controller
             ->orderBy('nama_barang')
             ->get();
 
-        // KPI berasal dari database, bukan data contoh.
+        // KPI dari PostgreSQL.
         $totalAset = DB::table('mesins')->count();
 
-        $totalLokasi = $mesins->count();
+        $totalLokasi = DB::table('mesins')
+            ->whereNotNull('id_lokasi')
+            ->distinct()
+            ->count('id_lokasi');
 
-        // Mencakup Penambahan Aset dan Penambahan Nilai.
-        $totalNilai = DB::table('nilai_aktivas')
-            ->where('cat', $cat)
-            ->sum('nilai');
+        $totalNilai = $this->queryNilaiMesin()
+            ->sum('n.nilai');
 
-        // Pending kompatibel dengan transaksi historis web lama.
+        // Pending mempertahankan aturan notifikasi lama:
+        // kategori transaksi dan stat = 0.
         $totalPending = DB::table('nilai_aktivas')
             ->where('cat', $cat)
             ->where('stat', 0)
@@ -2215,6 +2278,7 @@ class KIBController extends Controller
             )
         );
     }
+
 
 
     /*
@@ -2381,6 +2445,81 @@ class KIBController extends Controller
         return response()->json([
             'success' => true,
             'lokasi' => $location,
+            'data' => $rows,
+        ]);
+    }
+
+
+    /**
+     * ===================================================
+     * RINCIAN NILAI MESIN PER LOKASI
+     * GET /kib/mesin/lokasi/{lokasi}/nilai
+     * ===================================================
+     */
+    public function detailNilaiMesinLokasi(int $lokasi)
+    {
+        $lokasiRow = DB::table('lokasis')
+            ->where('id', $lokasi)
+            ->first([
+                'id',
+                'lokasi',
+                'alamat',
+            ]);
+
+        abort_unless(
+            $lokasiRow,
+            404,
+            'Lokasi tidak ditemukan.'
+        );
+
+        $query = $this->queryNilaiMesin()
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'n.dep'
+            )
+            ->leftJoin(
+                'divisis as dv',
+                'dv.id',
+                '=',
+                'n.div'
+            )
+            ->where('n.id_lokasi', $lokasi);
+
+        $total = (clone $query)
+            ->sum('n.nilai');
+
+        $rows = $query
+            ->select([
+                'n.id',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.tahun',
+                'n.jenisn',
+                'n.stat',
+                'n.urai',
+                'n.nilai',
+                'a.kode as kode_aktiva',
+                'a.aktiva as nama_aktiva',
+                'd.nama_dep as departemen',
+                'dv.nama_div as divisi',
+            ])
+            ->orderBy('n.tgl_voucher')
+            ->orderBy('n.id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+
+            'lokasi' => [
+                'id' => $lokasiRow->id,
+                'nama' => $lokasiRow->lokasi,
+                'alamat' => $lokasiRow->alamat,
+            ],
+
+            'count' => $rows->count(),
+            'total' => $total,
             'data' => $rows,
         ]);
     }

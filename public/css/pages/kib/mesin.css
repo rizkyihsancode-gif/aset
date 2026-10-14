@@ -4,21 +4,19 @@
    PERUMDA TIRTA KENCANA KOTA SAMARINDA
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   01. PAGE ROOT
-   -------------------------------------------------------------------------- */
+/* 01. HALAMAN UTAMA */
 
 .mesin-page {
-    --mesin-primary: #0967e9;
-    --mesin-primary-dark: #0754bc;
-    --mesin-ink: #102956;
-    --mesin-muted: #617b9c;
-    --mesin-border: #dae6f5;
+    --primary: #0967e9;
+    --primary-dark: #0752ba;
+    --ink: #102956;
+    --muted: #617b9c;
+    --border: #dae6f5;
 
     min-height: 100vh;
-    padding: 0 24px 30px;
+    padding: 0 20px 30px;
     background: #f4f8fd;
-    color: var(--mesin-ink);
+    color: var(--ink);
     font-size: 14px;
 }
 
@@ -31,8 +29,8 @@
     display: none !important;
 }
 
-.mesin-page input,
 .mesin-page button,
+.mesin-page input,
 .mesin-page select,
 .mesin-page textarea {
     font: inherit;
@@ -44,15 +42,13 @@
 }
 
 
-/* --------------------------------------------------------------------------
-   02. HERO
-   -------------------------------------------------------------------------- */
+/* 02. HERO */
 
 .mesin-hero {
     position: relative;
     overflow: hidden;
-    margin: 0 -24px 18px;
-    padding: 26px 24px 22px;
+    margin: 0 -20px 18px;
+    padding: 24px 20px 22px;
 
     background-image: url('/images/master/pdam4.png');
     background-position: right center;
@@ -63,14 +59,12 @@
 .mesin-hero-overlay {
     position: absolute;
     inset: 0;
-
     background: linear-gradient(
         90deg,
-        rgba(246, 250, 255, 0.98) 0%,
-        rgba(232, 243, 255, 0.90) 55%,
-        rgba(207, 228, 253, 0.36) 100%
+        rgba(247, 251, 255, .98),
+        rgba(229, 242, 255, .91) 55%,
+        rgba(205, 229, 255, .40)
     );
-
     pointer-events: none;
 }
 
@@ -82,9 +76,8 @@
 .mesin-breadcrumb {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 9px;
-
+    flex-wrap: wrap;
     margin-bottom: 15px;
     font-size: 13px;
     color: #6280a3;
@@ -101,65 +94,51 @@
 
 .mesin-heading h1 {
     margin: 0 0 8px;
-
-    color: #0b2454;
     font-size: 30px;
-    font-weight: 800;
     line-height: 1.2;
+    font-weight: 800;
+    color: #0b2454;
 }
 
 .mesin-heading p {
     margin: 0 0 22px;
-
     color: #506f92;
     font-size: 14px;
-    line-height: 1.65;
+    line-height: 1.6;
 }
 
 
-/* --------------------------------------------------------------------------
-   03. KPI CARDS
-   -------------------------------------------------------------------------- */
+/* 03. KPI */
 
 .mesin-kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
+    gap: 13px;
 }
 
 .mesin-kpi-card {
     display: flex;
     align-items: center;
-    gap: 14px;
-
+    gap: 13px;
     min-width: 0;
-    min-height: 98px;
-    padding: 15px;
+    min-height: 94px;
+    padding: 14px;
 
-    border: 1px solid var(--mesin-border);
-    border-radius: 13px;
-
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 6px 20px rgba(24, 74, 127, 0.06);
+    background: rgba(255, 255, 255, .97);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 5px 18px rgba(20, 64, 120, .05);
 }
 
 .mesin-kpi-icon {
-    display: grid;
-    place-items: center;
-
     width: 48px;
     height: 48px;
     flex-shrink: 0;
-
+    display: grid;
+    place-items: center;
     border-radius: 11px;
-
-    background: linear-gradient(
-        140deg,
-        #1b7bff,
-        #075bd5
-    );
-
-    color: #fff;
+    color: white;
+    background: linear-gradient(135deg, #1b7bff, #075bd5);
 }
 
 .mesin-kpi-icon svg {
@@ -173,7 +152,6 @@
 
 .mesin-kpi-card span {
     display: block;
-
     color: #325577;
     font-size: 12px;
     font-weight: 700;
@@ -181,76 +159,53 @@
 
 .mesin-kpi-card strong {
     display: block;
-
     margin: 5px 0;
-
     color: #112c5c;
     font-size: 20px;
     font-weight: 800;
-
     overflow-wrap: anywhere;
 }
 
 .mesin-kpi-card p {
     margin: 0;
-
     color: #7188a2;
     font-size: 12px;
-    line-height: 1.4;
 }
 
 
-/* --------------------------------------------------------------------------
-   04. ALERT SUKSES DAN ERROR
-   -------------------------------------------------------------------------- */
+/* 04. NOTIFIKASI */
 
 .mesin-notice {
-    margin: 12px 0;
     padding: 13px 16px;
-
+    margin: 12px 0;
+    border-radius: 10px;
     border: 1px solid;
-    border-radius: 11px;
-
-    font-size: 14px;
-    line-height: 1.5;
 }
 
 .mesin-notice.success {
+    color: #176b42;
     background: #edf9f2;
     border-color: #b2dfc4;
-    color: #176b42;
 }
 
 .mesin-notice.error {
+    color: #9e342d;
     background: #fff5f3;
     border-color: #ebc0ba;
-    color: #9e342d;
 }
-
-.mesin-notice ul {
-    margin: 7px 0 0;
-    padding-left: 20px;
-}
-
-
-/* --------------------------------------------------------------------------
-   05. PENDING CARD
-   -------------------------------------------------------------------------- */
 
 .mesin-incoming-card,
 .mesin-card {
     background: #fff;
-    border: 1px solid var(--mesin-border);
-    border-radius: 13px;
-
-    box-shadow: 0 5px 20px rgba(20, 70, 120, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(20, 70, 120, .04);
 }
 
 .mesin-incoming-card {
     display: flex;
     align-items: center;
     gap: 17px;
-
     margin-bottom: 16px;
     padding: 18px;
 }
@@ -258,14 +213,12 @@
 .mesin-incoming-icon {
     display: grid;
     place-items: center;
-
     width: 52px;
     height: 52px;
     flex-shrink: 0;
-
     border-radius: 12px;
     background: #fff1d8;
-    color: #e3910a;
+    color: #df8c0a;
 }
 
 .mesin-incoming-icon svg {
@@ -279,24 +232,24 @@
 }
 
 .mesin-incoming-copy small {
+    display: block;
+    margin-bottom: 5px;
     color: #6e87a2;
     font-size: 11px;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: .08em;
 }
 
 .mesin-incoming-copy h3 {
-    margin: 4px 0 7px;
-
+    margin: 0 0 6px;
     color: #102e60;
     font-size: 16px;
     font-weight: 800;
 }
 
 .mesin-incoming-copy p {
-    margin: 0 0 9px;
-
-    color: var(--mesin-muted);
+    margin: 0 0 10px;
+    color: var(--muted);
     font-size: 13px;
 }
 
@@ -304,49 +257,41 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-
     padding: 6px 10px;
-
     border-radius: 7px;
     background: #e7f8ed;
-
     color: #177a44;
     font-size: 12px;
     font-weight: 700;
 }
 
 
-/* --------------------------------------------------------------------------
-   06. BUTTONS
-   -------------------------------------------------------------------------- */
+/* 05. BUTTON */
 
 .mesin-button {
     display: inline-flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    min-height: 37px;
+    padding: 9px 13px;
 
-    min-height: 38px;
-    padding: 9px 14px;
-
-    border-radius: 9px;
+    background: white;
     border: 1px solid transparent;
+    border-radius: 8px;
 
-    background: #fff;
     color: #214f86;
-
     font-size: 13px;
     font-weight: 700;
     line-height: 1.3;
-
-    text-decoration: none;
     white-space: nowrap;
+    text-decoration: none;
     cursor: pointer;
 
     transition:
-        background 0.18s ease,
-        transform 0.18s ease,
-        border-color 0.18s ease;
+        background .18s ease,
+        border-color .18s ease,
+        transform .18s ease;
 }
 
 .mesin-button:hover {
@@ -354,21 +299,19 @@
 }
 
 .mesin-button.primary {
-    color: #fff;
-
-    background: var(--mesin-primary);
-    border-color: var(--mesin-primary);
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
 }
 
 .mesin-button.primary:hover {
-    background: var(--mesin-primary-dark);
+    background: var(--primary-dark);
 }
 
 .mesin-button.outline {
-    color: #1763d4;
-
-    background: #fff;
+    background: white;
     border-color: #c7dcf4;
+    color: #1763d4;
 }
 
 .mesin-button.outline:hover {
@@ -377,13 +320,8 @@
 
 .mesin-button.danger {
     color: #d53b42;
-
     background: #fff2f2;
     border-color: #f2c5c8;
-}
-
-.mesin-button.danger:hover {
-    background: #ffe2e4;
 }
 
 .mesin-button.small {
@@ -393,9 +331,7 @@
 }
 
 
-/* --------------------------------------------------------------------------
-   07. MAIN WORKSPACE
-   -------------------------------------------------------------------------- */
+/* 06. TABEL DAN FILTER */
 
 .mesin-workspace {
     padding: 18px;
@@ -403,34 +339,30 @@
 
 .mesin-workspace-head {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     gap: 16px;
-
     margin-bottom: 18px;
 }
 
 .mesin-workspace-head h2 {
     margin: 0 0 5px;
-
-    color: #102c59;
     font-size: 18px;
     font-weight: 800;
+    color: #102c59;
 }
 
 .mesin-workspace-head p {
     margin: 0;
-
     color: #7086a2;
     font-size: 13px;
 }
 
 .mesin-filters {
     display: flex;
-    align-items: flex-end;
     flex-wrap: wrap;
+    align-items: end;
     gap: 12px;
-
     margin-bottom: 18px;
 }
 
@@ -438,26 +370,22 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-
-    color: #436488;
     font-size: 12px;
     font-weight: 700;
+    color: #436488;
 }
 
 .mesin-search-box {
     position: relative;
-
     display: flex;
     align-items: center;
-
     flex: 1;
-    min-width: 240px;
+    min-width: 230px;
 }
 
 .mesin-search-box svg {
     position: absolute;
     left: 13px;
-
     color: #8198b3;
     pointer-events: none;
 }
@@ -466,60 +394,46 @@
     width: 100%;
     min-height: 40px;
     padding: 10px 12px 10px 41px;
-
-    border: 1px solid var(--mesin-border);
-    border-radius: 9px;
-
     background: #f9fbff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     color: #24446e;
-
     outline: none;
 }
 
 .mesin-filters select {
     min-height: 40px;
     padding: 9px 12px;
-
-    border: 1px solid var(--mesin-border);
-    border-radius: 9px;
-
-    background: #fff;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     color: #28496f;
 }
 
 .mesin-search-box input:focus,
 .mesin-filters select:focus {
     border-color: #5797ef;
-    box-shadow: 0 0 0 3px rgba(37, 113, 224, 0.10);
+    box-shadow: 0 0 0 3px rgba(37, 113, 224, .10);
 }
-
-
-/* --------------------------------------------------------------------------
-   08. DATA TABLE
-   -------------------------------------------------------------------------- */
 
 .mesin-table-wrap {
     width: 100%;
     overflow-x: auto;
-
     border: 1px solid #e1ebf6;
-    border-radius: 10px;
+    border-radius: 9px;
 }
 
 .mesin-table {
     width: 100%;
     border-collapse: collapse;
-
     font-size: 13px;
     color: #284365;
 }
 
 .mesin-table thead th {
     padding: 13px 12px;
-
-    border-bottom: 1px solid #d9e5f2;
     background: #eaf2fb;
-
+    border-bottom: 1px solid #d9e5f2;
     color: #193b67;
     font-size: 12px;
     font-weight: 800;
@@ -529,13 +443,12 @@
 
 .mesin-table tbody td {
     padding: 12px;
-
     border-bottom: 1px solid #e7eff8;
     vertical-align: middle;
 }
 
 .mesin-table tbody tr:last-child td {
-    border-bottom: none;
+    border-bottom: 0;
 }
 
 .mesin-table tbody tr:hover {
@@ -549,11 +462,9 @@
 
 .mesin-table tbody td small {
     display: block;
-
-    margin-top: 3px;
-
+    margin-top: 4px;
     color: #7a91ac;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .mesin-data-row[hidden] {
@@ -565,22 +476,6 @@
     text-align: center;
 }
 
-.mesin-count-pill {
-    display: inline-block;
-
-    padding: 6px 10px;
-
-    border: 1px solid #cfe2fa;
-    border-radius: 7px;
-
-    background: #f1f7ff;
-    color: #1765c9;
-
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
 .mesin-currency {
     color: #1266d7 !important;
     white-space: nowrap;
@@ -588,16 +483,10 @@
 
 .mesin-empty {
     padding: 30px !important;
-
+    text-align: center;
     color: #7c90a8;
     font-size: 13px;
-    text-align: center;
 }
-
-
-/* --------------------------------------------------------------------------
-   09. TABLE FOOTER / PAGINATION
-   -------------------------------------------------------------------------- */
 
 .mesin-table-footer {
     display: flex;
@@ -605,17 +494,14 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-
     margin-top: 15px;
-
-    color: #6e87a6;
     font-size: 12px;
+    color: #6e87a6;
 }
 
 .mesin-pagination {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 6px;
 }
 
@@ -623,60 +509,121 @@
     min-width: 35px;
     min-height: 34px;
     padding: 6px 10px;
-
+    background: white;
     border: 1px solid #d7e5f5;
     border-radius: 8px;
-
-    background: #fff;
     color: #2b568a;
-
-    font-size: 12px;
     cursor: pointer;
 }
 
 .mesin-pagination button.active {
-    background: #0967e9;
-    border-color: #0967e9;
-    color: #fff;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
 }
 
 .mesin-pagination button:disabled {
     cursor: default;
-    opacity: 0.75;
+    opacity: .75;
 }
 
 
-/* --------------------------------------------------------------------------
-   10. DIALOG / MODAL
-   -------------------------------------------------------------------------- */
+/* 07. TOMBOL JUMLAH BARANG DAN NILAI */
+
+.mesin-data-button,
+.mesin-nilai-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    min-width: 130px;
+    max-width: 100%;
+    padding: 9px 11px;
+
+    background: #f0f7ff;
+    border: 1px solid #cae0f8;
+    border-radius: 8px;
+
+    color: #1764c9;
+    text-align: left;
+    cursor: pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease;
+}
+
+.mesin-nilai-button {
+    min-width: 175px;
+}
+
+.mesin-data-button:hover,
+.mesin-nilai-button:hover {
+    background: #e3f0ff;
+    border-color: #8abaf3;
+}
+
+.mesin-data-button svg,
+.mesin-nilai-button svg {
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+}
+
+.mesin-data-button span,
+.mesin-nilai-button span {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.mesin-data-button strong,
+.mesin-nilai-button strong {
+    color: #0964cd !important;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.mesin-data-button small,
+.mesin-nilai-button small {
+    margin: 0 !important;
+    color: #6b87a8 !important;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+
+/* 08. MODAL */
 
 .mesin-dialog {
     position: fixed;
+    width: min(1020px, calc(100vw - 32px));
+    max-width: 1020px;
+    max-height: calc(100dvh - 36px);
 
-    width: min(1000px, calc(100vw - 32px));
-    max-width: 1000px;
-    max-height: calc(100dvh - 40px);
-
-    padding: 0;
     margin: auto;
+    padding: 0;
 
+    background: white;
     border: 1px solid #d9e6f6;
-    border-radius: 16px;
+    border-radius: 15px;
 
-    background: #fff;
     color: #15345f;
-
-    box-shadow: 0 25px 80px rgba(6, 30, 67, 0.25);
+    box-shadow: 0 25px 80px rgba(6, 30, 67, .25);
     overflow: hidden;
 }
 
-.mesin-dialog.detail {
+.mesin-dialog.detail,
+.mesin-dialog.nilai {
     width: min(1100px, calc(100vw - 32px));
     max-width: 1100px;
 }
 
 .mesin-dialog::backdrop {
-    background: rgba(10, 27, 52, 0.60);
+    background: rgba(10, 27, 52, .60);
     backdrop-filter: blur(3px);
 }
 
@@ -688,24 +635,21 @@
 
     padding: 19px 23px;
 
+    background: white;
     border-bottom: 1px solid #e3ecf6;
-    background: #fff;
 }
 
 .mesin-dialog-header small {
     display: block;
-
     margin-bottom: 5px;
-
     color: #176bd9;
     font-size: 11px;
     font-weight: 800;
-    letter-spacing: 0.06em;
+    letter-spacing: .06em;
 }
 
 .mesin-dialog-header h2 {
     margin: 0 0 5px;
-
     color: #102d5b;
     font-size: 21px;
     font-weight: 800;
@@ -713,7 +657,6 @@
 
 .mesin-dialog-header p {
     margin: 0;
-
     color: #70849d;
     font-size: 13px;
     line-height: 1.5;
@@ -727,31 +670,23 @@
     height: 36px;
     flex-shrink: 0;
 
+    background: #f0f5fb;
     border: none;
     border-radius: 9px;
 
-    background: #f0f5fb;
     color: #527298;
-
     cursor: pointer;
-}
-
-.mesin-close:hover {
-    background: #e5effb;
 }
 
 .mesin-dialog-scroll {
     max-height: calc(100dvh - 155px);
     padding: 19px 22px;
-
     overflow-y: auto;
     overscroll-behavior: contain;
 }
 
 
-/* --------------------------------------------------------------------------
-   11. MODAL SECTIONS
-   -------------------------------------------------------------------------- */
+/* 09. SECTION DAN FORM */
 
 .mesin-section {
     display: flex;
@@ -760,22 +695,21 @@
     margin-bottom: 17px;
     padding: 17px;
 
+    background: #fbfdff;
     border: 1px solid #dfeaf6;
     border-radius: 12px;
-
-    background: #fbfdff;
 }
 
 .mesin-step {
     display: grid;
     place-items: center;
+    flex-shrink: 0;
 
     width: 29px;
     height: 29px;
-    flex-shrink: 0;
 
-    border-radius: 8px;
     background: #e8f2ff;
+    border-radius: 8px;
 
     color: #126cdb;
     font-size: 13px;
@@ -789,15 +723,13 @@
 
 .mesin-section-body h3 {
     margin: 0 0 5px;
-
-    color: #15345f;
     font-size: 16px;
     font-weight: 800;
+    color: #15345f;
 }
 
 .mesin-section-body > p {
     margin: 0 0 15px;
-
     color: #7187a2;
     font-size: 13px;
     line-height: 1.5;
@@ -807,13 +739,7 @@
     display: block;
     margin-top: 9px;
     color: #6a83a0;
-    font-size: 12px;
 }
-
-
-/* --------------------------------------------------------------------------
-   12. FORM
-   -------------------------------------------------------------------------- */
 
 .mesin-form-grid {
     display: grid;
@@ -834,7 +760,6 @@
     display: flex;
     flex-direction: column;
     gap: 7px;
-
     min-width: 0;
 
     color: #325577;
@@ -844,24 +769,20 @@
 
 .mesin-form-grid input,
 .mesin-form-grid select,
-.mesin-form-grid textarea,
 .mesin-full-label textarea,
 #mesinPendingSearch {
     display: block;
-
     width: 100%;
     min-height: 40px;
     padding: 10px 12px;
 
+    background: white;
     border: 1px solid #d5e3f3;
     border-radius: 8px;
 
-    background: #fff;
     color: #223f67;
-
     font-size: 13px;
     font-weight: 400;
-
     outline: none;
 }
 
@@ -876,17 +797,12 @@
 .mesin-full-label textarea:focus,
 #mesinPendingSearch:focus {
     border-color: #4d95f2;
-    box-shadow: 0 0 0 3px rgba(42, 124, 236, 0.10);
-}
-
-.mesin-form-grid input[type="file"] {
-    padding: 8px;
-    min-height: 43px;
+    box-shadow: 0 0 0 3px rgba(42, 124, 236, .10);
 }
 
 .mesin-full-label textarea {
-    resize: vertical;
     min-height: 90px;
+    resize: vertical;
 }
 
 .mesin-form-actions {
@@ -894,14 +810,8 @@
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 10px;
-
     padding: 16px 0 4px;
 }
-
-
-/* --------------------------------------------------------------------------
-   13. PENDING SOURCE TABLE
-   -------------------------------------------------------------------------- */
 
 #mesinPendingSearch {
     margin-bottom: 12px;
@@ -913,19 +823,18 @@
 }
 
 .mesin-pending-wrap .mesin-table {
-    min-width: 850px;
+    min-width: 880px;
 }
 
-.mesin-pending-wrap .mesin-table th {
+.mesin-pending-wrap thead th,
+.mesin-nilai-table thead th {
     position: sticky;
     top: 0;
     z-index: 1;
 }
 
 
-/* --------------------------------------------------------------------------
-   14. DETAIL PERALATAN DAN MESIN
-   -------------------------------------------------------------------------- */
+/* 10. DETAIL BARANG */
 
 .mesin-detail-list {
     display: grid;
@@ -934,11 +843,9 @@
 
 .mesin-detail-card {
     padding: 18px;
-
+    background: white;
     border: 1px solid #dce8f7;
     border-radius: 12px;
-
-    background: #fff;
 }
 
 .mesin-detail-head {
@@ -946,13 +853,11 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
-
     margin-bottom: 15px;
 }
 
 .mesin-detail-head h3 {
     margin: 0 0 5px;
-
     color: #15345f;
     font-size: 17px;
     font-weight: 800;
@@ -973,31 +878,26 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
-
     margin: 0;
 }
 
 .mesin-detail-grid > div {
     min-width: 0;
     padding: 10px 12px;
-
+    background: #f7fbff;
     border: 1px solid #e1eaf5;
     border-radius: 9px;
-
-    background: #f7fbff;
 }
 
 .mesin-detail-grid dt {
     margin-bottom: 4px;
-
     color: #7890ab;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
 }
 
 .mesin-detail-grid dd {
     margin: 0;
-
     color: #234467;
     font-size: 13px;
     font-weight: 700;
@@ -1008,14 +908,61 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-
     margin-top: 15px;
 }
 
 
-/* --------------------------------------------------------------------------
-   15. RESPONSIVE
-   -------------------------------------------------------------------------- */
+/* 11. MODAL NILAI MESIN */
+
+.mesin-nilai-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    padding: 14px 16px;
+    margin-bottom: 14px;
+
+    background: #f2f8ff;
+    border: 1px solid #cae0f8;
+    border-radius: 10px;
+}
+
+.mesin-nilai-summary span {
+    color: #5c7798;
+    font-size: 13px;
+}
+
+.mesin-nilai-summary strong {
+    color: #0858b7;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.mesin-nilai-summary small {
+    margin-left: auto;
+    color: #6d89a6;
+    font-size: 12px;
+}
+
+.mesin-nilai-table-wrap {
+    max-height: 460px;
+    overflow: auto;
+}
+
+.mesin-nilai-table {
+    min-width: 850px;
+}
+
+.mesin-nilai-uraian {
+    min-width: 200px;
+    max-width: 360px;
+    white-space: normal;
+    line-height: 1.45;
+}
+
+
+/* 12. RESPONSIVE */
 
 @media (max-width: 1200px) {
     .mesin-kpi-grid {
@@ -1029,12 +976,12 @@
 
 @media (max-width: 900px) {
     .mesin-page {
-        padding: 0 16px 24px;
+        padding: 0 15px 24px;
     }
 
     .mesin-hero {
-        margin: 0 -16px 16px;
-        padding: 24px 16px;
+        margin: 0 -15px 16px;
+        padding: 24px 15px;
     }
 
     .mesin-incoming-card {
@@ -1042,8 +989,8 @@
     }
 
     .mesin-workspace-head {
-        align-items: flex-start;
         flex-direction: column;
+        align-items: flex-start;
     }
 
     .mesin-form-grid.cols-3 {
@@ -1052,7 +999,10 @@
 }
 
 @media (max-width: 640px) {
-    .mesin-kpi-grid {
+    .mesin-kpi-grid,
+    .mesin-form-grid.cols-2,
+    .mesin-form-grid.cols-3,
+    .mesin-detail-grid {
         grid-template-columns: 1fr;
     }
 
@@ -1076,26 +1026,23 @@
         width: 100%;
     }
 
-    .mesin-form-grid.cols-2,
-    .mesin-form-grid.cols-3,
-    .mesin-detail-grid {
-        grid-template-columns: 1fr;
-    }
-
     .mesin-section {
         padding: 12px;
         gap: 10px;
     }
 
-    .mesin-dialog-header {
-        padding: 15px;
-    }
-
+    .mesin-dialog-header,
     .mesin-dialog-scroll {
-        padding: 13px;
+        padding: 14px;
     }
 
-    .mesin-detail-head {
+    .mesin-detail-head,
+    .mesin-nilai-summary {
         flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mesin-nilai-summary small {
+        margin-left: 0;
     }
 }

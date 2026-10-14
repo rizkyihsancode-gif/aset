@@ -493,14 +493,11 @@ Route::prefix('kib')
     });
 
 
+
 /*
 |--------------------------------------------------------------------------
 | K.I.B B — PERALATAN DAN MESIN
 |--------------------------------------------------------------------------
-|
-| Seluruh fungsi dikelola oleh KIBController.
-| Route tidak memakai Controller Mesin terpisah.
-|
 */
 
 Route::get('/kib/mesin', [
@@ -508,12 +505,24 @@ Route::get('/kib/mesin', [
     'dataMesin'
 ])->name('kib.mesin');
 
-
 Route::get('/kib/mesin/pending', [
     KIBController::class,
     'pendingMesin'
 ])->name('kib.mesin.pending');
 
+/*
+|--------------------------------------------------------------------------
+| Detail lokasi dan rincian nilai harus berada
+| sebelum route /kib/mesin/{mesin}
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/kib/mesin/lokasi/{lokasi}/nilai', [
+    KIBController::class,
+    'detailNilaiMesinLokasi'
+])
+    ->whereNumber('lokasi')
+    ->name('kib.mesin.lokasi.nilai');
 
 Route::get('/kib/mesin/lokasi/{lokasi}', [
     KIBController::class,
@@ -522,12 +531,10 @@ Route::get('/kib/mesin/lokasi/{lokasi}', [
     ->whereNumber('lokasi')
     ->name('kib.mesin.lokasi');
 
-
 Route::post('/kib/mesin', [
     KIBController::class,
     'storeMesin'
 ])->name('kib.mesin.store');
-
 
 Route::get('/kib/mesin/{mesin}', [
     KIBController::class,
@@ -536,14 +543,12 @@ Route::get('/kib/mesin/{mesin}', [
     ->whereNumber('mesin')
     ->name('kib.mesin.show');
 
-
 Route::put('/kib/mesin/{mesin}', [
     KIBController::class,
     'updateMesin'
 ])
     ->whereNumber('mesin')
     ->name('kib.mesin.update');
-
 
 Route::delete('/kib/mesin/{mesin}', [
     KIBController::class,
@@ -552,7 +557,6 @@ Route::delete('/kib/mesin/{mesin}', [
     ->whereNumber('mesin')
     ->name('kib.mesin.destroy');
 
-
 Route::get('/kib/mesin/{mesin}/file/{jenis}', [
     KIBController::class,
     'fileMesin'
@@ -560,6 +564,7 @@ Route::get('/kib/mesin/{mesin}/file/{jenis}', [
     ->whereNumber('mesin')
     ->where('jenis', 'dokumen|foto')
     ->name('kib.mesin.file');
+
 
 
 Route::get('/kib/gedung', function () {
