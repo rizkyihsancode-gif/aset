@@ -231,123 +231,143 @@
                 </button>
             </div>
 
-            {{-- DELAPAN KOLOM TETAP ADA --}}
+
+            {{-- =====================================================
+     TABEL PERALATAN DAN MESIN
+     6 KOLOM: WEB LAMA + PDF
+===================================================== --}}
+
             <div class="mesin-table-wrap">
+
                 <table id="mesinTable" class="mesin-table">
 
                     <thead>
                         <tr>
-                            <th>No</th>
-                            <th>Lokasi</th>
-                            <th>Alamat</th>
-                            <th>Data Mesin</th>
-                            <th>Tahun</th>
-                            <th>Nilai</th>
-                            <th>Dokumen</th>
-                            <th>Aksi</th>
+                            <th scope="col">No</th>
+                            <th scope="col">Lokasi</th>
+                            <th scope="col">Alamat</th>
+                            <th scope="col">Nilai</th>
+                            <th scope="col">Aksi</th>
+                            <th scope="col">PDF</th>
                         </tr>
                     </thead>
 
                     <tbody>
+
                         @forelse ($mesins as $row)
                             <tr class="mesin-data-row"
-                                data-search="{{ mb_strtolower(trim((string) $row->lokasi) . ' ' . trim((string) $row->alamat)) }}">
+                                data-search="{{ mb_strtolower(trim((string) $row->lokasi) . ' ' . trim((string) $row->alamat)) }}"
+                                data-export-lokasi="{{ trim((string) $row->lokasi) }}"
+                                data-export-alamat="{{ trim((string) $row->alamat) }}"
+                                data-export-nilai="{{ (int) $row->nilai_total }}"
+                                data-export-pdf="{{ (int) $row->jumlah_dokumen }}">
+
+                                {{-- 1. NOMOR URUT --}}
                                 <td class="mesin-number"></td>
 
-                                <td>
+                                {{-- 2. LOKASI --}}
+                                <td class="mesin-lokasi-cell">
+
                                     <strong>
-                                        {{ trim((string) $row->lokasi) }}
+                                        {{ trim((string) $row->lokasi) ?: '—' }}
                                     </strong>
+
                                     <small>
                                         ID Lokasi #{{ $row->id_lokasi }}
                                     </small>
+
                                 </td>
 
-                                <td>
-                                    {{ trim((string) $row->alamat) }}
+                                {{-- 3. ALAMAT --}}
+                                <td class="mesin-alamat-cell">
+
+                                    {{ trim((string) $row->alamat) ?: '—' }}
+
                                 </td>
 
-                                <td>
-                                    <button type="button" class="mesin-data-button" data-lokasi="{{ $row->id_lokasi }}"
-                                        title="Lihat data Mesin">
-                                        <i data-lucide="files"></i>
-                                        <span>
-                                            <strong>
-                                                {{ number_format((int) $row->jumlah_barang, 0, ',', '.') }}
-                                                barang
-                                            </strong>
-                                            <small>Lihat detail barang</small>
-                                        </span>
-                                    </button>
-                                </td>
+                                {{-- 4. NILAI --}}
+                                <td class="mesin-nilai-cell">
 
-                                <td>
-                                    @if ($row->tahun_awal && $row->tahun_akhir)
-                                        @if ($row->tahun_awal === $row->tahun_akhir)
-                                            <span class="mesin-year-pill">
-                                                {{ $row->tahun_awal }}
-                                            </span>
-                                        @else
-                                            <span class="mesin-year-pill">
-                                                {{ $row->tahun_awal }}–{{ $row->tahun_akhir }}
-                                            </span>
-                                        @endif
-                                    @else
-                                        <span class="mesin-muted">—</span>
-                                    @endif
-                                </td>
-
-                                <td>
                                     <button type="button" class="mesin-nilai-button"
                                         data-nilai-lokasi="{{ $row->id_lokasi }}"
                                         data-nilai-nama="{{ trim((string) $row->lokasi) }}"
                                         title="Lihat rincian transaksi Nilai Aset">
+
                                         <span>
                                             <strong>
                                                 {{ $rupiah($row->nilai_total) }}
                                             </strong>
+
                                             <small>
                                                 {{ number_format((int) $row->jumlah_transaksi, 0, ',', '.') }}
-                                                transaksi mesin
+                                                transaksi
                                             </small>
                                         </span>
+
                                         <i data-lucide="external-link"></i>
+
                                     </button>
+
                                 </td>
 
-                                <td>
-                                    @if ((int) $row->jumlah_dokumen > 0)
-                                        <button type="button" class="mesin-document-button"
-                                            data-lokasi="{{ $row->id_lokasi }}">
-                                            <i data-lucide="file-text"></i>
-                                            {{ number_format((int) $row->jumlah_dokumen, 0, ',', '.') }}
-                                            dokumen
-                                        </button>
-                                    @else
-                                        <span class="mesin-muted">—</span>
-                                    @endif
-                                </td>
+                                {{-- 5. AKSI DETAIL --}}
+                                <td class="mesin-aksi-cell">
 
-                                <td>
                                     <button type="button" class="mesin-button outline small"
                                         data-lokasi="{{ $row->id_lokasi }}">
+
                                         <i data-lucide="eye"></i>
+
                                         Detail
+
                                     </button>
+
+                                </td>
+
+                                {{-- 6. PDF --}}
+                                <td class="mesin-pdf-cell">
+
+                                    @if ((int) $row->jumlah_dokumen > 0)
+                                        <button type="button" class="mesin-button mesin-pdf-button small"
+                                            data-pdf-lokasi="{{ $row->id_lokasi }}"
+                                            data-pdf-nama="{{ trim((string) $row->lokasi) }}"
+                                            aria-label="Lihat PDF untuk lokasi {{ trim((string) $row->lokasi) }}">
+
+                                            <i data-lucide="file-text"></i>
+
+                                            PDF
+
+                                            <span class="mesin-pdf-count">
+                                                {{ (int) $row->jumlah_dokumen }}
+                                            </span>
+
+                                        </button>
+                                    @else
+                                        <span class="mesin-muted" title="Belum ada dokumen PDF">
+                                            —
+                                        </span>
+                                    @endif
+
                                 </td>
 
                             </tr>
+
                         @empty
+
                             <tr>
-                                <td colspan="8" class="mesin-empty">
+                                <td colspan="6" class="mesin-empty">
                                     Belum ada data Peralatan dan Mesin
                                     pada database.
                                 </td>
                             </tr>
                         @endforelse
+
                     </tbody>
+
                 </table>
+
             </div>
+
 
             {{-- PAGINATION TETAP --}}
             <div class="mesin-table-footer">
@@ -678,6 +698,77 @@
                 <div id="mesinDetailBody" class="mesin-detail-list"></div>
             </div>
         </dialog>
+
+
+        {{-- =====================================================
+     MODAL DAFTAR PDF MESIN PER LOKASI
+===================================================== --}}
+
+        <dialog id="mesinPdfDialog" class="mesin-dialog detail">
+
+            {{-- HEADER MODAL --}}
+            <div class="mesin-dialog-header">
+
+                <div>
+
+                    <small>
+                        DOKUMEN INVENTARIS
+                    </small>
+
+                    <h2 id="mesinPdfTitle">
+                        Dokumen PDF Mesin
+                    </h2>
+
+                    <p id="mesinPdfAddress">
+                        Lokasi Peralatan dan Mesin
+                    </p>
+
+                </div>
+
+                <button type="button" class="mesin-close" data-close="mesinPdfDialog" aria-label="Tutup daftar PDF">
+                    <i data-lucide="x"></i>
+                </button>
+
+            </div>
+
+            {{-- BODY MODAL --}}
+            <div class="mesin-dialog-scroll">
+
+                <p id="mesinPdfStatus" class="mesin-pdf-status" role="status"></p>
+
+                <div class="mesin-table-wrap">
+
+                    <table class="mesin-table mesin-pdf-table">
+
+                        <thead>
+                            <tr>
+                                <th scope="col">No</th>
+                                <th scope="col">Nama Barang</th>
+                                <th scope="col">Kode</th>
+                                <th scope="col">Tahun</th>
+                                <th scope="col">PDF</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="mesinPdfBody">
+
+                            <tr>
+                                <td colspan="5" class="mesin-empty">
+                                    Pilih tombol PDF
+                                    pada tabel utama.
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </dialog>
+
 
         {{-- MODAL RINCIAN NILAI TETAP 10 KOLOM --}}
         <dialog id="mesinNilaiDialog" class="mesin-dialog nilai">

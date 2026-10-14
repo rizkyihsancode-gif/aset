@@ -48,9 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ELEMENT
     // ==========================================
 
-    const formDialog = $('#mesinFormDialog');
-    const detailDialog = $('#mesinDetailDialog');
-    const nilaiDialog = $('#mesinNilaiDialog');
+   
+const formDialog = $('#mesinFormDialog');
+const detailDialog = $('#mesinDetailDialog');
+const nilaiDialog = $('#mesinNilaiDialog');
+
+// Modal dokumen PDF per lokasi
+const pdfDialog = $('#mesinPdfDialog');
+
 
     const form = $('#mesinForm');
     const sourceId = $('#mesinNilaiId');
@@ -177,15 +182,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    [formDialog, detailDialog, nilaiDialog]
-        .filter(Boolean)
-        .forEach(dialog => {
-            dialog.addEventListener('click', event => {
-                if (event.target === dialog) {
-                    closeDialog(dialog);
-                }
-            });
-        });
+   
+[
+    formDialog,
+    detailDialog,
+    nilaiDialog,
+    pdfDialog
+].forEach(dialog => {
+    dialog?.addEventListener('click', event => {
+        if (event.target === dialog) {
+            closeDialog(dialog);
+        }
+    });
+});
+
 
     // ==========================================
     // PENCARIAN TABEL UTAMA
@@ -357,60 +367,79 @@ document.addEventListener('DOMContentLoaded', () => {
     // EXPORT CSV TABEL UTAMA
     // ==========================================
 
-    $('#mesinExport').addEventListener('click', () => {
-        const output = [[
-            'No',
-            'Lokasi',
-            'Alamat',
-            'Jumlah Barang',
-            'Tahun',
-            'Nilai',
-            'Dokumen'
-        ]];
+    
+/*
+|--------------------------------------------------------------------------
+| EXPORT CSV K.I.B MESIN
+| STRUKTUR TABEL LAMA + PDF
+|--------------------------------------------------------------------------
+*/
 
-        filteredTableRows().forEach((row, index) => {
-            const cells = [...row.cells];
+$('#mesinExport').addEventListener('click', () => {
 
-            output.push([
-                index + 1,
-                cells[1]?.innerText.trim() || '',
-                cells[2]?.innerText.trim() || '',
-                cells[3]?.innerText.trim() || '',
-                cells[4]?.innerText.trim() || '',
-                cells[5]?.innerText.trim() || '',
-                cells[6]?.innerText.trim() || ''
-            ]);
-        });
+    const rows = [[
+        'No',
+        'Lokasi',
+        'Alamat',
+        'Nilai',
+        'Jumlah PDF'
+    ]];
 
-        const csv = '\uFEFF' + output.map(values =>
-            values.map(value => {
-                let text = String(value ?? '');
+    // Ekspor seluruh hasil pencarian,
+    // bukan hanya halaman pagination aktif.
+    filteredTableRows().forEach((row, index) => {
 
-                // Melindungi dari formula injection CSV.
-                if (/^\s*[=+@-]/.test(text)) {
-                    text = "'" + text;
-                }
+        rows.push([
+            index + 1,
+            row.dataset.exportLokasi || '',
+            row.dataset.exportAlamat || '',
+            row.dataset.exportNilai || '0',
+            row.dataset.exportPdf || '0'
+        ]);
 
-                return `"${text.replaceAll('"', '""')}"`;
-            }).join(';')
-        ).join('\r\n');
-
-        const blob = new Blob([csv], {
-            type: 'text/csv;charset=utf-8'
-        });
-
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-
-        anchor.href = url;
-        anchor.download = 'kib-peralatan-mesin.csv';
-
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-
-        URL.revokeObjectURL(url);
     });
+
+    // Format CSV yang kompatibel dengan Excel.
+    const csv = '\uFEFF' + rows.map(values =>
+
+        values.map(value => {
+
+            let text = String(value ?? '');
+
+            // Hindari formula injection pada CSV.
+            if (/^\s*[=+@-]/.test(text)) {
+                text = "'" + text;
+            }
+
+            // Escape karakter tanda kutip.
+            return `"${text.replaceAll('"', '""')}"`;
+
+        }).join(';')
+
+    ).join('\r\n');
+
+    const blob = new Blob(
+        [csv],
+        { type: 'text/csv;charset=utf-8' }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+
+    link.href = url;
+
+    link.download = 'kib-peralatan-mesin.csv';
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+});
+
 
     // ==========================================
     // LOAD DATA PENDING
@@ -1174,34 +1203,271 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ==========================================
-    // EVENT TABEL UTAMA
-    // ==========================================
+    
+/*
+|--------------------------------------------------------------------------
+| DOKUMEN PDF MESIN PER LOKASI
+|--------------------------------------------------------------------------
+|
+| Menggunakan endpoint yang sudah tersedia:
+| GET /kib/mesin/lokasi/{lokasi}
+|
+| Setiap dokumen memakai route:
+| GET /kib/mesin/{mesin}/file/dokumen
+|
+| Tidak membutuhkan Controller atau route baru.
+|
+*/
 
-    $('#mesinTable').addEventListener(
-        'click',
-        event => {
-            const nilai = event.target.closest(
-                '[data-nilai-lokasi]'
-            );
+async function showPdfLokasi(
+    lokasiId,
+    lokasiNama = ''
+) {
+    // Buka modal PDF.
+    openDialog(pdfDialog);
 
-            if (nilai) {
-                showNilaiMesin(
-                    nilai.dataset.nilaiLokasi,
-                    nilai.dataset.nilaiNama
-                );
-                return;
-            }
+    // Reset judul dan status.
+    $('#mesinPdfTitle').textContent =
+        `Dokumen PDF — ${lokasiNama || 'Lokasi Mesin'}`;
 
-            const detail = event.target.closest(
-                '[data-lokasi]'
-            );
+    $('#mesinPdfAddress').textContent =
+        'Memuat dokumen...';
 
-            if (detail) {
-                showDetail(detail.dataset.lokasi);
-            }
+    $('#mesinPdfStatus').textContent = '';
+
+    $('#mesinPdfBody').innerHTML = `
+        <tr>
+            <td
+                colspan="5"
+                class="mesin-empty"
+            >
+                Memuat daftar PDF...
+            </td>
+        </tr>
+    `;
+
+    try {
+        // Mengambil detail seluruh barang
+        // di lokasi yang diklik.
+        const result = await getJson(
+            locationUrl(lokasiId)
+        );
+
+        if (!pdfDialog.open) return;
+
+        const location = result.lokasi || {};
+
+        const all = Array.isArray(result.data)
+            ? result.data
+            : [];
+
+        // Filter barang yang memiliki dokumen.
+        const documents = all.filter(item =>
+            String(item.dok ?? '').trim() !== '' &&
+            String(item.dok).trim() !== '-'
+        );
+
+        // Menampilkan judul sesuai lokasi.
+        $('#mesinPdfTitle').textContent =
+            `Dokumen PDF — ${
+                location.lokasi || lokasiNama
+            }`;
+
+        $('#mesinPdfAddress').textContent =
+            location.alamat || 'Lokasi Mesin';
+
+        // Jumlah dokumen.
+        $('#mesinPdfStatus').textContent =
+            `${number.format(
+                documents.length
+            )} dokumen terdaftar`;
+
+        // Tidak ada PDF.
+        if (!documents.length) {
+            $('#mesinPdfBody').innerHTML = `
+                <tr>
+                    <td
+                        colspan="5"
+                        class="mesin-empty"
+                    >
+                        Belum ada dokumen PDF
+                        pada lokasi ini.
+                    </td>
+                </tr>
+            `;
+
+            return;
         }
-    );
+
+        // Menampilkan dokumen per barang.
+        $('#mesinPdfBody').innerHTML =
+            documents.map((item, index) => {
+
+                const id = Number(item.id);
+
+                // Route yang saat ini dapat membuka
+                // file dari folder penyimpanan baru.
+                const available =
+                    Number.isSafeInteger(id) &&
+                    id > 0 &&
+                    String(item.dok).startsWith(
+                        'kib/mesin/dokumen/'
+                    );
+
+                const link = available
+                    ? `
+                        <a
+                            class="mesin-button mesin-pdf-button small"
+                            href="${recordUrl(id)}/file/dokumen"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <i data-lucide="file-text"></i>
+                            Buka PDF
+                        </a>
+                    `
+                    : `
+                        <span
+                            class="mesin-pdf-unavailable"
+                            title="File lama belum tersedia melalui endpoint PDF saat ini"
+                        >
+                            File lama
+                        </span>
+                    `;
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${index + 1}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                item.nama_barang || 'Barang'
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                item.kode || '—'
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                item.tahun || '—'
+                            )}
+                        </td>
+
+                        <td>
+                            ${link}
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join('');
+
+        // Aktifkan ikon di baris dokumen.
+        refreshIcons();
+
+    } catch (error) {
+
+        console.error(
+            'Gagal memuat PDF Mesin:',
+            error
+        );
+
+        $('#mesinPdfStatus').textContent =
+            'Gagal membaca dokumen dari server.';
+
+        $('#mesinPdfBody').innerHTML = `
+            <tr>
+                <td
+                    colspan="5"
+                    class="mesin-empty"
+                >
+                    Gagal mengambil PDF.
+                    Periksa koneksi dan izin akses.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+   
+/*
+|--------------------------------------------------------------------------
+| EVENT TABEL UTAMA K.I.B MESIN
+|--------------------------------------------------------------------------
+|
+| Nilai  -> rincian transaksi Nilai Aset
+| Aksi   -> detail barang per lokasi
+| PDF    -> dokumen PDF per lokasi
+|
+*/
+
+$('#mesinTable').addEventListener(
+    'click',
+    event => {
+
+        // ==================================
+        // 1. TOMBOL NILAI
+        // ==================================
+
+        const nilaiButton = event.target.closest(
+            '[data-nilai-lokasi]'
+        );
+
+        if (nilaiButton) {
+
+            showNilaiMesin(
+                nilaiButton.dataset.nilaiLokasi,
+                nilaiButton.dataset.nilaiNama
+            );
+
+            return;
+        }
+
+        // ==================================
+        // 2. TOMBOL PDF
+        // ==================================
+
+        const pdfButton = event.target.closest(
+            '[data-pdf-lokasi]'
+        );
+
+        if (pdfButton) {
+
+            showPdfLokasi(
+                pdfButton.dataset.pdfLokasi,
+                pdfButton.dataset.pdfNama
+            );
+
+            return;
+        }
+
+        // ==================================
+        // 3. TOMBOL DETAIL
+        // ==================================
+
+        const detailButton = event.target.closest(
+            '[data-lokasi]'
+        );
+
+        if (detailButton) {
+
+            showDetail(
+                detailButton.dataset.lokasi
+            );
+
+            return;
+        }
+    }
+);
+
 
     // ==========================================
     // EDIT DAN HAPUS INVENTARIS

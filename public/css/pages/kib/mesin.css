@@ -2240,3 +2240,291 @@ min-height: 39px;
         justify-self: end;
     }
 }
+
+/* ============================================================
+   K.I.B PERALATAN DAN MESIN
+   TABEL WEB LAMA + KOLOM PDF
+   ============================================================ */
+
+/*
+|--------------------------------------------------------------------------
+| 1. STRUKTUR TABEL UTAMA — 6 KOLOM
+|--------------------------------------------------------------------------
+*/
+
+.mesin-page #mesinTable {
+    width: 100%;
+    min-width: 800px;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    background: #ffffff;
+}
+
+/* Header tetap biru muda. */
+.mesin-page #mesinTable thead th {
+    padding: 14px 15px;
+
+    border: 1px solid #d9e4ee;
+
+    background: #eaf4ff;
+    color: #122f55;
+
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+/* Garis vertikal dan horizontal tetap ada. */
+.mesin-page #mesinTable tbody td,
+.mesin-page #mesinTable tbody tr:last-child td {
+    padding: 13px 15px;
+
+    border: 1px solid #e1e9f1;
+
+    color: #294866;
+    font-size: 13px;
+    line-height: 1.55;
+
+    vertical-align: middle;
+}
+
+/* Warna baris selang-seling. */
+.mesin-page #mesinTable tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+/* Hover seperti desain sebelumnya. */
+.mesin-page #mesinTable tbody tr:hover {
+    background: #f1f7fd;
+}
+
+/*
+|--------------------------------------------------------------------------
+| 2. LEBAR MASING-MASING KOLOM
+|--------------------------------------------------------------------------
+*/
+
+/* No */
+.mesin-page #mesinTable thead th:nth-child(1),
+.mesin-page #mesinTable tbody td:nth-child(1) {
+    width: 55px;
+    text-align: center;
+}
+
+/* Lokasi */
+.mesin-page #mesinTable thead th:nth-child(2) {
+    min-width: 205px;
+}
+
+/* Alamat */
+.mesin-page #mesinTable thead th:nth-child(3) {
+    min-width: 190px;
+}
+
+/* Nilai */
+.mesin-page #mesinTable thead th:nth-child(4) {
+    min-width: 205px;
+}
+
+/* Aksi */
+.mesin-page #mesinTable thead th:nth-child(5),
+.mesin-page #mesinTable tbody td:nth-child(5) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* PDF */
+.mesin-page #mesinTable thead th:nth-child(6),
+.mesin-page #mesinTable tbody td:nth-child(6) {
+    min-width: 108px;
+    text-align: center;
+}
+
+/*
+|--------------------------------------------------------------------------
+| 3. LOKASI DAN ALAMAT
+|--------------------------------------------------------------------------
+*/
+
+.mesin-page #mesinTable .mesin-lokasi-cell strong {
+    color: #143a69;
+    font-weight: 800;
+}
+
+.mesin-page #mesinTable .mesin-lokasi-cell small {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #738aa5;
+    font-size: 11px;
+}
+
+.mesin-page #mesinTable .mesin-alamat-cell {
+    line-height: 1.6;
+}
+
+/*
+|--------------------------------------------------------------------------
+| 4. KOLOM NILAI
+|--------------------------------------------------------------------------
+*/
+
+/* Tetap memakai style nilai sebelumnya. */
+.mesin-page #mesinTable .mesin-nilai-button {
+    min-width: 0;
+}
+
+.mesin-page #mesinTable .mesin-nilai-button strong {
+    color: #0964cd;
+    font-weight: 800;
+}
+
+.mesin-page #mesinTable .mesin-nilai-button small {
+    color: #6b87a8;
+    font-size: 11px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| 5. TOMBOL PDF
+|--------------------------------------------------------------------------
+*/
+
+.mesin-page .mesin-pdf-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 7px 11px;
+
+    border: 1px solid #f6cccc;
+    border-radius: 8px;
+
+    background: #fff2f2;
+    color: #b92e3b;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    white-space: nowrap;
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        background-color .15s ease,
+        border-color .15s ease;
+}
+
+.mesin-page .mesin-pdf-button:hover {
+    background: #ffe4e4;
+    border-color: #eab4b4;
+
+    color: #982332;
+}
+
+.mesin-page .mesin-pdf-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mesin-page .mesin-pdf-button:focus-visible {
+    outline: 2px solid #df7c83;
+    outline-offset: 3px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| 6. BADGE JUMLAH PDF
+|--------------------------------------------------------------------------
+*/
+
+.mesin-page .mesin-pdf-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 19px;
+    height: 19px;
+
+    padding: 0 5px;
+
+    border-radius: 999px;
+
+    background: #fddde0;
+    color: #9e2b36;
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+/*
+|--------------------------------------------------------------------------
+| 7. MODAL DAFTAR PDF
+|--------------------------------------------------------------------------
+*/
+
+.mesin-page .mesin-pdf-status {
+    margin: 0 0 14px;
+
+    color: #647e9e;
+    font-size: 13px;
+}
+
+.mesin-page .mesin-pdf-table {
+    width: 100%;
+    min-width: 650px;
+
+    border-collapse: collapse;
+}
+
+.mesin-page .mesin-pdf-table thead th {
+    padding: 13px 12px;
+
+    background: #eaf4ff;
+    color: #193b67;
+
+    font-weight: 800;
+    white-space: nowrap;
+
+    border-bottom: 1px solid #d9e5f2;
+}
+
+.mesin-page .mesin-pdf-table tbody td {
+    padding: 13px 12px;
+
+    border-bottom: 1px solid #e7eff8;
+    vertical-align: middle;
+}
+
+.mesin-page .mesin-pdf-table tbody tr:hover {
+    background: #f7fbff;
+}
+
+.mesin-page .mesin-pdf-unavailable {
+    color: #9c6d31;
+    font-size: 12px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| 8. RESPONSIVE
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 800px) {
+    .mesin-page #mesinTable {
+        min-width: 800px;
+    }
+
+    .mesin-page .mesin-pdf-table {
+        min-width: 650px;
+    }
+}
