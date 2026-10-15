@@ -946,7 +946,15 @@
                 @csrf
 
 
-                <input type="hidden" name="_method" id="nilaiFormMethod" value="">
+                
+{{-- Tambah = POST; Edit = PUT --}}
+<input
+    type="hidden"
+    name="_method"
+    id="nilaiFormMethod"
+    value="PUT"
+    disabled
+>
 
 
                 <div class="nilai-modal-header">

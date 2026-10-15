@@ -509,8 +509,11 @@ document.addEventListener(
             if (
                 nilaiFormMethod
             ) {
-                nilaiFormMethod.value =
-                    '';
+               
+// Mode Tambah: gunakan POST murni.
+nilaiFormMethod.value = 'PUT';
+nilaiFormMethod.disabled = true;
+
             }
 
 
@@ -649,8 +652,11 @@ document.addEventListener(
                                         .updateUrl;
 
 
-                                nilaiFormMethod.value =
-                                    'PUT';
+                                
+// Mode Edit: POST diubah menjadi PUT.
+nilaiFormMethod.value = 'PUT';
+nilaiFormMethod.disabled = false;
+
 
 
                                 nilaiFormTitle
