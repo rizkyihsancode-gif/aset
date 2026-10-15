@@ -567,9 +567,79 @@ Route::get('/kib/mesin/{mesin}/file/{jenis}', [
 
 
 
-Route::get('/kib/gedung', function () {
-    return view('kib.gedung');
-})->name('kib.gedung');
+/*
+|--------------------------------------------------------------------------
+| K.I.B C — GEDUNG DAN BANGUNAN
+| Controller: KIBController
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/kib/gedung',
+    [KIBController::class, 'dataGedung']
+)->name('kib.gedung');
+
+
+Route::get(
+    '/kib/gedung/pending',
+    [KIBController::class, 'pendingGedung']
+)->name('kib.gedung.pending');
+
+
+Route::get(
+    '/kib/gedung/lokasi/{lokasi}/nilai',
+    [KIBController::class, 'detailNilaiGedungLokasi']
+)
+    ->whereNumber('lokasi')
+    ->name('kib.gedung.lokasi.nilai');
+
+
+Route::get(
+    '/kib/gedung/lokasi/{lokasi}',
+    [KIBController::class, 'detailGedungLokasi']
+)
+    ->whereNumber('lokasi')
+    ->name('kib.gedung.lokasi');
+
+
+Route::get(
+    '/kib/gedung/{gedung}/file/{jenis}',
+    [KIBController::class, 'fileGedung']
+)
+    ->whereNumber('gedung')
+    ->where('jenis', 'dokumen|foto')
+    ->name('kib.gedung.file');
+
+
+Route::get(
+    '/kib/gedung/{gedung}',
+    [KIBController::class, 'showGedung']
+)
+    ->whereNumber('gedung')
+    ->name('kib.gedung.show');
+
+
+Route::post(
+    '/kib/gedung',
+    [KIBController::class, 'storeGedung']
+)->name('kib.gedung.store');
+
+
+Route::put(
+    '/kib/gedung/{gedung}',
+    [KIBController::class, 'updateGedung']
+)
+    ->whereNumber('gedung')
+    ->name('kib.gedung.update');
+
+
+Route::delete(
+    '/kib/gedung/{gedung}',
+    [KIBController::class, 'destroyGedung']
+)
+    ->whereNumber('gedung')
+    ->name('kib.gedung.destroy');
+
 
 Route::get('/kib/jalan', function () {
     return view('kib.jalan');

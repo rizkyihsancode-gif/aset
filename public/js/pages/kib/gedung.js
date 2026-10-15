@@ -1,1774 +1,1450 @@
-/* =========================================================
-   GEDUNG & BANGUNAN
-   K.I.B PAGE
-========================================================= */
 
-(function () {
-
+document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
+    // =====================================================
+    // 1. INITIALISASI HALAMAN
+    // =====================================================
 
-    /* =====================================================
-       STATE
-    ====================================================== */
+    const root = document.getElementById('gedungPage');
 
-    let currentPage = 1;
+    if (!root || root.dataset.init === '1') return;
 
-    let previousBodyOverflow = '';
+    root.dataset.init = '1';
 
-    const TOTAL_DATA = 38;
+    const $ = (selector, node = root) =>
+        node.querySelector(selector);
 
+    const $$ = (selector, node = root) =>
+        [...node.querySelectorAll(selector)];
 
-    /* =====================================================
-       INITIALIZATION
-    ====================================================== */
+    const format = new Intl.NumberFormat('id-ID');
 
-    document.addEventListener('DOMContentLoaded', function () {
+    const rupiah = value =>
+        'Rp ' + format.format(Number(value) || 0);
 
-        const page =
-            document.querySelector('.gedung-page');
+    const esc = value =>
+        String(value ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[c]);
 
-        if (!page) {
-            return;
-        }
+    const icons = () =>
+        window.lucide?.createIcons?.();
 
+    const base = root.dataset.baseUrl;
 
-        initLucide();
+    const url = id =>
+        base + '/' + encodeURIComponent(id);
 
-        initSearch();
+    const lokasiUrl = id =>
+        base + '/lokasi/' + encodeURIComponent(id);
 
-        initFilters();
+    const fileUrl = (id, type) =>
+        url(id) + '/file/' + type;
 
-        initPagination();
+    const fmtDate = date => {
+        if (!date) return '—';
 
-        initSelectAll();
+        const s = String(date).slice(0, 10);
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
 
-        initTableActions();
+        return m
+            ? `${m[3]}/${m[2]}/${m[1]}`
+            : s;
+    };
 
-        initModal();
+    // =====================================================
+    // 2. FETCH JSON DARI LARAVEL
+    // =====================================================
 
-        initForm();
-
-        renderTable();
-
-    });
-
-
-    /* =====================================================
-       LUCIDE
-    ====================================================== */
-
-    function initLucide() {
-
-        if (
-            typeof window.lucide !== 'undefined' &&
-            typeof window.lucide.createIcons === 'function'
-        ) {
-
-            window.lucide.createIcons();
-
-        }
-
-    }
-
-
-    /* =====================================================
-       SEARCH
-    ====================================================== */
-
-    function initSearch() {
-
-        const search =
-            document.getElementById(
-                'gedungSearch'
-            );
-
-        if (!search) {
-            return;
-        }
-
-
-        search.addEventListener(
-            'input',
-            function () {
-
-                currentPage = 1;
-
-                renderTable();
-
+    async function json(path) {
+        const response = await fetch(path, {
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        );
-
-    }
-
-
-    /* =====================================================
-       FILTER
-    ====================================================== */
-
-    function initFilters() {
-
-        const ids = [
-
-            'gedungKondisi',
-
-            'gedungTahun',
-
-            'gedungLokasi',
-
-            'gedungStatusTanah',
-
-            'gedungJenis'
-
-        ];
-
-
-        ids.forEach(function (id) {
-
-            const element =
-                document.getElementById(id);
-
-            if (!element) {
-                return;
-            }
-
-
-            element.addEventListener(
-                'change',
-                function () {
-
-                    currentPage = 1;
-
-                    renderTable();
-
-                }
-            );
-
         });
 
+        if (!response.ok) {
+            throw new Error(
+                'Server merespons HTTP ' + response.status
+            );
+        }
+
+        const data = await response.json();
+
+        if (data.success === false) {
+            throw new Error(
+                data.message || 'Permintaan gagal.'
+            );
+        }
+
+        return data;
     }
 
+    // =====================================================
+    // 3. MODAL
+    // =====================================================
 
-    /* =====================================================
-       GET ROWS
-    ====================================================== */
+    function open(id) {
+        const dialog = $('#' + id);
 
-    function getRows() {
+        if (dialog && !dialog.open) {
+            dialog.showModal();
+        }
 
-        return Array.from(
-            document.querySelectorAll(
-                '#gedungTable tbody tr[data-record]'
-            )
-        );
-
+        icons();
     }
 
+    function close(id) {
+        const dialog = $('#' + id);
 
-    /* =====================================================
-       GET FILTERED ROWS
-    ====================================================== */
+        if (dialog?.open) {
+            dialog.close();
+        }
+    }
 
-    function getFilteredRows() {
+    $$('[data-close]').forEach(element => {
+        element.addEventListener('click', () => {
+            close(element.dataset.close);
+        });
+    });
 
-        const search =
-            document
-                .getElementById('gedungSearch')
-                ?.value
-                .trim()
-                .toLowerCase() || '';
-
-
-        const kondisi =
-            document
-                .getElementById('gedungKondisi')
-                ?.value || '';
-
-
-        const tahun =
-            document
-                .getElementById('gedungTahun')
-                ?.value || '';
-
-
-        const lokasi =
-            document
-                .getElementById('gedungLokasi')
-                ?.value || '';
-
-
-        const statusTanah =
-            document
-                .getElementById('gedungStatusTanah')
-                ?.value || '';
-
-
-        const jenis =
-            document
-                .getElementById('gedungJenis')
-                ?.value || '';
-
-
-        return getRows().filter(
-            function (row) {
-
-                const searchableText = [
-
-                    row.cells[2]?.textContent,
-
-                    row.cells[3]?.textContent,
-
-                    row.cells[4]?.textContent,
-
-                    row.cells[8]?.textContent
-
-                ]
-                    .join(' ')
-                    .toLowerCase();
-
-
-                const matchSearch =
-                    !search ||
-                    searchableText.includes(search);
-
-
-                const matchKondisi =
-                    !kondisi ||
-                    row.dataset.kondisi === kondisi;
-
-
-                const matchTahun =
-                    !tahun ||
-                    row.dataset.tahun === tahun;
-
-
-                const matchLokasi =
-                    !lokasi ||
-                    row.dataset.lokasi === lokasi;
-
-
-                const matchStatusTanah =
-                    !statusTanah ||
-                    row.dataset.statusTanah === statusTanah;
-
-
-                const matchJenis =
-                    !jenis ||
-                    row.dataset.jenis === jenis;
-
-
-                return (
-
-                    matchSearch &&
-
-                    matchKondisi &&
-
-                    matchTahun &&
-
-                    matchLokasi &&
-
-                    matchStatusTanah &&
-
-                    matchJenis
-
-                );
-
+    $$('dialog').forEach(dialog => {
+        dialog.addEventListener('click', event => {
+            if (event.target === dialog) {
+                dialog.close();
             }
+        });
+    });
+
+    // =====================================================
+    // 4. TABEL UTAMA DAN PAGINATION
+    // =====================================================
+
+    const rows = $$('.gedung-row');
+
+    let page = 1;
+
+    function filteredRows() {
+        const keyword = $('#gedungSearch')
+            .value.trim()
+            .toLowerCase();
+
+        return rows.filter(row =>
+            row.dataset.search.includes(keyword)
         );
-
     }
-
-
-    /* =====================================================
-       RENDER TABLE
-    ====================================================== */
 
     function renderTable() {
-
-        const rows =
-            getRows();
-
-        const filtered =
-            getFilteredRows();
-
+        const selected = filteredRows();
 
         const pageSize =
-            parseInt(
-                document
-                    .getElementById(
-                        'gedungPageSize'
-                    )
-                    ?.value || '8',
-                10
-            );
+            Number($('#gedungPageSize').value) || 20;
 
-
-        const totalPages =
-            Math.max(
-                1,
-                Math.ceil(
-                    filtered.length /
-                    pageSize
-                )
-            );
-
-
-        currentPage =
-            Math.min(
-                Math.max(
-                    currentPage,
-                    1
-                ),
-                totalPages
-            );
-
-
-        const start =
-            (currentPage - 1) *
-            pageSize;
-
-
-        const end =
-            start + pageSize;
-
-
-        const visibleRows =
-            filtered.slice(
-                start,
-                end
-            );
-
-
-        /* Hide all */
-        rows.forEach(
-            function (row) {
-
-                row.hidden = true;
-
-            }
+        const count = Math.max(
+            1,
+            Math.ceil(selected.length / pageSize)
         );
 
+        page = Math.min(
+            Math.max(1, page),
+            count
+        );
 
-        /* Show current page */
-        visibleRows.forEach(
-            function (row, index) {
+        const start = (page - 1) * pageSize;
 
+        rows.forEach(row => {
+            row.hidden = true;
+        });
+
+        selected
+            .slice(start, start + pageSize)
+            .forEach((row, index) => {
                 row.hidden = false;
 
+                row.querySelector(
+                    '.gedung-row-number'
+                ).textContent = start + index + 1;
+            });
 
-                const numberCell =
-                    row.cells[1];
+        const shown = selected.length
+            ? start + 1
+            : 0;
 
-                if (numberCell) {
+        $('#gedungTableInfo').textContent =
+            `Menampilkan ${shown}–` +
+            `${Math.min(start + pageSize, selected.length)}` +
+            ` dari ${selected.length} lokasi`;
 
-                    numberCell.textContent =
-                        start + index + 1;
+        const parent = $('#gedungPagination');
 
-                }
+        parent.replaceChildren();
 
-            }
-        );
+        if (count <= 1) return;
 
+        function add(text, target, disabled = false) {
+            const element = document.createElement('button');
 
-        /* Empty state */
-        const emptyRow =
-            document.getElementById(
-                'gedungEmptyRow'
-            );
-
-
-        if (emptyRow) {
-
-            emptyRow.hidden =
-                filtered.length !== 0;
-
-        }
-
-
-        /* Table info */
-        updateTableInfo(
-            filtered.length,
-            start,
-            visibleRows.length
-        );
-
-
-        /* Pagination */
-        renderPagination(
-            totalPages
-        );
-
-
-        /* Select all state */
-        updateSelectAll();
-
-
-        initLucide();
-
-    }
-
-
-    /* =====================================================
-       TABLE INFO
-    ====================================================== */
-
-    function updateTableInfo(
-        total,
-        start,
-        visible
-    ) {
-
-        const info =
-            document.getElementById(
-                'gedungTableInfo'
-            );
-
-
-        if (!info) {
-            return;
-        }
-
-
-        if (total === 0) {
-
-            info.textContent =
-                'Tidak ada data yang ditampilkan';
-
-            return;
-
-        }
-
-
-        const first =
-            start + 1;
-
-
-        const last =
-            start + visible;
-
-
-        info.textContent =
-            `Menampilkan ${formatNumber(first)} - ${formatNumber(last)} dari ${formatNumber(total)} data hasil filter`;
-
-    }
-
-
-    /* =====================================================
-       PAGINATION INIT
-    ====================================================== */
-
-    function initPagination() {
-
-        const pageSize =
-            document.getElementById(
-                'gedungPageSize'
-            );
-
-
-        if (!pageSize) {
-            return;
-        }
-
-
-        pageSize.addEventListener(
-            'change',
-            function () {
-
-                currentPage = 1;
-
-                renderTable();
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       PAGINATION RENDER
-    ====================================================== */
-
-    function renderPagination(
-        totalPages
-    ) {
-
-        const pagination =
-            document.getElementById(
-                'gedungPagination'
-            );
-
-
-        if (!pagination) {
-            return;
-        }
-
-
-        pagination.replaceChildren();
-
-
-        /* Previous */
-        const previous =
-            createPaginationButton(
-                'chevron-left',
-                null,
-                currentPage === 1
-            );
-
-
-        previous.addEventListener(
-            'click',
-            function () {
-
-                if (currentPage <= 1) {
-                    return;
-                }
-
-
-                currentPage--;
-
-                renderTable();
-
-            }
-        );
-
-
-        pagination.appendChild(
-            previous
-        );
-
-
-        /* Page numbers */
-        const maxVisiblePages = 5;
-
-
-        let startPage =
-            Math.max(
-                1,
-                currentPage - 2
-            );
-
-
-        let endPage =
-            Math.min(
-                totalPages,
-                startPage + maxVisiblePages - 1
-            );
-
-
-        if (
-            endPage - startPage + 1 <
-            maxVisiblePages
-        ) {
-
-            startPage =
-                Math.max(
-                    1,
-                    endPage - maxVisiblePages + 1
-                );
-
-        }
-
-
-        for (
-            let page = startPage;
-            page <= endPage;
-            page++
-        ) {
-
-            const button =
-                createPaginationButton(
-                    String(page),
-                    page,
-                    false
-                );
-
+            element.type = 'button';
+            element.textContent = text;
+            element.disabled = disabled;
 
             if (
-                page === currentPage
+                target === page &&
+                /^\d+$/.test(text)
             ) {
+                element.classList.add('active');
 
-                button.classList.add(
-                    'active'
-                );
-
-                button.setAttribute(
+                element.setAttribute(
                     'aria-current',
                     'page'
                 );
-
             }
 
-
-            button.addEventListener(
-                'click',
-                function () {
-
-                    currentPage =
-                        page;
-
-                    renderTable();
-
-                }
-            );
-
-
-            pagination.appendChild(
-                button
-            );
-
-        }
-
-
-        /* Next */
-        const next =
-            createPaginationButton(
-                'chevron-right',
-                null,
-                currentPage >= totalPages
-            );
-
-
-        next.addEventListener(
-            'click',
-            function () {
-
-                if (
-                    currentPage >= totalPages
-                ) {
-                    return;
-                }
-
-
-                currentPage++;
-
+            element.addEventListener('click', () => {
+                page = target;
                 renderTable();
+            });
 
-            }
-        );
+            parent.appendChild(element);
+        }
 
+        function dot() {
+            const span = document.createElement('span');
 
-        pagination.appendChild(
-            next
-        );
+            span.textContent = '…';
 
+            parent.appendChild(span);
+        }
 
-        initLucide();
+        add('‹', page - 1, page === 1);
 
-    }
+        const pages = new Set([1, count]);
 
-
-    /* =====================================================
-       CREATE PAGINATION BUTTON
-    ====================================================== */
-
-    function createPaginationButton(
-        value,
-        page,
-        disabled
-    ) {
-
-        const button =
-            document.createElement(
-                'button'
-            );
-
-
-        button.type =
-            'button';
-
-
-        button.disabled =
-            Boolean(disabled);
-
-
-        if (
-            value ===
-            'chevron-left'
-            ||
-            value ===
-            'chevron-right'
+        for (
+            let p = Math.max(1, page - 2);
+            p <= Math.min(count, page + 2);
+            p++
         ) {
-
-            const icon =
-                document.createElement(
-                    'i'
-                );
-
-
-            icon.setAttribute(
-                'data-lucide',
-                value
-            );
-
-
-            button.appendChild(
-                icon
-            );
-
-        } else {
-
-            button.textContent =
-                value;
-
+            pages.add(p);
         }
 
+        let last = 0;
 
-        return button;
-
-    }
-
-
-    /* =====================================================
-       SELECT ALL
-    ====================================================== */
-
-    function initSelectAll() {
-
-        const selectAll =
-            document.getElementById(
-                'gedungSelectAll'
-            );
-
-
-        if (!selectAll) {
-            return;
-        }
-
-
-        selectAll.addEventListener(
-            'change',
-            function () {
-
-                const rows =
-                    getRows();
-
-
-                const visible =
-                    rows.filter(
-                        row =>
-                            !row.hidden
-                    );
-
-
-                visible.forEach(
-                    function (row) {
-
-                        const checkbox =
-                            row.querySelector(
-                                'input[type="checkbox"]'
-                            );
-
-
-                        if (checkbox) {
-
-                            checkbox.checked =
-                                selectAll.checked;
-
-                        }
-
-                    }
-                );
-
-            }
-        );
-
-
-        getRows().forEach(
-            function (row) {
-
-                const checkbox =
-                    row.querySelector(
-                        'input[type="checkbox"]'
-                    );
-
-
-                checkbox?.addEventListener(
-                    'change',
-                    updateSelectAll
-                );
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       UPDATE SELECT ALL
-    ====================================================== */
-
-    function updateSelectAll() {
-
-        const selectAll =
-            document.getElementById(
-                'gedungSelectAll'
-            );
-
-
-        if (!selectAll) {
-            return;
-        }
-
-
-        const visible =
-            getRows().filter(
-                row =>
-                    !row.hidden
-            );
-
-
-        const checkboxes =
-            visible
-                .map(
-                    row =>
-                        row.querySelector(
-                            'input[type="checkbox"]'
-                        )
-                )
-                .filter(Boolean);
-
-
-        if (checkboxes.length === 0) {
-
-            selectAll.checked = false;
-
-            selectAll.indeterminate = false;
-
-            return;
-
-        }
-
-
-        const checked =
-            checkboxes.filter(
-                checkbox =>
-                    checkbox.checked
-            ).length;
-
-
-        selectAll.checked =
-            checked === checkboxes.length;
-
-
-        selectAll.indeterminate =
-            checked > 0 &&
-            checked < checkboxes.length;
-
-    }
-
-
-    /* =====================================================
-       TABLE ACTIONS
-    ====================================================== */
-
-    function initTableActions() {
-
-        const table =
-            document.getElementById(
-                'gedungTable'
-            );
-
-
-        if (!table) {
-            return;
-        }
-
-
-        table.addEventListener(
-            'click',
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        'button[data-action]'
-                    );
-
-
-                if (!button) {
-                    return;
+        [...pages]
+            .sort((a, b) => a - b)
+            .forEach(p => {
+                if (last && p - last > 1) {
+                    dot();
                 }
 
+                add(String(p), p);
+                last = p;
+            });
 
-                const row =
-                    button.closest(
-                        'tr[data-record]'
-                    );
+        add('›', page + 1, page === count);
+    }
 
+    // =====================================================
+    // 5. PENCARIAN DAN RESET
+    // =====================================================
 
-                if (!row) {
-                    return;
+    $('#gedungSearch').addEventListener('input', () => {
+        page = 1;
+        renderTable();
+    });
+
+    $('#gedungPageSize').addEventListener('change', () => {
+        page = 1;
+        renderTable();
+    });
+
+    $('#gedungReset').addEventListener('click', () => {
+        $('#gedungSearch').value = '';
+        $('#gedungPageSize').value = '20';
+
+        page = 1;
+        renderTable();
+    });
+
+    // =====================================================
+    // 6. EXPORT CSV
+    // =====================================================
+
+    $('#gedungExport').addEventListener('click', () => {
+        const out = [[
+            'No',
+            'Lokasi',
+            'Alamat',
+            'Nilai',
+            'Jumlah PDF'
+        ]];
+
+        filteredRows().forEach((row, index) => {
+            out.push([
+                index + 1,
+                row.dataset.exportLokasi,
+                row.dataset.exportAlamat,
+                row.dataset.exportNilai,
+                row.dataset.exportPdf
+            ]);
+        });
+
+        const csv = '\uFEFF' + out.map(row =>
+            row.map(value => {
+                let text = String(value ?? '');
+
+                if (/^\s*[=+@-]/.test(text)) {
+                    text = "'" + text;
                 }
 
+                return '"' +
+                    text.replaceAll('"', '""') +
+                    '"';
 
-                openGedungModal(
-                    button.dataset.action,
-                    row
-                );
+            }).join(';')
 
-            }
+        ).join('\r\n');
+
+        const link = document.createElement('a');
+
+        const blobUrl = URL.createObjectURL(
+            new Blob([csv], {
+                type: 'text/csv;charset=utf-8'
+            })
         );
 
-    }
+        link.href = blobUrl;
+        link.download = 'kib-gedung-bangunan.csv';
 
-
-    /* =====================================================
-       ADVANCED FILTER
-    ====================================================== */
-
-    window.toggleGedungAdvancedFilter =
-        function () {
-
-            const filter =
-                document.getElementById(
-                    'gedungAdvancedFilter'
-                );
-
-
-            if (!filter) {
-                return;
-            }
-
-
-            filter.hidden =
-                !filter.hidden;
-
-        };
-
-
-    /* =====================================================
-       RESET
-    ====================================================== */
-
-    window.resetGedungFilter =
-        function () {
-
-            const ids = [
-
-                'gedungSearch',
-
-                'gedungKondisi',
-
-                'gedungTahun',
-
-                'gedungLokasi',
-
-                'gedungStatusTanah',
-
-                'gedungJenis'
-
-            ];
-
-
-            ids.forEach(
-                function (id) {
-
-                    const element =
-                        document.getElementById(
-                            id
-                        );
-
-
-                    if (element) {
-
-                        element.value = '';
-
-                    }
-
-                }
-            );
-
-
-            currentPage = 1;
-
-            renderTable();
-
-        };
-
-
-    /* =====================================================
-       MODAL INIT
-    ====================================================== */
-
-    function initModal() {
-
-        const modal =
-            document.getElementById(
-                'gedungModal'
-            );
-
-
-        if (!modal) {
-            return;
-        }
-
-
-        modal.addEventListener(
-            'click',
-            function (event) {
-
-                if (
-                    event.target === modal
-                ) {
-
-                    closeGedungModal();
-
-                }
-
-            }
-        );
-
-
-        modal.addEventListener(
-            'close',
-            function () {
-
-                document.body.style.overflow =
-                    previousBodyOverflow;
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       OPEN MODAL
-    ====================================================== */
-
-    window.openGedungModal =
-        function (
-            mode = 'add',
-            row = null
-        ) {
-
-            const modal =
-                document.getElementById(
-                    'gedungModal'
-                );
-
-
-            if (!modal) {
-                return;
-            }
-
-
-            const title =
-                document.getElementById(
-                    'gedungModalTitle'
-                );
-
-
-            const description =
-                document.getElementById(
-                    'gedungModalDescription'
-                );
-
-
-            const note =
-                document.getElementById(
-                    'gedungModalNote'
-                );
-
-
-            const saveButton =
-                document.getElementById(
-                    'gedungSaveButton'
-                );
-
-
-            const titles = {
-
-                add:
-                    'Tambah Gedung & Bangunan',
-
-                view:
-                    'Detail Gedung & Bangunan',
-
-                edit:
-                    'Edit Gedung & Bangunan',
-
-                delete:
-                    'Hapus Gedung & Bangunan'
-
-            };
-
-
-            const descriptions = {
-
-                add:
-                    'Tambahkan data aset gedung atau bangunan.',
-
-                view:
-                    'Lihat informasi lengkap aset gedung atau bangunan.',
-
-                edit:
-                    'Perbarui informasi aset gedung atau bangunan.',
-
-                delete:
-                    'Konfirmasi data gedung atau bangunan yang akan dihapus.'
-
-            };
-
-
-            title.textContent =
-                titles[mode] ||
-                titles.add;
-
-
-            description.textContent =
-                descriptions[mode] ||
-                descriptions.add;
-
-
-            const readOnly =
-                mode === 'view' ||
-                mode === 'delete';
-
-
-            fillGedungForm(
-                row
-            );
-
-
-            setFormReadonly(
-                readOnly
-            );
-
-
-            if (mode === 'delete') {
-
-                note.textContent =
-                    'Data ini hanya simulasi UI. Penghapusan database belum dihubungkan.';
-
-            } else if (mode === 'view') {
-
-                note.textContent =
-                    'Mode lihat. Field dikunci dan tidak dapat diubah.';
-
-            } else {
-
-                note.textContent =
-                    'Form UI. Penyimpanan database akan kita hubungkan pada tahap backend.';
-
-            }
-
-
-            if (mode === 'view') {
-
-                saveButton.hidden =
-                    true;
-
-            } else {
-
-                saveButton.hidden =
-                    false;
-
-
-                saveButton.innerHTML =
-                    mode === 'delete'
-
-                        ? '<i data-lucide="trash-2"></i> Hapus Data'
-
-                        : '<i data-lucide="save"></i> Simpan Data';
-
-
-                saveButton.classList.toggle(
-                    'is-delete',
-                    mode === 'delete'
-                );
-
-            }
-
-
-            previousBodyOverflow =
-                document.body.style.overflow;
-
-
-            document.body.style.overflow =
-                'hidden';
-
-
-            if (!modal.open) {
-
-                modal.showModal();
-
-            }
-
-
-            initLucide();
-
-        };
-
-
-    /* =====================================================
-       FILL FORM
-    ====================================================== */
-
-    function fillGedungForm(
-        row
-    ) {
-
-        const form =
-            document.getElementById(
-                'gedungForm'
-            );
-
-
-        form?.reset();
-
-
-        if (!row) {
-            return;
-        }
-
-
-        setValue(
-            'gedungKode',
-            row.cells[2]
-        );
-
-
-        setValue(
-            'gedungNama',
-            row.cells[3]
-        );
-
-
-        setValue(
-            'gedungRegister',
-            row.cells[4]
-        );
-
-
-        setValue(
-            'gedungLuas',
-            row.cells[6]
-        );
-
-
-        setValue(
-            'gedungFormTahun',
-            row.cells[7]
-        );
-
-
-        setValue(
-            'gedungFormLokasi',
-            row.cells[8]
-        );
-
-
-        setValue(
-            'gedungNilai',
-            row.cells[10]
-        );
-
-
-        setSelectValue(
-            'gedungFormJenis',
-            row.cells[5]
-        );
-
-
-        setSelectValue(
-            'gedungFormKondisi',
-            row.cells[9]
-        );
-
-
-        setSelectValue(
-            'gedungFormStatusTanah',
-            row.cells[11]
-        );
-
-    }
-
-
-    /* =====================================================
-       SET VALUE
-    ====================================================== */
-
-    function setValue(
-        id,
-        cell
-    ) {
-
-        const element =
-            document.getElementById(id);
-
-
-        if (
-            element &&
-            cell
-        ) {
-
-            element.value =
-                cleanText(
-                    cell.textContent
-                );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       SET SELECT VALUE
-    ====================================================== */
-
-    function setSelectValue(
-        id,
-        cell
-    ) {
-
-        const element =
-            document.getElementById(id);
-
-
-        if (
-            !element ||
-            !cell
-        ) {
-            return;
-        }
-
-
-        const value =
-            cleanText(
-                cell.textContent
-            );
-
-
-        const exists =
-            Array.from(
-                element.options
-            ).some(
-                option =>
-                    option.value === value ||
-                    option.textContent.trim() === value
-            );
-
-
-        if (exists) {
-
-            element.value =
-                value;
-
-        }
-
-    }
-
-
-    /* =====================================================
-       READONLY
-    ====================================================== */
-
-    function setFormReadonly(
-        readOnly
-    ) {
-
-        const inputs =
-            document.querySelectorAll(
-                '#gedungForm input'
-            );
-
-
-        inputs.forEach(
-            function (input) {
-
-                input.readOnly =
-                    readOnly;
-
-            }
-        );
-
-
-        const selects =
-            document.querySelectorAll(
-                '#gedungForm select'
-            );
-
-
-        selects.forEach(
-            function (select) {
-
-                select.disabled =
-                    readOnly;
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       CLOSE MODAL
-    ====================================================== */
-
-    window.closeGedungModal =
-        function () {
-
-            const modal =
-                document.getElementById(
-                    'gedungModal'
-                );
-
-
-            if (
-                modal &&
-                modal.open
-            ) {
-
-                modal.close();
-
-            }
-
-        };
-
-
-    /* =====================================================
-       FORM
-    ====================================================== */
-
-    function initForm() {
-
-        const form =
-            document.getElementById(
-                'gedungForm'
-            );
-
-
-        if (!form) {
-            return;
-        }
-
-
-        form.addEventListener(
-            'submit',
-            function (event) {
-
-                event.preventDefault();
-
-
-                /*
-                 * Backend belum dihubungkan.
-                 */
-
-                const saveButton =
-                    document.getElementById(
-                        'gedungSaveButton'
-                    );
-
-
-                if (
-                    saveButton?.classList.contains(
-                        'is-delete'
-                    )
-                ) {
-
-                    alert(
-                        'Mode hapus masih berupa simulasi UI. Backend belum dihubungkan.'
-                    );
-
-                } else {
-
-                    alert(
-                        'Data berhasil divalidasi. Penyimpanan database akan dihubungkan pada tahap backend.'
-                    );
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       EXPORT CSV
-    ====================================================== */
-
-    window.exportGedungCSV =
-        function () {
-
-            const rows =
-                getFilteredRows();
-
-
-            const csvRows = [
-
-                [
-
-                    'No',
-
-                    'Kode Barang',
-
-                    'Nama Gedung / Bangunan',
-
-                    'Register',
-
-                    'Jenis',
-
-                    'Luas Bangunan',
-
-                    'Tahun Perolehan',
-
-                    'Lokasi',
-
-                    'Kondisi',
-
-                    'Nilai Perolehan',
-
-                    'Status Tanah'
-
-                ]
-
-            ];
-
-
-            rows.forEach(
-                function (row, index) {
-
-                    csvRows.push([
-
-                        index + 1,
-
-                        getCell(
-                            row,
-                            2
-                        ),
-
-                        getCell(
-                            row,
-                            3
-                        ),
-
-                        getCell(
-                            row,
-                            4
-                        ),
-
-                        getCell(
-                            row,
-                            5
-                        ),
-
-                        getCell(
-                            row,
-                            6
-                        ),
-
-                        getCell(
-                            row,
-                            7
-                        ),
-
-                        getCell(
-                            row,
-                            8
-                        ),
-
-                        getCell(
-                            row,
-                            9
-                        ),
-
-                        getCell(
-                            row,
-                            10
-                        ),
-
-                        getCell(
-                            row,
-                            11
-                        )
-
-                    ]);
-
-                }
-            );
-
-
-            downloadCSV(
-                csvRows,
-                'data-gedung-bangunan.csv'
-            );
-
-        };
-
-
-    /* =====================================================
-       GET CELL
-    ====================================================== */
-
-    function getCell(
-        row,
-        index
-    ) {
-
-        return cleanText(
-            row
-                .cells[index]
-                ?.textContent || ''
-        );
-
-    }
-
-
-    /* =====================================================
-       DOWNLOAD CSV
-    ====================================================== */
-
-    function downloadCSV(
-        rows,
-        filename
-    ) {
-
-        const csv =
-            rows
-                .map(
-                    function (row) {
-
-                        return row
-                            .map(
-                                escapeCSV
-                            )
-                            .join(',');
-
-                    }
-                )
-                .join('\r\n');
-
-
-        const blob =
-            new Blob(
-                [
-                    '\uFEFF' + csv
-                ],
-                {
-                    type:
-                        'text/csv;charset=utf-8;'
-                }
-            );
-
-
-        const url =
-            URL.createObjectURL(
-                blob
-            );
-
-
-        const link =
-            document.createElement(
-                'a'
-            );
-
-
-        link.href =
-            url;
-
-
-        link.download =
-            filename;
-
-
-        document.body.appendChild(
-            link
-        );
-
+        document.body.appendChild(link);
 
         link.click();
-
-
         link.remove();
 
+        setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+        }, 500);
+    });
 
-        setTimeout(
-            function () {
+    // =====================================================
+    // 7. STATE NILAI ASET DAN GEDUNG
+    // =====================================================
 
-                URL.revokeObjectURL(
-                    url
-                );
+    let pending = [];
+    let selectedId = null;
 
-            },
-            1000
-        );
+    let detailItems = [];
+    let detailMode = 'view';
 
+    let nilaiItems = [];
+
+    const form = $('#gedungForm');
+
+    // =====================================================
+    // 8. STATUS DATA NILAI ASET TERPILIH
+    // =====================================================
+
+    function selection(source) {
+        selectedId = String(source.id);
+
+        $('#gedungVoucherId').value = source.id;
+
+        $('#gedungLokasi').value =
+            source.lokasi || '';
+
+        $('#gedungAlamat').value =
+            source.alamat || '';
+
+        $('#gedungDepartemen').value =
+            source.departemen || '';
+
+        $('#gedungDivisi').value =
+            source.divisi || '';
+
+        $('#gedungVoucher').value =
+            source.no_voucher || '';
+
+        $('#gedungSelected').hidden = false;
+
+        $('#gedungSelectedTitle').textContent =
+            `${source.no_voucher || '—'} · ` +
+            `${source.lokasi || '—'}`;
+
+        $('#gedungSelectedMeta').textContent =
+            `Tahun ${source.tahun || '—'} · ` +
+            `${source.departemen || '—'} / ` +
+            `${source.divisi || '—'} · ` +
+            `${rupiah(source.nilai)}`;
+
+        // Tabel tetap tampil,
+        // baris voucher diberi status Terpilih.
+        renderPending();
     }
 
+    // =====================================================
+    // 9. RENDER DATA PENDING
+    // =====================================================
 
-    /* =====================================================
-       ESCAPE CSV
-    ====================================================== */
+    function renderPending() {
+        const keyword = $('#gedungPendingSearch')
+            .value.trim()
+            .toLowerCase();
 
-    function escapeCSV(
-        value
-    ) {
+        const matches = pending.filter(item =>
+            [
+                item.no_voucher,
+                item.lokasi,
+                item.departemen,
+                item.divisi,
+                item.tahun,
+                item.nilai,
+                item.urai,
+                item.kode_aktiva
+            ]
+                .join(' ')
+                .toLowerCase()
+                .includes(keyword)
+        );
 
-        let text =
-            String(
-                value ?? ''
+        $('#gedungPendingCount').textContent =
+            format.format(matches.length) + ' data';
+
+        $('#gedungPendingBody').innerHTML =
+            matches.length
+                ? matches.map((item, index) => {
+                    const chosen =
+                        String(item.id) === selectedId;
+
+                    return `
+                        <tr class="${chosen ? 'selected' : ''}">
+
+                            <td>${index + 1}</td>
+
+                            <td>
+                                <b>
+                                    ${esc(item.no_voucher || '—')}
+                                </b>
+
+                                <small>
+                                    ${esc(fmtDate(item.tgl_voucher))}
+                                </small>
+                            </td>
+
+                            <td>
+                                <b>
+                                    ${esc(item.lokasi || '—')}
+                                </b>
+
+                                <small>
+                                    ${esc(item.alamat || '')}
+                                </small>
+                            </td>
+
+                            <td>
+                                ${esc(item.departemen || '—')}
+                            </td>
+
+                            <td>
+                                ${esc(item.divisi || '—')}
+                            </td>
+
+                            <td>
+                                ${esc(item.tahun || '—')}
+                            </td>
+
+                            <td>
+                                <b>${rupiah(item.nilai)}</b>
+                            </td>
+
+                            <td class="gedung-uraian">
+                                ${esc(item.urai || '—')}
+                            </td>
+
+                            <td>
+                                <button
+                                    type="button"
+                                    class="gedung-choose ${
+                                        chosen ? 'chosen' : ''
+                                    }"
+                                    data-source="${Number(item.id)}"
+                                >
+                                    ${
+                                        chosen
+                                            ? '✓ Terpilih'
+                                            : 'Pilih'
+                                    }
+                                </button>
+                            </td>
+
+                        </tr>
+                    `;
+                }).join('')
+                : `
+                    <tr>
+                        <td colspan="9" class="gedung-empty">
+                            Tidak ada transaksi yang sesuai.
+                        </td>
+                    </tr>
+                `;
+    }
+
+    // =====================================================
+    // 10. LOAD DATA PENDING DARI KIBController
+    // =====================================================
+
+    async function loadPending() {
+        $('#gedungPendingBody').innerHTML = `
+            <tr>
+                <td colspan="9" class="gedung-empty">
+                    Memuat transaksi pending...
+                </td>
+            </tr>
+        `;
+
+        try {
+            const data = await json(
+                root.dataset.pendingUrl
             );
 
+            pending = Array.isArray(data.data)
+                ? data.data
+                : [];
 
-        /*
-         * CSV Injection Protection
-         */
+            [
+                '#gedungPendingKpi',
+                '#gedungIncomingBadge',
+                '#gedungPendingLabel',
+                '#gedungPendingPill'
+            ].forEach(selector => {
+                $(selector).textContent =
+                    format.format(
+                        Number(data.count ?? pending.length)
+                    );
+            });
+
+            renderPending();
+
+        } catch (error) {
+            $('#gedungPendingBody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="gedung-empty">
+                        ${esc(error.message)} —
+                        periksa server.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    $('#gedungPendingSearch').addEventListener(
+        'input',
+        renderPending
+    );
+
+    // =====================================================
+    // 11. PILIH VOUCHER
+    // =====================================================
+
+    $('#gedungPendingBody').addEventListener(
+        'click',
+        event => {
+            const button = event.target.closest(
+                '[data-source]'
+            );
+
+            if (!button) return;
+
+            const source = pending.find(item =>
+                String(item.id) ===
+                button.dataset.source
+            );
+
+            if (!source) return;
+
+            if (
+                !source.id_lokasi ||
+                !source.dep ||
+                !source.div
+            ) {
+                alert(
+                    'Voucher belum memiliki Lokasi, ' +
+                    'Departemen, atau Divisi lengkap.'
+                );
+
+                return;
+            }
+
+            selection(source);
+        }
+    );
+
+    // =====================================================
+    // 12. GANTI VOUCHER
+    // =====================================================
+
+    $('#gedungChange').addEventListener('click', () => {
+        // Pada mode Edit, voucher sumber
+        // tidak boleh diubah.
+        if (!$('#gedungMethod').disabled) return;
+
+        $('#gedungPendingSection').hidden = false;
+        $('#gedungPendingSearch').value = '';
+
+        renderPending();
+
+        $('#gedungPendingSearch').focus();
+    });
+
+    // =====================================================
+    // 13. RESET FORM
+    // =====================================================
+
+    function resetForm() {
+        form.reset();
+
+        form.action = root.dataset.storeUrl;
+
+        $('#gedungMethod').disabled = true;
+        $('#gedungVoucherId').value = '';
+
+        selectedId = null;
+
+        $('#gedungSelected').hidden = true;
+        $('#gedungChange').hidden = false;
+
+        $('#gedungPendingSection').hidden = false;
+
+        $('#gedungFormTitle').textContent =
+            'Tambah Data Gedung';
+
+        [
+            'gedungLokasi',
+            'gedungAlamat',
+            'gedungDepartemen',
+            'gedungDivisi',
+            'gedungVoucher'
+        ].forEach(id => {
+            $('#' + id).value = '';
+        });
+
+        $('#gedungPendingSearch').value = '';
+    }
+
+    // =====================================================
+    // 14. TAMBAH GEDUNG
+    // =====================================================
+
+    async function create() {
+        resetForm();
+
+        open('gedungFormDialog');
+
+        await loadPending();
+    }
+
+    $('#gedungAdd').addEventListener('click', create);
+
+    $('#gedungOpenPending').addEventListener(
+        'click',
+        create
+    );
+
+    // =====================================================
+    // 15. VALIDASI SIMPAN
+    // =====================================================
+
+    form.addEventListener('submit', event => {
+        const creating = $('#gedungMethod').disabled;
 
         if (
-            /^[\s]*[=+@-]/.test(text)
+            creating &&
+            !$('#gedungVoucherId').value
         ) {
+            event.preventDefault();
 
-            text =
-                "'" + text;
-
+            alert(
+                'Pilih data Nilai Aset terlebih dahulu.'
+            );
         }
+    });
 
+    // =====================================================
+    // 16. ATRIBUT DETAIL GEDUNG
+    // =====================================================
 
-        return '"' +
-            text.replace(
-                /"/g,
-                '""'
-            ) +
-            '"';
-
+    function detailAttributes(item) {
+        return [
+            ['Kode Inventaris', item.kode],
+            ['Nama Gedung', item.nama_barang],
+            ['Penggunaan', item.guna],
+            ['No. Register', item.reg],
+            ['Departemen', item.departemen],
+            ['Divisi', item.divisi],
+            ['Kondisi', item.kondisi],
+            ['Konstruksi', item.konstruksi],
+            ['Material / Bahan', item.materi],
+            ['Luas Bangunan', item.luas],
+            ['Luas Lantai / Tanah', item.luastanah],
+            ['Status Tanah', item.status],
+            ['Kode Tanah', item.kode_tanah],
+            ['Tanggal Dokumen', fmtDate(item.tgl_imb)],
+            ['No. IMB / Dokumen', item.no_imb],
+            ['Asal Perolehan', item.asal],
+            ['Keterangan', item.ket]
+        ];
     }
 
+    // =====================================================
+    // 17. DETAIL SATU GEDUNG
+    // =====================================================
 
-    /* =====================================================
-       FORMAT NUMBER
-    ====================================================== */
+    function displayFocus(item) {
+        const pane = $('#gedungDetailFocus');
 
-    function formatNumber(
-        value
-    ) {
+        pane.hidden = false;
 
-        return new Intl.NumberFormat(
-            'id-ID'
-        ).format(
-            Number(value)
+        pane.innerHTML = `
+            <div class="gedung-focus-heading">
+
+                <h3>
+                    Rincian:
+                    ${esc(item.nama_barang || 'Gedung')}
+                </h3>
+
+                <button
+                    type="button"
+                    class="gedung-btn outline"
+                    data-hide-focus
+                >
+                    Tutup rincian
+                </button>
+
+            </div>
+
+            ${
+                item.img
+                    ? `
+                        <div class="gedung-focus-media">
+                            <a
+                                href="${fileUrl(item.id, 'foto')}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <img
+                                    src="${fileUrl(item.id, 'foto')}"
+                                    alt="Foto ${esc(item.nama_barang)}"
+                                    loading="lazy"
+                                >
+                            </a>
+                        </div>
+                    `
+                    : ''
+            }
+
+            <dl class="gedung-attributes">
+                ${
+                    detailAttributes(item)
+                        .map(([name, value]) => `
+                            <div>
+                                <dt>
+                                    ${esc(name)}
+                                </dt>
+
+                                <dd>
+                                    ${esc(value || '—')}
+                                </dd>
+                            </div>
+                        `)
+                        .join('')
+                }
+            </dl>
+
+            ${
+                item.dok
+                    ? `
+                        <a
+                            class="gedung-btn outline"
+                            href="${fileUrl(item.id, 'dokumen')}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <i data-lucide="file-text"></i>
+                            Lihat Dokumen PDF
+                        </a>
+                    `
+                    : ''
+            }
+        `;
+
+        icons();
+
+        pane.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
+
+    // =====================================================
+    // 18. DAFTAR GEDUNG BERDASARKAN LOKASI
+    // =====================================================
+
+    function renderDetailList() {
+        const dep = $('#gedungDetailDep').value;
+        const div = $('#gedungDetailDiv').value;
+
+        const items = detailItems.filter(item =>
+            (!dep || String(item.id_departemen) === dep) &&
+            (!div || String(item.id_div) === div)
         );
 
+        $('#gedungDetailItems').innerHTML =
+            items.length
+                ? items.map(item => {
+                    const button =
+                        detailMode === 'delete'
+                            ? `
+                                <button
+                                    type="button"
+                                    class="gedung-btn danger"
+                                    data-delete="${item.id}"
+                                >
+                                    <i data-lucide="trash-2"></i>
+                                    Hapus
+                                </button>
+                            `
+                            : detailMode === 'edit'
+                                ? `
+                                    <button
+                                        type="button"
+                                        class="gedung-btn outline"
+                                        data-edit="${item.id}"
+                                    >
+                                        <i data-lucide="square-pen"></i>
+                                        Edit
+                                    </button>
+                                `
+                                : `
+                                    <button
+                                        type="button"
+                                        class="gedung-btn outline"
+                                        data-focus="${item.id}"
+                                    >
+                                        <i data-lucide="eye"></i>
+                                        Lihat Rincian
+                                    </button>
+                                `;
+
+                    return `
+                        <article class="gedung-inventory">
+
+                            <div>
+                                <strong>
+                                    ${esc(item.nama_barang || 'Gedung')}
+                                </strong>
+
+                                <small>
+                                    ${esc(item.kode || '—')} ·
+                                    ${esc(item.departemen || '—')} /
+                                    ${esc(item.divisi || '—')} ·
+                                    ${esc(item.kondisi || '—')}
+                                </small>
+                            </div>
+
+                            ${button}
+
+                        </article>
+                    `;
+                }).join('')
+                : `
+                    <p class="gedung-empty">
+                        Tidak ada inventaris untuk
+                        filter tersebut.
+                    </p>
+                `;
+
+        icons();
     }
 
+    // =====================================================
+    // 19. FILTER DEPARTEMEN DAN DIVISI
+    // =====================================================
 
-    /* =====================================================
-       CLEAN TEXT
-    ====================================================== */
+    function renderDetailFilters() {
+        const dep = $('#gedungDetailDep');
+        const div = $('#gedungDetailDiv');
 
-    function cleanText(
-        value
-    ) {
+        const departments = new Map();
 
-        return String(
-            value ?? ''
-        )
-            .replace(
-                /\s+/g,
-                ' '
-            )
-            .trim();
+        detailItems.forEach(item => {
+            departments.set(
+                String(item.id_departemen),
+                item.departemen || 'Tanpa departemen'
+            );
+        });
 
+        dep.innerHTML = `
+            <option value="">
+                Semua Departemen
+            </option>
+        ` + [...departments]
+            .map(([id, name]) => `
+                <option value="${esc(id)}">
+                    ${esc(name)}
+                </option>
+            `)
+            .join('');
+
+        function makeDiv() {
+            const divisions = new Map();
+
+            detailItems
+                .filter(item =>
+                    !dep.value ||
+                    String(item.id_departemen) === dep.value
+                )
+                .forEach(item => {
+                    divisions.set(
+                        String(item.id_div),
+                        item.divisi || 'Tanpa divisi'
+                    );
+                });
+
+            div.innerHTML = `
+                <option value="">
+                    Semua Divisi
+                </option>
+            ` + [...divisions]
+                .map(([id, name]) => `
+                    <option value="${esc(id)}">
+                        ${esc(name)}
+                    </option>
+                `)
+                .join('');
+
+            renderDetailList();
+        }
+
+        dep.onchange = makeDiv;
+        div.onchange = renderDetailList;
+
+        makeDiv();
     }
 
+    // =====================================================
+    // 20. MEMBUKA DETAIL LOKASI
+    // =====================================================
 
-})();
+    async function showLokasi(lokasiId, mode = 'view') {
+        detailMode = mode;
+
+        $('#gedungDetailTitle').textContent =
+            mode === 'edit'
+                ? 'Pilih Gedung untuk Edit'
+                : mode === 'delete'
+                    ? 'Pilih Gedung untuk Hapus'
+                    : 'Detail Gedung dan Bangunan';
+
+        $('#gedungDetailAddress').textContent =
+            'Memuat lokasi dan daftar bangunan...';
+
+        $('#gedungDetailItems').innerHTML = `
+            <p class="gedung-empty">
+                Memuat data...
+            </p>
+        `;
+
+        $('#gedungDetailFocus').hidden = true;
+
+        open('gedungDetailDialog');
+
+        try {
+            const data = await json(
+                lokasiUrl(lokasiId)
+            );
+
+            detailItems = Array.isArray(data.data)
+                ? data.data
+                : [];
+
+            $('#gedungDetailAddress').textContent =
+                `${data.lokasi.lokasi || '—'} · ` +
+                `${data.lokasi.alamat || '—'} · ` +
+                `${detailItems.length} gedung`;
+
+            renderDetailFilters();
+
+        } catch (error) {
+            $('#gedungDetailItems').textContent =
+                'Gagal memuat data: ' + error.message;
+        }
+    }
+
+    // =====================================================
+    // 21. EVENT MODAL DETAIL
+    // =====================================================
+
+    $('#gedungDetailItems').addEventListener(
+        'click',
+        event => {
+            // LIHAT RINCIAN
+            const focus = event.target.closest(
+                '[data-focus]'
+            );
+
+            if (focus) {
+                const item = detailItems.find(
+                    item =>
+                        String(item.id) === focus.dataset.focus
+                );
+
+                if (item) {
+                    displayFocus(item);
+                }
+
+                return;
+            }
+
+            // EDIT
+            const edit = event.target.closest(
+                '[data-edit]'
+            );
+
+            if (edit) {
+                editGedung(edit.dataset.edit);
+                return;
+            }
+
+            // HAPUS
+            const del = event.target.closest(
+                '[data-delete]'
+            );
+
+            if (!del) return;
+
+            const item = detailItems.find(
+                item =>
+                    String(item.id) === del.dataset.delete
+            );
+
+            if (!item) return;
+
+            const confirmed = confirm(
+                `Hapus hanya inventaris "` +
+                `${item.nama_barang || item.kode}"?\n` +
+                `Lokasi dan transaksi Nilai Aset ` +
+                `tidak dihapus.`
+            );
+
+            if (!confirmed) return;
+
+            const formDel = $('#gedungDeleteForm');
+
+            formDel.action = url(item.id);
+
+            formDel.submit();
+        }
+    );
+
+    $('#gedungDetailFocus').addEventListener(
+        'click',
+        event => {
+            if (
+                event.target.closest('[data-hide-focus]')
+            ) {
+                $('#gedungDetailFocus').hidden = true;
+            }
+        }
+    );
+
+    // =====================================================
+    // 22. EDIT DATA GEDUNG
+    // =====================================================
+
+    async function editGedung(id) {
+        try {
+            const result = await json(
+                url(id)
+            );
+
+            const item = result.data;
+
+            resetForm();
+
+            $('#gedungMethod').disabled = false;
+
+            form.action = url(id);
+
+            $('#gedungFormTitle').textContent =
+                'Edit Data Gedung #' + id;
+
+            $('#gedungPendingSection').hidden = true;
+            $('#gedungSelected').hidden = false;
+
+            $('#gedungSelectedTitle').textContent =
+                `${item.lokasi || '—'} · ` +
+                `${item.kode || '—'}`;
+
+            $('#gedungSelectedMeta').textContent =
+                'Mode Edit — sumber transaksi dan ' +
+                'organisasi tidak diubah.';
+
+            $('#gedungChange').hidden = true;
+
+            $('#gedungLokasi').value =
+                item.lokasi || '';
+
+            $('#gedungAlamat').value =
+                item.alamat || '';
+
+            $('#gedungDepartemen').value =
+                item.departemen || '';
+
+            $('#gedungDivisi').value =
+                item.divisi || '';
+
+            $('#gedungVoucher').value =
+                item.nilai_aktiva_id
+                    ? `Nilai Aset #${item.nilai_aktiva_id}`
+                    : 'Data lama';
+
+            [
+                'id_barang',
+                'kode',
+                'reg',
+                'asal',
+                'kondisi',
+                'konstruksi',
+                'materi',
+                'status',
+                'luas',
+                'luastanah',
+                'kode_tanah',
+                'no_imb',
+                'guna',
+                'ket'
+            ].forEach(name => {
+                const field = form.elements.namedItem(name);
+
+                if (field) {
+                    field.value = item[name] ?? '';
+                }
+            });
+
+            form.elements.namedItem('tgl_imb').value =
+                String(item.tgl_imb || '').slice(0, 10);
+
+            close('gedungDetailDialog');
+
+            open('gedungFormDialog');
+
+        } catch (error) {
+            alert(
+                'Tidak bisa membuka edit: ' +
+                error.message
+            );
+        }
+    }
+
+    // =====================================================
+    // 23. RENDER RINCIAN NILAI GEDUNG
+    // =====================================================
+
+    function renderNilai() {
+        const keyword = $('#gedungNilaiSearch')
+            .value.trim()
+            .toLowerCase();
+
+        const values = nilaiItems.filter(item =>
+            [
+                item.kode_aktiva,
+                item.nama_aktiva,
+                item.no_voucher,
+                item.urai,
+                item.tahun,
+                item.nilai
+            ]
+                .join(' ')
+                .toLowerCase()
+                .includes(keyword)
+        );
+
+        $('#gedungNilaiBody').innerHTML =
+            values.length
+                ? values.map((item, index) => `
+                    <tr>
+                        <td>
+                            ${index + 1}
+                        </td>
+
+                        <td>
+                            ${esc(item.kode_aktiva || '—')}
+                        </td>
+
+                        <td>
+                            ${esc(item.nama_aktiva || '—')}
+                        </td>
+
+                        <td>
+                            ${esc(fmtDate(item.tgl_voucher))}
+                        </td>
+
+                        <td>
+                            ${esc(item.tahun || '—')}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${rupiah(item.nilai)}
+                            </strong>
+                        </td>
+
+                        <td class="gedung-uraian">
+                            ${esc(item.urai || '—')}
+                        </td>
+
+                        <td>
+                            ${esc(item.no_voucher || '—')}
+                        </td>
+                    </tr>
+                `).join('')
+                : `
+                    <tr>
+                        <td colspan="8" class="gedung-empty">
+                            Tidak ada rincian nilai yang cocok.
+                        </td>
+                    </tr>
+                `;
+    }
+
+    // =====================================================
+    // 24. DETAIL NILAI PER LOKASI
+    // =====================================================
+
+    async function showNilai(id, name) {
+        $('#gedungNilaiTitle').textContent =
+            'Detail Nilai — ' + name;
+
+        $('#gedungNilaiAddress').textContent =
+            'Memuat rincian...';
+
+        $('#gedungNilaiBody').innerHTML = `
+            <tr>
+                <td colspan="8" class="gedung-empty">
+                    Memuat transaksi...
+                </td>
+            </tr>
+        `;
+
+        $('#gedungNilaiSearch').value = '';
+
+        open('gedungNilaiDialog');
+
+        try {
+            const data = await json(
+                lokasiUrl(id) + '/nilai'
+            );
+
+            nilaiItems = data.data || [];
+
+            $('#gedungNilaiAddress').textContent =
+                data.lokasi.alamat || '—';
+
+            $('#gedungNilaiTotal').textContent =
+                rupiah(data.total);
+
+            $('#gedungNilaiCount').textContent =
+                format.format(data.count) +
+                ' transaksi';
+
+            renderNilai();
+
+        } catch (error) {
+            $('#gedungNilaiBody').innerHTML = `
+                <tr>
+                    <td colspan="8" class="gedung-empty">
+                        ${esc(error.message)}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    $('#gedungNilaiSearch').addEventListener(
+        'input',
+        renderNilai
+    );
+
+    // =====================================================
+    // 25. DAFTAR PDF GEDUNG
+    // =====================================================
+
+    async function showPdf(id, name) {
+        $('#gedungPdfTitle').textContent =
+            'Dokumen PDF — ' + name;
+
+        $('#gedungPdfBody').innerHTML = `
+            <tr>
+                <td colspan="4" class="gedung-empty">
+                    Memuat...
+                </td>
+            </tr>
+        `;
+
+        open('gedungPdfDialog');
+
+        try {
+            const response = await json(
+                lokasiUrl(id)
+            );
+
+            const docs = (response.data || [])
+                .filter(item =>
+                    String(item.dok || '')
+                        .toLowerCase()
+                        .endsWith('.pdf')
+                );
+
+            $('#gedungPdfAddress').textContent =
+                `${docs.length} dokumen terdaftar`;
+
+            $('#gedungPdfBody').innerHTML =
+                docs.length
+                    ? docs.map((item, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+
+                            <td>
+                                ${esc(item.nama_barang || '—')}
+                            </td>
+
+                            <td>
+                                ${esc(item.kode || '—')}
+                            </td>
+
+                            <td>
+                                <a
+                                    class="gedung-pdf-btn"
+                                    href="${fileUrl(item.id, 'dokumen')}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <i data-lucide="file-text"></i>
+                                    Buka PDF
+                                </a>
+                            </td>
+                        </tr>
+                    `).join('')
+                    : `
+                        <tr>
+                            <td colspan="4" class="gedung-empty">
+                                Tidak ada dokumen PDF.
+                            </td>
+                        </tr>
+                    `;
+
+            icons();
+
+        } catch (error) {
+            $('#gedungPdfBody').textContent =
+                'Gagal memuat PDF: ' +
+                error.message;
+        }
+    }
+
+    // =====================================================
+    // 26. EVENT TOMBOL TABEL UTAMA
+    // =====================================================
+
+    $('#gedungTable').addEventListener(
+        'click',
+        event => {
+            const target = event.target.closest('button');
+
+            if (!target) return;
+
+            // DETAIL NILAI
+            if (target.dataset.nilaiLokasi) {
+                return showNilai(
+                    target.dataset.nilaiLokasi,
+                    target.dataset.nama || ''
+                );
+            }
+
+            // DAFTAR PDF
+            if (target.dataset.pdfLokasi) {
+                return showPdf(
+                    target.dataset.pdfLokasi,
+                    target.dataset.nama || ''
+                );
+            }
+
+            // EDIT GEDUNG
+            if (target.dataset.pilihEdit) {
+                return showLokasi(
+                    target.dataset.pilihEdit,
+                    'edit'
+                );
+            }
+
+            // HAPUS GEDUNG
+            if (target.dataset.pilihHapus) {
+                return showLokasi(
+                    target.dataset.pilihHapus,
+                    'delete'
+                );
+            }
+
+            // DETAIL GEDUNG
+            if (target.dataset.lokasi) {
+                return showLokasi(
+                    target.dataset.lokasi,
+                    'view'
+                );
+            }
+        }
+    );
+
+    // =====================================================
+    // 27. INITIALISASI HALAMAN
+    // =====================================================
+
+    renderTable();
+
+    icons();
+
+    // Apabila terjadi error validasi dari Laravel,
+    // buka kembali form dan pertahankan data lama.
+    const hasErrors = !!$('.gedung-alert.danger');
+
+    if (hasErrors) {
+        const previous = new FormData(form);
+
+        const previousVoucher =
+            previous.get('id_nilai_aktiva');
+
+        open('gedungFormDialog');
+
+        loadPending().then(() => {
+            if (previousVoucher) {
+                const source = pending.find(item =>
+                    String(item.id) ===
+                    String(previousVoucher)
+                );
+
+                if (source) {
+                    selection(source);
+                }
+            }
+        });
+
+    } else {
+        loadPending();
+    }
+});

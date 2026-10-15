@@ -1,1270 +1,825 @@
 @extends('layouts.main')
 
+@section('title', 'Gedung & Bangunan')
+
 @section('content')
-    <link rel="stylesheet" href="{{ asset('css/pages/kib/gedung.css') }}">
 
-    <section class="content gedung-page">
+    @php
+        $rupiah = fn($n) => 'Rp ' . number_format((float) ($n ?? 0), 0, ',', '.');
+        $totalKondisi = max(1, (int) $totalGedung);
+        $baik = (int) ($kondisi['Baik'] ?? 0);
+        $rusak = (int) ($kondisi['Rusak'] ?? 0);
+        $perhatian = (int) ($kondisi['Perlu perhatian'] ?? 0);
+    @endphp
 
-        {{-- =====================================================
-        HERO
-    ====================================================== --}}
-        <section class="gedung-hero">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/gedung.css') }}?v={{ file_exists(public_path('css/pages/kib/gedung.css')) ? filemtime(public_path('css/pages/kib/gedung.css')) : time() }}">
 
+    <main id="gedungPage" class="content gedung-page" data-base-url="{{ url('/kib/gedung') }}"
+        data-store-url="{{ route('kib.gedung.store') }}" data-pending-url="{{ route('kib.gedung.pending') }}">
+        {{-- =============================================
+         HEADER DAN KPI
+    ============================================== --}}
+        <header class="gedung-hero">
             <div class="gedung-hero-overlay"></div>
 
             <div class="gedung-hero-inner">
-
-                {{-- Breadcrumb --}}
-                <div class="gedung-breadcrumb">
-
-                    <a href="{{ route('dashboard') }}">
-                        <i data-lucide="house"></i>
-                    </a>
-
-                    <i data-lucide="chevron-right"></i>
-
-                    <span>K.I.B</span>
-
-                    <i data-lucide="chevron-right"></i>
-
-                    <strong>Gedung & Bangunan</strong>
-
-                </div>
-
-
-                {{-- Heading --}}
-                <div class="gedung-heading">
-
+                <div class="gedung-hero-top">
                     <div>
+                        <nav class="gedung-breadcrumb">
+                            <a href="{{ route('dashboard') }}" aria-label="Dashboard">
+                                <i data-lucide="house"></i>
+                            </a>
+
+                            <i data-lucide="chevron-right"></i>
+                            <span>K.I.B</span>
+                            <i data-lucide="chevron-right"></i>
+                            <strong>Gedung & Bangunan</strong>
+                        </nav>
 
                         <h1>Gedung & Bangunan</h1>
-
                         <p>
-                            Kelola data aset tetap berupa gedung dan bangunan
-                            milik Perumda Tirta Kencana Kota Samarinda.
+                            Kelola inventaris gedung, nilai transaksi,
+                            dokumen, dan data masuk dari Nilai Aset
+                            Perumda Tirta Kencana Kota Samarinda.
                         </p>
-
                     </div>
 
+                    <div class="gedung-date-card">
+                        <i data-lucide="calendar-days"></i>
+                        <div>
+                            <strong>
+                                {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
+                            </strong>
+                            <small>
+                                {{ now('Asia/Makassar')->format('H:i') }} WITA
+                            </small>
+                        </div>
+                    </div>
                 </div>
 
-
-                {{-- KPI --}}
-                <div class="gedung-kpi-grid">
-
-                    <div class="gedung-kpi-card">
-
-                        <div class="gedung-kpi-icon blue">
+                <div class="gedung-kpis">
+                    <article class="gedung-kpi">
+                        <span class="gedung-kpi-icon">
                             <i data-lucide="building-2"></i>
+                        </span>
+                        <div>
+                            <small>Total Data Gedung</small>
+                            <strong>{{ number_format($totalGedung, 0, ',', '.') }}</strong>
+                            <span>Inventaris terdaftar</span>
                         </div>
+                    </article>
 
-                        <div class="gedung-kpi-content">
+                    <article class="gedung-kpi">
+                        <span class="gedung-kpi-icon">
+                            <i data-lucide="wallet"></i>
+                        </span>
+                        <div>
+                            <small>Total Nilai Gedung</small>
+                            <strong>{{ $rupiah($totalNilai) }}</strong>
+                            <span>Transaksi aktiva K.I.B C</span>
+                        </div>
+                    </article>
 
-                            <span>Total Gedung</span>
+                    <article class="gedung-kpi">
+                        <span class="gedung-kpi-icon">
+                            <i data-lucide="map-pin"></i>
+                        </span>
+                        <div>
+                            <small>Jumlah Lokasi</small>
+                            <strong>{{ number_format($totalLokasi, 0, ',', '.') }}</strong>
+                            <span>Lokasi dengan inventaris</span>
+                        </div>
+                    </article>
 
-                            <strong id="totalGedung">
-                                38
+                    <article class="gedung-kpi">
+                        <span class="gedung-kpi-icon">
+                            <i data-lucide="bell"></i>
+                        </span>
+                        <div>
+                            <small>Pending Nilai Aset</small>
+                            <strong id="gedungPendingKpi">
+                                {{ number_format($totalPending, 0, ',', '.') }}
                             </strong>
-
-                            <small>
-                                seluruh aset gedung
-                            </small>
-
+                            <span>Penambahan Aset menunggu</span>
                         </div>
-
-                    </div>
-
-
-                    <div class="gedung-kpi-card">
-
-                        <div class="gedung-kpi-icon green">
-                            <i data-lucide="circle-check"></i>
-                        </div>
-
-                        <div class="gedung-kpi-content">
-
-                            <span>Kondisi Baik</span>
-
-                            <strong>
-                                29
-                            </strong>
-
-                            <small>
-                                76,3% dari total aset
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="gedung-kpi-card">
-
-                        <div class="gedung-kpi-icon yellow">
-                            <i data-lucide="triangle-alert"></i>
-                        </div>
-
-                        <div class="gedung-kpi-content">
-
-                            <span>Perlu Perhatian</span>
-
-                            <strong>
-                                7
-                            </strong>
-
-                            <small>
-                                kondisi sedang
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="gedung-kpi-card">
-
-                        <div class="gedung-kpi-icon red">
-                            <i data-lucide="circle-x"></i>
-                        </div>
-
-                        <div class="gedung-kpi-content">
-
-                            <span>Kondisi Rusak</span>
-
-                            <strong>
-                                2
-                            </strong>
-
-                            <small>
-                                perlu tindak lanjut
-                            </small>
-
-                        </div>
-
-                    </div>
-
+                    </article>
                 </div>
+            </div>
+        </header>
 
+        {{-- =============================================
+         ALERT SUKSES DAN VALIDASI
+    ============================================== --}}
+        @if (session('success'))
+            <div class="gedung-alert success" role="status">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="gedung-alert danger" role="alert">
+                <strong>Data belum berhasil disimpan:</strong>
+                <ul>
+                    @foreach ($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- =============================================
+         CARD DATA MASUK
+    ============================================== --}}
+        <section class="gedung-incoming" id="gedungIncomingCard">
+            <span class="gedung-incoming-icon">
+                <i data-lucide="bell-ring"></i>
+            </span>
+
+            <div class="gedung-incoming-copy">
+                <small>NILAI ASET</small>
+
+                <h2>
+                    Data Gedung dan Bangunan Menunggu Diproses
+                    <em id="gedungIncomingBadge">
+                        {{ number_format($totalPending, 0, ',', '.') }}
+                    </em>
+                </h2>
+
+                <p>
+                    Ada
+                    <strong id="gedungPendingLabel">
+                        {{ number_format($totalPending, 0, ',', '.') }}
+                    </strong>
+                    transaksi Penambahan Aset kategori Gedung
+                    yang menunggu pendataan K.I.B.
+                </p>
+
+                <span class="gedung-pending-pill">
+                    <i data-lucide="package-plus"></i>
+
+                    <b id="gedungPendingPill">
+                        {{ number_format($totalPending, 0, ',', '.') }}
+                    </b>
+
+                    Data Pending Gedung
+                </span>
             </div>
 
+            <button id="gedungOpenPending" type="button" class="gedung-btn outline">
+                <i data-lucide="inbox"></i>
+                Lihat Data Masuk
+            </button>
         </section>
 
-
-        {{-- =====================================================
-        MAIN CARD
-    ====================================================== --}}
+        {{-- =============================================
+         TABEL UTAMA GEDUNG
+    ============================================== --}}
         <section class="gedung-card">
-
-            {{-- Header --}}
-            <div class="gedung-card-header">
-
+            <div class="gedung-card-title">
                 <div>
-
-                    <h2>
-                        Daftar Gedung & Bangunan
-                    </h2>
-
+                    <h2>Daftar Gedung dan Bangunan</h2>
                     <p>
-                        Data aset tetap gedung dan bangunan
+                        Pengelompokan aset berdasarkan lokasi
+                        sesuai sistem aset lama.
                     </p>
-
                 </div>
 
-
-                <button type="button" class="gedung-add-btn" onclick="openGedungModal('add')">
-
+                <button type="button" id="gedungAdd" class="gedung-btn primary">
                     <i data-lucide="plus"></i>
-
-                    Tambah Gedung
-
+                    Tambah Data Gedung
                 </button>
-
             </div>
 
-
-            {{-- =================================================
-            FILTER
-        ================================================== --}}
-            <div class="gedung-filter">
-
-                {{-- Search --}}
-                <div class="gedung-search">
-
-                    <i data-lucide="search"></i>
-
-                    <input type="search" id="gedungSearch" placeholder="Cari kode, nama gedung, register, atau lokasi..."
-                        autocomplete="off">
-
-                </div>
-
-
-                {{-- Kondisi --}}
-                <select id="gedungKondisi">
-
-                    <option value="">
-                        Semua Kondisi
-                    </option>
-
-                    <option value="Baik">
-                        Baik
-                    </option>
-
-                    <option value="Sedang">
-                        Sedang
-                    </option>
-
-                    <option value="Rusak Berat">
-                        Rusak Berat
-                    </option>
-
-                </select>
-
-
-                {{-- Tahun --}}
-                <select id="gedungTahun">
-
-                    <option value="">
-                        Semua Tahun
-                    </option>
-
-                    <option value="2026">
-                        2026
-                    </option>
-
-                    <option value="2025">
-                        2025
-                    </option>
-
-                    <option value="2024">
-                        2024
-                    </option>
-
-                    <option value="2023">
-                        2023
-                    </option>
-
-                    <option value="2022">
-                        2022
-                    </option>
-
-                    <option value="2021">
-                        2021
-                    </option>
-
-                </select>
-
-
-                {{-- Lokasi --}}
-                <select id="gedungLokasi">
-
-                    <option value="">
-                        Semua Lokasi
-                    </option>
-
-                    <option value="Kantor Pusat">
-                        Kantor Pusat
-                    </option>
-
-                    <option value="IPA Gunung Lipan">
-                        IPA Gunung Lipan
-                    </option>
-
-                    <option value="IPA Sungai Kapih">
-                        IPA Sungai Kapih
-                    </option>
-
-                    <option value="Reservoir Lempake">
-                        Reservoir Lempake
-                    </option>
-
-                    <option value="Gudang Material">
-                        Gudang Material
-                    </option>
-
-                </select>
-
-
-                <button type="button" class="gedung-filter-btn" onclick="resetGedungFilter()">
-
-                    <i data-lucide="rotate-ccw"></i>
-
-                    Reset
-
-                </button>
-
-            </div>
-
-
-            {{-- =================================================
-            TOOLBAR
-        ================================================== --}}
             <div class="gedung-toolbar">
+                <label class="gedung-search">
+                    <i data-lucide="search"></i>
+                    <input type="search" id="gedungSearch" placeholder="Cari nama lokasi atau alamat...">
+                </label>
 
-                <div class="gedung-toolbar-left">
+                <label class="gedung-limit">
+                    Jumlah data
+                    <select id="gedungPageSize">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </label>
 
-                    <button type="button" class="gedung-tool-btn" onclick="toggleGedungAdvancedFilter()">
+                <button type="button" id="gedungReset" class="gedung-btn outline">
+                    <i data-lucide="refresh-cw"></i>
+                    Reset
+                </button>
 
-                        <i data-lucide="list-filter"></i>
-
-                        Filter Lainnya
-
-                    </button>
-
-                </div>
-
-
-                <div class="gedung-toolbar-right">
-
-                    <button type="button" class="gedung-tool-btn" onclick="exportGedungCSV()">
-
-                        <i data-lucide="download"></i>
-
-                        Export CSV
-
-                    </button>
-
-                </div>
-
+                <button type="button" id="gedungExport" class="gedung-btn outline">
+                    <i data-lucide="download"></i>
+                    Export CSV
+                </button>
             </div>
 
-
-            {{-- =================================================
-            ADVANCED FILTER
-        ================================================== --}}
-            <div class="gedung-advanced-filter" id="gedungAdvancedFilter" hidden>
-
-                <div>
-
-                    <label>
-                        Status Kepemilikan
-                    </label>
-
-                    <select id="gedungStatusTanah">
-
-                        <option value="">
-                            Semua Status
-                        </option>
-
-                        <option value="Milik Sendiri">
-                            Milik Sendiri
-                        </option>
-
-                        <option value="Sewa">
-                            Sewa
-                        </option>
-
-                        <option value="Pinjam Pakai">
-                            Pinjam Pakai
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div>
-
-                    <label>
-                        Jenis Bangunan
-                    </label>
-
-                    <select id="gedungJenis">
-
-                        <option value="">
-                            Semua Jenis
-                        </option>
-
-                        <option value="Kantor">
-                            Kantor
-                        </option>
-
-                        <option value="Instalasi">
-                            Instalasi
-                        </option>
-
-                        <option value="Gudang">
-                            Gudang
-                        </option>
-
-                        <option value="Reservoir">
-                            Reservoir
-                        </option>
-
-                        <option value="Bangunan Pendukung">
-                            Bangunan Pendukung
-                        </option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-
-            {{-- =================================================
-            TABLE
-        ================================================== --}}
-            <div class="gedung-table-wrapper" tabindex="0">
-
+            <div class="gedung-table-scroller">
                 <table class="gedung-table" id="gedungTable">
+                    <colgroup>
+                        <col class="gc-no">
+                        <col class="gc-lokasi">
+                        <col class="gc-alamat">
+                        <col class="gc-nilai">
+                        <col class="gc-pdf">
+                        <col class="gc-aksi">
+                    </colgroup>
 
                     <thead>
-
                         <tr>
-
-                            <th class="check-column">
-
-                                <input type="checkbox" id="gedungSelectAll" aria-label="Pilih semua data">
-
-                            </th>
-
                             <th>No</th>
-
-                            <th>Kode Barang</th>
-
-                            <th>Nama Gedung / Bangunan</th>
-
-                            <th>Register</th>
-
-                            <th>Jenis</th>
-
-                            <th>Luas Bangunan</th>
-
-                            <th>Tahun Perolehan</th>
-
                             <th>Lokasi</th>
-
-                            <th>Kondisi</th>
-
-                            <th>Nilai Perolehan</th>
-
-                            <th>Status Tanah</th>
-
+                            <th>Alamat</th>
+                            <th>Nilai</th>
+                            <th>PDF</th>
                             <th>Aksi</th>
-
                         </tr>
-
                     </thead>
 
-
                     <tbody>
+                        @forelse($lokasiGedung as $row)
+                            <tr class="gedung-row"
+                                data-search="{{ mb_strtolower(trim((string) $row->lokasi) . ' ' . trim((string) $row->alamat)) }}"
+                                data-export-lokasi="{{ trim((string) $row->lokasi) }}"
+                                data-export-alamat="{{ trim((string) $row->alamat) }}"
+                                data-export-nilai="{{ (int) $row->nilai_total }}"
+                                data-export-pdf="{{ (int) $row->jumlah_pdf }}">
+                                <td class="gedung-row-number"></td>
 
+                                <td>
+                                    <strong>
+                                        {{ trim((string) $row->lokasi) ?: '—' }}
+                                    </strong>
+                                    <small>
+                                        ID Lokasi #{{ $row->id_lokasi }}
+                                        · {{ $row->jumlah_gedung }} gedung
+                                    </small>
+                                </td>
 
-                        {{-- DATA 1 --}}
-                        <tr data-record data-kondisi="Baik" data-tahun="2022" data-lokasi="Kantor Pusat"
-                            data-status-tanah="Milik Sendiri" data-jenis="Kantor">
+                                <td>
+                                    {{ trim((string) $row->alamat) ?: '—' }}
+                                </td>
 
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>1</td>
-
-                            <td>1.3.1.01.001</td>
-
-                            <td>
-                                Gedung Kantor Pusat
-                            </td>
-
-                            <td>00001</td>
-
-                            <td>Kantor</td>
-
-                            <td>1.250 m²</td>
-
-                            <td>2022</td>
-
-                            <td>Kantor Pusat</td>
-
-                            <td>
-                                <span class="gedung-status baik">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 8.500.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view" title="Lihat">
-                                        <i data-lucide="eye"></i>
+                                <td>
+                                    <button type="button" class="gedung-nilai-btn"
+                                        data-nilai-lokasi="{{ $row->id_lokasi }}"
+                                        data-nama="{{ trim((string) $row->lokasi) }}">
+                                        <span>
+                                            <b>{{ $rupiah($row->nilai_total) }}</b>
+                                            <small>
+                                                {{ $row->jumlah_transaksi }} transaksi
+                                            </small>
+                                        </span>
+                                        <i data-lucide="external-link"></i>
                                     </button>
-
-                                    <button type="button" class="edit" data-action="edit" title="Edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete" title="Hapus">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 2 --}}
-                        <tr data-record data-kondisi="Baik" data-tahun="2021" data-lokasi="IPA Gunung Lipan"
-                            data-status-tanah="Milik Sendiri" data-jenis="Instalasi">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>2</td>
-
-                            <td>1.3.1.01.002</td>
-
-                            <td>
-                                Gedung Instalasi Pengolahan Air
-                            </td>
-
-                            <td>00002</td>
-
-                            <td>Instalasi</td>
-
-                            <td>980 m²</td>
-
-                            <td>2021</td>
-
-                            <td>IPA Gunung Lipan</td>
-
-                            <td>
-                                <span class="gedung-status baik">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 6.750.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 3 --}}
-                        <tr data-record data-kondisi="Sedang" data-tahun="2020" data-lokasi="Gudang Material"
-                            data-status-tanah="Milik Sendiri" data-jenis="Gudang">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>3</td>
-
-                            <td>1.3.1.02.001</td>
-
-                            <td>
-                                Gudang Material Utama
-                            </td>
-
-                            <td>00003</td>
-
-                            <td>Gudang</td>
-
-                            <td>650 m²</td>
-
-                            <td>2020</td>
-
-                            <td>Gudang Material</td>
-
-                            <td>
-                                <span class="gedung-status sedang">
-                                    Sedang
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 3.250.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 4 --}}
-                        <tr data-record data-kondisi="Baik" data-tahun="2023" data-lokasi="Reservoir Lempake"
-                            data-status-tanah="Milik Sendiri" data-jenis="Reservoir">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>4</td>
-
-                            <td>1.3.1.03.001</td>
-
-                            <td>
-                                Bangunan Reservoir Lempake
-                            </td>
-
-                            <td>00004</td>
-
-                            <td>Reservoir</td>
-
-                            <td>420 m²</td>
-
-                            <td>2023</td>
-
-                            <td>Reservoir Lempake</td>
-
-                            <td>
-                                <span class="gedung-status baik">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 4.850.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 5 --}}
-                        <tr data-record data-kondisi="Sedang" data-tahun="2019" data-lokasi="IPA Sungai Kapih"
-                            data-status-tanah="Milik Sendiri" data-jenis="Instalasi">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>5</td>
-
-                            <td>1.3.1.01.003</td>
-
-                            <td>
-                                Bangunan Operasional IPA
-                            </td>
-
-                            <td>00005</td>
-
-                            <td>Instalasi</td>
-
-                            <td>760 m²</td>
-
-                            <td>2019</td>
-
-                            <td>IPA Sungai Kapih</td>
-
-                            <td>
-                                <span class="gedung-status sedang">
-                                    Sedang
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 5.125.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 6 --}}
-                        <tr data-record data-kondisi="Baik" data-tahun="2024" data-lokasi="Kantor Pusat"
-                            data-status-tanah="Milik Sendiri" data-jenis="Bangunan Pendukung">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>6</td>
-
-                            <td>1.3.1.04.001</td>
-
-                            <td>
-                                Gedung Arsip
-                            </td>
-
-                            <td>00006</td>
-
-                            <td>Bangunan Pendukung</td>
-
-                            <td>315 m²</td>
-
-                            <td>2024</td>
-
-                            <td>Kantor Pusat</td>
-
-                            <td>
-                                <span class="gedung-status baik">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 2.850.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 7 --}}
-                        <tr data-record data-kondisi="Rusak Berat" data-tahun="2018" data-lokasi="Gudang Material"
-                            data-status-tanah="Milik Sendiri" data-jenis="Gudang">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>7</td>
-
-                            <td>1.3.1.02.002</td>
-
-                            <td>
-                                Gudang Suku Cadang Lama
-                            </td>
-
-                            <td>00007</td>
-
-                            <td>Gudang</td>
-
-                            <td>380 m²</td>
-
-                            <td>2018</td>
-
-                            <td>Gudang Material</td>
-
-                            <td>
-                                <span class="gedung-status rusak">
-                                    Rusak Berat
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 1.650.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 8 --}}
-                        <tr data-record data-kondisi="Baik" data-tahun="2025" data-lokasi="Kantor Pusat"
-                            data-status-tanah="Milik Sendiri" data-jenis="Bangunan Pendukung">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>8</td>
-
-                            <td>1.3.1.04.002</td>
-
-                            <td>
-                                Pos Keamanan Kantor Pusat
-                            </td>
-
-                            <td>00008</td>
-
-                            <td>Bangunan Pendukung</td>
-
-                            <td>85 m²</td>
-
-                            <td>2025</td>
-
-                            <td>Kantor Pusat</td>
-
-                            <td>
-                                <span class="gedung-status baik">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-                                Rp 650.000.000
-                            </td>
-
-                            <td>
-                                Milik Sendiri
-                            </td>
-
-                            <td>
-
-                                <div class="gedung-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- EMPTY --}}
-                        <tr id="gedungEmptyRow" hidden>
-
-                            <td colspan="13" class="gedung-empty">
-
-                                <i data-lucide="database-zap"></i>
-
-                                <strong>
-                                    Data tidak ditemukan
-                                </strong>
-
-                                <span>
-                                    Tidak ada gedung atau bangunan yang
-                                    sesuai dengan filter.
-                                </span>
-
-                            </td>
-
-                        </tr>
-
+                                </td>
+
+                                <td class="gedung-center">
+                                    @if ((int) $row->jumlah_pdf > 0)
+                                        <button type="button" class="gedung-pdf-btn"
+                                            data-pdf-lokasi="{{ $row->id_lokasi }}"
+                                            data-nama="{{ trim((string) $row->lokasi) }}">
+                                            <i data-lucide="file-text"></i>
+                                            PDF ({{ $row->jumlah_pdf }})
+                                        </button>
+                                    @else
+                                        <span class="gedung-muted">—</span>
+                                    @endif
+                                </td>
+
+                                <td class="gedung-center">
+                                    <div class="gedung-actions">
+                                        <button type="button" class="gedung-action view"
+                                            data-lokasi="{{ $row->id_lokasi }}" title="Lihat detail lokasi"
+                                            aria-label="Detail lokasi">
+                                            <i data-lucide="eye"></i>
+                                        </button>
+
+                                        <button type="button" class="gedung-action edit"
+                                            data-pilih-edit="{{ $row->id_lokasi }}" title="Pilih gedung untuk diedit"
+                                            aria-label="Edit gedung">
+                                            <i data-lucide="square-pen"></i>
+                                        </button>
+
+                                        <button type="button" class="gedung-action delete"
+                                            data-pilih-hapus="{{ $row->id_lokasi }}" title="Pilih gedung untuk dihapus"
+                                            aria-label="Hapus gedung">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td class="gedung-empty" colspan="6">
+                                    Belum ada inventaris Gedung pada database.
+                                    Data Nilai Aset dapat diproses melalui
+                                    Lihat Data Masuk.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
-
                 </table>
-
             </div>
 
-
-            {{-- =================================================
-            FOOTER
-        ================================================== --}}
-            <div class="gedung-footer">
-
-                <div class="gedung-info" id="gedungTableInfo">
-                    Menampilkan 1 - 8 dari 38 data
-                </div>
-
-
-                <div class="gedung-pagination-area">
-
-                    <select id="gedungPageSize">
-
-                        <option value="8">
-                            8
-                        </option>
-
-                        <option value="10">
-                            10
-                        </option>
-
-                        <option value="25">
-                            25
-                        </option>
-
-                        <option value="50">
-                            50
-                        </option>
-
-                    </select>
-
-                    <span>
-                        data per halaman
-                    </span>
-
-
-                    <div class="gedung-pagination" id="gedungPagination"></div>
-
-                </div>
-
-            </div>
-
+            <footer class="gedung-table-footer">
+                <span id="gedungTableInfo"></span>
+                <div id="gedungPagination" class="gedung-pagination"></div>
+            </footer>
         </section>
 
+        {{-- =============================================
+         DISTRIBUSI KONDISI DAN GEDUNG TERBARU
+    ============================================== --}}
+        <div class="gedung-insights">
+            <section class="gedung-card">
+                <h2>Distribusi Kondisi Gedung</h2>
 
-        {{-- =====================================================
-        MODAL
-    ====================================================== --}}
-        <dialog class="gedung-modal" id="gedungModal">
-
-            <div class="gedung-modal-dialog">
-
-                <div class="gedung-modal-header">
-
-                    <div>
-
-                        <h3 id="gedungModalTitle">
-                            Tambah Gedung & Bangunan
-                        </h3>
-
-                        <p id="gedungModalDescription">
-                            Tambahkan data aset gedung atau bangunan.
-                        </p>
-
+                <div class="gedung-condition-panel">
+                    <div class="gedung-donut"
+                        style="--p1:{{ round(($baik / $totalKondisi) * 100, 2) }}%;--p2:{{ round((($baik + $perhatian) / $totalKondisi) * 100, 2) }}%">
+                        <div>
+                            <b>{{ number_format($totalGedung, 0, ',', '.') }}</b>
+                            <small>Gedung</small>
+                        </div>
                     </div>
 
+                    <div class="gedung-legend">
+                        <div>
+                            <span class="swatch good"></span>
+                            Baik
+                            <strong>{{ $baik }}</strong>
+                        </div>
 
-                    <button type="button" class="gedung-modal-close" onclick="closeGedungModal()">
+                        <div>
+                            <span class="swatch warn"></span>
+                            Perlu perhatian
+                            <strong>{{ $perhatian }}</strong>
+                        </div>
 
-                        <i data-lucide="x"></i>
+                        <div>
+                            <span class="swatch bad"></span>
+                            Rusak
+                            <strong>{{ $rusak }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                    </button>
+            <section class="gedung-card">
+                <h2>Gedung Terbaru</h2>
 
+                <div class="gedung-table-scroller">
+                    <table class="gedung-table gedung-recent">
+                        <thead>
+                            <tr>
+                                <th>Kode</th>
+                                <th>Nama Gedung</th>
+                                <th>Lokasi</th>
+                                <th>Terdaftar</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @forelse($terbaru as $item)
+                                <tr>
+                                    <td>{{ $item->kode }}</td>
+                                    <td>{{ trim((string) $item->nama_barang) }}</td>
+                                    <td>{{ $item->lokasi }}</td>
+                                    <td>
+                                        {{ $item->created_at ? \Carbon\Carbon::parse($item->created_at)->format('d/m/Y') : '—' }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="gedung-empty">
+                                        Belum ada data
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        {{-- =============================================
+         MODAL TAMBAH / EDIT GEDUNG
+    ============================================== --}}
+        <dialog id="gedungFormDialog" class="gedung-dialog">
+            <div class="gedung-dialog-head">
+                <div>
+                    <small>K.I.B C — GEDUNG DAN BANGUNAN</small>
+                    <h2 id="gedungFormTitle">Tambah Data Gedung</h2>
+                    <p>
+                        Pilih sumber transaksi lalu lengkapi
+                        informasi inventaris.
+                    </p>
                 </div>
 
+                <button class="gedung-x" type="button" data-close="gedungFormDialog" aria-label="Tutup">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
 
-                <form id="gedungForm">
+            <div class="gedung-dialog-body">
+                {{-- TABEL PENDING --}}
+                <section id="gedungPendingSection" class="gedung-form-section">
+                    <span class="gedung-step">1</span>
 
-                    <div class="gedung-modal-body">
+                    <div class="gedung-section-content">
+                        <h3>Pilih Data Nilai Aset</h3>
+                        <p>
+                            Voucher Penambahan Aset golongan Gedung
+                            dan Bangunan yang belum diproses.
+                        </p>
 
-                        <div class="gedung-modal-note" id="gedungModalNote">
-                            Form ini masih dalam tahap UI.
-                            Penyimpanan database akan dihubungkan pada tahap backend.
-                        </div>
-
-
-                        {{-- Kode --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungKode">
-                                Kode Barang
+                        <div class="gedung-toolbar">
+                            <label class="gedung-search">
+                                <i data-lucide="search"></i>
+                                <input type="search" id="gedungPendingSearch"
+                                    placeholder="Cari voucher, lokasi, departemen atau uraian...">
                             </label>
 
-                            <input type="text" id="gedungKode" placeholder="Contoh: 1.3.1.01.001" required>
-
+                            <span id="gedungPendingCount">0 data</span>
                         </div>
 
-
-                        {{-- Nama --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungNama">
-                                Nama Gedung / Bangunan
-                            </label>
-
-                            <input type="text" id="gedungNama" placeholder="Masukkan nama gedung" required>
-
+                        <div class="gedung-table-scroller gedung-pending-scroller">
+                            <table class="gedung-table gedung-pending-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Voucher</th>
+                                        <th>Lokasi</th>
+                                        <th>Departemen</th>
+                                        <th>Divisi</th>
+                                        <th>Tahun</th>
+                                        <th>Nilai</th>
+                                        <th>Uraian</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gedungPendingBody">
+                                    <tr>
+                                        <td colspan="9" class="gedung-empty">
+                                            Memuat data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
+                    </div>
+                </section>
 
+                {{-- DATA VOUCHER TERPILIH --}}
+                <div id="gedungSelected" class="gedung-selected" hidden>
+                    <i data-lucide="circle-check-big"></i>
 
-                        {{-- Register --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungRegister">
-                                Register
-                            </label>
-
-                            <input type="text" id="gedungRegister" placeholder="Nomor register">
-
-                        </div>
-
-
-                        {{-- Jenis --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungFormJenis">
-                                Jenis Bangunan
-                            </label>
-
-                            <select id="gedungFormJenis">
-
-                                <option>
-                                    Kantor
-                                </option>
-
-                                <option>
-                                    Instalasi
-                                </option>
-
-                                <option>
-                                    Gudang
-                                </option>
-
-                                <option>
-                                    Reservoir
-                                </option>
-
-                                <option>
-                                    Bangunan Pendukung
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        {{-- Luas --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungLuas">
-                                Luas Bangunan
-                            </label>
-
-                            <input type="text" id="gedungLuas" placeholder="Contoh: 1.250 m²">
-
-                        </div>
-
-
-                        {{-- Tahun --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungFormTahun">
-                                Tahun Perolehan
-                            </label>
-
-                            <input type="number" id="gedungFormTahun" min="1900" max="2100">
-
-                        </div>
-
-
-                        {{-- Lokasi --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungFormLokasi">
-                                Lokasi
-                            </label>
-
-                            <input type="text" id="gedungFormLokasi" placeholder="Lokasi gedung">
-
-                        </div>
-
-
-                        {{-- Kondisi --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungFormKondisi">
-                                Kondisi
-                            </label>
-
-                            <select id="gedungFormKondisi">
-
-                                <option>
-                                    Baik
-                                </option>
-
-                                <option>
-                                    Sedang
-                                </option>
-
-                                <option>
-                                    Rusak Berat
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        {{-- Nilai --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungNilai">
-                                Nilai Perolehan
-                            </label>
-
-                            <input type="text" id="gedungNilai" placeholder="Contoh: Rp 2.500.000.000">
-
-                        </div>
-
-
-                        {{-- Status tanah --}}
-                        <div class="gedung-form-group">
-
-                            <label for="gedungFormStatusTanah">
-                                Status Tanah
-                            </label>
-
-                            <select id="gedungFormStatusTanah">
-
-                                <option>
-                                    Milik Sendiri
-                                </option>
-
-                                <option>
-                                    Sewa
-                                </option>
-
-                                <option>
-                                    Pinjam Pakai
-                                </option>
-
-                            </select>
-
-                        </div>
-
+                    <div>
+                        <small>Data Nilai Aset Terpilih</small>
+                        <strong id="gedungSelectedTitle">—</strong>
+                        <span id="gedungSelectedMeta">—</span>
                     </div>
 
+                    <button type="button" id="gedungChange" class="gedung-btn outline">
+                        <i data-lucide="refresh-cw"></i>
+                        Ganti
+                    </button>
+                </div>
 
-                    <div class="gedung-modal-footer">
+                {{-- FORM GEDUNG --}}
+                <form id="gedungForm" method="POST" action="{{ route('kib.gedung.store') }}"
+                    enctype="multipart/form-data">
+                    @csrf
 
-                        <button type="button" class="gedung-cancel-btn" onclick="closeGedungModal()">
+                    <input type="hidden" name="_method" id="gedungMethod" value="PUT" disabled>
+
+                    <input type="hidden" name="id_nilai_aktiva" id="gedungVoucherId"
+                        value="{{ old('id_nilai_aktiva') }}">
+
+                    <section class="gedung-form-section">
+                        <span class="gedung-step">2</span>
+
+                        <div class="gedung-section-content">
+                            <h3>Lokasi dan Organisasi</h3>
+                            <p>Terisi otomatis dari Nilai Aset.</p>
+
+                            <div class="gedung-fields cols3">
+                                <label>
+                                    Lokasi
+                                    <input id="gedungLokasi" readonly>
+                                </label>
+                                <label>
+                                    Departemen
+                                    <input id="gedungDepartemen" readonly>
+                                </label>
+                                <label>
+                                    Divisi
+                                    <input id="gedungDivisi" readonly>
+                                </label>
+                            </div>
+
+                            <div class="gedung-fields cols2">
+                                <label>
+                                    Alamat
+                                    <input id="gedungAlamat" readonly>
+                                </label>
+                                <label>
+                                    Nomor Voucher
+                                    <input id="gedungVoucher" readonly>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="gedung-form-section">
+                        <span class="gedung-step">3</span>
+
+                        <div class="gedung-section-content">
+                            <h3>Informasi Gedung dan Bangunan</h3>
+                            <p>
+                                Field disesuaikan dengan tabel
+                                <code>gedungs</code> dan detail inventaris
+                                website lama.
+                            </p>
+
+                            <div class="gedung-fields cols2">
+                                <label>
+                                    Nama Barang / Jenis Gedung *
+                                    <select name="id_barang" required>
+                                        <option value="">— Pilih Barang —</option>
+                                        @foreach ($barangRows as $barang)
+                                            <option value="{{ $barang->id }}" @selected(old('id_barang') == $barang->id)>
+                                                {{ trim((string) $barang->nama_barang) }}
+                                                ({{ trim((string) $barang->kode_barang) }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </label>
+
+                                <label>
+                                    Kode Inventaris *
+                                    <input name="kode" value="{{ old('kode') }}" maxlength="255" required>
+                                </label>
+
+                                <label>
+                                    No. Register *
+                                    <input name="reg" value="{{ old('reg') }}" maxlength="255" required>
+                                </label>
+
+                                <label>
+                                    Penggunaan
+                                    <input name="guna" value="{{ old('guna') }}" maxlength="255"
+                                        placeholder="Contoh: Kantor / Operasional">
+                                </label>
+
+                                <label>
+                                    Kondisi Bangunan
+                                    <select name="kondisi">
+                                        <option value="">— Pilih Kondisi —</option>
+                                        <option value="BAIK">Baik</option>
+                                        <option value="RUSAK RINGAN">Rusak Ringan</option>
+                                        <option value="RUSAK BERAT">Rusak Berat</option>
+                                    </select>
+                                </label>
+
+                                <label>
+                                    Konstruksi *
+                                    <select name="konstruksi" required>
+                                        <option value="">— Pilih Konstruksi —</option>
+                                        <option value="BERTINGKAT">Bertingkat</option>
+                                        <option value="TIDAK BERTINGKAT">Tidak Bertingkat</option>
+                                    </select>
+                                </label>
+
+                                <label>
+                                    Material / Bahan
+                                    <input name="materi" value="{{ old('materi') }}" maxlength="255"
+                                        placeholder="Contoh: Beton">
+                                </label>
+
+                                <label>
+                                    Luas Bangunan *
+                                    <input name="luas" value="{{ old('luas') }}" maxlength="255"
+                                        placeholder="Contoh: 597 m²" required>
+                                </label>
+
+                                <label>
+                                    Luas Lantai / Tanah *
+                                    <input name="luastanah" value="{{ old('luastanah') }}" maxlength="255"
+                                        placeholder="Contoh: 700 m²" required>
+                                </label>
+
+                                <label>
+                                    Status Tanah
+                                    <select name="status">
+                                        <option value="">— Pilih Status —</option>
+                                        <option value="Perumdam">Perumdam</option>
+                                        <option value="Pemprov">Pemprov</option>
+                                        <option value="Milik Sendiri">Milik Sendiri</option>
+                                        <option value="Lainnya">Lainnya</option>
+                                    </select>
+                                </label>
+
+                                <label>
+                                    Kode Tanah *
+                                    <input name="kode_tanah" value="{{ old('kode_tanah') }}" maxlength="255" required>
+                                </label>
+
+                                <label>
+                                    Asal / Perolehan *
+                                    <input name="asal" value="{{ old('asal') }}" maxlength="255"
+                                        placeholder="Contoh: Pembelian" required>
+                                </label>
+
+                                <label>
+                                    Tanggal Dokumen *
+                                    <input name="tgl_imb" value="{{ old('tgl_imb') }}" type="date" required>
+                                </label>
+
+                                <label>
+                                    No. IMB / Dokumen *
+                                    <input name="no_imb" value="{{ old('no_imb') }}" maxlength="255" required>
+                                </label>
+
+                                <label>
+                                    Dokumen PDF
+                                    <input type="file" name="dokumen" accept="application/pdf">
+                                    <small>PDF maksimal 15 MB</small>
+                                </label>
+
+                                <label>
+                                    Foto Gedung
+                                    <input type="file" name="foto" accept="image/*">
+                                    <small>Maksimal 5 MB</small>
+                                </label>
+                            </div>
+
+                            <label class="gedung-full-label">
+                                Keterangan *
+                                <textarea name="ket" rows="3" required>{{ old('ket') }}</textarea>
+                            </label>
+                        </div>
+                    </section>
+
+                    <div class="gedung-form-actions">
+                        <button type="button" class="gedung-btn outline" data-close="gedungFormDialog">
                             Batal
                         </button>
 
-
-                        <button type="submit" class="gedung-save-btn" id="gedungSaveButton">
-
+                        <button type="submit" class="gedung-btn primary">
                             <i data-lucide="save"></i>
-
-                            Simpan Data
-
+                            Simpan Data Gedung
                         </button>
-
                     </div>
-
                 </form>
+            </div>
+        </dialog>
 
+        {{-- =============================================
+         MODAL DETAIL LOKASI DAN INVENTARIS
+    ============================================== --}}
+        <dialog id="gedungDetailDialog" class="gedung-dialog">
+            <div class="gedung-dialog-head">
+                <div>
+                    <small>DETAIL INVENTARIS</small>
+                    <h2 id="gedungDetailTitle">Detail Gedung</h2>
+                    <p id="gedungDetailAddress">
+                        Per lokasi, departemen dan divisi.
+                    </p>
+                </div>
+
+                <button type="button" class="gedung-x" data-close="gedungDetailDialog">
+                    <i data-lucide="x"></i>
+                </button>
             </div>
 
+            <div class="gedung-dialog-body">
+                <div class="gedung-fields cols2 gedung-detail-filters">
+                    <label>
+                        Departemen
+                        <select id="gedungDetailDep">
+                            <option value="">Semua Departemen</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Divisi
+                        <select id="gedungDetailDiv">
+                            <option value="">Semua Divisi</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div id="gedungDetailItems" class="gedung-detail-items"></div>
+
+                <section id="gedungDetailFocus" class="gedung-detail-focus" hidden></section>
+            </div>
         </dialog>
-        
-    </section>
 
+        {{-- =============================================
+         MODAL RINCIAN NILAI GEDUNG
+    ============================================== --}}
+        <dialog id="gedungNilaiDialog" class="gedung-dialog">
+            <div class="gedung-dialog-head">
+                <div>
+                    <small>RINCIAN NILAI ASET</small>
+                    <h2 id="gedungNilaiTitle">Detail Nilai Gedung</h2>
+                    <p id="gedungNilaiAddress"></p>
+                </div>
 
-    <script src="{{ asset('js/pages/kib/gedung.js') }}"></script>
+                <button type="button" class="gedung-x" data-close="gedungNilaiDialog">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="gedung-dialog-body">
+                <div class="gedung-nilai-summary">
+                    <span>Total Nilai Gedung di Lokasi</span>
+                    <strong id="gedungNilaiTotal">Rp 0</strong>
+                    <small id="gedungNilaiCount">0 transaksi</small>
+                </div>
+
+                <div class="gedung-toolbar">
+                    <label class="gedung-search">
+                        <i data-lucide="search"></i>
+                        <input id="gedungNilaiSearch" type="search" placeholder="Cari voucher, kode aktiva, uraian...">
+                    </label>
+                </div>
+
+                <div class="gedung-table-scroller">
+                    <table class="gedung-table gedung-nilai-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kode Perkiraan</th>
+                                <th>Nama Aktiva</th>
+                                <th>Tanggal</th>
+                                <th>Tahun</th>
+                                <th>Nilai</th>
+                                <th>Uraian</th>
+                                <th>Voucher</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="gedungNilaiBody">
+                            <tr>
+                                <td colspan="8" class="gedung-empty">
+                                    Memuat rincian...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </dialog>
+
+        {{-- =============================================
+         MODAL DAFTAR PDF
+    ============================================== --}}
+        <dialog id="gedungPdfDialog" class="gedung-dialog">
+            <div class="gedung-dialog-head">
+                <div>
+                    <small>ARSIP DOKUMEN</small>
+                    <h2 id="gedungPdfTitle">Daftar PDF Gedung</h2>
+                    <p id="gedungPdfAddress"></p>
+                </div>
+
+                <button type="button" class="gedung-x" data-close="gedungPdfDialog">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="gedung-dialog-body">
+                <div class="gedung-table-scroller">
+                    <table class="gedung-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Gedung</th>
+                                <th>Kode</th>
+                                <th>Dokumen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gedungPdfBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </dialog>
+
+        {{-- FORM HAPUS INVENTARIS --}}
+        <form id="gedungDeleteForm" method="POST" hidden>
+            @csrf
+            @method('DELETE')
+        </form>
+    </main>
+
+    <script
+        src="{{ asset('js/pages/kib/gedung.js') }}?v={{ file_exists(public_path('js/pages/kib/gedung.js')) ? filemtime(public_path('js/pages/kib/gedung.js')) : time() }}">
+    </script>
+
 @endsection

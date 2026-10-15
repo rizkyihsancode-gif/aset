@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Services\KibNotificationService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+
 
 class KIBController extends Controller
 {
@@ -3093,6 +3096,1151 @@ class KIBController extends Controller
 
         return response()->file(
             Storage::disk('local')->path($path)
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | K.I.B C — GEDUNG DAN BANGUNAN
+    |--------------------------------------------------------------------------
+    | Seluruh fungsi Gedung berada di KIBController.
+    | Fungsi Tanah dan Peralatan & Mesin tetap dipertahankan.
+    */
+
+    private function gedungKategori(): int
+    {
+        $cat = DB::table('golongans')
+            ->whereRaw(
+                "UPPER(TRIM(REGEXP_REPLACE(nama, '[^A-Za-z0-9]+', ' ', 'g'))) IN (?, ?)",
+                [
+                    'GEDUNG DAN BANGUNAN',
+                    'GEDUNG BANGUNAN'
+                ]
+            )
+            ->value('id');
+
+        if ($cat === null) {
+            throw new \RuntimeException(
+                'Golongan Gedung dan Bangunan belum tersedia pada master Golongan.'
+            );
+        }
+
+        return (int) $cat;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUERY NILAI K.I.B GEDUNG
+    |--------------------------------------------------------------------------
+    */
+    private function gedungNilaiQuery()
+    {
+        return DB::table('nilai_aktivas as n')
+            ->join(
+                'aktivas as a',
+                'a.id',
+                '=',
+                'n.id_aktiva'
+            )
+            ->whereRaw(
+                "TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)",
+                [
+                    'KIB C GEDUNG DAN BANGUNAN',
+                    'GEDUNG DAN BANGUNAN'
+                ]
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HALAMAN UTAMA GEDUNG DAN BANGUNAN
+    |--------------------------------------------------------------------------
+    */
+    public function dataGedung()
+    {
+        $nilaiLokasi = $this->gedungNilaiQuery()
+            ->whereNotNull('n.id_lokasi')
+            ->select('n.id_lokasi')
+            ->selectRaw(
+                'COALESCE(SUM(n.nilai), 0) AS nilai_total'
+            )
+            ->selectRaw(
+                'COUNT(n.id) AS jumlah_transaksi'
+            )
+            ->groupBy('n.id_lokasi');
+
+        $lokasiGedung = DB::table('gedungs as g')
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'g.id_lokasi'
+            )
+            ->leftJoinSub(
+                $nilaiLokasi,
+                'v',
+                fn($join) =>
+                $join->on(
+                    'v.id_lokasi',
+                    '=',
+                    'g.id_lokasi'
+                )
+            )
+            ->whereNotNull('g.id_lokasi')
+            ->select(
+                'g.id_lokasi',
+                'l.lokasi',
+                'l.alamat'
+            )
+            ->selectRaw(
+                'COUNT(DISTINCT g.id) AS jumlah_gedung'
+            )
+            ->selectRaw(
+                'COALESCE(MAX(v.nilai_total), 0) AS nilai_total'
+            )
+            ->selectRaw(
+                'COALESCE(MAX(v.jumlah_transaksi), 0) AS jumlah_transaksi'
+            )
+            ->selectRaw(
+                "COUNT(DISTINCT CASE
+                    WHEN LOWER(BTRIM(COALESCE(g.dok, ''))) LIKE '%.pdf'
+                    THEN g.id
+                END) AS jumlah_pdf"
+            )
+            ->groupBy(
+                'g.id_lokasi',
+                'l.lokasi',
+                'l.alamat'
+            )
+            ->orderBy('l.lokasi')
+            ->get();
+
+        $totalGedung = DB::table('gedungs')
+            ->count();
+
+        $totalLokasi = DB::table('gedungs')
+            ->whereNotNull('id_lokasi')
+            ->distinct()
+            ->count('id_lokasi');
+
+        $totalNilai = $this->gedungNilaiQuery()
+            ->sum('n.nilai');
+
+        $totalPending = DB::table('nilai_aktivas')
+            ->where('cat', $this->gedungKategori())
+            ->where('stat', 0)
+            ->where('jenisn', 1)
+            ->count();
+
+        $barangRows = DB::table('barangs')
+            ->select(
+                'id',
+                'nama_barang',
+                'kode_barang'
+            )
+            ->orderBy('nama_barang')
+            ->get();
+
+        $kondisi = DB::table('gedungs')
+            ->selectRaw(
+                "CASE
+                    WHEN UPPER(TRIM(COALESCE(kondisi, ''))) = 'BAIK'
+                    THEN 'Baik'
+                    WHEN UPPER(TRIM(COALESCE(kondisi, ''))) LIKE 'RUSAK%'
+                    THEN 'Rusak'
+                    ELSE 'Perlu perhatian'
+                END AS label"
+            )
+            ->selectRaw('COUNT(*) AS jumlah')
+            ->groupBy('label')
+            ->pluck('jumlah', 'label');
+
+        $terbaru = DB::table('gedungs as g')
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'g.id_barang'
+            )
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'g.id_lokasi'
+            )
+            ->select(
+                'g.id',
+                'g.kode',
+                'g.created_at',
+                'b.nama_barang',
+                'l.lokasi'
+            )
+            ->orderByDesc('g.id')
+            ->limit(5)
+            ->get();
+
+        return view('kib.gedung', compact(
+            'lokasiGedung',
+            'totalGedung',
+            'totalLokasi',
+            'totalNilai',
+            'totalPending',
+            'barangRows',
+            'kondisi',
+            'terbaru'
+        ));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DATA PENDING GEDUNG DARI NILAI ASET
+    |--------------------------------------------------------------------------
+    */
+    public function pendingGedung()
+    {
+        $cat = $this->gedungKategori();
+
+        $query = DB::table('nilai_aktivas as n')
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'n.id_lokasi'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'n.dep'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'n.div'
+            )
+            ->leftJoin(
+                'aktivas as a',
+                'a.id',
+                '=',
+                'n.id_aktiva'
+            )
+            ->where('n.cat', $cat)
+            ->where('n.stat', 0)
+            ->where('n.jenisn', 1);
+
+        $count = (clone $query)->count();
+
+        $rows = $query
+            ->select([
+                'n.id',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.nilai',
+                'n.urai',
+                'n.tahun',
+                'n.id_lokasi',
+                'n.dep',
+                'n.div',
+                'n.jenisn',
+                'l.lokasi',
+                'l.alamat',
+                'a.kode as kode_aktiva',
+                'a.aktiva as nama_aktiva',
+            ])
+            ->selectRaw(
+                "TRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+            )
+            ->selectRaw(
+                "TRIM(COALESCE(v.nama_div, '')) AS divisi"
+            )
+            ->orderByDesc('n.tgl_voucher')
+            ->orderByDesc('n.id')
+            ->limit(1000)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'count' => $count,
+            'data' => $rows,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETAIL GEDUNG BERDASARKAN LOKASI
+    |--------------------------------------------------------------------------
+    */
+    public function detailGedungLokasi(int $lokasi)
+    {
+        $location = DB::table('lokasis')
+            ->where('id', $lokasi)
+            ->first([
+                'id',
+                'lokasi',
+                'alamat'
+            ]);
+
+        abort_unless($location, 404);
+
+        $rows = DB::table('gedungs as g')
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'g.id_barang'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'g.id_departemen'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'g.id_div'
+            )
+            ->where('g.id_lokasi', $lokasi)
+            ->select('g.*')
+            ->selectRaw(
+                "TRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
+            )
+            ->selectRaw(
+                "TRIM(COALESCE(b.kode_barang, '')) AS kode_barang"
+            )
+            ->selectRaw(
+                "TRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+            )
+            ->selectRaw(
+                "TRIM(COALESCE(v.nama_div, '')) AS divisi"
+            )
+            ->orderBy('d.nama_dep')
+            ->orderBy('v.nama_div')
+            ->orderByDesc('g.id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'lokasi' => $location,
+            'data' => $rows,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETAIL NILAI GEDUNG BERDASARKAN LOKASI
+    |--------------------------------------------------------------------------
+    */
+    public function detailNilaiGedungLokasi(int $lokasi)
+    {
+        $location = DB::table('lokasis')
+            ->where('id', $lokasi)
+            ->first([
+                'id',
+                'lokasi',
+                'alamat'
+            ]);
+
+        abort_unless($location, 404);
+
+        $query = $this->gedungNilaiQuery()
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'n.dep'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'n.div'
+            )
+            ->where('n.id_lokasi', $lokasi);
+
+        $total = (clone $query)->sum('n.nilai');
+
+        $rows = $query
+            ->select([
+                'n.id',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.tahun',
+                'n.nilai',
+                'n.urai',
+                'n.jenisn',
+                'n.stat',
+                'a.kode as kode_aktiva',
+                'a.aktiva as nama_aktiva',
+                'd.nama_dep as departemen',
+                'v.nama_div as divisi',
+            ])
+            ->orderBy('n.tgl_voucher')
+            ->orderBy('n.id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+
+            'lokasi' => [
+                'id' => $location->id,
+                'nama' => $location->lokasi,
+                'alamat' => $location->alamat,
+            ],
+
+            'total' => $total,
+            'count' => $rows->count(),
+            'data' => $rows,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETAIL SATU BARANG GEDUNG
+    |--------------------------------------------------------------------------
+    */
+    public function showGedung(int $gedung)
+    {
+        $row = DB::table('gedungs as g')
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'g.id_barang'
+            )
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'g.id_lokasi'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'g.id_departemen'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'g.id_div'
+            )
+            ->where('g.id', $gedung)
+            ->select(
+                'g.*',
+                'l.lokasi',
+                'l.alamat'
+            )
+            ->selectRaw(
+                "TRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
+            )
+            ->selectRaw(
+                "TRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+            )
+            ->selectRaw(
+                "TRIM(COALESCE(v.nama_div, '')) AS divisi"
+            )
+            ->first();
+
+        abort_unless($row, 404);
+
+        return response()->json([
+            'success' => true,
+            'data' => $row,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI FORM GEDUNG
+    |--------------------------------------------------------------------------
+    */
+    private function validasiGedung(
+        Request $request,
+        bool $creating
+    ): array {
+        $rules = [
+            'id_barang' => [
+                'required',
+                'integer',
+                Rule::exists('barangs', 'id'),
+            ],
+
+            'kode' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'reg' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'asal' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'kondisi' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'konstruksi' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'materi' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'status' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'luas' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'luastanah' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'kode_tanah' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'no_imb' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'tgl_imb' => [
+                'required',
+                'date',
+            ],
+
+            'guna' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'ket' => [
+                'required',
+                'string',
+                'max:10000',
+            ],
+
+            'dokumen' => [
+                'nullable',
+                'file',
+                'mimes:pdf',
+                'max:15360',
+            ],
+
+            'foto' => [
+                'nullable',
+                'image',
+                'max:5120',
+            ],
+        ];
+
+        if ($creating) {
+            $rules['id_nilai_aktiva'] = [
+                'required',
+                'integer',
+                Rule::exists(
+                    'nilai_aktivas',
+                    'id'
+                ),
+            ];
+        }
+
+        return $request->validate($rules);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIELD GEDUNG YANG BOLEH DISIMPAN
+    |--------------------------------------------------------------------------
+    */
+    private function fieldsGedung(array $input): array
+    {
+        return collect($input)
+            ->only([
+                'id_barang',
+                'kode',
+                'reg',
+                'asal',
+                'kondisi',
+                'konstruksi',
+                'materi',
+                'status',
+                'luas',
+                'luastanah',
+                'kode_tanah',
+                'no_imb',
+                'tgl_imb',
+                'guna',
+                'ket',
+            ])
+            ->all();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SIMPAN GEDUNG DARI VOUCHER NILAI ASET
+    |--------------------------------------------------------------------------
+    */
+    public function storeGedung(Request $request)
+    {
+        try {
+            $validated = $this->validasiGedung(
+                $request,
+                true
+            );
+        } catch (ValidationException $e) {
+
+            return $this->gedungFormError(
+                $request,
+                $e->errors()
+            );
+        }
+
+        $files = [];
+
+        try {
+            DB::transaction(
+                function () use (
+                    $request,
+                    $validated,
+                    &$files
+                ) {
+                    $source = DB::table('nilai_aktivas')
+                        ->where(
+                            'id',
+                            $validated['id_nilai_aktiva']
+                        )
+                        ->where(
+                            'cat',
+                            $this->gedungKategori()
+                        )
+                        ->where('jenisn', 1)
+                        ->where('stat', 0)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (
+                        !$source ||
+                        !$source->id_lokasi ||
+                        !$source->dep ||
+                        !$source->div
+                    ) {
+                        throw ValidationException::withMessages([
+                            'id_nilai_aktiva' =>
+                            'Voucher sudah diproses atau ' .
+                                'Lokasi, Departemen, dan Divisi ' .
+                                'belum lengkap.',
+                        ]);
+                    }
+
+                    $exists = DB::table('gedungs')
+                        ->where(
+                            'nilai_aktiva_id',
+                            $source->id
+                        )
+                        ->exists();
+
+                    if ($exists) {
+                        throw ValidationException::withMessages([
+                            'id_nilai_aktiva' =>
+                            'Voucher sudah digunakan pada inventaris Gedung.',
+                        ]);
+                    }
+
+                    $row = $this->fieldsGedung(
+                        $validated
+                    );
+
+                    $row['id_lokasi'] =
+                        (int) $source->id_lokasi;
+
+                    $row['id_departemen'] =
+                        (int) $source->dep;
+
+                    $row['id_div'] =
+                        (int) $source->div;
+
+                    $row['nilai_aktiva_id'] =
+                        (int) $source->id;
+
+                    // Total nilai utama berasal dari
+                    // nilai_aktivas, bukan diduplikasi.
+                    $row['nilai'] = null;
+
+                    $row['susut'] = 0;
+                    $row['input'] = 1;
+                    $row['id_user'] = Auth::id();
+
+                    $row['created_at'] = now();
+                    $row['updated_at'] = now();
+
+                    if ($request->hasFile('dokumen')) {
+                        $row['dok'] = $request
+                            ->file('dokumen')
+                            ->store(
+                                'kib/gedung/dokumen',
+                                'local'
+                            );
+
+                        $files[] = $row['dok'];
+                    }
+
+                    if ($request->hasFile('foto')) {
+                        $row['img'] = $request
+                            ->file('foto')
+                            ->store(
+                                'kib/gedung/foto',
+                                'local'
+                            );
+
+                        $files[] = $row['img'];
+                    }
+
+                    DB::table('gedungs')
+                        ->insert($row);
+
+                    $changed = DB::table('nilai_aktivas')
+                        ->where('id', $source->id)
+                        ->where('stat', 0)
+                        ->update([
+                            'stat' => 1,
+                            'updated_at' => now(),
+                        ]);
+
+                    if ($changed !== 1) {
+                        throw new \RuntimeException(
+                            'Status voucher gagal diperbarui.'
+                        );
+                    }
+                }
+            );
+        } catch (\Throwable $e) {
+
+            foreach ($files as $path) {
+                Storage::disk('local')
+                    ->delete($path);
+            }
+
+            if ($e instanceof ValidationException) {
+                return $this->gedungFormError(
+                    $request,
+                    $e->errors()
+                );
+            }
+
+            Log::error(
+                'Simpan K.I.B Gedung gagal',
+                [
+                    'voucher_id' =>
+                    $request->input('id_nilai_aktiva'),
+
+                    'error' =>
+                    $e->getMessage(),
+                ]
+            );
+
+            return $this->gedungFormError(
+                $request,
+                [
+                    'simpan' =>
+                    'Penyimpanan Gedung gagal. ' .
+                        'Silakan periksa log Laravel.',
+                ]
+            );
+        }
+
+        return redirect()
+            ->route('kib.gedung')
+            ->with(
+                'success',
+                'Gedung berhasil disimpan. Voucher telah diproses.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE DATA GEDUNG
+    |--------------------------------------------------------------------------
+    */
+    public function updateGedung(
+        Request $request,
+        int $gedung
+    ) {
+        try {
+            $validated = $this->validasiGedung(
+                $request,
+                false
+            );
+        } catch (ValidationException $e) {
+
+            return $this->gedungFormError(
+                $request,
+                $e->errors()
+            );
+        }
+
+        $newFiles = [];
+        $oldFiles = [];
+
+        try {
+            DB::transaction(
+                function () use (
+                    $request,
+                    $validated,
+                    $gedung,
+                    &$newFiles,
+                    &$oldFiles
+                ) {
+                    $previous = DB::table('gedungs')
+                        ->where('id', $gedung)
+                        ->lockForUpdate()
+                        ->first();
+
+                    abort_unless($previous, 404);
+
+                    $fields = $this->fieldsGedung(
+                        $validated
+                    );
+
+                    $fields['updated_at'] = now();
+
+                    foreach (
+                        [
+                            'dokumen' => [
+                                'dok',
+                                'kib/gedung/dokumen'
+                            ],
+                            'foto' => [
+                                'img',
+                                'kib/gedung/foto'
+                            ],
+                        ] as $input => [$field, $folder]
+                    ) {
+                        if (!$request->hasFile($input)) {
+                            continue;
+                        }
+
+                        $fields[$field] = $request
+                            ->file($input)
+                            ->store($folder, 'local');
+
+                        $newFiles[] = $fields[$field];
+
+                        if (
+                            $previous->{$field} &&
+                            str_starts_with(
+                                $previous->{$field},
+                                $folder . '/'
+                            )
+                        ) {
+                            $oldFiles[] =
+                                $previous->{$field};
+                        }
+                    }
+
+                    DB::table('gedungs')
+                        ->where('id', $gedung)
+                        ->update($fields);
+                }
+            );
+        } catch (\Throwable $e) {
+
+            foreach ($newFiles as $path) {
+                Storage::disk('local')
+                    ->delete($path);
+            }
+
+            if ($e instanceof ValidationException) {
+                return $this->gedungFormError(
+                    $request,
+                    $e->errors()
+                );
+            }
+
+            Log::error(
+                'Edit K.I.B Gedung gagal',
+                [
+                    'gedung' => $gedung,
+                    'error' => $e->getMessage(),
+                ]
+            );
+
+            return $this->gedungFormError(
+                $request,
+                [
+                    'edit' =>
+                    'Gagal memperbarui Gedung. ' .
+                        'Periksa log Laravel.',
+                ]
+            );
+        }
+
+        foreach ($oldFiles as $path) {
+            Storage::disk('local')
+                ->delete($path);
+        }
+
+        return redirect()
+            ->route('kib.gedung')
+            ->with(
+                'success',
+                'Data Gedung berhasil diperbarui.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HAPUS SATU INVENTARIS GEDUNG
+    |--------------------------------------------------------------------------
+    */
+    public function destroyGedung(int $gedung)
+    {
+        $files = [];
+
+        DB::transaction(
+            function () use (
+                $gedung,
+                &$files
+            ) {
+                $row = DB::table('gedungs')
+                    ->where('id', $gedung)
+                    ->lockForUpdate()
+                    ->first();
+
+                abort_unless($row, 404);
+
+                foreach (
+                    [
+                        'dok' =>
+                        'kib/gedung/dokumen/',
+                        'img' =>
+                        'kib/gedung/foto/',
+                    ] as $field => $prefix
+                ) {
+                    if (
+                        $row->{$field} &&
+                        str_starts_with(
+                            $row->{$field},
+                            $prefix
+                        )
+                    ) {
+                        $files[] = $row->{$field};
+                    }
+                }
+
+                DB::table('gedungs')
+                    ->where('id', $gedung)
+                    ->delete();
+
+                if (
+                    $row->nilai_aktiva_id &&
+                    !DB::table('gedungs')
+                        ->where(
+                            'nilai_aktiva_id',
+                            $row->nilai_aktiva_id
+                        )
+                        ->exists()
+                ) {
+                    DB::table('nilai_aktivas')
+                        ->where(
+                            'id',
+                            $row->nilai_aktiva_id
+                        )
+                        ->where(
+                            'cat',
+                            $this->gedungKategori()
+                        )
+                        ->where('jenisn', 1)
+                        ->update([
+                            'stat' => 0,
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+        );
+
+        foreach ($files as $path) {
+            Storage::disk('local')
+                ->delete($path);
+        }
+
+        return redirect()
+            ->route('kib.gedung')
+            ->with(
+                'success',
+                'Data Gedung dihapus. Voucher terkait dikembalikan ke pending.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | REDIRECT ERROR FORM GEDUNG
+    |--------------------------------------------------------------------------
+    */
+    private function gedungFormError(
+        Request $request,
+        array $errors
+    ) {
+        return redirect()
+            ->route('kib.gedung')
+            ->withErrors($errors)
+            ->withInput(
+                $request->except([
+                    '_token',
+                    '_method',
+                    'dokumen',
+                    'foto',
+                ])
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PREVIEW FILE PDF / FOTO GEDUNG
+    |--------------------------------------------------------------------------
+    */
+    public function fileGedung(
+        int $gedung,
+        string $jenis
+    ) {
+        abort_unless(
+            in_array(
+                $jenis,
+                ['dokumen', 'foto'],
+                true
+            ),
+            404
+        );
+
+        $row = DB::table('gedungs')
+            ->where('id', $gedung)
+            ->first([
+                'dok',
+                'img'
+            ]);
+
+        abort_unless($row, 404);
+
+        $path = $jenis === 'dokumen'
+            ? $row->dok
+            : $row->img;
+
+        abort_unless($path, 404);
+
+        $prefix = $jenis === 'dokumen'
+            ? 'kib/gedung/dokumen/'
+            : 'kib/gedung/foto/';
+
+        if (str_starts_with($path, $prefix)) {
+
+            abort_unless(
+                Storage::disk('local')
+                    ->exists($path),
+                404
+            );
+
+            $full = Storage::disk('local')
+                ->path($path);
+        } else {
+
+            // Kompatibilitas dokumen web lama.
+            $legacy = $jenis === 'dokumen'
+                ? 'dok'
+                : 'img';
+
+            $full = public_path(
+                'assets/img/gedung/'
+                    . $legacy
+                    . '/'
+                    . basename($path)
+            );
+
+            abort_unless(
+                is_file($full),
+                404
+            );
+        }
+
+        $ext = strtolower(
+            pathinfo(
+                $full,
+                PATHINFO_EXTENSION
+            )
+        );
+
+        if ($jenis === 'dokumen') {
+
+            abort_unless(
+                $ext === 'pdf',
+                415,
+                'Dokumen bukan PDF.'
+            );
+
+            return response()->file(
+                $full,
+                [
+                    'Content-Type' =>
+                    'application/pdf',
+
+                    'X-Content-Type-Options' =>
+                    'nosniff',
+                ]
+            );
+        }
+
+        abort_unless(
+            in_array(
+                $ext,
+                [
+                    'png',
+                    'jpg',
+                    'jpeg',
+                    'webp',
+                    'gif',
+                ],
+                true
+            ),
+            415
+        );
+
+        return response()->file(
+            $full,
+            [
+                'X-Content-Type-Options' =>
+                'nosniff',
+            ]
         );
     }
 }
