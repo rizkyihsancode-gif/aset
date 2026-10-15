@@ -2264,10 +2264,21 @@ class KIBController extends Controller
 
         // Pending mempertahankan aturan notifikasi lama:
         // kategori transaksi dan stat = 0.
+
+        /*
+|--------------------------------------------------------------------------
+| JUMLAH PENDING K.I.B GEDUNG
+|--------------------------------------------------------------------------
+| Hanya menghitung Penambahan Aset
+| yang belum diproses menjadi inventaris.
+*/
+
         $totalPending = DB::table('nilai_aktivas')
-            ->where('cat', $cat)
+            ->where('cat', $this->gedungKategori())
+            ->where('jenisn', 1)
             ->where('stat', 0)
             ->count();
+
 
         return view(
             'kib.mesin',
@@ -3300,34 +3311,16 @@ class KIBController extends Controller
     {
         $cat = $this->gedungKategori();
 
+
         $query = DB::table('nilai_aktivas as n')
-            ->leftJoin(
-                'lokasis as l',
-                'l.id',
-                '=',
-                'n.id_lokasi'
-            )
-            ->leftJoin(
-                'departemens as d',
-                'd.id',
-                '=',
-                'n.dep'
-            )
-            ->leftJoin(
-                'divisis as v',
-                'v.id',
-                '=',
-                'n.div'
-            )
-            ->leftJoin(
-                'aktivas as a',
-                'a.id',
-                '=',
-                'n.id_aktiva'
-            )
-            ->where('n.cat', $cat)
-            ->where('n.stat', 0)
-            ->where('n.jenisn', 1);
+            ->leftJoin('lokasis as l', 'l.id', '=', 'n.id_lokasi')
+            ->leftJoin('departemens as d', 'd.id', '=', 'n.dep')
+            ->leftJoin('divisis as v', 'v.id', '=', 'n.div')
+            ->leftJoin('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+            ->where('n.cat', $this->gedungKategori())
+            ->where('n.jenisn', 1)
+            ->where('n.stat', 0);
+
 
         $count = (clone $query)->count();
 
