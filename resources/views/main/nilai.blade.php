@@ -946,15 +946,7 @@
                 @csrf
 
 
-                
-{{-- Tambah = POST; Edit = PUT --}}
-<input
-    type="hidden"
-    name="_method"
-    id="nilaiFormMethod"
-    value="PUT"
-    disabled
->
+                <input type="hidden" name="_method" id="nilaiFormMethod" value="PUT" disabled>
 
 
                 <div class="nilai-modal-header">
@@ -1026,7 +1018,7 @@
                                 </option>
 
                                 @foreach ($aktivaOptions as $item)
-                                    <option value="{{ $item->id }}" @selected(old('id_aktiva') == $item->id)>
+                                    <option value="{{ $item->id }}" data-kib="{{ $item->kib }}" @selected(old('id_aktiva') == $item->id)>
                                         {{ $item->kode }}
                                         |
                                         {{ $item->aktiva }}

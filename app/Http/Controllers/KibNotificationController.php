@@ -94,6 +94,10 @@ class KibNotificationController extends Controller
             $base->whereIn('jenisn', [1, 2]);
         }
 
+        if ($module === 'gedung') {
+            $base->where('jenisn', 1);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | 05. JUMLAH DATA PENDING
@@ -149,6 +153,10 @@ class KibNotificationController extends Controller
 
         if ($module === 'tanah') {
             $query->whereIn('n.jenisn', [1, 2]);
+        }
+
+        if ($module === 'gedung') {
+            $query->where('n.jenisn', 1);
         }
 
         /*

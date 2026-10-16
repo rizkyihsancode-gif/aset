@@ -270,6 +270,11 @@ class KibNotificationService
                         continue;
                     }
 
+                    // Gedung: Penambahan Nilai (jenisn=2) bukan pending inventaris.
+                    if ($module === 'gedung' && $jenis !== 1) {
+                        continue;
+                    }
+
                     $result[$module]['total'] += $jumlah;
 
                     if ($jenis === 1) {
