@@ -2960,3 +2960,694 @@ min-height: 39px;
     }
 }
 
+
+/* =========================================================
+   K.I.B B — NAVBAR DAN MASA PAJAK KENDARAAN
+   ========================================================= */
+
+#mesinPage .mesin-feature-tabs {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    min-height: 56px;
+    padding: 0 18px;
+    margin: 0 0 15px;
+    background: #fff;
+    border: 1px solid #dce8f6;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+#mesinPage .mesin-feature-tabs button {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 17px 4px 14px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: #54729b;
+    background: transparent;
+    white-space: nowrap;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#mesinPage .mesin-feature-tabs button[aria-selected="true"] {
+    color: #0769ed;
+    border-bottom-color: #0769ed;
+}
+
+#mesinPage [hidden] {
+    display: none !important;
+}
+
+#mesinPage.mesin-pajak-active .mesin-kpi-grid {
+    display: none;
+}
+
+#mesinPage .pajak-panel,
+#mesinPage .pajak-panel * {
+    box-sizing: border-box;
+}
+
+#mesinPage .pajak-panel {
+    --pk-blue: #0869ed;
+    --pk-ink: #102c60;
+    --pk-line: #dce8f6;
+    color: var(--pk-ink);
+}
+
+/* =========================================================
+   KARTU STATISTIK PAJAK
+   ========================================================= */
+
+#mesinPage .pajak-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+#mesinPage .pajak-kpi {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 15px 13px;
+    background: #fff;
+    border: 1px solid var(--pk-line);
+    border-radius: 10px;
+    box-shadow: 0 4px 14px #183f720d;
+}
+
+#mesinPage .pajak-kpi-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    color: #fff;
+}
+
+#mesinPage .pajak-kpi-icon svg {
+    width: 23px;
+    height: 23px;
+}
+
+#mesinPage .pajak-kpi-icon.blue {
+    background: #0869ed;
+}
+
+#mesinPage .pajak-kpi-icon.green {
+    background: #13aa6d;
+}
+
+#mesinPage .pajak-kpi-icon.yellow {
+    background: #f1a90c;
+}
+
+#mesinPage .pajak-kpi-icon.red {
+    background: #ee4354;
+}
+
+#mesinPage .pajak-kpi small,
+#mesinPage .pajak-kpi strong,
+#mesinPage .pajak-kpi div > span {
+    display: block;
+}
+
+#mesinPage .pajak-kpi small {
+    color: #34567c;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+#mesinPage .pajak-kpi strong {
+    color: #0d3168;
+    margin: 4px 0;
+    font-size: 24px;
+    font-weight: 850;
+    line-height: 1.2;
+}
+
+#mesinPage .pajak-kpi div > span {
+    color: #829ab5;
+    font-size: 10px;
+}
+
+/* =========================================================
+   PANEL MASA PAJAK
+   ========================================================= */
+
+#mesinPage .pajak-workspace {
+    background: #fff;
+    padding: 16px;
+    border: 1px solid var(--pk-line);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px #1640730a;
+}
+
+#mesinPage .pajak-workspace-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 17px;
+}
+
+#mesinPage .pajak-workspace-head h2 {
+    margin: 0 0 5px;
+    color: #112e61;
+    font-size: 17px;
+    font-weight: 850;
+}
+
+#mesinPage .pajak-workspace-head p {
+    margin: 0;
+    color: #7c91aa;
+    font-size: 11px;
+}
+
+/* TOMBOL */
+
+#mesinPage .pajak-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 35px;
+    padding: 8px 12px;
+    border: 1px solid #c9dcf1;
+    border-radius: 7px;
+    color: #1263c8;
+    background: #fff;
+    font-size: 11px;
+    font-weight: 750;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#mesinPage .pajak-btn.primary {
+    background: #0869ed;
+    border-color: #0869ed;
+    color: #fff;
+}
+
+#mesinPage .pajak-btn.primary:hover {
+    background: #0758ca;
+}
+
+#mesinPage .pajak-btn.outline {
+    background: #f8fbff;
+}
+
+#mesinPage .pajak-btn.outline:hover {
+    background: #edf6ff;
+}
+
+#mesinPage .pajak-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   FILTER
+   ========================================================= */
+
+#mesinPage .pajak-toolbar {
+    display: grid;
+    grid-template-columns: minmax(230px, 2fr)
+                           repeat(4, minmax(125px, 1fr));
+    gap: 9px;
+    margin-bottom: 10px;
+}
+
+#mesinPage .pajak-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+#mesinPage .pajak-search svg {
+    position: absolute;
+    left: 11px;
+    color: #7e98b4;
+    pointer-events: none;
+}
+
+#mesinPage .pajak-search input {
+    padding-left: 35px !important;
+}
+
+#mesinPage .pajak-toolbar input,
+#mesinPage .pajak-toolbar select {
+    width: 100%;
+    height: 37px;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid #d6e4f4;
+    border-radius: 7px;
+    outline: none;
+    background: #f7faff;
+    color: #2b4d77;
+    font-size: 11px;
+}
+
+#mesinPage .pajak-toolbar input:focus,
+#mesinPage .pajak-toolbar select:focus {
+    border-color: #67acef;
+    box-shadow: 0 0 0 3px #2278dd19;
+}
+
+/* RESET, EXPORT */
+
+#mesinPage .pajak-actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 11px;
+}
+
+#mesinPage #pajakInfoStatus {
+    color: #738ead;
+    font-size: 11px;
+}
+
+#mesinPage .pajak-actions-bar > div {
+    display: flex;
+    gap: 7px;
+}
+
+/* =========================================================
+   TABEL MASA PAJAK
+   ========================================================= */
+
+#mesinPage .pajak-scroll {
+    overflow-x: auto;
+    border: 1px solid #dce8f5;
+    border-radius: 8px;
+}
+
+#mesinPage .pajak-table {
+    width: 100%;
+    min-width: 1220px;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+#mesinPage .pajak-table th {
+    padding: 11px 9px;
+    background: #eaf4ff;
+    border-bottom: 1px solid #dce8f5;
+    color: #163960;
+    text-align: left;
+    white-space: nowrap;
+    font-weight: 800;
+}
+
+#mesinPage .pajak-table td {
+    padding: 10px 9px;
+    border-bottom: 1px solid #e5edf6;
+    color: #3b5577;
+    vertical-align: middle;
+}
+
+#mesinPage .pajak-table tbody tr:nth-child(even) {
+    background: #fcfdff;
+}
+
+#mesinPage .pajak-table tbody tr:hover {
+    background: #f3f8ff;
+}
+
+#mesinPage .pajak-table td small {
+    display: block;
+    margin-top: 4px;
+    color: #7b93ac;
+    font-size: 10px;
+}
+
+#mesinPage .pajak-table th:first-child,
+#mesinPage .pajak-table td:first-child {
+    text-align: center;
+    width: 45px;
+}
+
+#mesinPage .pajak-empty {
+    padding: 24px !important;
+    text-align: center !important;
+    color: #8398ad !important;
+}
+
+/* STATUS WARNA */
+
+#mesinPage .pajak-status {
+    display: inline-block;
+    min-width: 88px;
+    padding: 6px 9px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#mesinPage .pajak-status.aktif {
+    background: #e0f8e9;
+    color: #138653;
+}
+
+#mesinPage .pajak-status.segera_habis {
+    background: #fff2d6;
+    color: #af7102;
+}
+
+#mesinPage .pajak-status.kedaluwarsa {
+    background: #ffe6e9;
+    color: #dc3448;
+}
+
+#mesinPage .pajak-status.belum_didata {
+    background: #edf0f5;
+    color: #677e97;
+}
+
+/* AKSI */
+
+#mesinPage .pajak-row-actions {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+#mesinPage .pajak-row-actions button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#mesinPage .pajak-row-actions .view {
+    background: #e8f4ff;
+    color: #0a76dc;
+}
+
+#mesinPage .pajak-row-actions .edit {
+    background: #fff0da;
+    color: #dc9006;
+}
+
+#mesinPage .pajak-row-actions .delete {
+    background: #ffe8ec;
+    color: #e9465b;
+}
+
+#mesinPage .pajak-row-actions button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
+/* PAGINATION */
+
+#mesinPage .pajak-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 13px;
+    color: #7b93ad;
+    font-size: 11px;
+}
+
+#mesinPage .pajak-footer > div,
+#mesinPage .pajak-pages {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+#mesinPage .pajak-footer select {
+    padding: 6px;
+    border: 1px solid #d5e5f5;
+    border-radius: 6px;
+    color: #204f83;
+}
+
+#mesinPage .pajak-pages button {
+    min-width: 29px;
+    height: 30px;
+    padding: 4px 8px;
+    border: 1px solid #dce7f5;
+    border-radius: 6px;
+    background: #fff;
+    color: #426a9b;
+    cursor: pointer;
+}
+
+#mesinPage .pajak-pages button.active {
+    color: #fff;
+    background: #0869ed;
+    border-color: #0869ed;
+}
+
+#mesinPage .pajak-pages button:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+#mesinPage .pajak-footnote {
+    margin: 13px 0 0;
+    color: #7d93ad;
+    font-size: 11px;
+}
+
+/* =========================================================
+   MODAL TAMBAH, EDIT DAN DETAIL
+   ========================================================= */
+
+#mesinPage .pajak-dialog {
+    width: min(720px, calc(100vw - 24px));
+    max-height: 92vh;
+    max-width: 100%;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #d6e4f4;
+    border-radius: 12px;
+    background: #fff;
+    color: #244368;
+    box-shadow: 0 25px 80px #1026485c;
+    overflow: hidden;
+}
+
+#mesinPage .pajak-dialog::backdrop {
+    background: #132b4ba8;
+    backdrop-filter: blur(3px);
+}
+
+#mesinPage .pajak-dialog > header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px;
+    border-bottom: 1px solid #dfebf6;
+    background: #f5faff;
+}
+
+#mesinPage .pajak-dialog > header small {
+    color: #3e7cbb;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .07em;
+}
+
+#mesinPage .pajak-dialog > header h2 {
+    margin: 5px 0;
+    color: #123765;
+    font-size: 18px;
+}
+
+#mesinPage .pajak-dialog > header p {
+    margin: 0;
+    color: #7d92ad;
+    font-size: 11px;
+}
+
+#mesinPage .pajak-dialog > header button {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: #e7f1fb;
+    color: #526d89;
+    cursor: pointer;
+}
+
+#mesinPage .pajak-dialog-body {
+    display: grid;
+    gap: 12px;
+    max-height: 65vh;
+    padding: 18px;
+    overflow-y: auto;
+}
+
+#mesinPage .pajak-dialog label {
+    display: grid;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 750;
+    color: #3c5c83;
+}
+
+#mesinPage .pajak-dialog input,
+#mesinPage .pajak-dialog select,
+#mesinPage .pajak-dialog textarea {
+    width: 100%;
+    min-height: 37px;
+    padding: 9px 10px;
+    border: 1px solid #d6e5f4;
+    border-radius: 7px;
+    background: #fff;
+    color: #2c4e73;
+    outline: none;
+}
+
+#mesinPage .pajak-dialog input:focus,
+#mesinPage .pajak-dialog select:focus,
+#mesinPage .pajak-dialog textarea:focus {
+    border-color: #66aaf0;
+    box-shadow: 0 0 0 3px #2582dd1c;
+}
+
+#mesinPage .pajak-dialog label small {
+    color: #8aa0b8;
+    font-weight: 400;
+}
+
+#mesinPage .pajak-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+}
+
+#mesinPage .pajak-dialog footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding: 13px 18px;
+    border-top: 1px solid #e4edf6;
+}
+
+#mesinPage .pajak-error {
+    margin: 0;
+    padding: 10px;
+    border: 1px solid #f3c5cf;
+    border-radius: 7px;
+    background: #fff0f2;
+    color: #ae384b;
+    white-space: pre-line;
+}
+
+/* RINCIAN */
+
+#mesinPage .pajak-detail-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    border: 1px solid #e2ebf5;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#mesinPage .pajak-detail-list div {
+    padding: 10px;
+    border-bottom: 1px solid #e6edf6;
+}
+
+#mesinPage .pajak-detail-list dt {
+    color: #748aa5;
+    font-size: 10px;
+    font-weight: 750;
+}
+
+#mesinPage .pajak-detail-list dd {
+    margin: 5px 0 0;
+    color: #264368;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+    #mesinPage .pajak-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #mesinPage .pajak-toolbar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #mesinPage .pajak-search {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    #mesinPage .pajak-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    #mesinPage .pajak-workspace-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #mesinPage .pajak-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #mesinPage .pajak-form-grid,
+    #mesinPage .pajak-detail-list {
+        grid-template-columns: 1fr;
+    }
+
+    #mesinPage .pajak-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    #mesinPage .pajak-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    #mesinPage .pajak-search {
+        grid-column: auto;
+    }
+
+    #mesinPage .pajak-actions-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #mesinPage .mesin-feature-tabs {
+        gap: 15px;
+    }
+}

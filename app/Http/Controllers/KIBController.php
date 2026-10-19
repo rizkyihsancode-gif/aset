@@ -3110,6 +3110,474 @@ class KIBController extends Controller
         );
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | MASA PAJAK KENDARAAN — K.I.B PERALATAN DAN MESIN
+    |--------------------------------------------------------------------------
+    | Data kendaraan berasal dari tabel mesins.
+    | Catatan pajak berasal dari tabel mesin_pajaks.
+    */
+
+    public function dataPajakMesin()
+    {
+        // Ambil inventaris yang memiliki nomor polisi.
+        $vehicles = DB::table('mesins as m')
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'm.id_barang'
+            )
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'm.id_lokasi'
+            )
+            ->whereRaw(
+                "NULLIF(
+                    BTRIM(COALESCE(m.polisi, '')),
+                    ''
+                ) IS NOT NULL"
+            )
+            ->select(
+                'm.id',
+                'm.polisi',
+                'm.merk',
+                'm.tahun',
+                'm.id_lokasi',
+                'b.nama_barang',
+                'l.lokasi'
+            )
+            ->orderBy('m.polisi')
+            ->get();
+
+        // Ambil catatan pajak terbaru setiap kendaraan.
+        $latest = DB::table('mesin_pajaks')
+            ->orderByDesc('jatuh_tempo')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('mesin_id')
+            ->keyBy('mesin_id');
+
+        $today = \Carbon\Carbon::today(
+            'Asia/Makassar'
+        );
+
+        $summary = [
+            'total' => $vehicles->count(),
+            'aktif' => 0,
+            'segera_habis' => 0,
+            'kedaluwarsa' => 0,
+            'belum_didata' => 0,
+        ];
+
+        $rows = $vehicles->map(
+            function ($vehicle) use (
+                $latest,
+                $today,
+                &$summary
+            ) {
+                $pajak = $latest->get(
+                    $vehicle->id
+                );
+
+                $status = 'belum_didata';
+                $sisaHari = null;
+
+                if ($pajak) {
+                    $jatuhTempo = \Carbon\Carbon::parse(
+                        $pajak->jatuh_tempo,
+                        'Asia/Makassar'
+                    )->startOfDay();
+
+                    $sisaHari = (int) $today
+                        ->diffInDays(
+                            $jatuhTempo,
+                            false
+                        );
+
+                    if ($sisaHari < 0) {
+                        $status = 'kedaluwarsa';
+                    } elseif ($sisaHari <= 30) {
+                        $status = 'segera_habis';
+                    } else {
+                        $status = 'aktif';
+                    }
+                }
+
+                $summary[$status]++;
+
+                return [
+                    'mesin_id' => (int) $vehicle->id,
+
+                    'pajak_id' => $pajak
+                        ? (int) $pajak->id
+                        : null,
+
+                    'nomor_polisi' => trim(
+                        (string) $vehicle->polisi
+                    ),
+
+                    'nama_kendaraan' => trim(
+                        (string) (
+                            $vehicle->nama_barang
+                            ?: 'Kendaraan'
+                        )
+                    ),
+
+                    'merk' => trim(
+                        (string) (
+                            $vehicle->merk ?: ''
+                        )
+                    ),
+
+                    'tahun' => $vehicle->tahun,
+
+                    'lokasi_id' =>
+                    $vehicle->id_lokasi,
+
+                    'lokasi' => $vehicle->lokasi
+                        ?: '—',
+
+                    'tanggal_bayar' =>
+                    $pajak->tanggal_bayar ?? null,
+
+                    'jatuh_tempo' =>
+                    $pajak->jatuh_tempo ?? null,
+
+                    'nominal' =>
+                    $pajak->nominal ?? null,
+
+                    'nomor_stnk' =>
+                    $pajak->nomor_stnk ?? null,
+
+                    'keterangan' =>
+                    $pajak->keterangan ?? null,
+
+                    'ada_dokumen' => !empty($pajak->dokumen_pdf),
+
+                    'status' => $status,
+
+                    'sisa_hari' => $sisaHari,
+                ];
+            }
+        );
+
+        return response()->json([
+            'success' => true,
+            'tanggal' => $today->toDateString(),
+            'summary' => $summary,
+            'data' => $rows,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI MASA PAJAK
+    |--------------------------------------------------------------------------
+    */
+
+    private function validasiPajakMesin(
+        Request $request,
+        bool $creating
+    ): array {
+        $rules = [
+            'tanggal_bayar' => [
+                'nullable',
+                'date'
+            ],
+
+            'jatuh_tempo' => [
+                'required',
+                'date'
+            ],
+
+            'nominal' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:9223372036854775807'
+            ],
+
+            'nomor_stnk' => [
+                'nullable',
+                'string',
+                'max:120'
+            ],
+
+            'keterangan' => [
+                'nullable',
+                'string',
+                'max:10000'
+            ],
+
+            'dokumen_pdf' => [
+                'nullable',
+                'file',
+                'mimes:pdf',
+                'max:15360'
+            ],
+        ];
+
+        if ($creating) {
+            $rules['mesin_id'] = [
+                'required',
+                'integer',
+                'exists:mesins,id',
+            ];
+        }
+
+        $validated = $request->validate(
+            $rules
+        );
+
+        if ($creating) {
+            $vehicle = DB::table('mesins')
+                ->where(
+                    'id',
+                    $validated['mesin_id']
+                )
+                ->first();
+
+            if (
+                !$vehicle ||
+                trim(
+                    (string) (
+                        $vehicle->polisi ?? ''
+                    )
+                ) === ''
+            ) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'mesin_id' =>
+                    'Inventaris belum memiliki nomor polisi.'
+                ]);
+            }
+        }
+
+        return $validated;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TAMBAH MASA PAJAK KENDARAAN
+    |--------------------------------------------------------------------------
+    */
+
+    public function storePajakMesin(
+        Request $request
+    ) {
+        $data = $this->validasiPajakMesin(
+            $request,
+            true
+        );
+
+        $pdf = $request->file('dokumen_pdf');
+
+        unset($data['dokumen_pdf']);
+
+        $path = null;
+
+        try {
+            if ($pdf) {
+                $path = $pdf->store(
+                    'kib/mesin/pajak',
+                    'local'
+                );
+
+                if (!$path) {
+                    throw new \RuntimeException(
+                        'Dokumen PDF gagal disimpan.'
+                    );
+                }
+            }
+
+            $data['dokumen_pdf'] = $path;
+            $data['created_at'] = now();
+            $data['updated_at'] = now();
+
+            $id = DB::table('mesin_pajaks')
+                ->insertGetId($data);
+
+            return response()->json([
+                'success' => true,
+
+                'message' =>
+                'Masa pajak kendaraan berhasil dicatat.',
+
+                'id' => $id,
+            ]);
+        } catch (\Throwable $e) {
+            if ($path) {
+                Storage::disk('local')
+                    ->delete($path);
+            }
+
+            throw $e;
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT MASA PAJAK
+    |--------------------------------------------------------------------------
+    */
+
+    public function updatePajakMesin(
+        Request $request,
+        int $pajak
+    ) {
+        $data = $this->validasiPajakMesin(
+            $request,
+            false
+        );
+
+        $old = DB::table('mesin_pajaks')
+            ->where('id', $pajak)
+            ->first();
+
+        abort_unless($old, 404);
+
+        unset($data['dokumen_pdf']);
+
+        $newPath = null;
+
+        try {
+            if ($request->hasFile('dokumen_pdf')) {
+                $newPath = $request
+                    ->file('dokumen_pdf')
+                    ->store(
+                        'kib/mesin/pajak',
+                        'local'
+                    );
+
+                if (!$newPath) {
+                    throw new \RuntimeException(
+                        'PDF pajak gagal disimpan.'
+                    );
+                }
+
+                $data['dokumen_pdf'] = $newPath;
+            }
+
+            $data['updated_at'] = now();
+
+            DB::table('mesin_pajaks')
+                ->where('id', $pajak)
+                ->update($data);
+        } catch (\Throwable $e) {
+            if ($newPath) {
+                Storage::disk('local')
+                    ->delete($newPath);
+            }
+
+            throw $e;
+        }
+
+        // Hapus PDF lama hanya setelah update berhasil.
+        if (
+            $newPath &&
+            $old->dokumen_pdf &&
+            str_starts_with(
+                $old->dokumen_pdf,
+                'kib/mesin/pajak/'
+            )
+        ) {
+            Storage::disk('local')
+                ->delete($old->dokumen_pdf);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Data masa pajak berhasil diperbarui.'
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HAPUS CATATAN PAJAK
+    |--------------------------------------------------------------------------
+    | Inventaris kendaraan tidak dihapus.
+    */
+
+    public function destroyPajakMesin(
+        int $pajak
+    ) {
+        $old = DB::table('mesin_pajaks')
+            ->where('id', $pajak)
+            ->first();
+
+        abort_unless($old, 404);
+
+        DB::table('mesin_pajaks')
+            ->where('id', $pajak)
+            ->delete();
+
+        if (
+            $old->dokumen_pdf &&
+            str_starts_with(
+                $old->dokumen_pdf,
+                'kib/mesin/pajak/'
+            )
+        ) {
+            Storage::disk('local')
+                ->delete($old->dokumen_pdf);
+        }
+
+        return response()->json([
+            'success' => true,
+
+            'message' =>
+            'Catatan pajak berhasil dihapus. Inventaris Mesin tetap tersimpan.'
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PREVIEW PDF PAJAK
+    |--------------------------------------------------------------------------
+    */
+
+    public function filePajakMesin(
+        int $pajak
+    ) {
+        $row = DB::table('mesin_pajaks')
+            ->where('id', $pajak)
+            ->first();
+
+        abort_unless(
+            $row && !empty($row->dokumen_pdf),
+            404
+        );
+
+        $path = (string) $row->dokumen_pdf;
+
+        abort_unless(
+            str_starts_with(
+                $path,
+                'kib/mesin/pajak/'
+            ) &&
+                Storage::disk('local')
+                ->exists($path),
+            404
+        );
+
+        return response()->file(
+            Storage::disk('local')
+                ->path($path),
+            [
+                'Content-Type' =>
+                'application/pdf',
+
+                'X-Content-Type-Options' =>
+                'nosniff',
+            ]
+        );
+    }
+
+
     /*
     |--------------------------------------------------------------------------
     | K.I.B C — GEDUNG DAN BANGUNAN
