@@ -572,10 +572,10 @@
                 @endphp
 
 
-                <a href="{{ url('/kib/aset-tetap') }}"
+                <a href="{{ url('/kib/aset_ttp') }}"
                     class="
                         sidebar-submenu-item
-                        {{ request()->is('kib/aset-tetap*') ? 'active' : '' }}
+                        {{ request()->is('kib/aset_ttp  *') ? 'active' : '' }}
                     ">
 
                     <span class="sidebar-submenu-icon">
