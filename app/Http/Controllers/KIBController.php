@@ -4236,4 +4236,873 @@ class KIBController extends Controller
             ]
         );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | K.I.B E — ASET TETAP LAINNYA
+    |--------------------------------------------------------------------------
+    | Inventaris: kib_e_s
+    | Nilai transaksi: nilai_aktivas
+    | Controller utama: KIBController
+    */
+
+    private function kategoriAsetTetapLainnya(): ?int
+    {
+        foreach (
+            DB::table('golongans')
+                ->select('id', 'nama')
+                ->get() as $row
+        ) {
+            $nama = trim(
+                preg_replace(
+                    '/[^A-Z0-9]+/u',
+                    ' ',
+                    mb_strtoupper((string) $row->nama)
+                ) ?? ''
+            );
+
+            if (in_array($nama, [
+                'ASET TETAP LAINNYA',
+                'KIB E ASET TETAP LAINNYA'
+            ], true)) {
+                return (int) $row->id;
+            }
+        }
+
+        return null;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUERY MASTER INVENTARIS K.I.B E
+    |--------------------------------------------------------------------------
+    */
+    private function queryInventarisAsetTetap()
+    {
+        return DB::table('kib_e_s as e')
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'e.id_barang'
+            )
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'e.id_lokasi'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'e.id_dep'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'e.id_div'
+            )
+            ->leftJoin(
+                'bahans as bh',
+                'bh.id',
+                '=',
+                'e.id_bahan'
+            )
+            ->select(
+                'e.*',
+                'l.lokasi',
+                'l.alamat'
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(b.kode_barang, '')) AS kode_barang"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(bh.nama, '')) AS bahan"
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HALAMAN UTAMA ASET TETAP LAINNYA
+    |--------------------------------------------------------------------------
+    */
+    public function dataAsetTetapLainnya()
+    {
+        foreach (
+            [
+                'kib_e_s',
+                'lokasis',
+                'barangs',
+                'bahans',
+                'departemens',
+                'divisis',
+            ] as $tabel
+        ) {
+            if (!Schema::hasTable($tabel)) {
+                throw new \RuntimeException(
+                    "Tabel {$tabel} belum tersedia."
+                );
+            }
+        }
+
+        $cat = $this->kategoriAsetTetapLainnya();
+
+        // Nilai dari transaksi Nilai Aset,
+        // bukan harga satuan yang dikarang.
+        $nilaiPerLokasi = DB::table('nilai_aktivas as n')
+            ->where('n.cat', $cat ?? -1)
+            ->whereNotNull('n.id_lokasi')
+            ->select('n.id_lokasi')
+            ->selectRaw(
+                'COALESCE(SUM(n.nilai), 0) AS nilai_total'
+            )
+            ->selectRaw(
+                'COUNT(n.id) AS transaksi_total'
+            )
+            ->groupBy('n.id_lokasi');
+
+        $hasDok = Schema::hasColumn(
+            'kib_e_s',
+            'dok'
+        );
+
+        $pdfCount = $hasDok
+            ? "COUNT(DISTINCT CASE
+                WHEN NULLIF(BTRIM(COALESCE(e.dok, '')), '') IS NOT NULL
+                THEN e.id
+               END)"
+            : '0';
+
+        $lokasiAset = DB::table('kib_e_s as e')
+            ->join(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'e.id_lokasi'
+            )
+            ->leftJoinSub(
+                $nilaiPerLokasi,
+                'n',
+                fn($join) => $join->on(
+                    'n.id_lokasi',
+                    '=',
+                    'e.id_lokasi'
+                )
+            )
+            ->select('e.id_lokasi')
+            ->selectRaw(
+                'MIN(l.lokasi) AS lokasi'
+            )
+            ->selectRaw(
+                'MIN(l.alamat) AS alamat'
+            )
+            ->selectRaw(
+                'COUNT(DISTINCT e.id) AS jumlah_aset'
+            )
+            ->selectRaw(
+                'COALESCE(SUM(e.jumlah), 0) AS jumlah_unit'
+            )
+            ->selectRaw(
+                'COALESCE(MAX(n.nilai_total), 0) AS nilai_total'
+            )
+            ->selectRaw(
+                'COALESCE(MAX(n.transaksi_total), 0) AS jumlah_transaksi'
+            )
+            ->selectRaw(
+                "{$pdfCount} AS jumlah_pdf"
+            )
+            ->groupBy('e.id_lokasi')
+            ->orderByRaw('MIN(l.lokasi) ASC')
+            ->get();
+
+        $totalAset = DB::table('kib_e_s')->count();
+
+        $totalUnit = (int) DB::table('kib_e_s')
+            ->sum('jumlah');
+
+        $totalLokasi = $lokasiAset->count();
+
+        $totalNilai = (float) DB::table('nilai_aktivas')
+            ->where('cat', $cat ?? -1)
+            ->sum('nilai');
+
+        $totalBaik = DB::table('kib_e_s')
+            ->whereRaw(
+                "UPPER(BTRIM(COALESCE(kondisi, ''))) = 'BAIK'"
+            )
+            ->count();
+
+        $kondisi = DB::table('kib_e_s')
+            ->select('kondisi')
+            ->selectRaw('COUNT(*) AS jumlah')
+            ->groupBy('kondisi')
+            ->orderByDesc('jumlah')
+            ->get();
+
+        $terbaru = $this->queryInventarisAsetTetap()
+            ->orderByDesc('e.id')
+            ->limit(5)
+            ->get();
+
+        $barangRows = DB::table('barangs')
+            ->select(
+                'id',
+                'nama_barang',
+                'kode_barang'
+            )
+            ->orderBy('nama_barang')
+            ->get();
+
+        $lokasiRows = DB::table('lokasis')
+            ->select(
+                'id',
+                'lokasi',
+                'alamat'
+            )
+            ->orderBy('lokasi')
+            ->get();
+
+        $departemenRows = DB::table('departemens')
+            ->select(
+                'id',
+                'kode_dep',
+                'nama_dep'
+            )
+            ->orderBy('nama_dep')
+            ->get();
+
+        $divisiRows = DB::table('divisis')
+            ->select(
+                'id',
+                'id_dep',
+                'nama_div'
+            )
+            ->orderBy('nama_div')
+            ->get();
+
+        $bahanRows = DB::table('bahans')
+            ->select('id', 'nama')
+            ->orderBy('nama')
+            ->get();
+
+        return view('kib.aset_ttp', compact(
+            'lokasiAset',
+            'totalAset',
+            'totalUnit',
+            'totalLokasi',
+            'totalNilai',
+            'totalBaik',
+            'kondisi',
+            'terbaru',
+            'barangRows',
+            'lokasiRows',
+            'departemenRows',
+            'divisiRows',
+            'bahanRows',
+            'hasDok'
+        ));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETAIL ASET BERDASARKAN LOKASI
+    |--------------------------------------------------------------------------
+    */
+    public function detailAsetTetapLainnyaLokasi(int $lokasi)
+    {
+        $lokasiRow = DB::table('lokasis')
+            ->where('id', $lokasi)
+            ->first([
+                'id',
+                'lokasi',
+                'alamat'
+            ]);
+
+        abort_unless($lokasiRow, 404);
+
+        $rows = $this->queryInventarisAsetTetap()
+            ->where('e.id_lokasi', $lokasi)
+            ->orderBy('d.nama_dep')
+            ->orderBy('v.nama_div')
+            ->orderBy('b.nama_barang')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'lokasi' => $lokasiRow,
+            'data' => $rows,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETAIL NILAI ASET BERDASARKAN LOKASI
+    |--------------------------------------------------------------------------
+    */
+    public function nilaiAsetTetapLainnyaLokasi(int $lokasi)
+    {
+        $lokasiRow = DB::table('lokasis')
+            ->where('id', $lokasi)
+            ->first([
+                'id',
+                'lokasi',
+                'alamat'
+            ]);
+
+        abort_unless($lokasiRow, 404);
+
+        $cat = $this->kategoriAsetTetapLainnya();
+
+        $rows = DB::table('nilai_aktivas as n')
+            ->leftJoin(
+                'aktivas as a',
+                'a.id',
+                '=',
+                'n.id_aktiva'
+            )
+            ->where('n.id_lokasi', $lokasi)
+            ->where('n.cat', $cat ?? -1)
+            ->select(
+                'n.id',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.tahun',
+                'n.nilai',
+                'n.urai'
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(a.kode, '')) AS kode_aktiva"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(a.aktiva, '')) AS nama_aktiva"
+            )
+            ->orderBy('n.tgl_voucher')
+            ->orderBy('n.id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'lokasi' => $lokasiRow,
+            'count' => $rows->count(),
+            'total' => $rows->sum('nilai'),
+            'data' => $rows,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETAIL SATU BARANG INVENTARIS
+    |--------------------------------------------------------------------------
+    */
+    public function showAsetTetapLainnya(int $aset)
+    {
+        $row = $this->queryInventarisAsetTetap()
+            ->where('e.id', $aset)
+            ->first();
+
+        abort_unless($row, 404);
+
+        return response()->json([
+            'success' => true,
+            'data' => $row,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI FORM
+    |--------------------------------------------------------------------------
+    */
+    private function validasiAsetTetapLainnya(
+        Request $request
+    ): array {
+        return $request->validate([
+            'id_lokasi' => [
+                'required',
+                'integer',
+                'exists:lokasis,id'
+            ],
+            'id_dep' => [
+                'required',
+                'integer',
+                'exists:departemens,id'
+            ],
+            'id_div' => [
+                'required',
+                'integer',
+                'exists:divisis,id'
+            ],
+            'id_barang' => [
+                'required',
+                'integer',
+                'exists:barangs,id'
+            ],
+            'id_bahan' => [
+                'required',
+                'integer',
+                'exists:bahans,id'
+            ],
+            'kode' => [
+                'required',
+                'string',
+                'max:255'
+            ],
+            'reg' => [
+                'required',
+                'string',
+                'max:255'
+            ],
+            'kondisi' => [
+                'required',
+                'string',
+                'max:255'
+            ],
+            'tahun' => [
+                'required',
+                'digits:4',
+                'integer',
+                'between:1900,2100'
+            ],
+            'jumlah' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:100000000'
+            ],
+            'asal' => [
+                'required',
+                'string',
+                'max:255'
+            ],
+            'ket' => [
+                'nullable',
+                'string',
+                'max:10000'
+            ],
+            'img' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120'
+            ],
+            'dok' => [
+                'nullable',
+                'file',
+                'mimes:pdf',
+                'max:15360'
+            ],
+        ]);
+    }
+
+    private function formAsetTetapLainnya(
+        array $data
+    ): array {
+        return collect($data)->only([
+            'id_lokasi',
+            'id_dep',
+            'id_div',
+            'id_barang',
+            'id_bahan',
+            'kode',
+            'reg',
+            'kondisi',
+            'tahun',
+            'jumlah',
+            'asal',
+            'ket',
+        ])->all();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDASI DIVISI SESUAI DEPARTEMEN
+    |--------------------------------------------------------------------------
+    */
+    private function cekDivisiAsetTetapLainnya(
+        array $data
+    ): void {
+        $sesuai = DB::table('divisis')
+            ->where('id', $data['id_div'])
+            ->where('id_dep', $data['id_dep'])
+            ->exists();
+
+        if (!$sesuai) {
+            throw ValidationException::withMessages([
+                'id_div' =>
+                'Divisi tidak sesuai dengan Departemen.'
+            ]);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE ASET TETAP LAINNYA
+    |--------------------------------------------------------------------------
+    */
+    public function storeAsetTetapLainnya(
+        Request $request
+    ) {
+        $data = $this->validasiAsetTetapLainnya(
+            $request
+        );
+
+        $this->cekDivisiAsetTetapLainnya(
+            $data
+        );
+
+        if (
+            $request->hasFile('dok') &&
+            !Schema::hasColumn('kib_e_s', 'dok')
+        ) {
+            throw ValidationException::withMessages([
+                'dok' =>
+                'Kolom dokumen tidak tersedia pada tabel kib_e_s.'
+            ]);
+        }
+
+        $row = $this->formAsetTetapLainnya(
+            $data
+        );
+
+        $row['user'] = Auth::id();
+
+        if (Schema::hasColumn('kib_e_s', 'input')) {
+            $row['input'] = 1;
+        }
+
+        $row['created_at'] = now();
+        $row['updated_at'] = now();
+
+        $files = [];
+
+        try {
+            if ($request->hasFile('img')) {
+                $row['img'] = $request
+                    ->file('img')
+                    ->store(
+                        'kib/aset-tetap-lainnya/foto',
+                        'local'
+                    );
+
+                if (!$row['img']) {
+                    throw new \RuntimeException(
+                        'Gagal menyimpan foto.'
+                    );
+                }
+
+                $files[] = $row['img'];
+            }
+
+            if ($request->hasFile('dok')) {
+                $row['dok'] = $request
+                    ->file('dok')
+                    ->store(
+                        'kib/aset-tetap-lainnya/dokumen',
+                        'local'
+                    );
+
+                if (!$row['dok']) {
+                    throw new \RuntimeException(
+                        'Gagal menyimpan dokumen.'
+                    );
+                }
+
+                $files[] = $row['dok'];
+            }
+
+            $id = DB::transaction(
+                fn() => DB::table('kib_e_s')
+                    ->insertGetId($row)
+            );
+        } catch (\Throwable $e) {
+            foreach ($files as $file) {
+                Storage::disk('local')->delete($file);
+            }
+
+            throw $e;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Data Aset Tetap Lainnya berhasil disimpan.',
+            'id' => $id,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE ASET TETAP LAINNYA
+    |--------------------------------------------------------------------------
+    */
+    public function updateAsetTetapLainnya(
+        Request $request,
+        int $aset
+    ) {
+        $data = $this->validasiAsetTetapLainnya(
+            $request
+        );
+
+        $this->cekDivisiAsetTetapLainnya(
+            $data
+        );
+
+        if (
+            $request->hasFile('dok') &&
+            !Schema::hasColumn('kib_e_s', 'dok')
+        ) {
+            throw ValidationException::withMessages([
+                'dok' =>
+                'Kolom dokumen tidak tersedia pada tabel kib_e_s.'
+            ]);
+        }
+
+        $old = DB::table('kib_e_s')
+            ->where('id', $aset)
+            ->first();
+
+        abort_unless($old, 404);
+
+        $row = $this->formAsetTetapLainnya(
+            $data
+        );
+
+        $row['updated_at'] = now();
+
+        $newFiles = [];
+        $oldFiles = [];
+
+        try {
+            foreach (
+                [
+                    'img' =>
+                    'kib/aset-tetap-lainnya/foto/',
+                    'dok' =>
+                    'kib/aset-tetap-lainnya/dokumen/',
+                ] as $field => $prefix
+            ) {
+
+                if (!$request->hasFile($field)) {
+                    continue;
+                }
+
+                $path = $request
+                    ->file($field)
+                    ->store(
+                        rtrim($prefix, '/'),
+                        'local'
+                    );
+
+                if (!$path) {
+                    throw new \RuntimeException(
+                        'Gagal menyimpan file.'
+                    );
+                }
+
+                $row[$field] = $path;
+                $newFiles[] = $path;
+
+                if (
+                    !empty($old->{$field}) &&
+                    str_starts_with(
+                        $old->{$field},
+                        $prefix
+                    )
+                ) {
+                    $oldFiles[] = $old->{$field};
+                }
+            }
+
+            DB::transaction(
+                function () use ($aset, $row) {
+                    DB::table('kib_e_s')
+                        ->where('id', $aset)
+                        ->update($row);
+                }
+            );
+        } catch (\Throwable $e) {
+            foreach ($newFiles as $file) {
+                Storage::disk('local')
+                    ->delete($file);
+            }
+
+            throw $e;
+        }
+
+        foreach ($oldFiles as $file) {
+            Storage::disk('local')
+                ->delete($file);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Data aset berhasil diperbarui.',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE SATU INVENTARIS
+    |--------------------------------------------------------------------------
+    */
+    public function destroyAsetTetapLainnya(
+        int $aset
+    ) {
+        $old = DB::table('kib_e_s')
+            ->where('id', $aset)
+            ->first();
+
+        abort_unless($old, 404);
+
+        DB::transaction(
+            fn() => DB::table('kib_e_s')
+                ->where('id', $aset)
+                ->delete()
+        );
+
+        foreach (
+            [
+                'img' => 'kib/aset-tetap-lainnya/foto/',
+                'dok' => 'kib/aset-tetap-lainnya/dokumen/',
+            ] as $field => $prefix
+        ) {
+
+            if (
+                !empty($old->{$field}) &&
+                str_starts_with(
+                    $old->{$field},
+                    $prefix
+                )
+            ) {
+                Storage::disk('local')
+                    ->delete($old->{$field});
+            }
+        }
+
+        // Nilai Aset tidak dihapus karena
+        // inventaris K.I.B E dikelola secara mandiri.
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Inventaris berhasil dihapus.',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PREVIEW FOTO DAN DOKUMEN PDF
+    |--------------------------------------------------------------------------
+    */
+    public function fileAsetTetapLainnya(
+        int $aset,
+        string $jenis
+    ) {
+        abort_unless(
+            in_array(
+                $jenis,
+                ['foto', 'dokumen'],
+                true
+            ),
+            404
+        );
+
+        $column = $jenis === 'foto'
+            ? 'img'
+            : 'dok';
+
+        abort_unless(
+            Schema::hasColumn(
+                'kib_e_s',
+                $column
+            ),
+            404
+        );
+
+        $row = DB::table('kib_e_s')
+            ->where('id', $aset)
+            ->first([$column]);
+
+        abort_unless(
+            $row && !empty($row->{$column}),
+            404
+        );
+
+        $stored = (string) $row->{$column};
+
+        $base = $jenis === 'foto'
+            ? 'kib/aset-tetap-lainnya/foto/'
+            : 'kib/aset-tetap-lainnya/dokumen/';
+
+        if (str_starts_with($stored, $base)) {
+            abort_unless(
+                Storage::disk('local')
+                    ->exists($stored),
+                404
+            );
+
+            $file = Storage::disk('local')
+                ->path($stored);
+        } else {
+            // File historis website lama.
+            $legacyFolder = $jenis === 'foto'
+                ? 'img'
+                : 'dok';
+
+            $file = public_path(
+                'assets/img/aset_tetap/' .
+                    $legacyFolder . '/' .
+                    basename($stored)
+            );
+
+            abort_unless(
+                is_file($file),
+                404
+            );
+        }
+
+        $ext = strtolower(
+            pathinfo(
+                $file,
+                PATHINFO_EXTENSION
+            )
+        );
+
+        if ($jenis === 'dokumen') {
+            abort_unless(
+                $ext === 'pdf',
+                415
+            );
+        } else {
+            abort_unless(
+                in_array(
+                    $ext,
+                    ['jpg', 'jpeg', 'png', 'webp'],
+                    true
+                ),
+                415
+            );
+        }
+
+        return response()->file(
+            $file,
+            [
+                'X-Content-Type-Options' =>
+                'nosniff'
+            ]
+        );
+    }
 }

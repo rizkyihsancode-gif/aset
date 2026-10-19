@@ -1,1373 +1,1567 @@
-/* =========================================================
-   K.I.B - ASET TETAP LAINNYA
-========================================================= */
 
-let asetTtpCurrentPage = 1;
+/* ============================================================
+   K.I.B E — ASET TETAP LAINNYA
+   PERUMDA TIRTA KENCANA
+   CRUD, FILTER, DETAIL, PDF, CSV, MODAL
+   ============================================================ */
 
-let asetTtpPreviousOverflow = '';
+document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
 
-const asetTtpNumber =
-    new Intl.NumberFormat('id-ID');
+    const root = document.getElementById(
+        'asetLainPage'
+    );
 
-const asetTtpDemoTotal = 128;
+    if (!root || root.dataset.ready === 'yes') {
+        return;
+    }
 
-const asetTtpDemoPages = 13;
+    root.dataset.ready = 'yes';
 
+    const $ = (selector, element = root) =>
+        element.querySelector(selector);
 
-/* =========================================================
-   INIT
-========================================================= */
+    const $$ = (selector, element = root) =>
+        [...element.querySelectorAll(selector)];
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+    const base = root.dataset.base;
+    const store = root.dataset.store;
+    const csrf = root.dataset.token;
+
+    const money = value =>
+        'Rp ' + new Intl.NumberFormat(
+            'id-ID',
+            { maximumFractionDigits: 0 }
+        ).format(Number(value) || 0);
+
+    const number = value =>
+        new Intl.NumberFormat('id-ID')
+            .format(Number(value) || 0);
+
+    const esc = value =>
+        String(value ?? '').replace(
+            /[&<>"']/g,
+            character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]
+        );
+
+    const icon = () =>
+        window.lucide?.createIcons?.();
+
+    const assetUrl = id =>
+        `${base}/${encodeURIComponent(id)}`;
+
+    const lokasiUrl = id =>
+        `${base}/lokasi/${encodeURIComponent(id)}`;
+
+    const fileUrl = (id, type) =>
+        `${assetUrl(id)}/file/${type}`;
+
+    function date(value) {
+        const match = String(value ?? '')
+            .slice(0, 10)
+            .match(/^(\d{4})-(\d\d)-(\d\d)$/);
+
+        return match
+            ? `${match[3]}/${match[2]}/${match[1]}`
+            : (value || '—');
+    }
+
+    // ========================================================
+    // 1. MODAL
+    // ========================================================
+
+    function open(id) {
+        const element = $('#' + id);
+
+        if (element && !element.open) {
+            element.showModal();
+        }
+
+        icon();
+    }
+
+    function close(id) {
+        const element = $('#' + id);
+
+        if (element?.open) {
+            element.close();
+        }
+    }
+
+    function notify(message) {
+        const toast = $('#aetToast');
+
+        toast.textContent = message;
+        toast.hidden = false;
+
+        clearTimeout(notify.timer);
+
+        notify.timer = setTimeout(() => {
+            toast.hidden = true;
+        }, 4500);
+    }
+
+    $$('[data-close]').forEach(button => {
+        button.addEventListener('click', () => {
+            close(button.dataset.close);
+        });
+    });
+
+    $$('dialog').forEach(dialog => {
+        dialog.addEventListener('click', event => {
+            if (event.target === dialog) {
+                dialog.close();
+            }
+        });
+    });
+
+    // ========================================================
+    // 2. REQUEST AJAX LARAVEL
+    // ========================================================
+
+    async function request(path, options = {}) {
+        const response = await fetch(path, {
+            credentials: 'same-origin',
+
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With':
+                    'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrf,
+                ...options.headers
+            },
+
+            ...options
+        });
+
+        const text = await response.text();
+
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch {
+            throw new Error(
+                `Respons server bukan JSON ` +
+                `(HTTP ${response.status}).`
+            );
+        }
 
         if (
-            !document.querySelector(
-                '.aset-ttp-page'
-            )
+            !response.ok ||
+            data.success === false
         ) {
+            const errors = Object.values(
+                data.errors || {}
+            )
+                .flat()
+                .filter(Boolean);
+
+            throw new Error(
+                errors.length
+                    ? errors.join('\n')
+                    : (
+                        data.message ||
+                        `HTTP ${response.status}`
+                    )
+            );
+        }
+
+        return data;
+    }
+
+    // ========================================================
+    // 3. FILTER TABEL UTAMA
+    // ========================================================
+
+    const rows = $$('.aet-location-row');
+
+    let page = 1;
+    let limit = 20;
+
+    function matched() {
+        const query = (
+            $('#aetSearch').value || ''
+        )
+            .trim()
+            .toLowerCase();
+
+        return rows.filter(row =>
+            !query ||
+            row.dataset.search.includes(query) ||
+            row.dataset.value.includes(query)
+        );
+    }
+
+    // ========================================================
+    // 4. PAGINATION
+    // ========================================================
+
+    function renderPage() {
+        const all = matched();
+
+        limit = Number(
+            $('#aetLimit').value
+        ) || 20;
+
+        const max = Math.max(
+            1,
+            Math.ceil(all.length / limit)
+        );
+
+        page = Math.min(
+            Math.max(page, 1),
+            max
+        );
+
+        rows.forEach(row => {
+            row.hidden = true;
+        });
+
+        const start = (page - 1) * limit;
+
+        all
+            .slice(start, start + limit)
+            .forEach((row, index) => {
+                row.hidden = false;
+
+                row.querySelector(
+                    '[data-order]'
+                ).textContent = start + index + 1;
+            });
+
+        $('#aetPageInfo').textContent =
+            `Menampilkan ${
+                all.length ? start + 1 : 0
+            }–${
+                Math.min(
+                    start + limit,
+                    all.length
+                )
+            } dari ${
+                number(all.length)
+            } lokasi`;
+
+        const box = $('#aetPages');
+
+        box.replaceChildren();
+
+        if (max < 2) {
             return;
         }
 
-
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
-
-
-        /* =========================================
-           FILTER
-        ========================================= */
-
-        [
-            'asetTtpSearch',
-            'asetTtpJenis',
-            'asetTtpLokasi',
-            'asetTtpKondisi'
-        ].forEach(
-            function (id) {
-
-                const element =
-                    document.getElementById(id);
-
-                if (!element) {
-                    return;
-                }
-
-
-                element.addEventListener(
-                    element.tagName === 'INPUT'
-                        ? 'input'
-                        : 'change',
-                    filterAsetTtpTable
-                );
-
-            }
-        );
-
-
-        /* =========================================
-           PAGE SIZE
-        ========================================= */
-
-        document
-            .getElementById(
-                'asetTtpPageSize'
-            )
-            ?.addEventListener(
-                'change',
-                function () {
-
-                    asetTtpCurrentPage = 1;
-
-                    renderAsetTtpTable();
-
-                }
-            );
-
-
-        /* =========================================
-           SELECT ALL
-        ========================================= */
-
-        document
-            .getElementById(
-                'asetTtpSelectAll'
-            )
-            ?.addEventListener(
-                'change',
-                function () {
-
-                    const checked =
-                        this.checked;
-
-
-                    getAsetTtpRows()
-                        .forEach(
-                            function (row) {
-
-                                if (
-                                    !row.hidden
-                                ) {
-
-                                    const checkbox =
-                                        row.querySelector(
-                                            'input[type="checkbox"]'
-                                        );
-
-                                    if (checkbox) {
-                                        checkbox.checked =
-                                            checked;
-                                    }
-
-                                }
-
-                            }
-                        );
-
-                }
-            );
-
-
-        /* =========================================
-           TABLE ACTION
-        ========================================= */
-
-        document
-            .getElementById(
-                'asetTtpTable'
-            )
-            ?.addEventListener(
-                'click',
-                function (event) {
-
-                    const button =
-                        event.target.closest(
-                            'button[data-action]'
-                        );
-
-                    if (!button) {
-                        return;
-                    }
-
-
-                    openAsetTtpModal(
-                        button.dataset.action,
-                        button.closest('tr')
-                    );
-
-                }
-            );
-
-
-        /* =========================================
-           TABS
-        ========================================= */
-
-        document
-            .querySelectorAll(
-                '[data-aset-ttp-tab]'
-            )
-            .forEach(
-                function (button) {
-
-                    button.addEventListener(
-                        'click',
-                        function () {
-
-                            document
-                                .querySelectorAll(
-                                    '[data-aset-ttp-tab]'
-                                )
-                                .forEach(
-                                    function (item) {
-
-                                        item.classList.remove(
-                                            'active'
-                                        );
-
-                                        item.setAttribute(
-                                            'aria-selected',
-                                            'false'
-                                        );
-
-                                    }
-                                );
-
-
-                            button.classList.add(
-                                'active'
-                            );
-
-                            button.setAttribute(
-                                'aria-selected',
-                                'true'
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
-
-        /* =========================================
-           MODAL
-        ========================================= */
-
-        const modal =
-            document.getElementById(
-                'asetTtpModal'
-            );
-
-
-        modal?.addEventListener(
-            'click',
-            function (event) {
-
-                if (
-                    event.target === modal
-                ) {
-
-                    closeAsetTtpModal();
-
-                }
-
-            }
-        );
-
-
-        modal?.addEventListener(
-            'close',
-            function () {
-
-                document.body.style.overflow =
-                    asetTtpPreviousOverflow;
-
-            }
-        );
-
-
-        /* =========================================
-           FORM
-        ========================================= */
-
-        document
-            .getElementById(
-                'asetTtpForm'
-            )
-            ?.addEventListener(
-                'submit',
-                function (event) {
-
-                    event.preventDefault();
-
-                }
-            );
-
-
-        renderAsetTtpTable();
-
-    }
-);
-
-
-/* =========================================================
-   GET ROWS
-========================================================= */
-
-function getAsetTtpRows() {
-
-    return Array.from(
-        document.querySelectorAll(
-            '#asetTtpTable tbody tr[data-record]'
-        )
-    );
-
-}
-
-
-/* =========================================================
-   FILTERED ROWS
-========================================================= */
-
-function getFilteredAsetTtpRows() {
-
-    const search =
-        document
-            .getElementById(
-                'asetTtpSearch'
-            )
-            ?.value
-            .trim()
-            .toLocaleLowerCase('id-ID')
-        || '';
-
-
-    const jenis =
-        document
-            .getElementById(
-                'asetTtpJenis'
-            )
-            ?.value
-        || '';
-
-
-    const lokasi =
-        document
-            .getElementById(
-                'asetTtpLokasi'
-            )
-            ?.value
-        || '';
-
-
-    const kondisi =
-        document
-            .getElementById(
-                'asetTtpKondisi'
-            )
-            ?.value
-        || '';
-
-
-    return getAsetTtpRows()
-        .filter(
-            function (row) {
-
-                const searchable = [
-
-                    row.cells[2]?.textContent,
-
-                    row.cells[4]?.textContent,
-
-                    row.cells[5]?.textContent,
-
-                    row.cells[7]?.textContent
-
-                ]
-                    .join(' ')
-                    .toLocaleLowerCase('id-ID');
-
-
-                return (
-
-                    !search ||
-
-                    searchable.includes(
-                        search
-                    )
-
-                ) && (
-
-                    !jenis ||
-
-                    row.dataset.jenis ===
-                        jenis
-
-                ) && (
-
-                    !lokasi ||
-
-                    row.dataset.lokasi ===
-                        lokasi
-
-                ) && (
-
-                    !kondisi ||
-
-                    row.dataset.kondisi ===
-                        kondisi
-
-                );
-
-            }
-        );
-
-}
-
-
-/* =========================================================
-   FILTER
-========================================================= */
-
-function filterAsetTtpTable() {
-
-    asetTtpCurrentPage = 1;
-
-    renderAsetTtpTable();
-
-}
-
-
-/* =========================================================
-   RESET FILTER
-========================================================= */
-
-function resetAsetTtpFilter() {
-
-    [
-        'asetTtpSearch',
-        'asetTtpJenis',
-        'asetTtpLokasi',
-        'asetTtpKondisi'
-    ].forEach(
-        function (id) {
-
+        function button(
+            label,
+            target,
+            disabled = false
+        ) {
             const element =
-                document.getElementById(id);
+                document.createElement('button');
 
-            if (element) {
-                element.value = '';
+            element.type = 'button';
+            element.textContent = label;
+            element.disabled = disabled;
+
+            if (Number(label) === page) {
+                element.classList.add('current');
             }
 
-        }
-    );
-
-
-    const selectAll =
-        document.getElementById(
-            'asetTtpSelectAll'
-        );
-
-    if (selectAll) {
-        selectAll.checked = false;
-    }
-
-
-    getAsetTtpRows()
-        .forEach(
-            function (row) {
-
-                const checkbox =
-                    row.querySelector(
-                        'input[type="checkbox"]'
-                    );
-
-                if (checkbox) {
-                    checkbox.checked = false;
+            element.addEventListener(
+                'click',
+                () => {
+                    page = target;
+                    renderPage();
                 }
-
-            }
-        );
-
-
-    asetTtpCurrentPage = 1;
-
-    renderAsetTtpTable();
-
-}
-
-
-/* =========================================================
-   RENDER TABLE
-========================================================= */
-
-function renderAsetTtpTable() {
-
-    const rows =
-        getAsetTtpRows();
-
-    const filtered =
-        getFilteredAsetTtpRows();
-
-
-    const hasFilter = Boolean(
-
-        document
-            .getElementById(
-                'asetTtpSearch'
-            )
-            ?.value
-            .trim()
-
-        ||
-
-        document
-            .getElementById(
-                'asetTtpJenis'
-            )
-            ?.value
-
-        ||
-
-        document
-            .getElementById(
-                'asetTtpLokasi'
-            )
-            ?.value
-
-        ||
-
-        document
-            .getElementById(
-                'asetTtpKondisi'
-            )
-            ?.value
-
-    );
-
-
-    rows.forEach(
-        function (row) {
-
-            row.hidden =
-                !filtered.includes(row);
-
-        }
-    );
-
-
-    /* NOMOR */
-
-    filtered.forEach(
-        function (row, index) {
-
-            if (row.cells[1]) {
-
-                row.cells[1].textContent =
-                    index + 1;
-
-            }
-
-        }
-    );
-
-
-    /* EMPTY */
-
-    const empty =
-        document.getElementById(
-            'asetTtpEmptyRow'
-        );
-
-    if (empty) {
-
-        empty.hidden =
-            filtered.length > 0;
-
-    }
-
-
-    /* INFO */
-
-    const info =
-        document.getElementById(
-            'asetTtpTableInfo'
-        );
-
-
-    if (info) {
-
-        info.textContent =
-            hasFilter
-
-                ? `Menampilkan ${asetTtpNumber.format(filtered.length)} hasil pada data contoh`
-
-                : `Menampilkan 1 - ${asetTtpNumber.format(rows.length)} dari ${asetTtpNumber.format(asetTtpDemoTotal)} data`;
-
-    }
-
-
-    renderAsetTtpPagination(
-        hasFilter
-            ? 1
-            : asetTtpDemoPages
-    );
-
-}
-
-
-/* =========================================================
-   PAGINATION
-========================================================= */
-
-function renderAsetTtpPagination(
-    totalPages
-) {
-
-    const pagination =
-        document.getElementById(
-            'asetTtpPagination'
-        );
-
-
-    if (!pagination) {
-        return;
-    }
-
-
-    asetTtpCurrentPage =
-        Math.min(
-            Math.max(
-                1,
-                asetTtpCurrentPage
-            ),
-            totalPages
-        );
-
-
-    pagination.replaceChildren();
-
-
-    function addButton(
-        label,
-        page,
-        options = {}
-    ) {
-
-        const button =
-            document.createElement(
-                'button'
             );
 
-
-        button.type = 'button';
-
-
-        button.disabled =
-            Boolean(
-                options.disabled
-            );
-
-
-        if (options.active) {
-
-            button.classList.add(
-                'active'
-            );
-
-            button.setAttribute(
-                'aria-current',
-                'page'
-            );
-
+            box.appendChild(element);
         }
 
-
-        if (options.icon) {
-
-            const icon =
-                document.createElement(
-                    'i'
-                );
-
-            icon.setAttribute(
-                'data-lucide',
-                options.icon
-            );
-
-            button.appendChild(
-                icon
-            );
-
-        } else {
-
-            button.textContent =
-                label;
-
-        }
-
-
-        button.setAttribute(
-            'aria-label',
-            options.aria || label
+        button(
+            '‹',
+            page - 1,
+            page === 1
         );
 
-
-        button.addEventListener(
-            'click',
-            function () {
-
-                asetTtpCurrentPage =
-                    page;
-
-                renderAsetTtpPagination(
-                    totalPages
-                );
-
-            }
-        );
-
-
-        pagination.appendChild(
-            button
-        );
-
-    }
-
-
-    function addDots() {
-
-        const button =
-            document.createElement(
-                'button'
-            );
-
-        button.type = 'button';
-
-        button.disabled = true;
-
-        button.textContent = '...';
-
-        pagination.appendChild(
-            button
-        );
-
-    }
-
-
-    /* PREVIOUS */
-
-    addButton(
-        '',
-        Math.max(
-            1,
-            asetTtpCurrentPage - 1
-        ),
-        {
-            disabled:
-                asetTtpCurrentPage === 1,
-
-            icon:
-                'chevron-left',
-
-            aria:
-                'Halaman sebelumnya'
-        }
-    );
-
-
-    /* PAGES */
-
-    if (totalPages <= 7) {
+        const list = new Set([1, max]);
 
         for (
-            let page = 1;
-            page <= totalPages;
-            page++
+            let i = Math.max(1, page - 2);
+            i <= Math.min(max, page + 2);
+            i++
         ) {
-
-            addButton(
-                String(page),
-                page,
-                {
-                    active:
-                        page ===
-                        asetTtpCurrentPage
-                }
-            );
-
+            list.add(i);
         }
 
-    } else {
+        let previous = 0;
 
-        const pages = new Set([
-            1,
-            2,
-            asetTtpCurrentPage - 1,
-            asetTtpCurrentPage,
-            asetTtpCurrentPage + 1,
-            totalPages
-        ]);
-
-
-        const validPages =
-            Array.from(pages)
-                .filter(
-                    page =>
-                        page >= 1 &&
-                        page <= totalPages
-                )
-                .sort(
-                    (a,b) => a - b
-                );
-
-
-        validPages.forEach(
-            function (
-                page,
-                index
-            ) {
+        [...list]
+            .sort((a, b) => a - b)
+            .forEach(current => {
 
                 if (
-                    index > 0 &&
-                    page -
-                    validPages[index - 1]
-                    > 1
+                    previous &&
+                    current - previous > 1
                 ) {
+                    const dot =
+                        document.createElement('span');
 
-                    addDots();
+                    dot.textContent = '…';
 
+                    box.appendChild(dot);
                 }
 
-
-                addButton(
-                    String(page),
-                    page,
-                    {
-                        active:
-                            page ===
-                            asetTtpCurrentPage
-                    }
+                button(
+                    String(current),
+                    current
                 );
 
-            }
-        );
+                previous = current;
+            });
 
+        button(
+            '›',
+            page + 1,
+            page === max
+        );
     }
 
+    // ========================================================
+    // 5. SEARCH, RESET, LIMIT
+    // ========================================================
 
-    /* NEXT */
-
-    addButton(
-        '',
-        Math.min(
-            totalPages,
-            asetTtpCurrentPage + 1
-        ),
-        {
-            disabled:
-                asetTtpCurrentPage ===
-                totalPages,
-
-            icon:
-                'chevron-right',
-
-            aria:
-                'Halaman berikutnya'
+    $('#aetSearch').addEventListener(
+        'input',
+        () => {
+            page = 1;
+            renderPage();
         }
     );
 
+    $('#aetLimit').addEventListener(
+        'change',
+        () => {
+            page = 1;
+            renderPage();
+        }
+    );
 
-    if (window.lucide) {
-        window.lucide.createIcons();
-    }
+    $('#aetReset').addEventListener(
+        'click',
+        () => {
+            $('#aetSearch').value = '';
+            $('#aetLimit').value = '20';
 
-}
+            page = 1;
+            renderPage();
+        }
+    );
 
+    // ========================================================
+    // 6. EXPORT CSV
+    // ========================================================
 
-/* =========================================================
-   MODAL
-========================================================= */
+    $('#aetExport').addEventListener(
+        'click',
+        () => {
+            const data = [[
+                'No',
+                'Lokasi',
+                'Alamat',
+                'Jumlah Aset',
+                'Nilai Aktiva'
+            ]];
 
-function openAsetTtpModal(
-    mode = 'add',
-    row = null
-) {
+            matched().forEach(
+                (row, index) => {
+                    data.push([
+                        index + 1,
+                        row.dataset.name,
+                        row.dataset.address,
+                        row.dataset.count,
+                        row.dataset.value
+                    ]);
+                }
+            );
 
-    const modal =
-        document.getElementById(
-            'asetTtpModal'
-        );
+            const csv = '\uFEFF' +
+                data.map(line =>
+                    line.map(value => {
+                        let text = String(
+                            value ?? ''
+                        );
 
+                        // Menghindari eksekusi
+                        // formula pada spreadsheet.
+                        if (/^\s*[=+@-]/.test(text)) {
+                            text = "'" + text;
+                        }
 
-    if (
-        !modal ||
-        modal.open
-    ) {
-        return;
-    }
+                        return '"' +
+                            text.replaceAll(
+                                '"',
+                                '""'
+                            ) +
+                            '"';
+                    }).join(';')
+                ).join('\r\n');
 
-
-    const titles = {
-
-        add:
-            'Tambah Aset',
-
-        view:
-            'Detail Aset',
-
-        edit:
-            'Edit Aset',
-
-        delete:
-            'Hapus Aset'
-
-    };
-
-
-    const descriptions = {
-
-        add:
-            'Tambahkan data aset tetap lainnya.',
-
-        view:
-            'Informasi detail aset tetap lainnya.',
-
-        edit:
-            'Perbarui informasi aset tetap lainnya.',
-
-        delete:
-            'Periksa aset yang akan dihapus.'
-
-    };
-
-
-    const readonly =
-        mode === 'view' ||
-        mode === 'delete';
-
-
-    document
-        .getElementById(
-            'asetTtpForm'
-        )
-        ?.reset();
-
-
-    document
-        .getElementById(
-            'asetTtpModalTitle'
-        )
-        .textContent =
-            titles[mode] ||
-            titles.add;
-
-
-    document
-        .getElementById(
-            'asetTtpModalDescription'
-        )
-        .textContent =
-            descriptions[mode] ||
-            descriptions.add;
-
-
-    /* =========================================
-       FIELD
-    ========================================= */
-
-    const fieldMap = [
-
-        [
-            'asetTtpCode',
-            2
-        ],
-
-        [
-            'asetTtpName',
-            4
-        ],
-
-        [
-            'asetTtpJumlah',
-            6
-        ],
-
-        [
-            'asetTtpFormLokasi',
-            7
-        ],
-
-        [
-            'asetTtpTahun',
-            8
-        ],
-
-        [
-            'asetTtpPerolehan',
-            9
-        ],
-
-        [
-            'asetTtpBuku',
-            10
-        ]
-
-    ];
-
-
-    fieldMap.forEach(
-        function (
-            [id,index]
-        ) {
-
-            const input =
-                document.getElementById(
-                    id
+            const exportUrl =
+                URL.createObjectURL(
+                    new Blob(
+                        [csv],
+                        {
+                            type:
+                                'text/csv;charset=utf-8'
+                        }
+                    )
                 );
 
+            const link =
+                document.createElement('a');
 
-            if (!input) {
+            link.href = exportUrl;
+            link.download =
+                'kib-e-aset-tetap-lainnya.csv';
+
+            document.body.appendChild(link);
+
+            link.click();
+            link.remove();
+
+            setTimeout(() => {
+                URL.revokeObjectURL(
+                    exportUrl
+                );
+            }, 1000);
+        }
+    );
+
+    // ========================================================
+    // 7. TABS
+    // ========================================================
+
+    $$('[data-tab]').forEach(button => {
+        button.addEventListener(
+            'click',
+            () => {
+                $$('[data-tab]').forEach(item => {
+                    item.classList.toggle(
+                        'active',
+                        item === button
+                    );
+                });
+
+                $$('[data-tab-panel]').forEach(
+                    panel => {
+                        panel.hidden =
+                            panel.dataset.tabPanel !==
+                            button.dataset.tab;
+                    }
+                );
+            }
+        );
+    });
+
+    // ========================================================
+    // 8. FORM CREATE DAN UPDATE
+    // ========================================================
+
+    const form = $('#aetForm');
+
+    const dep = $('#aetDep');
+    const div = $('#aetDiv');
+
+    let editing = null;
+
+    function filterDivision(
+        preserve = true
+    ) {
+        const old = div.value;
+
+        [...div.options].forEach(option => {
+            if (!option.value) {
                 return;
             }
 
-
-            input.value =
-                row
-                    ? row
-                        .cells[index]
-                        .textContent
-                        .trim()
-                        .replace(
-                            /\s+/g,
-                            ' '
-                        )
-                    : '';
-
-
-            input.readOnly =
-                readonly;
-
-        }
-    );
-
-
-    /* =========================================
-       JENIS
-    ========================================= */
-
-    const jenis =
-        document.getElementById(
-            'asetTtpFormJenis'
-        );
-
-
-    if (jenis) {
-
-        jenis.value =
-            row
-                ? row.cells[5]
-                    .textContent
-                    .trim()
-                : 'Buku Perpustakaan';
-
-
-        jenis.disabled =
-            readonly;
-
-    }
-
-
-    /* =========================================
-       KONDISI
-    ========================================= */
-
-    const kondisi =
-        document.getElementById(
-            'asetTtpFormKondisi'
-        );
-
-
-    if (kondisi) {
-
-        kondisi.value =
-            row
-                ? row.cells[11]
-                    .textContent
-                    .trim()
-                : 'Baik';
-
-
-        kondisi.disabled =
-            readonly;
-
-    }
-
-
-    /* =========================================
-       SAVE
-    ========================================= */
-
-    const save =
-        document.getElementById(
-            'asetTtpSaveButton'
-        );
-
-
-    if (save) {
-
-        save.hidden =
-            mode === 'view';
-
-        save.disabled =
-            true;
-
-        save.textContent =
-            mode === 'delete'
-                ? 'Hapus Aset'
-                : 'Simpan Aset';
-
-        save.classList.toggle(
-            'aset-ttp-delete-button',
-            mode === 'delete'
-        );
-
-    }
-
-
-    /* =========================================
-       NOTE
-    ========================================= */
-
-    const note =
-        document.getElementById(
-            'asetTtpModalNote'
-        );
-
-
-    if (note) {
-
-        note.textContent =
-
-            mode === 'view'
-
-                ? 'Data contoh untuk pratinjau tampilan.'
-
-                : mode === 'delete'
-
-                    ? 'Pratinjau konfirmasi. Penghapusan database belum dihubungkan.'
-
-                    : 'Form UI contoh. Penyimpanan database belum dihubungkan.';
-
-    }
-
-
-    /* =========================================
-       OPEN
-    ========================================= */
-
-    asetTtpPreviousOverflow =
-        document.body.style.overflow;
-
-
-    document.body.style.overflow =
-        'hidden';
-
-
-    modal.showModal();
-
-
-    if (!readonly) {
-
-        document
-            .getElementById(
-                'asetTtpCode'
-            )
-            ?.focus();
-
-    }
-
-}
-
-
-/* =========================================================
-   CLOSE MODAL
-========================================================= */
-
-function closeAsetTtpModal() {
-
-    const modal =
-        document.getElementById(
-            'asetTtpModal'
-        );
-
-
-    if (
-        modal &&
-        modal.open
-    ) {
-
-        modal.close();
-
-    }
-
-}
-
-
-/* =========================================================
-   EXPORT CSV
-========================================================= */
-
-function exportAsetTtpCSV() {
-
-    const records = [
-
-        [
-            'No',
-            'Kode Aset',
-            'Nama Aset',
-            'Jenis Aset',
-            'Satuan / Jumlah',
-            'Lokasi',
-            'Tahun',
-            'Nilai Perolehan',
-            'Nilai Buku',
-            'Kondisi'
-        ]
-
-    ];
-
-
-    getFilteredAsetTtpRows()
-        .forEach(
-            function (
-                row,
-                index
-            ) {
-
-                records.push([
-
-                    index + 1,
-
-                    row.cells[2]
-                        .textContent
-                        .trim(),
-
-                    row.cells[4]
-                        .textContent
-                        .trim(),
-
-                    row.cells[5]
-                        .textContent
-                        .trim(),
-
-                    row.cells[6]
-                        .textContent
-                        .trim(),
-
-                    row.cells[7]
-                        .textContent
-                        .trim(),
-
-                    row.cells[8]
-                        .textContent
-                        .trim(),
-
-                    row.cells[9]
-                        .textContent
-                        .trim(),
-
-                    row.cells[10]
-                        .textContent
-                        .trim(),
-
-                    row.cells[11]
-                        .textContent
-                        .trim()
-
-                ]);
-
-            }
-        );
-
-
-    downloadAsetTtpCSV(
-        records,
-        'data-aset-tetap-lainnya.csv'
-    );
-
-}
-
-
-/* =========================================================
-   DOWNLOAD CSV
-========================================================= */
-
-function downloadAsetTtpCSV(
-    records,
-    filename
-) {
-
-    function csvCell(value) {
-
-        let text =
-            String(value ?? '');
-
-
-        /*
-         * Mencegah formula injection
-         * saat CSV dibuka di Excel.
-         */
+            const okay =
+                !!dep.value &&
+                option.dataset.dep === dep.value;
+
+            option.hidden = !okay;
+            option.disabled = !okay;
+        });
 
         if (
-            /^[\s]*[=+@-]/.test(text) ||
-            /^[\t\r\n]/.test(text)
+            !preserve ||
+            [...div.options]
+                .find(
+                    option =>
+                        option.value === old
+                )?.disabled
         ) {
-
-            text =
-                "'" + text;
-
+            div.value = '';
         }
-
-
-        return (
-            '"' +
-            text.replace(
-                /"/g,
-                '""'
-            ) +
-            '"'
-        );
-
     }
 
-
-    const csv =
-        records
-            .map(
-                function (row) {
-
-                    return row
-                        .map(csvCell)
-                        .join(',');
-
-                }
-            )
-            .join('\r\n');
-
-
-    const blob =
-        new Blob(
-            [
-                '\uFEFF' + csv
-            ],
-            {
-                type:
-                    'text/csv;charset=utf-8;'
-            }
-        );
-
-
-    const url =
-        URL.createObjectURL(
-            blob
-        );
-
-
-    const link =
-        document.createElement(
-            'a'
-        );
-
-
-    link.href = url;
-
-    link.download =
-        filename;
-
-
-    document.body.appendChild(
-        link
+    dep.addEventListener(
+        'change',
+        () => filterDivision(false)
     );
 
+    filterDivision(false);
 
-    link.click();
+    // ========================================================
+    // 9. RESET DAN ISI FORM
+    // ========================================================
 
-    link.remove();
+    function prepareForm(item = null) {
+        form.reset();
 
+        editing = item?.id ?? null;
 
-    setTimeout(
-        function () {
+        $('#aetFormError').hidden = true;
 
-            URL.revokeObjectURL(
-                url
+        $('#aetFormTitle').textContent =
+            item
+                ? 'Edit Aset Tetap Lainnya'
+                : 'Tambah Aset Tetap Lainnya';
+
+        if (item) {
+            [
+                'id_lokasi',
+                'id_dep',
+                'id_barang',
+                'id_bahan',
+                'kode',
+                'reg',
+                'kondisi',
+                'tahun',
+                'jumlah',
+                'asal',
+                'ket'
+            ].forEach(name => {
+                const element =
+                    form.elements.namedItem(name);
+
+                if (element) {
+                    element.value =
+                        item[name] ?? '';
+                }
+            });
+
+            filterDivision(false);
+
+            div.value = String(
+                item.id_div ?? ''
             );
 
-        },
-        1000
+        } else {
+            filterDivision(false);
+        }
+
+        open('aetFormDialog');
+    }
+
+    $('#aetAdd').addEventListener(
+        'click',
+        () => {
+            prepareForm();
+        }
     );
 
-}
+    // ========================================================
+    // 10. SUBMIT CREATE / UPDATE
+    // ========================================================
+
+    form.addEventListener(
+        'submit',
+        async event => {
+            event.preventDefault();
+
+            if (!form.reportValidity()) {
+                return;
+            }
+
+            const submit = $('#aetSave');
+            const errorBox = $('#aetFormError');
+
+            errorBox.hidden = true;
+            submit.disabled = true;
+
+            try {
+                const payload =
+                    new FormData(form);
+
+                const endpoint = editing
+                    ? assetUrl(editing)
+                    : store;
+
+                // Method spoofing Laravel:
+                // Tambah POST, Edit PUT.
+                if (editing) {
+                    payload.append(
+                        '_method',
+                        'PUT'
+                    );
+                }
+
+                const result = await request(
+                    endpoint,
+                    {
+                        method: 'POST',
+                        body: payload
+                    }
+                );
+
+                close('aetFormDialog');
+
+                notify(
+                    result.message ||
+                    'Data berhasil disimpan.'
+                );
+
+                window.location.reload();
+
+            } catch (error) {
+                errorBox.textContent =
+                    error.message;
+
+                errorBox.hidden = false;
+
+                errorBox.scrollIntoView({
+                    block: 'nearest'
+                });
+
+            } finally {
+                submit.disabled = false;
+            }
+        }
+    );
+
+    // ========================================================
+    // 11. EDIT SATU BARANG
+    // ========================================================
+
+    async function edit(id) {
+        try {
+            const data = await request(
+                assetUrl(id)
+            );
+
+            close('aetDetailDialog');
+
+            prepareForm(
+                data.data
+            );
+
+        } catch (error) {
+            notify(
+                'Gagal membuka data Edit: ' +
+                error.message
+            );
+        }
+    }
+
+    // ========================================================
+    // 12. HAPUS SATU BARANG
+    // ========================================================
+
+    async function remove(id) {
+        const item = details.find(
+            asset =>
+                String(asset.id) === String(id)
+        );
+
+        const name =
+            item?.nama_barang ||
+            item?.kode ||
+            id;
+
+        const confirmed = confirm(
+            `Hapus inventaris "${name}"?\n` +
+            'Data transaksi Nilai Aset tidak akan dihapus.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const data = await request(
+                assetUrl(id),
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            close('aetDetailDialog');
+
+            notify(
+                data.message
+            );
+
+            window.location.reload();
+
+        } catch (error) {
+            notify(
+                'Gagal menghapus: ' +
+                error.message
+            );
+        }
+    }
+
+    // ========================================================
+    // 13. DETAIL INVENTARIS BERDASARKAN LOKASI
+    // ========================================================
+
+    let details = [];
+
+    let detailMode = 'view';
+
+    let currentFilter = {
+        dep: '',
+        div: ''
+    };
+
+    // ========================================================
+    // 14. TREE DEPARTEMEN DAN DIVISI
+    // ========================================================
+
+    function makeTree() {
+        const tree = $('#aetTree');
+
+        const departments = new Map();
+
+        details.forEach(item => {
+            const depId = String(
+                item.id_dep ?? ''
+            );
+
+            const divId = String(
+                item.id_div ?? ''
+            );
+
+            if (!departments.has(depId)) {
+                departments.set(
+                    depId,
+                    {
+                        label:
+                            item.departemen ||
+                            'Tanpa Departemen',
+
+                        items: new Map()
+                    }
+                );
+            }
+
+            departments
+                .get(depId)
+                .items.set(
+                    divId,
+                    item.divisi ||
+                    'Tanpa Divisi'
+                );
+        });
+
+        const button = (
+            label,
+            departemen,
+            division = ''
+        ) => `
+            <button
+                type="button"
+                class="${
+                    departemen === currentFilter.dep &&
+                    division === currentFilter.div
+                        ? 'active'
+                        : ''
+                }"
+                data-tree-dep="${esc(departemen)}"
+                data-tree-div="${esc(division)}"
+            >
+                ${esc(label)}
+            </button>
+        `;
+
+        let html = button(
+            `Semua Aset (${details.length})`,
+            ''
+        );
+
+        for (
+            const [depId, obj]
+            of departments
+        ) {
+            html += `
+                <div class="aet-tree-group">
+                    <b>
+                        ${esc(obj.label)}
+                    </b>
+
+                    ${button(
+                        'Semua divisi',
+                        depId
+                    )}
+            `;
+
+            for (
+                const [divId, label]
+                of obj.items
+            ) {
+                html += button(
+                    label,
+                    depId,
+                    divId
+                );
+            }
+
+            html += '</div>';
+        }
+
+        tree.innerHTML = html;
+    }
+
+    // ========================================================
+    // 15. FILTER DAFTAR BARANG
+    // ========================================================
+
+    function visibleAssets() {
+        const query = $('#aetDetailSearch')
+            .value
+            .trim()
+            .toLowerCase();
+
+        return details.filter(item =>
+            (
+                !currentFilter.dep ||
+                String(item.id_dep) ===
+                    currentFilter.dep
+            ) &&
+            (
+                !currentFilter.div ||
+                String(item.id_div) ===
+                    currentFilter.div
+            ) &&
+            (
+                !query ||
+                [
+                    item.nama_barang,
+                    item.kode,
+                    item.reg,
+                    item.bahan,
+                    item.departemen,
+                    item.divisi
+                ]
+                    .join(' ')
+                    .toLowerCase()
+                    .includes(query)
+            )
+        );
+    }
+
+    // ========================================================
+    // 16. RENDER TABEL BARANG PER LOKASI
+    // ========================================================
+
+    function renderDetail() {
+        const list = visibleAssets();
+
+        $('#aetDetailCount').textContent =
+            number(list.length) +
+            ' inventaris';
+
+        $('#aetDetailBody').innerHTML =
+            list.length
+
+                ? list.map(
+                    (item, index) => `
+                    <tr>
+                        <td>
+                            ${index + 1}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${esc(
+                                    item.nama_barang || '—'
+                                )}
+                            </strong>
+
+                            <small>
+                                ${esc(item.bahan || '')}
+                            </small>
+                        </td>
+
+                        <td>
+                            ${esc(item.kode || '—')}
+                        </td>
+
+                        <td>
+                            ${esc(item.reg || '—')}
+                        </td>
+
+                        <td>
+                            ${number(item.jumlah)}
+                        </td>
+
+                        <td>
+                            ${
+                                item.img
+                                    ? `
+                                    <img
+                                        class="aet-photo-thumb"
+                                        loading="lazy"
+                                        src="${fileUrl(
+                                            item.id,
+                                            'foto'
+                                        )}"
+                                        alt="Foto aset"
+                                    >
+                                    `
+                                    : `
+                                    <span class="aet-muted">
+                                        —
+                                    </span>
+                                    `
+                            }
+                        </td>
+
+                        <td>
+                            <div class="aet-actions">
+
+                                <button
+                                    type="button"
+                                    class="detail"
+                                    data-focus="${item.id}"
+                                    title="Lihat detail"
+                                >
+                                    <i data-lucide="eye"></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="edit"
+                                    data-edit="${item.id}"
+                                    title="Edit"
+                                >
+                                    <i data-lucide="square-pen"></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="delete"
+                                    data-delete="${item.id}"
+                                    title="Hapus"
+                                >
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+
+                            </div>
+                        </td>
+                    </tr>
+                `
+                ).join('')
+
+                : `
+                    <tr>
+                        <td
+                            class="aet-empty"
+                            colspan="7"
+                        >
+                            Belum ada inventaris untuk
+                            pilihan departemen/divisi ini.
+                        </td>
+                    </tr>
+                `;
+
+        icon();
+    }
+
+    // ========================================================
+    // 17. RINCIAN SATU ASET
+    // ========================================================
+
+    function focusAsset(item) {
+        const attrs = [
+            ['Nama Aset', item.nama_barang],
+            ['Kode Barang', item.kode],
+            ['Register', item.reg],
+            ['Lokasi', item.lokasi],
+            ['Departemen', item.departemen],
+            ['Divisi', item.divisi],
+            ['Bahan', item.bahan],
+            ['Kondisi', item.kondisi],
+            ['Tahun Pengadaan', item.tahun],
+            ['Jumlah', item.jumlah],
+            ['Asal Perolehan', item.asal],
+            ['Keterangan', item.ket]
+        ];
+
+        const focus = $('#aetFocus');
+
+        focus.hidden = false;
+
+        focus.innerHTML = `
+            <div class="aet-focus-title">
+
+                <h3>
+                    ${esc(
+                        item.nama_barang ||
+                        'Detail Aset'
+                    )}
+                </h3>
+
+                <button
+                    class="aet-btn pale"
+                    data-focus-close
+                    type="button"
+                >
+                    Tutup
+                </button>
+
+            </div>
+
+            ${
+                item.img
+                    ? `
+                    <div class="aet-focus-photo">
+                        <img
+                            src="${fileUrl(
+                                item.id,
+                                'foto'
+                            )}"
+                            alt="Foto ${esc(
+                                item.nama_barang
+                            )}"
+                        >
+                    </div>
+                    `
+                    : ''
+            }
+
+            <dl class="aet-attrs">
+                ${
+                    attrs.map(
+                        ([name, value]) => `
+                        <div>
+                            <dt>
+                                ${esc(name)}
+                            </dt>
+
+                            <dd>
+                                ${esc(value ?? '—')}
+                            </dd>
+                        </div>
+                        `
+                    ).join('')
+                }
+            </dl>
+
+            <div class="aet-focus-actions">
+
+                ${
+                    item.dok
+                        ? `
+                        <a
+                            class="aet-btn pale"
+                            href="${fileUrl(
+                                item.id,
+                                'dokumen'
+                            )}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <i data-lucide="file-text"></i>
+                            Buka PDF
+                        </a>
+                        `
+                        : ''
+                }
+
+                <button
+                    class="aet-btn pale"
+                    type="button"
+                    data-edit="${item.id}"
+                >
+                    <i data-lucide="square-pen"></i>
+                    Edit Aset
+                </button>
+
+                <button
+                    class="aet-btn danger"
+                    type="button"
+                    data-delete="${item.id}"
+                >
+                    <i data-lucide="trash-2"></i>
+                    Hapus Aset
+                </button>
+
+            </div>
+        `;
+
+        icon();
+
+        focus.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
+
+    // ========================================================
+    // 18. MEMUAT DATA LOKASI
+    // ========================================================
+
+    async function loadLokasi(
+        id,
+        mode = 'view'
+    ) {
+        detailMode = mode;
+
+        currentFilter = {
+            dep: '',
+            div: ''
+        };
+
+        $('#aetDetailSearch').value = '';
+        $('#aetFocus').hidden = true;
+
+        $('#aetDetailBody').innerHTML = `
+            <tr>
+                <td
+                    colspan="7"
+                    class="aet-empty"
+                >
+                    Memuat inventaris...
+                </td>
+            </tr>
+        `;
+
+        open('aetDetailDialog');
+
+        try {
+            const data = await request(
+                lokasiUrl(id)
+            );
+
+            details = Array.isArray(data.data)
+                ? data.data
+                : [];
+
+            $('#aetDetailTitle').textContent =
+                `Detail Aset — ${
+                    data.lokasi.lokasi || 'Lokasi'
+                }`;
+
+            $('#aetDetailSub').textContent =
+                `${
+                    data.lokasi.alamat || '—'
+                } · ${
+                    number(details.length)
+                } inventaris`;
+
+            makeTree();
+            renderDetail();
+
+            if (
+                mode === 'edit' ||
+                mode === 'delete'
+            ) {
+                notify(
+                    'Pilih ikon ' +
+                    (
+                        mode === 'edit'
+                            ? 'oranye untuk mengedit'
+                            : 'merah untuk menghapus'
+                    ) +
+                    ' salah satu aset.'
+                );
+            }
+
+        } catch (error) {
+            $('#aetDetailBody').innerHTML = `
+                <tr>
+                    <td
+                        colspan="7"
+                        class="aet-empty"
+                    >
+                        ${esc(error.message)}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // ========================================================
+    // 19. PILIH DEPARTEMEN / DIVISI
+    // ========================================================
+
+    $('#aetTree').addEventListener(
+        'click',
+        event => {
+            const button = event.target.closest(
+                '[data-tree-dep]'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            currentFilter = {
+                dep: button.dataset.treeDep,
+                div: button.dataset.treeDiv
+            };
+
+            $('#aetFocus').hidden = true;
+
+            makeTree();
+            renderDetail();
+        }
+    );
+
+    $('#aetDetailSearch').addEventListener(
+        'input',
+        renderDetail
+    );
+
+    // ========================================================
+    // 20. AKSI PADA DETAIL
+    // ========================================================
+
+    function clickAset(event) {
+        const button = event.target.closest(
+            'button'
+        );
+
+        if (!button) {
+            return;
+        }
+
+        if (button.dataset.focus) {
+            const item = details.find(
+                value =>
+                    String(value.id) ===
+                    button.dataset.focus
+            );
+
+            if (item) {
+                focusAsset(item);
+            }
+
+        } else if (button.dataset.edit) {
+            edit(button.dataset.edit);
+
+        } else if (button.dataset.delete) {
+            remove(button.dataset.delete);
+
+        } else if (
+            button.hasAttribute(
+                'data-focus-close'
+            )
+        ) {
+            $('#aetFocus').hidden = true;
+        }
+    }
+
+    $('#aetDetailBody').addEventListener(
+        'click',
+        clickAset
+    );
+
+    $('#aetFocus').addEventListener(
+        'click',
+        clickAset
+    );
+
+    // ========================================================
+    // 21. DETAIL NILAI ASET K.I.B E
+    // ========================================================
+
+    async function showNilai(id) {
+        $('#aetNilaiBody').innerHTML = `
+            <tr>
+                <td
+                    colspan="8"
+                    class="aet-empty"
+                >
+                    Memuat transaksi...
+                </td>
+            </tr>
+        `;
+
+        $('#aetNilaiTitle').textContent =
+            'Detail Nilai Aset Tetap Lainnya';
+
+        open('aetNilaiDialog');
+
+        try {
+            const data = await request(
+                lokasiUrl(id) + '/nilai'
+            );
+
+            $('#aetNilaiSub').textContent =
+                `${
+                    data.lokasi.lokasi || '—'
+                } · ${
+                    data.lokasi.alamat || '—'
+                }`;
+
+            $('#aetNilaiTotal').textContent =
+                money(data.total);
+
+            $('#aetNilaiCount').textContent =
+                `${number(data.count)} transaksi`;
+
+            $('#aetNilaiBody').innerHTML =
+                data.data.length
+
+                    ? data.data.map(
+                        (item, index) => `
+                        <tr>
+                            <td>
+                                ${index + 1}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    item.kode_aktiva || '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    item.nama_aktiva || '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${date(item.tgl_voucher)}
+                            </td>
+
+                            <td>
+                                ${esc(item.tahun || '—')}
+                            </td>
+
+                            <td>
+                                <b>
+                                    ${money(item.nilai)}
+                                </b>
+                            </td>
+
+                            <td>
+                                ${esc(item.urai || '—')}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    item.no_voucher || '—'
+                                )}
+                            </td>
+                        </tr>
+                        `
+                    ).join('')
+
+                    : `
+                    <tr>
+                        <td
+                            colspan="8"
+                            class="aet-empty"
+                        >
+                            Belum ada transaksi
+                            Nilai Aset pada lokasi ini.
+                        </td>
+                    </tr>
+                    `;
+
+        } catch (error) {
+            $('#aetNilaiBody').innerHTML = `
+                <tr>
+                    <td
+                        colspan="8"
+                        class="aet-empty"
+                    >
+                        ${esc(error.message)}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // ========================================================
+    // 22. DAFTAR PDF
+    // ========================================================
+
+    async function showPdfs(id) {
+        $('#aetPdfList').textContent =
+            'Memuat daftar dokumen...';
+
+        open('aetPdfDialog');
+
+        try {
+            const data = await request(
+                lokasiUrl(id)
+            );
+
+            const docs = (
+                data.data || []
+            ).filter(
+                item => !!item.dok
+            );
+
+            $('#aetPdfTitle').textContent =
+                'PDF — ' +
+                (
+                    data.lokasi.lokasi ||
+                    'Lokasi'
+                );
+
+            $('#aetPdfList').innerHTML =
+                docs.length
+
+                    ? docs.map(
+                        (item, index) => `
+                        <div class="aet-pdf-row">
+
+                            <span>
+                                ${index + 1}.
+                                ${esc(
+                                    item.nama_barang ||
+                                    'Aset'
+                                )}
+                                ·
+                                ${esc(
+                                    item.kode || '—'
+                                )}
+                            </span>
+
+                            <a
+                                class="aet-btn pale"
+                                href="${fileUrl(
+                                    item.id,
+                                    'dokumen'
+                                )}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <i data-lucide="file-text"></i>
+                                Buka PDF
+                            </a>
+                        </div>
+                        `
+                    ).join('')
+
+                    : `
+                    <p>
+                        Belum ada dokumen PDF
+                        pada lokasi ini.
+                    </p>
+                    `;
+
+            icon();
+
+        } catch (error) {
+            $('#aetPdfList').textContent =
+                error.message;
+        }
+    }
+
+    // ========================================================
+    // 23. TOMBOL TABEL UTAMA
+    // ========================================================
+
+    $('#aetTable').addEventListener(
+        'click',
+        event => {
+            const button = event.target.closest(
+                'button'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            if (button.dataset.nilai) {
+                return showNilai(
+                    button.dataset.nilai
+                );
+            }
+
+            if (button.dataset.pdfs) {
+                return showPdfs(
+                    button.dataset.pdfs
+                );
+            }
+
+            if (button.dataset.view) {
+                return loadLokasi(
+                    button.dataset.view,
+                    'view'
+                );
+            }
+
+            if (button.dataset.editLocation) {
+                return loadLokasi(
+                    button.dataset.editLocation,
+                    'edit'
+                );
+            }
+
+            if (button.dataset.deleteLocation) {
+                return loadLokasi(
+                    button.dataset.deleteLocation,
+                    'delete'
+                );
+            }
+        }
+    );
+
+    // ========================================================
+    // 24. AKSI DARI TAB ASET TERBARU
+    // ========================================================
+
+    $$('[data-aset]').forEach(button => {
+        button.addEventListener(
+            'click',
+            async () => {
+                try {
+                    const data = await request(
+                        assetUrl(button.dataset.aset)
+                    );
+
+                    await loadLokasi(
+                        data.data.id_lokasi
+                    );
+
+                    const item = details.find(
+                        value =>
+                            String(value.id) ===
+                            String(
+                                button.dataset.aset
+                            )
+                    );
+
+                    if (item) {
+                        focusAsset(item);
+                    }
+
+                } catch (error) {
+                    notify(error.message);
+                }
+            }
+        );
+    });
+
+    // ========================================================
+    // 25. INITIALISASI
+    // ========================================================
+
+    renderPage();
+
+    icon();
+});

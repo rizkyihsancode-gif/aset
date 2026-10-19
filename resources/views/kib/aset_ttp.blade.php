@@ -2,1355 +2,863 @@
 
 @section('title', 'Aset Tetap Lainnya')
 
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kib/aset_ttp.css') }}">
-@endpush
-
 @section('content')
 
-    <section class="content aset-ttp-page">
+    @php
+        $rupiah = fn($n) => 'Rp ' . number_format((float) ($n ?? 0), 0, ',', '.');
+    @endphp
 
-        {{-- =====================================================
-         HERO
-    ====================================================== --}}
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/aset_ttp.css') }}?v={{ file_exists(public_path('css/pages/kib/aset_ttp.css')) ? filemtime(public_path('css/pages/kib/aset_ttp.css')) : time() }}">
 
-        <section class="aset-ttp-hero">
+    <section id="asetLainPage" class="content aet-page" data-base="{{ url('/kib/aset_ttp') }}"
+        data-store="{{ route('kib.aset_ttp.store') }}" data-token="{{ csrf_token() }}">
 
-            <div class="aset-ttp-hero-overlay"></div>
+        {{-- ===================================================
+         HEADER DAN STATISTIK
+    ==================================================== --}}
+        <header class="aet-hero">
+            <div class="aet-hero-shade"></div>
 
-            <div class="aset-ttp-hero-inner">
+            <div class="aet-hero-content">
 
-                {{-- BREADCRUMB --}}
-                <nav class="aset-ttp-breadcrumb" aria-label="Breadcrumb">
-
-                    <a href="{{ route('dashboard') }}" aria-label="Home">
+                <nav class="aet-crumb">
+                    <a href="{{ url('/dashboard') }}">
                         <i data-lucide="house"></i>
                     </a>
 
                     <i data-lucide="chevron-right"></i>
-
-                    <span>K.I.B</span>
-
+                    K.I.B
                     <i data-lucide="chevron-right"></i>
 
-                    <strong aria-current="page">
-                        Aset Tetap Lainnya
-                    </strong>
-
+                    <b>Aset Tetap Lainnya</b>
                 </nav>
 
+                <h1>Aset Tetap Lainnya</h1>
 
-                {{-- TITLE --}}
-                <div class="aset-ttp-heading">
+                <p>
+                    Pengelolaan K.I.B E, inventaris per lokasi,
+                    departemen, divisi, dan dokumen aset
+                    Perumda Tirta Kencana Kota Samarinda.
+                </p>
 
-                    <h1>
-                        Aset Tetap Lainnya
-                    </h1>
+                <div class="aet-kpis">
 
+                    <article>
+                        <span class="aet-kpi-icon">
+                            <i data-lucide="package-open"></i>
+                        </span>
+
+                        <div>
+                            <small>Total Inventaris</small>
+                            <strong>
+                                {{ number_format($totalAset, 0, ',', '.') }}
+                            </strong>
+                            <span>Data pada K.I.B E</span>
+                        </div>
+                    </article>
+
+                    <article>
+                        <span class="aet-kpi-icon">
+                            <i data-lucide="boxes"></i>
+                        </span>
+
+                        <div>
+                            <small>Total Unit</small>
+                            <strong>
+                                {{ number_format($totalUnit, 0, ',', '.') }}
+                            </strong>
+                            <span>Akumulasi jumlah barang</span>
+                        </div>
+                    </article>
+
+                    <article>
+                        <span class="aet-kpi-icon">
+                            <i data-lucide="wallet"></i>
+                        </span>
+
+                        <div>
+                            <small>Nilai Aktiva K.I.B E</small>
+                            <strong>
+                                {{ $rupiah($totalNilai) }}
+                            </strong>
+                            <span>Dari transaksi Nilai Aset</span>
+                        </div>
+                    </article>
+
+                    <article>
+                        <span class="aet-kpi-icon">
+                            <i data-lucide="map-pin"></i>
+                        </span>
+
+                        <div>
+                            <small>Jumlah Lokasi</small>
+                            <strong>
+                                {{ number_format($totalLokasi, 0, ',', '.') }}
+                            </strong>
+                            <span>Lokasi terinventarisasi</span>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </header>
+
+        {{-- ===================================================
+         PANEL UTAMA
+    ==================================================== --}}
+        <section class="aet-panel">
+
+            <div class="aet-panel-top">
+                <div>
+                    <h2>Daftar Aset Tetap Lainnya</h2>
                     <p>
-                        Kelola data aset tetap lainnya seperti buku,
-                        koleksi perpustakaan, barang bercorak kesenian
-                        dan aset tetap lainnya pada Perumdam Tirta Kencana
-                        Kota Samarinda.
+                        Struktur lokasi dan detail inventaris
+                        mengikuti web aset lama.
                     </p>
-
                 </div>
 
-
-                {{-- =================================================
-                 KPI
-            ================================================== --}}
-
-                <div class="aset-ttp-kpi-grid">
-
-                    {{-- TOTAL ASET --}}
-                    <div class="aset-ttp-kpi-card">
-
-                        <div class="aset-ttp-kpi-icon">
-                            <i data-lucide="archive"></i>
-                        </div>
-
-                        <div class="aset-ttp-kpi-content">
-
-                            <span>
-                                Total Aset
-                            </span>
-
-                            <div class="aset-ttp-kpi-inline">
-
-                                <strong>
-                                    128
-                                </strong>
-
-                                <small>
-                                    <i data-lucide="arrow-up"></i>
-                                    +9
-                                </small>
-
-                            </div>
-
-                            <p>
-                                dari tahun lalu
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- NILAI PEROLEHAN --}}
-                    <div class="aset-ttp-kpi-card">
-
-                        <div class="aset-ttp-kpi-icon">
-                            <i data-lucide="wallet-cards"></i>
-                        </div>
-
-                        <div class="aset-ttp-kpi-content">
-
-                            <span>
-                                Total Nilai Perolehan
-                            </span>
-
-                            <strong>
-                                Rp 2,86 M
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- NILAI BUKU --}}
-                    <div class="aset-ttp-kpi-card">
-
-                        <div class="aset-ttp-kpi-icon">
-                            <i data-lucide="chart-no-axes-combined"></i>
-                        </div>
-
-                        <div class="aset-ttp-kpi-content">
-
-                            <span>
-                                Nilai Buku
-                            </span>
-
-                            <strong>
-                                Rp 1,94 M
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- JENIS ASET --}}
-                    <div class="aset-ttp-kpi-card">
-
-                        <div class="aset-ttp-kpi-icon">
-                            <i data-lucide="layers-3"></i>
-                        </div>
-
-                        <div class="aset-ttp-kpi-content">
-
-                            <span>
-                                Jenis Aset
-                            </span>
-
-                            <strong>
-                                5
-                            </strong>
-
-                            <p>
-                                kelompok aset
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
+                <button class="aet-btn primary" type="button" id="aetAdd">
+                    <i data-lucide="plus"></i>
+                    Tambah Aset
+                </button>
             </div>
 
-        </section>
-
-
-
-        {{-- =====================================================
-         MAIN WORKSPACE
-    ====================================================== --}}
-
-        <section class="aset-ttp-card aset-ttp-workspace">
-
-            {{-- HEADER --}}
-            <div class="aset-ttp-workspace-head">
-
-                <div class="aset-ttp-tabs" role="tablist" aria-label="Menu Aset Tetap Lainnya">
-
-                    <button type="button" class="active" data-aset-ttp-tab="list" role="tab" aria-selected="true">
-                        Daftar Aset
-                    </button>
-
-                    <button type="button" data-aset-ttp-tab="recap" role="tab" aria-selected="false">
-                        Rekapitulasi
-                    </button>
-
-                    <button type="button" data-aset-ttp-tab="chart" role="tab" aria-selected="false">
-                        Grafik
-                    </button>
-
-                    <button type="button" data-aset-ttp-tab="depreciation" role="tab" aria-selected="false">
-                        Penyusutan
-                    </button>
-
-                </div>
-
-
-                <button type="button" class="aset-ttp-add-button" onclick="openAsetTtpModal('add')">
-
-                    <i data-lucide="plus"></i>
-
-                    Tambah Aset
-
+            {{-- TABS --}}
+            <div class="aet-tabs" role="tablist" aria-label="Tampilan aset">
+                <button class="active" type="button" data-tab="daftar">
+                    Daftar Lokasi
                 </button>
 
+                <button type="button" data-tab="rekap">
+                    Rekapitulasi
+                </button>
+
+                <button type="button" data-tab="grafik">
+                    Grafik Kondisi
+                </button>
+
+                <button type="button" data-tab="terbaru">
+                    Aset Terbaru
+                </button>
             </div>
 
+            {{-- =================================================
+             TAB DAFTAR ASET
+        ================================================== --}}
+            <div class="aet-tab-content" data-tab-panel="daftar">
+                <div class="aet-toolbar">
 
+                    <label class="aet-search">
+                        <i data-lucide="search"></i>
 
-            {{-- =====================================================
-             FILTER
-        ====================================================== --}}
+                        <input id="aetSearch" type="search" placeholder="Cari lokasi, alamat, atau nilai...">
+                    </label>
 
-            <div class="aset-ttp-filter-row">
+                    <label class="aet-limit">
+                        Tampilkan
 
-                {{-- SEARCH --}}
-                <div class="aset-ttp-search">
+                        <select id="aetLimit">
+                            <option>10</option>
+                            <option selected>20</option>
+                            <option>50</option>
+                            <option>100</option>
+                        </select>
+                    </label>
 
-                    <i data-lucide="search"></i>
-
-                    <input type="search" id="asetTtpSearch" placeholder="Cari kode, nama aset, lokasi, atau keterangan..."
-                        aria-label="Cari aset tetap lainnya">
-
-                </div>
-
-
-                {{-- JENIS --}}
-                <div class="aset-ttp-select-field">
-
-                    <select id="asetTtpJenis" aria-label="Filter jenis aset">
-
-                        <option value="">
-                            Semua Jenis Aset
-                        </option>
-
-                        <option value="Buku Perpustakaan">
-                            Buku Perpustakaan
-                        </option>
-
-                        <option value="Barang Bercorak Kesenian">
-                            Barang Bercorak Kesenian
-                        </option>
-
-                        <option value="Hewan Ternak">
-                            Hewan Ternak
-                        </option>
-
-                        <option value="Tanaman">
-                            Tanaman
-                        </option>
-
-                        <option value="Aset Tetap Lainnya">
-                            Aset Tetap Lainnya
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                {{-- LOKASI --}}
-                <div class="aset-ttp-select-field">
-
-                    <select id="asetTtpLokasi" aria-label="Filter lokasi">
-
-                        <option value="">
-                            Semua Lokasi
-                        </option>
-
-                        <option value="Kantor Pusat">
-                            Kantor Pusat
-                        </option>
-
-                        <option value="Unit Pelayanan">
-                            Unit Pelayanan
-                        </option>
-
-                        <option value="IPA Gunung Lipan">
-                            IPA Gunung Lipan
-                        </option>
-
-                        <option value="IPA Sungai Kapih">
-                            IPA Sungai Kapih
-                        </option>
-
-                        <option value="Gudang Pusat">
-                            Gudang Pusat
-                        </option>
-
-                        <option value="Ruang Arsip">
-                            Ruang Arsip
-                        </option>
-
-                        <option value="Laboratorium">
-                            Laboratorium
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                {{-- KONDISI --}}
-                <div class="aset-ttp-select-field">
-
-                    <select id="asetTtpKondisi" aria-label="Filter kondisi">
-
-                        <option value="">
-                            Semua Kondisi
-                        </option>
-
-                        <option value="Baik">
-                            Baik
-                        </option>
-
-                        <option value="Cukup">
-                            Cukup
-                        </option>
-
-                        <option value="Rusak">
-                            Rusak
-                        </option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-
-
-            {{-- FILTER ACTION --}}
-            <div class="aset-ttp-filter-actions">
-
-                <div>
-
-                    <button type="button" class="aset-ttp-secondary-button" onclick="filterAsetTtpTable()">
-
-                        <i data-lucide="list-filter"></i>
-
-                        Filter Lainnya
-
-                    </button>
-
-                </div>
-
-
-                <div>
-
-                    <button type="button" class="aset-ttp-secondary-button" onclick="resetAsetTtpFilter()">
-
+                    <button class="aet-btn pale" type="button" id="aetReset">
                         <i data-lucide="refresh-cw"></i>
-
                         Reset
-
                     </button>
 
-
-                    <button type="button" class="aset-ttp-secondary-button aset-ttp-export-button"
-                        onclick="exportAsetTtpCSV()">
-
+                    <button class="aet-btn pale" type="button" id="aetExport">
                         <i data-lucide="download"></i>
-
-                        Export
-
+                        Export CSV
                     </button>
+                </div>
+
+                <div class="aet-table-scroll">
+
+                    <table id="aetTable" class="aet-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Lokasi</th>
+                                <th>Alamat</th>
+                                <th>Nilai Aktiva</th>
+                                <th>PDF</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @forelse($lokasiAset as $row)
+                                <tr class="aet-location-row"
+                                    data-search="{{ mb_strtolower(trim((string) $row->lokasi) . ' ' . trim((string) $row->alamat)) }}"
+                                    data-location="{{ $row->id_lokasi }}" data-name="{{ trim((string) $row->lokasi) }}"
+                                    data-address="{{ trim((string) $row->alamat) }}" data-value="{{ $row->nilai_total }}"
+                                    data-count="{{ $row->jumlah_aset }}">
+                                    <td data-order></td>
+
+                                    <td>
+                                        <b>
+                                            {{ trim((string) $row->lokasi) ?: '—' }}
+                                        </b>
+
+                                        <small>
+                                            {{ number_format($row->jumlah_aset, 0, ',', '.') }}
+                                            inventaris ·
+                                            {{ number_format($row->jumlah_unit, 0, ',', '.') }}
+                                            unit
+                                        </small>
+                                    </td>
+
+                                    <td>
+                                        {{ trim((string) $row->alamat) ?: '—' }}
+                                    </td>
+
+                                    <td>
+                                        <button class="aet-value-btn" type="button" data-nilai="{{ $row->id_lokasi }}">
+                                            {{ $rupiah($row->nilai_total) }}
+
+                                            <i data-lucide="external-link"></i>
+                                        </button>
+
+                                        <small>
+                                            {{ $row->jumlah_transaksi }}
+                                            transaksi
+                                        </small>
+                                    </td>
+
+                                    <td class="aet-center">
+                                        @if ((int) $row->jumlah_pdf > 0)
+                                            <button type="button" class="aet-pdf-btn" data-pdfs="{{ $row->id_lokasi }}">
+                                                <i data-lucide="file-text"></i>
+                                                {{ $row->jumlah_pdf }} PDF
+                                            </button>
+                                        @else
+                                            <span class="aet-muted">—</span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        <div class="aet-actions">
+
+                                            <button type="button" class="detail" data-view="{{ $row->id_lokasi }}"
+                                                title="Detail lokasi">
+                                                <i data-lucide="eye"></i>
+                                            </button>
+
+                                            <button type="button" class="edit"
+                                                data-edit-location="{{ $row->id_lokasi }}" title="Pilih aset untuk edit">
+                                                <i data-lucide="square-pen"></i>
+                                            </button>
+
+                                            <button type="button" class="delete"
+                                                data-delete-location="{{ $row->id_lokasi }}"
+                                                title="Pilih aset untuk hapus">
+                                                <i data-lucide="trash-2"></i>
+                                            </button>
+
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="aet-empty">
+                                        Belum ada data K.I.B E.
+                                        Klik Tambah Aset untuk
+                                        melakukan pendataan.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
 
                 </div>
 
+                <div class="aet-table-bottom">
+                    <span id="aetPageInfo"></span>
+                    <div id="aetPages" class="aet-pages"></div>
+                </div>
             </div>
 
+            {{-- =================================================
+             TAB REKAPITULASI
+        ================================================== --}}
+            <div class="aet-tab-content" data-tab-panel="rekap" hidden>
+                <div class="aet-recap">
 
+                    <article>
+                        <h3>Kondisi Aset</h3>
 
-            {{-- =====================================================
-             TABLE
-        ====================================================== --}}
+                        <div class="aet-condition-list">
+                            @forelse($kondisi as $item)
+                                <div>
+                                    <span>
+                                        {{ trim((string) $item->kondisi) ?: 'Belum diisi' }}
+                                    </span>
 
-            <div class="aset-ttp-table-scroll" tabindex="0" aria-label="Daftar aset tetap lainnya">
-
-                <table class="aset-ttp-table" id="asetTtpTable">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                <input type="checkbox" id="asetTtpSelectAll" aria-label="Pilih semua aset">
-                            </th>
-
-                            <th>
-                                No
-                            </th>
-
-                            <th>
-                                Kode Aset
-                            </th>
-
-                            <th>
-                                Foto
-                            </th>
-
-                            <th>
-                                Nama Aset
-                            </th>
-
-                            <th>
-                                Jenis Aset
-                            </th>
-
-                            <th>
-                                Satuan / Jumlah
-                            </th>
-
-                            <th>
-                                Lokasi
-                            </th>
-
-                            <th>
-                                Tahun
-                            </th>
-
-                            <th>
-                                Nilai Perolehan
-                            </th>
-
-                            <th>
-                                Nilai Buku
-                            </th>
-
-                            <th>
-                                Kondisi
-                            </th>
-
-                            <th>
-                                Aksi
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-
-                        {{-- DATA 1 --}}
-                        <tr data-record data-jenis="Buku Perpustakaan" data-lokasi="Kantor Pusat" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>1</td>
-
-                            <td class="aset-ttp-code">
-                                05.01.01.001
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="book-open"></i>
+                                    <b>
+                                        {{ number_format($item->jumlah, 0, ',', '.') }}
+                                    </b>
                                 </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Koleksi Buku Perpustakaan
-                            </td>
-
-                            <td>
-                                Buku Perpustakaan
-                            </td>
-
-                            <td>
-                                420 Buku
-                            </td>
-
-                            <td>
-                                Kantor Pusat
-                            </td>
-
-                            <td>
-                                2022
-                            </td>
-
-                            <td>
-                                Rp 185.000.000
-                            </td>
-
-                            <td>
-                                Rp 142.500.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view" title="Lihat">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit" title="Edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete" title="Hapus">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 2 --}}
-                        <tr data-record data-jenis="Barang Bercorak Kesenian" data-lokasi="Kantor Pusat"
-                            data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>2</td>
-
-                            <td class="aset-ttp-code">
-                                05.02.01.004
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="palette"></i>
-                                </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Koleksi Lukisan dan Dekorasi
-                            </td>
-
-                            <td>
-                                Barang Bercorak Kesenian
-                            </td>
-
-                            <td>
-                                18 Unit
-                            </td>
-
-                            <td>
-                                Kantor Pusat
-                            </td>
-
-                            <td>
-                                2021
-                            </td>
-
-                            <td>
-                                Rp 320.000.000
-                            </td>
-
-                            <td>
-                                Rp 246.000.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 3 --}}
-                        <tr data-record data-jenis="Buku Perpustakaan" data-lokasi="Ruang Arsip" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>3</td>
-
-                            <td class="aset-ttp-code">
-                                05.01.02.008
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="library"></i>
-                                </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Buku Referensi Teknis
-                            </td>
-
-                            <td>
-                                Buku Perpustakaan
-                            </td>
-
-                            <td>
-                                175 Buku
-                            </td>
-
-                            <td>
-                                Ruang Arsip
-                            </td>
-
-                            <td>
-                                2023
-                            </td>
-
-                            <td>
-                                Rp 95.000.000
-                            </td>
-
-                            <td>
-                                Rp 82.500.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 4 --}}
-                        <tr data-record data-jenis="Tanaman" data-lokasi="IPA Gunung Lipan" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>4</td>
-
-                            <td class="aset-ttp-code">
-                                05.04.01.012
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="trees"></i>
-                                </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Tanaman Penghijauan Area Instalasi
-                            </td>
-
-                            <td>
-                                Tanaman
-                            </td>
-
-                            <td>
-                                85 Pohon
-                            </td>
-
-                            <td>
-                                IPA Gunung Lipan
-                            </td>
-
-                            <td>
-                                2022
-                            </td>
-
-                            <td>
-                                Rp 145.000.000
-                            </td>
-
-                            <td>
-                                Rp 108.000.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 5 --}}
-                        <tr data-record data-jenis="Aset Tetap Lainnya" data-lokasi="Unit Pelayanan"
-                            data-kondisi="Cukup">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>5</td>
-
-                            <td class="aset-ttp-code">
-                                05.05.01.016
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="package"></i>
-                                </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Koleksi Peralatan Dokumentasi
-                            </td>
-
-                            <td>
-                                Aset Tetap Lainnya
-                            </td>
-
-                            <td>
-                                12 Unit
-                            </td>
-
-                            <td>
-                                Unit Pelayanan
-                            </td>
-
-                            <td>
-                                2021
-                            </td>
-
-                            <td>
-                                Rp 210.000.000
-                            </td>
-
-                            <td>
-                                Rp 137.500.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-fair">
-                                    Cukup
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 6 --}}
-                        <tr data-record data-jenis="Barang Bercorak Kesenian" data-lokasi="IPA Sungai Kapih"
-                            data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>6</td>
-
-                            <td class="aset-ttp-code">
-                                05.02.02.019
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="landmark"></i>
-                                </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Ornamen dan Elemen Dekoratif
-                            </td>
-
-                            <td>
-                                Barang Bercorak Kesenian
-                            </td>
-
-                            <td>
-                                9 Unit
-                            </td>
-
-                            <td>
-                                IPA Sungai Kapih
-                            </td>
-
-                            <td>
-                                2020
-                            </td>
-
-                            <td>
-                                Rp 175.000.000
-                            </td>
-
-                            <td>
-                                Rp 110.000.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 7 --}}
-                        <tr data-record data-jenis="Buku Perpustakaan" data-lokasi="Laboratorium" data-kondisi="Cukup">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>7</td>
-
-                            <td class="aset-ttp-code">
-                                05.01.03.024
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="book-copy"></i>
-                                </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Buku Manual dan Standar Operasional
-                            </td>
-
-                            <td>
-                                Buku Perpustakaan
-                            </td>
-
-                            <td>
-                                280 Buku
-                            </td>
-
-                            <td>
-                                Laboratorium
-                            </td>
-
-                            <td>
-                                2020
-                            </td>
-
-                            <td>
-                                Rp 120.000.000
-                            </td>
-
-                            <td>
-                                Rp 74.500.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-fair">
-                                    Cukup
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 8 --}}
-                        <tr data-record data-jenis="Aset Tetap Lainnya" data-lokasi="Gudang Pusat" data-kondisi="Rusak">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>8</td>
-
-                            <td class="aset-ttp-code">
-                                05.05.02.027
-                            </td>
-
-                            <td>
-                                <div class="aset-ttp-thumb">
-                                    <i data-lucide="boxes"></i>
-                                </div>
-                            </td>
-
-                            <td class="aset-ttp-name">
-                                Koleksi Barang Inventaris Khusus
-                            </td>
-
-                            <td>
-                                Aset Tetap Lainnya
-                            </td>
-
-                            <td>
-                                7 Unit
-                            </td>
-
-                            <td>
-                                Gudang Pusat
-                            </td>
-
-                            <td>
-                                2019
-                            </td>
-
-                            <td>
-                                Rp 88.000.000
-                            </td>
-
-                            <td>
-                                Rp 22.500.000
-                            </td>
-
-                            <td>
-                                <span class="aset-ttp-status is-bad">
-                                    Rusak
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="aset-ttp-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- EMPTY --}}
-                        <tr id="asetTtpEmptyRow" hidden>
-
-                            <td colspan="13" class="aset-ttp-empty">
-                                Tidak ada data yang sesuai dengan filter.
-                            </td>
-
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
+                            @empty
+                                <p>
+                                    Belum ada data kondisi aset.
+                                </p>
+                            @endforelse
+                        </div>
+                    </article>
+
+                    <article>
+                        <h3>Ringkasan Inventaris</h3>
+
+                        <p>
+                            Total aset dengan kondisi baik:
+                            <b>
+                                {{ number_format($totalBaik, 0, ',', '.') }}
+                            </b>
+                        </p>
+
+                        <p>
+                            Jumlah unit tercatat:
+                            <b>
+                                {{ number_format($totalUnit, 0, ',', '.') }}
+                            </b>
+                        </p>
+
+                        <p>
+                            Jumlah lokasi:
+                            <b>
+                                {{ number_format($totalLokasi, 0, ',', '.') }}
+                            </b>
+                        </p>
+
+                        <p class="aet-note">
+                            Nilai aktiva dihitung dari transaksi
+                            Nilai Aset K.I.B E, bukan nilai
+                            perolehan tiap baris inventaris.
+                        </p>
+                    </article>
+
+                </div>
             </div>
 
+            {{-- =================================================
+             TAB GRAFIK KONDISI
+        ================================================== --}}
+            <div class="aet-tab-content" data-tab-panel="grafik" hidden>
+                <div class="aet-graph-card">
+                    <h3>
+                        Grafik Distribusi Kondisi Aset
+                    </h3>
 
+                    <p>
+                        Jumlah inventaris berdasarkan kondisi
+                        yang tercatat dalam tabel K.I.B E.
+                    </p>
 
-            {{-- =====================================================
-             TABLE FOOTER
-        ====================================================== --}}
+                    @forelse($kondisi as $item)
+                        @php
+                            $percent = $totalAset > 0 ? round((100 * (int) $item->jumlah) / $totalAset, 1) : 0;
+                        @endphp
 
-            <div class="aset-ttp-table-footer">
+                        <div class="aet-graph-row">
 
-                <div class="aset-ttp-table-info" id="asetTtpTableInfo" role="status" aria-live="polite">
-                    Menampilkan 1 - 8 dari 128 data
+                            <span>
+                                {{ trim((string) $item->kondisi) ?: 'Belum diisi' }}
+                            </span>
+
+                            <div>
+                                <i style="width:{{ $percent }}%"></i>
+                            </div>
+
+                            <strong>
+                                {{ number_format($item->jumlah, 0, ',', '.') }}
+                                ({{ $percent }}%)
+                            </strong>
+
+                        </div>
+                    @empty
+                        <p>
+                            Belum ada kondisi aset yang tercatat.
+                        </p>
+                    @endforelse
                 </div>
+            </div>
 
+            {{-- =================================================
+             TAB ASET TERBARU
+        ================================================== --}}
+            <div class="aet-tab-content" data-tab-panel="terbaru" hidden>
+                <div class="aet-table-scroll">
 
-                <div class="aset-ttp-pagination-area">
+                    <table class="aet-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Aset</th>
+                                <th>Kode / Register</th>
+                                <th>Lokasi</th>
+                                <th>Jumlah</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
 
-                    <select id="asetTtpPageSize" aria-label="Jumlah data per halaman">
+                        <tbody>
+                            @forelse($terbaru as $item)
+                                <tr>
+                                    <td>
+                                        {{ $loop->iteration }}
+                                    </td>
 
-                        <option value="10">
-                            10
-                        </option>
+                                    <td>
+                                        <b>
+                                            {{ trim((string) $item->nama_barang) }}
+                                        </b>
+                                    </td>
 
-                        <option value="25">
-                            25
-                        </option>
+                                    <td>
+                                        {{ trim((string) $item->kode) }}
+                                        /
+                                        {{ trim((string) $item->reg) }}
+                                    </td>
 
-                        <option value="50">
-                            50
-                        </option>
+                                    <td>
+                                        {{ trim((string) $item->lokasi) }}
+                                    </td>
 
-                    </select>
+                                    <td>
+                                        {{ $item->jumlah }}
+                                    </td>
 
-                    <span>
-                        data per halaman
-                    </span>
+                                    <td>
+                                        <button type="button" class="aet-btn pale" data-aset="{{ $item->id }}">
+                                            Detail
+                                        </button>
+                                    </td>
+                                </tr>
 
-
-                    <nav class="aset-ttp-pagination" id="asetTtpPagination" aria-label="Pagination">
-                    </nav>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="aet-empty">
+                                        Belum ada data.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
 
                 </div>
-
             </div>
 
         </section>
 
+        {{-- ===================================================
+         MODAL TAMBAH / EDIT
+    ==================================================== --}}
+        <dialog id="aetFormDialog" class="aet-dialog">
+            <header>
+                <div>
+                    <small>
+                        K.I.B E — PENGELOLAAN INVENTARIS
+                    </small>
 
+                    <h2 id="aetFormTitle">
+                        Tambah Aset Tetap Lainnya
+                    </h2>
 
-        {{-- =====================================================
-         MODAL
-    ====================================================== --}}
-
-        <dialog class="aset-ttp-modal" id="asetTtpModal">
-
-            <div class="aset-ttp-modal-dialog">
-
-                <div class="aset-ttp-modal-header">
-
-                    <div>
-
-                        <h3 id="asetTtpModalTitle">
-                            Tambah Aset
-                        </h3>
-
-                        <p id="asetTtpModalDescription">
-                            Tambahkan data aset tetap lainnya.
-                        </p>
-
-                    </div>
-
-
-                    <button type="button" onclick="closeAsetTtpModal()" aria-label="Tutup dialog">
-
-                        <i data-lucide="x"></i>
-
-                    </button>
-
+                    <p>
+                        Lengkapi identitas aset, lokasi
+                        dan detail perolehan.
+                    </p>
                 </div>
 
+                <button type="button" data-close="aetFormDialog" aria-label="Tutup">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
 
+            <div class="aet-dialog-body">
 
-                <form id="asetTtpForm">
+                <form id="aetForm" enctype="multipart/form-data" novalidate>
+                    @csrf
 
-                    <div class="aset-ttp-modal-body">
+                    <section class="aet-section">
+                        <h3>
+                            <span>1</span>
+                            Lokasi dan Organisasi
+                        </h3>
 
-                        <p class="aset-ttp-modal-note" id="asetTtpModalNote">
-                            Form UI contoh.
-                            Penyimpanan database belum dihubungkan.
-                        </p>
+                        <div class="aet-fields cols3">
 
+                            <label>
+                                Lokasi *
+                                <select name="id_lokasi" required>
+                                    <option value="">
+                                        Pilih Lokasi
+                                    </option>
 
-                        {{-- KODE --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpCode">
-                                Kode Aset
+                                    @foreach ($lokasiRows as $row)
+                                        <option value="{{ $row->id }}">
+                                            {{ trim((string) $row->lokasi) }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </label>
 
-                            <input id="asetTtpCode" name="kode" type="text" placeholder="05.01.01.001" required>
+                            <label>
+                                Departemen *
+                                <select name="id_dep" id="aetDep" required>
+                                    <option value="">
+                                        Pilih Departemen
+                                    </option>
+
+                                    @foreach ($departemenRows as $row)
+                                        <option value="{{ $row->id }}">
+                                            {{ trim((string) $row->kode_dep) }}
+                                            —
+                                            {{ trim((string) $row->nama_dep) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                            <label>
+                                Divisi *
+                                <select name="id_div" id="aetDiv" required>
+                                    <option value="">
+                                        Pilih Divisi
+                                    </option>
+
+                                    @foreach ($divisiRows as $row)
+                                        <option value="{{ $row->id }}" data-dep="{{ $row->id_dep }}">
+                                            {{ trim((string) $row->nama_div) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                        </div>
+                    </section>
+
+                    <section class="aet-section">
+                        <h3>
+                            <span>2</span>
+                            Identitas Aset
+                        </h3>
+
+                        <div class="aet-fields cols2">
+
+                            <label>
+                                Nama Barang / Jenis Aset *
+
+                                <select name="id_barang" required>
+                                    <option value="">
+                                        Pilih Barang
+                                    </option>
+
+                                    @foreach ($barangRows as $item)
+                                        <option value="{{ $item->id }}">
+                                            {{ trim((string) $item->nama_barang) }}
+                                            ({{ trim((string) $item->kode_barang) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                            <label>
+                                Kode Inventaris *
+
+                                <input name="kode" required maxlength="255" placeholder="Kode barang inventaris">
+                            </label>
+
+                            <label>
+                                Nomor Register *
+
+                                <input name="reg" required maxlength="255" placeholder="Nomor register aset">
+                            </label>
+
+                            <label>
+                                Kondisi *
+
+                                <select name="kondisi" required>
+                                    <option value="">
+                                        Pilih Kondisi
+                                    </option>
+
+                                    <option value="BAIK">Baik</option>
+                                    <option value="CUKUP">Cukup</option>
+                                    <option value="RUSAK RINGAN">
+                                        Rusak Ringan
+                                    </option>
+                                    <option value="RUSAK BERAT">
+                                        Rusak Berat
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label>
+                                Bahan *
+
+                                <select name="id_bahan" required>
+                                    <option value="">
+                                        Pilih Bahan
+                                    </option>
+
+                                    @foreach ($bahanRows as $item)
+                                        <option value="{{ $item->id }}">
+                                            {{ trim((string) $item->nama) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+
+                            <label>
+                                Tahun Pengadaan *
+
+                                <input type="number" name="tahun" min="1900" max="2100" required
+                                    placeholder="Contoh: 2026">
+                            </label>
+
+                            <label>
+                                Jumlah (Unit) *
+
+                                <input type="number" name="jumlah" min="1" required value="1">
+                            </label>
+
+                            <label>
+                                Asal Perolehan *
+
+                                <select name="asal" required>
+                                    <option value="">
+                                        Pilih Asal
+                                    </option>
+
+                                    <option value="PEMBELIAN">
+                                        Pembelian
+                                    </option>
+
+                                    <option value="HIBAH">
+                                        Hibah
+                                    </option>
+
+                                    <option value="BANTUAN">
+                                        Bantuan
+                                    </option>
+
+                                    <option value="LAINNYA">
+                                        Lainnya
+                                    </option>
+                                </select>
+                            </label>
+
+                            <label>
+                                Foto Aset
+
+                                <input type="file" name="img" accept="image/jpeg,image/png,image/webp">
+
+                                <small>
+                                    Maksimum 5 MB.
+                                    Kosongkan jika tidak diganti.
+                                </small>
+                            </label>
+
+                            @if ($hasDok)
+                                <label>
+                                    Dokumen PDF
+
+                                    <input type="file" name="dok" accept="application/pdf">
+
+                                    <small>
+                                        Maksimum 15 MB.
+                                    </small>
+                                </label>
+                            @endif
 
                         </div>
 
+                        <label class="aet-textarea-label">
+                            Keterangan
 
-                        {{-- NAMA --}}
-                        <div class="aset-ttp-form-group">
+                            <textarea name="ket" rows="3" placeholder="Keterangan kondisi dan penggunaan aset"></textarea>
+                        </label>
 
-                            <label for="asetTtpName">
-                                Nama Aset
-                            </label>
+                    </section>
 
-                            <input id="asetTtpName" name="nama" type="text" placeholder="Masukkan nama aset"
-                                required>
+                    <div id="aetFormError" class="aet-error" role="alert" hidden></div>
 
-                        </div>
-
-
-                        {{-- JENIS --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpFormJenis">
-                                Jenis Aset
-                            </label>
-
-                            <select id="asetTtpFormJenis" name="jenis" required>
-
-                                <option value="Buku Perpustakaan">
-                                    Buku Perpustakaan
-                                </option>
-
-                                <option value="Barang Bercorak Kesenian">
-                                    Barang Bercorak Kesenian
-                                </option>
-
-                                <option value="Hewan Ternak">
-                                    Hewan Ternak
-                                </option>
-
-                                <option value="Tanaman">
-                                    Tanaman
-                                </option>
-
-                                <option value="Aset Tetap Lainnya">
-                                    Aset Tetap Lainnya
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        {{-- JUMLAH --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpJumlah">
-                                Satuan / Jumlah
-                            </label>
-
-                            <input id="asetTtpJumlah" name="jumlah" type="text" placeholder="Contoh: 100 Buku"
-                                required>
-
-                        </div>
-
-
-                        {{-- LOKASI --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpFormLokasi">
-                                Lokasi
-                            </label>
-
-                            <input id="asetTtpFormLokasi" name="lokasi" type="text"
-                                placeholder="Masukkan lokasi aset" required>
-
-                        </div>
-
-
-                        {{-- TAHUN --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpTahun">
-                                Tahun Perolehan
-                            </label>
-
-                            <input id="asetTtpTahun" name="tahun" type="text" placeholder="2024" required>
-
-                        </div>
-
-
-                        {{-- NILAI PEROLEHAN --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpPerolehan">
-                                Nilai Perolehan
-                            </label>
-
-                            <input id="asetTtpPerolehan" name="perolehan" type="text" placeholder="Rp 0" required>
-
-                        </div>
-
-
-                        {{-- NILAI BUKU --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpBuku">
-                                Nilai Buku
-                            </label>
-
-                            <input id="asetTtpBuku" name="buku" type="text" placeholder="Rp 0" required>
-
-                        </div>
-
-
-                        {{-- KONDISI --}}
-                        <div class="aset-ttp-form-group">
-
-                            <label for="asetTtpFormKondisi">
-                                Kondisi
-                            </label>
-
-                            <select id="asetTtpFormKondisi" name="kondisi" required>
-
-                                <option value="Baik">
-                                    Baik
-                                </option>
-
-                                <option value="Cukup">
-                                    Cukup
-                                </option>
-
-                                <option value="Rusak">
-                                    Rusak
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="aset-ttp-modal-footer">
-
-                        <button type="button" class="aset-ttp-cancel-button" onclick="closeAsetTtpModal()">
+                    <footer>
+                        <button type="button" class="aet-btn pale" data-close="aetFormDialog">
                             Batal
                         </button>
 
-
-                        <button type="submit" class="aset-ttp-save-button" id="asetTtpSaveButton">
+                        <button type="submit" class="aet-btn primary" id="aetSave">
+                            <i data-lucide="save"></i>
                             Simpan Aset
                         </button>
-
-                    </div>
+                    </footer>
 
                 </form>
-
             </div>
-
         </dialog>
+
+        {{-- ===================================================
+         MODAL DETAIL INVENTARIS PER LOKASI
+    ==================================================== --}}
+        <dialog id="aetDetailDialog" class="aet-dialog wide">
+            <header>
+                <div>
+                    <small>
+                        DETAIL LOKASI K.I.B E
+                    </small>
+
+                    <h2 id="aetDetailTitle">
+                        Detail Aset Tetap Lainnya
+                    </h2>
+
+                    <p id="aetDetailSub">
+                        Pilih departemen/divisi untuk melihat aset.
+                    </p>
+                </div>
+
+                <button type="button" data-close="aetDetailDialog">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+
+            <div class="aet-dialog-body">
+                <div class="aet-detail-grid">
+
+                    <aside class="aet-detail-tree">
+                        <h3>
+                            Departemen & Divisi
+                        </h3>
+
+                        <div id="aetTree"></div>
+                    </aside>
+
+                    <div class="aet-detail-right">
+
+                        <div class="aet-toolbar">
+
+                            <label class="aet-search">
+                                <i data-lucide="search"></i>
+
+                                <input type="search" id="aetDetailSearch" placeholder="Cari nama, kode, register...">
+                            </label>
+
+                            <b id="aetDetailCount"></b>
+                        </div>
+
+                        <div class="aet-table-scroll">
+
+                            <table class="aet-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Nama Aset</th>
+                                        <th>Kode</th>
+                                        <th>Register</th>
+                                        <th>Jumlah</th>
+                                        <th>Foto</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="aetDetailBody"></tbody>
+                            </table>
+
+                        </div>
+
+                        <div id="aetFocus" class="aet-focus" hidden></div>
+
+                    </div>
+                </div>
+            </div>
+        </dialog>
+
+        {{-- ===================================================
+         MODAL DETAIL NILAI
+    ==================================================== --}}
+        <dialog id="aetNilaiDialog" class="aet-dialog wide">
+            <header>
+                <div>
+                    <small>TRANSAKSI NILAI ASET</small>
+
+                    <h2 id="aetNilaiTitle">
+                        Detail Nilai K.I.B E
+                    </h2>
+
+                    <p id="aetNilaiSub"></p>
+                </div>
+
+                <button type="button" data-close="aetNilaiDialog">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+
+            <div class="aet-dialog-body">
+
+                <div class="aet-value-summary">
+                    <span>Total nilai aktiva lokasi</span>
+                    <b id="aetNilaiTotal">Rp 0</b>
+                    <span id="aetNilaiCount">0 transaksi</span>
+                </div>
+
+                <div class="aet-table-scroll">
+
+                    <table class="aet-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kode Perkiraan</th>
+                                <th>Nama Aktiva</th>
+                                <th>Tanggal</th>
+                                <th>Tahun</th>
+                                <th>Nilai</th>
+                                <th>Uraian</th>
+                                <th>Voucher</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="aetNilaiBody"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </dialog>
+
+        {{-- ===================================================
+         MODAL PDF
+    ==================================================== --}}
+        <dialog id="aetPdfDialog" class="aet-dialog">
+            <header>
+                <div>
+                    <small>DOKUMEN INVENTARIS</small>
+
+                    <h2 id="aetPdfTitle">
+                        PDF Aset
+                    </h2>
+                </div>
+
+                <button type="button" data-close="aetPdfDialog">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+
+            <div class="aet-dialog-body">
+                <div id="aetPdfList"></div>
+            </div>
+        </dialog>
+
+        <div id="aetToast" class="aet-toast" role="status" hidden></div>
 
     </section>
 
-
-    @push('scripts')
-        <script src="{{ asset('js/pages/kib/aset_ttp.js') }}"></script>
-    @endpush
+    <script
+        src="{{ asset('js/pages/kib/aset_ttp.js') }}?v={{ file_exists(public_path('js/pages/kib/aset_ttp.js')) ? filemtime(public_path('js/pages/kib/aset_ttp.js')) : time() }}">
+    </script>
 
 @endsection
