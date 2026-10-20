@@ -11,8 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // HELPER
     // ==========================================
 
-    const $ = (selector, scope = root) =>
-        scope.querySelector(selector);
+
+const $ = (selector, node = root) => {
+    return node.querySelector(selector)
+        ?? document
+            .getElementById('mesinPage')
+            ?.querySelector(selector)
+        ?? null;
+};
+
 
     const $$ = (selector, scope = root) =>
         [...scope.querySelectorAll(selector)];
@@ -1680,428 +1687,764 @@ $('#mesinTable').addEventListener('click', event => {
 });
 
 
+
 /* ==========================================================
-   K.I.B B — PERALATAN DAN MESIN
-   MASA PAJAK KENDARAAN
-   PERUMDA TIRTA KENCANA
-========================================================== */
+ * MODUL MASA PAJAK KENDARAAN
+ *
+ * FILE: public/js/pages/kib/mesin.js
+ *
+ * Kode Aktiva : 31.08.%
+ * Pengguna    : mesins.guna
+ * Merk / Type : mesins.merk
+ * No. Polisi  : mesins.polisi
+ * Masa Berlaku: 8 atau 12 bulan
+ * Peringatan  : H-14 sampai H-1
+ * Kedaluwarsa : H-0 dan sesudahnya
+ *
+ * Seluruh fungsi inventaris Mesin sebelumnya
+ * tetap berada di bagian atas file ini.
+ * ========================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    const mesin = document.getElementById('mesinPage');
-    const root = document.getElementById('mesinPajakPanel');
+    // ======================================================
+    // 01. INISIALISASI
+    // ======================================================
 
-    if (!mesin || !root || root.dataset.ready === '1') {
+    const halaman = document.getElementById('mesinPage');
+
+    const panel = document.getElementById(
+        'mesinPajakPanel'
+    );
+
+    const panelDaftar = document.getElementById(
+        'mesinDaftarPanel'
+    );
+
+    if (
+        !halaman ||
+        !panel ||
+        !panelDaftar ||
+        panel.dataset.pajakInitialized === '1'
+    ) {
         return;
     }
 
-    root.dataset.ready = '1';
+    panel.dataset.pajakInitialized = '1';
 
-    const $ = (selector, node = root) =>
-        node.querySelector(selector);
+    const $ = selector =>
+        panel.querySelector(selector);
 
-    const $$ = (selector, node = root) =>
-        [...node.querySelectorAll(selector)];
+    const $$ = selector =>
+        [...panel.querySelectorAll(selector)];
 
-    const numberFormat = new Intl.NumberFormat('id-ID');
+    const token = panel.dataset.token;
+    const baseURL = panel.dataset.base;
+    const apiData = panel.dataset.api;
 
-    const number = value =>
-        numberFormat.format(Number(value) || 0);
+    const nf = new Intl.NumberFormat('id-ID');
 
-    const money = value =>
-        value == null || value === ''
-            ? '—'
-            : 'Rp ' + number(value);
-
-    const esc = value =>
-        String(value ?? '').replace(
-            /[&<>"']/g,
-            char => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            })[char]
-        );
-
-    const date = value => {
-        const match = String(value ?? '')
-            .slice(0, 10)
-            .match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-        return match
-            ? `${match[3]}/${match[2]}/${match[1]}`
-            : '—';
-    };
-
-    const icons = () =>
-        window.lucide?.createIcons?.();
-
-    const endpoint = root.dataset.base;
-    const token = root.dataset.token;
-
-    const STATUS = {
+    const statusLabel = {
         aktif: 'Aktif',
         segera_habis: 'Segera Habis',
         kedaluwarsa: 'Kedaluwarsa',
         belum_didata: 'Belum Dicatat'
     };
 
-    let vehicles = [];
-    let currentPage = 1;
-    let editing = null;
-    let loaded = false;
+    let kendaraan = [];
+    let halamanAktif = 1;
+    let editId = null;
 
-    // =====================================================
-    // 1. NAVBAR DUA TAB
-    // =====================================================
+    let sudahDimuat = false;
+    let sedangMemuat = false;
+    let sedangMengirim = false;
 
-    const daftarPanel = document.getElementById(
-        'mesinDaftarPanel'
-    );
+    // ======================================================
+    // 02. HELPER
+    // ======================================================
 
-    const tabs = [
-        ...mesin.querySelectorAll('[data-mesin-tab]')
-    ];
-
-    function activateTab(tab) {
-        const isPajak = tab === 'pajak';
-
-        daftarPanel.hidden = isPajak;
-        root.hidden = !isPajak;
-
-        mesin.classList.toggle(
-            'mesin-pajak-active',
-            isPajak
+    const escapeHTML = value =>
+        String(value ?? '').replace(
+            /[&<>"']/g,
+            karakter => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[karakter]
         );
 
-        tabs.forEach(button => {
-            const active =
+    const formatAngka = nilai =>
+        nf.format(Number(nilai) || 0);
+
+    const formatUang = nilai =>
+        nilai == null || nilai === ''
+            ? '—'
+            : 'Rp ' + formatAngka(nilai);
+
+    const refreshIcons = () =>
+        window.lucide?.createIcons?.();
+
+    const nomorId = value =>
+        Number.isSafeInteger(Number(value)) &&
+        Number(value) > 0
+            ? Number(value)
+            : null;
+
+    // ======================================================
+    // 03. FORMAT TANGGAL
+    // ======================================================
+
+    function parseTanggal(iso) {
+        const match = String(iso ?? '')
+            .slice(0, 10)
+            .match(
+                /^(\d{4})-(\d{2})-(\d{2})$/
+            );
+
+        if (!match) {
+            return null;
+        }
+
+        const tanggal = new Date(
+            Number(match[1]),
+            Number(match[2]) - 1,
+            Number(match[3])
+        );
+
+        if (
+            tanggal.getFullYear() !== Number(match[1]) ||
+            tanggal.getMonth() !== Number(match[2]) - 1 ||
+            tanggal.getDate() !== Number(match[3])
+        ) {
+            return null;
+        }
+
+        return tanggal;
+    }
+
+    function tanggalIndonesia(value) {
+        const tanggal = parseTanggal(value);
+
+        if (!tanggal) {
+            return '—';
+        }
+
+        return new Intl.DateTimeFormat(
+            'id-ID',
+            {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }
+        ).format(tanggal);
+    }
+
+    // ======================================================
+    // 04. HITUNG MASA BERLAKU OTOMATIS
+    // ======================================================
+
+    /*
+     * Contoh:
+     *
+     * Tanggal pembaruan : 12 September 2026
+     * Masa berlaku      : 8 bulan
+     * Berlaku s/d       : 12 Mei 2027
+     *
+     * Perhitungan ini menggunakan metode yang sama
+     * dengan Carbon::addMonthsNoOverflow().
+     */
+
+    function hitungJatuhTempo(
+        tanggal,
+        bulan
+    ) {
+        const awal = parseTanggal(tanggal);
+        const durasi = Number(bulan);
+
+        if (
+            !awal ||
+            ![8, 12].includes(durasi)
+        ) {
+            return '';
+        }
+
+        const awalBulanTujuan = new Date(
+            awal.getFullYear(),
+            awal.getMonth() + durasi,
+            1
+        );
+
+        const hariTerakhir = new Date(
+            awalBulanTujuan.getFullYear(),
+            awalBulanTujuan.getMonth() + 1,
+            0
+        ).getDate();
+
+        const tujuan = new Date(
+            awalBulanTujuan.getFullYear(),
+            awalBulanTujuan.getMonth(),
+            Math.min(
+                awal.getDate(),
+                hariTerakhir
+            )
+        );
+
+        return [
+            tujuan.getFullYear(),
+
+            String(
+                tujuan.getMonth() + 1
+            ).padStart(2, '0'),
+
+            String(
+                tujuan.getDate()
+            ).padStart(2, '0')
+
+        ].join('-');
+    }
+
+    function updatePreview() {
+        const hasil = hitungJatuhTempo(
+            $('#pajakTanggalBayar').value,
+            $('#pajakMasaBulan').value
+        );
+
+        $('#pajakTanggalPreview').value =
+            hasil
+                ? tanggalIndonesia(hasil)
+                : '';
+    }
+
+    $('#pajakTanggalBayar').addEventListener(
+        'input',
+        updatePreview
+    );
+
+    $('#pajakMasaBulan').addEventListener(
+        'change',
+        updatePreview
+    );
+
+    // ======================================================
+    // 05. NAVBAR DUA TAB
+    // ======================================================
+
+    const tabButtons = [
+        ...halaman.querySelectorAll(
+            '[data-mesin-tab]'
+        )
+    ];
+
+    function bukaTab(
+        tab,
+        ubahHash = true
+    ) {
+        const pajak = tab === 'pajak';
+
+        panelDaftar.hidden = pajak;
+        panel.hidden = !pajak;
+
+        halaman.classList.toggle(
+            'mesin-pajak-active',
+            pajak
+        );
+
+        
+// =====================================================
+// PERGANTIAN KARTU KPI SESUAI TAB AKTIF
+// =====================================================
+
+// Gunakan boolean yang sudah dihitung fungsi tab:
+// pajak === true jika Masa Pajak aktif.
+
+const kpiMesin = document.getElementById(
+    'mesinInventarisKpiGrid'
+);
+
+const kpiPajak = document.getElementById(
+    'mesinPajakKpiGrid'
+);
+
+if (kpiMesin) {
+    kpiMesin.hidden = pajak;
+}
+
+if (kpiPajak) {
+    kpiPajak.hidden = !pajak;
+}
+
+document.getElementById('mesinPage')
+    .classList.toggle(
+        'mesin-pajak-active',
+        pajak
+    );
+
+
+        tabButtons.forEach(button => {
+            const aktif =
                 button.dataset.mesinTab === tab;
 
             button.setAttribute(
                 'aria-selected',
-                active ? 'true' : 'false'
+                String(aktif)
             );
 
-            button.tabIndex = active ? 0 : -1;
+            button.tabIndex =
+                aktif ? 0 : -1;
         });
 
-        history.replaceState(
-            null,
-            '',
-            isPajak
+        if (ubahHash) {
+            const hash = pajak
                 ? '#masa-pajak'
-                : '#daftar-mesin'
-        );
+                : '#daftar-mesin';
 
-        if (isPajak && !loaded) {
-            loadPajak();
+            if (location.hash !== hash) {
+                history.replaceState(
+                    null,
+                    '',
+                    hash
+                );
+            }
         }
 
-        icons();
+        if (pajak && !sudahDimuat) {
+            muatData();
+        }
+
+        refreshIcons();
     }
 
-    tabs.forEach(button => {
-        button.addEventListener('click', () => {
-            activateTab(button.dataset.mesinTab);
-        });
-    });
-
-    activateTab(
-        location.hash === '#masa-pajak'
-            ? 'pajak'
-            : 'daftar'
-    );
-
-    window.addEventListener('hashchange', () => {
-        activateTab(
-            location.hash === '#masa-pajak'
-                ? 'pajak'
-                : 'daftar'
+    tabButtons.forEach(button => {
+        button.addEventListener(
+            'click',
+            () => {
+                bukaTab(
+                    button.dataset.mesinTab
+                );
+            }
         );
     });
 
-    // =====================================================
-    // 2. AJAX KE KIBController
-    // =====================================================
+    window.addEventListener(
+        'hashchange',
+        () => {
+            bukaTab(
+                location.hash === '#masa-pajak'
+                    ? 'pajak'
+                    : 'daftar',
+                false
+            );
+        }
+    );
 
-    async function api(url, options = {}) {
-        const response = await fetch(url, {
-            credentials: 'same-origin',
-            ...options,
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': token,
-                ...(options.headers || {})
+    bukaTab(
+        location.hash === '#masa-pajak'
+            ? 'pajak'
+            : 'daftar',
+        false
+    );
+
+    // ======================================================
+    // 06. REQUEST AJAX LARAVEL
+    // ======================================================
+
+    async function request(
+        url,
+        opsi = {}
+    ) {
+        const response = await fetch(
+            url,
+            {
+                credentials: 'same-origin',
+
+                ...opsi,
+
+                headers: {
+                    Accept: 'application/json',
+
+                    'X-Requested-With':
+                        'XMLHttpRequest',
+
+                    'X-CSRF-TOKEN':
+                        token,
+
+                    ...(opsi.headers || {})
+                }
             }
-        });
+        );
 
-        const raw = await response.text();
+        const responseText =
+            await response.text();
 
-        let result;
+        let json;
 
         try {
-            result = JSON.parse(raw);
+            json = JSON.parse(
+                responseText
+            );
+
         } catch {
             throw new Error(
-                `Respons server bukan JSON (HTTP ${response.status}).`
+                `Server tidak mengirim JSON ` +
+                `(HTTP ${response.status}). ` +
+                'Periksa log Laravel.'
             );
         }
 
-        if (!response.ok || result.success === false) {
-            const errors = Object.values(
-                result.errors || {}
+        if (
+            !response.ok ||
+            json.success === false
+        ) {
+            const validasi = Object.values(
+                json.errors || {}
             )
                 .flat()
                 .filter(Boolean)
                 .join('\n');
 
             throw new Error(
-                errors ||
-                result.message ||
+                validasi ||
+                json.message ||
                 `HTTP ${response.status}`
             );
         }
 
-        return result;
+        return json;
     }
 
-    // =====================================================
-    // 3. MODAL
-    // =====================================================
+    // ======================================================
+    // 07. MODAL
+    // ======================================================
 
-    function dialog(id, show = true) {
-        const element = $('#' + id);
+    function tampilkanDialog(
+        id,
+        buka = true
+    ) {
+        const dialog = $('#' + id);
 
-        if (!element) return;
-
-        if (show && !element.open) {
-            element.showModal();
+        if (!dialog) {
+            return;
         }
 
-        if (!show && element.open) {
-            element.close();
+        if (buka && !dialog.open) {
+            dialog.showModal();
         }
 
-        icons();
+        if (!buka && dialog.open) {
+            dialog.close();
+        }
+
+        refreshIcons();
     }
 
-    $$('[data-pajak-close]').forEach(button => {
-        button.addEventListener('click', () => {
-            dialog(
-                button.dataset.pajakClose,
-                false
+    $$('[data-pajak-close]').forEach(
+        button => {
+            button.addEventListener(
+                'click',
+                () => {
+                    tampilkanDialog(
+                        button.dataset.pajakClose,
+                        false
+                    );
+                }
             );
-        });
-    });
+        }
+    );
 
-    $$('dialog').forEach(element => {
-        element.addEventListener('click', event => {
-            if (event.target === element) {
-                element.close();
+    $$('dialog').forEach(dialog => {
+        dialog.addEventListener(
+            'click',
+            event => {
+                if (event.target === dialog) {
+                    dialog.close();
+                }
             }
-        });
+        );
     });
 
-    // =====================================================
-    // 4. MENGAMBIL DATA PAJAK
-    // =====================================================
+    // ======================================================
+    // 08. LOAD KENDARAAN DARI KIBController
+    // ======================================================
 
-    async function loadPajak() {
+    async function muatData() {
+        if (sedangMemuat) {
+            return;
+        }
+
+        sedangMemuat = true;
+
         $('#pajakInfoStatus').textContent =
-            'Memuat masa pajak kendaraan...';
+            'Memuat kendaraan Kode Aktiva 31.08...';
 
         try {
-            const result = await api(
-                root.dataset.api
+            const json = await request(
+                apiData
             );
 
-            if (!Array.isArray(result.data)) {
+            if (
+                !Array.isArray(json.data) ||
+                !json.summary
+            ) {
                 throw new Error(
-                    'Format data kendaraan tidak sesuai.'
+                    'Format respons kendaraan tidak sesuai.'
                 );
             }
 
-            vehicles = result.data;
-            loaded = true;
+            kendaraan = json.data;
+            sudahDimuat = true;
 
-            const summary = result.summary;
+            const summary = json.summary;
 
-            $('#pajakTotal').textContent =
-                number(summary.total);
+            // Kartu statistik
+            
+// =====================================================
+// KPI MASA PAJAK — SEKARANG BERADA DI HEADER
+// =====================================================
 
-            $('#pajakAktif').textContent =
-                number(summary.aktif);
+// Gunakan json dan formatAngka jika itu nama
+// variabel pada fungsi muatData() milikmu.
 
-            $('#pajakSegera').textContent =
-                number(summary.segera_habis);
+document.getElementById('pajakTotal').textContent =
+    formatAngka(json.summary.total);
 
-            $('#pajakTerlambat').textContent =
-                number(summary.kedaluwarsa);
+document.getElementById('pajakAktif').textContent =
+    formatAngka(json.summary.aktif);
+
+document.getElementById('pajakSegera').textContent =
+    formatAngka(json.summary.segera_habis);
+
+document.getElementById('pajakTerlambat').textContent =
+    formatAngka(json.summary.kedaluwarsa);
+
 
             $('#pajakBelumDicatat').textContent =
-                `${number(summary.belum_didata)} kendaraan ` +
-                'belum memiliki catatan masa pajak. ' +
-                'Kendaraan tersebut tidak dihitung sebagai pajak aktif.';
+                formatAngka(
+                    summary.belum_didata
+                ) +
+                ' kendaraan belum memiliki catatan pembaruan pajak.';
 
-            populateFilters();
-            populateVehicleOptions();
+            isiDropdown();
 
-            currentPage = 1;
-            renderTable();
+            halamanAktif = 1;
+
+            gambarTabel();
 
             $('#pajakInfoStatus').textContent =
-                'Data kendaraan berasal dari inventaris Mesin.';
+                `${formatAngka(kendaraan.length)} kendaraan berkode Aktiva 31.08.%`;
 
         } catch (error) {
-            loaded = false;
+            sudahDimuat = false;
 
             $('#pajakInfoStatus').textContent =
-                'Gagal memuat: ' + error.message;
+                `Gagal memuat: ${error.message}`;
 
             $('#pajakTableBody').innerHTML = `
                 <tr>
-                    <td colspan="10" class="pajak-empty">
-                        ${esc(error.message)}
+                    <td
+                        colspan="10"
+                        class="pajak-empty"
+                    >
+                        ${escapeHTML(error.message)}
                     </td>
                 </tr>
             `;
+
+        } finally {
+            sedangMemuat = false;
         }
     }
 
-    // =====================================================
-    // 5. PILIHAN FILTER
-    // =====================================================
+    // ======================================================
+    // 09. ISI DROPDOWN JENIS / LOKASI / KENDARAAN
+    // ======================================================
 
-    function populateFilters() {
-        const jenisSelect = $('#pajakJenis');
-        const lokasiSelect = $('#pajakLokasi');
+    function isiDropdown() {
+        const jenis = $('#pajakJenis');
+        const lokasi = $('#pajakLokasi');
 
-        const selectedJenis = jenisSelect.value;
-        const selectedLokasi = lokasiSelect.value;
+        const pilihanJenis = jenis.value;
+        const pilihanLokasi = lokasi.value;
 
-        const jenis = [
+        const tipe = [
             ...new Set(
-                vehicles
-                    .map(item => item.nama_kendaraan)
+                kendaraan
+                    .map(k => k.jenis)
                     .filter(Boolean)
             )
-        ].sort((a, b) => a.localeCompare(b, 'id'));
+        ].sort((a, b) =>
+            a.localeCompare(b, 'id')
+        );
 
-        const lokasi = [
+        const tempat = [
             ...new Set(
-                vehicles
-                    .map(item => item.lokasi)
+                kendaraan
+                    .map(k => k.lokasi)
                     .filter(Boolean)
             )
-        ].sort((a, b) => a.localeCompare(b, 'id'));
+        ].sort((a, b) =>
+            a.localeCompare(b, 'id')
+        );
 
-        jenisSelect.innerHTML =
-            '<option value="">Semua Jenis Kendaraan</option>' +
-            jenis.map(value => `
-                <option value="${esc(value)}">
-                    ${esc(value)}
-                </option>
-            `).join('');
+        function isi(
+            select,
+            judul,
+            items
+        ) {
+            select.replaceChildren(
+                new Option(
+                    judul,
+                    ''
+                )
+            );
 
-        lokasiSelect.innerHTML =
-            '<option value="">Semua Lokasi</option>' +
-            lokasi.map(value => `
-                <option value="${esc(value)}">
-                    ${esc(value)}
-                </option>
-            `).join('');
+            items.forEach(value => {
+                select.add(
+                    new Option(
+                        value,
+                        value
+                    )
+                );
+            });
+        }
 
-        jenisSelect.value =
-            jenis.includes(selectedJenis)
-                ? selectedJenis : '';
+        isi(
+            jenis,
+            'Semua Jenis Kendaraan',
+            tipe
+        );
 
-        lokasiSelect.value =
-            lokasi.includes(selectedLokasi)
-                ? selectedLokasi : '';
+        isi(
+            lokasi,
+            'Semua Lokasi',
+            tempat
+        );
+
+        jenis.value =
+            tipe.includes(pilihanJenis)
+                ? pilihanJenis
+                : '';
+
+        lokasi.value =
+            tempat.includes(pilihanLokasi)
+                ? pilihanLokasi
+                : '';
+
+        // Dropdown kendaraan pada modal
+        const selectKendaraan =
+            $('#pajakMesinId');
+
+        selectKendaraan.replaceChildren(
+            new Option(
+                'Pilih kendaraan',
+                ''
+            )
+        );
+
+        kendaraan.forEach(k => {
+            const label = [
+                k.kode_aktiva || '31.08',
+                k.merk ||
+                    k.nama_kendaraan ||
+                    'Kendaraan',
+                k.nomor_polisi ||
+                    'Polisi belum diisi',
+                k.lokasi ||
+                    'Tanpa lokasi'
+            ].join(' — ');
+
+            selectKendaraan.add(
+                new Option(
+                    label,
+                    String(k.mesin_id)
+                )
+            );
+        });
     }
 
-    // =====================================================
-    // 6. DROPDOWN KENDARAAN
-    // =====================================================
+    // ======================================================
+    // 10. FILTER KENDARAAN
+    // ======================================================
 
-    function populateVehicleOptions() {
-        const select = $('#pajakMesinId');
-
-        select.innerHTML = `
-            <option value="">
-                Pilih kendaraan dari inventaris Mesin
-            </option>
-        ` + vehicles.map(item => `
-            <option value="${Number(item.mesin_id)}">
-                ${esc(item.nomor_polisi)}
-                —
-                ${esc(item.nama_kendaraan)}
-                (${esc(item.lokasi)})
-            </option>
-        `).join('');
-    }
-
-    // =====================================================
-    // 7. FILTER MASA PAJAK
-    // =====================================================
-
-    function filteredVehicles() {
-        const search = $('#pajakCari')
-            .value.trim().toLowerCase();
+    function dataTersaring() {
+        const pencarian = $('#pajakCari')
+            .value
+            .trim()
+            .toLocaleLowerCase('id-ID');
 
         const jenis = $('#pajakJenis').value;
-        const status = $('#pajakStatus').value;
         const lokasi = $('#pajakLokasi').value;
-        const tempo = $('#pajakTempo').value;
+        const status = $('#pajakStatus').value;
+        const masa = $('#pajakTempo').value;
 
-        return vehicles.filter(item => {
-            const text = [
-                item.nomor_polisi,
-                item.nama_kendaraan,
-                item.merk,
-                item.lokasi
-            ].join(' ').toLowerCase();
-
-            if (search && !text.includes(search)) {
-                return false;
-            }
-
-            if (jenis && item.nama_kendaraan !== jenis) {
-                return false;
-            }
-
-            if (status && item.status !== status) {
-                return false;
-            }
-
-            if (lokasi && item.lokasi !== lokasi) {
-                return false;
-            }
-
-            const days = item.sisa_hari;
+        return kendaraan.filter(k => {
+            const isi = [
+                k.pengguna,
+                k.merk,
+                k.jenis,
+                k.kode_aktiva,
+                k.nomor_polisi,
+                k.tahun,
+                k.lokasi,
+                k.nama_kendaraan
+            ]
+                .join(' ')
+                .toLocaleLowerCase('id-ID');
 
             if (
-                tempo === 'terlambat' &&
-                (days == null || days >= 0)
+                pencarian &&
+                !isi.includes(pencarian)
             ) {
                 return false;
             }
 
             if (
-                tempo === '30' &&
-                (days == null || days < 0 || days > 30)
+                jenis &&
+                k.jenis !== jenis
             ) {
                 return false;
             }
 
             if (
-                tempo === '90' &&
-                (days == null || days < 0 || days > 90)
+                lokasi &&
+                k.lokasi !== lokasi
+            ) {
+                return false;
+            }
+
+            if (
+                status &&
+                k.status !== status
+            ) {
+                return false;
+            }
+
+            const hari =
+                k.sisa_hari == null
+                    ? null
+                    : Number(k.sisa_hari);
+
+            // Kedaluwarsa termasuk H-0
+            if (
+                masa === 'terlambat' &&
+                !(
+                    hari != null &&
+                    hari <= 0
+                )
+            ) {
+                return false;
+            }
+
+            // Filter 7 atau 14 hari
+            if (
+                ['7', '14'].includes(masa) &&
+                !(
+                    hari != null &&
+                    hari > 0 &&
+                    hari <= Number(masa)
+                )
             ) {
                 return false;
             }
@@ -2110,220 +2453,308 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =====================================================
-    // 8. RENDER TABEL
-    // =====================================================
+    // ======================================================
+    // 11. RENDER TABEL 10 KOLOM
+    // ======================================================
 
-    function renderTable() {
-        const matches = filteredVehicles();
+    function gambarTabel() {
+        const data = dataTersaring();
 
-        const pageSize =
+        const ukuran =
             Number($('#pajakLimit').value) || 10;
 
-        const totalPages = Math.max(
+        const jumlahHalaman = Math.max(
             1,
-            Math.ceil(matches.length / pageSize)
+            Math.ceil(
+                data.length / ukuran
+            )
         );
 
-        currentPage = Math.min(
-            Math.max(1, currentPage),
-            totalPages
+        halamanAktif = Math.min(
+            Math.max(1, halamanAktif),
+            jumlahHalaman
         );
 
-        const start = (currentPage - 1) * pageSize;
+        const mulai =
+            (halamanAktif - 1) * ukuran;
 
-        const rows = matches.slice(
-            start,
-            start + pageSize
+        const baris = data.slice(
+            mulai,
+            mulai + ukuran
         );
 
         $('#pajakTableBody').innerHTML =
-            rows.length
+            baris.length
+                ? baris.map((k, idx) => {
+                    const id = nomorId(
+                        k.mesin_id
+                    );
 
-            ? rows.map((item, index) => `
-                <tr>
-                    <td>${start + index + 1}</td>
+                    const pajakId = nomorId(
+                        k.pajak_id
+                    );
 
-                    <td>
-                        <strong>
-                            ${esc(item.nomor_polisi)}
-                        </strong>
-                    </td>
+                    const hari =
+                        k.sisa_hari == null
+                            ? null
+                            : Number(k.sisa_hari);
 
-                    <td>
-                        ${esc(item.nama_kendaraan)}
-                    </td>
+                    const catatan =
+                        k.status === 'segera_habis' &&
+                        hari != null
 
-                    <td>
-                        ${esc(item.merk || '—')}
-                    </td>
-
-                    <td>
-                        ${esc(item.tahun || '—')}
-                    </td>
-
-                    <td>
-                        ${esc(item.lokasi)}
-                    </td>
-
-                    <td>
-                        ${date(item.tanggal_bayar)}
-                    </td>
-
-                    <td>
-                        ${date(item.jatuh_tempo)}
-                    </td>
-
-                    <td>
-                        <span class="pajak-status ${esc(item.status)}">
-                            ${STATUS[item.status] || '—'}
-                        </span>
-
-                        ${
-                            item.sisa_hari != null &&
-                            item.sisa_hari >= 0
-                                ? `<small>
-                                    ${number(item.sisa_hari)}
+                            ? `
+                                <small>
+                                    ${formatAngka(hari)}
                                     hari lagi
-                                   </small>`
-                                : ''
-                        }
-                    </td>
+                                    ${
+                                        hari <= 7
+                                            ? ' • Prioritas'
+                                            : ''
+                                    }
+                                </small>
+                            `
+                            : '';
 
-                    <td>
-                        <div class="pajak-row-actions">
+                    const statusClass =
+                        Object.hasOwn(
+                            statusLabel,
+                            k.status
+                        )
+                            ? k.status
+                            : 'belum_didata';
 
-                            <button
-                                type="button"
-                                class="view"
-                                data-pajak-view="${Number(item.mesin_id)}"
-                                title="Detail Pajak"
-                            >
-                                <i data-lucide="eye"></i>
-                            </button>
+                    return `
+                        <tr>
+                            <td>
+                                ${mulai + idx + 1}
+                            </td>
 
-                            <button
-                                type="button"
-                                class="edit"
-                                data-pajak-edit="${Number(item.mesin_id)}"
-                                title="${item.pajak_id ? 'Edit Pajak' : 'Catat Pajak'}"
-                            >
-                                <i data-lucide="square-pen"></i>
-                            </button>
+                            <td>
+                                ${escapeHTML(
+                                    k.pengguna || '—'
+                                )}
+                            </td>
 
-                            <button
-                                type="button"
-                                class="delete"
-                                data-pajak-delete="${Number(item.mesin_id)}"
-                                ${!item.pajak_id ? 'disabled' : ''}
-                                title="Hapus Catatan Pajak"
-                            >
-                                <i data-lucide="trash-2"></i>
-                            </button>
+                            <td>
+                                ${escapeHTML(
+                                    k.merk || '—'
+                                )}
+                            </td>
 
-                        </div>
-                    </td>
-                </tr>
-            `).join('')
+                            <td>
+                                ${escapeHTML(
+                                    k.jenis || '—'
+                                )}
 
-            : `
-                <tr>
-                    <td colspan="10" class="pajak-empty">
-                        Tidak ada kendaraan sesuai filter.
-                    </td>
-                </tr>
-            `;
+                                <small>
+                                    ${escapeHTML(
+                                        k.kode_aktiva || ''
+                                    )}
+                                </small>
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    k.nomor_polisi ||
+                                    'Belum diisi'
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    k.tahun || '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHTML(
+                                    k.lokasi || '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${tanggalIndonesia(
+                                    k.jatuh_tempo
+                                )}
+                            </td>
+
+                            <td>
+                                <span
+                                    class="pajak-status ${statusClass}"
+                                >
+                                    ${statusLabel[statusClass]}
+                                </span>
+
+                                ${catatan}
+                            </td>
+
+                            <td>
+                                <div class="pajak-row-actions">
+
+                                    <button
+                                        type="button"
+                                        class="view"
+                                        data-pajak-view="${id}"
+                                        title="Detail Pajak"
+                                        aria-label="Detail Pajak"
+                                    >
+                                        <i data-lucide="eye"></i>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="edit"
+                                        data-pajak-edit="${id}"
+                                        title="${pajakId ? 'Edit Pajak' : 'Catat Pajak'}"
+                                        aria-label="Edit atau Catat Pajak"
+                                    >
+                                        <i data-lucide="square-pen"></i>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="delete"
+                                        data-pajak-delete="${id}"
+                                        title="Hapus Catatan Pajak"
+                                        aria-label="Hapus Catatan Pajak"
+                                        ${pajakId ? '' : 'disabled'}
+                                    >
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('')
+
+                : `
+                    <tr>
+                        <td
+                            colspan="10"
+                            class="pajak-empty"
+                        >
+                            Tidak ada kendaraan sesuai filter.
+                        </td>
+                    </tr>
+                `;
 
         $('#pajakTableInfo').textContent =
             `Menampilkan ${
-                matches.length ? start + 1 : 0
+                data.length ? mulai + 1 : 0
             }–${
-                Math.min(start + pageSize, matches.length)
-            } dari ${number(matches.length)} kendaraan`;
+                Math.min(
+                    mulai + ukuran,
+                    data.length
+                )
+            } dari ${
+                formatAngka(data.length)
+            } kendaraan`;
 
-        renderPagination(totalPages);
-        icons();
+        gambarPagination(jumlahHalaman);
+
+        refreshIcons();
     }
 
-    // =====================================================
-    // 9. PAGINATION
-    // =====================================================
+    // ======================================================
+    // 12. PAGINATION
+    // ======================================================
 
-    function renderPagination(totalPages) {
+    function gambarPagination(jumlah) {
         const container = $('#pajakPages');
 
         container.replaceChildren();
 
-        if (totalPages <= 1) return;
+        if (jumlah <= 1) {
+            return;
+        }
 
-        function addButton(
-            title,
+        function tombol(
+            teks,
             target,
             disabled = false
         ) {
-            const button = document.createElement('button');
+            const button =
+                document.createElement('button');
 
             button.type = 'button';
-            button.textContent = title;
+            button.textContent = teks;
             button.disabled = disabled;
 
             if (
-                target === currentPage &&
-                /^\d+$/.test(title)
+                /^\d+$/.test(teks) &&
+                halamanAktif === target
             ) {
                 button.classList.add('active');
             }
 
-            button.addEventListener('click', () => {
-                currentPage = target;
-                renderTable();
-            });
+            button.addEventListener(
+                'click',
+                () => {
+                    halamanAktif = target;
+                    gambarTabel();
+                }
+            );
 
             container.appendChild(button);
         }
 
-        addButton(
+        tombol(
             '‹',
-            currentPage - 1,
-            currentPage === 1
+            halamanAktif - 1,
+            halamanAktif === 1
         );
 
-        const pages = new Set([1, totalPages]);
+        let sebelumnya = 0;
+
+        const tampil = new Set([
+            1,
+            jumlah
+        ]);
 
         for (
-            let p = Math.max(1, currentPage - 2);
-            p <= Math.min(totalPages, currentPage + 2);
-            p++
+            let n = Math.max(
+                1,
+                halamanAktif - 2
+            );
+            n <= Math.min(
+                jumlah,
+                halamanAktif + 2
+            );
+            n++
         ) {
-            pages.add(p);
+            tampil.add(n);
         }
 
-        let last = 0;
-
-        [...pages]
+        [...tampil]
             .sort((a, b) => a - b)
-            .forEach(p => {
-                if (last && p - last > 1) {
-                    const span = document.createElement('span');
-                    span.textContent = '…';
-                    container.appendChild(span);
+            .forEach(n => {
+                if (
+                    sebelumnya &&
+                    n - sebelumnya > 1
+                ) {
+                    container.append(' … ');
                 }
 
-                addButton(String(p), p);
+                tombol(
+                    String(n),
+                    n
+                );
 
-                last = p;
+                sebelumnya = n;
             });
 
-        addButton(
+        tombol(
             '›',
-            currentPage + 1,
-            currentPage === totalPages
+            halamanAktif + 1,
+            halamanAktif === jumlah
         );
     }
 
-    // =====================================================
-    // 10. EVENT FILTER DAN RESET
-    // =====================================================
+    // ======================================================
+    // 13. FILTER DAN RESET
+    // ======================================================
 
     [
         'pajakCari',
@@ -2333,309 +2764,502 @@ document.addEventListener('DOMContentLoaded', () => {
         'pajakTempo',
         'pajakLimit'
     ].forEach(id => {
-        const element = $('#' + id);
+        $('#' + id).addEventListener(
+            id === 'pajakCari'
+                ? 'input'
+                : 'change',
 
-        element.addEventListener(
-            id === 'pajakCari' ? 'input' : 'change',
             () => {
-                currentPage = 1;
-                renderTable();
+                halamanAktif = 1;
+                gambarTabel();
             }
         );
     });
 
-    $('#pajakReset').addEventListener('click', () => {
-        [
-            'pajakCari',
-            'pajakJenis',
-            'pajakStatus',
-            'pajakLokasi',
-            'pajakTempo'
-        ].forEach(id => {
-            $('#' + id).value = '';
-        });
+    $('#pajakReset').addEventListener(
+        'click',
+        () => {
+            [
+                'pajakCari',
+                'pajakJenis',
+                'pajakStatus',
+                'pajakLokasi',
+                'pajakTempo'
+            ].forEach(id => {
+                $('#' + id).value = '';
+            });
 
-        $('#pajakLimit').value = '10';
+            $('#pajakLimit').value = '10';
 
-        currentPage = 1;
-        renderTable();
-    });
+            halamanAktif = 1;
 
-    // =====================================================
-    // 11. EXPORT CSV
-    // =====================================================
+            gambarTabel();
+        }
+    );
 
-    $('#pajakExport').addEventListener('click', () => {
-        const data = [[
-            'No',
-            'Nomor Polisi',
-            'Kendaraan',
-            'Merk',
-            'Tahun',
-            'Lokasi',
-            'Tanggal Bayar',
-            'Jatuh Tempo',
-            'Status',
-            'Nominal'
-        ]];
+    // ======================================================
+    // 14. EXPORT CSV
+    // ======================================================
 
-        filteredVehicles().forEach((item, index) => {
-            data.push([
-                index + 1,
-                item.nomor_polisi,
-                item.nama_kendaraan,
-                item.merk,
-                item.tahun,
-                item.lokasi,
-                item.tanggal_bayar,
-                item.jatuh_tempo,
-                STATUS[item.status],
-                item.nominal
-            ]);
-        });
+    $('#pajakExport').addEventListener(
+        'click',
+        () => {
+            const data = [[
+                'No',
+                'Pengguna',
+                'Merk / Type',
+                'Jenis',
+                'Kode Aktiva',
+                'Nomor Polisi',
+                'Tahun',
+                'Lokasi',
+                'Berlaku s/d',
+                'Status'
+            ]];
 
-        const csv = '\uFEFF' + data.map(row =>
-            row.map(value => {
-                let text = String(value ?? '');
-
-                // Mencegah formula dieksekusi pada spreadsheet.
-                if (/^\s*[=+@-]/.test(text)) {
-                    text = "'" + text;
+            dataTersaring().forEach(
+                (k, i) => {
+                    data.push([
+                        i + 1,
+                        k.pengguna,
+                        k.merk,
+                        k.jenis,
+                        k.kode_aktiva,
+                        k.nomor_polisi,
+                        k.tahun,
+                        k.lokasi,
+                        k.jatuh_tempo,
+                        statusLabel[k.status] ||
+                            'Belum Dicatat'
+                    ]);
                 }
+            );
 
-                return '"' +
-                    text.replaceAll('"', '""') +
-                    '"';
+            const csv = '\uFEFF' +
+                data.map(row =>
+                    row.map(value => {
+                        let isi = String(
+                            value ?? ''
+                        );
 
-            }).join(';')
-        ).join('\r\n');
+                        // Mencegah formula spreadsheet.
+                        if (
+                            /^\s*[=+@-]/.test(isi)
+                        ) {
+                            isi = "'" + isi;
+                        }
 
-        const objectUrl = URL.createObjectURL(
-            new Blob([csv], {
-                type: 'text/csv;charset=utf-8'
-            })
-        );
+                        return '"' +
+                            isi.replaceAll('"', '""') +
+                            '"';
 
-        const link = document.createElement('a');
+                    }).join(';')
 
-        link.href = objectUrl;
-        link.download = 'masa-pajak-kendaraan.csv';
+                ).join('\r\n');
 
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+            const url = URL.createObjectURL(
+                new Blob(
+                    [csv],
+                    {
+                        type:
+                            'text/csv;charset=utf-8'
+                    }
+                )
+            );
 
-        setTimeout(() => {
-            URL.revokeObjectURL(objectUrl);
-        }, 1000);
-    });
+            const link =
+                document.createElement('a');
 
-    // =====================================================
-    // 12. TAMBAH / EDIT MASA PAJAK
-    // =====================================================
+            link.href = url;
+
+            link.download =
+                'masa-pajak-kendaraan-31-08.csv';
+
+            document.body.appendChild(link);
+
+            link.click();
+            link.remove();
+
+            setTimeout(
+                () => URL.revokeObjectURL(url),
+                1000
+            );
+        }
+    );
+
+    // ======================================================
+    // 15. PILIH KENDARAAN
+    // ======================================================
 
     const form = $('#pajakForm');
 
-    const findVehicle = id =>
-        vehicles.find(item =>
-            String(item.mesin_id) === String(id)
+    const cariKendaraan = id =>
+        kendaraan.find(
+            k =>
+                String(k.mesin_id) ===
+                String(id)
         );
 
-    function openForm(item = null) {
+    function informasiKendaraan() {
+        const k = cariKendaraan(
+            $('#pajakMesinId').value
+        );
+
+        $('#pajakKendaraanInfo').textContent =
+            k
+                ? [
+                    `Pengguna: ${k.pengguna || '—'}`,
+                    `Merk: ${k.merk || '—'}`,
+                    `Polisi: ${k.nomor_polisi || 'Belum diisi'}`,
+                    `Lokasi: ${k.lokasi || '—'}`
+                ].join(' | ')
+
+                : (
+                    'Pengguna, merk, nomor polisi, ' +
+                    'dan lokasi diambil otomatis dari inventaris Mesin.'
+                );
+    }
+
+    $('#pajakMesinId').addEventListener(
+        'change',
+        informasiKendaraan
+    );
+
+    // ======================================================
+    // 16. MODAL TAMBAH DAN EDIT PAJAK
+    // ======================================================
+
+    function bukaForm(k = null) {
         form.reset();
 
-        editing = item?.pajak_id || null;
+        editId = nomorId(
+            k?.pajak_id
+        );
+
+        // Saat edit, kendaraan induk tidak diganti.
+        $('#pajakMesinId').disabled =
+            Boolean(editId);
 
         $('#pajakFormError').hidden = true;
 
         $('#pajakFormTitle').textContent =
-            editing
-                ? 'Edit Masa Pajak Kendaraan'
-                : 'Catat Masa Pajak Kendaraan';
+            editId
+                ? 'Edit Pembaruan Pajak'
+                : 'Pembaruan Pajak Kendaraan';
 
-        // Saat edit, kendaraan induk tidak dapat diganti.
-        $('#pajakMesinId').disabled = !!editing;
-
-        if (item) {
+        if (k) {
             $('#pajakMesinId').value =
-                String(item.mesin_id);
+                String(k.mesin_id);
 
             [
                 'tanggal_bayar',
-                'jatuh_tempo',
+                'masa_berlaku_bulan',
                 'nominal',
                 'nomor_stnk',
                 'keterangan'
-            ].forEach(name => {
-                const field = form.elements.namedItem(name);
+            ].forEach(nama => {
+                const field =
+                    form.elements.namedItem(nama);
 
                 if (field) {
-                    field.value = item[name] ?? '';
+                    field.value =
+                        k[nama] ?? '';
                 }
             });
         }
 
-        dialog('pajakFormDialog');
+        informasiKendaraan();
+        updatePreview();
+
+        tampilkanDialog(
+            'pajakFormDialog'
+        );
     }
 
-    $('#pajakTambah').addEventListener('click', () => {
-        openForm();
-    });
+    $('#pajakTambah').addEventListener(
+        'click',
+        () => bukaForm()
+    );
 
-    // =====================================================
-    // 13. DETAIL DAN AKSI TABEL
-    // =====================================================
+    // ======================================================
+    // 17. MODAL DETAIL PAJAK
+    // ======================================================
+
+    function lihatDetail(k) {
+        $('#pajakDetailTitle').textContent =
+            `Pajak — ${
+                k.nomor_polisi ||
+                k.kode_aktiva ||
+                'Kendaraan'
+            }`;
+
+        const data = [
+            ['Pengguna', k.pengguna],
+
+            ['Merk / Type', k.merk],
+
+            ['Jenis', k.jenis],
+
+            ['Kode Aktiva', k.kode_aktiva],
+
+            ['Nomor Polisi', k.nomor_polisi],
+
+            ['Tahun', k.tahun],
+
+            ['Lokasi', k.lokasi],
+
+            [
+                'Pembaruan Pajak',
+                tanggalIndonesia(
+                    k.tanggal_bayar
+                )
+            ],
+
+            [
+                'Masa Berlaku',
+                k.masa_berlaku_bulan
+                    ? `${k.masa_berlaku_bulan} Bulan`
+                    : 'Riwayat lama'
+            ],
+
+            [
+                'Berlaku s/d',
+                tanggalIndonesia(
+                    k.jatuh_tempo
+                )
+            ],
+
+            [
+                'Nominal',
+                formatUang(k.nominal)
+            ],
+
+            ['Nomor STNK', k.nomor_stnk],
+
+            ['Keterangan', k.keterangan],
+
+            [
+                'Status',
+                statusLabel[k.status] ||
+                    'Belum Dicatat'
+            ]
+        ];
+
+        $('#pajakDetailData').innerHTML =
+            data.map(
+                ([label, value]) => `
+                    <div>
+                        <dt>
+                            ${escapeHTML(label)}
+                        </dt>
+
+                        <dd>
+                            ${escapeHTML(
+                                value || '—'
+                            )}
+                        </dd>
+                    </div>
+                `
+            ).join('');
+
+        const pdf = nomorId(
+            k.pajak_id
+        );
+
+        $('#pajakDetailDocument').innerHTML =
+            k.ada_dokumen && pdf
+
+                ? `
+                    <a
+                        class="pajak-btn outline"
+                        href="${baseURL}/${pdf}/dokumen"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <i data-lucide="file-text"></i>
+                        Lihat PDF Pajak
+                    </a>
+                `
+
+                : '';
+
+        tampilkanDialog(
+            'pajakDetailDialog'
+        );
+    }
+
+    // ======================================================
+    // 18. AKSI DETAIL, EDIT, HAPUS
+    // ======================================================
 
     $('#pajakTableBody').addEventListener(
         'click',
-        async event => {
-            const button = event.target.closest('button');
 
-            if (!button) return;
+        async event => {
+            const button =
+                event.target.closest('button');
+
+            if (!button) {
+                return;
+            }
 
             const id =
                 button.dataset.pajakView ||
                 button.dataset.pajakEdit ||
                 button.dataset.pajakDelete;
 
-            const item = findVehicle(id);
+            const k = cariKendaraan(id);
 
-            if (!item) return;
+            if (!k) {
+                return;
+            }
 
+            // Detail
             if (button.dataset.pajakView) {
-                showDetail(item);
+                lihatDetail(k);
                 return;
             }
 
+            // Edit / catat
             if (button.dataset.pajakEdit) {
-                openForm(item);
+                bukaForm(k);
                 return;
             }
 
+            // Hapus
             if (
-                button.dataset.pajakDelete &&
-                item.pajak_id
+                !button.dataset.pajakDelete ||
+                !nomorId(k.pajak_id)
             ) {
-                const confirmed = confirm(
-                    `Hapus catatan pajak ${item.nomor_polisi}?\n` +
-                    'Inventaris kendaraan tetap disimpan.'
+                return;
+            }
+
+            const konfirmasi = confirm(
+                `Hapus catatan pajak ${
+                    k.nomor_polisi ||
+                    k.kode_aktiva
+                }?\nInventaris Mesin tidak akan dihapus.`
+            );
+
+            if (!konfirmasi) {
+                return;
+            }
+
+            button.disabled = true;
+
+            try {
+                await request(
+                    `${baseURL}/${nomorId(k.pajak_id)}`,
+                    {
+                        method: 'DELETE'
+                    }
                 );
 
-                if (!confirmed) return;
+                await muatData();
 
-                try {
-                    await api(
-                        `${endpoint}/${Number(item.pajak_id)}`,
-                        { method: 'DELETE' }
-                    );
+            } catch (error) {
+                alert(
+                    'Gagal menghapus catatan pajak: ' +
+                    error.message
+                );
 
-                    await loadPajak();
-
-                } catch (error) {
-                    alert(
-                        'Gagal menghapus pajak: ' +
-                        error.message
-                    );
-                }
+                button.disabled = false;
             }
         }
     );
 
-    // =====================================================
-    // 14. MODAL DETAIL
-    // =====================================================
+    // ======================================================
+    // 19. SIMPAN PEMBARUAN PAJAK
+    // ======================================================
 
-    function showDetail(item) {
-        $('#pajakDetailTitle').textContent =
-            'Pajak — ' + item.nomor_polisi;
+    form.addEventListener(
+        'submit',
 
-        const fields = [
-            ['Nama Kendaraan', item.nama_kendaraan],
-            ['Nomor Polisi', item.nomor_polisi],
-            ['Merk / Tipe', item.merk],
-            ['Lokasi', item.lokasi],
-            ['Tahun', item.tahun],
-            ['Tanggal Bayar', date(item.tanggal_bayar)],
-            ['Jatuh Tempo', date(item.jatuh_tempo)],
-            ['Nominal Pajak', money(item.nominal)],
-            ['Nomor STNK', item.nomor_stnk],
-            ['Keterangan', item.keterangan],
-            ['Status', STATUS[item.status]]
-        ];
+        async event => {
+            event.preventDefault();
 
-        $('#pajakDetailData').innerHTML =
-            fields.map(([label, value]) => `
-                <div>
-                    <dt>${esc(label)}</dt>
-                    <dd>${esc(value ?? '—')}</dd>
-                </div>
-            `).join('');
-
-        $('#pajakDetailDocument').innerHTML =
-            item.ada_dokumen && item.pajak_id
-                ? `
-                    <a
-                        class="pajak-btn outline"
-                        href="${endpoint}/${Number(item.pajak_id)}/dokumen"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <i data-lucide="file-text"></i>
-                        Lihat Dokumen Pajak (PDF)
-                    </a>
-                `
-                : '';
-
-        dialog('pajakDetailDialog');
-    }
-
-    // =====================================================
-    // 15. SIMPAN DATA PAJAK
-    // =====================================================
-
-    form.addEventListener('submit', async event => {
-        event.preventDefault();
-
-        if (!form.reportValidity()) {
-            return;
-        }
-
-        const errorBox = $('#pajakFormError');
-        const submit = $('#pajakSimpan');
-
-        errorBox.hidden = true;
-        submit.disabled = true;
-
-        try {
-            const data = new FormData(form);
-
-            const url = editing
-                ? `${endpoint}/${Number(editing)}`
-                : endpoint;
-
-            // Laravel: POST untuk Create,
-            // POST + _method=PUT untuk Update.
-            if (editing) {
-                data.append('_method', 'PUT');
+            if (
+                sedangMengirim ||
+                !form.reportValidity()
+            ) {
+                return;
             }
 
-            await api(url, {
-                method: 'POST',
-                body: data
-            });
+            const preview = hitungJatuhTempo(
+                $('#pajakTanggalBayar').value,
+                $('#pajakMasaBulan').value
+            );
 
-            dialog('pajakFormDialog', false);
+            if (!preview) {
+                $('#pajakFormError').textContent =
+                    'Tanggal pembaruan dan masa berlaku harus valid.';
 
-            await loadPajak();
+                $('#pajakFormError').hidden = false;
+                return;
+            }
 
-        } catch (error) {
-            errorBox.textContent = error.message;
-            errorBox.hidden = false;
+            sedangMengirim = true;
 
-        } finally {
-            submit.disabled = false;
+            $('#pajakSimpan').disabled = true;
+
+            $('#pajakFormError').hidden = true;
+
+            try {
+                const data = new FormData(
+                    form
+                );
+
+                const url = editId
+                    ? `${baseURL}/${editId}`
+                    : baseURL;
+
+                /*
+                 * CREATE:
+                 * POST /kib/mesin/pajak
+                 *
+                 * UPDATE:
+                 * POST + _method=PUT
+                 */
+
+                if (editId) {
+                    data.set(
+                        '_method',
+                        'PUT'
+                    );
+                }
+
+                await request(
+                    url,
+                    {
+                        method: 'POST',
+                        body: data
+                    }
+                );
+
+                tampilkanDialog(
+                    'pajakFormDialog',
+                    false
+                );
+
+                await muatData();
+
+            } catch (error) {
+                $('#pajakFormError').textContent =
+                    error.message;
+
+                $('#pajakFormError').hidden = false;
+
+            } finally {
+                sedangMengirim = false;
+
+                $('#pajakSimpan').disabled = false;
+            }
         }
-    });
-
+    );
 });
+
+/* ==========================================================
+   AKHIR MODUL MASA PAJAK KENDARAAN
+   Seluruh fungsi berada dalam mesin.js
+   ========================================================== */
 

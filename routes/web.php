@@ -566,49 +566,41 @@ Route::get('/kib/mesin/{mesin}/file/{jenis}', [
     ->name('kib.mesin.file');
 
 
+
 /*
 |--------------------------------------------------------------------------
 | K.I.B B — MASA PAJAK KENDARAAN
 |--------------------------------------------------------------------------
-| Semua menggunakan KIBController.
-| Route GET /kib/mesin yang lama tetap dipertahankan.
+| Menggunakan KIBController.
 */
 
-// Mengambil semua kendaraan dan status pajak
 Route::get(
     '/kib/mesin/pajak/data',
     [KIBController::class, 'dataPajakMesin']
 )->name('kib.mesin.pajak.data');
 
-// Menampilkan dokumen pajak
-Route::get(
-    '/kib/mesin/pajak/{pajak}/dokumen',
-    [KIBController::class, 'filePajakMesin']
-)
-    ->whereNumber('pajak')
-    ->name('kib.mesin.pajak.dokumen');
-
-// Tambah masa pajak
 Route::post(
     '/kib/mesin/pajak',
     [KIBController::class, 'storePajakMesin']
 )->name('kib.mesin.pajak.store');
 
-// Edit masa pajak
 Route::put(
     '/kib/mesin/pajak/{pajak}',
     [KIBController::class, 'updatePajakMesin']
-)
-    ->whereNumber('pajak')
+)->whereNumber('pajak')
     ->name('kib.mesin.pajak.update');
 
-// Hapus catatan pajak
 Route::delete(
     '/kib/mesin/pajak/{pajak}',
     [KIBController::class, 'destroyPajakMesin']
-)
-    ->whereNumber('pajak')
+)->whereNumber('pajak')
     ->name('kib.mesin.pajak.destroy');
+
+Route::get(
+    '/kib/mesin/pajak/{pajak}/dokumen',
+    [KIBController::class, 'filePajakMesin']
+)->whereNumber('pajak')
+    ->name('kib.mesin.pajak.dokumen');
 
 
 /*

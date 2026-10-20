@@ -3651,3 +3651,178 @@ min-height: 39px;
         gap: 15px;
     }
 }
+
+/* ============================================================
+   K.I.B B — PENYESUAIAN FINAL MASA PAJAK KENDARAAN
+   Digabung langsung dalam mesin.css
+   ============================================================ */
+
+/* Informasi kendaraan otomatis dari tabel mesins */
+#mesinPage .pajak-vehicle-info {
+    display: block;
+    padding: 12px 14px;
+    border: 1px solid #cfe2fa;
+    border-radius: 9px;
+    background: #eff7ff;
+    color: #245587;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+/* Hasil perhitungan tanggal berlaku otomatis */
+#mesinPage #pajakTanggalPreview {
+    background: #edf6ff;
+    color: #075fc9;
+    border: 1px solid #bcd9fa;
+    font-weight: 800;
+    cursor: default;
+}
+
+#mesinPage #pajakTanggalPreview:focus {
+    box-shadow: none;
+}
+
+/* Kendaraan induk tidak dapat diganti ketika Edit Pajak */
+#mesinPage #pajakMesinId:disabled {
+    background: #edf3fa;
+    color: #65819f;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+/* Status aktif: lebih dari 14 hari */
+#mesinPage .pajak-status.aktif {
+    background: #e0f8e9;
+    color: #138653;
+}
+
+/* Status segera habis: H-14 sampai H-1 */
+#mesinPage .pajak-status.segera_habis {
+    background: #fff1d6;
+    color: #aa7000;
+}
+
+/* Status kedaluwarsa: H-0 dan seterusnya */
+#mesinPage .pajak-status.kedaluwarsa {
+    background: #ffe6eb;
+    color: #da3549;
+}
+
+/* Kendaraan yang belum dicatat */
+#mesinPage .pajak-status.belum_didata {
+    background: #edf0f5;
+    color: #657d97;
+}
+
+/* Informasi prioritas sisa 7 hari */
+#mesinPage .pajak-table td small {
+    display: block;
+    margin-top: 5px;
+    color: #7c93ac;
+    line-height: 1.5;
+}
+
+/* Tabel pajak tetap menggunakan 10 kolom */
+#mesinPage .pajak-scroll {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+#mesinPage .pajak-table {
+    width: 100%;
+    min-width: 1240px;
+}
+
+#mesinPage .pajak-table th:last-child,
+#mesinPage .pajak-table td:last-child {
+    text-align: center;
+}
+
+/* Modal yang dipakai untuk Tambah/Edit dan Detail Pajak */
+#mesinPage .pajak-dialog {
+    max-width: calc(100vw - 24px);
+}
+
+#mesinPage .pajak-dialog .pajak-error:not([hidden]) {
+    display: block;
+    padding: 11px 13px;
+    border: 1px solid #f1c7ce;
+    border-radius: 8px;
+    background: #fff0f2;
+    color: #b3384a;
+    white-space: pre-line;
+}
+
+@media (max-width: 700px) {
+    #mesinPage .pajak-vehicle-info {
+        font-size: 11px;
+    }
+
+    #mesinPage .pajak-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #mesinPage .pajak-workspace-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* ============================================================
+   FINAL FIX — PERGANTIAN KPI MESIN DAN MASA PAJAK
+   ============================================================ */
+
+/* TAB DAFTAR MESIN AKTIF */
+
+/* Tampilkan KPI inventaris */
+#mesinPage:not(.mesin-pajak-active)
+.mesin-hero #mesinInventarisKpiGrid {
+    display: grid !important;
+}
+
+/* Sembunyikan KPI pajak */
+#mesinPage:not(.mesin-pajak-active)
+.mesin-hero #mesinPajakKpiGrid {
+    display: none !important;
+}
+
+
+/* TAB MASA PAJAK AKTIF */
+
+/* Sembunyikan KPI inventaris */
+#mesinPage.mesin-pajak-active
+.mesin-hero #mesinInventarisKpiGrid {
+    display: none !important;
+}
+
+/* Tampilkan KPI pajak */
+#mesinPage.mesin-pajak-active
+.mesin-hero #mesinPajakKpiGrid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 13px;
+}
+
+/* Hormati atribut hidden */
+#mesinPage .mesin-hero [hidden] {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    #mesinPage.mesin-pajak-active
+    .mesin-hero #mesinPajakKpiGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    #mesinPage.mesin-pajak-active
+    .mesin-hero #mesinPajakKpiGrid {
+        grid-template-columns: 1fr;
+    }
+}
+

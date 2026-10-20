@@ -3111,50 +3111,102 @@ class KIBController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | MASA PAJAK KENDARAAN — K.I.B PERALATAN DAN MESIN
-    |--------------------------------------------------------------------------
-    | Data kendaraan berasal dari tabel mesins.
-    | Catatan pajak berasal dari tabel mesin_pajaks.
-    */
 
-    public function dataPajakMesin()
+
+
+    /**
+     * Mengambil kendaraan untuk Masa Pajak.
+     *
+     * Mendukung dua sumber klasifikasi:
+     *
+     * 1. Data Mesin baru:
+     *    mesins.id_voucher2
+     *       -> nilai_aktivas.id_aktiva
+     *
+     * 2. Data Mesin lama:
+     *    mesins.id_aktiva
+     *
+     * Hanya kode Aktiva 31.08.xx
+     * yang ditampilkan sebagai kendaraan.
+     */
+    private function queryKendaraanPajak()
     {
-        // Ambil inventaris yang memiliki nomor polisi.
-        $vehicles = DB::table('mesins as m')
+        return DB::table('mesins as m')
+
+            // Voucher boleh kosong pada inventaris lama.
+            ->leftJoin(
+                'nilai_aktivas as n',
+                'n.id',
+                '=',
+                'm.id_voucher2'
+            )
+
+            // Prioritas klasifikasi voucher.
+            // Jika tidak ada, gunakan id_aktiva Mesin.
+            ->join(
+                'aktivas as a',
+                'a.id',
+                '=',
+                DB::raw(
+                    'COALESCE(n.id_aktiva, m.id_aktiva)'
+                )
+            )
+
             ->leftJoin(
                 'barangs as b',
                 'b.id',
                 '=',
                 'm.id_barang'
             )
+
             ->leftJoin(
                 'lokasis as l',
                 'l.id',
                 '=',
                 'm.id_lokasi'
             )
+
+            // Hanya klasifikasi kendaraan.
             ->whereRaw(
-                "NULLIF(
-                    BTRIM(COALESCE(m.polisi, '')),
-                    ''
-                ) IS NOT NULL"
-            )
+                "BTRIM(COALESCE(a.kode, '')) LIKE ?",
+                ['31.08.%']
+            );
+    }
+
+
+
+    /*
+|--------------------------------------------------------------------------
+| LIST KENDARAAN DAN STATUS PAJAK
+|--------------------------------------------------------------------------
+*/
+
+    public function dataPajakMesin()
+    {
+        $vehicles = $this->queryKendaraanPajak()
             ->select(
                 'm.id',
-                'm.polisi',
+                'm.guna',
                 'm.merk',
+                'm.polisi',
                 'm.tahun',
                 'm.id_lokasi',
                 'b.nama_barang',
-                'l.lokasi'
+                'l.lokasi',
+                'a.kode as kode_aktiva',
+                'a.aktiva as jenis_aktiva'
             )
-            ->orderBy('m.polisi')
+            ->orderBy('a.kode')
+            ->orderBy('m.id')
             ->get();
 
-        // Ambil catatan pajak terbaru setiap kendaraan.
+        // Ambil periode pajak terakhir
+        // untuk setiap kendaraan.
         $latest = DB::table('mesin_pajaks')
+            ->whereIn(
+                'mesin_id',
+                $vehicles->pluck('id')
+            )
             ->orderByDesc('jatuh_tempo')
             ->orderByDesc('id')
             ->get()
@@ -3184,23 +3236,27 @@ class KIBController extends Controller
                 );
 
                 $status = 'belum_didata';
-                $sisaHari = null;
+                $remaining = null;
 
-                if ($pajak) {
-                    $jatuhTempo = \Carbon\Carbon::parse(
+                if ($pajak && $pajak->jatuh_tempo) {
+                    $due = \Carbon\Carbon::parse(
                         $pajak->jatuh_tempo,
                         'Asia/Makassar'
                     )->startOfDay();
 
-                    $sisaHari = (int) $today
-                        ->diffInDays(
-                            $jatuhTempo,
-                            false
-                        );
+                    $remaining = (int) $today
+                        ->diffInDays($due, false);
 
-                    if ($sisaHari < 0) {
+                    /*
+                 * Aturan Status:
+                 *
+                 * <= 0 hari : Kedaluwarsa
+                 * 1-14 hari : Segera Habis
+                 * > 14 hari : Aktif
+                 */
+                    if ($remaining <= 0) {
                         $status = 'kedaluwarsa';
-                    } elseif ($sisaHari <= 30) {
+                    } elseif ($remaining <= 14) {
                         $status = 'segera_habis';
                     } else {
                         $status = 'aktif';
@@ -3209,40 +3265,66 @@ class KIBController extends Controller
 
                 $summary[$status]++;
 
-                return [
-                    'mesin_id' => (int) $vehicle->id,
+                $polisi = trim(
+                    (string) (
+                        $vehicle->polisi ?? ''
+                    )
+                );
 
-                    'pajak_id' => $pajak
+                if ($polisi === '-') {
+                    $polisi = '';
+                }
+
+                return [
+                    'mesin_id' =>
+                    (int) $vehicle->id,
+
+                    'pajak_id' =>
+                    $pajak
                         ? (int) $pajak->id
                         : null,
 
-                    'nomor_polisi' => trim(
-                        (string) $vehicle->polisi
+                    'kode_aktiva' => trim(
+                        (string) $vehicle->kode_aktiva
+                    ),
+
+                    // Pengguna langsung dari tabel mesins.
+                    'pengguna' => trim(
+                        (string) ($vehicle->guna ?? '')
+                    ),
+
+                    'merk' => trim(
+                        (string) ($vehicle->merk ?? '')
+                    ),
+
+                    'jenis' => trim(
+                        (string) (
+                            $vehicle->jenis_aktiva ?? ''
+                        )
                     ),
 
                     'nama_kendaraan' => trim(
                         (string) (
-                            $vehicle->nama_barang
-                            ?: 'Kendaraan'
+                            $vehicle->nama_barang ?? ''
                         )
                     ),
 
-                    'merk' => trim(
-                        (string) (
-                            $vehicle->merk ?: ''
-                        )
-                    ),
+                    'nomor_polisi' => $polisi,
 
                     'tahun' => $vehicle->tahun,
 
                     'lokasi_id' =>
                     $vehicle->id_lokasi,
 
-                    'lokasi' => $vehicle->lokasi
-                        ?: '—',
+                    'lokasi' => trim(
+                        (string) ($vehicle->lokasi ?? '')
+                    ),
 
                     'tanggal_bayar' =>
                     $pajak->tanggal_bayar ?? null,
+
+                    'masa_berlaku_bulan' =>
+                    $pajak->masa_berlaku_bulan ?? null,
 
                     'jatuh_tempo' =>
                     $pajak->jatuh_tempo ?? null,
@@ -3256,11 +3338,12 @@ class KIBController extends Controller
                     'keterangan' =>
                     $pajak->keterangan ?? null,
 
-                    'ada_dokumen' => !empty($pajak->dokumen_pdf),
+                    'ada_dokumen' =>
+                    !empty($pajak->dokumen_pdf),
 
                     'status' => $status,
 
-                    'sisa_hari' => $sisaHari,
+                    'sisa_hari' => $remaining,
                 ];
             }
         );
@@ -3269,36 +3352,37 @@ class KIBController extends Controller
             'success' => true,
             'tanggal' => $today->toDateString(),
             'summary' => $summary,
-            'data' => $rows,
+            'data' => $rows->values(),
         ]);
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | VALIDASI MASA PAJAK
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| VALIDASI DAN HITUNG OTOMATIS JATUH TEMPO
+|--------------------------------------------------------------------------
+*/
 
     private function validasiPajakMesin(
         Request $request,
-        bool $creating
+        bool $creating,
+        ?int $mesinId = null
     ): array {
         $rules = [
             'tanggal_bayar' => [
-                'nullable',
-                'date'
+                'required',
+                'date_format:Y-m-d'
             ],
 
-            'jatuh_tempo' => [
+            'masa_berlaku_bulan' => [
                 'required',
-                'date'
+                'integer',
+                'in:8,12'
             ],
 
             'nominal' => [
                 'nullable',
                 'integer',
-                'min:0',
-                'max:9223372036854775807'
+                'min:0'
             ],
 
             'nomor_stnk' => [
@@ -3325,45 +3409,58 @@ class KIBController extends Controller
             $rules['mesin_id'] = [
                 'required',
                 'integer',
-                'exists:mesins,id',
+                'exists:mesins,id'
             ];
         }
 
-        $validated = $request->validate(
-            $rules
-        );
+        $data = $request->validate($rules);
 
-        if ($creating) {
-            $vehicle = DB::table('mesins')
-                ->where(
-                    'id',
-                    $validated['mesin_id']
-                )
-                ->first();
+        $id = $creating
+            ? (int) $data['mesin_id']
+            : (int) $mesinId;
 
-            if (
-                !$vehicle ||
-                trim(
-                    (string) (
-                        $vehicle->polisi ?? ''
-                    )
-                ) === ''
-            ) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'mesin_id' =>
-                    'Inventaris belum memiliki nomor polisi.'
-                ]);
-            }
+        // Validasi keamanan pada backend.
+        // Kendaraan harus berkode Aktiva 31.08.xx.
+        if (
+            !$this->queryKendaraanPajak()
+                ->where('m.id', $id)
+                ->exists()
+        ) {
+            throw ValidationException::withMessages([
+                'mesin_id' =>
+                'Hanya kendaraan dengan Kode Aktiva 31.08.xx yang dapat dicatat pajaknya.'
+            ]);
         }
 
-        return $validated;
+        /*
+     * Contoh:
+     * 2026-09-12 + 8 bulan = 2027-05-12
+     *
+     * addMonthsNoOverflow menangani tanggal
+     * 29, 30, atau 31 pada bulan tujuan.
+     */
+        $data['jatuh_tempo'] =
+            \Carbon\Carbon::createFromFormat(
+                '!Y-m-d',
+                $data['tanggal_bayar'],
+                'Asia/Makassar'
+            )
+            ->addMonthsNoOverflow(
+                (int) $data['masa_berlaku_bulan']
+            )
+            ->toDateString();
+
+        // File diambil terpisah dari UploadedFile.
+        unset($data['dokumen_pdf']);
+
+        return $data;
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | TAMBAH MASA PAJAK KENDARAAN
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| CREATE — PEMBARUAN PAJAK
+|--------------------------------------------------------------------------
+*/
 
     public function storePajakMesin(
         Request $request
@@ -3374,8 +3471,6 @@ class KIBController extends Controller
         );
 
         $pdf = $request->file('dokumen_pdf');
-
-        unset($data['dokumen_pdf']);
 
         $path = null;
 
@@ -3388,26 +3483,20 @@ class KIBController extends Controller
 
                 if (!$path) {
                     throw new \RuntimeException(
-                        'Dokumen PDF gagal disimpan.'
+                        'PDF pajak gagal disimpan.'
                     );
                 }
             }
 
             $data['dokumen_pdf'] = $path;
+
             $data['created_at'] = now();
             $data['updated_at'] = now();
 
-            $id = DB::table('mesin_pajaks')
-                ->insertGetId($data);
-
-            return response()->json([
-                'success' => true,
-
-                'message' =>
-                'Masa pajak kendaraan berhasil dicatat.',
-
-                'id' => $id,
-            ]);
+            $id = DB::transaction(
+                fn() => DB::table('mesin_pajaks')
+                    ->insertGetId($data)
+            );
         } catch (\Throwable $e) {
             if ($path) {
                 Storage::disk('local')
@@ -3416,30 +3505,41 @@ class KIBController extends Controller
 
             throw $e;
         }
+
+        return response()->json([
+            'success' => true,
+
+            'message' =>
+            'Pembaruan pajak tersimpan; jatuh tempo dihitung otomatis.',
+
+            'id' => $id,
+
+            'jatuh_tempo' =>
+            $data['jatuh_tempo'],
+        ]);
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | EDIT MASA PAJAK
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| UPDATE — EDIT MASA PAJAK
+|--------------------------------------------------------------------------
+*/
 
     public function updatePajakMesin(
         Request $request,
         int $pajak
     ) {
-        $data = $this->validasiPajakMesin(
-            $request,
-            false
-        );
-
         $old = DB::table('mesin_pajaks')
             ->where('id', $pajak)
             ->first();
 
         abort_unless($old, 404);
 
-        unset($data['dokumen_pdf']);
+        $data = $this->validasiPajakMesin(
+            $request,
+            false,
+            (int) $old->mesin_id
+        );
 
         $newPath = null;
 
@@ -3463,9 +3563,11 @@ class KIBController extends Controller
 
             $data['updated_at'] = now();
 
-            DB::table('mesin_pajaks')
-                ->where('id', $pajak)
-                ->update($data);
+            DB::transaction(
+                fn() => DB::table('mesin_pajaks')
+                    ->where('id', $pajak)
+                    ->update($data)
+            );
         } catch (\Throwable $e) {
             if ($newPath) {
                 Storage::disk('local')
@@ -3475,10 +3577,11 @@ class KIBController extends Controller
             throw $e;
         }
 
-        // Hapus PDF lama hanya setelah update berhasil.
+        // Hapus dokumen sebelumnya
+        // hanya setelah update berhasil.
         if (
             $newPath &&
-            $old->dokumen_pdf &&
+            !empty($old->dokumen_pdf) &&
             str_starts_with(
                 $old->dokumen_pdf,
                 'kib/mesin/pajak/'
@@ -3490,17 +3593,20 @@ class KIBController extends Controller
 
         return response()->json([
             'success' => true,
+
             'message' =>
-            'Data masa pajak berhasil diperbarui.'
+            'Masa pajak kendaraan berhasil diperbarui.',
+
+            'jatuh_tempo' =>
+            $data['jatuh_tempo'],
         ]);
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | HAPUS CATATAN PAJAK
-    |--------------------------------------------------------------------------
-    | Inventaris kendaraan tidak dihapus.
-    */
+|--------------------------------------------------------------------------
+| DELETE — HAPUS SATU CATATAN PAJAK
+|--------------------------------------------------------------------------
+*/
 
     public function destroyPajakMesin(
         int $pajak
@@ -3511,12 +3617,14 @@ class KIBController extends Controller
 
         abort_unless($old, 404);
 
-        DB::table('mesin_pajaks')
-            ->where('id', $pajak)
-            ->delete();
+        DB::transaction(
+            fn() => DB::table('mesin_pajaks')
+                ->where('id', $pajak)
+                ->delete()
+        );
 
         if (
-            $old->dokumen_pdf &&
+            !empty($old->dokumen_pdf) &&
             str_starts_with(
                 $old->dokumen_pdf,
                 'kib/mesin/pajak/'
@@ -3526,19 +3634,21 @@ class KIBController extends Controller
                 ->delete($old->dokumen_pdf);
         }
 
+        // Inventaris mesins tidak dihapus.
+
         return response()->json([
             'success' => true,
 
             'message' =>
-            'Catatan pajak berhasil dihapus. Inventaris Mesin tetap tersimpan.'
+            'Catatan pajak dihapus tanpa menghapus inventaris Mesin.',
         ]);
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | PREVIEW PDF PAJAK
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| PREVIEW PDF PAJAK
+|--------------------------------------------------------------------------
+*/
 
     public function filePajakMesin(
         int $pajak
@@ -3559,14 +3669,25 @@ class KIBController extends Controller
                 $path,
                 'kib/mesin/pajak/'
             ) &&
-                Storage::disk('local')
-                ->exists($path),
+                Storage::disk('local')->exists($path),
             404
         );
 
+        $file = Storage::disk('local')
+            ->path($path);
+
+        abort_unless(
+            strtolower(
+                pathinfo(
+                    $file,
+                    PATHINFO_EXTENSION
+                )
+            ) === 'pdf',
+            415
+        );
+
         return response()->file(
-            Storage::disk('local')
-                ->path($path),
+            $file,
             [
                 'Content-Type' =>
                 'application/pdf',
