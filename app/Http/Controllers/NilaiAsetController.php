@@ -539,15 +539,23 @@ class NilaiAsetController extends Controller
                         )
                         ->exists();
 
+
                     if ($processed || $hasLinkedTanah) {
-                        throw ValidationException::withMessages([
+
+                        $exception = ValidationException::withMessages([
                             'jenisn' =>
-                            'Penambahan Aset sudah diproses '
-                                . 'pada K.I.B. Data nilai tidak '
-                                . 'boleh diedit langsung agar '
-                                . 'K.I.B tetap konsisten.',
+                            'Data Nilai Aset tidak dapat dihapus '
+                                . 'karena sudah diproses atau '
+                                . 'terhubung dengan inventaris K.I.B.'
                         ]);
+
+                        // Jika ditolak, tetap kembali ke halaman Nilai Aset.
+                        // Jangan menggunakan redirect back secara otomatis.
+                        $exception->redirectTo = route('main.nilai');
+
+                        throw $exception;
                     }
+
 
                     $jenis = (int) $validated['jenisn'];
 
