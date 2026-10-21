@@ -605,6 +605,42 @@ Route::get(
 
 /*
 |--------------------------------------------------------------------------
+| REFERENSI TRANSAKSI KENDARAAN
+|--------------------------------------------------------------------------
+|
+| Membaca transaksi Nilai Aset berkode 31.08.%
+| tanpa membuat kendaraan baru.
+|
+*/
+
+Route::get(
+    '/kib/mesin/pajak/referensi',
+    [
+        KIBController::class,
+        'referensiAktivaKendaraanMesin'
+    ]
+)->name('kib.mesin.pajak.referensi');
+
+
+/*
+|--------------------------------------------------------------------------
+| KLASIFIKASI KENDARAAN SAAT EDIT INVENTARIS
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/kib/mesin/{mesin}/klasifikasi',
+    [
+        KIBController::class,
+        'klasifikasiMesin'
+    ]
+)
+    ->whereNumber('mesin')
+    ->name('kib.mesin.klasifikasi');
+
+
+/*
+|--------------------------------------------------------------------------
 | K.I.B C — GEDUNG DAN BANGUNAN
 | Controller: KIBController
 |--------------------------------------------------------------------------

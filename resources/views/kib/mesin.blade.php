@@ -13,10 +13,8 @@
 ========================================================= --}}
 
     {{-- CSS dengan versi otomatis --}}
-<link
-    rel="stylesheet"
-    href="{{ asset('css/pages/kib/mesin.css') }}?v={{ filemtime(public_path('css/pages/kib/mesin.css')) }}"
->
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/mesin.css') }}?v={{ filemtime(public_path('css/pages/kib/mesin.css')) }}">
     <section id="mesinPage" class="content mesin-page" data-store-url="{{ route('kib.mesin.store') }}"
         data-record-base="{{ url('/kib/mesin') }}" data-detail-base="{{ url('/kib/mesin/lokasi') }}"
         data-pending-url="{{ route('kib.mesin.pending') }}">
@@ -746,9 +744,11 @@
          sehingga panel ini langsung berisi workspace.
     ====================================================== --}}
 
+
         <section id="mesinPajakPanel" class="pajak-panel" role="tabpanel" aria-labelledby="mesinTabPajak"
             data-api="{{ route('kib.mesin.pajak.data') }}" data-base="{{ url('/kib/mesin/pajak') }}"
-            data-token="{{ csrf_token() }}" hidden>
+            data-referensi-api="{{ url('/kib/mesin/pajak/referensi') }}" data-token="{{ csrf_token() }}" hidden>
+
 
             {{-- ================================================
              WORKSPACE MASA PAJAK
@@ -981,6 +981,58 @@
 
                 <p id="pajakBelumDicatat" class="pajak-footnote"></p>
 
+            </section>
+
+
+            {{-- =================================================
+     REFERENSI AKTIVA 31.08.xx (BACA SAJA)
+     Data transaksi bukan otomatis unit kendaraan.
+================================================== --}}
+            <section id="mesinReferencePanel" class="mesin-reference-panel" aria-labelledby="mesinReferenceTitle">
+                <header class="mesin-reference-head">
+                    <div>
+                        <span class="mesin-reference-eyebrow">REFERENSI NILAI ASET · 31.08.XX</span>
+                        <h2 id="mesinReferenceTitle">Referensi Transaksi Kendaraan</h2>
+                        <p>Memuat transaksi pengadaan, penambahan nilai, dan aset historis sebagai bahan verifikasi. Satu
+                            transaksi dapat mencakup beberapa unit atau hanya komponen kendaraan, sehingga tidak dihitung
+                            sebagai kendaraan yang wajib pajak.</p>
+                    </div>
+                    <div class="mesin-reference-filter">
+                        <label for="mesinReferenceSearch">Cari referensi</label>
+                        <input id="mesinReferenceSearch" type="search" placeholder="Kode, voucher, uraian, lokasi..."
+                            autocomplete="off">
+                        <label for="mesinReferenceStatus">Status sumber</label>
+                        <select id="mesinReferenceStatus">
+                            <option value="">Semua Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="historis">Historis</option>
+                            <option value="perlu_verifikasi">Perlu Verifikasi</option>
+                        </select>
+                    </div>
+                </header>
+                <div class="mesin-reference-summary" id="mesinReferenceSummary" role="status">Referensi transaksi belum
+                    dimuat.</div>
+                <div class="mesin-reference-scroll">
+                    <table class="mesin-reference-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kode Aktiva</th>
+                                <th>Voucher / Tanggal</th>
+                                <th>Uraian Transaksi</th>
+                                <th>Lokasi</th>
+                                <th>Nilai Aset</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mesinReferenceBody">
+                            <tr>
+                                <td colspan="7" class="mesin-reference-empty">Buka tab Masa Pajak untuk memuat
+                                    referensi.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             {{-- =================================================
@@ -1459,7 +1511,7 @@
                      STEP 3 — DETAIL INVENTARIS
                 ============================================= --}}
 
-                    <section class="mesin-section">
+                    <section class="mesin-section" id="mesinStep3">
 
                         <div class="mesin-step">
                             3
@@ -1467,16 +1519,18 @@
 
                         <div class="mesin-section-body">
 
-                            <h3>
+                            <h3 id="mesinStep3Title">
                                 Detail Barang Peralatan dan Mesin
                             </h3>
 
-                            <p>
+                            <span id="mesinVehicleBadge" class="mesin-vehicle-badge" hidden></span>
+
+                            <p id="mesinStep3Desc">
                                 Lengkapi informasi teknis berdasarkan
                                 inventaris Perumda Tirta Kencana.
                             </p>
 
-                            <div class="mesin-form-grid cols-2">
+                            <div class="mesin-form-grid cols-2" id="mesinStandardFields">
 
                                 {{-- NAMA BARANG --}}
 
@@ -1491,7 +1545,8 @@
                                         </option>
 
                                         @foreach ($barangRows as $barang)
-                                            <option value="{{ $barang->id }}">
+                                            <option value="{{ $barang->id }}"
+                                                data-kode-barang="{{ trim((string) $barang->kode_barang) }}">
 
                                                 {{ trim((string) $barang->nama_barang) }}
 
@@ -1727,6 +1782,8 @@
                                 </label>
 
                             </div>
+
+                            <div id="mesinVehicleGroups" class="mesin-vehicle-groups" hidden></div>
 
                             {{-- KETERANGAN --}}
 
@@ -2005,9 +2062,7 @@
      Semua fungsi tetap berada pada satu mesin.js
 ========================================================= --}}
 
-  {{-- JavaScript dengan versi otomatis --}}
-<script
-    src="{{ asset('js/pages/kib/mesin.js') }}?v={{ filemtime(public_path('js/pages/kib/mesin.js')) }}"
-    defer
-></script>
+    {{-- JavaScript dengan versi otomatis --}}
+    <script src="{{ asset('js/pages/kib/mesin.js') }}?v={{ filemtime(public_path('js/pages/kib/mesin.js')) }}" defer>
+    </script>
 @endsection

@@ -2295,23 +2295,16 @@ class KIBController extends Controller
 
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 03. DATA PENDING NILAI ASET MESIN
-    |--------------------------------------------------------------------------
-    |
-    | Endpoint:
-    | GET /kib/mesin/pending
-    |
-    | Mengikuti kondisi pending database:
-    | cat = golongan Mesin
-    | stat = 0
-    |
-    | Jenis transaksi lama dipertahankan.
-    | Penambahan Nilai baru harus disimpan dengan stat=1.
-    |
-    */
 
+
+    /**
+     * ============================================================
+     * PENDING NILAI ASET PERALATAN DAN MESIN
+     *
+     * Termasuk informasi Kode Aktiva untuk
+     * pergantian form otomatis.
+     * ============================================================
+     */
     public function pendingMesin()
     {
         $cat = $this->mesinKategori();
@@ -2323,26 +2316,38 @@ class KIBController extends Controller
         $count = (clone $base)->count();
 
         $rows = DB::table('nilai_aktivas as n')
+
+            ->leftJoin(
+                'aktivas as a',
+                'a.id',
+                '=',
+                'n.id_aktiva'
+            )
+
             ->leftJoin(
                 'lokasis as l',
                 'l.id',
                 '=',
                 'n.id_lokasi'
             )
+
             ->leftJoin(
                 'departemens as d',
                 'd.id',
                 '=',
                 'n.dep'
             )
+
             ->leftJoin(
                 'divisis as v',
                 'v.id',
                 '=',
                 'n.div'
             )
+
             ->where('n.cat', $cat)
             ->where('n.stat', 0)
+
             ->select([
                 'n.id',
                 'n.no_voucher',
@@ -2350,56 +2355,107 @@ class KIBController extends Controller
                 'n.nilai',
                 'n.urai',
                 'n.tahun',
+
                 'n.id_lokasi',
                 'n.dep',
                 'n.div',
                 'n.jenisn',
+
+                'n.id_aktiva',
+                'a.kode as kode_aktiva',
+                'a.aktiva as nama_aktiva',
+
                 'l.lokasi',
                 'l.alamat',
             ])
+
             ->selectRaw(
                 "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
             )
+
             ->selectRaw(
                 "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
             )
+
             ->orderByDesc('n.tgl_voucher')
             ->orderByDesc('n.id')
+
             ->limit(1000)
             ->get();
 
         $data = $rows->map(function ($row) {
+
+            $kode = trim(
+                (string) ($row->kode_aktiva ?? '')
+            );
+
             return [
                 'id' => (int) $row->id,
-                'no_voucher' => trim((string) $row->no_voucher),
+
+                'no_voucher' => trim(
+                    (string) ($row->no_voucher ?? '')
+                ),
+
                 'tgl_voucher' => $row->tgl_voucher,
 
                 'nilai' => (int) ($row->nilai ?? 0),
+
                 'urai' => $row->urai,
+
                 'tahun' => $row->tahun,
 
                 'id_lokasi' => $row->id_lokasi,
-                'lokasi' => trim((string) $row->lokasi),
-                'alamat' => trim((string) $row->alamat),
+
+                'lokasi' => trim(
+                    (string) ($row->lokasi ?? '')
+                ),
+
+                'alamat' => trim(
+                    (string) ($row->alamat ?? '')
+                ),
 
                 'dep' => $row->dep,
-                'departemen' => trim((string) $row->departemen),
+
+                'departemen' => trim(
+                    (string) ($row->departemen ?? '')
+                ),
 
                 'div' => $row->div,
-                'divisi' => trim((string) $row->divisi),
+
+                'divisi' => trim(
+                    (string) ($row->divisi ?? '')
+                ),
 
                 'jenisn' => (int) ($row->jenisn ?? 0),
+
+                'id_aktiva' => $row->id_aktiva,
+
+                'kode_aktiva' => $kode,
+
+                'nama_aktiva' => trim(
+                    (string) ($row->nama_aktiva ?? '')
+                ),
+
+                'is_kendaraan' => str_starts_with(
+                    $kode,
+                    '31.08.'
+                ),
             ];
         });
 
         return response()->json([
             'success' => true,
+
             'module' => 'mesin',
+
             'category_id' => $cat,
+
             'count' => $count,
+
             'data' => $data->values(),
         ]);
     }
+
 
 
     /*
@@ -3114,26 +3170,22 @@ class KIBController extends Controller
 
 
 
+
     /**
-     * Mengambil kendaraan untuk Masa Pajak.
+     * ============================================================
+     * QUERY KENDARAAN K.I.B B
      *
-     * Mendukung dua sumber klasifikasi:
+     * Sumber klasifikasi:
+     * 1. Voucher Nilai Aset: nilai_aktivas.id_aktiva
+     * 2. Inventaris lama:   mesins.id_aktiva
      *
-     * 1. Data Mesin baru:
-     *    mesins.id_voucher2
-     *       -> nilai_aktivas.id_aktiva
-     *
-     * 2. Data Mesin lama:
-     *    mesins.id_aktiva
-     *
-     * Hanya kode Aktiva 31.08.xx
-     * yang ditampilkan sebagai kendaraan.
+     * Hanya Kode Aktiva 31.08.xx yang ditampilkan.
+     * ============================================================
      */
     private function queryKendaraanPajak()
     {
         return DB::table('mesins as m')
 
-            // Voucher boleh kosong pada inventaris lama.
             ->leftJoin(
                 'nilai_aktivas as n',
                 'n.id',
@@ -3141,8 +3193,6 @@ class KIBController extends Controller
                 'm.id_voucher2'
             )
 
-            // Prioritas klasifikasi voucher.
-            // Jika tidak ada, gunakan id_aktiva Mesin.
             ->join(
                 'aktivas as a',
                 'a.id',
@@ -3166,7 +3216,6 @@ class KIBController extends Controller
                 'm.id_lokasi'
             )
 
-            // Hanya klasifikasi kendaraan.
             ->whereRaw(
                 "BTRIM(COALESCE(a.kode, '')) LIKE ?",
                 ['31.08.%']
@@ -3175,15 +3224,22 @@ class KIBController extends Controller
 
 
 
-    /*
-|--------------------------------------------------------------------------
-| LIST KENDARAAN DAN STATUS PAJAK
-|--------------------------------------------------------------------------
-*/
 
+    /**
+     * ============================================================
+     * DATA MASA PAJAK KENDARAAN
+     *
+     * Status:
+     * - aktif         : lebih dari 14 hari
+     * - segera_habis  : 1–14 hari
+     * - kedaluwarsa   : 0 hari atau lewat
+     * - belum_didata  : belum mempunyai catatan pajak
+     * ============================================================
+     */
     public function dataPajakMesin()
     {
         $vehicles = $this->queryKendaraanPajak()
+
             ->select(
                 'm.id',
                 'm.guna',
@@ -3191,25 +3247,30 @@ class KIBController extends Controller
                 'm.polisi',
                 'm.tahun',
                 'm.id_lokasi',
+
                 'b.nama_barang',
                 'l.lokasi',
+
                 'a.kode as kode_aktiva',
                 'a.aktiva as jenis_aktiva'
             )
+
             ->orderBy('a.kode')
             ->orderBy('m.id')
             ->get();
 
-        // Ambil periode pajak terakhir
-        // untuk setiap kendaraan.
         $latest = DB::table('mesin_pajaks')
+
             ->whereIn(
                 'mesin_id',
                 $vehicles->pluck('id')
             )
+
             ->orderByDesc('jatuh_tempo')
             ->orderByDesc('id')
+
             ->get()
+
             ->unique('mesin_id')
             ->keyBy('mesin_id');
 
@@ -3231,56 +3292,56 @@ class KIBController extends Controller
                 $today,
                 &$summary
             ) {
+
                 $pajak = $latest->get(
                     $vehicle->id
                 );
 
                 $status = 'belum_didata';
-                $remaining = null;
+                $sisaHari = null;
 
-                if ($pajak && $pajak->jatuh_tempo) {
-                    $due = \Carbon\Carbon::parse(
+                if (
+                    $pajak &&
+                    $pajak->jatuh_tempo
+                ) {
+
+                    $jatuhTempo = \Carbon\Carbon::parse(
                         $pajak->jatuh_tempo,
                         'Asia/Makassar'
                     )->startOfDay();
 
-                    $remaining = (int) $today
-                        ->diffInDays($due, false);
+                    $sisaHari = (int) $today
+                        ->diffInDays(
+                            $jatuhTempo,
+                            false
+                        );
 
-                    /*
-                 * Aturan Status:
-                 *
-                 * <= 0 hari : Kedaluwarsa
-                 * 1-14 hari : Segera Habis
-                 * > 14 hari : Aktif
-                 */
-                    if ($remaining <= 0) {
+                    if ($sisaHari <= 0) {
+
                         $status = 'kedaluwarsa';
-                    } elseif ($remaining <= 14) {
+                    } elseif ($sisaHari <= 14) {
+
                         $status = 'segera_habis';
                     } else {
+
                         $status = 'aktif';
                     }
                 }
 
                 $summary[$status]++;
 
-                $polisi = trim(
-                    (string) (
-                        $vehicle->polisi ?? ''
-                    )
+                $nomorPolisi = trim(
+                    (string) ($vehicle->polisi ?? '')
                 );
 
-                if ($polisi === '-') {
-                    $polisi = '';
+                if ($nomorPolisi === '-') {
+                    $nomorPolisi = '';
                 }
 
                 return [
-                    'mesin_id' =>
-                    (int) $vehicle->id,
+                    'mesin_id' => (int) $vehicle->id,
 
-                    'pajak_id' =>
-                    $pajak
+                    'pajak_id' => $pajak
                         ? (int) $pajak->id
                         : null,
 
@@ -3288,7 +3349,6 @@ class KIBController extends Controller
                         (string) $vehicle->kode_aktiva
                     ),
 
-                    // Pengguna langsung dari tabel mesins.
                     'pengguna' => trim(
                         (string) ($vehicle->guna ?? '')
                     ),
@@ -3298,23 +3358,18 @@ class KIBController extends Controller
                     ),
 
                     'jenis' => trim(
-                        (string) (
-                            $vehicle->jenis_aktiva ?? ''
-                        )
+                        (string) ($vehicle->jenis_aktiva ?? '')
                     ),
 
                     'nama_kendaraan' => trim(
-                        (string) (
-                            $vehicle->nama_barang ?? ''
-                        )
+                        (string) ($vehicle->nama_barang ?? '')
                     ),
 
-                    'nomor_polisi' => $polisi,
+                    'nomor_polisi' => $nomorPolisi,
 
                     'tahun' => $vehicle->tahun,
 
-                    'lokasi_id' =>
-                    $vehicle->id_lokasi,
+                    'lokasi_id' => $vehicle->id_lokasi,
 
                     'lokasi' => trim(
                         (string) ($vehicle->lokasi ?? '')
@@ -3338,23 +3393,26 @@ class KIBController extends Controller
                     'keterangan' =>
                     $pajak->keterangan ?? null,
 
-                    'ada_dokumen' =>
-                    !empty($pajak->dokumen_pdf),
+                    'ada_dokumen' => !empty($pajak->dokumen_pdf),
 
                     'status' => $status,
 
-                    'sisa_hari' => $remaining,
+                    'sisa_hari' => $sisaHari,
                 ];
             }
         );
 
         return response()->json([
             'success' => true,
+
             'tanggal' => $today->toDateString(),
+
             'summary' => $summary,
+
             'data' => $rows->values(),
         ]);
     }
+
 
     /*
 |--------------------------------------------------------------------------
@@ -3697,6 +3755,180 @@ class KIBController extends Controller
             ]
         );
     }
+
+
+    /**
+     * ============================================================
+     * REFERENSI TRANSAKSI AKTIVA KENDARAAN
+     *
+     * READ ONLY.
+     *
+     * Tidak membuat unit kendaraan.
+     * Tidak mengubah cat/stat.
+     * Tidak masuk perhitungan KPI pajak.
+     * ============================================================
+     */
+    public function referensiAktivaKendaraanMesin()
+    {
+        $rows = DB::table('nilai_aktivas as n')
+
+            ->join(
+                'aktivas as a',
+                'a.id',
+                '=',
+                'n.id_aktiva'
+            )
+
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'n.id_lokasi'
+            )
+
+            ->whereRaw(
+                "BTRIM(COALESCE(a.kode, '')) LIKE ?",
+                ['31.08.%']
+            )
+
+            ->select([
+                'n.id',
+                'n.cat',
+                'n.stat',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.tahun',
+                'n.urai',
+                'n.nilai',
+
+                'a.kode as kode_aktiva',
+                'a.aktiva as jenis_aktiva',
+
+                'l.lokasi',
+            ])
+
+            ->orderBy('a.kode')
+            ->orderBy('n.id')
+            ->get();
+
+        $data = $rows->map(function ($row) {
+
+            $isPending =
+                (string) $row->cat === '2'
+                && (string) $row->stat === '0';
+
+            $isHistoris =
+                $row->cat === null
+                && $row->stat === null;
+
+            $status = 'perlu_verifikasi';
+
+            if ($isPending) {
+                $status = 'pending';
+            } elseif ($isHistoris) {
+                $status = 'historis';
+            }
+
+            return [
+                'id' => (int) $row->id,
+
+                'kode_aktiva' => trim(
+                    (string) $row->kode_aktiva
+                ),
+
+                'jenis_aktiva' => trim(
+                    (string) ($row->jenis_aktiva ?? '')
+                ),
+
+                'no_voucher' => trim(
+                    (string) ($row->no_voucher ?? '')
+                ),
+
+                'tgl_voucher' => $row->tgl_voucher,
+
+                'tahun' => $row->tahun,
+
+                'uraian' => trim(
+                    (string) ($row->urai ?? '')
+                ),
+
+                'nilai' => $row->nilai,
+
+                'lokasi' => trim(
+                    (string) ($row->lokasi ?? '')
+                ),
+
+                'status' => $status,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+
+            'summary' => [
+                'total_transaksi' => $data->count(),
+
+                'pending' => $data
+                    ->where('status', 'pending')
+                    ->count(),
+
+                'historis' => $data
+                    ->where('status', 'historis')
+                    ->count(),
+
+                'perlu_verifikasi' => $data
+                    ->where('status', 'perlu_verifikasi')
+                    ->count(),
+            ],
+
+            'data' => $data->values(),
+        ]);
+    }
+
+
+    /**
+     * ============================================================
+     * KLASIFIKASI SATU INVENTARIS MESIN
+     * ============================================================
+     */
+    public function klasifikasiMesin(int $mesin)
+    {
+        $row = DB::table('mesins as m')
+
+            ->leftJoin(
+                'nilai_aktivas as n',
+                'n.id',
+                '=',
+                'm.id_voucher2'
+            )
+
+            ->leftJoin(
+                'aktivas as a',
+                'a.id',
+                '=',
+                DB::raw(
+                    'COALESCE(n.id_aktiva, m.id_aktiva)'
+                )
+            )
+
+            ->where('m.id', $mesin)
+
+            ->select(
+                'm.id',
+                'a.kode as kode_aktiva',
+                'a.aktiva as nama_aktiva'
+            )
+
+            ->first();
+
+        abort_unless($row, 404);
+
+        return response()->json([
+            'success' => true,
+            'data' => $row,
+        ]);
+    }
+
 
 
     /*

@@ -82,6 +82,101 @@ const pdfDialog = $('#mesinPdfDialog');
     // ID voucher yang sedang dipilih.
     let selectedSourceId = null;
 
+// ==========================================================
+// MODE FORM STEP 3 (MENGGUNAKAN INPUT ASLI, TANPA DUPLIKASI)
+// Kode 31.08.% -> KIB B Kendaraan, lainnya -> standar.
+// ==========================================================
+const standardFields = $('#mesinStandardFields');
+const vehicleGroups = $('#mesinVehicleGroups');
+const vehicleBadge = $('#mesinVehicleBadge');
+const step3Title = $('#mesinStep3Title');
+const step3Description = $('#mesinStep3Desc');
+const remarkLabel = form.querySelector('[name="ket"]')?.closest('label');
+const barangSelect = standardFields?.querySelector('[name="id_barang"]');
+const originalDescription = step3Description?.textContent.trim() || '';
+const originalFieldLabels = standardFields ? [...standardFields.children] : [];
+const remarkMarker = document.createComment('posisi asli keterangan mesin');
+if (remarkLabel) remarkLabel.before(remarkMarker);
+const allFieldLabels = new Map();
+for (const label of originalFieldLabels) {
+    const input = label.querySelector('[name]');
+    if (input) {
+        allFieldLabels.set(input.name, label);
+    }
+}
+if (remarkLabel) allFieldLabels.set('ket', remarkLabel);
+const kodeBarangLabel = document.createElement('label');
+kodeBarangLabel.className = 'mesin-vehicle-readonly';
+kodeBarangLabel.append(document.createTextNode('Kode Barang (otomatis)'));
+const kodeBarangInput = document.createElement('input');
+kodeBarangInput.type = 'text';
+kodeBarangInput.id = 'mesinKodeBarangOtomatis';
+kodeBarangInput.readOnly = true;
+kodeBarangInput.placeholder = 'Pilih Nama Barang';
+kodeBarangLabel.append(kodeBarangInput);
+function syncKodeBarang() {
+    kodeBarangInput.value = barangSelect?.selectedOptions[0]?.dataset.kodeBarang || '';
+}
+barangSelect?.addEventListener('change', syncKodeBarang);
+let isVehicleMode = false;
+function setJenisFormMesin(kodeAktiva, namaAktiva = '') {
+    if (!standardFields || !vehicleGroups || !remarkLabel || !step3Title) return;
+    const kode = String(kodeAktiva ?? '').trim();
+    const kendaraan = /^31\.08\./.test(kode);
+    if (kendaraan !== isVehicleMode) {
+        if (kendaraan) {
+            vehicleGroups.replaceChildren();
+            const groups = [
+                ['A', 'Identitas Barang', ['id_barang', 'kode', 'reg', 'merk']],
+                ['B', 'Spesifikasi Kendaraan', ['ukuran', 'bahan', 'tahun', 'pabrik']],
+                ['C', 'Nomor Identitas Kendaraan', ['rangka', 'nomor_mesin', 'polisi', 'bpkb']],
+                ['D', 'Asal Usul dan Pengguna', ['asal', 'guna', 'ket']],
+                ['E', 'Administrasi Inventaris', ['fungsi', 'struktur', 'kondisi', 'harga', 'susut', 'foto', 'dokumen']]
+            ];
+            for (const [letter, title, names] of groups) {
+                const section = document.createElement('section');
+                section.className = 'mesin-vehicle-group';
+                const heading = document.createElement('h4');
+                heading.textContent = `${letter}. ${title}`;
+                section.append(heading);
+                const grid = document.createElement('div');
+                grid.className = 'mesin-form-grid cols-2';
+                for (const name of names) {
+                    const label = allFieldLabels.get(name);
+                    if (label) grid.append(label);
+                    if (name === 'id_barang') grid.append(kodeBarangLabel);
+                }
+                section.append(grid);
+                vehicleGroups.append(section);
+            }
+            standardFields.hidden = true;
+            vehicleGroups.hidden = false;
+        } else {
+            for (const label of originalFieldLabels) standardFields.append(label);
+            remarkMarker.before(remarkLabel);
+            kodeBarangLabel.remove();
+            vehicleGroups.replaceChildren();
+            vehicleGroups.hidden = true;
+            standardFields.hidden = false;
+        }
+        isVehicleMode = kendaraan;
+    }
+    step3Title.textContent = kendaraan
+        ? 'Detail Inventaris Kendaraan — KIB B'
+        : 'Detail Barang Peralatan dan Mesin';
+    if (step3Description) {
+        step3Description.textContent = kendaraan
+            ? 'Lengkapi identitas kendaraan sesuai kolom Excel KIB B. Lokasi dan organisasi tetap otomatis dari transaksi Nilai Aset.'
+            : originalDescription;
+    }
+    if (vehicleBadge) {
+        vehicleBadge.hidden = !kendaraan;
+        vehicleBadge.textContent = kendaraan ? `${kode} — ${namaAktiva || 'Kendaraan'}` : '';
+    }
+    syncKodeBarang();
+}
+
+
     // ==========================================
     // DETAIL TANGGAL DAN JENIS VOUCHER
     // ==========================================
@@ -536,7 +631,9 @@ $('#mesinExport').addEventListener('click', () => {
                 item.divisi,
                 item.tahun,
                 item.urai,
-                item.nilai
+                item.nilai,
+                item.kode_aktiva,
+                item.nama_aktiva
             ]
                 .join(' ')
                 .toLowerCase()
@@ -581,9 +678,11 @@ $('#mesinExport').addEventListener('click', () => {
                                 )}
                             </small>
                             <small class="mesin-source-type">
-                                ${escapeHtml(
-                                    selectedJenis(item)
-                                )}
+                                ${escapeHtml(selectedJenis(item))}
+                            </small>
+                            <small class="mesin-source-aktiva">
+                                ${escapeHtml(item.kode_aktiva || 'Kode Aktiva belum tercatat')}
+                                ${escapeHtml(item.nama_aktiva || '')}
                             </small>
                         </td>
 
@@ -725,6 +824,7 @@ $('#mesinExport').addEventListener('click', () => {
         selectedSourceId = String(source.id);
 
         showSourceSummary(source);
+        setJenisFormMesin(source.kode_aktiva, source.nama_aktiva);
         renderPending();
 
         // Form tetap bisa dilanjutkan.
@@ -769,6 +869,7 @@ $('#mesinExport').addEventListener('click', () => {
         });
 
         pendingSearch.value = '';
+        setJenisFormMesin('');
     }
 
     // ==========================================
@@ -820,6 +921,20 @@ $('#mesinExport').addEventListener('click', () => {
             const item = result.data;
 
             resetForm();
+
+            // Dukung inventaris yang terhubung voucher maupun klasifikasi legacy.
+            let kodeAktivaEdit = item.kode_aktiva || '';
+            let namaAktivaEdit = item.nama_aktiva || '';
+            if (!kodeAktivaEdit) {
+                try {
+                    const klasifikasi = await getJson(`${recordUrl(id)}/klasifikasi`);
+                    kodeAktivaEdit = klasifikasi.data?.kode_aktiva || '';
+                    namaAktivaEdit = klasifikasi.data?.nama_aktiva || '';
+                } catch (error) {
+                    console.warn('Klasifikasi Edit Mesin tidak tersedia; memakai form standar.', error);
+                }
+            }
+            setJenisFormMesin(kodeAktivaEdit, namaAktivaEdit);
 
             $('#mesinMethod').disabled = false;
             $('#mesinMethod').value = 'PUT';
@@ -1734,7 +1849,9 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.dataset.pajakInitialized = '1';
 
     const $ = selector =>
-        panel.querySelector(selector);
+        panel.querySelector(selector)
+        ?? halaman.querySelector(selector)
+        ?? null;
 
     const $$ = selector =>
         [...panel.querySelectorAll(selector)];
@@ -3263,3 +3380,101 @@ document.getElementById('pajakTerlambat').textContent =
    Seluruh fungsi berada dalam mesin.js
    ========================================================== */
 
+
+
+/* ============================================================
+   REFERENSI 31.08.xx — BACA SAJA, TIDAK DIHITUNG KPI PAJAK
+   Tidak mengubah alur inventaris dan CRUD pajak.
+============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+    const page = document.getElementById('mesinPage');
+    const panel = document.getElementById('mesinPajakPanel');
+    const tbody = document.getElementById('mesinReferenceBody');
+    const summary = document.getElementById('mesinReferenceSummary');
+    const search = document.getElementById('mesinReferenceSearch');
+    const statusFilter = document.getElementById('mesinReferenceStatus');
+    const tab = document.getElementById('mesinTabPajak');
+    if (!page || !panel || !tbody || !summary || !search || !statusFilter || !tab) return;
+    const api = panel.dataset.referensiApi;
+    const nf = new Intl.NumberFormat('id-ID');
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[ch]);
+    const formatRp = value => value === null || value === undefined
+        ? '—' : `Rp ${nf.format(Number(value) || 0)}`;
+    const formatDate = value => {
+        const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ''));
+        return match ? `${match[3]}/${match[2]}/${match[1]}` : '—';
+    };
+    const statusText = {
+        pending: 'Pending',
+        historis: 'Historis',
+        perlu_verifikasi: 'Perlu Verifikasi'
+    };
+    let records = [];
+    let loaded = false;
+    let loading = false;
+    function render() {
+        const key = search.value.toLowerCase().trim();
+        const status = statusFilter.value;
+        const filtered = records.filter(row => {
+            if (status && row.status !== status) return false;
+            return [row.id, row.kode_aktiva, row.jenis_aktiva, row.no_voucher,
+                row.uraian, row.lokasi, row.tahun]
+                .join(' ').toLowerCase().includes(key);
+        });
+        summary.textContent = `Menampilkan ${nf.format(filtered.length)} dari ${nf.format(records.length)} transaksi referensi. `
+            + 'Data ini belum tentu merepresentasikan satu unit kendaraan.';
+        if (!filtered.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="mesin-reference-empty">Tidak ada transaksi yang cocok.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map((row, index) => {
+            const st = Object.hasOwn(statusText, row.status) ? row.status : 'perlu_verifikasi';
+            return `<tr>
+                <td>${index + 1}</td>
+                <td><strong>${esc(row.kode_aktiva || '—')}</strong><small>${esc(row.jenis_aktiva || '')}</small></td>
+                <td><strong>${esc(row.no_voucher || '—')}</strong><small>${esc(formatDate(row.tgl_voucher))}</small></td>
+                <td class="mesin-reference-uraian">${esc(row.uraian || '—')}</td>
+                <td>${esc(row.lokasi || '—')}</td>
+                <td>${esc(formatRp(row.nilai))}</td>
+                <td><span class="mesin-reference-status ${st}">${statusText[st]}</span></td>
+            </tr>`;
+        }).join('');
+    }
+    async function loadReferences() {
+        if (loaded || loading) return;
+        if (!api) {
+            summary.textContent = 'Route referensi kendaraan belum dikonfigurasi.';
+            return;
+        }
+        loading = true;
+        summary.textContent = 'Memuat data referensi Aktiva kendaraan...';
+        try {
+            const response = await fetch(api, { credentials: 'same-origin', headers: {
+                'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'
+            }});
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const json = await response.json();
+            if (json.success === false || !Array.isArray(json.data)) {
+                throw new Error(json.message || 'Format JSON referensi tidak sesuai.');
+            }
+            records = json.data;
+            loaded = true;
+            render();
+        } catch (error) {
+            summary.textContent = 'Referensi belum dapat dimuat: ' + error.message;
+            tbody.innerHTML = '<tr><td colspan="7" class="mesin-reference-empty">Periksa route, Controller, dan log Laravel.</td></tr>';
+        } finally {
+            loading = false;
+        }
+    }
+    search.addEventListener('input', render);
+    statusFilter.addEventListener('change', render);
+    tab.addEventListener('click', loadReferences);
+    window.addEventListener('hashchange', () => {
+        if (location.hash === '#masa-pajak') loadReferences();
+    });
+    if (location.hash === '#masa-pajak' || !panel.hidden) loadReferences();
+});

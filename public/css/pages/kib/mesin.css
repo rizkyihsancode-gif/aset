@@ -3826,3 +3826,109 @@ min-height: 39px;
     }
 }
 
+
+
+/* ============================================================
+   MODE FORM KENDARAAN 31.08.xx + REFERENSI TRANSAKSI
+   Khusus halaman K.I.B B; tidak mengubah CSS fitur lama.
+============================================================ */
+#mesinPage #mesinStandardFields[hidden],
+#mesinPage #mesinVehicleGroups[hidden],
+#mesinPage #mesinVehicleBadge[hidden] { display: none !important; }
+#mesinPage .mesin-vehicle-badge {
+    display: inline-flex; margin: 4px 0 16px; padding: 7px 12px;
+    border-radius: 9px; color: #125da6; background: #e7f3ff;
+    border: 1px solid #c7dffc; font-size: 12px; font-weight: 800;
+}
+#mesinPage .mesin-vehicle-groups { display: grid; gap: 15px; min-width: 0; }
+#mesinPage .mesin-vehicle-group {
+    min-width: 0; border: 1px solid #dce7f5; border-radius: 13px;
+    background: #fff; padding: 18px;
+}
+#mesinPage .mesin-vehicle-group h4 {
+    margin: 0 0 15px; padding-bottom: 11px; border-bottom: 1px solid #ecf1f8;
+    color: #174374; font-size: 14px; font-weight: 800;
+}
+#mesinPage .mesin-vehicle-group label,
+#mesinPage .mesin-vehicle-group input,
+#mesinPage .mesin-vehicle-group textarea,
+#mesinPage .mesin-vehicle-group select { min-width: 0; box-sizing: border-box; }
+#mesinPage #mesinKodeBarangOtomatis {
+    background: #eff6ff; color: #1b62a8; font-weight: 700;
+    cursor: default; border-color: #cbdff7;
+}
+#mesinPage .mesin-source-aktiva {
+    display: block; margin-top: 5px; color: #116ac4;
+    font-size: 11px; font-weight: 700; overflow-wrap: anywhere;
+}
+#mesinPage .mesin-reference-panel {
+    margin-top: 23px; padding: 22px; background: #fff;
+    border: 1px solid #dbe6f2; border-radius: 15px;
+    box-shadow: 0 4px 18px rgba(24, 56, 96, .04);
+}
+#mesinPage .mesin-reference-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 22px;
+}
+#mesinPage .mesin-reference-head > div:first-child { flex: 1; min-width: 240px; }
+#mesinPage .mesin-reference-eyebrow {
+    color: #0a6ace; font-size: 11px; font-weight: 800; letter-spacing: .05em;
+}
+#mesinPage .mesin-reference-head h2 {
+    margin: 6px 0 8px; font-size: 18px; font-weight: 800; color: #193e6e;
+}
+#mesinPage .mesin-reference-head p {
+    max-width: 760px; margin: 0; color: #7189a3; font-size: 12px; line-height: 1.7;
+}
+#mesinPage .mesin-reference-filter {
+    display: grid; gap: 5px; min-width: 220px;
+}
+#mesinPage .mesin-reference-filter label {
+    color: #365679; font-size: 11px; font-weight: 700;
+}
+#mesinPage .mesin-reference-filter input,
+#mesinPage .mesin-reference-filter select {
+    width: 100%; min-height: 38px; padding: 8px 11px; border-radius: 9px;
+    border: 1px solid #ccdbed; background: #fff; color: #244967;
+    box-sizing: border-box; font-size: 12px;
+}
+#mesinPage .mesin-reference-summary {
+    margin: 16px 0 12px; padding: 11px 14px; border-radius: 9px;
+    color: #355c84; background: #eef6ff; font-size: 12px;
+}
+#mesinPage .mesin-reference-scroll { width: 100%; overflow-x: auto; }
+#mesinPage .mesin-reference-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+}
+#mesinPage .mesin-reference-table thead {
+    background: #f0f6fd; color: #244e79;
+}
+#mesinPage .mesin-reference-table th,
+#mesinPage .mesin-reference-table td {
+    padding: 11px 12px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid #e6edf5;
+}
+#mesinPage .mesin-reference-table th { white-space: nowrap; font-weight: 800; }
+#mesinPage .mesin-reference-table tr:hover td { background: #f9fcff; }
+#mesinPage .mesin-reference-table small {
+    display: block; margin-top: 4px; color: #738aa4; line-height: 1.4;
+}
+#mesinPage .mesin-reference-uraian {
+    min-width: 260px; max-width: 450px; overflow-wrap: anywhere; line-height: 1.65;
+}
+#mesinPage .mesin-reference-empty { text-align: center !important; color: #7890a9; padding: 26px !important; }
+#mesinPage .mesin-reference-status {
+    display: inline-flex; white-space: nowrap; padding: 6px 9px;
+    border-radius: 8px; background: #e9eef4; color: #60748c;
+    font-size: 11px; font-weight: 800;
+}
+#mesinPage .mesin-reference-status.pending { background: #e7f1ff; color: #1769bd; }
+#mesinPage .mesin-reference-status.historis { background: #fff3e1; color: #956400; }
+#mesinPage .mesin-reference-status.perlu_verifikasi { background: #edeff4; color: #62748a; }
+@media (max-width: 720px) {
+    #mesinPage .mesin-vehicle-group { padding: 12px; }
+    #mesinPage .mesin-vehicle-group .mesin-form-grid.cols-2 { grid-template-columns: 1fr; }
+    #mesinPage .mesin-reference-panel { padding: 13px; }
+    #mesinPage .mesin-reference-filter { width: 100%; }
+    #mesinPage .mesin-reference-table { min-width: 860px; }
+}
