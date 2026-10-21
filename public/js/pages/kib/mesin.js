@@ -3478,3 +3478,445 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (location.hash === '#masa-pajak' || !panel.hidden) loadReferences();
 });
+
+
+/* ================================================================
+   SISTEM ASET PERUMDA TIRTA KENCANA
+   K.I.B B — MASA PAJAK KENDARAAN
+
+   MODUL DELETE LENGKAP
+
+   Fungsi:
+   1. Mengaktifkan interaksi tombol Delete.
+   2. Memeriksa keberadaan catatan pajak.
+   3. Memberi informasi jika pajak belum dicatat.
+   4. Menampilkan konfirmasi sebelum penghapusan.
+   5. Menghapus catatan pajak berdasarkan pajak_id.
+   6. Tidak menghapus inventaris kendaraan.
+   7. Menangani CSRF dan error server.
+   8. Memuat ulang data setelah berhasil.
+   ================================================================ */
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    'use strict';
+
+    // ============================================================
+    // 01. ELEMENT UTAMA
+    // ============================================================
+
+    const panel = document.getElementById(
+        'mesinPajakPanel'
+    );
+
+    const tabel = document.getElementById(
+        'pajakTableBody'
+    );
+
+    if (!panel || !tabel) {
+        return;
+    }
+
+    // Hindari inisialisasi ganda.
+
+    if (tabel.dataset.deletePajakReady === '1') {
+        return;
+    }
+
+    tabel.dataset.deletePajakReady = '1';
+
+    // ============================================================
+    // 02. KONFIGURASI API LARAVEL
+    // ============================================================
+
+    const apiData = panel.dataset.api;
+
+    const baseUrl = (
+        panel.dataset.base || ''
+    ).replace(/\/$/, '');
+
+    const csrfToken =
+        panel.dataset.token ||
+        document.querySelector(
+            'meta[name="csrf-token"]'
+        )?.content ||
+        '';
+
+    let deleting = false;
+
+    // ============================================================
+    // 03. AKTIFKAN INTERAKSI TOMBOL DELETE
+    // ============================================================
+
+    function aktifkanTombolDelete() {
+
+        const buttons = tabel.querySelectorAll(
+            'button[data-pajak-delete]'
+        );
+
+        buttons.forEach(button => {
+
+            /*
+             * Tombol dapat ditekan, termasuk ketika
+             * kendaraan belum mempunyai catatan pajak.
+             *
+             * Jika belum ada catatan pajak,
+             * tampilkan informasi tanpa menghapus data.
+             */
+
+            button.disabled = false;
+
+            button.title =
+                'Hapus atau periksa catatan pajak';
+
+            button.setAttribute(
+                'aria-label',
+                'Hapus atau periksa catatan pajak'
+            );
+
+        });
+
+    }
+
+    aktifkanTombolDelete();
+
+    // ============================================================
+    // 04. PANTAU PERUBAHAN TABEL
+    // ============================================================
+
+    /*
+     * Tabel Masa Pajak digambar ulang ketika:
+     *
+     * - Data dimuat
+     * - Pencarian berubah
+     * - Filter digunakan
+     * - Pagination berubah
+     * - Pembaruan pajak disimpan
+     *
+     * MutationObserver memastikan tombol Delete
+     * tetap mempunyai interaksi setelah render.
+     */
+
+    const observer = new MutationObserver(() => {
+
+        aktifkanTombolDelete();
+
+    });
+
+    observer.observe(
+        tabel,
+        {
+            childList: true,
+            subtree: true
+        }
+    );
+
+    // ============================================================
+    // 05. AMBIL DATA PAJAK TERBARU
+    // ============================================================
+
+    async function ambilDataPajak() {
+
+        if (!apiData) {
+
+            throw new Error(
+                'Endpoint data Masa Pajak tidak ditemukan.'
+            );
+
+        }
+
+        const response = await fetch(
+            apiData,
+            {
+                method: 'GET',
+
+                credentials: 'same-origin',
+
+                headers: {
+                    Accept: 'application/json',
+
+                    'X-Requested-With':
+                        'XMLHttpRequest'
+                }
+            }
+        );
+
+        const json = await response
+            .json()
+            .catch(() => null);
+
+        if (
+            !response.ok ||
+            !json ||
+            !Array.isArray(json.data)
+        ) {
+
+            throw new Error(
+                json?.message ||
+                `Gagal membaca data pajak. HTTP ${response.status}`
+            );
+
+        }
+
+        return json.data;
+
+    }
+
+    // ============================================================
+    // 06. REQUEST DELETE KE LARAVEL
+    // ============================================================
+
+    async function hapusCatatanPajak(pajakId) {
+
+        if (!baseUrl) {
+
+            throw new Error(
+                'Endpoint penghapusan pajak tidak tersedia.'
+            );
+
+        }
+
+        if (!csrfToken) {
+
+            throw new Error(
+                'Token CSRF tidak tersedia. Muat ulang halaman.'
+            );
+
+        }
+
+        const url =
+            `${baseUrl}/${encodeURIComponent(pajakId)}`;
+
+        const response = await fetch(
+            url,
+            {
+                method: 'DELETE',
+
+                credentials: 'same-origin',
+
+                headers: {
+                    Accept: 'application/json',
+
+                    'X-Requested-With':
+                        'XMLHttpRequest',
+
+                    'X-CSRF-TOKEN':
+                        csrfToken
+                }
+            }
+        );
+
+        const json = await response
+            .json()
+            .catch(() => null);
+
+        if (
+            !response.ok ||
+            json?.success === false
+        ) {
+
+            throw new Error(
+                json?.message ||
+                `Penghapusan gagal. HTTP ${response.status}`
+            );
+
+        }
+
+        return json;
+
+    }
+
+    // ============================================================
+    // 07. AKSI DELETE PADA TABEL
+    // ============================================================
+
+    /*
+     * Capture listener mencegah handler Delete lama
+     * menjalankan permintaan penghapusan yang sama
+     * dua kali.
+     */
+
+    tabel.addEventListener(
+        'click',
+
+        async event => {
+
+            const button = event.target.closest(
+                'button[data-pajak-delete]'
+            );
+
+            if (
+                !button ||
+                !tabel.contains(button)
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+
+            event.stopImmediatePropagation();
+
+            if (deleting) {
+                return;
+            }
+
+            // ====================================================
+            // IDENTIFIKASI KENDARAAN
+            // ====================================================
+
+            const mesinId = Number(
+                button.dataset.pajakDelete
+            );
+
+            if (
+                !Number.isSafeInteger(mesinId) ||
+                mesinId <= 0
+            ) {
+
+                alert(
+                    'Identitas kendaraan tidak valid.'
+                );
+
+                return;
+            }
+
+            deleting = true;
+
+            button.disabled = true;
+
+            try {
+
+                // =================================================
+                // MEMBACA CATATAN PAJAK TERBARU
+                // =================================================
+
+                const data = await ambilDataPajak();
+
+                const kendaraan = data.find(
+                    item =>
+                        Number(item.mesin_id) === mesinId
+                );
+
+                if (!kendaraan) {
+
+                    alert(
+                        'Kendaraan tidak ditemukan ' +
+                        'pada data Masa Pajak.'
+                    );
+
+                    return;
+                }
+
+                // =================================================
+                // PERIKSA ID CATATAN PAJAK
+                // =================================================
+
+                const pajakId = Number(
+                    kendaraan.pajak_id
+                );
+
+                /*
+                 * Jika pajak_id kosong:
+                 *
+                 * Kendaraan tetap berada di inventaris.
+                 * Tidak ada riwayat pajak yang bisa dihapus.
+                 */
+
+                if (
+                    !Number.isSafeInteger(pajakId) ||
+                    pajakId <= 0
+                ) {
+
+                    alert(
+                        'Kendaraan ini berstatus Belum Dicatat.\n\n' +
+                        'Belum ada catatan pembaruan pajak ' +
+                        'yang dapat dihapus.\n\n' +
+                        'Untuk mengubah klasifikasi atau ' +
+                        'menghapus inventaris kendaraan, ' +
+                        'gunakan menu Daftar Peralatan dan Mesin.'
+                    );
+
+                    return;
+                }
+
+                // =================================================
+                // IDENTITAS KENDARAAN
+                // =================================================
+
+                const identitas = String(
+                    kendaraan.nomor_polisi ||
+                    kendaraan.merk ||
+                    `ID Mesin ${mesinId}`
+                ).trim();
+
+                // =================================================
+                // KONFIRMASI PENGHAPUSAN
+                // =================================================
+
+                const konfirmasi = confirm(
+                    `Hapus catatan pajak kendaraan ${identitas}?\n\n` +
+                    'Catatan pembaruan pajak akan dihapus.\n' +
+                    'Data inventaris kendaraan tidak akan dihapus.'
+                );
+
+                if (!konfirmasi) {
+                    return;
+                }
+
+                // =================================================
+                // EKSEKUSI DELETE
+                // =================================================
+
+                await hapusCatatanPajak(
+                    pajakId
+                );
+
+                // =================================================
+                // NOTIFIKASI BERHASIL
+                // =================================================
+
+                alert(
+                    'Catatan pajak berhasil dihapus.\n\n' +
+                    'Data kendaraan tetap tersimpan dalam inventaris.'
+                );
+
+                // =================================================
+                // MUAT ULANG TABEL DAN STATISTIK
+                // =================================================
+
+                window.location.reload();
+
+            } catch (error) {
+
+                console.error(
+                    '[MASA PAJAK] Gagal menghapus:',
+                    error
+                );
+
+                alert(
+                    'Gagal menghapus catatan pajak:\n' +
+                    error.message
+                );
+
+            } finally {
+
+                deleting = false;
+
+                if (button.isConnected) {
+
+                    button.disabled = false;
+
+                }
+
+            }
+
+        },
+
+        true
+    );
+
+});
+
+/* ================================================================
+   AKHIR MODUL DELETE MASA PAJAK KENDARAAN
+   ================================================================ */
