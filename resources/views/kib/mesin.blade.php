@@ -12,9 +12,11 @@
      CSS PERALATAN DAN MESIN + MASA PAJAK
 ========================================================= --}}
 
-    <link rel="stylesheet"
-        href="{{ asset('css/pages/kib/mesin.css') }}?v={{ file_exists(public_path('css/pages/kib/mesin.css')) ? filemtime(public_path('css/pages/kib/mesin.css')) : time() }}">
-
+    {{-- CSS dengan versi otomatis --}}
+<link
+    rel="stylesheet"
+    href="{{ asset('css/pages/kib/mesin.css') }}?v={{ filemtime(public_path('css/pages/kib/mesin.css')) }}"
+>
     <section id="mesinPage" class="content mesin-page" data-store-url="{{ route('kib.mesin.store') }}"
         data-record-base="{{ url('/kib/mesin') }}" data-detail-base="{{ url('/kib/mesin/lokasi') }}"
         data-pending-url="{{ route('kib.mesin.pending') }}">
@@ -2003,8 +2005,9 @@
      Semua fungsi tetap berada pada satu mesin.js
 ========================================================= --}}
 
-    <script
-        src="{{ asset('js/pages/kib/mesin.js') }}?v={{ file_exists(public_path('js/pages/kib/mesin.js')) ? filemtime(public_path('js/pages/kib/mesin.js')) : time() }}">
-    </script>
-
+  {{-- JavaScript dengan versi otomatis --}}
+<script
+    src="{{ asset('js/pages/kib/mesin.js') }}?v={{ filemtime(public_path('js/pages/kib/mesin.js')) }}"
+    defer
+></script>
 @endsection
