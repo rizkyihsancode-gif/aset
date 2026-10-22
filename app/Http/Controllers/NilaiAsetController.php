@@ -594,56 +594,93 @@ class NilaiAsetController extends Controller
             );
     }
 
+
     /**
+     * ==========================================================
      * HAPUS NILAI ASET
+     *
+     * - Mencegah penghapusan aset yang sudah diproses K.I.B.
+     * - Memisahkan validasi Hapus dari Tambah/Edit.
+     * - Tidak membuka modal Edit ketika Delete ditolak.
+     * - Selalu kembali ke halaman Nilai Aset.
+     * ==========================================================
      */
     public function destroy(int $nilai)
     {
         $pdfPath = null;
 
-        DB::transaction(
-            function () use ($nilai, &$pdfPath): void {
+        DB::transaction(function () use ($nilai, &$pdfPath): void {
 
-                $record = NilaiAktiva::query()
-                    ->whereKey($nilai)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            $record = NilaiAktiva::query()
+                ->whereKey($nilai)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-                $processed =
-                    (int) $record->jenisn === 1
-                    && (int) $record->stat === 1;
+            /*
+         * Periksa apakah Nilai Aset telah
+         * diproses sebagai inventaris K.I.B.
+         */
+            $processed =
+                (int) $record->jenisn === 1
+                && (int) $record->stat === 1;
 
-                $hasLinkedTanah =
-                    Schema::hasColumn(
-                        'tanahs',
-                        'nilai_aktiva_id'
-                    )
-                    && DB::table('tanahs')
-                    ->where(
-                        'nilai_aktiva_id',
-                        $record->id
-                    )
-                    ->exists();
+            /*
+         * Periksa hubungan dengan inventaris Tanah.
+         */
+            $hasLinkedTanah =
+                Schema::hasColumn(
+                    'tanahs',
+                    'nilai_aktiva_id'
+                )
+                && DB::table('tanahs')
+                ->where(
+                    'nilai_aktiva_id',
+                    $record->id
+                )
+                ->exists();
 
-                if ($processed || $hasLinkedTanah) {
-                    throw ValidationException::withMessages([
-                        'jenisn' =>
-                        'Penambahan Aset sudah diproses '
-                            . 'dalam K.I.B. Tidak boleh '
-                            . 'dihapus langsung dari Nilai Aset.',
-                    ]);
-                }
+            /*
+         * Jika tidak boleh dihapus:
+         *
+         * Gunakan error bag khusus "nilaiDelete".
+         *
+         * Error ini tidak akan dianggap sebagai
+         * kesalahan form Tambah/Edit.
+         */
+            if ($processed || $hasLinkedTanah) {
 
-                $pdfPath = $record->dokumen_pdf;
-
-                $record->delete();
+                throw ValidationException::withMessages([
+                    'delete' =>
+                    'Data Nilai Aset tidak dapat dihapus ' .
+                        'karena sudah diproses atau terhubung ' .
+                        'dengan inventaris K.I.B.'
+                ])
+                    ->errorBag('nilaiDelete')
+                    ->redirectTo(route('main.nilai'));
             }
-        );
 
+            /*
+         * Simpan path PDF sebelum data dihapus.
+         */
+            $pdfPath = $record->dokumen_pdf;
+
+            /*
+         * Hapus data yang memenuhi persyaratan.
+         */
+            $record->delete();
+        });
+
+        /*
+     * Hapus dokumen setelah transaksi
+     * database berhasil diselesaikan.
+     */
         if ($pdfPath) {
             Storage::disk('local')->delete($pdfPath);
         }
 
+        /*
+     * Kembali ke halaman Nilai Aset.
+     */
         return redirect()
             ->route('main.nilai')
             ->with(
@@ -651,6 +688,7 @@ class NilaiAsetController extends Controller
                 'Data Nilai Aset berhasil dihapus.'
             );
     }
+
 
     /**
      * ==========================================

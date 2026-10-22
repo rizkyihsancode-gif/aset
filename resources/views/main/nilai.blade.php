@@ -113,6 +113,39 @@
         </section>
 
 
+
+        {{-- ========================================================
+     NOTIFIKASI ERROR KHUSUS DELETE NILAI ASET
+
+     Tidak membuka modal Tambah/Edit.
+========================================================= --}}
+
+        @if ($errors->getBag('nilaiDelete')->any())
+            <div class="nilai-alert nilai-alert-danger" role="alert">
+
+                <i data-lucide="circle-alert"></i>
+
+                <div>
+
+                    <strong>
+                        Data tidak dapat dihapus.
+                    </strong>
+
+                    <ul>
+
+                        @foreach ($errors->getBag('nilaiDelete')->all() as $error)
+                            <li>
+                                {{ $error }}
+                            </li>
+                        @endforeach
+
+                    </ul>
+
+                </div>
+
+            </div>
+        @endif
+
         {{-- =====================================================
          ALERT
     ====================================================== --}}
@@ -1018,7 +1051,8 @@
                                 </option>
 
                                 @foreach ($aktivaOptions as $item)
-                                    <option value="{{ $item->id }}" data-kib="{{ $item->kib }}" @selected(old('id_aktiva') == $item->id)>
+                                    <option value="{{ $item->id }}" data-kib="{{ $item->kib }}"
+                                        @selected(old('id_aktiva') == $item->id)>
                                         {{ $item->kode }}
                                         |
                                         {{ $item->aktiva }}
