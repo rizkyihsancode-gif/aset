@@ -1,7 +1,21 @@
 
 /* ============================================================
+   SISTEM ASET PERUMDA TIRTA KENCANA
    K.I.B E — ASET TETAP LAINNYA
-   PERUMDA TIRTA KENCANA
+
+   FULL CSS — TAMPILAN LEBIH JELAS DAN PROPORSIONAL
+
+   Fokus:
+   - Teks lebih besar dan terbaca
+   - Kolom tabel sesuai kegunaannya
+   - Tabel tetap rapi saat zoom browser
+   - Tombol CRUD tetap nyaman digunakan
+   - Desain lama dipertahankan
+   ============================================================ */
+
+
+/* ============================================================
+   01. ROOT DAN PENGATURAN DASAR
    ============================================================ */
 
 .aet-page {
@@ -13,9 +27,12 @@
 
     min-height: 100vh;
     padding: 0 20px 28px;
+
     color: var(--ink);
     background: #f4f8fd;
-    font-size: 12px;
+
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .aet-page *,
@@ -46,16 +63,19 @@
     stroke-width: 2;
 }
 
+
 /* ============================================================
-   HERO HEADER
+   02. HERO HEADER
    ============================================================ */
 
 .aet-hero {
     position: relative;
+
     margin: 0 -20px 15px;
     padding: 24px 20px 23px;
-    overflow: hidden;
+
     min-height: 202px;
+    overflow: hidden;
 
     background:
         url('/images/master/pdam4.png')
@@ -83,9 +103,12 @@
 .aet-crumb {
     display: flex;
     align-items: center;
+
     gap: 8px;
     margin: 0 0 15px;
+
     color: #50759c;
+    font-size: 13px;
     font-weight: 650;
 }
 
@@ -100,51 +123,68 @@
 }
 
 .aet-hero h1 {
-    font-size: 30px;
+    margin: 0 0 7px;
+
+    color: #091e4c;
+
+    font-size: 32px;
     line-height: 1.15;
     font-weight: 850;
     letter-spacing: -.7px;
-    color: #091e4c;
-    margin: 0 0 7px;
 }
 
 .aet-hero p {
-    max-width: 800px;
-    color: #426894;
-    font-size: 13px;
-    line-height: 1.6;
+    max-width: 850px;
     margin: 0 0 21px;
+
+    color: #426894;
+
+    font-size: 14px;
+    line-height: 1.65;
 }
 
+
 /* ============================================================
-   KPI CARDS
+   03. KPI CARDS
    ============================================================ */
 
 .aet-kpis {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
     gap: 12px;
 }
 
 .aet-kpis article {
-    min-width: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 15px;
+
+    min-width: 0;
+    gap: 13px;
+    padding: 15px;
+
     border: 1px solid rgba(220, 233, 247, .95);
     border-radius: 11px;
+
     background: rgba(255, 255, 255, .97);
-    box-shadow: 0 4px 16px #164d7316;
+
+    box-shadow:
+        0 4px 16px rgba(22, 77, 115, .09);
 }
 
 .aet-kpi-icon {
     display: grid;
     place-items: center;
+
     flex: 0 0 48px;
+
     width: 48px;
     height: 48px;
+
     border-radius: 10px;
+
     background: #0869ed;
     color: #fff;
 }
@@ -166,84 +206,110 @@
 
 .aet-kpis small {
     color: #263f68;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 750;
 }
 
 .aet-kpis strong {
+    margin: 5px 0;
+
     color: #102d65;
-    font-size: 20px;
+
+    font-size: 23px;
     font-weight: 850;
-    margin: 4px 0;
     line-height: 1.15;
+
     overflow-wrap: anywhere;
 }
 
 .aet-kpis article div > span {
     color: #8398ad;
-    font-size: 10px;
+    font-size: 11px;
+    line-height: 1.45;
 }
 
+
 /* ============================================================
-   PANEL UTAMA
+   04. PANEL UTAMA
    ============================================================ */
 
 .aet-panel {
-    padding: 17px 17px 14px;
+    padding: 18px;
+
     border: 1px solid var(--line);
     border-radius: 12px;
-    box-shadow: 0 4px 15px #1e4a7808;
+
     background: #fff;
+
+    box-shadow:
+        0 4px 15px rgba(30, 74, 120, .04);
 }
 
 .aet-panel-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
+
     gap: 12px;
 }
 
 .aet-panel-top h2 {
-    font-size: 16px;
-    margin: 0 0 4px;
-    font-weight: 850;
+    margin: 0 0 5px;
+
     color: #0d2b62;
+
+    font-size: 18px;
+    font-weight: 850;
 }
 
 .aet-panel-top p {
-    color: #8193ad;
-    font-size: 11px;
     margin: 0;
+
+    color: #8193ad;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
+
 /* ============================================================
-   BUTTONS
+   05. BUTTON UMUM
    ============================================================ */
 
 .aet-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    min-height: 35px;
+
+    gap: 8px;
+
+    min-height: 38px;
     padding: 9px 13px;
-    border-radius: 7px;
+
     border: 1px solid transparent;
+    border-radius: 8px;
+
+    background: #fff;
+    color: #0a59b9;
+
     text-decoration: none;
     white-space: nowrap;
+
+    font-size: 13px;
     font-weight: 750;
-    color: #0a59b9;
-    background: #fff;
+
     transition:
         background .16s,
-        border-color .16s;
+        border-color .16s,
+        box-shadow .16s;
 }
 
 .aet-btn.primary {
     color: #fff;
-    border-color: #0667eb;
     background: #0667eb;
-    box-shadow: 0 2px 5px #1950af1a;
+    border-color: #0667eb;
+
+    box-shadow:
+        0 2px 5px rgba(25, 80, 175, .10);
 }
 
 .aet-btn.primary:hover {
@@ -271,130 +337,206 @@
     border-color: #f4ccd1;
 }
 
+
 /* ============================================================
-   TABS
+   06. TAB NAVIGASI
    ============================================================ */
 
 .aet-tabs {
     display: flex;
-    gap: 28px;
-    border-bottom: 1px solid #dce7f4;
+    align-items: center;
+
+    gap: 25px;
+
     margin: 16px 0 13px;
+
+    border-bottom: 1px solid #dce7f4;
+
     overflow-x: auto;
 }
 
 .aet-tabs button {
     padding: 11px 3px 12px;
+
     border: 0;
     border-bottom: 3px solid transparent;
+
     background: transparent;
     color: #5874a5;
-    white-space: nowrap;
+
+    font-size: 13px;
     font-weight: 650;
-    font-size: 12px;
+
+    white-space: nowrap;
+}
+
+.aet-tabs button:hover {
+    color: #0769ed;
 }
 
 .aet-tabs button.active {
     color: #0869eb;
     border-bottom-color: #0869eb;
+
     font-weight: 850;
 }
 
+
 /* ============================================================
-   TOOLBAR, SEARCH, FILTER
+   07. TOOLBAR DAN PENCARIAN
    ============================================================ */
 
 .aet-toolbar {
     display: flex;
-    gap: 9px;
     align-items: center;
     flex-wrap: wrap;
-    margin: 0 0 12px;
+
+    gap: 9px;
+    margin: 0 0 13px;
 }
 
 .aet-search {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
     flex: 1;
     min-width: 210px;
-    display: flex;
-    position: relative;
-    align-items: center;
 }
 
 .aet-search svg {
     position: absolute;
+
     left: 12px;
+
     color: #7e9bbb;
 }
 
 .aet-search input {
     width: 100%;
-    min-height: 36px;
-    padding: 8px 11px 8px 35px;
+    min-height: 40px;
+
+    padding: 9px 12px 9px 37px;
+
     border: 1px solid #d5e4f3;
-    border-radius: 7px;
+    border-radius: 8px;
+
     background: #f5f9fe;
-    outline: none;
     color: #21426c;
+
+    font-size: 13px;
+    outline: none;
 }
 
 .aet-search input:focus {
     border-color: #6badeb;
-    box-shadow: 0 0 0 3px #126fd51a;
+
+    box-shadow:
+        0 0 0 3px rgba(18, 111, 213, .10);
+}
+
+.aet-search input::placeholder {
+    color: #91a5bc;
 }
 
 .aet-limit {
     display: flex;
-    gap: 8px;
     align-items: center;
+
+    gap: 8px;
+
     color: #69809c;
+
+    font-size: 13px;
     font-weight: 600;
+
+    white-space: nowrap;
 }
 
 .aet-limit select {
-    min-height: 35px;
-    padding: 0 9px;
+    min-height: 38px;
+    padding: 0 10px;
+
     border: 1px solid #d6e4f1;
-    background: #fff;
     border-radius: 7px;
+
+    background: #fff;
     color: #1a4b8a;
+
+    font-size: 13px;
 }
 
+
 /* ============================================================
-   TABEL
+   08. KONTAINER TABEL
    ============================================================ */
 
 .aet-table-scroll {
     width: 100%;
+
     overflow-x: auto;
+    overflow-y: hidden;
+
     border: 1px solid #dfebf5;
-    border-radius: 7px;
+    border-radius: 9px;
+
+    background: #fff;
+
+    scrollbar-width: thin;
+    scrollbar-color: #c1d4e8 transparent;
 }
+
+
+/* ============================================================
+   09. TABEL GLOBAL K.I.B E
+
+   Berlaku untuk:
+   - Daftar Lokasi
+   - Aset Terbaru
+   - Detail Inventaris
+   - Detail Nilai Aktiva
+   ============================================================ */
 
 .aet-table {
     width: 100%;
     min-width: 880px;
+
     border-collapse: collapse;
+
     table-layout: auto;
 }
 
 .aet-table thead th {
-    background: #e9f3ff;
-    padding: 11px 10px;
-    color: #132f5e;
-    text-align: left;
-    font-weight: 800;
-    font-size: 11px;
+    padding: 13px 12px;
+
     border: 1px solid #dce7f4;
+
+    background: #e9f3ff;
+    color: #132f5e;
+
+    text-align: left;
+    vertical-align: middle;
+
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.45;
+
     white-space: nowrap;
 }
 
 .aet-table tbody td {
-    padding: 10px;
+    padding: 12px 12px;
+
     border: 1px solid #e2eaf4;
+
     color: #375370;
-    font-size: 11px;
-    vertical-align: middle;
+
+    font-size: 14px;
+    font-weight: 450;
     line-height: 1.5;
+
+    vertical-align: middle;
 }
 
 .aet-table tbody tr:nth-child(even) {
@@ -412,20 +554,26 @@
 .aet-table tbody td b,
 .aet-table tbody td strong {
     color: #23436f;
+
+    font-size: 14px;
     font-weight: 800;
 }
 
 .aet-table tbody td small {
     display: block;
+
+    margin-top: 5px;
+
     color: #8197ae;
-    font-size: 10px;
-    margin-top: 3px;
+
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .aet-table th:first-child,
 .aet-table td:first-child {
     text-align: center;
-    width: 42px;
+    width: 50px;
 }
 
 .aet-table th:last-child,
@@ -433,50 +581,192 @@
     text-align: center;
 }
 
-.aet-location-row td:nth-child(2) {
-    min-width: 205px;
-    max-width: 340px;
+
+/* ============================================================
+   10. TABEL DAFTAR LOKASI
+   ============================================================ */
+
+/*
+   Pengaturan kolom khusus untuk #aetTable.
+
+   1. No            =  4%
+   2. Lokasi        = 30%
+   3. Alamat        = 27%
+   4. Nilai Aktiva  = 21%
+   5. PDF           =  8%
+   6. Aksi          = 10%
+
+   TOTAL = 100%
+
+   Pengaturan ini tidak memengaruhi tabel
+   Detail Aset, Nilai Aktiva dan Aset Terbaru.
+*/
+
+#aetTable {
+    width: 100%;
+    min-width: 980px;
+
+    table-layout: fixed;
 }
 
-.aet-location-row td:nth-child(3) {
-    min-width: 180px;
+/* Nomor */
+
+#aetTable th:nth-child(1),
+#aetTable td:nth-child(1) {
+    width: 4%;
+    text-align: center;
 }
 
-.aet-location-row td:nth-child(4) {
-    min-width: 145px;
+/* Lokasi */
+
+#aetTable th:nth-child(2),
+#aetTable td:nth-child(2) {
+    width: 30%;
+    text-align: left;
 }
 
-/* NILAI */
-.aet-value-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid #c7dff8;
-    background: #f0f7ff;
-    color: #0868d5;
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 11px;
-    font-weight: 750;
-    white-space: nowrap;
+/* Alamat */
+
+#aetTable th:nth-child(3),
+#aetTable td:nth-child(3) {
+    width: 27%;
+    text-align: left;
 }
 
-.aet-value-btn svg {
-    width: 12px;
-    height: 12px;
+/* Nilai Aktiva */
+
+#aetTable th:nth-child(4),
+#aetTable td:nth-child(4) {
+    width: 21%;
+    text-align: left;
 }
 
 /* PDF */
+
+#aetTable th:nth-child(5),
+#aetTable td:nth-child(5) {
+    width: 8%;
+    text-align: center;
+}
+
+/* Aksi */
+
+#aetTable th:nth-child(6),
+#aetTable td:nth-child(6) {
+    width: 10%;
+    text-align: center;
+}
+
+/* Lokasi dan alamat panjang */
+
+#aetTable td:nth-child(2),
+#aetTable td:nth-child(3) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Tombol Nilai dan Aksi dijaga tetap rapi */
+
+#aetTable td:nth-child(4),
+#aetTable td:nth-child(5),
+#aetTable td:nth-child(6) {
+    vertical-align: middle;
+}
+
+#aetTable td:nth-child(4) {
+    overflow-wrap: anywhere;
+}
+
+/* Nama lokasi */
+
+#aetTable .aet-location-row td:nth-child(2) b {
+    display: block;
+
+    color: #123765;
+
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.45;
+}
+
+/* Jumlah inventaris dan unit */
+
+#aetTable .aet-location-row td:nth-child(2) small {
+    color: #6f89a6;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Alamat */
+
+#aetTable .aet-location-row td:nth-child(3) {
+    color: #3e5d80;
+    line-height: 1.55;
+}
+
+
+/* ============================================================
+   11. TOMBOL NILAI AKTIVA
+   ============================================================ */
+
+.aet-value-btn {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+
+    max-width: 100%;
+    min-height: 33px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #c7dff8;
+    border-radius: 7px;
+
+    background: #f0f7ff;
+    color: #0868d5;
+
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1.4;
+
+    white-space: nowrap;
+}
+
+.aet-value-btn:hover {
+    background: #e1efff;
+    border-color: #a9cdf4;
+}
+
+.aet-value-btn svg {
+    width: 13px;
+    height: 13px;
+}
+
 .aet-pdf-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+
     gap: 5px;
+
+    padding: 8px;
+
     border: 1px solid #c7e1fc;
-    color: #0870d7;
+    border-radius: 7px;
+
     background: #eaf6ff;
-    border-radius: 6px;
-    padding: 7px 9px;
+    color: #0870d7;
+
+    font-size: 12px;
+    font-weight: 750;
+
     white-space: nowrap;
+}
+
+.aet-pdf-btn:hover {
+    background: #dceeff;
 }
 
 .aet-center {
@@ -487,22 +777,43 @@
     color: #9aacbb;
 }
 
-/* AKSI */
+
+/* ============================================================
+   12. TOMBOL AKSI CRUD
+   ============================================================ */
+
 .aet-actions {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+
+    flex-wrap: nowrap;
+    gap: 6px;
 }
 
 .aet-actions button {
-    height: 31px;
-    width: 31px;
     display: grid;
     place-items: center;
+
+    flex: 0 0 34px;
+
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+
     border: 0;
-    border-radius: 7px;
+    border-radius: 8px;
+
     cursor: pointer;
+
+    transition:
+        background .15s ease,
+        transform .15s ease;
+}
+
+.aet-actions button:hover {
+    transform: translateY(-1px);
 }
 
 .aet-actions button.detail {
@@ -532,43 +843,72 @@
     background: #ffd9e0;
 }
 
-.aet-actions svg {
-    height: 16px;
-    width: 16px;
+.aet-actions button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
 }
+
+.aet-actions svg {
+    width: 17px;
+    height: 17px;
+}
+
+
+/* ============================================================
+   13. TABEL KOSONG
+   ============================================================ */
 
 .aet-empty {
     text-align: center !important;
-    padding: 22px 12px !important;
+
+    padding: 24px 12px !important;
+
     color: #8393ad !important;
+
+    font-size: 13px !important;
 }
 
-/* PAGINATION */
+
+/* ============================================================
+   14. PAGINATION DAN FOOTER TABEL
+   ============================================================ */
+
 .aet-table-bottom {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 14px;
+    justify-content: space-between;
+
     flex-wrap: wrap;
-    margin: 12px 0 0;
+    gap: 14px;
+
+    margin: 13px 0 0;
+
     color: #607ca3;
-    font-size: 11px;
+
+    font-size: 12px;
 }
 
 .aet-pages {
     display: flex;
     align-items: center;
+
     gap: 5px;
 }
 
 .aet-pages button {
-    min-width: 31px;
-    height: 31px;
-    padding: 4px 8px;
+    min-width: 34px;
+    height: 34px;
+
+    padding: 4px 9px;
+
     border: 1px solid #d7e4f3;
+    border-radius: 7px;
+
     background: #fff;
     color: #536f99;
-    border-radius: 6px;
+
+    font-size: 12px;
 }
 
 .aet-pages button.current {
@@ -582,30 +922,41 @@
     cursor: default;
 }
 
+
 /* ============================================================
-   REKAPITULASI
+   15. REKAPITULASI ASET
    ============================================================ */
 
 .aet-recap {
     display: grid;
+
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
 
 .aet-recap article {
-    padding: 16px;
+    padding: 17px;
+
     border: 1px solid #e1ebf6;
+    border-radius: 10px;
+
     background: #fafdff;
-    border-radius: 9px;
 }
 
 .aet-recap h3 {
-    font-size: 14px;
-    margin: 0 0 10px;
+    margin: 0 0 12px;
+
+    color: #153b6e;
+
+    font-size: 15px;
+    font-weight: 800;
 }
 
 .aet-recap p {
     color: #44668b;
+
+    font-size: 13px;
+    line-height: 1.7;
 }
 
 .aet-condition-list {
@@ -616,33 +967,49 @@
 .aet-condition-list > div {
     display: flex;
     justify-content: space-between;
-    padding: 8px;
-    border-radius: 5px;
+    align-items: center;
+
+    gap: 12px;
+    padding: 10px 12px;
+
+    border-radius: 7px;
+
     background: #eef6ff;
+
+    color: #365c84;
+    font-size: 13px;
 }
 
 .aet-note {
-    line-height: 1.7;
-    font-size: 11px;
     color: #8794aa !important;
+
+    font-size: 12px;
+    line-height: 1.7;
 }
 
+
 /* ============================================================
-   MODAL
+   16. MODAL DASAR
    ============================================================ */
 
 .aet-dialog {
-    margin: auto;
     width: min(1020px, calc(100vw - 36px));
-    max-height: 92vh;
     max-width: none;
-    border-radius: 12px;
-    border: 1px solid #d5e2f3;
+    max-height: 92vh;
+
+    margin: auto;
     padding: 0;
+
+    border: 1px solid #d5e2f3;
+    border-radius: 12px;
+
     background: #fff;
-    box-shadow: 0 28px 95px #0d24424d;
-    overflow: hidden;
     color: #18365d;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 28px 95px rgba(13, 36, 66, .30);
 }
 
 .aet-dialog.wide {
@@ -656,107 +1023,144 @@
 
 .aet-dialog > header {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
+    align-items: flex-start;
+
     gap: 15px;
-    padding: 16px 19px;
-    background: linear-gradient(100deg, #fff, #f2f8ff);
+    padding: 17px 19px;
+
     border-bottom: 1px solid #e1eaf5;
+
+    background: linear-gradient(
+        100deg,
+        #fff,
+        #f2f8ff
+    );
 }
 
 .aet-dialog > header small {
     color: #3975b2;
-    font-size: 10px;
+
+    font-size: 11px;
     font-weight: 850;
     letter-spacing: .08em;
 }
 
 .aet-dialog > header h2 {
-    font-size: 18px;
     margin: 5px 0 4px;
+
     color: #102f60;
+
+    font-size: 20px;
     font-weight: 850;
 }
 
 .aet-dialog > header p {
-    font-size: 11px;
-    color: #718ca6;
     margin: 0;
+
+    color: #718ca6;
+    font-size: 12px;
 }
 
 .aet-dialog > header > button {
-    width: 33px;
-    height: 33px;
     display: grid;
     place-items: center;
+
+    flex: 0 0 35px;
+
+    width: 35px;
+    height: 35px;
+
     border: 0;
     border-radius: 8px;
+
     background: #e9f2fa;
     color: #67809a;
+
     cursor: pointer;
 }
 
 .aet-dialog-body {
     max-height: calc(92vh - 92px);
+
+    padding: 17px 19px;
+
     overflow-y: auto;
-    padding: 16px 19px;
 }
 
+
 /* ============================================================
-   FORM
+   17. SECTION FORM TAMBAH / EDIT
    ============================================================ */
 
 .aet-section {
-    padding: 14px;
-    border: 1px solid #dbe8f5;
-    border-radius: 9px;
     margin-bottom: 13px;
+    padding: 15px;
+
+    border: 1px solid #dbe8f5;
+    border-radius: 10px;
+
     background: #fff;
 }
 
 .aet-section h3 {
     display: flex;
     align-items: center;
+
     gap: 9px;
-    margin: 0 0 15px;
+
+    margin: 0 0 16px;
+
     color: #143568;
-    font-size: 13px;
+
+    font-size: 15px;
     font-weight: 800;
 }
 
 .aet-section h3 span {
-    width: 27px;
-    height: 27px;
-    border-radius: 8px;
     display: grid;
     place-items: center;
+
+    flex: 0 0 29px;
+
+    width: 29px;
+    height: 29px;
+
+    border-radius: 8px;
+
     background: #e8f3ff;
     color: #0872db;
 }
 
 .aet-fields {
     display: grid;
+
     gap: 13px;
     margin-bottom: 12px;
 }
 
 .aet-fields.cols3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
 }
 
 .aet-fields.cols2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 }
 
 .aet-fields label,
 .aet-textarea-label {
     display: flex;
     flex-direction: column;
+
     gap: 6px;
-    font-weight: 750;
-    font-size: 11px;
-    color: #3d597a;
     min-width: 0;
+
+    color: #3d597a;
+
+    font-size: 13px;
+    font-weight: 750;
 }
 
 .aet-fields input,
@@ -764,12 +1168,18 @@
 .aet-textarea-label textarea {
     width: 100%;
     min-width: 0;
-    min-height: 36px;
-    padding: 8px 10px;
+    min-height: 40px;
+
+    padding: 9px 11px;
+
     border: 1px solid #d7e4f2;
-    border-radius: 7px;
+    border-radius: 8px;
+
     background: #fff;
     color: #2d4e70;
+
+    font-size: 13px;
+
     outline: none;
 }
 
@@ -777,64 +1187,86 @@
 .aet-fields select:focus,
 .aet-textarea-label textarea:focus {
     border-color: #4d9ae9;
-    box-shadow: 0 0 0 3px #3982da1d;
+
+    box-shadow:
+        0 0 0 3px rgba(57, 130, 218, .12);
 }
 
 .aet-fields label small {
-    font-size: 10px;
-    font-weight: 400;
     color: #8194a9;
+
+    font-size: 11px;
+    font-weight: 400;
 }
 
 .aet-textarea-label textarea {
     resize: vertical;
-    min-height: 75px;
+    min-height: 90px;
 }
 
 #aetForm footer {
     display: flex;
     justify-content: flex-end;
+
     gap: 10px;
-    padding: 5px 0 0;
+    padding: 7px 0 0;
 }
 
 .aet-error {
-    white-space: pre-line;
     margin: 0 0 14px;
-    background: #fff0f0;
-    color: #a02f3e;
+    padding: 11px 13px;
+
     border: 1px solid #f3c5ce;
     border-radius: 8px;
-    padding: 10px 12px;
+
+    background: #fff0f0;
+    color: #a02f3e;
+
+    font-size: 13px;
+    line-height: 1.6;
+
+    white-space: pre-line;
 }
 
+
 /* ============================================================
-   DETAIL INVENTARIS PER DEPARTEMEN/DIVISI
+   18. MODAL DETAIL — TREE DEPARTEMEN DAN DIVISI
    ============================================================ */
 
 .aet-detail-grid {
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
+
+    grid-template-columns:
+        250px minmax(0, 1fr);
+
     gap: 15px;
     min-height: 240px;
 }
 
 .aet-detail-tree {
-    border: 1px solid #dbe6f4;
-    border-radius: 8px;
-    padding: 11px;
     min-width: 0;
-    background: #fafcff;
-    overflow-y: auto;
     max-height: 58vh;
+
+    padding: 12px;
+
+    border: 1px solid #dbe6f4;
+    border-radius: 9px;
+
+    background: #fafcff;
+
+    overflow-y: auto;
 }
 
 .aet-detail-tree h3 {
-    font-size: 12px;
-    color: #1e426e;
-    margin: 0 0 10px;
-    padding-bottom: 8px;
+    margin: 0 0 11px;
+    padding-bottom: 10px;
+
     border-bottom: 1px solid #e1ecf5;
+
+    color: #1e426e;
+
+    font-size: 14px;
+    font-weight: 800;
 }
 
 #aetTree {
@@ -843,13 +1275,18 @@
 }
 
 #aetTree button {
-    padding: 8px 9px;
+    padding: 10px;
+
     border: 0;
-    border-radius: 6px;
+    border-radius: 7px;
+
     background: #fff;
-    text-align: left;
     color: #43658a;
-    font-size: 11px;
+
+    text-align: left;
+    font-size: 12px;
+    line-height: 1.5;
+
     overflow-wrap: anywhere;
 }
 
@@ -857,21 +1294,26 @@
 #aetTree button.active {
     background: #e4f1ff;
     color: #005eca;
+
     font-weight: 800;
 }
 
 .aet-tree-group {
-    border-top: 1px solid #e5edf7;
-    margin-top: 7px;
-    padding-top: 9px;
     display: grid;
     gap: 4px;
+
+    margin-top: 7px;
+    padding-top: 9px;
+
+    border-top: 1px solid #e5edf7;
 }
 
 .aet-tree-group > b {
-    font-size: 11px;
-    color: #174473;
     margin: 4px 5px;
+
+    color: #174473;
+
+    font-size: 12px;
 }
 
 .aet-tree-group button {
@@ -887,78 +1329,110 @@
     white-space: nowrap;
 }
 
+
+/* ============================================================
+   19. FOTO DAN DETAIL IDENTITAS ASET
+   ============================================================ */
+
 .aet-photo-thumb {
-    height: 44px;
-    width: 59px;
-    object-fit: cover;
+    width: 64px;
+    height: 48px;
+
     border: 1px solid #dae5ef;
-    border-radius: 5px;
+    border-radius: 6px;
+
+    object-fit: cover;
 }
 
-/* PANEL DETAIL BARANG */
 .aet-focus {
-    border: 1px solid #d5e5f5;
-    background: #f8fbff;
-    padding: 15px;
-    border-radius: 10px;
     margin: 15px 0 5px;
+    padding: 16px;
+
+    border: 1px solid #d5e5f5;
+    border-radius: 10px;
+
+    background: #f8fbff;
 }
 
 .aet-focus-title {
     display: flex;
     justify-content: space-between;
-    gap: 9px;
     align-items: center;
+
+    gap: 9px;
     margin-bottom: 12px;
 }
 
 .aet-focus-title h3 {
     margin: 0;
-    font-size: 14px;
+
     color: #113a68;
+
+    font-size: 16px;
+    font-weight: 800;
 }
 
 .aet-focus-photo {
     display: flex;
     justify-content: center;
+
     margin-bottom: 14px;
 }
 
 .aet-focus-photo img {
     max-height: 290px;
     max-width: 100%;
-    object-fit: contain;
-    border-radius: 8px;
+
     border: 1px solid #e3edf6;
+    border-radius: 8px;
+
+    object-fit: contain;
 }
+
+
+/* ============================================================
+   20. ATRIBUT DETAIL ASET
+   ============================================================ */
 
 .aet-attrs {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    margin: 0 0 13px;
+
     border: 1px solid #e1eaf4;
     border-radius: 8px;
+
     overflow: hidden;
-    margin: 0 0 13px;
 }
 
 .aet-attrs > div {
     display: grid;
+
     grid-template-columns: 44% 56%;
-    border-bottom: 1px solid #e1eaf4;
+
     min-width: 0;
+
+    border-bottom: 1px solid #e1eaf4;
 }
 
 .aet-attrs dt,
 .aet-attrs dd {
-    padding: 9px;
     margin: 0;
+    padding: 11px;
+
+    font-size: 13px;
+    line-height: 1.5;
+
     overflow-wrap: anywhere;
-    font-size: 11px;
 }
 
 .aet-attrs dt {
     background: #eaf4ff;
     color: #1e4770;
+
     font-weight: 800;
 }
 
@@ -970,125 +1444,208 @@
 .aet-focus-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
     flex-wrap: wrap;
+
+    gap: 8px;
 }
 
-/* NILAI DAN PDF */
+
+/* ============================================================
+   21. MODAL DETAIL NILAI ASET
+   ============================================================ */
+
 .aet-value-summary {
     display: flex;
     align-items: center;
-    gap: 18px;
     justify-content: space-between;
+
     flex-wrap: wrap;
+    gap: 18px;
+
     margin: 0 0 12px;
-    background: #ecf6ff;
+    padding: 14px;
+
     border: 1px solid #d2e6fc;
-    border-radius: 8px;
-    padding: 13px;
+    border-radius: 9px;
+
+    background: #ecf6ff;
     color: #46678d;
+
+    font-size: 13px;
 }
 
 .aet-value-summary b {
     color: #075cce;
-    font-size: 18px;
+
+    font-size: 20px;
+    font-weight: 850;
 }
+
+
+/* ============================================================
+   22. DAFTAR PDF
+   ============================================================ */
 
 .aet-pdf-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px;
+
     gap: 10px;
+    padding: 12px 10px;
+
     border-bottom: 1px solid #e1ebf6;
+
+    color: #46678d;
+
+    font-size: 13px;
 }
 
-/* TOAST */
-.aet-toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    max-width: 380px;
-    z-index: 3000;
-    background: #103a6a;
-    color: #fff;
-    padding: 13px 16px;
-    border-radius: 8px;
-    box-shadow: 0 5px 18px #0b223d40;
-    font-weight: 650;
-}
 
 /* ============================================================
-   GRAFIK
+   23. TOAST NOTIFIKASI
+   ============================================================ */
+
+.aet-toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+
+    z-index: 3000;
+
+    max-width: 380px;
+    padding: 14px 17px;
+
+    border-radius: 9px;
+
+    background: #103a6a;
+    color: #fff;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    box-shadow:
+        0 5px 18px rgba(11, 34, 61, .25);
+}
+
+
+/* ============================================================
+   24. GRAFIK KONDISI ASET
    ============================================================ */
 
 .aet-graph-card {
-    padding: 15px;
+    padding: 17px;
+
     border: 1px solid #dce9f7;
-    border-radius: 9px;
+    border-radius: 10px;
+
     background: #fafdff;
 }
 
 .aet-graph-card h3 {
+    margin: 0 0 6px;
+
     color: #10356e;
-    font-size: 14px;
-    margin: 0 0 5px;
+
+    font-size: 16px;
+    font-weight: 800;
 }
 
 .aet-graph-card > p {
-    color: #8298ae;
-    font-size: 11px;
     margin: 0 0 18px;
+
+    color: #8298ae;
+
+    font-size: 12px;
 }
 
 .aet-graph-row {
     display: grid;
-    grid-template-columns: 160px minmax(60px, 1fr) 125px;
-    gap: 13px;
     align-items: center;
-    margin-bottom: 13px;
+
+    grid-template-columns:
+        160px minmax(60px, 1fr) 125px;
+
+    gap: 13px;
+    margin-bottom: 14px;
 }
 
 .aet-graph-row > span {
     color: #395b84;
+
+    font-size: 13px;
     font-weight: 700;
 }
 
 .aet-graph-row > div {
-    height: 15px;
+    height: 16px;
+
     border-radius: 20px;
+
     background: #e8f1fb;
+
     overflow: hidden;
 }
 
 .aet-graph-row i {
     display: block;
+
     height: 100%;
+
+    border-radius: 20px;
+
     background: linear-gradient(
         90deg,
         #1274ec,
         #48b1f5
     );
-    border-radius: 20px;
 }
 
 .aet-graph-row strong {
     color: #1b568f;
+
     text-align: right;
+    font-size: 13px;
 }
 
+
 /* ============================================================
-   RESPONSIVE
+   25. RESPONSIVE — LAPTOP DAN TABLET
    ============================================================ */
 
 @media (max-width: 1190px) {
+
     .aet-kpis {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
+
+    .aet-hero h1 {
+        font-size: 29px;
+    }
+
+    #aetTable {
+        min-width: 980px;
+    }
+
 }
 
+
+/* ============================================================
+   26. RESPONSIVE — TABLET
+   ============================================================ */
+
 @media (max-width: 830px) {
+
+    .aet-page {
+        padding: 0 14px 24px;
+    }
+
+    .aet-hero {
+        margin: 0 -14px 15px;
+        padding: 22px 14px;
+    }
+
     .aet-detail-grid {
         grid-template-columns: 1fr;
     }
@@ -1105,11 +1662,32 @@
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
+
+    .aet-panel-top {
+        gap: 14px;
+    }
+
+    .aet-table {
+        min-width: 900px;
+    }
+
+    #aetTable {
+        min-width: 980px;
+    }
+
 }
 
+
+/* ============================================================
+   27. RESPONSIVE — MOBILE
+   ============================================================ */
+
 @media (max-width: 560px) {
+
     .aet-page {
         padding: 0 11px 20px;
+
+        font-size: 13px;
     }
 
     .aet-hero {
@@ -1118,20 +1696,32 @@
     }
 
     .aet-hero h1 {
-        font-size: 23px;
+        font-size: 25px;
+    }
+
+    .aet-hero p {
+        font-size: 13px;
     }
 
     .aet-kpis {
         grid-template-columns: 1fr;
     }
 
+    .aet-kpis strong {
+        font-size: 22px;
+    }
+
     .aet-panel {
-        padding: 11px;
+        padding: 12px;
     }
 
     .aet-panel-top {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .aet-panel-top h2 {
+        font-size: 17px;
     }
 
     .aet-toolbar .aet-search {
@@ -1152,16 +1742,64 @@
 
     .aet-dialog-body {
         max-height: calc(96vh - 85px);
-        padding: 12px;
+        padding: 13px;
     }
 
     .aet-tabs {
         gap: 15px;
     }
 
+    .aet-tabs button {
+        font-size: 12px;
+    }
+
+    .aet-table {
+        min-width: 880px;
+    }
+
+    #aetTable {
+        min-width: 980px;
+    }
+
+    .aet-table thead th {
+        padding: 11px 10px;
+        font-size: 12px;
+    }
+
+    .aet-table tbody td {
+        padding: 11px 10px;
+        font-size: 13px;
+    }
+
+    .aet-table tbody td small {
+        font-size: 11px;
+    }
+
     .aet-graph-row {
         grid-template-columns:
             95px minmax(50px, 1fr) 85px;
+
         gap: 7px;
     }
+
+    .aet-graph-row > span,
+    .aet-graph-row strong {
+        font-size: 11px;
+    }
+
+    .aet-graph-card {
+        padding: 13px;
+    }
+
+    .aet-actions button {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+    }
+
+    .aet-table-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
 }
