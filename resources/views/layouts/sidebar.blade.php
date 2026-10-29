@@ -777,34 +777,23 @@
 
         {{-- LOGOUT --}}
 
-        <button type="submit" form="sidebarLogoutForm" class="sidebar-logout">
-            onclick="
-                event.preventDefault();
-                document
-                    .getElementById(
-                        'sidebarLogoutForm'
-                    )
-                    .submit();
-            ">
 
-            <span>
+        {{-- ======================================================
+     LOGOUT SISTEM ASET
+     PERUMDA TIRTA KENCANA KOTA SAMARINDA
+====================================================== --}}
 
+        <form id="sidebarLogoutForm" action="{{ route('logout') }}" method="POST" class="sidebar-logout-form">
+            @csrf
+
+            <button type="submit" class="sidebar-logout" title="Keluar dari Sistem Aset"
+                aria-label="Logout dari Sistem Aset">
                 <i data-lucide="log-out"></i>
 
-            </span>
-
-
-            <span class="sidebar-menu-text">
-                Logout
-            </span>
-
-        </button>
-
-
-
-        <form id="sidebarLogoutForm" action="{{ route('logout') }}" method="POST" hidden>
-            @csrf
+                <span>Logout</span>
+            </button>
         </form>
+
 
 
 
