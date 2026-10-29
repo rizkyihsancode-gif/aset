@@ -777,7 +777,7 @@
 
         {{-- LOGOUT --}}
 
-        <a href="{{ url('/logout') }}" class="sidebar-logout"
+        <button type="submit" form="sidebarLogoutForm" class="sidebar-logout">
             onclick="
                 event.preventDefault();
                 document
@@ -798,14 +798,14 @@
                 Logout
             </span>
 
-        </a>
+        </button>
 
 
-        <form id="sidebarLogoutForm" action="{{ url('/logout') }}" method="POST" hidden>
 
+        <form id="sidebarLogoutForm" action="{{ route('logout') }}" method="POST" hidden>
             @csrf
-
         </form>
+
 
 
     </div>

@@ -36,6 +36,30 @@ Route::post('/login', function () {
 })->name('login.submit');
 
 
+/*
+|--------------------------------------------------------------------------
+| LOGOUT SISTEM ASET
+|--------------------------------------------------------------------------
+|
+| Mengakhiri autentikasi dan menghapus session pengguna.
+| Logout menggunakan POST untuk perlindungan CSRF.
+|
+*/
+
+Route::post('/logout', function (
+    \Illuminate\Http\Request $request
+) {
+    \Illuminate\Support\Facades\Auth::logout();
+
+    $request->session()->invalidate();
+
+    $request->session()->regenerateToken();
+
+    return redirect()->route('login');
+})->name('logout');
+
+
+
 
 // ------------------------------------------------
 // DASHBOARD ROUTES

@@ -1539,7 +1539,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     );
 
                     const item = details.find(
-                        value =>
+                        value =>    
                             String(value.id) ===
                             String(
                                 button.dataset.aset
