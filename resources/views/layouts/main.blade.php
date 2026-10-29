@@ -62,8 +62,7 @@
     ========================================================= --}}
 
     <link rel="stylesheet"
-        href="{{ asset('css/components/sidebar-logout.css') }}?v={{ filemtime(public_path('css/components/sidebar-logout.css')) }}">
-
+        href="{{ asset('css/aset.css') }}?v={{ file_exists(public_path('css/aset.css')) ? filemtime(public_path('css/aset.css')) : '1' }}">
 </head>
 
 
