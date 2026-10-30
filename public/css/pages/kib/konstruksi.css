@@ -1,20 +1,34 @@
 
-/* ============================================================
-   K.I.B F KONSTRUKSI
-   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+/*
+|--------------------------------------------------------------------------
+| K.I.B F — KONSTRUKSI
+| Perumda Tirta Kencana Kota Samarinda
+|--------------------------------------------------------------------------
+| CSS khusus halaman Konstruksi.
+| Tidak mengubah CSS modul K.I.B lainnya.
+|--------------------------------------------------------------------------
+*/
 
-   CSS KHUSUS MODUL KONSTRUKSI
-============================================================ */
+/* ==========================================================
+   1. ROOT DAN VARIABEL
+========================================================== */
 
 .kf {
     --kf-blue: #0968ec;
+    --kf-dark-blue: #092f68;
     --kf-ink: #123567;
-    --kf-muted: #7186a5;
-    --kf-line: #dfe8f3;
+    --kf-muted: #5d7392;
+    --kf-line: #d8e4f3;
+    --kf-soft: #eef6ff;
+    --kf-bg: #f4f8fd;
 
-    background: #f4f8fd;
     min-height: calc(100vh - 60px);
+
+    background: var(--kf-bg);
     color: var(--kf-ink);
+
+    font-size: 14px;
+    line-height: 1.55;
 }
 
 .kf *,
@@ -27,18 +41,19 @@
     display: none !important;
 }
 
-/* ============================================================
-   HERO
-============================================================ */
+/* ==========================================================
+   2. HEADER
+========================================================== */
 
 .kf-hero {
     margin: -21px -24px 15px;
     padding: 25px 24px;
 
     background: linear-gradient(
-        120deg,
-        #f6faff,
-        #e6f3ff
+        110deg,
+        #f8fcff,
+        #e4f1ff 65%,
+        #d7eaff
     );
 
     border-bottom: 1px solid #d9eafa;
@@ -52,16 +67,18 @@
     margin-bottom: 15px;
 
     color: #577ba3;
-    font-size: 12px;
+
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .kf-crumb svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
 
 .kf-crumb a {
-    color: #0968ec;
+    color: var(--kf-blue);
 }
 
 .kf-heading {
@@ -74,106 +91,117 @@
 }
 
 .kf-heading small {
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1px;
+    display: block;
+
     color: #1767c5;
+
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .8px;
 }
 
 .kf-heading h1 {
-    font-size: 31px;
+    margin: 4px 0 6px;
+
+    color: #092b60;
+
+    font-size: clamp(30px, 2.2vw, 36px);
+    font-weight: 850;
+
     line-height: 1.25;
-
-    margin: 3px 0 5px;
-
-    font-weight: 800;
-    color: #0a2c62;
+    letter-spacing: -.5px;
 }
 
 .kf-heading p {
-    font-size: 12px;
-    color: #6581a3;
-
-    max-width: 670px;
+    max-width: 720px;
     margin: 0;
-    line-height: 1.6;
+
+    color: #496789;
+
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.65;
 }
 
-/* ============================================================
-   BUTTON
-============================================================ */
+/* ==========================================================
+   3. BUTTON
+========================================================== */
 
-.kf-btn {
+.kf-btn,
+.kf-dialog .kf-btn {
     display: inline-flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
-    gap: 7px;
-    min-height: 37px;
-    padding: 9px 13px;
+    gap: 8px;
+
+    min-height: 39px;
+    padding: 9px 14px;
 
     border: 1px solid #d8e5f6;
     border-radius: 8px;
 
-    background: white;
+    background: #ffffff;
     color: #1859aa;
 
-    font-size: 12px;
-    font-weight: 700;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 750;
 
     cursor: pointer;
-
     text-decoration: none !important;
-    white-space: nowrap;
 }
 
-.kf-btn svg {
+.kf-btn svg,
+.kf-dialog .kf-btn svg {
     width: 16px;
     height: 16px;
+
+    flex-shrink: 0;
 }
 
-.kf-btn.primary {
-    background: var(--kf-blue);
-    border-color: var(--kf-blue);
-    color: white;
+.kf-btn.primary,
+.kf-dialog .kf-btn.primary {
+    background: var(--kf-blue, #0968ec);
+    border-color: #0968ec;
+    color: #ffffff;
 }
 
-.kf-btn.primary:hover {
+.kf-btn.primary:hover,
+.kf-dialog .kf-btn.primary:hover {
     background: #0754c8;
 }
 
-.kf-btn.outline:hover {
+.kf-btn.outline:hover,
+.kf-dialog .kf-btn.outline:hover {
     background: #edf6ff;
 }
 
-.kf-btn.warning {
-    color: #956000;
-
+.kf-dialog .kf-btn.warning {
     background: #fff6e5;
     border-color: #ffe2ae;
+    color: #956000;
 }
 
-.kf-btn.danger {
-    color: #b72540;
-
+.kf-dialog .kf-btn.danger {
     background: #fff0f2;
     border-color: #ffd2dc;
+    color: #b72540;
 }
 
-.kf-btn:disabled {
+.kf-btn:disabled,
+.kf-dialog .kf-btn:disabled {
     opacity: .55;
     cursor: not-allowed;
 }
 
-/* ============================================================
-   KPI
-============================================================ */
+/* ==========================================================
+   4. KPI STATISTIK
+========================================================== */
 
 .kf-kpis {
     display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 
     gap: 12px;
 }
@@ -182,28 +210,30 @@
     display: flex;
     align-items: center;
 
-    gap: 12px;
-    min-height: 92px;
+    gap: 15px;
+
+    min-height: 100px;
     padding: 15px;
 
     background: #ffffff;
 
     border: 1px solid #deebf8;
-    border-radius: 10px;
+    border-radius: 12px;
 
-    box-shadow:
-        0 5px 16px rgba(13, 76, 141, .04);
+    box-shadow: 0 5px 16px rgba(13, 76, 141, .04);
 }
 
 .kf-kpis article > svg {
     width: 44px;
     height: 44px;
-    padding: 11px;
 
     flex-shrink: 0;
 
+    padding: 11px;
+
     background: #0968ec;
-    color: white;
+    color: #ffffff;
+
     border-radius: 9px;
 }
 
@@ -214,97 +244,216 @@
 .kf-kpis small {
     display: block;
 
-    color: var(--kf-muted);
-    font-size: 11px;
+    color: #486a93;
+
+    font-size: 12px;
+    font-weight: 650;
 }
 
 .kf-kpis strong {
     display: block;
 
-    overflow-wrap: anywhere;
-
-    font-size: 24px;
-    line-height: 1.25;
-
     color: #0b2f68;
+
+    font-size: 25px;
+    font-weight: 850;
+    line-height: 1.3;
+
+    overflow-wrap: anywhere;
 }
 
-.kf-kpis strong.kf-rupiah {
-    font-size: 17px;
+.kf-kpis strong.kf-money-small {
+    font-size: clamp(17px, 1.55vw, 23px);
 }
 
-.kf-kpis strong.kf-date {
-    font-size: 15px;
+.kf-kpis strong.kf-date-small {
+    font-size: 16px;
 }
 
-/* ============================================================
-   CARD
-============================================================ */
+.kf-kpis article span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #617d9d;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ==========================================================
+   5. DATA MASUK
+========================================================== */
+
+.kf-incoming {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    margin: 0 0 14px;
+    padding: 17px 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #d6e5f6;
+    border-radius: 12px;
+}
+
+.kf-incoming .kib-incoming-icon {
+    display: grid;
+    place-items: center;
+
+    width: 46px;
+    height: 46px;
+
+    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    background: #eaf4ff;
+    color: #0968ec;
+}
+
+.kf-incoming .kib-incoming-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.kf-incoming .kib-incoming-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.kf-incoming .kib-incoming-eyebrow {
+    color: #2971ca;
+
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .8px;
+}
+
+.kf-incoming .kib-incoming-content h3 {
+    margin: 2px 0 5px;
+
+    color: #092f68;
+
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.kf-incoming .kib-incoming-content p {
+    margin: 0;
+
+    color: #536f93;
+
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.kf-incoming .kib-incoming-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 40px;
+    padding: 10px 14px;
+
+    background: #f5faff;
+    color: #0968ec;
+
+    border: 1px solid #cfe1f8;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 750;
+
+    cursor: pointer;
+}
+
+.kf-incoming .kib-incoming-button:hover {
+    background: #e8f3ff;
+}
+
+.kf-incoming .kib-incoming-button svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* ==========================================================
+   6. CARD
+========================================================== */
 
 .kf-card {
+    margin-top: 14px;
+    padding: 17px;
+
     background: #ffffff;
 
     border: 1px solid var(--kf-line);
     border-radius: 11px;
 
-    padding: 17px;
-    margin-top: 14px;
-
-    box-shadow:
-        0 3px 12px rgba(32, 82, 130, .03);
+    box-shadow: 0 3px 12px rgba(32, 82, 130, .03);
 }
 
 .kf-card-head {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
     gap: 12px;
     margin-bottom: 14px;
 }
 
 .kf-card-head h2 {
-    margin: 0 0 3px;
+    margin: 0 0 4px;
 
-    font-size: 16px;
-    font-weight: 800;
-    color: #113970;
+    color: #092a60;
+
+    font-size: 17px;
+    font-weight: 850;
 }
 
 .kf-card-head p {
-    font-size: 12px;
-    color: var(--kf-muted);
     margin: 0;
+
+    color: var(--kf-muted);
+
+    font-size: 13px;
 }
 
 .kf-pill {
     display: inline-flex;
     align-items: center;
 
-    gap: 6px;
-    padding: 7px 10px;
+    gap: 7px;
+    padding: 8px 10px;
 
     border-radius: 8px;
 
     background: #eaf4ff;
     color: #1664c0;
 
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 750;
 }
 
 .kf-pill svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
 
-/* ============================================================
-   FILTER
-============================================================ */
+/* ==========================================================
+   7. FILTER DAN PENCARIAN
+========================================================== */
 
 .kf-toolbar {
     display: flex;
-    align-items: center;
+    align-items: end;
+
     gap: 10px;
 }
 
@@ -313,36 +462,59 @@
     align-items: center;
 
     flex: 1;
-    gap: 8px;
+
+    gap: 9px;
+    min-width: 0;
 
     padding: 0 12px;
 
+    background: #f6faff;
+
     border: 1px solid #dce8f5;
     border-radius: 8px;
-
-    background: #f6faff;
 }
 
 .kf-search svg {
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
+
+    flex-shrink: 0;
     color: #7390b3;
 }
 
 .kf-search input {
     width: 100%;
-    height: 39px;
+    min-width: 0;
+    height: 40px;
 
-    outline: none;
     background: transparent;
-    border: 0;
-
-    font-size: 12px;
     color: #23466e;
+
+    border: 0;
+    outline: none;
+
+    font-family: inherit;
+    font-size: 14px;
 }
 
-.kf-toolbar select {
-    min-width: 95px;
+.kf-limit {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+
+    white-space: nowrap;
+
+    color: #37577c;
+
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.kf-limit select {
+    min-width: 125px;
+    min-height: 40px;
+
     padding: 9px;
 
     border: 1px solid #dce8f5;
@@ -350,67 +522,79 @@
 
     color: #274f7e;
     background: #ffffff;
+
+    font-size: 14px;
 }
 
-/* ============================================================
-   TABLE
-============================================================ */
+/* ==========================================================
+   8. TABEL UTAMA
+========================================================== */
 
 .kf-table-wrap {
     max-width: 100%;
     overflow: auto;
 
-    border: 1px solid var(--kf-line);
-    border-radius: 8px;
+    border: 1px solid #d9e5f5;
+    border-radius: 9px;
 }
 
-.kf-table {
-    border-collapse: collapse;
-
+.kf-table,
+.kf-dialog .kf-table {
     width: 100%;
     min-width: 690px;
 
-    font-size: 12px;
+    border-collapse: collapse;
+
+    font-size: 13px;
 }
 
-.kf-table th {
+.kf-table thead th,
+.kf-dialog .kf-table thead th {
     padding: 12px;
 
-    background: #eaf3fe;
+    background: #e9f2fc;
+    color: #123e75;
 
     border-bottom: 1px solid #dce8f6;
 
-    color: #153c72;
+    font-size: 13px;
+    font-weight: 850;
 
-    font-size: 11px;
-    white-space: nowrap;
+    line-height: 1.45;
     text-align: left;
-}
-
-.kf-table td {
-    padding: 12px;
-
-    border-bottom: 1px solid #e9eef6;
-
-    color: #385980;
     vertical-align: middle;
 }
 
-.kf-table tr:last-child td {
-    border-bottom: 0;
+.kf-table tbody td,
+.kf-dialog .kf-table tbody td {
+    padding: 12px;
+
+    color: #25486f;
+
+    border-bottom: 1px solid #e9eef6;
+
+    font-size: 13px;
+    line-height: 1.55;
+
+    vertical-align: middle;
 }
 
-.kf-table tbody tr:nth-child(even) {
+.kf-table td strong,
+.kf-dialog .kf-table td strong {
+    color: #092f68;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.kf-table tbody tr:nth-child(even),
+.kf-dialog .kf-table tbody tr:nth-child(even) {
     background: #fbfdff;
 }
 
-.kf-table tbody tr:hover {
+.kf-table tbody tr:hover,
+.kf-dialog .kf-table tbody tr:hover {
     background: #f4f9ff;
-}
-
-.kf-table td strong {
-    font-weight: 750;
-    color: #0c396f;
 }
 
 .kf-table tr[hidden] {
@@ -418,41 +602,127 @@
 }
 
 .kf-empty {
-    text-align: center !important;
-
-    color: #8a9cb1 !important;
-
     padding: 28px !important;
+
+    color: #8294ac !important;
+
+    text-align: center !important;
+    font-size: 13px;
+}
+
+.kf-main-table th,
+.kf-main-table td {
+    padding: 13px 12px;
+}
+
+.kf-main-table th:first-child,
+.kf-main-table td:first-child {
+    width: 52px;
+    text-align: center;
+}
+
+.kf-main-table th:last-child,
+.kf-main-table td:last-child {
+    width: 95px;
+    text-align: center;
+}
+
+.kf-location-name {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+}
+
+.kf-location-icon {
+    display: inline-grid;
+    place-items: center;
+
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    background: #e8f3ff;
+    color: #086eea;
+
+    border-radius: 9px;
+}
+
+.kf-location-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.kf-location-name small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #6c85a3;
+    font-size: 11px;
+}
+
+.kf-count-chip {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+    padding: 7px 9px;
+
+    background: #edf6ff;
+    color: #165caf;
+
+    border: 1px solid #c9dff9;
+    border-radius: 7px;
+
+    font-size: 12px;
+    font-weight: 750;
+
+    white-space: nowrap;
+}
+
+.kf-count-chip svg {
+    width: 16px;
+    height: 16px;
+}
+
+.kf-price,
+.kf-dialog .kf-price {
+    color: #074da4 !important;
+
+    font-weight: 850 !important;
+    white-space: nowrap;
 }
 
 .kf-icon-btn {
     display: inline-grid;
     place-items: center;
 
-    width: 33px;
-    height: 33px;
-
-    border: 0;
-    border-radius: 8px;
+    width: 35px;
+    height: 35px;
 
     background: #eaf4ff;
     color: #0d6bde;
+
+    border: 0;
+    border-radius: 8px;
 
     cursor: pointer;
 }
 
 .kf-icon-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
 }
 
 .kf-icon-btn:hover {
     background: #d9eaff;
 }
 
-/* ============================================================
-   PAGINATION
-============================================================ */
+/* ==========================================================
+   9. PAGINATION
+========================================================== */
 
 .kf-table-footer {
     display: flex;
@@ -460,57 +730,64 @@
     justify-content: space-between;
 
     gap: 12px;
-    padding-top: 12px;
+    padding-top: 13px;
 
-    font-size: 12px;
     color: #7186a2;
+
+    font-size: 13px;
 }
 
 .kf-pages {
     display: flex;
-    gap: 5px;
     flex-wrap: wrap;
+
+    gap: 6px;
 }
 
 .kf-page-btn {
-    width: 31px;
-    height: 31px;
+    min-width: 33px;
+    height: 33px;
 
     background: #ffffff;
+    color: #225da5;
 
     border: 1px solid #d9e6f5;
     border-radius: 7px;
 
-    color: #225da5;
+    font-weight: 750;
+
     cursor: pointer;
 }
 
 .kf-page-btn.active {
     background: #0968ec;
     border-color: #0968ec;
-    color: white;
+    color: #ffffff;
 }
 
-/* ============================================================
-   MODAL
-============================================================ */
+.kf-page-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* ==========================================================
+   10. MODAL
+========================================================== */
 
 .kf-dialog {
     width: min(970px, calc(100vw - 30px));
-
     max-width: none;
     max-height: calc(100dvh - 25px);
+
+    padding: 0;
+
+    background: #ffffff;
+    color: #183b70;
 
     border: 1px solid #d8e6f5;
     border-radius: 13px;
 
-    padding: 0;
-
-    color: #183b70;
-    background: #ffffff;
-
-    box-shadow:
-        0 25px 90px rgba(5, 32, 68, .30);
+    box-shadow: 0 25px 90px rgba(5, 32, 68, .30);
 
     overflow: hidden;
 }
@@ -521,7 +798,6 @@
 
 .kf-dialog::backdrop {
     background: rgba(10, 35, 79, .60);
-
     backdrop-filter: blur(2px);
 }
 
@@ -531,7 +807,7 @@
     justify-content: space-between;
 
     gap: 15px;
-    padding: 15px 20px;
+    padding: 16px 22px;
 
     background: #f7fbff;
 
@@ -539,38 +815,49 @@
 }
 
 .kf-dialog-head small {
-    font-size: 10px;
     color: #2070c0;
 
-    letter-spacing: .7px;
+    font-size: 11px;
     font-weight: 800;
+
+    letter-spacing: .8px;
 }
 
 .kf-dialog-head h2 {
-    font-size: 20px;
-    font-weight: 800;
-
     margin: 4px 0 0;
+
     color: #0e3671;
+
+    font-size: 23px;
+    font-weight: 850;
+    letter-spacing: -.3px;
+}
+
+.kf-dialog-head p {
+    margin: 5px 0 0;
+
+    color: #58769a;
+
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .kf-close {
-    width: 35px;
-    height: 35px;
-
     display: grid;
     place-items: center;
 
-    border: 0;
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+
     background: transparent;
+    color: #667f9c;
+
+    border: 0;
     border-radius: 8px;
 
-    color: #667f9c;
     cursor: pointer;
-}
-
-.kf-close:hover {
-    background: #edf5ff;
 }
 
 .kf-close svg {
@@ -578,38 +865,43 @@
     height: 19px;
 }
 
-.kf-dialog-content {
-    padding: 17px 20px;
+.kf-close:hover {
+    background: #edf5ff;
+}
 
-    max-height: calc(100dvh - 160px);
+.kf-dialog-content {
+    padding: 18px 21px;
+
+    max-height: calc(100dvh - 165px);
 
     overflow: auto;
 }
 
 .kf-dialog-foot {
     display: flex;
-    justify-content: flex-end;
     align-items: center;
+    justify-content: flex-end;
 
-    gap: 8px;
-    padding: 12px 20px;
+    gap: 9px;
+    padding: 13px 21px;
+
+    background: #ffffff;
 
     border-top: 1px solid #e2eaf4;
-    background: #ffffff;
 }
 
-/* ============================================================
-   DETAIL LOKASI
-============================================================ */
+/* ==========================================================
+   11. DETAIL LOKASI
+========================================================== */
 
 .kf-lokasi-grid {
     display: grid;
 
     grid-template-columns:
-        minmax(225px, 29%) minmax(0, 1fr);
+        minmax(220px, 23%) minmax(0, 1fr);
 
     gap: 13px;
-    min-height: 350px;
+    min-height: 480px;
 }
 
 .kf-tree-panel,
@@ -627,16 +919,20 @@
 }
 
 .kf-tree-panel h3,
-.kf-aset-title h3 {
-    font-weight: 800;
-    font-size: 14px;
+.kf-aset-panel h3 {
     margin: 0 0 9px;
+
+    color: #0d3470;
+
+    font-size: 16px;
+    font-weight: 850;
 }
 
 .kf-tree-panel h3 {
     display: flex;
     align-items: center;
-    gap: 7px;
+
+    gap: 8px;
 }
 
 .kf-tree-panel h3 svg {
@@ -644,40 +940,49 @@
     height: 18px;
 }
 
-.kf-tree-panel p {
-    font-size: 11px;
-    color: #7890ad;
+.kf-tree-panel p,
+.kf-table-subtitle {
+    margin: 0 0 12px;
+
+    color: #6684a3;
+
+    font-size: 13px;
 }
 
 .kf-tree-panel h4 {
-    margin: 16px 0 7px;
+    margin: 16px 0 8px;
 
     color: #597b9d;
 
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 850;
+
     text-transform: uppercase;
-    letter-spacing: .6px;
 }
 
 .kf-tree-btn {
     display: flex;
     align-items: center;
 
-    gap: 9px;
-    min-height: 37px;
     width: 100%;
+    min-height: 39px;
+
+    gap: 9px;
+    margin-bottom: 6px;
+    padding: 9px 11px;
 
     text-align: left;
-    margin-bottom: 6px;
-    padding: 9px;
-
-    border: 1px solid #dce6f4;
-    border-radius: 7px;
 
     background: #ffffff;
     color: #25517e;
 
-    font-size: 12px;
+    border: 1px solid #dce6f4;
+    border-radius: 7px;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 650;
+
     cursor: pointer;
 
     overflow-wrap: anywhere;
@@ -686,41 +991,91 @@
 .kf-tree-btn svg {
     width: 16px;
     height: 16px;
-    flex: none;
+
+    flex-shrink: 0;
 }
 
 .kf-tree-btn.child {
-    padding-left: 16px;
+    padding-left: 17px;
 }
 
 .kf-tree-btn.active {
-    border-color: #4794ec;
-
     background: #eaf4ff;
     color: #0964c9;
 
-    box-shadow:
-        inset 3px 0 #0968ec;
+    border-color: #4794ec;
+
+    box-shadow: inset 3px 0 #0968ec;
 }
 
-.kf-aset-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* ==========================================================
+   12. TABEL FORMAT EXCEL KIB F
+========================================================== */
 
-    gap: 12px;
-    flex-wrap: wrap;
-
-    margin-bottom: 12px;
+.kf-excel-wrap {
+    max-height: 58vh;
+    overflow: auto;
 }
 
-.kf-aset-title h3 {
-    margin: 0;
+.kf-excel-table {
+    min-width: 1940px !important;
+
+    border-collapse: separate !important;
+    border-spacing: 0;
 }
 
-/* ============================================================
-   DETAIL INVENTARIS
-============================================================ */
+.kf-excel-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
+    padding: 11px 9px !important;
+
+    text-align: center !important;
+
+    border-right: 1px solid #d5e3f3;
+    border-bottom: 1px solid #d5e3f3;
+}
+
+.kf-excel-table td {
+    max-width: 250px;
+    min-width: 70px;
+
+    padding: 11px 10px !important;
+
+    vertical-align: top !important;
+
+    border-right: 1px solid #edf1f7;
+
+    overflow-wrap: anywhere;
+}
+
+.kf-excel-name {
+    min-width: 270px !important;
+}
+
+.kf-excel-name strong {
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.kf-excel-name p,
+.kf-excel-document p {
+    margin: 6px 0 10px;
+
+    white-space: pre-wrap;
+
+    line-height: 1.6;
+    font-size: 13px;
+}
+
+.kf-excel-document {
+    min-width: 230px !important;
+}
+
+/* ==========================================================
+   13. DETAIL INVENTARIS
+========================================================== */
 
 .kf-summary {
     padding: 15px;
@@ -737,45 +1092,61 @@
 }
 
 .kf-summary strong {
-    font-size: 16px;
+    color: #0d3470;
+
+    font-size: 17px;
+    font-weight: 850;
 }
 
 .kf-summary p {
-    font-size: 12px;
-    color: #6685a3;
     margin: 5px 0 0;
+
+    color: #6685a3;
+
+    font-size: 14px;
 }
 
 .kf-photo {
     display: block;
 
     width: 100%;
-    max-height: 230px;
+    max-height: 280px;
+
+    margin: 12px 0;
 
     object-fit: contain;
 
     background: #f6f9fd;
-    border-radius: 9px;
 
-    margin: 12px 0;
+    border-radius: 9px;
+}
+
+.kf-detail-section-heading {
+    margin: 20px 0 11px;
+
+    color: #0d3470;
+
+    font-size: 16px;
+    font-weight: 850;
 }
 
 .kf-detail-grid {
     display: grid;
 
     grid-template-columns:
-        repeat(3, minmax(0, 1fr));
+        repeat(2, minmax(0, 1fr));
 
-    gap: 9px;
+    gap: 11px;
 }
 
 .kf-field {
+    min-height: 74px;
     padding: 12px;
+
+    background: #fbfdff;
 
     border: 1px solid #e0e9f5;
     border-radius: 8px;
-
-    min-height: 68px;
 
     overflow-wrap: anywhere;
 }
@@ -783,80 +1154,274 @@
 .kf-field small {
     display: block;
 
-    margin-bottom: 6px;
+    margin-bottom: 7px;
 
-    color: #7f92aa;
-    font-size: 11px;
+    color: #5b789b;
+
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .kf-field strong {
-    font-size: 12px;
+    color: #153c73;
+
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.55;
+
     white-space: pre-wrap;
 }
 
 .kf-detail-text h3 {
-    font-size: 13px;
-    margin: 18px 0 6px;
+    margin: 18px 0 7px;
+
+    color: #0d3470;
+
+    font-size: 15px;
+    font-weight: 850;
 }
 
 .kf-detail-text p {
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    color: #466688;
 
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.7;
 
-    color: #466688;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .kf-muted {
     color: #8397ae;
-    font-size: 12px;
+
+    font-size: 13px;
 }
 
-/* ============================================================
-   FORM
-============================================================ */
+/* ==========================================================
+   14. MODAL FORM TAMBAH / EDIT
+========================================================== */
 
-.kf-form-title {
+.kf-form-dialog {
+    width: min(970px, calc(100vw - 24px));
+}
+
+.kf-form-dialog[open] {
+    display: block;
+}
+
+.kf-form-dialog form {
+    display: flex;
+    flex-direction: column;
+
+    max-height: calc(100dvh - 30px);
+
+    margin: 0;
+}
+
+.kf-form-dialog form > .kf-dialog-content {
+    flex: 1;
+
+    min-height: 0;
+    max-height: none;
+
+    overflow-y: auto;
+}
+
+.kf-form-section {
+    margin: 0 0 15px;
+    padding: 15px;
+
+    background: #ffffff;
+
+    border: 1px solid #d9e5f4;
+    border-radius: 11px;
+}
+
+.kf-form-section:first-of-type {
+    background: #fbfdff;
+    border-color: #bdd8fc;
+}
+
+.kf-section-title {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 11px;
+    margin-bottom: 15px;
+}
+
+.kf-section-title > span {
+    display: grid;
+    place-items: center;
+
+    width: 29px;
+    height: 29px;
+
+    flex-shrink: 0;
+
+    background: #e8f2ff;
+    color: #0b61d0;
+
+    border-radius: 8px;
+
     font-size: 14px;
-    font-weight: 800;
-
-    margin: 19px 0 11px;
-
-    color: #153e79;
+    font-weight: 850;
 }
 
-.kf-source {
+.kf-section-title h3 {
+    margin: 0;
+
+    color: #123b76;
+
+    font-size: 16px;
+    font-weight: 850;
+}
+
+.kf-section-title p {
+    margin: 3px 0 0;
+
+    color: #657e9a;
+
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* ==========================================================
+   15. TABEL DATA PENDING
+========================================================== */
+
+.kf-pending-toolbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+
+    gap: 10px;
+    margin-bottom: 11px;
+}
+
+.kf-pending-toolbar .kf-search {
+    flex: 1;
+}
+
+.kf-pending-toolbar > span {
+    flex-shrink: 0;
+
+    color: #4a6e99;
+
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.kf-pending-wrap {
+    max-height: 300px;
+
+    overflow: auto;
+}
+
+.kf-pending-table {
+    min-width: 1050px !important;
+}
+
+.kf-pending-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.kf-pending-table td {
+    padding: 11px 8px !important;
+
+    vertical-align: top !important;
+
+    font-size: 13px;
+}
+
+.kf-pending-table td small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #67819f;
+
+    font-size: 11px;
+}
+
+.kf-pending-uraian {
+    width: 230px;
+    min-width: 230px;
+
+    overflow-wrap: anywhere;
+}
+
+/* ==========================================================
+   16. VOUCHER TERPILIH
+========================================================== */
+
+.kf-selected-source {
+    display: flex;
+    align-items: center;
 
     gap: 12px;
     padding: 13px;
 
-    border: 1px solid #d4e8fd;
-    background: #eef7ff;
+    margin: 0 0 15px;
 
-    border-radius: 8px;
+    background: #effbf4;
+
+    border: 1px solid #b6e3c7;
+    border-radius: 10px;
 }
 
-.kf-source strong {
-    font-size: 12px;
-    color: #135fbc;
+.kf-selected-source > svg {
+    width: 24px;
+    height: 24px;
+
+    flex-shrink: 0;
+
+    color: #159352;
 }
 
-.kf-source p {
+.kf-selected-source > div {
+    min-width: 0;
+    flex: 1;
+}
+
+.kf-selected-source small {
+    display: block;
+
+    color: #2e7953;
+
     font-size: 11px;
-    color: #6f8baa;
+    font-weight: 700;
+}
 
-    margin: 4px 0 0;
+.kf-selected-source strong {
+    display: block;
+
+    color: #155e3e;
+
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.kf-selected-source p {
+    margin: 3px 0 0;
+
+    color: #40775c;
+
+    font-size: 12px;
+    line-height: 1.5;
+
     overflow-wrap: anywhere;
 }
 
+/* ==========================================================
+   17. FORM INPUT
+========================================================== */
+
 .kf-fields {
     display: grid;
-    gap: 12px;
+
+    gap: 13px;
 }
 
 .kf-fields.two {
@@ -864,19 +1429,19 @@
         repeat(2, minmax(0, 1fr));
 }
 
-.kf-fields.three {
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-}
-
 .kf-fields label {
     display: block;
+
     min-width: 0;
 
-    color: #345b86;
+    color: #244a79;
 
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.kf-fields label.full {
+    grid-column: 1 / -1;
 }
 
 .kf-fields label b {
@@ -890,19 +1455,23 @@
 
     width: 100%;
     min-width: 0;
+    min-height: 40px;
 
-    margin-top: 5px;
-    padding: 9px 10px;
+    margin-top: 6px;
+    padding: 9px 11px;
+
+    background: #ffffff;
+    color: #173c6d;
 
     border: 1px solid #d6e4f3;
     border-radius: 8px;
 
-    color: #254a7e;
-    background: #ffffff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 550;
+    line-height: 1.5;
 
-    font-size: 12px;
-    outline: 0;
-    font-weight: 400;
+    outline: none;
 }
 
 .kf-fields input:focus,
@@ -917,69 +1486,96 @@
 .kf-fields input[readonly] {
     background: #f3f7fc;
     color: #6382a5;
-}
 
-.kf-fields label.full {
-    grid-column: 1 / -1;
+    font-weight: 700;
 }
 
 .kf-fields textarea {
+    min-height: 100px;
+
     resize: vertical;
-    min-height: 85px;
 }
 
-.kf-error {
-    padding: 11px;
+.kf-fields label small {
+    display: block;
 
-    color: #ad293e;
+    margin-top: 5px;
+
+    color: #6b83a0;
+
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* ==========================================================
+   18. VALIDASI
+========================================================== */
+
+.kf-error {
+    padding: 12px;
+    margin-bottom: 15px;
+
     background: #fff0f2;
+    color: #ad293e;
 
     border: 1px solid #ffd1da;
     border-radius: 8px;
 
-    white-space: pre-wrap;
-    font-size: 12px;
-}
-
-.kf-hint {
-    color: #7d91aa;
-
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 650;
     line-height: 1.6;
+
+    white-space: pre-wrap;
 }
 
-/* ============================================================
-   ACCESSIBILITY
-============================================================ */
+/* ==========================================================
+   19. AKSESIBILITAS
+========================================================== */
 
 .kf-btn:focus-visible,
 .kf-icon-btn:focus-visible,
-.kf-tree-btn:focus-visible {
+.kf-tree-btn:focus-visible,
+.kf-page-btn:focus-visible,
+.kf-dialog button:focus-visible {
     outline: 2px solid #1882fb;
     outline-offset: 2px;
 }
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
+/* ==========================================================
+   20. RESPONSIVE TABLET
+========================================================== */
 
 @media (max-width: 1100px) {
-
     .kf-kpis {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 820px) {
+@media (max-width: 920px) {
+    .kf-lokasi-grid {
+        grid-template-columns: 1fr;
+    }
 
+    .kf-tree-panel {
+        max-height: 220px;
+        overflow: auto;
+    }
+
+    .kf-incoming {
+        flex-wrap: wrap;
+    }
+
+    .kf-incoming .kib-incoming-action {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 820px) {
     .kf-hero {
         margin: -18px -17px 14px;
         padding: 18px 17px;
-    }
-
-    .kf-lokasi-grid {
-        grid-template-columns: 1fr;
     }
 
     .kf-detail-grid {
@@ -988,8 +1584,11 @@
     }
 }
 
-@media (max-width: 600px) {
+/* ==========================================================
+   21. RESPONSIVE MOBILE
+========================================================== */
 
+@media (max-width: 650px) {
     .kf-hero {
         margin: -16px -13px 12px;
         padding: 17px 13px;
@@ -997,47 +1596,66 @@
 
     .kf-heading {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
     }
 
     .kf-heading h1 {
-        font-size: 26px;
+        font-size: 28px;
+    }
+
+    .kf-heading .kf-btn {
+        width: 100%;
+    }
+
+    .kf-kpis {
+        grid-template-columns: 1fr;
     }
 
     .kf-kpis article {
-        padding: 10px;
-        gap: 8px;
-    }
-
-    .kf-kpis article > svg {
-        width: 36px;
-        height: 36px;
-        padding: 8px;
+        min-height: 85px;
+        padding: 12px;
     }
 
     .kf-kpis strong {
-        font-size: 17px;
-    }
-
-    .kf-kpis strong.kf-rupiah,
-    .kf-kpis strong.kf-date {
-        font-size: 13px;
+        font-size: 21px;
     }
 
     .kf-card {
         padding: 12px;
     }
 
+    .kf-card-head {
+        align-items: flex-start;
+    }
+
     .kf-toolbar {
         flex-wrap: wrap;
     }
 
-    .kf-search {
+    .kf-toolbar .kf-search {
         flex-basis: 100%;
     }
 
+    .kf-main-table {
+        min-width: 840px;
+    }
+
+    .kf-incoming {
+        align-items: flex-start;
+    }
+
+    .kf-incoming .kib-incoming-action {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .kf-incoming .kib-incoming-button {
+        width: 100%;
+    }
+
     .kf-dialog,
-    .kf-dialog.wide {
+    .kf-dialog.wide,
+    .kf-form-dialog {
         width: calc(100vw - 12px);
     }
 
@@ -1049,26 +1667,41 @@
     }
 
     .kf-dialog-head h2 {
-        font-size: 17px;
+        font-size: 19px;
     }
 
-    .kf-fields.two,
-    .kf-fields.three,
-    .kf-detail-grid {
+    .kf-dialog-foot {
+        flex-wrap: wrap;
+    }
+
+    .kf-detail-grid,
+    .kf-fields.two {
         grid-template-columns: 1fr;
     }
 
-    .kf-source {
-        flex-direction: column;
-        align-items: stretch;
+    .kf-form-section {
+        padding: 12px;
+    }
+
+    .kf-pending-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .kf-pending-toolbar .kf-search {
+        flex-basis: 100%;
     }
 
     .kf-table-footer {
         flex-direction: column;
-        align-items: start;
+        align-items: flex-start;
+    }
+
+    .kf-selected-source {
+        flex-wrap: wrap;
     }
 }
 
-/* ============================================================
-   END K.I.B F
-============================================================ */
+/* ==========================================================
+   END OF KONSTRUKSI CSS
+========================================================== */
+    

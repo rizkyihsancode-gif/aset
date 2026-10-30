@@ -4,38 +4,17 @@
 | K.I.B F — KONSTRUKSI
 | Perumda Tirta Kencana Kota Samarinda
 |--------------------------------------------------------------------------
-|
-| File:
-| public/js/pages/kib/konstruksi.js
-|
-| Database:
-| - kib_f_s
-| - nilai_aktivas
-| - barangs
-| - lokasis
-| - departemens
-| - divisis
-|
-| Fitur:
-| - Pencarian dan pagination
-| - Detail lokasi, departemen, divisi
-| - Detail inventaris
-| - Tambah dari Data Pending
-| - Edit inventaris
-| - Hapus inventaris
-| - Preview foto dan dokumen PDF
-| - Validasi dan penanganan error
-|
-| Tidak mengubah modul K.I.B lainnya.
+| Mengikuti pola CRUD K.I.B A Tanah
+| Backend tetap menggunakan KIBController asli.
 |--------------------------------------------------------------------------
 */
 
 (() => {
     'use strict';
 
-    const app = document.getElementById('kfApp');
+    const root = document.getElementById('kfApp');
 
-    if (!app || window.__kfConstructed) {
+    if (!root || window.__kfConstructed) {
         return;
     }
 
@@ -43,37 +22,38 @@
 
     /*
     |--------------------------------------------------------------------------
-    | 1. KONFIGURASI DASAR
+    | KONFIGURASI
     |--------------------------------------------------------------------------
     */
 
     const $ = id => document.getElementById(id);
 
-    const base = app.dataset.base;
-
-    const saveUrl = app.dataset.save;
-
-    const csrfToken = app.dataset.token;
+    const base = root.dataset.base;
+    const endpointPending = root.dataset.pending;
+    const token = root.dataset.token;
 
     const state = {
         page: 1,
-        lokasiId: null,
-        departemenId: null,
-        divisiId: null,
-        inventarisId: null,
-        editId: null,
-        source: null,
+        lokasi: null,
+        departemen: null,
+        divisi: null,
         lokasiData: [],
-        detailLoading: false,
-        busy: false
+        pending: [],
+        selected: null,
+        id: null,
+        editId: null,
+        saving: false
     };
 
-    const rows = Array.from(
+    const allRows = Array.from(
         document.querySelectorAll('[data-kf-row]')
     );
 
-    const str = value =>
-        String(value ?? '').trim();
+    /*
+    |--------------------------------------------------------------------------
+    | UTILITAS
+    |--------------------------------------------------------------------------
+    */
 
     const esc = value =>
         String(value ?? '').replace(
@@ -87,6 +67,9 @@
             }[character])
         );
 
+    const string = value =>
+        String(value ?? '').trim();
+
     const rupiah = value =>
         'Rp ' + new Intl.NumberFormat('id-ID', {
             maximumFractionDigits: 0
@@ -96,31 +79,21 @@
         window.lucide?.createIcons?.();
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | 2. UTILITAS MODAL
-    |--------------------------------------------------------------------------
-    */
+    function openDialog(id) {
+        const dialog = $(id);
 
-    function showModal(id) {
-        const modal = $(id);
-
-        if (!modal) {
-            return;
-        }
-
-        if (!modal.open) {
-            modal.showModal();
+        if (!dialog.open) {
+            dialog.showModal();
         }
 
         icons();
     }
 
-    function closeModal(id) {
-        const modal = $(id);
+    function closeDialog(id) {
+        const dialog = $(id);
 
-        if (modal?.open) {
-            modal.close();
+        if (dialog.open) {
+            dialog.close();
         }
     }
 
@@ -128,98 +101,78 @@
         '[data-kf-close]'
     ).forEach(button => {
         button.addEventListener('click', () => {
-            closeModal(button.dataset.kfClose);
+            closeDialog(button.dataset.kfClose);
         });
     });
 
     /*
     |--------------------------------------------------------------------------
-    | 3. ERROR DAN NOTIFIKASI
-    |--------------------------------------------------------------------------
-    */
-
-    function showError(message) {
-        const element = $('kfError');
-
-        if (!element) {
-            return;
-        }
-
-        const value = str(message);
-
-        element.hidden = !value;
-        element.textContent = value;
-    }
-
-    function notify(message) {
-        alert(message);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 4. REQUEST API
+    | API LARAVEL
     |--------------------------------------------------------------------------
     */
 
     async function api(url, options = {}) {
-        const headers = {
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrfToken,
-            ...(options.headers || {})
-        };
-
         const response = await fetch(url, {
-            ...options,
             credentials: 'same-origin',
-            headers
+
+            ...options,
+
+            headers: {
+                Accept: 'application/json',
+
+                'X-Requested-With': 'XMLHttpRequest',
+
+                'X-CSRF-TOKEN': token,
+
+                ...(options.headers || {})
+            }
         });
 
-        const result = await response.json()
+        const result = await response
+            .json()
             .catch(() => ({}));
 
         if (!response.ok || result.success === false) {
-            let message = result.message ||
-                `Permintaan gagal (HTTP ${response.status}).`;
-
-            if (result.errors) {
-                message = Object.values(result.errors)
+            const validation = result.errors
+                ? Object.values(result.errors)
                     .flat()
-                    .join('\n');
-            }
+                    .join('\n')
+                : '';
 
-            if (response.status === 401) {
-                message =
-                    'Sesi login telah berakhir. ' +
-                    'Silakan login kembali.';
-            }
+            const defaults = {
+                401: 'Sesi login berakhir. Silakan login kembali.',
 
-            if (response.status === 403) {
-                message =
-                    'Akses ditolak. Pastikan akun ' +
-                    'sudah login dan memiliki hak akses.';
-            }
+                403: 'Akses ditolak. Pastikan sudah login dan memiliki izin.',
 
-            if (response.status === 419) {
-                message =
-                    'Sesi keamanan telah berakhir. ' +
-                    'Muat ulang halaman kemudian coba lagi.';
-            }
+                419: 'Sesi keamanan berakhir. Muat ulang halaman.'
+            };
 
-            throw new Error(message);
+            throw new Error(
+                validation ||
+                defaults[response.status] ||
+                result.message ||
+                `Gagal memproses permintaan (HTTP ${response.status}).`
+            );
         }
 
         return result;
     }
 
+    function showError(message) {
+        const error = $('kfError');
+
+        error.textContent = message || '';
+        error.hidden = !message;
+    }
+
     /*
     |--------------------------------------------------------------------------
-    | 5. PENCARIAN DAN PAGINATION
+    | PENCARIAN DAN PAGINATION
     |--------------------------------------------------------------------------
     */
 
-    function renderPagination() {
-        const keyword = str(
+    function renderPages() {
+        const keyword = string(
             $('kfCari').value
         ).toLocaleLowerCase('id-ID');
 
@@ -228,36 +181,31 @@
             Number($('kfLimit').value) || 20
         );
 
-        const filtered = rows.filter(row => {
-            const text = str(
-                row.dataset.search
-            ).toLocaleLowerCase('id-ID');
-
-            return text.includes(keyword);
+        const found = allRows.filter(row => {
+            return (row.dataset.search || '')
+                .toLocaleLowerCase('id-ID')
+                .includes(keyword);
         });
-
-        const total = filtered.length;
 
         const totalPages = Math.max(
             1,
-            Math.ceil(total / limit)
+            Math.ceil(found.length / limit)
         );
 
-        state.page = Math.min(
-            Math.max(state.page, 1),
-            totalPages
+        state.page = Math.max(
+            1,
+            Math.min(state.page, totalPages)
         );
 
         const start = (state.page - 1) * limit;
 
-        const end = start + limit;
-
-        rows.forEach(row => {
+        allRows.forEach(row => {
             row.hidden = true;
         });
 
-        filtered.slice(start, end).forEach(
-            (row, index) => {
+        found
+            .slice(start, start + limit)
+            .forEach((row, index) => {
                 row.hidden = false;
 
                 const numberCell =
@@ -265,62 +213,57 @@
 
                 if (numberCell) {
                     numberCell.textContent =
-                        start + index + 1;
+                        String(start + index + 1);
                 }
-            }
-        );
+            });
 
-        $('kfInfo').textContent = total
-            ? `Menampilkan ${start + 1}–${Math.min(end, total)} dari ${total} lokasi`
-            : 'Tidak ada lokasi yang sesuai.';
+        $('kfInfo').textContent = found.length
+            ? `Menampilkan ${start + 1}–${Math.min(start + limit, found.length)} dari ${found.length} lokasi`
+            : 'Tidak ditemukan lokasi yang sesuai.';
 
         const container = $('kfPages');
 
-        container.innerHTML = '';
+        container.replaceChildren();
 
         if (totalPages <= 1) {
             return;
         }
 
-        function addPage(label, target, disabled, active) {
+        function paginationButton(
+            label,
+            target,
+            disabled = false,
+            active = false
+        ) {
             const button = document.createElement('button');
 
             button.type = 'button';
-            button.className = active
-                ? 'active'
-                : '';
+
+            button.className = `kf-page-btn ${active ? 'active' : ''}`;
 
             button.textContent = label;
-
             button.disabled = disabled;
 
             button.addEventListener('click', () => {
                 state.page = target;
-                renderPagination();
+                renderPages();
             });
 
-            container.appendChild(button);
+            container.append(button);
         }
 
-        addPage(
+        paginationButton(
             '‹',
             state.page - 1,
-            state.page === 1,
-            false
+            state.page === 1
         );
 
-        const first = Math.max(
-            1,
-            state.page - 2
-        );
-
-        const last = Math.min(
-            totalPages,
-            first + 4
-        );
-
-        for (let i = first; i <= last; i++) {
-            addPage(
+        for (
+            let i = Math.max(1, state.page - 2);
+            i <= Math.min(totalPages, state.page + 2);
+            i++
+        ) {
+            paginationButton(
                 String(i),
                 i,
                 false,
@@ -328,22 +271,21 @@
             );
         }
 
-        addPage(
+        paginationButton(
             '›',
             state.page + 1,
-            state.page === totalPages,
-            false
+            state.page === totalPages
         );
     }
 
     $('kfCari').addEventListener('input', () => {
         state.page = 1;
-        renderPagination();
+        renderPages();
     });
 
     $('kfLimit').addEventListener('change', () => {
         state.page = 1;
-        renderPagination();
+        renderPages();
     });
 
     $('kfReset').addEventListener('click', () => {
@@ -352,264 +294,261 @@
 
         state.page = 1;
 
-        renderPagination();
+        renderPages();
     });
 
     /*
     |--------------------------------------------------------------------------
-    | 6. UTILITAS STRUKTUR ORGANISASI
+    | STRUKTUR ORGANISASI
     |--------------------------------------------------------------------------
     */
 
-    function uniqueRows(data, field) {
-        const map = new Map();
+    const unique = (data, key) => {
+        return Array.from(
+            new Map(
+                data.map(row => [
+                    Number(row[key] || 0),
+                    row
+                ])
+            ).values()
+        );
+    };
 
-        data.forEach(row => {
-            const key = Number(row[field] || 0);
-
-            if (!map.has(key)) {
-                map.set(key, row);
-            }
-        });
-
-        return Array.from(map.values());
-    }
-
-    function departemenName(row) {
-        return str(
+    const depName = row =>
+        string(
             row.departemen || row.kode_dep
         ) || 'Tanpa Departemen';
-    }
 
-    function divisiName(row) {
-        return str(
-            row.divisi
-        ) || 'Tanpa Divisi';
-    }
+    const divName = row =>
+        string(row.divisi) || 'Tanpa Divisi';
 
     /*
     |--------------------------------------------------------------------------
-    | 7. RENDER DEPARTEMEN
+    | RENDER DEPARTEMEN
     |--------------------------------------------------------------------------
     */
 
     function renderDepartemen() {
-        const data = uniqueRows(
+        const data = unique(
             state.lokasiData,
             'id_dep'
         );
 
-        const container = $('kfDepartemenTree');
-
-        container.innerHTML = `
-            <h4>Departemen</h4>
-
-            ${
+        $('kfDepartemenTree').innerHTML =
+            '<h4>Departemen</h4>' +
+            (
                 data.length
                     ? data.map(row => `
                         <button
-                            type="button"
                             class="kf-tree-btn ${
-                                Number(row.id_dep || 0) ===
-                                state.departemenId
+                                Number(row.id_dep || 0) === state.departemen
                                     ? 'active'
                                     : ''
                             }"
+                            type="button"
                             data-dep="${Number(row.id_dep || 0)}"
                         >
                             <i data-lucide="folder"></i>
-                            ${esc(departemenName(row))}
+                            ${esc(depName(row))}
                         </button>
                     `).join('')
                     : `
                         <p class="kf-muted">
-                            Tidak ada Departemen.
+                            Tidak ada departemen.
                         </p>
                     `
-            }
-        `;
+            );
 
         renderDivisi();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 8. RENDER DIVISI
+    | RENDER DIVISI
     |--------------------------------------------------------------------------
     */
 
     function renderDivisi() {
-        const byDepartemen = state.lokasiData.filter(
-            row =>
-                Number(row.id_dep || 0) ===
-                state.departemenId
-        );
+        const selected = state.lokasiData.filter(row => {
+            return Number(row.id_dep || 0) ===
+                state.departemen;
+        });
 
-        const data = uniqueRows(
-            byDepartemen,
+        const data = unique(
+            selected,
             'id_div'
         );
 
-        const container = $('kfDivisiTree');
-
-        container.innerHTML = `
-            <h4>Divisi</h4>
-
-            ${
+        $('kfDivisiTree').innerHTML =
+            '<h4>Divisi</h4>' +
+            (
                 data.length
                     ? data.map(row => `
                         <button
-                            type="button"
-                            class="kf-tree-btn ${
-                                Number(row.id_div || 0) ===
-                                state.divisiId
+                            class="kf-tree-btn child ${
+                                Number(row.id_div || 0) === state.divisi
                                     ? 'active'
                                     : ''
                             }"
+                            type="button"
                             data-div="${Number(row.id_div || 0)}"
                         >
                             <i data-lucide="folder-open"></i>
-                            ${esc(divisiName(row))}
+                            ${esc(divName(row))}
                         </button>
                     `).join('')
                     : `
                         <p class="kf-muted">
-                            Tidak ada Divisi.
+                            Tidak ada divisi.
                         </p>
                     `
-            }
-        `;
+            );
 
         renderInventaris();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 9. RENDER TABEL INVENTARIS
+    | FORMAT BANGUNAN
+    |--------------------------------------------------------------------------
+    */
+
+    function labelBangunan(value) {
+        const labels = {
+            P: 'Permanen',
+            SP: 'Semi Permanen',
+            D: 'Darurat'
+        };
+
+        return labels[string(value).toUpperCase()] ||
+            string(value) ||
+            '—';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TABEL INVENTARIS SESUAI KIB F EXCEL
     |--------------------------------------------------------------------------
     */
 
     function renderInventaris() {
-        const selected = state.lokasiData.filter(
-            row =>
-                Number(row.id_dep || 0) ===
-                    state.departemenId &&
-                Number(row.id_div || 0) ===
-                    state.divisiId
-        );
+        const data = state.lokasiData.filter(row => {
+            return (
+                Number(row.id_dep || 0) === state.departemen &&
+                Number(row.id_div || 0) === state.divisi
+            );
+        });
 
-        const first = selected[0];
+        const first = data[0];
 
         $('kfJudulUnit').textContent = first
-            ? `${departemenName(first)} / ${divisiName(first)}`
-            : 'Daftar Inventaris';
+            ? `${depName(first)} / ${divName(first)}`
+            : 'Daftar Konstruksi';
 
-        const container = $('kfTabelInventaris');
-
-        if (!selected.length) {
-            container.innerHTML = `
+        $('kfTabelInventaris').innerHTML = data.length
+            ? data.map((r, i) => `
                 <tr>
-                    <td colspan="6" class="kf-empty">
-                        Belum ada inventaris.
+                    <td>${i + 1}</td>
+
+                    <td class="kf-excel-name">
+                        <strong>
+                            ${esc(r.nama_barang || 'Tanpa nama')}
+                        </strong>
+
+                        <p>${esc(r.urai || '—')}</p>
                     </td>
-                </tr>
-            `;
-
-            return;
-        }
-
-        container.innerHTML = selected.map(
-            (row, index) => `
-                <tr>
-                    <td>${index + 1}</td>
 
                     <td>
-                        <strong>
-                            ${esc(row.nama_barang || 'Tanpa nama')}
+                        <strong>${esc(r.tahun || '—')}</strong>
+                    </td>
+
+                    <td>${esc(labelBangunan(r.type))}</td>
+                    <td>${esc(r.struktur || '—')}</td>
+                    <td>${esc(r.materi || '—')}</td>
+                    <td>${esc(r.luas || '—')}</td>
+
+                    <td>
+                        ${esc(r.letak || r.alamat_lokasi || '—')}
+                    </td>
+
+                    <td>${esc(r.status_tanah || '—')}</td>
+                    <td>${esc(r.asal || '—')}</td>
+                    <td>${esc(r.status_aset || '—')}</td>
+
+                    <td>
+                        <strong class="kf-price">
+                            ${rupiah(r.nilai)}
                         </strong>
                     </td>
 
-                    <td>
-                        ${esc(row.urai || '—')}
-                    </td>
+                    <td class="kf-excel-document">
+                        <p>${esc(r.ket || '—')}</p>
 
-                    <td>
-                        ${esc(row.tahun || '—')}
-                    </td>
-
-                    <td>
-                        ${rupiah(row.nilai)}
-                    </td>
-
-                    <td>
                         <button
                             type="button"
-                            class="kf-icon-btn"
-                            data-aset="${Number(row.id)}"
-                            title="Lihat Detail"
+                            class="kf-btn outline"
+                            data-aset="${Number(r.id)}"
                         >
                             <i data-lucide="eye"></i>
+                            Detail
                         </button>
                     </td>
                 </tr>
-            `
-        ).join('');
+            `).join('')
+            : `
+                <tr>
+                    <td colspan="13" class="kf-empty">
+                        Belum ada inventaris pada unit ini.
+                    </td>
+                </tr>
+            `;
 
         icons();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 10. BUKA DETAIL LOKASI
+    | BUKA DETAIL LOKASI
     |--------------------------------------------------------------------------
     */
 
     async function openLokasi(id, nama) {
-        state.lokasiId = id;
+        state.lokasi = id;
         state.lokasiData = [];
-        state.departemenId = null;
-        state.divisiId = null;
+        state.departemen = null;
+        state.divisi = null;
 
         $('kfJudulLokasi').textContent =
             nama || 'Detail Lokasi';
 
         $('kfDepartemenTree').textContent =
-            'Memuat Departemen...';
+            'Memuat data organisasi...';
 
         $('kfDivisiTree').innerHTML = '';
-
         $('kfTabelInventaris').innerHTML = '';
 
-        $('kfJudulUnit').textContent =
-            'Daftar Inventaris';
-
-        showModal('kfModalLokasi');
+        openDialog('kfModalLokasi');
 
         try {
-            const response = await api(
+            const result = await api(
                 `${base}/lokasi/${id}`
             );
 
-            state.lokasiData = Array.isArray(response.data)
-                ? response.data
+            state.lokasiData = Array.isArray(result.data)
+                ? result.data
                 : [];
 
-            if (!state.lokasiData.length) {
+            const first = state.lokasiData[0];
+
+            if (!first) {
                 $('kfDepartemenTree').textContent =
-                    'Belum ada data untuk lokasi ini.';
+                    'Lokasi ini belum memiliki inventaris.';
 
                 return;
             }
 
-            const first = state.lokasiData[0];
-
-            state.departemenId = Number(
-                first.id_dep || 0
-            );
-
-            state.divisiId = Number(
-                first.id_div || 0
-            );
+            state.departemen = Number(first.id_dep || 0);
+            state.divisi = Number(first.id_div || 0);
 
             renderDepartemen();
 
@@ -619,6 +558,12 @@
         }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | EVENT TABEL LOKASI
+    |--------------------------------------------------------------------------
+    */
+
     $('kfTabelLokasi').addEventListener(
         'click',
         event => {
@@ -626,20 +571,18 @@
                 '[data-kf-lokasi]'
             );
 
-            if (!button) {
-                return;
+            if (button) {
+                openLokasi(
+                    Number(button.dataset.kfLokasi),
+                    button.dataset.kfNama
+                );
             }
-
-            openLokasi(
-                Number(button.dataset.kfLokasi),
-                button.dataset.kfNama
-            );
         }
     );
 
     /*
     |--------------------------------------------------------------------------
-    | 11. PILIH DEPARTEMEN
+    | EVENT PILIH DEPARTEMEN
     |--------------------------------------------------------------------------
     */
 
@@ -654,18 +597,14 @@
                 return;
             }
 
-            state.departemenId = Number(
+            state.departemen = Number(
                 button.dataset.dep
             );
 
-            const first = state.lokasiData.find(
-                row =>
-                    Number(row.id_dep || 0) ===
-                    state.departemenId
-            );
-
-            state.divisiId = Number(
-                first?.id_div || 0
+            state.divisi = Number(
+                state.lokasiData.find(row =>
+                    Number(row.id_dep || 0) === state.departemen
+                )?.id_div || 0
             );
 
             renderDepartemen();
@@ -674,7 +613,7 @@
 
     /*
     |--------------------------------------------------------------------------
-    | 12. PILIH DIVISI
+    | EVENT PILIH DIVISI
     |--------------------------------------------------------------------------
     */
 
@@ -689,7 +628,7 @@
                 return;
             }
 
-            state.divisiId = Number(
+            state.divisi = Number(
                 button.dataset.div
             );
 
@@ -699,56 +638,75 @@
 
     /*
     |--------------------------------------------------------------------------
-    | 13. FORMAT FIELD DETAIL
+    | EVENT DETAIL INVENTARIS
     |--------------------------------------------------------------------------
     */
 
-    function detailField(label, value) {
-        const text = str(value) || '—';
+    $('kfTabelInventaris').addEventListener(
+        'click',
+        event => {
+            const button = event.target.closest(
+                '[data-aset]'
+            );
 
+            if (button) {
+                openInventaris(
+                    Number(button.dataset.aset)
+                );
+            }
+        }
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | FORMAT FIELD DETAIL
+    |--------------------------------------------------------------------------
+    */
+
+    function field(label, value) {
         return `
-            <div>
+            <div class="kf-field">
                 <small>${esc(label)}</small>
-                <strong>${esc(text)}</strong>
+
+                <strong>
+                    ${esc(string(value) || '—')}
+                </strong>
             </div>
         `;
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 14. DETAIL SATU INVENTARIS
+    | DETAIL SATU INVENTARIS
     |--------------------------------------------------------------------------
     */
 
     async function openInventaris(id) {
-        state.inventarisId = null;
-        state.detailLoading = true;
+        state.id = null;
 
         $('kfEdit').disabled = true;
         $('kfHapus').disabled = true;
 
         $('kfIsiDetail').textContent =
-            'Memuat data Konstruksi...';
+            'Memuat data konstruksi...';
 
-        $('kfJudulDetail').textContent =
-            'Detail Konstruksi';
-
-        showModal('kfModalDetail');
+        openDialog('kfModalDetail');
 
         try {
-            const response = await api(
+            const { data: r } = await api(
                 `${base}/${id}`
             );
 
-            const r = response.data;
-
             if (!r) {
                 throw new Error(
-                    'Data Konstruksi tidak ditemukan.'
+                    'Data konstruksi tidak ditemukan.'
                 );
             }
 
-            state.inventarisId = Number(r.id);
+            state.id = Number(r.id);
+
+            $('kfJudulDetail').textContent =
+                r.nama_barang || 'Detail Konstruksi';
 
             const namaLokasi =
                 r.nama_lokasi ||
@@ -758,27 +716,24 @@
             const alamat =
                 r.alamat_lokasi ||
                 r.alamat ||
-                '';
+                '—';
 
-            $('kfJudulDetail').textContent =
-                r.nama_barang || 'Detail Konstruksi';
-
-            const image = r.foto_url
+            const fotoHtml = r.foto_url
                 ? `
                     <img
                         class="kf-photo"
                         src="${esc(r.foto_url)}"
-                        alt="Foto konstruksi"
+                        alt="Foto Konstruksi"
                         loading="lazy"
                     >
                 `
                 : `
                     <p class="kf-muted">
-                        Foto konstruksi belum tersedia.
+                        Foto belum tersedia.
                     </p>
                 `;
 
-            const pdf = r.dokumen_url
+            const dokumenHtml = r.dokumen_url
                 ? `
                     <a
                         class="kf-btn outline"
@@ -791,9 +746,9 @@
                     </a>
                 `
                 : `
-                    <span class="kf-muted">
-                        Dokumen PDF belum tersedia.
-                    </span>
+                    <p class="kf-muted">
+                        PDF belum tersedia.
+                    </p>
                 `;
 
             $('kfIsiDetail').innerHTML = `
@@ -809,32 +764,70 @@
                     </p>
                 </div>
 
-                ${image}
+                ${fotoHtml}
+
+                <h3 class="kf-detail-section-heading">
+                    Identitas K.I.B F
+                </h3>
 
                 <div class="kf-detail-grid">
-                    ${detailField('Kode Barang', r.kode_barang)}
-                    ${detailField('Tahun', r.tahun)}
-                    ${detailField('Bangunan (P/SP/D)', r.type)}
-                    ${detailField('Struktur', r.struktur)}
-                    ${detailField('Material', r.materi)}
-                    ${detailField('Luas (m²)', r.luas)}
-                    ${detailField('Letak / Alamat', r.letak || alamat)}
-                    ${detailField('Status Tanah', r.status_tanah)}
-                    ${detailField('Asal Pembiayaan', r.asal)}
-                    ${detailField('Status Aset', r.status_aset)}
-                    ${detailField('Nilai Aset', rupiah(r.nilai))}
+                    ${field('Nama Barang / Jenis Barang', r.nama_barang)}
+
+                    ${field('Kode Barang', r.kode_barang)}
+
+                    ${field('Tahun', r.tahun)}
+
+                    ${field(
+                        'Bangunan (P, SP, D)',
+                        labelBangunan(r.type)
+                    )}
+
+                    ${field(
+                        'Konstruksi: Bertingkat / Tidak',
+                        r.struktur
+                    )}
+
+                    ${field(
+                        'Konstruksi: Beton / Tidak',
+                        r.materi
+                    )}
+
+                    ${field('Luas (m²)', r.luas)}
+
+                    ${field(
+                        'Letak / Lokasi Alamat',
+                        r.letak || alamat
+                    )}
+
+                    ${field('Status Tanah', r.status_tanah)}
+
+                    ${field(
+                        'Asal Usul Pembiayaan',
+                        r.asal
+                    )}
+
+                    ${field('Status Aset', r.status_aset)}
+
+                    ${field(
+                        'Nilai (Rp)',
+                        rupiah(r.nilai)
+                    )}
                 </div>
 
                 <div class="kf-detail-text">
                     <h3>Uraian Pekerjaan</h3>
 
-                    <p>${esc(r.urai || '—')}</p>
+                    <p>
+                        ${esc(r.urai || '—')}
+                    </p>
 
-                    <h3>Keterangan / Dokumen</h3>
+                    <h3>Dokumen Pendukung</h3>
 
-                    <p>${esc(r.ket || '—')}</p>
+                    <p>
+                        ${esc(r.ket || '—')}
+                    </p>
 
-                    ${pdf}
+                    ${dokumenHtml}
                 </div>
             `;
 
@@ -844,56 +837,182 @@
             icons();
 
         } catch (error) {
-            state.inventarisId = null;
+            state.id = null;
 
             $('kfIsiDetail').textContent =
                 error.message;
-
-        } finally {
-            state.detailLoading = false;
         }
     }
 
-    $('kfTabelInventaris').addEventListener(
-        'click',
-        event => {
-            const button = event.target.closest(
-                '[data-aset]'
-            );
-
-            if (!button) {
-                return;
-            }
-
-            openInventaris(
-                Number(button.dataset.aset)
-            );
-        }
-    );
-
     /*
     |--------------------------------------------------------------------------
-    | 15. FORM DAN FIELD
+    | FILTER DATA PENDING
     |--------------------------------------------------------------------------
     */
 
-    const fields = [
-        'id_barang',
-        'tahun',
-        'type',
-        'struktur',
-        'materi',
-        'luas',
-        'letak',
-        'status_tanah',
-        'asal',
-        'status_aset',
-        'urai',
-        'ket'
-    ];
+    function pendingFiltered() {
+        const keyword = string(
+            $('kfPendingCari').value
+        ).toLocaleLowerCase('id-ID');
+
+        return state.pending.filter(row => {
+            return [
+                row.no_voucher,
+                row.lokasi,
+                row.alamat,
+                row.departemen,
+                row.divisi,
+                row.tahun,
+                row.nilai,
+                row.urai
+            ].join(' ')
+                .toLocaleLowerCase('id-ID')
+                .includes(keyword);
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TABEL DATA PENDING
+    |--------------------------------------------------------------------------
+    */
+
+    function renderPending() {
+        const list = pendingFiltered();
+
+        $('kfPendingTotal').textContent =
+            `${list.length} data`;
+
+        $('kfPendingBody').innerHTML = list.length
+            ? list.map((r, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+
+                    <td>
+                        <strong>
+                            ${esc(r.no_voucher || r.id)}
+                        </strong>
+
+                        <small>
+                            ${esc(r.tgl_voucher || '—')}
+                        </small>
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${esc(r.lokasi || '—')}
+                        </strong>
+
+                        <small>
+                            ${esc(r.alamat || '—')}
+                        </small>
+                    </td>
+
+                    <td>
+                        ${esc(r.departemen || '—')}
+                    </td>
+
+                    <td>
+                        ${esc(r.divisi || '—')}
+                    </td>
+
+                    <td>
+                        ${esc(r.tahun || '—')}
+                    </td>
+
+                    <td>
+                        <strong class="kf-price">
+                            ${rupiah(r.nilai)}
+                        </strong>
+                    </td>
+
+                    <td class="kf-pending-uraian">
+                        ${esc(r.urai || '—')}
+                    </td>
+
+                    <td>
+                        <button
+                            type="button"
+                            class="kf-btn primary"
+                            data-pending-id="${Number(r.id)}"
+                            ${
+                                Number(r.jenisn) !== 1
+                                    ? 'disabled title="Bukan Penambahan Aset"'
+                                    : ''
+                            }
+                        >
+                            Pilih
+                        </button>
+                    </td>
+                </tr>
+            `).join('')
+            : `
+                <tr>
+                    <td colspan="9" class="kf-empty">
+                        Tidak ada transaksi Konstruksi
+                        yang menunggu diproses.
+                    </td>
+                </tr>
+            `;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MEMUAT DATA PENDING DARI DATABASE
+    |--------------------------------------------------------------------------
+    */
+
+    async function loadPending() {
+        $('kfPendingBody').innerHTML = `
+            <tr>
+                <td colspan="9" class="kf-empty">
+                    Memuat transaksi Nilai Aset...
+                </td>
+            </tr>
+        `;
+
+        $('kfPendingTotal').textContent =
+            'Memuat...';
+
+        try {
+            const response = await api(
+                endpointPending
+            );
+
+            state.pending = (
+                Array.isArray(response.data)
+                    ? response.data
+                    : []
+            ).filter(row => {
+                return Number(row.jenisn) === 1;
+            });
+
+            renderPending();
+
+        } catch (error) {
+            state.pending = [];
+
+            $('kfPendingBody').innerHTML = `
+                <tr>
+                    <td colspan="9" class="kf-empty">
+                        ${esc(error.message)}
+                    </td>
+                </tr>
+            `;
+
+            $('kfPendingTotal').textContent =
+                'Gagal memuat';
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT UNTUK KOMPATIBILITAS DATA LAMA
+    |--------------------------------------------------------------------------
+    */
 
     function setSelect(element, value) {
-        const selected = str(value);
+        const selected = string(value);
 
         if (
             selected &&
@@ -912,179 +1031,284 @@
         element.value = selected;
     }
 
-    function fillForm(data) {
-        const form = $('kfForm');
+    /*
+    |--------------------------------------------------------------------------
+    | PENGISIAN OTOMATIS ORGANISASI
+    |--------------------------------------------------------------------------
+    */
 
-        fields.forEach(name => {
-            const control = form.elements.namedItem(name);
-
-            if (!control) {
-                return;
-            }
-
-            const value = data[name] ?? '';
-
-            if (control.tagName === 'SELECT') {
-                setSelect(control, value);
-            } else {
-                control.value = str(value);
-            }
-        });
-
-        $('kfNilai').value = rupiah(data.nilai);
-    }
-
-    function fillOrganisasi(data) {
+    function organisasi(row) {
         $('kfLokasi').value =
-            str(
-                data.nama_lokasi ||
-                data.lokasi
-            ) || '—';
+            row.nama_lokasi || row.lokasi || '';
+
+        $('kfAlamat').value =
+            row.alamat_lokasi || row.alamat || '';
 
         $('kfDepartemen').value =
-            str(data.departemen) || '—';
+            row.departemen || '';
 
         $('kfDivisi').value =
-            str(data.divisi) || '—';
+            row.divisi || '';
     }
 
     /*
     |--------------------------------------------------------------------------
-    | 16. BUKA DATA PENDING
+    | STATUS VOUCHER TERPILIH
     |--------------------------------------------------------------------------
     */
 
-    function openPending() {
-        const button = document.querySelector(
-            '[data-kib-open-pending="konstruksi"]'
-        );
+    function selectedSource(visible, allowChange) {
+        $('kfSourceSelected').hidden = !visible;
+        $('kfSourceSection').hidden = visible;
+        $('kfPilihUlang').hidden = !allowChange;
+    }
 
-        if (!button || button.disabled) {
-            notify(
-                'Belum ada Data Pending Konstruksi.\n\n' +
-                'Buat transaksi Penambahan Aset pada ' +
-                'menu Nilai Aset terlebih dahulu.'
-            );
+    /*
+    |--------------------------------------------------------------------------
+    | RESET FORM TAMBAH
+    |--------------------------------------------------------------------------
+    */
 
-            return;
-        }
+    function resetCreate() {
+        state.selected = null;
+        state.editId = null;
 
-        button.click();
+        $('kfForm').reset();
+
+        showError('');
+
+        [
+            'kfSourceId',
+            'kfLokasi',
+            'kfAlamat',
+            'kfDepartemen',
+            'kfDivisi',
+            'kfNilai'
+        ].forEach(id => {
+            $(id).value = '';
+        });
+
+        $('kfPendingCari').value = '';
+
+        $('kfJudulForm').textContent =
+            'Tambah Data Konstruksi';
+
+        $('kfSimpan').textContent =
+            'Simpan Data Konstruksi';
+
+        $('kfVoucher').textContent = '—';
+        $('kfVoucherUrai').textContent = '';
+
+        selectedSource(false, true);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | BUKA FORM TAMBAH
+    |--------------------------------------------------------------------------
+    */
+
+    function openCreate() {
+        resetCreate();
+
+        openDialog('kfModalForm');
+
+        loadPending();
     }
 
     $('kfTambah').addEventListener(
         'click',
-        openPending
+        openCreate
     );
 
-    $('kfPilihUlang').addEventListener(
+    $('kfLihatMasuk').addEventListener(
         'click',
-        openPending
+        openCreate
+    );
+
+    $('kfPendingCari').addEventListener(
+        'input',
+        renderPending
     );
 
     /*
     |--------------------------------------------------------------------------
-    | 17. TERIMA VOUCHER DARI PENDING GLOBAL
+    | GANTI VOUCHER
     |--------------------------------------------------------------------------
     */
 
-    function sourceSelected(data) {
-        if (!data || !data.id) {
-            return;
-        }
+    $('kfPilihUlang').addEventListener(
+        'click',
+        () => {
+            state.selected = null;
 
-        if (Number(data.jenisn) !== 1) {
-            notify(
-                'Pilih transaksi Penambahan Aset, ' +
-                'bukan Penambahan Nilai.'
-            );
+            $('kfSourceId').value = '';
 
-            return;
-        }
+            selectedSource(false, true);
 
-        if (
-            !data.id_lokasi ||
-            !data.dep ||
-            !data.div
-        ) {
-            notify(
-                'Lokasi, Departemen, dan Divisi ' +
-                'pada voucher belum lengkap.'
-            );
-
-            return;
-        }
-
-        state.source = data;
-        state.editId = null;
-
-        const form = $('kfForm');
-
-        form.reset();
-
-        showError('');
-
-        $('kfSourceId').value = data.id;
-
-        $('kfVoucher').textContent =
-            `Voucher ${data.no_voucher || data.id}`;
-
-        $('kfVoucherUrai').textContent =
-            data.urai || 'Penambahan Aset';
-
-        fillOrganisasi(data);
-
-        const tahun = str(data.tahun);
-
-        $('kfTahun').value =
-            /^\d{4}$/.test(tahun)
-                ? tahun
-                : '';
-
-        $('kfLetak').value =
-            data.alamat === '-'
-                ? ''
-                : (data.alamat || '');
-
-        $('kfUrai').value =
-            data.urai === '-'
-                ? ''
-                : (data.urai || '');
-
-        $('kfNilai').value =
-            rupiah(data.nilai);
-
-        $('kfPilihUlang').hidden = false;
-
-        $('kfJudulForm').textContent =
-            'Tambah Konstruksi';
-
-        $('kfSimpan').textContent =
-            'Simpan Inventaris';
-
-        showModal('kfModalForm');
-    }
-
-    window.addEventListener(
-        'kib:source-selected',
-        event => {
-            sourceSelected(event.detail);
+            loadPending();
         }
     );
 
     /*
     |--------------------------------------------------------------------------
-    | 18. EDIT KONSTRUKSI
+    | PILIH DATA NILAI ASET
+    |--------------------------------------------------------------------------
+    */
+
+    $('kfPendingBody').addEventListener(
+        'click',
+        event => {
+            const button = event.target.closest(
+                '[data-pending-id]'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            const row = state.pending.find(item => {
+                return Number(item.id) ===
+                    Number(button.dataset.pendingId);
+            });
+
+            if (!row || Number(row.jenisn) !== 1) {
+                return;
+            }
+
+            if (
+                !row.id_lokasi ||
+                !row.dep ||
+                !row.div
+            ) {
+                showError(
+                    'Voucher belum memiliki Lokasi, ' +
+                    'Departemen dan Divisi yang lengkap. ' +
+                    'Perbaiki pada Nilai Aset dahulu.'
+                );
+
+                return;
+            }
+
+            showError('');
+
+            state.selected = row;
+
+            $('kfSourceId').value =
+                String(row.id);
+
+            $('kfVoucher').textContent =
+                `Voucher ${row.no_voucher || row.id}`;
+
+            $('kfVoucherUrai').textContent =
+                `${row.lokasi || '—'} · ` +
+                `${row.departemen || '—'} / ` +
+                `${row.divisi || '—'} · ` +
+                rupiah(row.nilai);
+
+            organisasi(row);
+
+            $('kfTahun').value =
+                /^\d{4}$/.test(string(row.tahun))
+                    ? row.tahun
+                    : '';
+
+            $('kfLetak').value =
+                string(row.alamat) === '-'
+                    ? ''
+                    : string(row.alamat);
+
+            $('kfUrai').value =
+                string(row.urai) === '-'
+                    ? ''
+                    : string(row.urai);
+
+            $('kfNilai').value =
+                rupiah(row.nilai);
+
+            selectedSource(true, true);
+
+            $('kfBarang').focus();
+        }
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIELD EDIT
+    |--------------------------------------------------------------------------
+    */
+
+    const editableFields = [
+        'id_barang',
+        'tahun',
+        'type',
+        'struktur',
+        'materi',
+        'luas',
+        'letak',
+        'status_tanah',
+        'asal',
+        'status_aset',
+        'urai',
+        'ket'
+    ];
+
+    function fillEdit(row) {
+        $('kfForm').reset();
+
+        editableFields.forEach(name => {
+            const input = $('kfForm')
+                .elements
+                .namedItem(name);
+
+            if (!input) {
+                return;
+            }
+
+            if (input.tagName === 'SELECT') {
+                setSelect(
+                    input,
+                    row[name]
+                );
+            } else {
+                input.value = row[name] ?? '';
+            }
+        });
+
+        organisasi(row);
+
+        $('kfSourceId').value = '';
+
+        $('kfNilai').value =
+            rupiah(row.nilai);
+
+        $('kfVoucher').textContent =
+            'Edit data inventaris yang sudah tercatat';
+
+        $('kfVoucherUrai').textContent =
+            'Nilai dan organisasi tetap mengikuti transaksi asal.';
+
+        $('kfJudulForm').textContent =
+            'Edit Data Konstruksi';
+
+        $('kfSimpan').textContent =
+            'Simpan Perubahan';
+
+        selectedSource(true, false);
+
+        showError('');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT KONSTRUKSI
     |--------------------------------------------------------------------------
     */
 
     $('kfEdit').addEventListener(
         'click',
         async () => {
-            if (
-                !state.inventarisId ||
-                state.detailLoading
-            ) {
+            if (!state.id) {
                 return;
             }
 
@@ -1093,51 +1317,21 @@
             button.disabled = true;
 
             try {
-                const response = await api(
-                    `${base}/${state.inventarisId}`
+                const { data } = await api(
+                    `${base}/${state.id}`
                 );
 
-                const data = response.data;
+                state.editId = state.id;
+                state.selected = null;
 
-                if (!data) {
-                    throw new Error(
-                        'Data inventaris tidak ditemukan.'
-                    );
-                }
+                fillEdit(data);
 
-                state.editId = Number(data.id);
-                state.source = null;
+                closeDialog('kfModalDetail');
 
-                $('kfForm').reset();
-
-                showError('');
-
-                fillForm(data);
-                fillOrganisasi(data);
-
-                $('kfSourceId').value = '';
-
-                $('kfVoucher').textContent =
-                    'Edit inventaris Konstruksi';
-
-                $('kfVoucherUrai').textContent =
-                    'Nilai aset dan struktur organisasi ' +
-                    'tetap mengikuti data asal.';
-
-                $('kfPilihUlang').hidden = true;
-
-                $('kfJudulForm').textContent =
-                    'Edit Konstruksi';
-
-                $('kfSimpan').textContent =
-                    'Simpan Perubahan';
-
-                closeModal('kfModalDetail');
-
-                showModal('kfModalForm');
+                openDialog('kfModalForm');
 
             } catch (error) {
-                notify(error.message);
+                alert(error.message);
 
             } finally {
                 button.disabled = false;
@@ -1147,7 +1341,57 @@
 
     /*
     |--------------------------------------------------------------------------
-    | 19. SIMPAN TAMBAH / EDIT
+    | HAPUS KONSTRUKSI
+    |--------------------------------------------------------------------------
+    */
+
+    $('kfHapus').addEventListener(
+        'click',
+        async () => {
+            if (!state.id || state.saving) {
+                return;
+            }
+
+            const confirmed = confirm(
+                'Hapus inventaris Konstruksi ini ' +
+                'secara permanen?\n\n' +
+                'Status voucher Nilai Aset asal tidak diubah.'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            state.saving = true;
+            $('kfHapus').disabled = true;
+
+            try {
+                const result = await api(
+                    `${base}/${state.id}`,
+                    {
+                        method: 'DELETE'
+                    }
+                );
+
+                alert(
+                    result.message ||
+                    'Data konstruksi berhasil dihapus.'
+                );
+
+                window.location.reload();
+
+            } catch (error) {
+                alert(error.message);
+
+                $('kfHapus').disabled = false;
+                state.saving = false;
+            }
+        }
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | SIMPAN TAMBAH / EDIT
     |--------------------------------------------------------------------------
     */
 
@@ -1156,7 +1400,7 @@
         async event => {
             event.preventDefault();
 
-            if (state.busy) {
+            if (state.saving) {
                 return;
             }
 
@@ -1164,63 +1408,58 @@
 
             if (
                 !state.editId &&
-                !state.source
+                !state.selected
             ) {
                 showError(
-                    'Pilih Data Pending terlebih dahulu.'
+                    'Pilih satu transaksi Nilai Aset ' +
+                    'pada tabel terlebih dahulu.'
                 );
 
                 return;
             }
 
-            const formElement = event.currentTarget;
-
-            if (!formElement.reportValidity()) {
+            if (!event.currentTarget.reportValidity()) {
                 return;
             }
 
-            const submitButton = $('kfSimpan');
+            const button = $('kfSimpan');
+            const original = button.textContent;
 
-            const originalText =
-                submitButton.textContent;
+            button.disabled = true;
+            button.textContent = 'Menyimpan...';
 
-            state.busy = true;
-
-            submitButton.disabled = true;
-            submitButton.textContent = 'Menyimpan...';
+            state.saving = true;
 
             try {
-                const formData = new FormData(
-                    formElement
+                const form = new FormData(
+                    event.currentTarget
                 );
 
-                const isEditing = Boolean(
-                    state.editId
-                );
+                let url = root.dataset.save;
 
-                let url = saveUrl;
-
-                if (isEditing) {
+                if (state.editId) {
                     url = `${base}/${state.editId}`;
 
-                    // Method spoofing Laravel.
-                    formData.set('_method', 'PUT');
+                    form.set('_method', 'PUT');
 
-                    formData.delete('id_nilai_aktiva');
+                    form.delete('id_nilai_aktiva');
 
                 } else {
-                    formData.set(
+                    form.set(
                         'id_nilai_aktiva',
-                        String(state.source.id)
+                        String(state.selected.id)
                     );
                 }
 
-                const result = await api(url, {
-                    method: 'POST',
-                    body: formData
-                });
+                const result = await api(
+                    url,
+                    {
+                        method: 'POST',
+                        body: form
+                    }
+                );
 
-                notify(
+                alert(
                     result.message ||
                     'Data Konstruksi berhasil disimpan.'
                 );
@@ -1230,92 +1469,26 @@
             } catch (error) {
                 showError(error.message);
 
-                const errorElement = $('kfError');
-
-                errorElement.scrollIntoView({
+                $('kfError').scrollIntoView({
                     behavior: 'smooth',
                     block: 'center'
                 });
 
-            } finally {
-                state.busy = false;
+                state.saving = false;
 
-                submitButton.disabled = false;
-                submitButton.textContent = originalText;
-            }
-        }
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | 20. HAPUS KONSTRUKSI
-    |--------------------------------------------------------------------------
-    */
-
-    $('kfHapus').addEventListener(
-        'click',
-        async () => {
-            const id = state.inventarisId;
-
-            if (
-                !id ||
-                state.detailLoading ||
-                state.busy
-            ) {
-                return;
-            }
-
-            const confirmed = confirm(
-                'Apakah kamu yakin ingin menghapus ' +
-                'inventaris Konstruksi ini?\n\n' +
-                'Data dan file baru yang terhubung ' +
-                'akan dihapus secara permanen.\n\n' +
-                'Status voucher Nilai Aset asal ' +
-                'tidak akan diubah.'
-            );
-
-            if (!confirmed) {
-                return;
-            }
-
-            const button = $('kfHapus');
-
-            state.busy = true;
-            button.disabled = true;
-
-            try {
-                const result = await api(
-                    `${base}/${id}`,
-                    {
-                        method: 'DELETE'
-                    }
-                );
-
-                notify(
-                    result.message ||
-                    'Inventaris berhasil dihapus.'
-                );
-
-                window.location.reload();
-
-            } catch (error) {
-                notify(error.message);
-
-            } finally {
-                state.busy = false;
                 button.disabled = false;
+                button.textContent = original;
             }
         }
     );
 
     /*
     |--------------------------------------------------------------------------
-    | 21. INISIALISASI HALAMAN
+    | INISIALISASI
     |--------------------------------------------------------------------------
     */
 
-    renderPagination();
-
+    renderPages();
     icons();
 
 })();
