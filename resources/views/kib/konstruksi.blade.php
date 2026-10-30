@@ -10,9 +10,6 @@
 @section('content')
     @php
         $rupiah = fn($value) => 'Rp ' . number_format((float) ($value ?? 0), 0, ',', '.');
-
-        $jumlahKonstruksi = (int) ($statistik->jumlah ?? 0);
-        $jumlahLokasi = (int) ($statistik->lokasi ?? 0);
     @endphp
 
     <section class="content kf" id="kfApp" data-base="{{ url('/kib/konstruksi') }}"
@@ -22,18 +19,21 @@
         {{-- HEADER --}}
 
         <header class="kf-hero">
+
             <nav class="kf-crumb" aria-label="Breadcrumb">
-                <a href="{{ route('dashboard') }}" aria-label="Dashboard">
+                <a href="{{ route('dashboard') }}">
                     <i data-lucide="house"></i>
                 </a>
 
                 <i data-lucide="chevron-right"></i>
                 <span>K.I.B</span>
+
                 <i data-lucide="chevron-right"></i>
                 <strong>Konstruksi</strong>
             </nav>
 
             <div class="kf-heading">
+
                 <div>
                     <small>
                         KARTU INVENTARIS BARANG — K.I.B F
@@ -42,50 +42,74 @@
                     <h1>Konstruksi</h1>
 
                     <p>
-                        Pengelolaan konstruksi berdasarkan lokasi,
-                        departemen, divisi, dan transaksi Nilai Aset.
+                        Pengelolaan data inventaris konstruksi
+                        berdasarkan lokasi, departemen, divisi,
+                        dan transaksi Nilai Aset.
                     </p>
                 </div>
 
-                <button class="kf-btn primary" type="button" id="kfTambah">
-                    <i data-lucide="plus"></i>
-                    Tambah Data Konstruksi
-                </button>
+                {{-- KARTU TANGGAL DAN JAM --}}
+
+                <div class="kf-date-card">
+                    <span class="kf-date-icon">
+                        <i data-lucide="calendar-days"></i>
+                    </span>
+
+                    <div>
+                        <strong id="kfTanggal">
+                            {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
+                        </strong>
+
+                        <span>
+                            <time id="kfJam">
+                                {{ now('Asia/Makassar')->format('H:i:s') }}
+                            </time>
+                            WITA
+                        </span>
+                    </div>
+                </div>
             </div>
 
             {{-- STATISTIK --}}
 
             <div class="kf-kpis">
+
                 <article>
-                    <i data-lucide="map-pin"></i>
+                    <span class="kf-kpi-icon">
+                        <i data-lucide="map-pin"></i>
+                    </span>
 
                     <div>
                         <small>Lokasi Konstruksi</small>
 
                         <strong>
-                            {{ number_format($jumlahLokasi, 0, ',', '.') }}
+                            {{ number_format((int) ($statistik->lokasi ?? 0), 0, ',', '.') }}
                         </strong>
 
-                        <span>Lokasi aset yang terdaftar</span>
+                        <span>Lokasi terdaftar</span>
                     </div>
                 </article>
 
                 <article>
-                    <i data-lucide="hard-hat"></i>
+                    <span class="kf-kpi-icon">
+                        <i data-lucide="hard-hat"></i>
+                    </span>
 
                     <div>
                         <small>Inventaris K.I.B F</small>
 
                         <strong>
-                            {{ number_format($jumlahKonstruksi, 0, ',', '.') }}
+                            {{ number_format((int) ($statistik->jumlah ?? 0), 0, ',', '.') }}
                         </strong>
 
-                        <span>Data inventaris konstruksi</span>
+                        <span>Total data konstruksi</span>
                     </div>
                 </article>
 
                 <article>
-                    <i data-lucide="wallet"></i>
+                    <span class="kf-kpi-icon">
+                        <i data-lucide="wallet"></i>
+                    </span>
 
                     <div>
                         <small>Total Nilai Konstruksi</small>
@@ -94,12 +118,14 @@
                             {{ $rupiah($statistik->nilai ?? 0) }}
                         </strong>
 
-                        <span>Nilai tercatat di database</span>
+                        <span>Berdasarkan database aset</span>
                     </div>
                 </article>
 
                 <article>
-                    <i data-lucide="clock-3"></i>
+                    <span class="kf-kpi-icon">
+                        <i data-lucide="history"></i>
+                    </span>
 
                     <div>
                         <small>Update Terakhir</small>
@@ -112,60 +138,57 @@
                             @endif
                         </strong>
 
-                        <span>Berdasarkan tanggal pembaruan</span>
+                        <span>Aktivitas data K.I.B F</span>
                     </div>
                 </article>
             </div>
+
         </header>
 
         {{-- DATA NILAI ASET MASUK --}}
 
-        <section class="kf-incoming kib-incoming-card" aria-label="Data Nilai Aset masuk">
-            <div class="kib-incoming-icon">
+        <section class="kf-incoming">
+
+            <span class="kf-incoming-icon">
                 <i data-lucide="inbox"></i>
-            </div>
+            </span>
 
-            <div class="kib-incoming-content">
-                <div class="kib-incoming-title-row">
-                    <div>
-                        <span class="kib-incoming-eyebrow">
-                            DATA NILAI ASET
-                        </span>
+            <div class="kf-incoming-body">
 
-                        <h3>
-                            Data Konstruksi Menunggu Diproses
-                        </h3>
-                    </div>
-                </div>
+                <small>DATA NILAI ASET</small>
+
+                <h3>Data Konstruksi Menunggu Diproses</h3>
 
                 <p>
-                    Buka daftar transaksi Nilai Aset kategori
-                    Konstruksi untuk memilih voucher Penambahan Aset.
-                    Lokasi, alamat, departemen, divisi, tahun,
-                    dan nilai akan diisi otomatis.
+                    Pilih transaksi Penambahan Aset untuk
+                    melengkapi data Konstruksi K.I.B F.
                 </p>
             </div>
 
-            <div class="kib-incoming-action">
-                <button type="button" id="kfLihatMasuk" class="kib-incoming-button">
-                    <i data-lucide="inbox"></i>
-                    <span>Lihat Data Masuk</span>
-                </button>
-            </div>
+            <button type="button" class="kf-btn outline" id="kfLihatMasuk">
+                <i data-lucide="inbox"></i>
+                Lihat Data Masuk
+            </button>
         </section>
 
-        {{-- FILTER DATA --}}
+        {{-- FILTER --}}
 
         <section class="kf-card">
+
             <div class="kf-card-head">
                 <div>
                     <h2>Filter Data Konstruksi</h2>
-                    <p>Cari nama lokasi dan alamat konstruksi.</p>
+
+                    <p>
+                        Cari berdasarkan nama lokasi
+                        atau alamat konstruksi.
+                    </p>
                 </div>
             </div>
 
             <div class="kf-toolbar">
-                <label class="kf-search" aria-label="Cari lokasi">
+
+                <label class="kf-search">
                     <i data-lucide="search"></i>
 
                     <input id="kfCari" type="search" placeholder="Cari lokasi atau alamat..." autocomplete="off">
@@ -174,11 +197,11 @@
                 <label class="kf-limit">
                     <span>Jumlah data</span>
 
-                    <select id="kfLimit" aria-label="Jumlah baris">
-                        <option>10</option>
-                        <option selected>20</option>
-                        <option>50</option>
-                        <option>100</option>
+                    <select id="kfLimit">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
                     </select>
                 </label>
 
@@ -189,30 +212,42 @@
             </div>
         </section>
 
-        {{-- TABEL UTAMA LOKASI --}}
+        {{-- DAFTAR LOKASI KONSTRUKSI --}}
 
         <section class="kf-card">
+
             <div class="kf-card-head">
+
                 <div>
                     <h2>Daftar Lokasi Konstruksi</h2>
 
                     <p>
-                        Pilih tombol Detail untuk menampilkan
-                        inventaris sesuai kolom K.I.B F.
+                        Kelola data konstruksi berdasarkan
+                        lokasi, departemen, dan divisi.
                     </p>
                 </div>
 
-                <span class="kf-pill">
-                    <i data-lucide="database"></i>
-                    PostgreSQL
-                </span>
+                <div class="kf-card-actions">
+
+                    <span class="kf-pill">
+                        <i data-lucide="database"></i>
+                        PostgreSQL
+                    </span>
+
+                    <button type="button" class="kf-btn primary" id="kfTambah">
+                        <i data-lucide="plus"></i>
+                        Tambah Data Konstruksi
+                    </button>
+                </div>
             </div>
 
             <div class="kf-table-wrap">
+
                 <table class="kf-table kf-main-table" id="kfTabelLokasi">
+
                     <thead>
                         <tr>
-                            <th>No</th>
+                            <th>No.</th>
                             <th>Lokasi Konstruksi</th>
                             <th>Alamat</th>
                             <th>Data Konstruksi</th>
@@ -222,13 +257,16 @@
                     </thead>
 
                     <tbody>
+
                         @forelse ($lokasis as $i => $lok)
                             <tr data-kf-row
                                 data-search="{{ mb_strtolower(($lok->lokasi ?? '') . ' ' . ($lok->alamat ?? '')) }}">
+
                                 <td>{{ $i + 1 }}</td>
 
                                 <td>
-                                    <div class="kf-location-name">
+                                    <div class="kf-location">
+
                                         <span class="kf-location-icon">
                                             <i data-lucide="map-pin"></i>
                                         </span>
@@ -245,10 +283,12 @@
                                     </div>
                                 </td>
 
-                                <td>{{ $lok->alamat ?: '—' }}</td>
+                                <td>
+                                    {{ $lok->alamat ?: '—' }}
+                                </td>
 
                                 <td>
-                                    <span class="kf-count-chip">
+                                    <span class="kf-count">
                                         <i data-lucide="files"></i>
 
                                         {{ number_format((int) $lok->jumlah, 0, ',', '.') }}
@@ -256,98 +296,144 @@
                                     </span>
                                 </td>
 
-                                <td>
-                                    <strong class="kf-price">
-                                        {{ $rupiah($lok->nilai) }}
-                                    </strong>
-                                </td>
+                                {{-- NILAI BISA DIKLIK --}}
 
                                 <td>
-                                    <button type="button" class="kf-icon-btn"
-                                        data-kf-lokasi="{{ (int) ($lok->id_lokasi ?? 0) }}"
+                                    <button type="button" class="kf-value-button"
+                                        data-kf-value="{{ (int) ($lok->id_lokasi ?? 0) }}"
                                         data-kf-nama="{{ $lok->lokasi ?: 'Belum Dipetakan' }}"
-                                        aria-label="Detail lokasi {{ $lok->lokasi ?: 'Belum Dipetakan' }}" title="Detail">
-                                        <i data-lucide="eye"></i>
+                                        title="Lihat rincian nilai konstruksi">
+                                        <span>
+                                            <strong>
+                                                {{ $rupiah($lok->nilai) }}
+                                            </strong>
+
+                                            <small>
+                                                Rincian {{ (int) $lok->jumlah }} inventaris
+                                            </small>
+                                        </span>
+
+                                        <i data-lucide="external-link"></i>
                                     </button>
                                 </td>
+
+                                {{-- AKSI --}}
+
+                                <td>
+                                    <div class="kf-actions">
+
+                                        <button type="button" class="kf-icon-btn view" data-kf-action="view"
+                                            data-kf-lokasi="{{ (int) ($lok->id_lokasi ?? 0) }}"
+                                            data-kf-nama="{{ $lok->lokasi ?: 'Belum Dipetakan' }}" title="Detail Lokasi">
+                                            <i data-lucide="eye"></i>
+                                        </button>
+
+                                        <button type="button" class="kf-icon-btn edit" data-kf-action="edit"
+                                            data-kf-lokasi="{{ (int) ($lok->id_lokasi ?? 0) }}"
+                                            data-kf-nama="{{ $lok->lokasi ?: 'Belum Dipetakan' }}"
+                                            title="Pilih inventaris untuk diedit">
+                                            <i data-lucide="pencil"></i>
+                                        </button>
+
+                                        <button type="button" class="kf-icon-btn delete" data-kf-action="delete"
+                                            data-kf-lokasi="{{ (int) ($lok->id_lokasi ?? 0) }}"
+                                            data-kf-nama="{{ $lok->lokasi ?: 'Belum Dipetakan' }}"
+                                            title="Pilih inventaris untuk dihapus">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+
+                                    </div>
+                                </td>
+
                             </tr>
+
                         @empty
+
                             <tr>
                                 <td colspan="6" class="kf-empty">
-                                    Belum ada inventaris Konstruksi
-                                    pada database.
+                                    Belum ada data konstruksi.
                                 </td>
                             </tr>
                         @endforelse
+
                     </tbody>
                 </table>
             </div>
 
             <footer class="kf-table-footer">
+
                 <span id="kfInfo">
                     {{ $lokasis->count() }} lokasi
                 </span>
 
                 <div id="kfPages" class="kf-pages"></div>
+
             </footer>
         </section>
+
     </section>
 
     {{-- MODAL DETAIL LOKASI --}}
 
     <dialog class="kf-dialog wide" id="kfModalLokasi" aria-labelledby="kfJudulLokasi">
+
         <header class="kf-dialog-head">
+
             <div>
-                <small>K.I.B F / STRUKTUR ORGANISASI</small>
-                <h2 id="kfJudulLokasi">Detail Lokasi</h2>
+                <small>K.I.B F — STRUKTUR ORGANISASI</small>
+
+                <h2 id="kfJudulLokasi">
+                    Detail Lokasi
+                </h2>
 
                 <p>
-                    Pilih departemen dan divisi untuk
-                    melihat daftar konstruksi.
+                    Pilih departemen dan divisi
+                    untuk melihat inventaris konstruksi.
                 </p>
             </div>
 
-            <button class="kf-close" type="button" data-kf-close="kfModalLokasi" aria-label="Tutup">
+            <button type="button" class="kf-close" data-kf-close="kfModalLokasi">
                 <i data-lucide="x"></i>
             </button>
+
         </header>
 
         <div class="kf-dialog-content kf-lokasi-grid">
-            <aside class="kf-tree-panel">
-                <h3>
-                    <i data-lucide="network"></i>
-                    Struktur Organisasi
-                </h3>
 
-                <p>Departemen dan divisi</p>
+            <aside class="kf-tree-panel">
+
+                <h3>Struktur Organisasi</h3>
 
                 <div id="kfDepartemenTree"></div>
+
                 <div id="kfDivisiTree"></div>
+
             </aside>
 
             <section class="kf-aset-panel">
+
                 <h3 id="kfJudulUnit">
-                    Daftar Konstruksi
+                    Daftar Inventaris
                 </h3>
 
-                <p class="kf-table-subtitle">
-                    Tabel mengikuti struktur
-                    Kartu Inventaris Barang F (Excel).
+                <p class="kf-subtitle">
+                    Data mengikuti struktur Excel K.I.B F.
                 </p>
 
+                <div id="kfQuickActions" class="kf-quick-actions" hidden></div>
+
                 <div class="kf-table-wrap kf-excel-wrap">
+
                     <table class="kf-table kf-excel-table">
+
                         <thead>
+
                             <tr>
                                 <th rowspan="2">No.</th>
-
                                 <th rowspan="2">
                                     Nama Barang / Jenis Barang
-                                    dan Uraian
                                 </th>
-
                                 <th rowspan="2">Tahun</th>
-
                                 <th rowspan="2">
                                     Bangunan (P, SP, D)
                                 </th>
@@ -389,106 +475,164 @@
                                 <th>Bertingkat / Tidak</th>
                                 <th>Beton / Tidak</th>
                             </tr>
+
                         </thead>
 
-                        <tbody id="kfTabelInventaris">
-                            <tr>
-                                <td colspan="13" class="kf-empty">
-                                    Pilih lokasi untuk menampilkan data.
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="kfTabelInventaris"></tbody>
+
                     </table>
                 </div>
             </section>
         </div>
 
         <footer class="kf-dialog-foot">
-            <button class="kf-btn outline" type="button" data-kf-close="kfModalLokasi">
+            <button type="button" class="kf-btn outline" data-kf-close="kfModalLokasi">
                 Tutup
             </button>
         </footer>
+
+    </dialog>
+
+    {{-- MODAL RINCIAN NILAI --}}
+
+    <dialog class="kf-dialog" id="kfModalNilai" aria-labelledby="kfNilaiJudul">
+
+        <header class="kf-dialog-head">
+
+            <div>
+                <small>RINCIAN NILAI KONSTRUKSI</small>
+
+                <h2 id="kfNilaiJudul">
+                    Rincian Nilai Aset
+                </h2>
+
+                <p>
+                    Rincian nilai berdasarkan inventaris K.I.B F.
+                </p>
+            </div>
+
+            <button class="kf-close" type="button" data-kf-close="kfModalNilai">
+                <i data-lucide="x"></i>
+            </button>
+
+        </header>
+
+        <div class="kf-dialog-content">
+
+            <div class="kf-nilai-summary">
+                Total Nilai:
+
+                <strong id="kfNilaiTotal">
+                    Rp 0
+                </strong>
+            </div>
+
+            <div class="kf-table-wrap">
+
+                <table class="kf-table kf-nilai-table">
+
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nama Barang</th>
+                            <th>Departemen / Divisi</th>
+                            <th>Tahun</th>
+                            <th>Nilai (Rp)</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="kfNilaiBody"></tbody>
+
+                </table>
+            </div>
+        </div>
+
+        <footer class="kf-dialog-foot">
+            <button class="kf-btn outline" type="button" data-kf-close="kfModalNilai">
+                Tutup
+            </button>
+        </footer>
+
     </dialog>
 
     {{-- MODAL DETAIL INVENTARIS --}}
 
     <dialog class="kf-dialog" id="kfModalDetail" aria-labelledby="kfJudulDetail">
+
         <header class="kf-dialog-head">
+
             <div>
-                <small>
-                    KARTU INVENTARIS BARANG / K.I.B F
-                </small>
+                <small>DETAIL KARTU INVENTARIS BARANG F</small>
 
                 <h2 id="kfJudulDetail">
                     Detail Konstruksi
                 </h2>
-
-                <p>
-                    Informasi lengkap konstruksi
-                    sesuai struktur tabel Excel.
-                </p>
             </div>
 
-            <button type="button" class="kf-close" data-kf-close="kfModalDetail" aria-label="Tutup">
+            <button class="kf-close" type="button" data-kf-close="kfModalDetail">
                 <i data-lucide="x"></i>
             </button>
         </header>
 
-        <div class="kf-dialog-content" id="kfIsiDetail">
-            Memuat data...
-        </div>
+        <div class="kf-dialog-content" id="kfIsiDetail"></div>
 
         <footer class="kf-dialog-foot">
-            <button type="button" class="kf-btn outline" data-kf-close="kfModalDetail">
+
+            <button class="kf-btn outline" type="button" data-kf-close="kfModalDetail">
                 Tutup
             </button>
 
-            <button type="button" class="kf-btn warning" id="kfEdit">
+            <button class="kf-btn warning" type="button" id="kfEdit">
                 <i data-lucide="pencil"></i>
                 Edit
             </button>
 
-            <button type="button" class="kf-btn danger" id="kfHapus">
+            <button class="kf-btn danger" type="button" id="kfHapus">
                 <i data-lucide="trash-2"></i>
                 Hapus
             </button>
         </footer>
+
     </dialog>
 
-    {{-- MODAL FORM TAMBAH DAN EDIT --}}
+    {{-- MODAL TAMBAH DAN EDIT --}}
 
     <dialog class="kf-dialog kf-form-dialog" id="kfModalForm" aria-labelledby="kfJudulForm">
+
         <form id="kfForm" enctype="multipart/form-data">
             @csrf
 
             <input type="hidden" name="id_nilai_aktiva" id="kfSourceId">
 
             <header class="kf-dialog-head">
+
                 <div>
-                    <small>K.I.B F / KONSTRUKSI</small>
+                    <small>K.I.B F — KONSTRUKSI</small>
 
                     <h2 id="kfJudulForm">
                         Tambah Data Konstruksi
                     </h2>
 
                     <p>
-                        Pilih transaksi Nilai Aset,
-                        kemudian lengkapi inventaris
-                        sesuai Excel K.I.B F.
+                        Pilih Data Nilai Aset,
+                        kemudian lengkapi formulir K.I.B F.
                     </p>
                 </div>
 
-                <button class="kf-close" type="button" data-kf-close="kfModalForm" aria-label="Tutup">
+                <button class="kf-close" type="button" data-kf-close="kfModalForm">
                     <i data-lucide="x"></i>
                 </button>
             </header>
 
             <div class="kf-dialog-content">
-                <p id="kfError" class="kf-error" role="alert" hidden></p>
 
-                {{-- BAGIAN 1: DATA PENDING --}}
+                <p id="kfError" class="kf-error" hidden></p>
+
+                {{-- 1. DATA PENDING --}}
 
                 <section class="kf-form-section" id="kfSourceSection">
+
                     <div class="kf-section-title">
                         <span>1</span>
 
@@ -496,28 +640,33 @@
                             <h3>Pilih Data Nilai Aset</h3>
 
                             <p>
-                                Pilih transaksi kategori Konstruksi
-                                dengan jenis Penambahan Aset.
+                                Pilih transaksi Penambahan Aset
+                                kategori Konstruksi.
                             </p>
                         </div>
                     </div>
 
                     <div class="kf-pending-toolbar">
+
                         <label class="kf-search">
                             <i data-lucide="search"></i>
 
-                            <input type="search" id="kfPendingCari" autocomplete="off"
-                                placeholder="Cari voucher, lokasi, departemen, divisi atau uraian...">
+                            <input type="search" id="kfPendingCari"
+                                placeholder="Cari voucher, lokasi, departemen, divisi, uraian...">
                         </label>
 
-                        <span id="kfPendingTotal">0 data</span>
+                        <span id="kfPendingTotal">
+                            0 data
+                        </span>
                     </div>
 
                     <div class="kf-table-wrap kf-pending-wrap">
+
                         <table class="kf-table kf-pending-table">
+
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th>No.</th>
                                     <th>Voucher</th>
                                     <th>Lokasi / Alamat</th>
                                     <th>Departemen</th>
@@ -529,108 +678,108 @@
                                 </tr>
                             </thead>
 
-                            <tbody id="kfPendingBody">
-                                <tr>
-                                    <td colspan="9" class="kf-empty">
-                                        Memuat data Nilai Aset...
-                                    </td>
-                                </tr>
-                            </tbody>
+                            <tbody id="kfPendingBody"></tbody>
+
                         </table>
                     </div>
                 </section>
 
-                {{-- INFORMASI VOUCHER TERPILIH --}}
+                {{-- DATA TERPILIH --}}
 
-                <div id="kfSourceSelected" class="kf-selected-source" hidden>
+                <div class="kf-selected-source" id="kfSourceSelected" hidden>
+
                     <i data-lucide="circle-check-big"></i>
 
                     <div>
-                        <small>Data Nilai Aset Terpilih</small>
+                        <small>Transaksi Terpilih</small>
 
-                        <strong id="kfVoucher">—</strong>
+                        <strong id="kfVoucher"></strong>
 
-                        <p id="kfVoucherUrai">—</p>
+                        <p id="kfVoucherUrai"></p>
                     </div>
 
-                    <button type="button" class="kf-btn outline" id="kfPilihUlang">
+                    <button class="kf-btn outline" type="button" id="kfPilihUlang">
                         Ganti
                     </button>
                 </div>
 
-                {{-- BAGIAN 2: IDENTITAS LOKASI --}}
+                {{-- 2. ORGANISASI --}}
 
                 <section class="kf-form-section">
+
                     <div class="kf-section-title">
                         <span>2</span>
 
                         <div>
-                            <h3>Identitas Konstruksi dan Lokasi</h3>
+                            <h3>Identitas dan Lokasi</h3>
 
                             <p>
-                                Kolom organisasi otomatis dari
+                                Terisi otomatis berdasarkan
                                 transaksi Nilai Aset.
                             </p>
                         </div>
                     </div>
 
                     <div class="kf-fields two">
+
                         <label>
                             Lokasi
 
-                            <input type="text" id="kfLokasi" readonly placeholder="Pilih transaksi Nilai Aset">
+                            <input id="kfLokasi" readonly>
                         </label>
 
                         <label>
                             Alamat Lokasi
 
-                            <input type="text" id="kfAlamat" readonly placeholder="Otomatis dari lokasi">
+                            <input id="kfAlamat" readonly>
                         </label>
 
                         <label>
                             Departemen
 
-                            <input type="text" id="kfDepartemen" readonly>
+                            <input id="kfDepartemen" readonly>
                         </label>
 
                         <label>
                             Divisi
 
-                            <input type="text" id="kfDivisi" readonly>
+                            <input id="kfDivisi" readonly>
                         </label>
+
                     </div>
                 </section>
 
-                {{-- BAGIAN 3: KIB F EXCEL --}}
+                {{-- 3. DATA KONSTRUKSI --}}
 
                 <section class="kf-form-section">
+
                     <div class="kf-section-title">
                         <span>3</span>
 
                         <div>
-                            <h3>Data Konstruksi Bangunan — K.I.B F</h3>
+                            <h3>Data Konstruksi Bangunan</h3>
 
                             <p>
-                                Urutan formulir mengikuti kolom-kolom
-                                pada Kartu Inventaris Barang F.
+                                Sesuai kolom Excel K.I.B F.
                             </p>
                         </div>
                     </div>
 
                     <div class="kf-fields two">
+
                         <label class="full">
                             Nama Barang / Jenis Barang <b>*</b>
 
                             <select name="id_barang" id="kfBarang" required>
                                 <option value="">
-                                    — Pilih Barang Master —
+                                    — Pilih Barang —
                                 </option>
 
-                                @foreach ($barangs as $b)
-                                    <option value="{{ $b->id }}">
-                                        {{ trim((string) $b->kode_barang) }}
+                                @foreach ($barangs as $barang)
+                                    <option value="{{ $barang->id }}">
+                                        {{ trim((string) $barang->kode_barang) }}
                                         —
-                                        {{ trim((string) $b->nama_barang) }}
+                                        {{ trim((string) $barang->nama_barang) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -646,18 +795,18 @@
                             Bangunan (P, SP, D)
 
                             <select name="type" id="kfType">
-                                <option value="">— Pilih —</option>
-                                <option value="P">Permanen (P)</option>
-                                <option value="SP">Semi Permanen (SP)</option>
-                                <option value="D">Darurat (D)</option>
+                                <option value="">Pilih</option>
+                                <option value="P">Permanen</option>
+                                <option value="SP">Semi Permanen</option>
+                                <option value="D">Darurat</option>
                             </select>
                         </label>
 
                         <label>
-                            Konstruksi Bangunan — Bertingkat / Tidak
+                            Bertingkat / Tidak
 
                             <select name="struktur" id="kfStruktur">
-                                <option value="">— Pilih —</option>
+                                <option value="">Pilih</option>
                                 <option value="BERTINGKAT">
                                     Bertingkat
                                 </option>
@@ -668,10 +817,10 @@
                         </label>
 
                         <label>
-                            Konstruksi Bangunan — Beton / Tidak
+                            Beton / Tidak
 
                             <select name="materi" id="kfMateri">
-                                <option value="">— Pilih —</option>
+                                <option value="">Pilih</option>
                                 <option value="BETON">Beton</option>
                                 <option value="TIDAK BETON">
                                     Tidak Beton
@@ -682,71 +831,63 @@
                         <label>
                             Luas (m²)
 
-                            <input type="number" name="luas" id="kfLuas" min="0" step="0.01"
-                                placeholder="Contoh: 125.50">
+                            <input type="number" name="luas" id="kfLuas" min="0" step="0.01">
                         </label>
 
                         <label>
                             Letak / Lokasi Alamat
 
-                            <input name="letak" id="kfLetak" maxlength="255" placeholder="Letak konstruksi">
+                            <input name="letak" id="kfLetak" maxlength="255">
                         </label>
 
                         <label>
                             Status Tanah
 
-                            <input name="status_tanah" id="kfStatusTanah" maxlength="255" placeholder="Contoh: Pemkot">
+                            <input name="status_tanah" id="kfStatusTanah" maxlength="255">
                         </label>
 
                         <label>
                             Asal Usul Pembiayaan
 
-                            <input name="asal" id="kfAsal" maxlength="255" placeholder="Contoh: Pemprov">
+                            <input name="asal" id="kfAsal" maxlength="255">
                         </label>
 
                         <label>
                             Status Aset
 
-                            <input name="status_aset" id="kfStatusAset" maxlength="255"
-                                placeholder="Contoh: Serah Terima">
+                            <input name="status_aset" id="kfStatusAset" maxlength="255">
                         </label>
 
                         <label>
-                            Nilai (Rp) — dari Voucher
+                            Nilai Aset (Rp)
 
-                            <input id="kfNilai" readonly placeholder="Otomatis dari Nilai Aset">
+                            <input id="kfNilai" readonly>
 
                             <small>
-                                Nilai diambil dari voucher dan
-                                tidak dapat diubah di formulir ini.
+                                Nominal mengikuti transaksi Nilai Aset.
                             </small>
                         </label>
 
                         <label class="full">
-                            Uraian Pekerjaan / Deskripsi Jenis Barang
-                            <b>*</b>
+                            Uraian Pekerjaan <b>*</b>
 
-                            <textarea name="urai" id="kfUrai" rows="4" required
-                                placeholder="Nama pekerjaan, rincian kegiatan, dan spesifikasi sesuai K.I.B F."></textarea>
+                            <textarea name="urai" id="kfUrai" rows="4" required></textarea>
                         </label>
 
                         <label class="full">
                             Dokumen Pendukung / Keterangan
 
                             <textarea name="ket" id="kfKet" rows="5"
-                                placeholder="Contoh: Berita acara serah terima, nomor dan tanggal; kontraktor pelaksana; nomor dan tanggal kontrak; keterangan lainnya."></textarea>
-
-                            <small>
-                                Isi informasi dokumen pendukung
-                                seperti kolom paling kanan pada Excel K.I.B F.
-                            </small>
+                                placeholder="Nomor berita acara, tanggal, kontraktor, nomor kontrak, dan keterangan lainnya."></textarea>
                         </label>
+
                     </div>
                 </section>
 
-                {{-- BAGIAN 4: BERKAS --}}
+                {{-- 4. BERKAS --}}
 
                 <section class="kf-form-section">
+
                     <div class="kf-section-title">
                         <span>4</span>
 
@@ -754,14 +895,13 @@
                             <h3>Berkas Pendukung</h3>
 
                             <p>
-                                Foto konstruksi serta dokumen PDF.
-                                Saat edit, kosongkan input berkas
-                                untuk mempertahankan dokumen lama.
+                                Foto dan dokumen PDF konstruksi.
                             </p>
                         </div>
                     </div>
 
                     <div class="kf-fields two">
+
                         <label>
                             Foto Konstruksi (maks. 5 MB)
 
@@ -770,24 +910,35 @@
                         </label>
 
                         <label>
-                            Dokumen Pendukung PDF (maks. 10 MB)
+                            Dokumen PDF (maks. 10 MB)
 
                             <input type="file" name="dokumen" id="kfDokumen" accept="application/pdf">
                         </label>
+
                     </div>
+
+                    <p class="kf-hint">
+                        Saat edit, kosongkan berkas bila
+                        tidak ingin mengganti file lama.
+                    </p>
+
                 </section>
+
             </div>
 
             <footer class="kf-dialog-foot">
-                <button type="button" class="kf-btn outline" data-kf-close="kfModalForm">
+
+                <button class="kf-btn outline" type="button" data-kf-close="kfModalForm">
                     Batal
                 </button>
 
-                <button type="submit" class="kf-btn primary" id="kfSimpan">
+                <button class="kf-btn primary" type="submit" id="kfSimpan">
                     <i data-lucide="save"></i>
                     Simpan Data Konstruksi
                 </button>
+
             </footer>
+
         </form>
     </dialog>
 @endsection
