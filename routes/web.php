@@ -800,9 +800,67 @@ Route::delete(
 // Kompatibilitas URL sidebar alternatif
 Route::redirect('/kib/aset-tetap', '/kib/aset_ttp');
 
-Route::get('/kib/konstruksi', function () {
-    return view('kib.konstruksi');
-})->name('kib.konstruksi');
+
+
+// ========================================================
+// K.I.B F — KONSTRUKSI
+// Controller: KIBController
+// ========================================================
+
+// Halaman utama
+Route::get(
+    '/kib/konstruksi',
+    [KIBController::class, 'dataKonstruksi']
+)->name('kib.konstruksi');
+
+// Detail Lokasi
+Route::get(
+    '/kib/konstruksi/lokasi/{lokasi}',
+    [KIBController::class, 'detailKonstruksiLokasi']
+)
+    ->whereNumber('lokasi')
+    ->name('kib.konstruksi.lokasi');
+
+// File Foto dan PDF
+Route::get(
+    '/kib/konstruksi/{konstruksi}/file/{jenis}',
+    [KIBController::class, 'fileKonstruksi']
+)
+    ->whereNumber('konstruksi')
+    ->where('jenis', 'foto|dokumen')
+    ->name('kib.konstruksi.file');
+
+// Detail Satu Inventaris
+Route::get(
+    '/kib/konstruksi/{konstruksi}',
+    [KIBController::class, 'showKonstruksi']
+)
+    ->whereNumber('konstruksi')
+    ->name('kib.konstruksi.show');
+
+// Tambah dari Pending
+Route::post(
+    '/kib/konstruksi',
+    [KIBController::class, 'storeKonstruksi']
+)->name('kib.konstruksi.store');
+
+// Edit
+Route::put(
+    '/kib/konstruksi/{konstruksi}',
+    [KIBController::class, 'updateKonstruksi']
+)
+    ->whereNumber('konstruksi')
+    ->name('kib.konstruksi.update');
+
+// Hapus
+Route::delete(
+    '/kib/konstruksi/{konstruksi}',
+    [KIBController::class, 'destroyKonstruksi']
+)
+    ->whereNumber('konstruksi')
+    ->name('kib.konstruksi.destroy');
+
+
 
 Route::get('/kib/kir', function () {
     return view('kib.kir');

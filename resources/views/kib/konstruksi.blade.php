@@ -1,1589 +1,629 @@
 @extends('layouts.main')
 
-@section('title', 'Konstruksi Dalam Pengerjaan')
+@section('title', 'K.I.B F - Konstruksi')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kib/konstruksi.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/konstruksi.css') }}?v={{ file_exists(public_path('css/pages/kib/konstruksi.css')) ? filemtime(public_path('css/pages/kib/konstruksi.css')) : '1' }}">
 @endpush
 
 @section('content')
 
-    <section class="content kontruksi-page">
+    @php
+        $rupiah = fn($v) => 'Rp ' . number_format((float) ($v ?? 0), 0, ',', '.');
+    @endphp
 
-        {{-- =====================================================
-         HERO
-    ====================================================== --}}
+    <section class="content kf" id="kfApp" data-base="{{ url('/kib/konstruksi') }}"
+        data-save="{{ route('kib.konstruksi.store') }}" data-token="{{ csrf_token() }}">
 
-        <section class="kontruksi-hero">
+        {{-- HEADER --}}
 
-            <div class="kontruksi-hero-overlay"></div>
+        <header class="kf-hero">
 
-            <div class="kontruksi-hero-inner">
+            <nav class="kf-crumb" aria-label="Breadcrumb">
+                <a href="{{ route('dashboard') }}">
+                    <i data-lucide="house"></i>
+                </a>
 
-                {{-- BREADCRUMB --}}
-                <nav class="kontruksi-breadcrumb" aria-label="Breadcrumb">
+                <i data-lucide="chevron-right"></i>
+                <span>K.I.B</span>
 
-                    <a href="{{ route('dashboard') }}" aria-label="Home">
-                        <i data-lucide="house"></i>
-                    </a>
+                <i data-lucide="chevron-right"></i>
+                <strong>Konstruksi</strong>
+            </nav>
 
-                    <i data-lucide="chevron-right"></i>
-
-                    <span>K.I.B</span>
-
-                    <i data-lucide="chevron-right"></i>
-
-                    <strong aria-current="page">
-                        Konstruksi Dalam Pengerjaan
-                    </strong>
-
-                </nav>
-
-
-                {{-- HEADING --}}
-                <div class="kontruksi-heading">
-
-                    <div class="kontruksi-heading-main">
-
-                        <span class="kontruksi-eyebrow">
-                            K.I.B 06
-                        </span>
-
-                        <h1>
-                            Konstruksi Dalam Pengerjaan
-                        </h1>
-
-                        <p>
-                            Kelola aset konstruksi yang masih dalam proses
-                            pengerjaan, mulai dari informasi proyek,
-                            lokasi, nilai kontrak, progres pembangunan,
-                            hingga target penyelesaian.
-                        </p>
-
-                    </div>
-
-
-                    <div class="kontruksi-date-card">
-
-                        <div class="kontruksi-date-icon">
-                            <i data-lucide="calendar-days"></i>
-                        </div>
-
-                        <div>
-                            <strong>
-                                Periode Data
-                            </strong>
-
-                            <span>
-                                Tahun Anggaran 2025
-                            </span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                {{-- =================================================
-                 KPI
-            ================================================== --}}
-
-                <div class="kontruksi-kpi-grid">
-
-                    {{-- TOTAL PROYEK --}}
-                    <article class="kontruksi-kpi-card">
-
-                        <div class="kontruksi-kpi-icon">
-                            <i data-lucide="construction"></i>
-                        </div>
-
-                        <div class="kontruksi-kpi-content">
-
-                            <span>
-                                Total Pekerjaan
-                            </span>
-
-                            <div class="kontruksi-kpi-value">
-
-                                <strong>
-                                    18
-                                </strong>
-
-                                <small>
-                                    <i data-lucide="arrow-up-right"></i>
-                                    +3
-                                </small>
-
-                            </div>
-
-                            <p>
-                                proyek konstruksi
-                            </p>
-
-                        </div>
-
-                    </article>
-
-
-                    {{-- BERJALAN --}}
-                    <article class="kontruksi-kpi-card">
-
-                        <div class="kontruksi-kpi-icon is-blue">
-                            <i data-lucide="loader-circle"></i>
-                        </div>
-
-                        <div class="kontruksi-kpi-content">
-
-                            <span>
-                                Sedang Dikerjakan
-                            </span>
-
-                            <strong>
-                                11
-                            </strong>
-
-                            <p>
-                                pekerjaan aktif
-                            </p>
-
-                        </div>
-
-                    </article>
-
-
-                    {{-- NILAI KONSTRUKSI --}}
-                    <article class="kontruksi-kpi-card">
-
-                        <div class="kontruksi-kpi-icon is-green">
-                            <i data-lucide="wallet"></i>
-                        </div>
-
-                        <div class="kontruksi-kpi-content">
-
-                            <span>
-                                Nilai Konstruksi
-                            </span>
-
-                            <strong class="kontruksi-kpi-money">
-                                Rp 18,42 M
-                            </strong>
-
-                            <p>
-                                total nilai perolehan
-                            </p>
-
-                        </div>
-
-                    </article>
-
-
-                    {{-- PROGRESS --}}
-                    <article class="kontruksi-kpi-card">
-
-                        <div class="kontruksi-kpi-icon is-orange">
-                            <i data-lucide="chart-no-axes-combined"></i>
-                        </div>
-
-                        <div class="kontruksi-kpi-content">
-
-                            <span>
-                                Rata-rata Progres
-                            </span>
-
-                            <strong>
-                                67,8%
-                            </strong>
-
-                            <p>
-                                progres pekerjaan
-                            </p>
-
-                        </div>
-
-                    </article>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        {{-- =====================================================
-         MAIN CARD
-    ====================================================== --}}
-
-        <section class="kontruksi-card kontruksi-workspace">
-
-            {{-- HEADER --}}
-            <div class="kontruksi-workspace-head">
-
+            <div class="kf-heading">
                 <div>
+                    <small>
+                        KARTU INVENTARIS BARANG — KIB F
+                    </small>
 
-                    <div class="kontruksi-section-title">
+                    <h1>Konstruksi</h1>
 
-                        <div class="kontruksi-section-icon">
-                            <i data-lucide="hard-hat"></i>
-                        </div>
-
-                        <div>
-
-                            <h2>
-                                Daftar Konstruksi
-                            </h2>
-
-                            <p>
-                                Data aset Konstruksi Dalam Pengerjaan
-                            </p>
-
-                        </div>
-
-                    </div>
-
+                    <p>
+                        Inventaris Konstruksi berdasarkan lokasi,
+                        Departemen, Divisi dan transaksi Nilai Aset.
+                    </p>
                 </div>
 
-
-                <button type="button" class="kontruksi-add-button" onclick="openKontruksiModal('add')">
-
+                <button class="kf-btn primary" type="button" id="kfTambah">
                     <i data-lucide="plus"></i>
-
                     Tambah Konstruksi
-
                 </button>
-
             </div>
 
+            {{-- KPI DATABASE ASLI --}}
 
+            <div class="kf-kpis">
 
-            {{-- =====================================================
-             SUMMARY STRIP
-        ====================================================== --}}
-
-            <div class="kontruksi-summary-grid">
-
-                <div class="kontruksi-summary-item">
-
-                    <div class="kontruksi-summary-icon">
-                        <i data-lucide="play-circle"></i>
-                    </div>
+                <article>
+                    <i data-lucide="map-pin"></i>
 
                     <div>
-
-                        <span>
-                            Berjalan
-                        </span>
+                        <small>Lokasi</small>
 
                         <strong>
-                            11
+                            {{ number_format($statistik->lokasi ?? 0, 0, ',', '.') }}
                         </strong>
-
                     </div>
+                </article>
 
-                </div>
-
-
-                <div class="kontruksi-summary-item">
-
-                    <div class="kontruksi-summary-icon is-warning">
-                        <i data-lucide="clock-3"></i>
-                    </div>
+                <article>
+                    <i data-lucide="hard-hat"></i>
 
                     <div>
-
-                        <span>
-                            Mendekati Selesai
-                        </span>
+                        <small>Inventaris K.I.B F</small>
 
                         <strong>
-                            4
+                            {{ number_format($statistik->jumlah ?? 0, 0, ',', '.') }}
                         </strong>
-
                     </div>
+                </article>
 
-                </div>
-
-
-                <div class="kontruksi-summary-item">
-
-                    <div class="kontruksi-summary-icon is-success">
-                        <i data-lucide="circle-check"></i>
-                    </div>
+                <article>
+                    <i data-lucide="wallet"></i>
 
                     <div>
+                        <small>Total Nilai Aset</small>
 
-                        <span>
-                            Selesai Tahun Ini
-                        </span>
-
-                        <strong>
-                            3
+                        <strong class="kf-money-small">
+                            {{ $rupiah($statistik->nilai ?? 0) }}
                         </strong>
-
                     </div>
+                </article>
 
-                </div>
+                <article>
+                    <i data-lucide="clock-3"></i>
 
+                    <div>
+                        <small>Update Terakhir</small>
 
-                <div class="kontruksi-summary-item kontruksi-summary-progress">
-
-                    <div class="kontruksi-summary-progress-head">
-
-                        <span>
-                            Rata-rata Progres
-                        </span>
-
-                        <strong>
-                            67,8%
+                        <strong class="kf-date-small">
+                            @if ($statistik->terakhir)
+                                {{ \Carbon\Carbon::parse($statistik->terakhir)->locale('id')->diffForHumans() }}
+                            @else
+                                Belum ada
+                            @endif
                         </strong>
-
                     </div>
-
-                    <div class="kontruksi-progress-track">
-
-                        <span style="width: 67.8%"></span>
-
-                    </div>
-
-                </div>
+                </article>
 
             </div>
+        </header>
 
+        {{-- DATA PENDING GLOBAL --}}
+        {{-- Sama dengan sistem notifikasi KIB lainnya --}}
 
+        <x-kib.pending-card module="konstruksi" title="Data Konstruksi Menunggu Diproses" />
 
-            {{-- =====================================================
-             FILTER
-        ====================================================== --}}
+        {{-- FILTER --}}
 
-            <div class="kontruksi-filter">
+        <section class="kf-card">
 
-                <div class="kontruksi-search">
+            <div class="kf-card-head">
+                <div>
+                    <h2>Filter Data Konstruksi</h2>
 
+                    <p>Cari nama lokasi atau alamat.</p>
+                </div>
+            </div>
+
+            <div class="kf-toolbar">
+
+                <label class="kf-search">
                     <i data-lucide="search"></i>
 
-                    <input type="search" id="kontruksiSearch" placeholder="Cari kode, nama pekerjaan, lokasi..."
-                        aria-label="Cari konstruksi">
+                    <input type="search" id="kfCari" placeholder="Cari lokasi atau alamat..." autocomplete="off">
+                </label>
 
-                </div>
+                <select id="kfLimit" aria-label="Jumlah baris">
+                    <option>10</option>
+                    <option selected>20</option>
+                    <option>50</option>
+                    <option>100</option>
+                </select>
 
-
-                <div class="kontruksi-select">
-
-                    <select id="kontruksiJenis" aria-label="Filter jenis konstruksi">
-
-                        <option value="">
-                            Semua Jenis
-                        </option>
-
-                        <option value="Bangunan Gedung">
-                            Bangunan Gedung
-                        </option>
-
-                        <option value="Bangunan Instalasi">
-                            Bangunan Instalasi
-                        </option>
-
-                        <option value="Pembangunan Sarana">
-                            Pembangunan Sarana
-                        </option>
-
-                        <option value="Renovasi">
-                            Renovasi
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="kontruksi-select">
-
-                    <select id="kontruksiStatus" aria-label="Filter status konstruksi">
-
-                        <option value="">
-                            Semua Status
-                        </option>
-
-                        <option value="Berjalan">
-                            Berjalan
-                        </option>
-
-                        <option value="Mendekati Selesai">
-                            Mendekati Selesai
-                        </option>
-
-                        <option value="Selesai">
-                            Selesai
-                        </option>
-
-                        <option value="Tertunda">
-                            Tertunda
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="kontruksi-select">
-
-                    <select id="kontruksiTahun" aria-label="Filter tahun">
-
-                        <option value="">
-                            Semua Tahun
-                        </option>
-
-                        <option value="2025">
-                            2025
-                        </option>
-
-                        <option value="2024">
-                            2024
-                        </option>
-
-                        <option value="2023">
-                            2023
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <button type="button" class="kontruksi-filter-button" onclick="filterKontruksiTable()">
-
-                    <i data-lucide="list-filter"></i>
-
-                    Filter
-
-                </button>
-
-
-                <button type="button" class="kontruksi-reset-button" onclick="resetKontruksiFilter()">
-
+                <button class="kf-btn outline" id="kfReset" type="button">
                     <i data-lucide="refresh-cw"></i>
-
                     Reset
-
                 </button>
 
             </div>
+        </section>
 
+        {{-- DAFTAR LOKASI KONSTRUKSI --}}
 
+        <section class="kf-card">
 
-            {{-- =====================================================
-             TABLE
-        ====================================================== --}}
+            <div class="kf-card-head">
 
-            <div class="kontruksi-table-scroll" tabindex="0" aria-label="Daftar konstruksi dalam pengerjaan">
+                <div>
+                    <h2>Daftar Lokasi Konstruksi</h2>
 
-                <table class="kontruksi-table" id="kontruksiTable">
+                    <p>
+                        Pilih Detail untuk melihat Departemen,
+                        Divisi dan inventaris.
+                    </p>
+                </div>
+
+                <span class="kf-pill">
+                    <i data-lucide="database"></i>
+                    PostgreSQL
+                </span>
+            </div>
+
+            <div class="kf-table-wrap">
+
+                <table class="kf-table" id="kfTabelLokasi">
 
                     <thead>
-
                         <tr>
-
-                            <th>
-                                <input type="checkbox" id="kontruksiSelectAll" aria-label="Pilih semua konstruksi">
-                            </th>
-
-                            <th>
-                                No
-                            </th>
-
-                            <th>
-                                Kode Aset
-                            </th>
-
-                            <th>
-                                Nama Pekerjaan
-                            </th>
-
-                            <th>
-                                Jenis Konstruksi
-                            </th>
-
-                            <th>
-                                Lokasi
-                            </th>
-
-                            <th>
-                                Tahun
-                            </th>
-
-                            <th>
-                                Nilai Kontrak
-                            </th>
-
-                            <th>
-                                Progres
-                            </th>
-
-                            <th>
-                                Target Selesai
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th>
-                                Aksi
-                            </th>
-
+                            <th>No</th>
+                            <th>Lokasi</th>
+                            <th>Alamat</th>
+                            <th>Inventaris</th>
+                            <th>Nilai</th>
+                            <th>Aksi</th>
                         </tr>
-
                     </thead>
-
 
                     <tbody>
 
+                        @forelse ($lokasis as $i => $lok)
+                            <tr data-kf-row
+                                data-search="{{ mb_strtolower(($lok->lokasi ?? '') . ' ' . ($lok->alamat ?? '')) }}">
 
-                        {{-- DATA 1 --}}
-                        <tr data-record data-jenis="Bangunan Gedung" data-status="Berjalan" data-tahun="2025">
+                                <td>{{ $i + 1 }}</td>
 
-                            <td>
-                                <input type="checkbox">
-                            </td>
+                                <td>
+                                    <strong>
+                                        {{ $lok->lokasi }}
+                                    </strong>
+                                </td>
 
-                            <td>1</td>
+                                <td>{{ $lok->alamat }}</td>
 
-                            <td class="kontruksi-code">
-                                06.01.01.001
-                            </td>
+                                <td>
+                                    {{ number_format($lok->jumlah, 0, ',', '.') }}
+                                    data
+                                </td>
 
-                            <td class="kontruksi-name">
+                                <td class="kf-value">
+                                    {{ $rupiah($lok->nilai) }}
+                                </td>
 
-                                <strong>
-                                    Pembangunan Gedung Kantor Unit
-                                </strong>
-
-                                <small>
-                                    Konstruksi tahap utama
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Bangunan Gedung
-                            </td>
-
-                            <td>
-                                Kantor Pusat
-                            </td>
-
-                            <td>
-                                2025
-                            </td>
-
-                            <td>
-                                Rp 4.850.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-
-                                        <span>
-                                            72%
-                                        </span>
-
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-
-                                        <span style="width:72%"></span>
-
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                30 Nov 2025
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-running">
-                                    Berjalan
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view" title="Lihat"
-                                        aria-label="Lihat pembangunan gedung kantor unit">
+                                <td>
+                                    <button class="kf-icon-btn" type="button" data-kf-lokasi="{{ $lok->id_lokasi ?? 0 }}"
+                                        data-kf-nama="{{ $lok->lokasi }}" title="Detail">
                                         <i data-lucide="eye"></i>
                                     </button>
-
-                                    <button type="button" class="edit" data-action="edit" title="Edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete" title="Hapus">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 2 --}}
-                        <tr data-record data-jenis="Bangunan Instalasi" data-status="Mendekati Selesai"
-                            data-tahun="2025">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>2</td>
-
-                            <td class="kontruksi-code">
-                                06.01.02.004
-                            </td>
-
-                            <td class="kontruksi-name">
-
-                                <strong>
-                                    Pembangunan Bangunan Pendukung IPA
-                                </strong>
-
-                                <small>
-                                    Area instalasi pengolahan air
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Bangunan Instalasi
-                            </td>
-
-                            <td>
-                                IPA Gunung Lipan
-                            </td>
-
-                            <td>
-                                2025
-                            </td>
-
-                            <td>
-                                Rp 3.275.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-
-                                        <span>
-                                            88%
-                                        </span>
-
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-
-                                        <span style="width:88%"></span>
-
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                15 Okt 2025
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-near">
-                                    Mendekati Selesai
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 3 --}}
-                        <tr data-record data-jenis="Pembangunan Sarana" data-status="Berjalan" data-tahun="2025">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>3</td>
-
-                            <td class="kontruksi-code">
-                                06.02.01.008
-                            </td>
-
-                            <td class="kontruksi-name">
-
-                                <strong>
-                                    Pembangunan Sarana Pendukung Distribusi
-                                </strong>
-
-                                <small>
-                                    Pekerjaan sarana distribusi
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Pembangunan Sarana
-                            </td>
-
-                            <td>
-                                Unit Pelayanan
-                            </td>
-
-                            <td>
-                                2025
-                            </td>
-
-                            <td>
-                                Rp 2.140.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-                                        <span>61%</span>
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-                                        <span style="width:61%"></span>
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                20 Des 2025
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-running">
-                                    Berjalan
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 4 --}}
-                        <tr data-record data-jenis="Renovasi" data-status="Berjalan" data-tahun="2025">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>4</td>
-
-                            <td class="kontruksi-code">
-                                06.03.01.012
-                            </td>
-
-                            <td class="kontruksi-name">
-
-                                <strong>
-                                    Renovasi Gedung Pelayanan
-                                </strong>
-
-                                <small>
-                                    Renovasi ruang pelayanan pelanggan
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Renovasi
-                            </td>
-
-                            <td>
-                                Kantor Pusat
-                            </td>
-
-                            <td>
-                                2025
-                            </td>
-
-                            <td>
-                                Rp 1.285.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-                                        <span>54%</span>
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-                                        <span style="width:54%"></span>
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                10 Des 2025
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-running">
-                                    Berjalan
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 5 --}}
-                        <tr data-record data-jenis="Bangunan Gedung" data-status="Selesai" data-tahun="2024">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>5</td>
-
-                            <td class="kontruksi-code">
-                                06.01.03.016
-                            </td>
-
-                            <td class="kontruksi-name">
-
-                                <strong>
-                                    Pembangunan Gudang Material
-                                </strong>
-
-                                <small>
-                                    Gudang penyimpanan material
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Bangunan Gedung
-                            </td>
-
-                            <td>
-                                Gudang Pusat
-                            </td>
-
-                            <td>
-                                2024
-                            </td>
-
-                            <td>
-                                Rp 1.920.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-                                        <span>100%</span>
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-                                        <span style="width:100%"></span>
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                28 Des 2024
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-complete">
-                                    Selesai
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 6 --}}
-                        <tr data-record data-jenis="Bangunan Instalasi" data-status="Berjalan" data-tahun="2024">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>6</td>
-
-                            <td class="kontruksi-code">
-                                06.01.04.019
-                            </td>
-
-                            <td class="kontruksi-name">
-
-                                <strong>
-                                    Pengembangan Area Instalasi
-                                </strong>
-
-                                <small>
-                                    Pengembangan fasilitas instalasi
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Bangunan Instalasi
-                            </td>
-
-                            <td>
-                                IPA Sungai Kapih
-                            </td>
-
-                            <td>
-                                2024
-                            </td>
-
-                            <td>
-                                Rp 2.760.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-                                        <span>76%</span>
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-                                        <span style="width:76%"></span>
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                30 Nov 2025
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-running">
-                                    Berjalan
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 7 --}}
-                        <tr data-record data-jenis="Pembangunan Sarana" data-status="Mendekati Selesai"
-                            data-tahun="2025">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>7</td>
-
-                            <td class="kontruksi-code">
-                                06.02.02.023
-                            </td>
-
-                            <td class="kontruksi-name">
-
-                                <strong>
-                                    Pembangunan Sarana Operasional
-                                </strong>
-
-                                <small>
-                                    Fasilitas pendukung operasional
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Pembangunan Sarana
-                            </td>
-
-                            <td>
-                                Unit Pelayanan
-                            </td>
-
-                            <td>
-                                2025
-                            </td>
-
-                            <td>
-                                Rp 985.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-                                        <span>91%</span>
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-                                        <span style="width:91%"></span>
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                30 Sep 2025
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-near">
-                                    Mendekati Selesai
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 8 --}}
-                        <tr data-record data-jenis="Renovasi" data-status="Tertunda" data-tahun="2024">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>8</td>
-
-                            <td class="kontruksi-code">
-                                06.03.02.028
-                            </td>
-
-                            <td class="kontruksi-name">
-
-                                <strong>
-                                    Renovasi Gedung Workshop
-                                </strong>
-
-                                <small>
-                                    Renovasi fasilitas workshop
-                                </small>
-
-                            </td>
-
-                            <td>
-                                Renovasi
-                            </td>
-
-                            <td>
-                                Bengkel Pusat
-                            </td>
-
-                            <td>
-                                2024
-                            </td>
-
-                            <td>
-                                Rp 745.000.000
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-progress-cell">
-
-                                    <div class="kontruksi-progress-info">
-                                        <span>38%</span>
-                                    </div>
-
-                                    <div class="kontruksi-progress-track">
-                                        <span style="width:38%"></span>
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                15 Mar 2026
-                            </td>
-
-                            <td>
-                                <span class="kontruksi-status is-pending">
-                                    Tertunda
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="kontruksi-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        <tr id="kontruksiEmptyRow" hidden>
-
-                            <td colspan="12" class="kontruksi-empty">
-                                <i data-lucide="search-x"></i>
-
-                                <strong>
-                                    Data tidak ditemukan
-                                </strong>
-
-                                <span>
-                                    Coba ubah kata pencarian atau filter.
-                                </span>
-
-                            </td>
-
-                        </tr>
+                                </td>
+                            </tr>
+
+                        @empty
+
+                            <tr>
+                                <td colspan="6" class="kf-empty">
+                                    Belum ada inventaris Konstruksi.
+                                    Pilih Data Pending untuk menambah.
+                                </td>
+                            </tr>
+                        @endforelse
 
                     </tbody>
-
                 </table>
-
             </div>
 
+            <footer class="kf-table-footer">
 
+                <span id="kfInfo">
+                    {{ $lokasis->count() }} lokasi
+                </span>
 
-            {{-- =====================================================
-             FOOTER
-        ====================================================== --}}
+                <div id="kfPages" class="kf-pages"></div>
 
-            <div class="kontruksi-table-footer">
-
-                <div class="kontruksi-table-info" id="kontruksiTableInfo" role="status" aria-live="polite">
-                    Menampilkan 1 - 8 dari 18 data
-                </div>
-
-
-                <div class="kontruksi-pagination-area">
-
-                    <select id="kontruksiPageSize" aria-label="Jumlah data per halaman">
-
-                        <option value="10">
-                            10
-                        </option>
-
-                        <option value="25">
-                            25
-                        </option>
-
-                        <option value="50">
-                            50
-                        </option>
-
-                    </select>
-
-                    <span>
-                        data per halaman
-                    </span>
-
-
-                    <nav class="kontruksi-pagination" id="kontruksiPagination" aria-label="Pagination">
-                    </nav>
-
-                </div>
-
-            </div>
+            </footer>
 
         </section>
-
-
-
-        {{-- =====================================================
-         MODAL
-    ====================================================== --}}
-
-        <dialog class="kontruksi-modal" id="kontruksiModal" aria-labelledby="kontruksiModalTitle">
-
-            <div class="kontruksi-modal-dialog">
-
-                <div class="kontruksi-modal-header">
-
-                    <div>
-
-                        <span class="kontruksi-modal-label">
-                            K.I.B 06
-                        </span>
-
-                        <h3 id="kontruksiModalTitle">
-                            Tambah Konstruksi
-                        </h3>
-
-                        <p id="kontruksiModalDescription">
-                            Tambahkan data Konstruksi Dalam Pengerjaan.
-                        </p>
-
-                    </div>
-
-
-                    <button type="button" onclick="closeKontruksiModal()" aria-label="Tutup dialog">
-                        <i data-lucide="x"></i>
-                    </button>
-
-                </div>
-
-
-
-                <form id="kontruksiForm">
-
-                    <div class="kontruksi-modal-body">
-
-                        <div class="kontruksi-modal-note" id="kontruksiModalNote">
-                            Form ini masih berupa antarmuka contoh.
-                            Penyimpanan database belum dihubungkan.
-                        </div>
-
-
-                        {{-- KODE --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiCode">
-                                Kode Aset
-                            </label>
-
-                            <input type="text" id="kontruksiCode" name="kode" placeholder="06.01.01.001" required>
-
-                        </div>
-
-
-                        {{-- NAMA --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiName">
-                                Nama Pekerjaan
-                            </label>
-
-                            <input type="text" id="kontruksiName" name="nama"
-                                placeholder="Masukkan nama pekerjaan" required>
-
-                        </div>
-
-
-                        {{-- JENIS --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiFormJenis">
-                                Jenis Konstruksi
-                            </label>
-
-                            <select id="kontruksiFormJenis" name="jenis" required>
-
-                                <option value="">
-                                    Pilih Jenis Konstruksi
-                                </option>
-
-                                <option value="Bangunan Gedung">
-                                    Bangunan Gedung
-                                </option>
-
-                                <option value="Bangunan Instalasi">
-                                    Bangunan Instalasi
-                                </option>
-
-                                <option value="Pembangunan Sarana">
-                                    Pembangunan Sarana
-                                </option>
-
-                                <option value="Renovasi">
-                                    Renovasi
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        {{-- LOKASI --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiFormLokasi">
-                                Lokasi
-                            </label>
-
-                            <input type="text" id="kontruksiFormLokasi" name="lokasi" placeholder="Masukkan lokasi"
-                                required>
-
-                        </div>
-
-
-                        {{-- TAHUN --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiFormTahun">
-                                Tahun Anggaran
-                            </label>
-
-                            <input type="number" id="kontruksiFormTahun" name="tahun" min="2000" max="2100"
-                                placeholder="2025" required>
-
-                        </div>
-
-
-                        {{-- NILAI KONTRAK --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiNilai">
-                                Nilai Kontrak
-                            </label>
-
-                            <input type="text" id="kontruksiNilai" name="nilai" placeholder="Rp 0" required>
-
-                        </div>
-
-
-                        {{-- PROGRESS --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiProgress">
-                                Progres Pekerjaan
-                            </label>
-
-                            <div class="kontruksi-progress-input">
-
-                                <input type="number" id="kontruksiProgress" name="progress" min="0"
-                                    max="100" value="0" required>
-
-                                <span>
-                                    %
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        {{-- TARGET --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiTarget">
-                                Target Selesai
-                            </label>
-
-                            <input type="date" id="kontruksiTarget" name="target" required>
-
-                        </div>
-
-
-                        {{-- STATUS --}}
-                        <div class="kontruksi-form-group">
-
-                            <label for="kontruksiFormStatus">
-                                Status
-                            </label>
-
-                            <select id="kontruksiFormStatus" name="status" required>
-
-                                <option value="Berjalan">
-                                    Berjalan
-                                </option>
-
-                                <option value="Mendekati Selesai">
-                                    Mendekati Selesai
-                                </option>
-
-                                <option value="Selesai">
-                                    Selesai
-                                </option>
-
-                                <option value="Tertunda">
-                                    Tertunda
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <div class="kontruksi-modal-footer">
-
-                        <button type="button" class="kontruksi-cancel-button" onclick="closeKontruksiModal()">
-                            Batal
-                        </button>
-
-
-                        <button type="submit" class="kontruksi-save-button" id="kontruksiSaveButton">
-                            Simpan Konstruksi
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </dialog>
 
     </section>
 
 
-    @push('scripts')
-        <script src="{{ asset('js/pages/kib/konstruksi.js') }}"></script>
-    @endpush
+    {{-- =====================================================
+     MODAL DETAIL LOKASI
+     Lokasi → Departemen → Divisi → Inventaris
+===================================================== --}}
+
+    <dialog class="kf-dialog wide" id="kfModalLokasi" aria-labelledby="kfJudulLokasi">
+
+        <header class="kf-dialog-head">
+
+            <div>
+                <small>STRUKTUR ORGANISASI K.I.B F</small>
+                <h2 id="kfJudulLokasi">Detail Lokasi</h2>
+            </div>
+
+            <button class="kf-close" type="button" data-kf-close="kfModalLokasi" aria-label="Tutup">
+                <i data-lucide="x"></i>
+            </button>
+
+        </header>
+
+        <div class="kf-dialog-content kf-lokasi-grid">
+
+            {{-- PANEL KIRI --}}
+
+            <aside class="kf-tree-panel">
+
+                <h3>
+                    <i data-lucide="network"></i>
+                    Struktur Organisasi
+                </h3>
+
+                <p>
+                    Pilih Departemen, kemudian Divisi.
+                </p>
+
+                <div id="kfDepartemenTree"></div>
+
+                <div id="kfDivisiTree"></div>
+
+            </aside>
+
+            {{-- PANEL KANAN --}}
+
+            <section class="kf-aset-panel">
+
+                <h3 id="kfJudulUnit">
+                    Daftar Inventaris
+                </h3>
+
+                <div class="kf-table-wrap">
+
+                    <table class="kf-table">
+
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Barang</th>
+                                <th>Uraian</th>
+                                <th>Tahun</th>
+                                <th>Nilai</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="kfTabelInventaris"></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </div>
+
+        <footer class="kf-dialog-foot">
+
+            <button class="kf-btn outline" type="button" data-kf-close="kfModalLokasi">
+                Tutup
+            </button>
+
+        </footer>
+    </dialog>
+
+
+    {{-- =====================================================
+     MODAL DETAIL SATU INVENTARIS
+===================================================== --}}
+
+    <dialog class="kf-dialog" id="kfModalDetail" aria-labelledby="kfJudulDetail">
+
+        <header class="kf-dialog-head">
+
+            <div>
+                <small>DETAIL KARTU INVENTARIS BARANG F</small>
+
+                <h2 id="kfJudulDetail">
+                    Detail Konstruksi
+                </h2>
+            </div>
+
+            <button class="kf-close" type="button" data-kf-close="kfModalDetail" aria-label="Tutup">
+                <i data-lucide="x"></i>
+            </button>
+
+        </header>
+
+        <div class="kf-dialog-content" id="kfIsiDetail"></div>
+
+        <footer class="kf-dialog-foot">
+
+            <button class="kf-btn outline" type="button" data-kf-close="kfModalDetail">
+                Tutup
+            </button>
+
+            <button class="kf-btn warning" type="button" id="kfEdit">
+                <i data-lucide="pencil"></i>
+                Edit
+            </button>
+
+            <button class="kf-btn danger" type="button" id="kfHapus">
+                <i data-lucide="trash-2"></i>
+                Hapus
+            </button>
+
+        </footer>
+    </dialog>
+
+
+    {{-- =====================================================
+     MODAL TAMBAH DAN EDIT KONSTRUKSI
+===================================================== --}}
+
+    <dialog class="kf-dialog" id="kfModalForm" aria-labelledby="kfJudulForm">
+
+        <header class="kf-dialog-head">
+
+            <div>
+                <small>INPUT K.I.B F</small>
+
+                <h2 id="kfJudulForm">
+                    Tambah Konstruksi
+                </h2>
+            </div>
+
+            <button class="kf-close" type="button" data-kf-close="kfModalForm" aria-label="Tutup">
+                <i data-lucide="x"></i>
+            </button>
+
+        </header>
+
+        <form id="kfForm" enctype="multipart/form-data">
+
+            <input type="hidden" name="id_nilai_aktiva" id="kfSourceId">
+
+            <div class="kf-dialog-content">
+
+                <p id="kfError" class="kf-error" role="alert" hidden></p>
+
+                {{-- BAGIAN 1 --}}
+
+                <h3 class="kf-form-title">
+                    1. Data Pending dan Struktur Organisasi
+                </h3>
+
+                <div class="kf-source">
+
+                    <div>
+                        <strong id="kfVoucher">
+                            Belum memilih voucher
+                        </strong>
+
+                        <p id="kfVoucherUrai">
+                            Pilih Pending agar data organisasi
+                            terisi otomatis.
+                        </p>
+                    </div>
+
+                    <button class="kf-btn outline" type="button" id="kfPilihUlang">
+                        Pilih Pending
+                    </button>
+
+                </div>
+
+                <div class="kf-fields three">
+
+                    <label>
+                        Lokasi
+                        <input id="kfLokasi" readonly>
+                    </label>
+
+                    <label>
+                        Departemen
+                        <input id="kfDepartemen" readonly>
+                    </label>
+
+                    <label>
+                        Divisi
+                        <input id="kfDivisi" readonly>
+                    </label>
+
+                </div>
+
+                {{-- BAGIAN 2 --}}
+
+                <h3 class="kf-form-title">
+                    2. Identitas Inventaris (sesuai Excel K.I.B F)
+                </h3>
+
+                <div class="kf-fields two">
+
+                    <label>
+                        Nama Barang / Jenis Barang <b>*</b>
+
+                        <select name="id_barang" id="kfBarang" required>
+                            <option value="">
+                                Pilih Barang Master
+                            </option>
+
+                            @foreach ($barangs as $b)
+                                <option value="{{ $b->id }}">
+                                    {{ trim((string) $b->kode_barang) }}
+                                    —
+                                    {{ trim((string) $b->nama_barang) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    <label>
+                        Tahun <b>*</b>
+
+                        <input name="tahun" id="kfTahun" type="number" min="1900" max="2100" required>
+                    </label>
+
+                    <label>
+                        Bangunan (P, SP, D)
+
+                        <select name="type" id="kfType">
+                            <option value="">Pilih</option>
+                            <option value="P">Permanen (P)</option>
+                            <option value="SP">Semi Permanen (SP)</option>
+                            <option value="D">Darurat (D)</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Bertingkat / Tidak
+
+                        <select name="struktur" id="kfStruktur">
+                            <option value="">Pilih</option>
+                            <option value="BERTINGKAT">Bertingkat</option>
+                            <option value="TIDAK BERTINGKAT">
+                                Tidak Bertingkat
+                            </option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Beton / Tidak
+
+                        <select name="materi" id="kfMateri">
+                            <option value="">Pilih</option>
+                            <option value="BETON">Beton</option>
+                            <option value="TIDAK BETON">
+                                Tidak Beton
+                            </option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Luas (m²)
+
+                        <input name="luas" id="kfLuas" type="number" min="0" step="0.01">
+                    </label>
+
+                    <label>
+                        Letak / Alamat
+
+                        <input name="letak" id="kfLetak" maxlength="255">
+                    </label>
+
+                    <label>
+                        Status Tanah
+
+                        <input name="status_tanah" id="kfStatusTanah" maxlength="255">
+                    </label>
+
+                    <label>
+                        Asal Usul Pembiayaan
+
+                        <input name="asal" id="kfAsal" maxlength="255">
+                    </label>
+
+                    <label>
+                        Status Aset
+
+                        <input name="status_aset" id="kfStatusAset" maxlength="255">
+                    </label>
+
+                    <label class="full">
+                        Uraian Pekerjaan <b>*</b>
+
+                        <textarea name="urai" id="kfUrai" rows="3" required></textarea>
+                    </label>
+
+                    <label>
+                        Nilai Aset (voucher)
+
+                        <input id="kfNilai" readonly>
+
+                        <small>
+                            Nilai mengikuti transaksi Nilai Aset.
+                        </small>
+                    </label>
+
+                    <label class="full">
+                        Keterangan / Nomor Dokumen /
+                        Kontraktor / Kontrak
+
+                        <textarea name="ket" id="kfKet" rows="4"
+                            placeholder="Tuliskan nomor, tanggal dokumen, kontraktor, nomor dan tanggal kontrak, serta keterangan lainnya."></textarea>
+                    </label>
+
+                </div>
+
+                {{-- BAGIAN 3 --}}
+
+                <h3 class="kf-form-title">
+                    3. Berkas Pendukung
+                </h3>
+
+                <div class="kf-fields two">
+
+                    <label>
+                        Foto Konstruksi (maks. 5 MB)
+
+                        <input type="file" name="foto" id="kfFoto" accept="image/jpeg,image/png,image/webp">
+                    </label>
+
+                    <label>
+                        Dokumen PDF (maks. 10 MB)
+
+                        <input type="file" name="dokumen" id="kfDokumen" accept="application/pdf">
+                    </label>
+
+                </div>
+
+                <p class="kf-hint">
+                    Saat Edit, kosongkan berkas bila tidak ingin
+                    menggantinya. Nilai, Lokasi, Departemen
+                    dan Divisi tidak berubah pada Edit.
+                </p>
+
+            </div>
+
+            <footer class="kf-dialog-foot">
+
+                <button class="kf-btn outline" type="button" data-kf-close="kfModalForm">
+                    Batal
+                </button>
+
+                <button class="kf-btn primary" type="submit" id="kfSimpan">
+                    <i data-lucide="save"></i>
+                    Simpan Inventaris
+                </button>
+
+            </footer>
+
+        </form>
+    </dialog>
 
 @endsection
+
+@push('scripts')
+    <script
+        src="{{ asset('js/pages/kib/konstruksi.js') }}?v={{ file_exists(public_path('js/pages/kib/konstruksi.js')) ? filemtime(public_path('js/pages/kib/konstruksi.js')) : '1' }}">
+    </script>
+@endpush

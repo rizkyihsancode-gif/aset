@@ -5926,4 +5926,886 @@ class KIBController extends Controller
             ]
         );
     }
+
+
+    /*
+    |==========================================================
+    | K.I.B F — KONSTRUKSI
+    | Database asli : kib_f_s
+    | Data Pending  : nilai_aktivas
+    | Tanpa migration dan model tambahan
+    |==========================================================
+    */
+
+    private function konstruksiQuery()
+    {
+        return DB::table('kib_f_s as k')
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'k.id_lokasi'
+            )
+            ->leftJoin(
+                'departemens as d',
+                'd.id',
+                '=',
+                'k.id_dep'
+            )
+            ->leftJoin(
+                'divisis as v',
+                'v.id',
+                '=',
+                'k.id_div'
+            )
+            ->leftJoin(
+                'barangs as b',
+                'b.id',
+                '=',
+                'k.id_barang'
+            )
+            ->select(
+                'k.*',
+                'l.lokasi as nama_lokasi',
+                'l.alamat as alamat_lokasi',
+                'd.nama_dep as departemen',
+                'd.kode_dep',
+                'v.nama_div as divisi',
+                'b.nama_barang as nama_barang',
+                'b.kode_barang'
+            );
+    }
+
+    /*
+    |----------------------------------------------------------
+    | FORMAT RESPONSE INVENTARIS
+    |----------------------------------------------------------
+    */
+
+    private function konstruksiJson(object $row): array
+    {
+        $data = (array) $row;
+
+        foreach (
+            [
+                'nama_lokasi',
+                'alamat_lokasi',
+                'departemen',
+                'divisi',
+                'nama_barang',
+                'kode_barang',
+                'tahun',
+                'type',
+                'struktur',
+                'materi',
+                'luas',
+                'letak',
+                'status_tanah',
+                'asal',
+                'status_aset',
+                'urai',
+                'ket',
+            ] as $key
+        ) {
+            $data[$key] = trim(
+                (string) ($data[$key] ?? '')
+            );
+        }
+
+        $data['nilai'] = (int) ($row->nilai ?? 0);
+
+        $data['foto_url'] = $this->konstruksiFilePath(
+            $row,
+            'foto'
+        )
+            ? route('kib.konstruksi.file', [
+                'konstruksi' => $row->id,
+                'jenis' => 'foto',
+            ])
+            : null;
+
+        $data['dokumen_url'] = $this->konstruksiFilePath(
+            $row,
+            'dokumen'
+        )
+            ? route('kib.konstruksi.file', [
+                'konstruksi' => $row->id,
+                'jenis' => 'dokumen',
+            ])
+            : null;
+
+        return $data;
+    }
+
+    /*
+    |----------------------------------------------------------
+    | HALAMAN UTAMA
+    |----------------------------------------------------------
+    */
+
+    public function dataKonstruksi()
+    {
+        $lokasis = DB::table('kib_f_s as k')
+            ->leftJoin(
+                'lokasis as l',
+                'l.id',
+                '=',
+                'k.id_lokasi'
+            )
+            ->selectRaw(
+                'COALESCE(k.id_lokasi, 0) AS id_lokasi'
+            )
+            ->selectRaw(
+                "COALESCE(MAX(l.lokasi), 'Belum Dipetakan') AS lokasi"
+            )
+            ->selectRaw(
+                "COALESCE(MAX(BTRIM(l.alamat)), '-') AS alamat"
+            )
+            ->selectRaw(
+                'COUNT(k.id) AS jumlah'
+            )
+            ->selectRaw(
+                'COALESCE(SUM(k.nilai), 0) AS nilai'
+            )
+            ->groupByRaw(
+                'COALESCE(k.id_lokasi, 0)'
+            )
+            ->orderBy('lokasi')
+            ->get();
+
+        $statistik = DB::table('kib_f_s')
+            ->selectRaw('COUNT(*) AS jumlah')
+            ->selectRaw(
+                'COUNT(DISTINCT id_lokasi) AS lokasi'
+            )
+            ->selectRaw(
+                'COALESCE(SUM(nilai), 0) AS nilai'
+            )
+            ->selectRaw(
+                'MAX(updated_at) AS terakhir'
+            )
+            ->first();
+
+        $barangs = DB::table('barangs')
+            ->select(
+                'id',
+                'kode_barang',
+                'nama_barang'
+            )
+            ->orderBy('nama_barang')
+            ->get();
+
+        return view(
+            'kib.konstruksi',
+            compact(
+                'lokasis',
+                'statistik',
+                'barangs'
+            )
+        );
+    }
+
+    /*
+    |----------------------------------------------------------
+    | DETAIL LOKASI
+    |----------------------------------------------------------
+    */
+
+    public function detailKonstruksiLokasi(int $lokasi)
+    {
+        $query = $this->konstruksiQuery();
+
+        if ($lokasi === 0) {
+            $query->where(function ($q) {
+                $q->whereNull('k.id_lokasi')
+                    ->orWhere('k.id_lokasi', 0);
+            });
+        } else {
+            $query->where(
+                'k.id_lokasi',
+                $lokasi
+            );
+        }
+
+        $data = $query
+            ->orderBy('k.id_dep')
+            ->orderBy('k.id_div')
+            ->orderBy('k.id')
+            ->get()
+            ->map(
+                fn($row) => $this->konstruksiJson($row)
+            );
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------
+    | DETAIL SATU INVENTARIS
+    |----------------------------------------------------------
+    */
+
+    public function showKonstruksi(int $konstruksi)
+    {
+        $row = $this->konstruksiQuery()
+            ->where(
+                'k.id',
+                $konstruksi
+            )
+            ->first();
+
+        abort_unless($row, 404);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->konstruksiJson($row),
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------
+    | VALIDASI FORM
+    |----------------------------------------------------------
+    */
+
+    private function validasiKonstruksi(
+        Request $request,
+        bool $create
+    ): array {
+        $rules = [
+            'id_barang' => [
+                'required',
+                'integer',
+                Rule::exists('barangs', 'id'),
+            ],
+
+            'tahun' => [
+                'required',
+                'integer',
+                'between:1900,2100',
+            ],
+
+            'type' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'struktur' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'materi' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'luas' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'letak' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'status_tanah' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'asal' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'status_aset' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'urai' => [
+                'required',
+                'string',
+                'max:10000',
+            ],
+
+            'ket' => [
+                'nullable',
+                'string',
+                'max:10000',
+            ],
+
+            'foto' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,jpg,png,webp',
+                'max:5120',
+            ],
+
+            'dokumen' => [
+                'nullable',
+                'file',
+                'mimes:pdf',
+                'max:10240',
+            ],
+        ];
+
+        if ($create) {
+            $rules['id_nilai_aktiva'] = [
+                'required',
+                'integer',
+                Rule::exists('nilai_aktivas', 'id'),
+            ];
+        }
+
+        return $request->validate($rules);
+    }
+
+    /*
+    |----------------------------------------------------------
+    | FIELD YANG BOLEH DISIMPAN KE KIB_F_S
+    |----------------------------------------------------------
+    */
+
+    private function konstruksiFields(array $data): array
+    {
+        return [
+            'id_barang' => (int) $data['id_barang'],
+
+            'tahun' => (string) $data['tahun'],
+
+            'type' => $data['type'] ?? null,
+
+            'struktur' => $data['struktur'] ?? null,
+
+            'materi' => $data['materi'] ?? null,
+
+            'luas' => isset($data['luas'])
+                ? (string) $data['luas']
+                : null,
+
+            'letak' => $data['letak'] ?? null,
+
+            'status_tanah' =>
+            $data['status_tanah'] ?? null,
+
+            'asal' => $data['asal'] ?? null,
+
+            'status_aset' =>
+            $data['status_aset'] ?? null,
+
+            'urai' => $data['urai'],
+
+            'ket' => $data['ket'] ?? null,
+
+            'updated_at' => now(),
+        ];
+    }
+
+    /*
+    |----------------------------------------------------------
+    | TAMBAH DARI DATA PENDING
+    |----------------------------------------------------------
+    */
+
+    public function storeKonstruksi(
+        Request $request,
+        KibNotificationService $pending
+    ) {
+        abort_unless(
+            Auth::check(),
+            403,
+            'Sesi login tidak valid. Silakan masuk kembali.'
+        );
+
+        $input = $this->validasiKonstruksi(
+            $request,
+            true
+        );
+
+        $cat = $pending->categoryId('konstruksi');
+
+        if ($cat === null) {
+            throw ValidationException::withMessages([
+                'id_nilai_aktiva' =>
+                'Kategori Konstruksi belum terdaftar ' .
+                    'pada konfigurasi K.I.B.',
+            ]);
+        }
+
+        $newFiles = [];
+
+        try {
+            DB::transaction(function () use (
+                $request,
+                $input,
+                $cat,
+                &$newFiles
+            ) {
+                /*
+                 * Ambil voucher sesuai kategori.
+                 * Kunci baris agar tidak diproses
+                 * oleh dua pengguna bersamaan.
+                 */
+
+                $voucher = DB::table('nilai_aktivas')
+                    ->where(
+                        'id',
+                        $input['id_nilai_aktiva']
+                    )
+                    ->where('cat', $cat)
+                    ->where('jenisn', 1)
+                    ->where('stat', 0)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$voucher) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' =>
+                        'Voucher tidak tersedia, bukan ' .
+                            'Penambahan Aset Konstruksi, ' .
+                            'atau sudah diproses.',
+                    ]);
+                }
+
+                /*
+                 * Validasi data organisasi
+                 * berdasarkan transaksi sumber.
+                 */
+
+                $organisasiValid =
+                    $voucher->id_lokasi
+                    && $voucher->dep
+                    && $voucher->div
+
+                    && DB::table('lokasis')
+                    ->where(
+                        'id',
+                        $voucher->id_lokasi
+                    )
+                    ->exists()
+
+                    && DB::table('departemens')
+                    ->where(
+                        'id',
+                        $voucher->dep
+                    )
+                    ->exists()
+
+                    && DB::table('divisis')
+                    ->where(
+                        'id',
+                        $voucher->div
+                    )
+                    ->where(
+                        'id_dep',
+                        $voucher->dep
+                    )
+                    ->exists();
+
+                if (!$organisasiValid) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' =>
+                        'Lokasi, Departemen, dan Divisi ' .
+                            'pada voucher belum lengkap ' .
+                            'atau tidak sesuai.',
+                    ]);
+                }
+
+                /*
+                 * Simpan ke database lama.
+                 */
+
+                $row = $this->konstruksiFields($input);
+
+                $row['id_lokasi'] =
+                    (int) $voucher->id_lokasi;
+
+                $row['id_dep'] =
+                    (int) $voucher->dep;
+
+                $row['id_div'] =
+                    (int) $voucher->div;
+
+                // Nilai hanya berasal dari voucher.
+                $row['nilai'] = $voucher->nilai ?? 0;
+
+                $row['user'] = (int) Auth::id();
+
+                // Final sesuai alur KIB modern.
+                $row['input'] = 1;
+
+                $row['created_at'] = now();
+
+                /*
+                 * Foto dan dokumen.
+                 */
+
+                foreach (
+                    [
+                        'foto' => ['img', 'foto'],
+                        'dokumen' => ['dok', 'dokumen'],
+                    ] as $field => [$column, $folder]
+                ) {
+
+                    if (!$request->hasFile($field)) {
+                        continue;
+                    }
+
+                    $file = $request
+                        ->file($field)
+                        ->store(
+                            'kib/konstruksi/' . $folder,
+                            'local'
+                        );
+
+                    if (!$file) {
+                        throw new \RuntimeException(
+                            'Gagal menyimpan berkas.'
+                        );
+                    }
+
+                    $newFiles[] = $file;
+                    $row[$column] = $file;
+                }
+
+                DB::table('kib_f_s')->insert($row);
+
+                /*
+                 * Ubah Pending menjadi selesai
+                 * hanya setelah insert berhasil.
+                 */
+
+                $changed = DB::table('nilai_aktivas')
+                    ->where('id', $voucher->id)
+                    ->where('stat', 0)
+                    ->update([
+                        'stat' => 1,
+                        'updated_at' => now(),
+                    ]);
+
+                if ($changed !== 1) {
+                    throw new \RuntimeException(
+                        'Gagal memperbarui status Pending.'
+                    );
+                }
+            });
+        } catch (\Throwable $e) {
+
+            foreach ($newFiles as $file) {
+                Storage::disk('local')
+                    ->delete($file);
+            }
+
+            throw $e;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Konstruksi tersimpan dan voucher ' .
+                'selesai diproses.',
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------
+    | EDIT KONSTRUKSI
+    |----------------------------------------------------------
+    */
+
+    public function updateKonstruksi(
+        Request $request,
+        int $konstruksi
+    ) {
+        abort_unless(
+            Auth::check(),
+            403,
+            'Sesi login tidak valid.'
+        );
+
+        $input = $this->validasiKonstruksi(
+            $request,
+            false
+        );
+
+        $newFiles = [];
+        $oldFiles = [];
+
+        try {
+            DB::transaction(function () use (
+                $request,
+                $konstruksi,
+                $input,
+                &$newFiles,
+                &$oldFiles
+            ) {
+                $old = DB::table('kib_f_s')
+                    ->where('id', $konstruksi)
+                    ->lockForUpdate()
+                    ->first();
+
+                abort_unless($old, 404);
+
+                $changes = $this->konstruksiFields(
+                    $input
+                );
+
+                foreach (
+                    [
+                        'foto' => ['img', 'foto'],
+                        'dokumen' => ['dok', 'dokumen'],
+                    ] as $field => [$column, $folder]
+                ) {
+
+                    if (!$request->hasFile($field)) {
+                        continue;
+                    }
+
+                    $path = $request
+                        ->file($field)
+                        ->store(
+                            'kib/konstruksi/' . $folder,
+                            'local'
+                        );
+
+                    if (!$path) {
+                        throw new \RuntimeException(
+                            'Gagal mengunggah berkas.'
+                        );
+                    }
+
+                    $newFiles[] = $path;
+                    $changes[$column] = $path;
+
+                    if (
+                        is_string($old->{$column})
+                        && str_starts_with(
+                            $old->{$column},
+                            'kib/konstruksi/'
+                        )
+                    ) {
+                        $oldFiles[] = $old->{$column};
+                    }
+                }
+
+                DB::table('kib_f_s')
+                    ->where('id', $konstruksi)
+                    ->update($changes);
+            });
+        } catch (\Throwable $e) {
+
+            foreach ($newFiles as $file) {
+                Storage::disk('local')
+                    ->delete($file);
+            }
+
+            throw $e;
+        }
+
+        foreach ($oldFiles as $file) {
+            Storage::disk('local')
+                ->delete($file);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data Konstruksi diperbarui.',
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------
+    | HAPUS KONSTRUKSI
+    |----------------------------------------------------------
+    */
+
+    public function destroyKonstruksi(int $konstruksi)
+    {
+        abort_unless(
+            Auth::check(),
+            403,
+            'Sesi login tidak valid.'
+        );
+
+        $files = [];
+
+        DB::transaction(function () use (
+            $konstruksi,
+            &$files
+        ) {
+            $row = DB::table('kib_f_s')
+                ->where('id', $konstruksi)
+                ->lockForUpdate()
+                ->first();
+
+            abort_unless($row, 404);
+
+            foreach (
+                [
+                    $row->img,
+                    $row->dok,
+                ] as $file
+            ) {
+
+                if (
+                    is_string($file)
+                    && str_starts_with(
+                        $file,
+                        'kib/konstruksi/'
+                    )
+                ) {
+                    $files[] = $file;
+                }
+            }
+
+            DB::table('kib_f_s')
+                ->where('id', $konstruksi)
+                ->delete();
+
+            /*
+             * Tanpa kolom relasi voucher,
+             * tidak mengubah stat secara spekulatif.
+             */
+        });
+
+        foreach ($files as $file) {
+            Storage::disk('local')
+                ->delete($file);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+            'Inventaris dihapus. Status voucher ' .
+                'asal tidak diubah.',
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------
+    | LOKASI FILE BARU DAN HISTORIS
+    |----------------------------------------------------------
+    */
+
+    private function konstruksiFilePath(
+        object $row,
+        string $jenis
+    ): ?string {
+        $name = trim((string) (
+            $jenis === 'foto'
+            ? ($row->img ?? '')
+            : ($row->dok ?? '')
+        ));
+
+        if ($name === '') {
+            return null;
+        }
+
+        $folder = $jenis === 'foto'
+            ? 'foto'
+            : 'dokumen';
+
+        $prefix = 'kib/konstruksi/' . $folder . '/';
+
+        /*
+         * File baru di Laravel Storage.
+         */
+
+        if (str_starts_with($name, $prefix)) {
+            return Storage::disk('local')->exists($name)
+                ? Storage::disk('local')->path($name)
+                : null;
+        }
+
+        /*
+         * File historis website lama.
+         */
+
+        $legacyFolder = $jenis === 'foto'
+            ? 'img'
+            : 'dok';
+
+        $legacyPath = public_path(
+            'assets/img/konstruksi/'
+                . $legacyFolder
+                . '/'
+                . basename($name)
+        );
+
+        return is_file($legacyPath)
+            ? $legacyPath
+            : null;
+    }
+
+    /*
+    |----------------------------------------------------------
+    | PREVIEW FOTO DAN DOKUMEN
+    |----------------------------------------------------------
+    */
+
+    public function fileKonstruksi(
+        int $konstruksi,
+        string $jenis
+    ) {
+        abort_unless(
+            in_array(
+                $jenis,
+                ['foto', 'dokumen'],
+                true
+            ),
+            404
+        );
+
+        $row = DB::table('kib_f_s')
+            ->where('id', $konstruksi)
+            ->first();
+
+        abort_unless($row, 404);
+
+        $path = $this->konstruksiFilePath(
+            $row,
+            $jenis
+        );
+
+        abort_unless($path, 404);
+
+        $ext = strtolower(
+            pathinfo(
+                $path,
+                PATHINFO_EXTENSION
+            )
+        );
+
+        abort_unless(
+            $jenis === 'dokumen'
+                ? $ext === 'pdf'
+                : in_array(
+                    $ext,
+                    ['jpg', 'jpeg', 'png', 'webp'],
+                    true
+                ),
+            415
+        );
+
+        return response()->file(
+            $path,
+            [
+                'X-Content-Type-Options' => 'nosniff',
+            ]
+        );
+    }
 }
