@@ -1,1012 +1,806 @@
 @extends('layouts.main')
 
-@section('title', 'K.I.R')
+@section('title', 'K.I.R - Kartu Inventaris Ruangan')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/kib/kir.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/kib/kir.css') }}?v={{ file_exists(public_path('css/pages/kib/kir.css')) ? filemtime(public_path('css/pages/kib/kir.css')) : '1' }}">
 @endpush
 
 @section('content')
+    @php
+        $rp = fn($v) => 'Rp ' . number_format((float) ($v ?? 0), 0, ',', '.');
+    @endphp
 
-    <section class="content kir-page">
+    <section class="content kir-page" id="kirApp" data-base="{{ url('/kib/kir') }}"
+        data-pending="{{ route('kib.pending', ['module' => 'kir']) }}" data-token="{{ csrf_token() }}">
 
-        {{-- =========================
-        HERO SECTION
-    ========================== --}}
-        <section class="kir-hero">
-            <div class="kir-hero-overlay"></div>
+        {{-- HEADER --}}
 
-            <div class="kir-hero-inner">
+        <header class="kir-hero">
+            <nav class="kir-breadcrumb">
+                <a href="{{ route('dashboard') }}" aria-label="Dashboard">
+                    <i data-lucide="house"></i>
+                </a>
 
-                {{-- Breadcrumb --}}
-                <nav class="kir-breadcrumb" aria-label="Breadcrumb">
-                    <a href="{{ route('dashboard') }}" aria-label="Dashboard">
-                        <i data-lucide="house"></i>
-                    </a>
+                <i data-lucide="chevron-right"></i>
+                <span>K.I.B</span>
 
-                    <i data-lucide="chevron-right"></i>
+                <i data-lucide="chevron-right"></i>
+                <strong>K.I.R</strong>
+            </nav>
 
-                    <span>K.I.B</span>
+            <div class="kir-heading">
+                <div>
+                    <small>KARTU INVENTARIS RUANGAN</small>
 
-                    <i data-lucide="chevron-right"></i>
-
-                    <strong>K.I.R</strong>
-                </nav>
-
-                {{-- Heading --}}
-                <div class="kir-heading">
-                    <h1>K.I.R</h1>
+                    <h1>K.I.R — Inventaris Ruangan</h1>
 
                     <p>
-                        Kelola data uji kelayakan kendaraan (KIR)
-                        untuk aset kendaraan di Perumda Tirta Kencana Kota Samarinda.
+                        Kelola inventaris berdasarkan lokasi,
+                        departemen, divisi, gedung dan ruangan.
                     </p>
                 </div>
 
-                {{-- KPI --}}
-                <div class="kir-kpi-grid">
-
-                    {{-- Total Kendaraan --}}
-                    <article class="kir-kpi-card">
-                        <div class="kir-kpi-icon is-blue">
-                            <i data-lucide="car-front"></i>
-                        </div>
-
-                        <div>
-                            <span>Total Kendaraan</span>
-
-                            <div class="kir-kpi-inline">
-                                <strong>42</strong>
-
-                                <small>
-                                    <i data-lucide="arrow-up"></i>
-                                    +3
-                                </small>
-                            </div>
-
-                            <p>dari tahun lalu</p>
-                        </div>
-                    </article>
-
-                    {{-- KIR Aktif --}}
-                    <article class="kir-kpi-card">
-                        <div class="kir-kpi-icon is-green">
-                            <i data-lucide="badge-check"></i>
-                        </div>
-
-                        <div>
-                            <span>KIR Aktif</span>
-                            <strong>35</strong>
-                        </div>
-                    </article>
-
-                    {{-- Segera Habis --}}
-                    <article class="kir-kpi-card">
-                        <div class="kir-kpi-icon is-yellow">
-                            <i data-lucide="badge-alert"></i>
-                        </div>
-
-                        <div>
-                            <span>KIR Habis ≤ 1 Bulan</span>
-                            <strong>5</strong>
-                        </div>
-                    </article>
-
-                    {{-- Kedaluwarsa --}}
-                    <article class="kir-kpi-card">
-                        <div class="kir-kpi-icon is-red">
-                            <i data-lucide="circle-x"></i>
-                        </div>
-
-                        <div>
-                            <span>KIR Kedaluwarsa</span>
-                            <strong>2</strong>
-                        </div>
-                    </article>
-
-                </div>
-            </div>
-        </section>
-
-
-        {{-- =========================
-        DATA WORKSPACE
-    ========================== --}}
-        <section class="kir-card kir-workspace">
-
-            {{-- Header --}}
-            <div class="kir-titlebar">
-
-                <h2>Daftar K.I.R</h2>
-
-                <button type="button" class="kir-add-button" onclick="openKirModal('add')">
-                    <i data-lucide="plus"></i>
-                    Tambah Data K.I.R
-                </button>
-
-            </div>
-
-
-            {{-- =========================
-            FILTER
-        ========================== --}}
-            <div class="kir-filter-row">
-
-                {{-- Search --}}
-                <div class="kir-search">
-                    <i data-lucide="search"></i>
-
-                    <input id="kirSearch" type="search" placeholder="Cari nomor polisi, merk, tipe, atau lokasi...">
-                </div>
-
-                {{-- Jenis --}}
-                <select id="kirJenis">
-                    <option value="">Semua Jenis Kendaraan</option>
-                    <option value="Mobil Penumpang">Mobil Penumpang</option>
-                    <option value="Bus">Bus</option>
-                    <option value="Truk">Truk</option>
-                    <option value="Pick Up">Pick Up</option>
-                </select>
-
-                {{-- Status --}}
-                <select id="kirStatus">
-                    <option value="">Semua Status KIR</option>
-                    <option value="Aktif">Aktif</option>
-                    <option value="Segera Habis">Segera Habis</option>
-                    <option value="Kedaluwarsa">Kedaluwarsa</option>
-                </select>
-
-                {{-- Lokasi --}}
-                <select id="kirLokasi">
-                    <option value="">Semua Lokasi</option>
-                    <option value="Kantor Pusat">Kantor Pusat</option>
-                    <option value="IPA Gunung Lipan">IPA Gunung Lipan</option>
-                    <option value="Gudang Material">Gudang Material</option>
-                    <option value="Wilayah Kota">Wilayah Kota</option>
-                    <option value="Reservoir Lempake">Reservoir Lempake</option>
-                    <option value="Sungai Kapih">Sungai Kapih</option>
-                    <option value="Loa Janan">Loa Janan</option>
-                    <option value="IPA Sungai Kapih">IPA Sungai Kapih</option>
-                </select>
-
-                {{-- Masa Berlaku --}}
-                <div class="kir-date-field">
-
+                <div class="kir-date-card">
                     <i data-lucide="calendar-days"></i>
 
-                    <select id="kirMasa">
-                        <option value="">Masa Berlaku</option>
-                        <option value="2026">Berakhir 2026</option>
-                        <option value="2027">Berakhir 2027</option>
-                    </select>
+                    <div>
+                        <strong id="kirTanggal">
+                            {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
+                        </strong>
 
+                        <small>
+                            <span id="kirJam">
+                                {{ now('Asia/Makassar')->format('H:i:s') }}
+                            </span>
+                            WITA
+                        </small>
+                    </div>
                 </div>
-
             </div>
 
-
-            {{-- Filter Actions --}}
-            <div class="kir-filter-actions">
-
-                <button type="button" class="kir-secondary-button">
-                    <i data-lucide="list-filter"></i>
-                    Filter Lainnya
-                </button>
-
-                <div>
-
-                    <button type="button" class="kir-secondary-button" onclick="resetKirFilter()">
-                        <i data-lucide="refresh-cw"></i>
-                        Reset
-                    </button>
-
-                    <button type="button" class="kir-secondary-button" onclick="exportKirCSV()">
-                        <i data-lucide="download"></i>
-                        Export
-                        <i data-lucide="chevron-down"></i>
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            {{-- =========================
-            TABLE
-        ========================== --}}
-            <div class="table-responsive kir-table-scroll" tabindex="0">
-
-                <table class="kir-table" id="kirTable">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                <input type="checkbox" aria-label="Pilih semua">
-                            </th>
-
-                            <th>No</th>
-
-                            <th>Nomor Polisi</th>
-
-                            <th class="kir-thumb-col"></th>
-
-                            <th>Nama Kendaraan</th>
-
-                            <th>Merk / Tipe</th>
-
-                            <th>Jenis</th>
-
-                            <th>Tahun</th>
-
-                            <th>Lokasi</th>
-
-                            <th>Tanggal Uji</th>
-
-                            <th>Berlaku s/d</th>
-
-                            <th>Status</th>
-
-                            <th>Aksi</th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                        {{-- DATA 1 --}}
-                        <tr data-record data-jenis="Mobil Penumpang" data-status="Aktif" data-lokasi="Kantor Pusat"
-                            data-masa="2027">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>1</td>
-
-                            <td>KT 1234 AB</td>
-
-                            <td>
-                                <span class="kir-thumb">
-                                    <i data-lucide="car-front"></i>
-                                </span>
-                            </td>
-
-                            <td>Toyota Avanza</td>
-
-                            <td>Toyota Avanza 1.5 G</td>
-
-                            <td>Mobil Penumpang</td>
-
-                            <td>2022</td>
-
-                            <td>Kantor Pusat</td>
-
-                            <td>10 Jan 2026</td>
-
-                            <td>10 Jan 2027</td>
-
-                            <td>
-                                <span class="kir-status is-active">
-                                    Aktif
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 2 --}}
-                        <tr data-record data-jenis="Bus" data-status="Aktif" data-lokasi="IPA Gunung Lipan"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>2</td>
-
-                            <td>KT 5678 CD</td>
-
-                            <td>
-                                <span class="kir-thumb">
-                                    <i data-lucide="bus-front"></i>
-                                </span>
-                            </td>
-
-                            <td>Isuzu Elf</td>
-
-                            <td>Isuzu NMR 71</td>
-
-                            <td>Bus</td>
-
-                            <td>2021</td>
-
-                            <td>IPA Gunung Lipan</td>
-
-                            <td>05 Mar 2026</td>
-
-                            <td>05 Mar 2027</td>
-
-                            <td>
-                                <span class="kir-status is-active">
-                                    Aktif
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 3 --}}
-                        <tr data-record data-jenis="Truk" data-status="Segera Habis" data-lokasi="Gudang Material"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>3</td>
-
-                            <td>KT 9012 EF</td>
-
-                            <td>
-                                <span class="kir-thumb is-truck">
-                                    <i data-lucide="truck"></i>
-                                </span>
-                            </td>
-
-                            <td>Hino Dutro</td>
-
-                            <td>Hino Dutro 130 HD</td>
-
-                            <td>Truk</td>
-
-                            <td>2020</td>
-
-                            <td>Gudang Material</td>
-
-                            <td>20 Feb 2026</td>
-
-                            <td>20 Feb 2027</td>
-
-                            <td>
-                                <span class="kir-status is-warning">
-                                    Segera Habis
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 4 --}}
-                        <tr data-record data-jenis="Pick Up" data-status="Kedaluwarsa" data-lokasi="Wilayah Kota"
-                            data-masa="2026">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>4</td>
-
-                            <td>KT 3456 GH</td>
-
-                            <td>
-                                <span class="kir-thumb">
-                                    <i data-lucide="car-front"></i>
-                                </span>
-                            </td>
-
-                            <td>Mitsubishi L300</td>
-
-                            <td>Mitsubishi L300</td>
-
-                            <td>Pick Up</td>
-
-                            <td>2023</td>
-
-                            <td>Wilayah Kota</td>
-
-                            <td>12 Sep 2025</td>
-
-                            <td>12 Sep 2026</td>
-
-                            <td>
-                                <span class="kir-status is-expired">
-                                    Kedaluwarsa
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 5 --}}
-                        <tr data-record data-jenis="Pick Up" data-status="Aktif" data-lokasi="Reservoir Lempake"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>5</td>
-
-                            <td>KT 7890 IJ</td>
-
-                            <td>
-                                <span class="kir-thumb">
-                                    <i data-lucide="car-front"></i>
-                                </span>
-                            </td>
-
-                            <td>Suzuki Carry</td>
-
-                            <td>Suzuki Carry 1.5</td>
-
-                            <td>Pick Up</td>
-
-                            <td>2022</td>
-
-                            <td>Reservoir Lempake</td>
-
-                            <td>18 Jul 2026</td>
-
-                            <td>18 Jul 2027</td>
-
-                            <td>
-                                <span class="kir-status is-active">
-                                    Aktif
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 6 --}}
-                        <tr data-record data-jenis="Pick Up" data-status="Aktif" data-lokasi="Sungai Kapih"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>6</td>
-
-                            <td>KT 2468 KL</td>
-
-                            <td>
-                                <span class="kir-thumb">
-                                    <i data-lucide="car-front"></i>
-                                </span>
-                            </td>
-
-                            <td>Toyota Hilux</td>
-
-                            <td>Toyota Hilux 2.4</td>
-
-                            <td>Pick Up</td>
-
-                            <td>2021</td>
-
-                            <td>Sungai Kapih</td>
-
-                            <td>01 Apr 2026</td>
-
-                            <td>01 Apr 2027</td>
-
-                            <td>
-                                <span class="kir-status is-active">
-                                    Aktif
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 7 --}}
-                        <tr data-record data-jenis="Truk" data-status="Segera Habis" data-lokasi="Loa Janan"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>7</td>
-
-                            <td>KT 1357 MN</td>
-
-                            <td>
-                                <span class="kir-thumb is-truck">
-                                    <i data-lucide="truck"></i>
-                                </span>
-                            </td>
-
-                            <td>Mitsubishi Fuso</td>
-
-                            <td>Fuso FN 62</td>
-
-                            <td>Truk</td>
-
-                            <td>2020</td>
-
-                            <td>Loa Janan</td>
-
-                            <td>15 Mar 2026</td>
-
-                            <td>15 Mar 2027</td>
-
-                            <td>
-                                <span class="kir-status is-warning">
-                                    Segera Habis
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 8 --}}
-                        <tr data-record data-jenis="Mobil Penumpang" data-status="Aktif" data-lokasi="Kantor Pusat"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>8</td>
-
-                            <td>KT 8642 OP</td>
-
-                            <td>
-                                <span class="kir-thumb">
-                                    <i data-lucide="car-front"></i>
-                                </span>
-                            </td>
-
-                            <td>Honda CR-V</td>
-
-                            <td>Honda CR-V 2.0</td>
-
-                            <td>Mobil Penumpang</td>
-
-                            <td>2023</td>
-
-                            <td>Kantor Pusat</td>
-
-                            <td>28 Jan 2026</td>
-
-                            <td>28 Jan 2027</td>
-
-                            <td>
-                                <span class="kir-status is-active">
-                                    Aktif
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 9 --}}
-                        <tr data-record data-jenis="Mobil Penumpang" data-status="Aktif" data-lokasi="IPA Sungai Kapih"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>9</td>
-
-                            <td>KT 9753 QR</td>
-
-                            <td>
-                                <span class="kir-thumb">
-                                    <i data-lucide="car-front"></i>
-                                </span>
-                            </td>
-
-                            <td>Suzuki APV</td>
-
-                            <td>Suzuki APV</td>
-
-                            <td>Mobil Penumpang</td>
-
-                            <td>2021</td>
-
-                            <td>IPA Sungai Kapih</td>
-
-                            <td>10 Mei 2026</td>
-
-                            <td>10 Mei 2027</td>
-
-                            <td>
-                                <span class="kir-status is-active">
-                                    Aktif
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- DATA 10 --}}
-                        <tr data-record data-jenis="Truk" data-status="Kedaluwarsa" data-lokasi="Gudang Material"
-                            data-masa="2027">
-
-                            <td><input type="checkbox"></td>
-
-                            <td>10</td>
-
-                            <td>KT 4681 ST</td>
-
-                            <td>
-                                <span class="kir-thumb is-truck">
-                                    <i data-lucide="truck"></i>
-                                </span>
-                            </td>
-
-                            <td>Isuzu Giga</td>
-
-                            <td>Isuzu Giga FVZ</td>
-
-                            <td>Truk</td>
-
-                            <td>2019</td>
-
-                            <td>Gudang Material</td>
-
-                            <td>25 Feb 2026</td>
-
-                            <td>25 Feb 2027</td>
-
-                            <td>
-                                <span class="kir-status is-expired">
-                                    Kedaluwarsa
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="kir-actions">
-                                    <button class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-                                </div>
-                            </td>
-
-                        </tr>
-
-
-                        {{-- Empty --}}
-                        <tr id="kirEmptyRow" hidden>
-                            <td colspan="13" class="kir-empty">
-                                Tidak ada data K.I.R yang sesuai dengan filter.
-                            </td>
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-            {{-- =========================
-            TABLE FOOTER
-        ========================== --}}
-            <div class="kir-table-footer">
-
-                <div id="kirTableInfo">
-                    Menampilkan 1 - 10 dari 42 data
-                </div>
-
-                <div class="kir-pagination-area">
-
-                    <select id="kirPageSize">
-                        <option>10</option>
-                        <option>25</option>
-                        <option>50</option>
-                    </select>
-
-                    <span>data per halaman</span>
-
-                    <nav class="kir-pagination" id="kirPagination"></nav>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        {{-- =========================
-        MODAL
-    ========================== --}}
-        <dialog class="kir-modal" id="kirModal">
-
-            <div class="kir-modal-dialog">
-
-                <header class="kir-modal-header">
+            <div class="kir-stats">
+                <article>
+                    <i data-lucide="map-pin"></i>
 
                     <div>
+                        <small>Lokasi KIR</small>
 
-                        <h3 id="kirModalTitle">
-                            Tambah Data K.I.R
-                        </h3>
-
-                        <p id="kirModalDescription">
-                            Tambahkan data uji KIR kendaraan.
-                        </p>
-
+                        <strong>{{ $lokasis->count() }}</strong>
                     </div>
+                </article>
 
-                    <button type="button" onclick="closeKirModal()">
-                        <i data-lucide="x"></i>
-                    </button>
+                <article>
+                    <i data-lucide="package"></i>
 
-                </header>
+                    <div>
+                        <small>Inventaris Ruangan</small>
 
-
-                <form id="kirForm">
-
-                    <div class="kir-modal-body">
-
-                        <p class="kir-modal-note" id="kirModalNote">
-                            Form UI contoh. Penyimpanan database belum dihubungkan.
-                        </p>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirPolisi">
-                                Nomor Polisi
-                            </label>
-
-                            <input id="kirPolisi" required>
-                        </div>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirName">
-                                Nama Kendaraan
-                            </label>
-
-                            <input id="kirName" required>
-                        </div>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirMerk">
-                                Merk / Tipe
-                            </label>
-
-                            <input id="kirMerk">
-                        </div>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirFormJenis">
-                                Jenis
-                            </label>
-
-                            <select id="kirFormJenis">
-                                <option>Mobil Penumpang</option>
-                                <option>Bus</option>
-                                <option>Truk</option>
-                                <option>Pick Up</option>
-                            </select>
-                        </div>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirTahun">
-                                Tahun
-                            </label>
-
-                            <input id="kirTahun" type="number">
-                        </div>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirFormLokasi">
-                                Lokasi
-                            </label>
-
-                            <input id="kirFormLokasi">
-                        </div>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirTanggalUji">
-                                Tanggal Uji
-                            </label>
-
-                            <input id="kirTanggalUji">
-                        </div>
-
-
-                        <div class="kir-form-group">
-                            <label for="kirBerlaku">
-                                Berlaku s/d
-                            </label>
-
-                            <input id="kirBerlaku">
-                        </div>
-
-
-                        <div class="kir-form-group">
-
-                            <label for="kirFormStatus">
-                                Status
-                            </label>
-
-                            <select id="kirFormStatus">
-                                <option>Aktif</option>
-                                <option>Segera Habis</option>
-                                <option>Kedaluwarsa</option>
-                            </select>
-
-                        </div>
-
+                        <strong>
+                            {{ number_format($stats['jumlah'], 0, ',', '.') }}
+                        </strong>
                     </div>
+                </article>
 
+                <article>
+                    <i data-lucide="door-open"></i>
 
-                    <footer class="kir-modal-footer">
+                    <div>
+                        <small>Ruangan Terdata</small>
 
-                        <button type="button" class="kir-cancel-button" onclick="closeKirModal()">
-                            Tutup
-                        </button>
+                        <strong>
+                            {{ number_format($stats['ruangan'], 0, ',', '.') }}
+                        </strong>
+                    </div>
+                </article>
 
-                        <button type="submit" class="kir-save-button" id="kirSaveButton" disabled>
-                            Simpan Data K.I.R
-                        </button>
+                <article>
+                    <i data-lucide="wallet"></i>
 
-                    </footer>
+                    <div>
+                        <small>Total Nilai KIR</small>
 
-                </form>
+                        <strong class="kir-rupiah">
+                            {{ $rp($stats['nilai']) }}
+                        </strong>
+                    </div>
+                </article>
+            </div>
+        </header>
 
+        {{-- DATA PENDING --}}
+
+        <section class="kir-pending-banner">
+            <span class="kir-banner-icon">
+                <i data-lucide="inbox"></i>
+            </span>
+
+            <div>
+                <small>DATA NILAI ASET</small>
+
+                <h2>
+                    Data KIR Menunggu Diproses
+
+                    <span class="kir-counter">
+                        {{ $stats['pending'] }}
+                    </span>
+                </h2>
+
+                <p>
+                    Pilih transaksi Penambahan Aset untuk
+                    membuat inventaris KIR. Unit mengikuti
+                    voucher; gedung dan ruangan dipilih apabila
+                    tidak dapat ditentukan otomatis.
+                </p>
             </div>
 
-        </dialog>
+            <button class="kir-btn outline" id="kirDataMasuk" type="button">
+                <i data-lucide="inbox"></i>
+                Lihat Data Masuk
+            </button>
+        </section>
 
+        {{-- FILTER --}}
+
+        <section class="kir-card">
+            <div class="kir-card-head">
+                <div>
+                    <h2>Filter Data KIR</h2>
+                    <p>Cari nama lokasi atau alamat.</p>
+                </div>
+            </div>
+
+            <div class="kir-toolbar">
+                <label class="kir-search">
+                    <i data-lucide="search"></i>
+
+                    <input id="kirCari" type="search" placeholder="Cari lokasi atau alamat..." autocomplete="off">
+                </label>
+
+                <select id="kirLimit" aria-label="Jumlah baris">
+                    <option>10</option>
+                    <option selected>20</option>
+                    <option>50</option>
+                    <option>100</option>
+                </select>
+
+                <button class="kir-btn outline" id="kirReset" type="button">
+                    <i data-lucide="refresh-cw"></i>
+                    Reset
+                </button>
+            </div>
+        </section>
+
+        {{-- TABEL UTAMA --}}
+
+        <section class="kir-card">
+            <div class="kir-card-head">
+                <div>
+                    <h2>Daftar Lokasi KIR</h2>
+
+                    <p>
+                        Pilih nilai untuk melihat transaksi
+                        dan Detail untuk membuka inventaris ruangan.
+                    </p>
+                </div>
+
+                <button class="kir-btn primary" id="kirTambah" type="button">
+                    <i data-lucide="plus"></i>
+                    Tambah Data KIR
+                </button>
+            </div>
+
+            <div class="kir-table-wrap">
+                <table class="kir-table" id="kirTabelLokasi">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Lokasi</th>
+                            <th>Alamat</th>
+                            <th>Inventaris</th>
+                            <th>Nilai (Rp)</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($lokasis as $lok)
+                            <tr data-kir-row
+                                data-search="{{ mb_strtolower(($lok->lokasi ?? '') . ' ' . ($lok->alamat ?? '')) }}">
+                                <td class="kir-nomor">
+                                    {{ $loop->iteration }}
+                                </td>
+
+                                <td>
+                                    <div class="kir-location">
+                                        <i data-lucide="map-pin"></i>
+
+                                        <div>
+                                            <strong>
+                                                {{ $lok->lokasi }}
+                                            </strong>
+
+                                            <small>
+                                                ID #{{ $lok->id }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    {{ $lok->alamat ?: '—' }}
+                                </td>
+
+                                <td>
+                                    <span class="kir-pill">
+                                        {{ $lok->jumlah }} barang
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <button type="button" class="kir-value" data-kir-value="{{ $lok->id }}"
+                                        data-name="{{ $lok->lokasi }}">
+                                        <strong>
+                                            {{ $rp($lok->nilai) }}
+                                        </strong>
+
+                                        <i data-lucide="external-link"></i>
+                                    </button>
+                                </td>
+
+                                <td>
+                                    <div class="kir-actions">
+                                        <button class="kir-icon view" type="button" title="Detail KIR"
+                                            data-kir-location="{{ $lok->id }}" data-name="{{ $lok->lokasi }}">
+                                            <i data-lucide="eye"></i>
+                                        </button>
+
+                                        <button class="kir-icon add" type="button" title="Tambah KIR di lokasi"
+                                            data-kir-add-location="{{ $lok->id }}">
+                                            <i data-lucide="plus"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="kir-empty">
+                                    Belum ada lokasi dengan data KIR.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="kir-table-footer">
+                <span id="kirInfo">
+                    {{ $lokasis->count() }} lokasi
+                </span>
+
+                <div id="kirPages" class="kir-pages"></div>
+            </div>
+        </section>
     </section>
 
+    {{-- MODAL RINCIAN NILAI --}}
+
+    <dialog class="kir-modal" id="kirModalNilai" aria-labelledby="kirNilaiJudul">
+        <div class="kir-modal-head">
+            <div>
+                <small>RINCIAN NILAI ASET KIR</small>
+
+                <h2 id="kirNilaiJudul">Nilai Aset</h2>
+
+                <p>
+                    Riwayat transaksi Nilai Aset kategori KIR
+                    di lokasi terpilih.
+                </p>
+            </div>
+
+            <button class="kir-close" type="button" data-kir-close="kirModalNilai">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="kir-modal-body">
+            <div class="kir-total">
+                Total nilai transaksi
+
+                <strong id="kirNilaiTotal">
+                    Rp 0
+                </strong>
+            </div>
+
+            <div class="kir-table-wrap">
+                <table class="kir-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Kode Perkiraan</th>
+                            <th>Nama Aktiva</th>
+                            <th>Voucher / Tanggal</th>
+                            <th>Tahun</th>
+                            <th>Nilai</th>
+                            <th>Uraian</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="kirNilaiBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="kir-modal-foot">
+            <button class="kir-btn outline" type="button" data-kir-close="kirModalNilai">
+                Tutup
+            </button>
+        </div>
+    </dialog>
+
+    {{-- MODAL DETAIL LOKASI --}}
+
+    <dialog class="kir-modal kir-wide" id="kirModalLokasi" aria-labelledby="kirLokasiJudul">
+        <div class="kir-modal-head">
+            <div>
+                <small>KIR — STRUKTUR ORGANISASI</small>
+
+                <h2 id="kirLokasiJudul">
+                    Detail Lokasi
+                </h2>
+
+                <p>
+                    Pilih divisi, gedung, dan ruangan.
+                    Data KIR ditampilkan di sebelah kanan.
+                </p>
+            </div>
+
+            <button class="kir-close" type="button" data-kir-close="kirModalLokasi">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="kir-modal-body kir-layout">
+            <aside class="kir-tree">
+                <h3>
+                    <i data-lucide="network"></i>
+                    Struktur Unit
+                </h3>
+
+                <div id="kirUnitTree">
+                    Memuat data...
+                </div>
+            </aside>
+
+            <div class="kir-right">
+                <div class="kir-card-head">
+                    <div>
+                        <h3 id="kirRoomTitle">
+                            Daftar Ruangan
+                        </h3>
+
+                        <p id="kirRoomSubtitle">
+                            Pilih ruangan untuk melihat barang.
+                        </p>
+                    </div>
+
+                    <button id="kirAddFromDetail" type="button" class="kir-btn primary">
+                        <i data-lucide="plus"></i>
+                        Tambah KIR
+                    </button>
+                </div>
+
+                <div id="kirRoomContent"></div>
+            </div>
+        </div>
+
+        <div class="kir-modal-foot">
+            <button class="kir-btn outline" type="button" data-kir-close="kirModalLokasi">
+                Tutup
+            </button>
+        </div>
+    </dialog>
+
+    {{-- MODAL DETAIL SATU BARANG --}}
+
+    <dialog class="kir-modal" id="kirModalBarang" aria-labelledby="kirBarangTitle">
+        <div class="kir-modal-head">
+            <div>
+                <small>DETAIL INVENTARIS RUANGAN</small>
+
+                <h2 id="kirBarangTitle">
+                    Data KIR
+                </h2>
+            </div>
+
+            <button class="kir-close" type="button" data-kir-close="kirModalBarang">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="kir-modal-body" id="kirBarangDetail"></div>
+
+        <div class="kir-modal-foot">
+            <button class="kir-btn outline" type="button" data-kir-close="kirModalBarang">
+                Tutup
+            </button>
+
+            <button class="kir-btn warning" type="button" id="kirEditDetail">
+                <i data-lucide="pencil"></i>
+                Edit
+            </button>
+
+            <button class="kir-btn danger" type="button" id="kirDeleteDetail">
+                <i data-lucide="trash-2"></i>
+                Hapus
+            </button>
+        </div>
+    </dialog>
+
+    {{-- MODAL FORM TAMBAH / EDIT --}}
+
+    <dialog class="kir-modal kir-form-modal" id="kirModalForm" aria-labelledby="kirFormTitle">
+        <form id="kirForm" enctype="multipart/form-data">
+            @csrf
+
+            <input type="hidden" name="id_nilai_aktiva" id="kirVoucherId">
+
+            <div class="kir-modal-head">
+                <div>
+                    <small>KARTU INVENTARIS RUANGAN</small>
+
+                    <h2 id="kirFormTitle">
+                        Tambah Data KIR
+                    </h2>
+
+                    <p>
+                        Data organisasi otomatis dari lokasi
+                        atau voucher yang dipilih.
+                    </p>
+                </div>
+
+                <button class="kir-close" type="button" data-kir-close="kirModalForm">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="kir-modal-body">
+                <p id="kirError" class="kir-error" hidden></p>
+
+                {{-- BAGIAN 1: DATA PENDING --}}
+
+                <section class="kir-form-section" id="kirPendingSection">
+                    <div class="kir-section-title">
+                        <span>1</span>
+
+                        <div>
+                            <h3>Pilih Data Pending Nilai Aset</h3>
+
+                            <p>
+                                Pilih transaksi KIR yang belum
+                                diproses (Penambahan Aset).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="kir-toolbar">
+                        <label class="kir-search">
+                            <i data-lucide="search"></i>
+
+                            <input id="kirPendingSearch" type="search"
+                                placeholder="Cari voucher, lokasi, divisi, atau uraian...">
+                        </label>
+
+                        <small id="kirPendingCount">
+                            0 data
+                        </small>
+                    </div>
+
+                    <div class="kir-table-wrap kir-pending-wrap">
+                        <table class="kir-table">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Voucher</th>
+                                    <th>Lokasi</th>
+                                    <th>Departemen</th>
+                                    <th>Divisi</th>
+                                    <th>Nilai</th>
+                                    <th>Uraian</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="kirPendingBody"></tbody>
+                        </table>
+                    </div>
+
+                    <button type="button" class="kir-btn outline" id="kirManualMode">
+                        <i data-lucide="plus"></i>
+                        Input langsung tanpa voucher
+                    </button>
+                </section>
+
+                {{-- VOUCHER TERPILIH --}}
+
+                <div id="kirSelectedVoucher" class="kir-selected" hidden>
+                    <i data-lucide="check-circle-2"></i>
+
+                    <div>
+                        <small>Voucher dipilih</small>
+
+                        <strong id="kirVoucherLabel">—</strong>
+
+                        <p id="kirVoucherDesc"></p>
+                    </div>
+
+                    <button class="kir-btn outline" type="button" id="kirChangeVoucher">
+                        Ganti
+                    </button>
+                </div>
+
+                {{-- BAGIAN 2: LOKASI DAN ORGANISASI --}}
+
+                <section class="kir-form-section">
+                    <div class="kir-section-title">
+                        <span>2</span>
+
+                        <div>
+                            <h3>
+                                Lokasi, Departemen, Divisi,
+                                Gedung, Ruangan
+                            </h3>
+
+                            <p>
+                                Voucher hanya menentukan lokasi
+                                dan unit. Gedung dan ruangan mengikuti
+                                pilihan yang tersedia.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="kir-fields three">
+                        <label>
+                            Lokasi <b>*</b>
+
+                            <select name="id_lokasi" id="kirLokasi" required>
+                                <option value="">
+                                    Pilih lokasi
+                                </option>
+
+                                @foreach ($semuaLokasis as $lok)
+                                    <option value="{{ $lok->id }}" data-alamat="{{ $lok->alamat }}">
+                                        {{ $lok->lokasi }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <label>
+                            Departemen <b>*</b>
+
+                            <select name="id_departemen" id="kirDep" required>
+                                <option value="">
+                                    Pilih departemen
+                                </option>
+
+                                @foreach ($departemens as $dep)
+                                    <option value="{{ $dep->id }}">
+                                        {{ $dep->nama_dep }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <label>
+                            Divisi <b>*</b>
+
+                            <select name="id_div" id="kirDiv" required>
+                                <option value="">
+                                    Pilih divisi
+                                </option>
+
+                                @foreach ($divisis as $div)
+                                    <option data-dep="{{ $div->id_dep }}" value="{{ $div->id }}">
+                                        {{ $div->nama_div }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <label class="kir-wide-field">
+                            Gedung <b>*</b>
+
+                            <input name="gedung" id="kirGedung" list="kirGedungList" maxlength="255" required
+                                placeholder="Pilih atau ketik gedung">
+
+                            <datalist id="kirGedungList">
+                                @foreach ($gedungs as $ged)
+                                    <option value="{{ trim($ged) }}"></option>
+                                @endforeach
+                            </datalist>
+                        </label>
+
+                        <label class="kir-wide-field">
+                            Ruangan <b>*</b>
+
+                            <input name="ruangan" id="kirRuang" list="kirRuangList" maxlength="255" required
+                                placeholder="Pilih atau ketik ruangan">
+
+                            <datalist id="kirRuangList">
+                                @foreach ($ruangans as $ruang)
+                                    <option value="{{ trim($ruang->nama_ruang) }}"></option>
+                                @endforeach
+                            </datalist>
+                        </label>
+
+                        <label>
+                            Alamat
+
+                            <input id="kirAlamat" readonly placeholder="Otomatis dari lokasi jika tersedia">
+                        </label>
+                    </div>
+                </section>
+
+                {{-- BAGIAN 3: BARANG DAN KONDISI --}}
+
+                <section class="kir-form-section">
+                    <div class="kir-section-title">
+                        <span>3</span>
+
+                        <div>
+                            <h3>Informasi Barang KIR</h3>
+
+                            <p>
+                                Jumlah harus sama dengan Baik +
+                                Rusak Ringan + Rusak Berat.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="kir-fields two">
+                        <label class="kir-wide-field">
+                            Nama Aset <b>*</b>
+
+                            <select name="id_barang" id="kirBarang" required>
+                                <option value="">
+                                    Pilih barang
+                                </option>
+
+                                @foreach ($barangs as $barang)
+                                    <option value="{{ $barang->id }}" data-kode="{{ trim($barang->kode_barang) }}">
+                                        {{ trim($barang->nama_barang) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <label>
+                            Kode Aset
+
+                            <input id="kirKode" readonly>
+                        </label>
+
+                        <label>
+                            Merk / Type
+
+                            <input name="merk" id="kirMerk" maxlength="255">
+                        </label>
+
+                        <label>
+                            Bahan
+
+                            <select name="bahan" id="kirBahan">
+                                <option value="">
+                                    Pilih bahan
+                                </option>
+
+                                @foreach ($bahans as $bahan)
+                                    <option value="{{ $bahan->id }}">
+                                        {{ $bahan->nama }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <label>
+                            Jumlah <b>*</b>
+
+                            <input type="number" name="jumlah" id="kirJumlah" min="0" value="1" required>
+                        </label>
+
+                        <label>
+                            Satuan <b>*</b>
+
+                            <input name="satuan" id="kirSatuan" maxlength="255" value="Unit" required>
+                        </label>
+
+                        <label>
+                            Baik <b>*</b>
+
+                            <input type="number" name="baik" id="kirBaik" min="0" value="1" required>
+                        </label>
+
+                        <label>
+                            Rusak Ringan <b>*</b>
+
+                            <input type="number" name="ringan" id="kirRingan" min="0" value="0" required>
+                        </label>
+
+                        <label>
+                            Rusak Berat <b>*</b>
+
+                            <input type="number" name="berat" id="kirBerat" min="0" value="0" required>
+                        </label>
+
+                        <label>
+                            Foto (maks. 5 MB)
+
+                            <input type="file" name="foto" id="kirFoto"
+                                accept="image/jpeg,image/png,image/webp">
+                        </label>
+
+                        <label class="kir-wide-field">
+                            Keterangan
+
+                            <textarea name="ket" id="kirKet" rows="3" maxlength="10000"></textarea>
+                        </label>
+                    </div>
+                </section>
+
+                {{-- BAGIAN 4: INVENTARIS EXISTING --}}
+
+                <section class="kir-form-section" id="kirRoomExisting" hidden>
+                    <div class="kir-section-title">
+                        <span>4</span>
+
+                        <div>
+                            <h3>
+                                Inventaris yang Sudah Ada
+                                di Ruangan
+                            </h3>
+
+                            <p>
+                                Periksa data agar barang tidak
+                                tercatat ganda.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="kir-table-wrap">
+                        <table class="kir-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama Aset</th>
+                                    <th>Merk</th>
+                                    <th>Jumlah</th>
+                                    <th>Kondisi</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="kirExistingBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div class="kir-modal-foot">
+                <button class="kir-btn outline" type="button" data-kir-close="kirModalForm">
+                    Batal
+                </button>
+
+                <button class="kir-btn primary" type="submit" id="kirSimpan">
+                    <i data-lucide="save"></i>
+                    Simpan KIR
+                </button>
+            </div>
+        </form>
+    </dialog>
 @endsection
 
-
 @push('scripts')
-    <script src="{{ asset('js/pages/kib/kir.js') }}"></script>
+    <script
+        src="{{ asset('js/pages/kib/kir.js') }}?v={{ file_exists(public_path('js/pages/kib/kir.js')) ? filemtime(public_path('js/pages/kib/kir.js')) : '1' }}">
+    </script>
 @endpush

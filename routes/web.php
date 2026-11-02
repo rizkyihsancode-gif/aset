@@ -862,6 +862,77 @@ Route::delete(
 
 
 
-Route::get('/kib/kir', function () {
-    return view('kib.kir');
-})->name('kib.kir');
+/*
+|--------------------------------------------------------------------------
+| K.I.R — KARTU INVENTARIS RUANGAN
+|--------------------------------------------------------------------------
+| Semua fungsi menggunakan KIBController.
+| Tidak membuat controller baru.
+|--------------------------------------------------------------------------
+*/
+
+// Halaman utama KIR.
+Route::get(
+    '/kib/kir',
+    [KIBController::class, 'dataKir']
+)->name('kib.kir');
+
+// Rincian transaksi nilai per lokasi.
+Route::get(
+    '/kib/kir/lokasi/{lokasi}/nilai',
+    [KIBController::class, 'nilaiKirLokasi']
+)
+    ->whereNumber('lokasi')
+    ->name('kib.kir.nilai');
+
+// Struktur departemen, divisi, gedung, ruangan.
+Route::get(
+    '/kib/kir/lokasi/{lokasi}',
+    [KIBController::class, 'detailKirLokasi']
+)
+    ->whereNumber('lokasi')
+    ->name('kib.kir.lokasi');
+
+// Inventaris di dalam satu ruangan.
+Route::get(
+    '/kib/kir/ruangan',
+    [KIBController::class, 'detailKirRuangan']
+)->name('kib.kir.ruangan');
+
+// Preview foto KIR.
+Route::get(
+    '/kib/kir/{kir}/foto',
+    [KIBController::class, 'fileKir']
+)
+    ->whereNumber('kir')
+    ->name('kib.kir.foto');
+
+// Detail satu inventaris.
+Route::get(
+    '/kib/kir/{kir}',
+    [KIBController::class, 'showKir']
+)
+    ->whereNumber('kir')
+    ->name('kib.kir.show');
+
+// Tambah inventaris KIR.
+Route::post(
+    '/kib/kir',
+    [KIBController::class, 'storeKir']
+)->name('kib.kir.store');
+
+// Edit inventaris KIR.
+Route::put(
+    '/kib/kir/{kir}',
+    [KIBController::class, 'updateKir']
+)
+    ->whereNumber('kir')
+    ->name('kib.kir.update');
+
+// Hapus inventaris KIR.
+Route::delete(
+    '/kib/kir/{kir}',
+    [KIBController::class, 'destroyKir']
+)
+    ->whereNumber('kir')
+    ->name('kib.kir.destroy');
