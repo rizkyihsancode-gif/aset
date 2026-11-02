@@ -1406,3 +1406,128 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================
+   K.I.R — GARIS TABEL SEPERTI HALAMAN TANAH
+   Berlaku pada tabel lokasi, nilai, ruangan,
+   barang inventaris, dan Data Pending
+========================================================== */
+
+/* Bingkai tabel */
+
+.kir-page .kir-table-wrap,
+.kir-modal .kir-table-wrap {
+    border: 1px solid #d7e3f0;
+    border-radius: 8px;
+
+    overflow: auto;
+}
+
+/* Struktur tabel */
+
+.kir-page .kir-table,
+.kir-modal .kir-table {
+    width: 100%;
+
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Garis header tabel */
+
+.kir-page .kir-table thead th,
+.kir-modal .kir-table thead th {
+    background: #e8f2fd;
+    color: #123b71;
+
+    border-right: 1px solid #d7e3f0;
+    border-bottom: 1px solid #d7e3f0;
+
+    padding: 12px 11px;
+
+    font-size: 13px;
+    font-weight: 850;
+
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* Garis antarbaris dan antarkolom */
+
+.kir-page .kir-table tbody td,
+.kir-modal .kir-table tbody td {
+    border-right: 1px solid #e0e8f2;
+    border-bottom: 1px solid #e0e8f2;
+
+    padding: 12px 11px;
+
+    color: #294d75;
+
+    font-size: 13px;
+    line-height: 1.6;
+
+    vertical-align: middle;
+}
+
+/* Hilangkan garis ganda di sisi kanan */
+
+.kir-page .kir-table tr > :last-child,
+.kir-modal .kir-table tr > :last-child {
+    border-right: 0;
+}
+
+/* Baris terakhir */
+
+.kir-page .kir-table tbody tr:last-child td,
+.kir-modal .kir-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Zebra striping */
+
+.kir-page .kir-table tbody tr:nth-child(odd),
+.kir-modal .kir-table tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+.kir-page .kir-table tbody tr:nth-child(even),
+.kir-modal .kir-table tbody tr:nth-child(even) {
+    background: #f8fbff;
+}
+
+/* Hover */
+
+.kir-page .kir-table tbody tr:hover,
+.kir-modal .kir-table tbody tr:hover {
+    background: #eef6ff;
+}
+
+/* Tabel detail inventaris ruangan */
+
+.kir-modal .kir-items-table thead th {
+    border-right: 1px solid #ceddec;
+    border-bottom: 1px solid #ceddec;
+}
+
+.kir-modal .kir-items-table tbody td {
+    border-right: 1px solid #dce6f1;
+    border-bottom: 1px solid #dce6f1;
+
+    vertical-align: middle;
+}
+
+/* Nama barang lebih jelas */
+
+.kir-page .kir-table td strong,
+.kir-modal .kir-table td strong {
+    color: #10376d;
+
+    font-weight: 850;
+}
+
+/* Foto inventaris */
+
+.kir-modal .kir-items-table .kir-thumb {
+    border: 1px solid #d5e2f0;
+    border-radius: 6px;
+}

@@ -1626,3 +1626,108 @@
         min-height: 350px;
     }
 }
+
+/* ==========================================================
+   K.I.B F — GARIS TABEL SEPERTI HALAMAN TANAH
+   Berlaku pada tabel utama dan seluruh modal Konstruksi
+========================================================== */
+
+/* Bingkai luar tabel */
+
+.kf .kf-table-wrap,
+.kf-dialog .kf-table-wrap {
+    border: 1px solid #d7e3f0;
+    border-radius: 8px;
+
+    overflow: auto;
+}
+
+/* Struktur tabel */
+
+.kf .kf-table,
+.kf-dialog .kf-table {
+    width: 100%;
+
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Garis header tabel */
+
+.kf .kf-table thead th,
+.kf-dialog .kf-table thead th {
+    background: #e8f2fd;
+    color: #123b71;
+
+    border-right: 1px solid #d7e3f0;
+    border-bottom: 1px solid #d7e3f0;
+
+    padding: 12px 11px;
+
+    font-size: 13px;
+    font-weight: 850;
+
+    vertical-align: middle;
+}
+
+/* Garis setiap baris dan kolom */
+
+.kf .kf-table tbody td,
+.kf-dialog .kf-table tbody td {
+    border-right: 1px solid #e0e8f2;
+    border-bottom: 1px solid #e0e8f2;
+
+    padding: 12px 11px;
+
+    font-size: 13px;
+    line-height: 1.6;
+
+    vertical-align: middle;
+}
+
+/* Hilangkan garis ganda di sisi kanan */
+
+.kf .kf-table tr > :last-child,
+.kf-dialog .kf-table tr > :last-child {
+    border-right: 0;
+}
+
+/* Baris terakhir menggunakan border bingkai */
+
+.kf .kf-table tbody tr:last-child td,
+.kf-dialog .kf-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Warna baris bergantian */
+
+.kf .kf-table tbody tr:nth-child(odd),
+.kf-dialog .kf-table tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+.kf .kf-table tbody tr:nth-child(even),
+.kf-dialog .kf-table tbody tr:nth-child(even) {
+    background: #f8fbff;
+}
+
+/* Hover baris */
+
+.kf .kf-table tbody tr:hover,
+.kf-dialog .kf-table tbody tr:hover {
+    background: #eef6ff;
+}
+
+/* Khusus tabel Excel K.I.B F */
+
+#kfModalLokasi .kf-excel-table tbody td {
+    vertical-align: top;
+
+    border-right: 1px solid #dce6f1;
+    border-bottom: 1px solid #dce6f1;
+}
+
+#kfModalLokasi .kf-excel-table thead th {
+    border-right: 1px solid #ceddec;
+    border-bottom: 1px solid #ceddec;
+}
