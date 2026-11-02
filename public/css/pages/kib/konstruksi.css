@@ -1403,3 +1403,226 @@
         align-items: flex-start;
     }
 }
+
+/* ==========================================================
+   K.I.B F — DETAIL LOKASI FULL WIDTH
+   Hanya memengaruhi modal Detail Konstruksi.
+========================================================== */
+
+/* Modal hampir memenuhi layar */
+
+#kfModalLokasi[open] {
+    display: flex;
+    flex-direction: column;
+
+    width: calc(100vw - 20px);
+    max-width: none;
+
+    height: calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
+
+    padding: 0;
+    margin: auto;
+
+    overflow: hidden;
+
+    border-radius: 12px;
+}
+
+/* Header dan footer tetap pada tempatnya */
+
+#kfModalLokasi > .kf-dialog-head,
+#kfModalLokasi > .kf-dialog-foot {
+    flex-shrink: 0;
+}
+
+/* Konten utama menggunakan ruang yang tersedia */
+
+#kfModalLokasi .kf-lokasi-grid {
+    display: grid;
+
+    grid-template-columns:
+        190px minmax(0, 1fr);
+
+    gap: 12px;
+
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+
+    padding: 14px;
+
+    overflow: hidden;
+}
+
+/* Panel Departemen dan Divisi */
+
+#kfModalLokasi .kf-tree-panel {
+    min-width: 0;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Panel tabel Konstruksi */
+
+#kfModalLokasi .kf-aset-panel {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+    min-height: 0;
+
+    overflow: hidden;
+}
+
+/* Area tabel bisa digeser tanpa terpotong */
+
+#kfModalLokasi .kf-excel-wrap {
+    flex: 1;
+
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    max-height: none;
+
+    overflow-x: auto;
+    overflow-y: auto;
+
+    border: 1px solid #dce7f5;
+    border-radius: 8px;
+}
+
+/* Tabel Excel */
+
+#kfModalLokasi .kf-excel-table {
+    width: 100%;
+    min-width: 1550px !important;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    font-size: 13px;
+}
+
+/* Judul tabel */
+
+#kfModalLokasi .kf-excel-table th {
+    padding: 12px 10px;
+
+    background: #e7f1fc;
+    color: #103b72;
+
+    font-size: 13px;
+    font-weight: 850;
+
+    text-align: center;
+    vertical-align: middle;
+
+    line-height: 1.45;
+}
+
+/* Isi tabel */
+
+#kfModalLokasi .kf-excel-table td {
+    padding: 12px 10px;
+
+    color: #294c75;
+
+    font-size: 13px;
+    line-height: 1.6;
+
+    vertical-align: top;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Nama konstruksi tetap menonjol */
+
+#kfModalLokasi .kf-excel-name {
+    min-width: 220px !important;
+}
+
+#kfModalLokasi .kf-excel-name strong {
+    font-size: 13px;
+    font-weight: 850;
+}
+
+/* Dokumen pendukung */
+
+#kfModalLokasi .kf-excel-table td:last-child {
+    min-width: 230px;
+}
+
+/* ==========================================================
+   MODE PERLUAS TABEL
+========================================================== */
+
+#kfModalLokasi.kf-table-expanded .kf-lokasi-grid {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* Sembunyikan sementara panel organisasi */
+
+#kfModalLokasi.kf-table-expanded .kf-tree-panel {
+    display: none;
+}
+
+/* Maksimalkan ruang tabel */
+
+#kfModalLokasi.kf-table-expanded .kf-aset-panel {
+    width: 100%;
+}
+
+/* Gunakan lebar lebih proporsional */
+
+#kfModalLokasi.kf-table-expanded .kf-excel-table {
+    min-width: 1450px !important;
+}
+
+/* Tombol perluas */
+
+#kfPerluasTabel {
+    white-space: nowrap;
+}
+
+#kfPerluasTabel svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 900px) {
+
+    #kfModalLokasi .kf-lokasi-grid {
+        grid-template-columns: 170px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 650px) {
+
+    #kfModalLokasi[open] {
+        width: calc(100vw - 10px);
+        height: calc(100dvh - 10px);
+        max-height: calc(100dvh - 10px);
+    }
+
+    #kfModalLokasi .kf-lokasi-grid {
+        grid-template-columns: minmax(0, 1fr);
+
+        overflow-y: auto;
+    }
+
+    #kfModalLokasi .kf-tree-panel {
+        max-height: 170px;
+    }
+
+    #kfModalLokasi .kf-excel-wrap {
+        min-height: 350px;
+    }
+}

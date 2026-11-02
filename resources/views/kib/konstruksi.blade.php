@@ -412,9 +412,28 @@
 
             <section class="kf-aset-panel">
 
-                <h3 id="kfJudulUnit">
-                    Daftar Inventaris
-                </h3>
+
+                <div class="kf-card-head">
+
+                    <div>
+                        <h3 id="kfJudulUnit">
+                            Daftar Inventaris
+                        </h3>
+
+                        <p class="kf-subtitle">
+                            Data mengikuti struktur Excel K.I.B F.
+                        </p>
+                    </div>
+
+                    <button type="button" class="kf-btn outline" id="kfPerluasTabel">
+                        <i data-lucide="maximize-2"></i>
+                        <span id="kfLabelPerluas">
+                            Perluas Tabel
+                        </span>
+                    </button>
+
+                </div>
+
 
                 <p class="kf-subtitle">
                     Data mengikuti struktur Excel K.I.B F.

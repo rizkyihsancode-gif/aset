@@ -1399,3 +1399,57 @@
     icons();
 
 })();
+
+/*
+|--------------------------------------------------------------------------
+| K.I.B F — PERLUAS TABEL DETAIL LOKASI
+|--------------------------------------------------------------------------
+*/
+
+const kfExpandButton = document.getElementById(
+    'kfPerluasTabel'
+);
+
+const kfLokasiModal = document.getElementById(
+    'kfModalLokasi'
+);
+
+if (kfExpandButton && kfLokasiModal) {
+
+    kfExpandButton.addEventListener('click', () => {
+
+        const expanded = kfLokasiModal.classList.toggle(
+            'kf-table-expanded'
+        );
+
+        document.getElementById(
+            'kfLabelPerluas'
+        ).textContent = expanded
+            ? 'Tampilkan Organisasi'
+            : 'Perluas Tabel';
+
+        const icon = kfExpandButton.querySelector(
+            'i[data-lucide]'
+        );
+
+        if (icon) {
+            icon.setAttribute(
+                'data-lucide',
+                expanded ? 'minimize-2' : 'maximize-2'
+            );
+        }
+
+        // Kembalikan tabel ke kolom paling kiri
+        // setelah mengganti mode tampilan.
+
+        const tableWrapper = kfLokasiModal.querySelector(
+            '.kf-excel-wrap'
+        );
+
+        if (tableWrapper) {
+            tableWrapper.scrollLeft = 0;
+        }
+
+        window.lucide?.createIcons?.();
+    });
+}
