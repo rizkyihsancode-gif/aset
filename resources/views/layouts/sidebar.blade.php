@@ -105,7 +105,8 @@
         <div class="sidebar-menu-group {{ $masterOpen ? 'open' : '' }}" id="masterGroup">
 
             <button type="button" class="sidebar-menu-item sidebar-parent {{ $masterOpen ? 'parent-active' : '' }}"
-                onclick="toggleMenu('masterGroup')" aria-label="Buka menu Master Data">
+                data-sidebar-toggle="masterGroup" aria-controls="masterSubmenu"
+                aria-expanded="{{ $masterOpen ? 'true' : 'false' }}" aria-label="Buka atau tutup menu Master Data">
 
                 <span class="sidebar-menu-icon">
                     <i data-lucide="database"></i>
@@ -122,7 +123,7 @@
             </button>
 
 
-            <div class="sidebar-submenu">
+            <div class="sidebar-submenu" id="masterSubmenu">
 
                 {{-- BARANG --}}
 
@@ -257,13 +258,14 @@
 
 
         {{-- ====================================================
-             K.I.B
+             K.I.B — KARTU INVENTARIS BARANG
         ==================================================== --}}
 
         <div class="sidebar-menu-group {{ $kibOpen ? 'open' : '' }}" id="kibGroup">
 
             <button type="button" class="sidebar-menu-item sidebar-parent {{ $kibOpen ? 'parent-active' : '' }}"
-                onclick="toggleMenu('kibGroup')" aria-label="Buka menu K.I.B">
+                data-sidebar-toggle="kibGroup" aria-controls="kibSubmenu"
+                aria-expanded="{{ $kibOpen ? 'true' : 'false' }}" aria-label="Buka atau tutup menu K.I.B">
 
                 <span class="sidebar-menu-icon">
                     <i data-lucide="library"></i>
@@ -272,6 +274,8 @@
                 <span class="sidebar-menu-text">
                     K.I.B
                 </span>
+
+                {{-- TOTAL NOTIFIKASI K.I.B --}}
 
                 @if ($kibTotalNotification > 0)
                     <span class="sidebar-kib-parent-count"
@@ -287,7 +291,7 @@
             </button>
 
 
-            <div class="sidebar-submenu">
+            <div class="sidebar-submenu" id="kibSubmenu">
 
                 {{-- K.I.B A — TANAH --}}
 
@@ -404,7 +408,7 @@
                 </a>
 
 
-                {{-- KONSTRUKSI --}}
+                {{-- K.I.B F — KONSTRUKSI --}}
 
                 <a href="{{ url('/kib/konstruksi') }}"
                     class="sidebar-submenu-item {{ request()->is('kib/konstruksi*') ? 'active' : '' }}">
@@ -427,7 +431,7 @@
                 </a>
 
 
-                {{-- K.I.R --}}
+                {{-- K.I.R — KARTU INVENTARIS RUANGAN --}}
 
                 <a href="{{ url('/kib/kir') }}"
                     class="sidebar-submenu-item {{ request()->is('kib/kir*') ? 'active' : '' }}">
@@ -519,10 +523,7 @@
 
         {{-- ====================================================
              FORM LOGOUT
-
-             Method POST + CSRF.
-             Tanpa anchor GET /logout.
-             Tanpa onclick JavaScript.
+             Method POST + CSRF
         ==================================================== --}}
 
         <form id="sidebarLogoutForm" class="sidebar-logout-form" method="POST" action="{{ route('logout') }}">
@@ -545,3 +546,131 @@
     </div>
 
 </aside>
+
+
+{{-- ============================================================
+     JAVASCRIPT SIDEBAR DROPDOWN
+     MASTER DATA DAN K.I.B
+============================================================ --}}
+
+<script>
+    (() => {
+        'use strict';
+
+        /*
+        |--------------------------------------------------------------------------
+        | KONFIGURASI SIDEBAR
+        |--------------------------------------------------------------------------
+        */
+
+        const sidebar = document.getElementById('sidebar');
+
+        const mobileBreakpoint = 820;
+
+        if (!sidebar) {
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOMBOL MENU MASTER DATA DAN K.I.B
+        |--------------------------------------------------------------------------
+        */
+
+        const buttons = sidebar.querySelectorAll(
+            '[data-sidebar-toggle]'
+        );
+
+        buttons.forEach((button) => {
+
+            // Hindari event listener ganda.
+            if (button.dataset.sidebarBound === '1') {
+                return;
+            }
+
+            button.dataset.sidebarBound = '1';
+
+            button.addEventListener('click', () => {
+
+                const groupId = button.dataset.sidebarToggle;
+
+                const group = document.getElementById(
+                    groupId
+                );
+
+                if (!group || !sidebar.contains(group)) {
+                    return;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | PERIKSA SIDEBAR COLLAPSED
+                |--------------------------------------------------------------------------
+                */
+
+                const wasCollapsed =
+                    window.innerWidth > mobileBreakpoint &&
+                    document.body.classList.contains(
+                        'sidebar-collapsed'
+                    );
+
+                /*
+                |--------------------------------------------------------------------------
+                | BUKA SIDEBAR JIKA COLLAPSED
+                |--------------------------------------------------------------------------
+                */
+
+                if (wasCollapsed) {
+
+                    document.body.classList.remove(
+                        'sidebar-collapsed'
+                    );
+
+                    try {
+
+                        localStorage.setItem(
+                            'aset-sidebar-collapsed',
+                            '0'
+                        );
+
+                    } catch (error) {
+
+                        console.warn(
+                            'Preferensi sidebar tidak tersimpan.',
+                            error
+                        );
+
+                    }
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | BUKA / TUTUP SUBMENU
+                |--------------------------------------------------------------------------
+                */
+
+                const isOpen = wasCollapsed ?
+                    true :
+                    !group.classList.contains('open');
+
+                group.classList.toggle(
+                    'open',
+                    isOpen
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | UPDATE ARIA EXPANDED
+                |--------------------------------------------------------------------------
+                */
+
+                button.setAttribute(
+                    'aria-expanded',
+                    String(isOpen)
+                );
+
+            });
+        });
+
+    })();
+</script>
