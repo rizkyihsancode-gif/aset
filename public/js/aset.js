@@ -1,591 +1,1857 @@
-/*
-|--------------------------------------------------------------------------
-| SISTEM ASET
-| GLOBAL JAVASCRIPT
-|--------------------------------------------------------------------------
-*/
 
+/* ============================================================
+   K.I.B E — ASET TETAP LAINNYA
+   PERUMDA TIRTA KENCANA
+   CRUD, FILTER, DETAIL, PDF, CSV, MODAL
+   ============================================================ */
 
-/*
-|--------------------------------------------------------------------------
-| BREAKPOINT
-|--------------------------------------------------------------------------
-*/
+document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
 
-const ASSET_MOBILE_BREAKPOINT = 820;
+    const root = document.getElementById(
+        'asetLainPage'
+    );
 
-
-
-/*
-|--------------------------------------------------------------------------
-| SIDEBAR TOGGLE
-|--------------------------------------------------------------------------
-|
-| Desktop:
-| - Collapse menjadi icon only.
-| - Expand kembali.
-|
-| Mobile:
-| - Sidebar slide dari kiri.
-| - Overlay muncul.
-|
-*/
-
-function toggleSidebar() {
-
-    const sidebar =
-        document.getElementById('sidebar');
-
-    const overlay =
-        document.getElementById('sidebarOverlay');
-
-
-    if (!sidebar) {
-
+    if (!root || root.dataset.ready === 'yes') {
         return;
-
     }
 
+    root.dataset.ready = 'yes';
 
+    const $ = (selector, element = root) =>
+        element.querySelector(selector);
 
-    /*
-    |--------------------------------------------------------------------------
-    | MOBILE
-    |--------------------------------------------------------------------------
-    */
+    const $$ = (selector, element = root) =>
+        [...element.querySelectorAll(selector)];
 
-    if (
-        window.innerWidth <=
-        ASSET_MOBILE_BREAKPOINT
-    ) {
+    const base = root.dataset.base;
+    const store = root.dataset.store;
+    const csrf = root.dataset.token;
 
-        sidebar.classList.toggle(
-            'open'
+    const money = value =>
+        'Rp ' + new Intl.NumberFormat(
+            'id-ID',
+            { maximumFractionDigits: 0 }
+        ).format(Number(value) || 0);
+
+    const number = value =>
+        new Intl.NumberFormat('id-ID')
+            .format(Number(value) || 0);
+
+    const esc = value =>
+        String(value ?? '').replace(
+            /[&<>"']/g,
+            character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]
         );
 
+    const icon = () =>
+        window.lucide?.createIcons?.();
 
-        if (overlay) {
+    const assetUrl = id =>
+        `${base}/${encodeURIComponent(id)}`;
 
-            overlay.classList.toggle(
-                'show'
-            );
+    const lokasiUrl = id =>
+        `${base}/lokasi/${encodeURIComponent(id)}`;
 
+    const fileUrl = (id, type) =>
+        `${assetUrl(id)}/file/${type}`;
+
+    function date(value) {
+        const match = String(value ?? '')
+            .slice(0, 10)
+            .match(/^(\d{4})-(\d\d)-(\d\d)$/);
+
+        return match
+            ? `${match[3]}/${match[2]}/${match[1]}`
+            : (value || '—');
+    }
+
+    // ========================================================
+    // 1. MODAL
+    // ========================================================
+
+    function open(id) {
+        const element = $('#' + id);
+
+        if (element && !element.open) {
+            element.showModal();
         }
 
-
-        return;
-
+        icon();
     }
 
+    function close(id) {
+        const element = $('#' + id);
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | DESKTOP
-    |--------------------------------------------------------------------------
-    */
-
-    document.body.classList.toggle(
-        'sidebar-collapsed'
-    );
-
-
-    const collapsed =
-        document.body.classList.contains(
-            'sidebar-collapsed'
-        );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | SAVE STATE
-    |--------------------------------------------------------------------------
-    */
-
-    localStorage.setItem(
-        'aset-sidebar-collapsed',
-        collapsed ? '1' : '0'
-    );
-
-}
-
-
-
-/*
-|--------------------------------------------------------------------------
-| SIDEBAR DROPDOWN
-|--------------------------------------------------------------------------
-|
-| Digunakan oleh:
-|
-| toggleMenu('masterGroup')
-| toggleMenu('kibGroup')
-|
-*/
-
-function toggleMenu(id) {
-
-    const menu =
-        document.getElementById(id);
-
-
-    if (!menu) {
-
-        return;
-
+        if (element?.open) {
+            element.close();
+        }
     }
 
+    function notify(message) {
+        const toast = $('#aetToast');
 
+        toast.textContent = message;
+        toast.hidden = false;
 
-    /*
-    |--------------------------------------------------------------------------
-    | DESKTOP COLLAPSED
-    |--------------------------------------------------------------------------
-    |
-    | Jika sidebar sedang kecil lalu user klik Master Data / KIB,
-    | sidebar dibuka dulu.
-    |
-    */
+        clearTimeout(notify.timer);
 
-    if (
+        notify.timer = setTimeout(() => {
+            toast.hidden = true;
+        }, 4500);
+    }
 
-        window.innerWidth >
-        ASSET_MOBILE_BREAKPOINT
+    $$('[data-close]').forEach(button => {
+        button.addEventListener('click', () => {
+            close(button.dataset.close);
+        });
+    });
 
-        &&
+    $$('dialog').forEach(dialog => {
+        dialog.addEventListener('click', event => {
+            if (event.target === dialog) {
+                dialog.close();
+            }
+        });
+    });
 
-        document.body.classList.contains(
-            'sidebar-collapsed'
-        )
+    // ========================================================
+    // 2. REQUEST AJAX LARAVEL
+    // ========================================================
 
-    ) {
+    async function request(path, options = {}) {
+        const response = await fetch(path, {
+            credentials: 'same-origin',
 
-        document.body.classList.remove(
-            'sidebar-collapsed'
-        );
-
-
-        localStorage.setItem(
-            'aset-sidebar-collapsed',
-            '0'
-        );
-
-
-        /*
-        Tunggu sedikit agar animasi sidebar selesai.
-        */
-
-        setTimeout(
-            function () {
-
-                menu.classList.toggle(
-                    'open'
-                );
-
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrf,
+                ...options.headers
             },
-            220
-        );
 
+            ...options
+        });
 
-        return;
+        const text = await response.text();
 
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch {
+            throw new Error(
+                `Respons server bukan JSON ` +
+                `(HTTP ${response.status}).`
+            );
+        }
+
+        if (
+            !response.ok ||
+            data.success === false
+        ) {
+            const errors = Object.values(
+                data.errors || {}
+            )
+                .flat()
+                .filter(Boolean);
+
+            throw new Error(
+                errors.length
+                    ? errors.join('\n')
+                    : (
+                        data.message ||
+                        `HTTP ${response.status}`
+                    )
+            );
+        }
+
+        return data;
     }
 
+    // ========================================================
+    // 3. TANGGAL DAN JAM WITA
+    // ========================================================
 
+    function updateClockE() {
+        const now = new Date();
+        const tanggal = $('#aetTanggal');
+        const jam = $('#aetJam');
 
-    /*
-    |--------------------------------------------------------------------------
-    | NORMAL TOGGLE
-    |--------------------------------------------------------------------------
-    */
+        if (tanggal) {
+            tanggal.textContent =
+                new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Makassar',
+                    weekday: 'long',
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                }).format(now);
+        }
 
-    menu.classList.toggle(
-        'open'
-    );
-
-}
-
-
-
-/*
-|--------------------------------------------------------------------------
-| CLOSE MOBILE SIDEBAR
-|--------------------------------------------------------------------------
-*/
-
-function closeMobileSidebar() {
-
-    const sidebar =
-        document.getElementById('sidebar');
-
-    const overlay =
-        document.getElementById('sidebarOverlay');
-
-
-    if (sidebar) {
-
-        sidebar.classList.remove(
-            'open'
-        );
-
+        if (jam) {
+            jam.textContent =
+                new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Makassar',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).format(now).replaceAll('.', ':');
+        }
     }
 
+    updateClockE();
+    setInterval(updateClockE, 1000);
 
-    if (overlay) {
+    // ========================================================
+    // 4. FILTER TABEL UTAMA
+    // ========================================================
 
-        overlay.classList.remove(
-            'show'
+    const rows = $$('.aet-location-row');
+
+    let page = 1;
+    let limit = 20;
+
+    function matched() {
+        const query = (
+            $('#aetSearch').value || ''
+        )
+            .trim()
+            .toLowerCase();
+
+        return rows.filter(row =>
+            !query ||
+            (row.dataset.search || '').includes(query) ||
+            (row.dataset.value || '').includes(query)
         );
-
     }
 
-}
+    // ========================================================
+    // 5. PAGINATION
+    // ========================================================
 
+    function renderPage() {
+        const all = matched();
 
+        limit = Number(
+            $('#aetLimit').value
+        ) || 20;
 
-/*
-|--------------------------------------------------------------------------
-| LOAD SAVED SIDEBAR STATE
-|--------------------------------------------------------------------------
-*/
-
-function loadSidebarState() {
-
-    /*
-    Mobile tidak menggunakan collapsed desktop.
-    */
-
-    if (
-
-        window.innerWidth <=
-        ASSET_MOBILE_BREAKPOINT
-
-    ) {
-
-        document.body.classList.remove(
-            'sidebar-collapsed'
+        const max = Math.max(
+            1,
+            Math.ceil(all.length / limit)
         );
 
-
-        return;
-
-    }
-
-
-    const savedState =
-        localStorage.getItem(
-            'aset-sidebar-collapsed'
+        page = Math.min(
+            Math.max(page, 1),
+            max
         );
 
+        rows.forEach(row => {
+            row.hidden = true;
+        });
 
-    if (savedState === '1') {
+        const start = (page - 1) * limit;
 
-        document.body.classList.add(
-            'sidebar-collapsed'
-        );
+        all
+            .slice(start, start + limit)
+            .forEach((row, index) => {
+                row.hidden = false;
 
-    } else {
-
-        document.body.classList.remove(
-            'sidebar-collapsed'
-        );
-
-    }
-
-}
-
-
-
-/*
-|--------------------------------------------------------------------------
-| RESTORE OPEN MENU STATE
-|--------------------------------------------------------------------------
-|
-| Ini opsional tetapi berguna agar dropdown tetap terbuka
-| selama halaman aktif berada di dalam group.
-|
-*/
-
-function restoreOpenMenus() {
-
-    const groups =
-        document.querySelectorAll(
-            '.sidebar-menu-group'
-        );
-
-
-    groups.forEach(
-        function (group) {
-
-            /*
-            Jika submenu punya item aktif,
-            parent otomatis dibuka.
-            */
-
-            const activeChild =
-                group.querySelector(
-                    '.sidebar-submenu-item.active'
+                const order = row.querySelector(
+                    '[data-order]'
                 );
 
+                if (order) {
+                    order.textContent =
+                        start + index + 1;
+                }
+            });
 
-            if (activeChild) {
+        $('#aetPageInfo').textContent =
+            `Menampilkan ${
+                all.length ? start + 1 : 0
+            }–${
+                Math.min(
+                    start + limit,
+                    all.length
+                )
+            } dari ${
+                number(all.length)
+            } lokasi`;
 
-                group.classList.add(
-                    'open'
-                );
+        const box = $('#aetPages');
 
+        box.replaceChildren();
+
+        if (max < 2) {
+            return;
+        }
+
+        function button(
+            label,
+            target,
+            disabled = false
+        ) {
+            const element =
+                document.createElement('button');
+
+            element.type = 'button';
+            element.textContent = label;
+            element.disabled = disabled;
+
+            if (Number(label) === page) {
+                element.classList.add('current');
             }
 
-        }
-    );
-
-}
-
-
-
-/*
-|--------------------------------------------------------------------------
-| CLOSE SIDEBAR WHEN CLICKING SUBMENU ON MOBILE
-|--------------------------------------------------------------------------
-*/
-
-function setupMobileMenuLinks() {
-
-    const links =
-        document.querySelectorAll(
-            '.sidebar a'
-        );
-
-
-    links.forEach(
-        function (link) {
-
-            link.addEventListener(
+            element.addEventListener(
                 'click',
-                function () {
-
-                    if (
-
-                        window.innerWidth <=
-                        ASSET_MOBILE_BREAKPOINT
-
-                    ) {
-
-                        closeMobileSidebar();
-
-                    }
-
+                () => {
+                    page = target;
+                    renderPage();
                 }
             );
 
+            box.appendChild(element);
+        }
+
+        button(
+            '‹',
+            page - 1,
+            page === 1
+        );
+
+        const list = new Set([1, max]);
+
+        for (
+            let i = Math.max(1, page - 2);
+            i <= Math.min(max, page + 2);
+            i++
+        ) {
+            list.add(i);
+        }
+
+        let previous = 0;
+
+        [...list]
+            .sort((a, b) => a - b)
+            .forEach(current => {
+
+                if (
+                    previous &&
+                    current - previous > 1
+                ) {
+                    const dot =
+                        document.createElement('span');
+
+                    dot.textContent = '…';
+
+                    box.appendChild(dot);
+                }
+
+                button(
+                    String(current),
+                    current
+                );
+
+                previous = current;
+            });
+
+        button(
+            '›',
+            page + 1,
+            page === max
+        );
+    }
+
+    // ========================================================
+    // 6. SEARCH, RESET, LIMIT
+    // ========================================================
+
+    $('#aetSearch').addEventListener(
+        'input',
+        () => {
+            page = 1;
+            renderPage();
         }
     );
 
-}
+    $('#aetLimit').addEventListener(
+        'change',
+        () => {
+            page = 1;
+            renderPage();
+        }
+    );
 
+    $('#aetReset').addEventListener(
+        'click',
+        () => {
+            $('#aetSearch').value = '';
+            $('#aetLimit').value = '20';
 
+            page = 1;
+            renderPage();
+        }
+    );
 
-/*
-|--------------------------------------------------------------------------
-| ESC KEY
-|--------------------------------------------------------------------------
-|
-| Di mobile user bisa tekan ESC untuk menutup sidebar.
-|
-*/
+    // ========================================================
+    // 7. EXPORT CSV
+    // ========================================================
 
-function setupEscapeSidebar() {
+    $('#aetExport').addEventListener(
+        'click',
+        () => {
+            const data = [[
+                'No',
+                'Lokasi',
+                'Alamat',
+                'Jumlah Aset',
+                'Nilai Aktiva'
+            ]];
 
-    document.addEventListener(
-        'keydown',
-        function (event) {
+            matched().forEach(
+                (row, index) => {
+                    data.push([
+                        index + 1,
+                        row.dataset.name,
+                        row.dataset.address,
+                        row.dataset.count,
+                        row.dataset.value
+                    ]);
+                }
+            );
+
+            const csv = '\uFEFF' +
+                data.map(line =>
+                    line.map(value => {
+                        let text = String(
+                            value ?? ''
+                        );
+
+                        // Hindari eksekusi formula
+                        // saat CSV dibuka di spreadsheet.
+                        if (/^\s*[=+@-]/.test(text)) {
+                            text = "'" + text;
+                        }
+
+                        return '"' +
+                            text.replaceAll(
+                                '"',
+                                '""'
+                            ) +
+                            '"';
+                    }).join(';')
+                ).join('\r\n');
+
+            const exportUrl =
+                URL.createObjectURL(
+                    new Blob(
+                        [csv],
+                        {
+                            type: 'text/csv;charset=utf-8'
+                        }
+                    )
+                );
+
+            const link =
+                document.createElement('a');
+
+            link.href = exportUrl;
+            link.download =
+                'kib-e-aset-tetap-lainnya.csv';
+
+            document.body.appendChild(link);
+
+            link.click();
+            link.remove();
+
+            setTimeout(() => {
+                URL.revokeObjectURL(
+                    exportUrl
+                );
+            }, 1000);
+        }
+    );
+
+    // ========================================================
+    // 8. TABS
+    // ========================================================
+
+    $$('[data-tab]').forEach(button => {
+        button.addEventListener(
+            'click',
+            () => {
+                $$('[data-tab]').forEach(item => {
+                    item.classList.toggle(
+                        'active',
+                        item === button
+                    );
+                });
+
+                $$('[data-tab-panel]').forEach(
+                    panel => {
+                        panel.hidden =
+                            panel.dataset.tabPanel !==
+                            button.dataset.tab;
+                    }
+                );
+            }
+        );
+    });
+
+    // ========================================================
+    // 9. FORM CREATE DAN UPDATE
+    // ========================================================
+
+    const form = $('#aetForm');
+
+    const dep = $('#aetDep');
+    const div = $('#aetDiv');
+
+    let editing = null;
+
+    function filterDivision(
+        preserve = true
+    ) {
+        const old = div.value;
+
+        [...div.options].forEach(option => {
+            if (!option.value) {
+                return;
+            }
+
+            const okay =
+                !!dep.value &&
+                option.dataset.dep === dep.value;
+
+            option.hidden = !okay;
+            option.disabled = !okay;
+        });
+
+        if (
+            !preserve ||
+            [...div.options].find(
+                option => option.value === old
+            )?.disabled
+        ) {
+            div.value = '';
+        }
+    }
+
+    dep.addEventListener(
+        'change',
+        () => filterDivision(false)
+    );
+
+    filterDivision(false);
+
+    // ========================================================
+    // 10. RESET DAN ISI FORM
+    // ========================================================
+
+    const sourceFields = [
+        'id_lokasi',
+        'id_dep',
+        'id_div'
+    ];
+
+    let sourceLocked = false;
+
+    function unlockSourceOrganization() {
+        sourceLocked = false;
+
+        sourceFields.forEach(name => {
+            const field =
+                form.elements.namedItem(name);
+
+            if (field) {
+                field.disabled = false;
+            }
+        });
+    }
+
+    function lockSourceOrganization() {
+        sourceLocked = true;
+
+        sourceFields.forEach(name => {
+            const field =
+                form.elements.namedItem(name);
+
+            if (field) {
+                field.disabled = true;
+            }
+        });
+    }
+
+    function prepareForm(item = null) {
+        form.reset();
+
+        $('#aetSourceId').value = '';
+        $('#aetSourceSelected').hidden = true;
+
+        unlockSourceOrganization();
+
+        editing = item?.id ?? null;
+
+        $('#aetFormError').hidden = true;
+        $('#aetFormError').textContent = '';
+
+        $('#aetFormTitle').textContent =
+            item
+                ? 'Edit Aset Tetap Lainnya'
+                : 'Tambah Aset Tetap Lainnya';
+
+        if (item) {
+            [
+                'id_lokasi',
+                'id_dep',
+                'id_barang',
+                'id_bahan',
+                'kode',
+                'reg',
+                'kondisi',
+                'tahun',
+                'jumlah',
+                'asal',
+                'ket'
+            ].forEach(name => {
+                const element =
+                    form.elements.namedItem(name);
+
+                if (element) {
+                    element.value =
+                        item[name] ?? '';
+                }
+            });
+
+            filterDivision(false);
+
+            div.value = String(
+                item.id_div ?? ''
+            );
+
+        } else {
+            filterDivision(false);
+        }
+
+        open('aetFormDialog');
+    }
+
+    // ========================================================
+    // 11. PEMILIHAN DATA PENDING
+    // ========================================================
+
+    /*
+     * Komponen Data Pending global mengirim event:
+     *
+     * kib:source-selected
+     *
+     * Backend tetap bertanggung jawab memvalidasi
+     * voucher dan mengubah status transaksi.
+     */
+
+    window.addEventListener(
+        'kib:source-selected',
+        event => {
+            const item = event.detail || {};
 
             if (
-
-                event.key === 'Escape'
-
-                &&
-
-                window.innerWidth <=
-                ASSET_MOBILE_BREAKPOINT
-
+                Number(item.jenisn) !== 1 ||
+                Number(item.stat) !== 0
             ) {
+                notify(
+                    'Untuk inventaris K.I.B E, pilih ' +
+                    'voucher Penambahan Aset yang masih Pending.'
+                );
 
-                closeMobileSidebar();
-
+                return;
             }
 
+            if (
+                !item.id_lokasi ||
+                !item.dep ||
+                !item.div
+            ) {
+                notify(
+                    'Voucher belum memiliki Lokasi, ' +
+                    'Departemen, dan Divisi yang lengkap.'
+                );
+
+                return;
+            }
+
+            prepareForm();
+
+            const lokasi =
+                form.elements.namedItem('id_lokasi');
+
+            lokasi.value =
+                String(item.id_lokasi);
+
+            dep.value =
+                String(item.dep);
+
+            filterDivision(false);
+
+            div.value =
+                String(item.div);
+
+            if (
+                lokasi.value !== String(item.id_lokasi) ||
+                dep.value !== String(item.dep) ||
+                div.value !== String(item.div)
+            ) {
+                close('aetFormDialog');
+
+                notify(
+                    'Organisasi pada voucher tidak ' +
+                    'cocok dengan master data.'
+                );
+
+                return;
+            }
+
+            $('#aetSourceId').value =
+                String(item.id);
+
+            $('#aetSourceVoucher').textContent =
+                `Voucher ${item.no_voucher || item.id}`;
+
+            $('#aetSourceDescription').textContent =
+                `${item.lokasi || '—'} · ` +
+                `${item.departemen || '—'} / ` +
+                `${item.divisi || '—'} · ` +
+                money(item.nilai);
+
+            const year = String(
+                item.tahun || ''
+            );
+
+            if (/^\d{4}$/.test(year)) {
+                const yearField =
+                    form.elements.namedItem('tahun');
+
+                if (yearField) {
+                    yearField.value = year;
+                }
+            }
+
+            const notes =
+                form.elements.namedItem('ket');
+
+            if (
+                notes &&
+                item.urai &&
+                item.urai !== '-'
+            ) {
+                notes.value = String(
+                    item.urai
+                );
+            }
+
+            $('#aetSourceSelected').hidden = false;
+
+            lockSourceOrganization();
+
+            icon();
         }
     );
 
-}
+    $('#aetClearSource').addEventListener(
+        'click',
+        () => {
+            $('#aetSourceId').value = '';
 
+            $('#aetSourceSelected').hidden = true;
 
-
-/*
-|--------------------------------------------------------------------------
-| WINDOW RESIZE
-|--------------------------------------------------------------------------
-*/
-
-window.addEventListener(
-    'resize',
-    function () {
-
-        const sidebar =
-            document.getElementById(
-                'sidebar'
-            );
-
-        const overlay =
-            document.getElementById(
-                'sidebarOverlay'
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SWITCH TO DESKTOP
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-
-            window.innerWidth >
-            ASSET_MOBILE_BREAKPOINT
-
-        ) {
-
-            /*
-            Hapus mobile state.
-            */
-
-            if (sidebar) {
-
-                sidebar.classList.remove(
-                    'open'
-                );
-
-            }
-
-
-            if (overlay) {
-
-                overlay.classList.remove(
-                    'show'
-                );
-
-            }
-
-
-
-            /*
-            Restore desktop collapsed state.
-            */
-
-            const savedState =
-                localStorage.getItem(
-                    'aset-sidebar-collapsed'
-                );
-
-
-            if (savedState === '1') {
-
-                document.body.classList.add(
-                    'sidebar-collapsed'
-                );
-
-            } else {
-
-                document.body.classList.remove(
-                    'sidebar-collapsed'
-                );
-
-            }
-
+            unlockSourceOrganization();
         }
+    );
 
+    $('#aetAdd').addEventListener(
+        'click',
+        () => {
+            prepareForm();
+        }
+    );
 
+    // ========================================================
+    // 12. SUBMIT CREATE / UPDATE
+    // ========================================================
 
-        /*
-        |--------------------------------------------------------------------------
-        | SWITCH TO MOBILE
-        |--------------------------------------------------------------------------
-        */
+    form.addEventListener(
+        'submit',
+        async event => {
+            event.preventDefault();
 
-        else {
+            if (!form.reportValidity()) {
+                return;
+            }
 
-            /*
-            Jangan tampilkan collapsed desktop
-            pada layar mobile.
-            */
+            const submit = $('#aetSave');
 
-            document.body.classList.remove(
-                'sidebar-collapsed'
+            const errorBox =
+                $('#aetFormError');
+
+            errorBox.hidden = true;
+            submit.disabled = true;
+
+            try {
+                const payload =
+                    new FormData(form);
+
+                /*
+                 * Field disabled tidak otomatis
+                 * dimasukkan ke dalam FormData.
+                 *
+                 * Nilai organisasi dari voucher
+                 * tetap harus dikirim.
+                 */
+
+                if (
+                    sourceLocked &&
+                    !editing
+                ) {
+                    sourceFields.forEach(name => {
+                        const field =
+                            form.elements.namedItem(name);
+
+                        payload.set(
+                            name,
+                            field.value
+                        );
+                    });
+                }
+
+                const endpoint = editing
+                    ? assetUrl(editing)
+                    : store;
+
+                /*
+                 * Laravel method spoofing:
+                 * Tambah = POST
+                 * Edit   = PUT
+                 */
+
+                if (editing) {
+                    payload.append(
+                        '_method',
+                        'PUT'
+                    );
+
+                    payload.delete('id_nilai_aktiva');
+                }
+
+                const result = await request(
+                    endpoint,
+                    {
+                        method: 'POST',
+                        body: payload
+                    }
+                );
+
+                close('aetFormDialog');
+
+                notify(
+                    result.message ||
+                    'Data berhasil disimpan.'
+                );
+
+                window.location.reload();
+
+            } catch (error) {
+                errorBox.textContent =
+                    error.message;
+
+                errorBox.hidden = false;
+
+                errorBox.scrollIntoView({
+                    block: 'nearest'
+                });
+
+            } finally {
+                submit.disabled = false;
+            }
+        }
+    );
+
+    // ========================================================
+    // 13. EDIT SATU BARANG
+    // ========================================================
+
+    async function edit(id) {
+        try {
+            const data = await request(
+                assetUrl(id)
             );
 
-        }
+            close('aetDetailDialog');
 
+            prepareForm(
+                data.data
+            );
+
+        } catch (error) {
+            notify(
+                'Gagal membuka data Edit: ' +
+                error.message
+            );
+        }
     }
-);
 
+    // ========================================================
+    // 14. DETAIL INVENTARIS BERDASARKAN LOKASI
+    // ========================================================
 
+    let details = [];
+    let activeLocationE = null;
 
-/*
-|--------------------------------------------------------------------------
-| DOM READY
-|--------------------------------------------------------------------------
-*/
+    let detailMode = 'view';
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+    let currentFilter = {
+        dep: '',
+        div: ''
+    };
 
-        /*
-        Sidebar state
-        */
+    // ========================================================
+    // 15. HAPUS SATU BARANG
+    // ========================================================
 
-        loadSidebarState();
+    async function remove(id) {
+        const item = details.find(
+            asset =>
+                String(asset.id) === String(id)
+        );
 
+        const name =
+            item?.nama_barang ||
+            item?.kode ||
+            id;
 
+        const confirmed = confirm(
+            `Hapus inventaris "${name}"?\n` +
+            'Data transaksi Nilai Aset tidak akan dihapus.'
+        );
 
-        /*
-        Parent menu
-        */
-
-        restoreOpenMenus();
-
-
-
-        /*
-        Mobile links
-        */
-
-        setupMobileMenuLinks();
-
-
-
-        /*
-        ESC support
-        */
-
-        setupEscapeSidebar();
-
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | LUCIDE ICON
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            window.lucide
-        ) {
-
-            lucide.createIcons();
-
+        if (!confirmed) {
+            return;
         }
 
+        try {
+            const data = await request(
+                assetUrl(id),
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            close('aetDetailDialog');
+
+            notify(
+                data.message ||
+                'Data berhasil dihapus.'
+            );
+
+            window.location.reload();
+
+        } catch (error) {
+            notify(
+                'Gagal menghapus: ' +
+                error.message
+            );
+        }
     }
-);
+
+    // ========================================================
+    // 16. TREE DEPARTEMEN DAN DIVISI
+    // ========================================================
+
+    function makeTree() {
+        const tree = $('#aetTree');
+
+        const departments = new Map();
+
+        details.forEach(item => {
+            const depId = String(
+                item.id_dep ?? ''
+            );
+
+            const divId = String(
+                item.id_div ?? ''
+            );
+
+            if (!departments.has(depId)) {
+                departments.set(
+                    depId,
+                    {
+                        label:
+                            item.departemen ||
+                            'Tanpa Departemen',
+
+                        items: new Map()
+                    }
+                );
+            }
+
+            departments
+                .get(depId)
+                .items.set(
+                    divId,
+                    item.divisi ||
+                    'Tanpa Divisi'
+                );
+        });
+
+        const button = (
+            label,
+            departemen,
+            division = ''
+        ) => `
+            <button
+                type="button"
+                class="${
+                    departemen === currentFilter.dep &&
+                    division === currentFilter.div
+                        ? 'active'
+                        : ''
+                }"
+                data-tree-dep="${esc(departemen)}"
+                data-tree-div="${esc(division)}"
+            >
+                ${esc(label)}
+            </button>
+        `;
+
+        let html = button(
+            `Semua Aset (${details.length})`,
+            ''
+        );
+
+        for (
+            const [depId, obj]
+            of departments
+        ) {
+            html += `
+                <div class="aet-tree-group">
+                    <b>
+                        ${esc(obj.label)}
+                    </b>
+
+                    ${button(
+                        'Semua divisi',
+                        depId
+                    )}
+            `;
+
+            for (
+                const [divId, label]
+                of obj.items
+            ) {
+                html += button(
+                    label,
+                    depId,
+                    divId
+                );
+            }
+
+            html += '</div>';
+        }
+
+        tree.innerHTML = html;
+    }
+
+    // ========================================================
+    // 17. FILTER DAFTAR BARANG
+    // ========================================================
+
+    function visibleAssets() {
+        const query = $('#aetDetailSearch')
+            .value
+            .trim()
+            .toLowerCase();
+
+        return details.filter(item =>
+            (
+                !currentFilter.dep ||
+                String(item.id_dep) ===
+                    currentFilter.dep
+            ) &&
+            (
+                !currentFilter.div ||
+                String(item.id_div) ===
+                    currentFilter.div
+            ) &&
+            (
+                !query ||
+                [
+                    item.nama_barang,
+                    item.kode,
+                    item.reg,
+                    item.bahan,
+                    item.departemen,
+                    item.divisi
+                ]
+                    .join(' ')
+                    .toLowerCase()
+                    .includes(query)
+            )
+        );
+    }
+
+    // ========================================================
+    // 18. RENDER TABEL BARANG PER LOKASI
+    // ========================================================
+
+    function renderDetail() {
+        const list = visibleAssets();
+
+        $('#aetDetailCount').textContent =
+            number(list.length) +
+            ' inventaris';
+
+        $('#aetDetailBody').innerHTML =
+            list.length
+
+                ? list.map(
+                    (item, index) => `
+                    <tr>
+                        <td>
+                            ${index + 1}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${esc(
+                                    item.nama_barang || '—'
+                                )}
+                            </strong>
+
+                            <small>
+                                ${esc(item.bahan || '')}
+                            </small>
+                        </td>
+
+                        <td>
+                            ${esc(item.kode || '—')}
+                        </td>
+
+                        <td>
+                            ${esc(item.reg || '—')}
+                        </td>
+
+                        <td>
+                            ${number(item.jumlah)}
+                        </td>
+
+                        <td>
+                            ${
+                                item.img
+                                    ? `
+                                    <img
+                                        class="aet-photo-thumb"
+                                        loading="lazy"
+                                        src="${fileUrl(
+                                            item.id,
+                                            'foto'
+                                        )}"
+                                        alt="Foto aset"
+                                    >
+                                    `
+                                    : `
+                                    <span class="aet-muted">
+                                        —
+                                    </span>
+                                    `
+                            }
+                        </td>
+
+                        <td>
+                            <div class="aet-actions">
+
+                                <button
+                                    type="button"
+                                    class="detail"
+                                    data-focus="${item.id}"
+                                    title="Lihat detail"
+                                >
+                                    <i data-lucide="eye"></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="edit"
+                                    data-edit="${item.id}"
+                                    title="Edit"
+                                >
+                                    <i data-lucide="square-pen"></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="delete"
+                                    data-delete="${item.id}"
+                                    title="Hapus"
+                                >
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+
+                            </div>
+                        </td>
+                    </tr>
+                `
+                ).join('')
+
+                : `
+                    <tr>
+                        <td
+                            class="aet-empty"
+                            colspan="7"
+                        >
+                            Belum ada inventaris untuk
+                            pilihan departemen/divisi ini.
+                        </td>
+                    </tr>
+                `;
+
+        icon();
+    }
+
+    // ========================================================
+    // 19. RINCIAN SATU ASET
+    // ========================================================
+
+    function focusAsset(item) {
+        const attrs = [
+            ['Nama Aset', item.nama_barang],
+            ['Kode Barang', item.kode],
+            ['Register', item.reg],
+            ['Lokasi', item.lokasi],
+            ['Departemen', item.departemen],
+            ['Divisi', item.divisi],
+            ['Bahan', item.bahan],
+            ['Kondisi', item.kondisi],
+            ['Tahun Pengadaan', item.tahun],
+            ['Jumlah', item.jumlah],
+            ['Asal Perolehan', item.asal],
+            ['Keterangan', item.ket]
+        ];
+
+        const focus = $('#aetFocus');
+
+        focus.hidden = false;
+
+        focus.innerHTML = `
+            <div class="aet-focus-title">
+
+                <h3>
+                    ${esc(
+                        item.nama_barang ||
+                        'Detail Aset'
+                    )}
+                </h3>
+
+                <button
+                    class="aet-btn pale"
+                    data-focus-close
+                    type="button"
+                >
+                    Tutup
+                </button>
+
+            </div>
+
+            ${
+                item.img
+                    ? `
+                    <div class="aet-focus-photo">
+                        <img
+                            src="${fileUrl(
+                                item.id,
+                                'foto'
+                            )}"
+                            alt="Foto ${esc(
+                                item.nama_barang
+                            )}"
+                        >
+                    </div>
+                    `
+                    : ''
+            }
+
+            <dl class="aet-attrs">
+                ${
+                    attrs.map(
+                        ([name, value]) => `
+                        <div>
+                            <dt>
+                                ${esc(name)}
+                            </dt>
+
+                            <dd>
+                                ${esc(value ?? '—')}
+                            </dd>
+                        </div>
+                        `
+                    ).join('')
+                }
+            </dl>
+
+            <div class="aet-focus-actions">
+
+                ${
+                    item.dok
+                        ? `
+                        <a
+                            class="aet-btn pale"
+                            href="${fileUrl(
+                                item.id,
+                                'dokumen'
+                            )}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <i data-lucide="file-text"></i>
+                            Buka PDF
+                        </a>
+                        `
+                        : ''
+                }
+
+                <button
+                    class="aet-btn pale"
+                    type="button"
+                    data-edit="${item.id}"
+                >
+                    <i data-lucide="square-pen"></i>
+                    Edit Aset
+                </button>
+
+                <button
+                    class="aet-btn danger"
+                    type="button"
+                    data-delete="${item.id}"
+                >
+                    <i data-lucide="trash-2"></i>
+                    Hapus Aset
+                </button>
+
+            </div>
+        `;
+
+        icon();
+
+        focus.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
+
+    // ========================================================
+    // 20. MEMUAT DATA LOKASI
+    // ========================================================
+
+    async function loadLokasi(
+        id,
+        mode = 'view'
+    ) {
+        activeLocationE = id;
+        detailMode = mode;
+
+        currentFilter = {
+            dep: '',
+            div: ''
+        };
+
+        $('#aetDetailSearch').value = '';
+        $('#aetFocus').hidden = true;
+
+        $('#aetDetailBody').innerHTML = `
+            <tr>
+                <td
+                    colspan="7"
+                    class="aet-empty"
+                >
+                    Memuat inventaris...
+                </td>
+            </tr>
+        `;
+
+        open('aetDetailDialog');
+
+        try {
+            const data = await request(
+                lokasiUrl(id)
+            );
+
+            details = Array.isArray(data.data)
+                ? data.data
+                : [];
+
+            $('#aetDetailTitle').textContent =
+                `Detail Aset — ${
+                    data.lokasi.lokasi || 'Lokasi'
+                }`;
+
+            $('#aetDetailSub').textContent =
+                `${
+                    data.lokasi.alamat || '—'
+                } · ${
+                    number(details.length)
+                } inventaris`;
+
+            makeTree();
+            renderDetail();
+
+            if (
+                mode === 'edit' ||
+                mode === 'delete'
+            ) {
+                notify(
+                    'Pilih ikon ' +
+                    (
+                        mode === 'edit'
+                            ? 'oranye untuk mengedit'
+                            : 'merah untuk menghapus'
+                    ) +
+                    ' salah satu aset.'
+                );
+            }
+
+        } catch (error) {
+            $('#aetDetailBody').innerHTML = `
+                <tr>
+                    <td
+                        colspan="7"
+                        class="aet-empty"
+                    >
+                        ${esc(error.message)}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // ========================================================
+    // 21. PILIH DEPARTEMEN / DIVISI
+    // ========================================================
+
+    $('#aetTree').addEventListener(
+        'click',
+        event => {
+            const button = event.target.closest(
+                '[data-tree-dep]'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            currentFilter = {
+                dep: button.dataset.treeDep,
+                div: button.dataset.treeDiv
+            };
+
+            $('#aetFocus').hidden = true;
+
+            makeTree();
+            renderDetail();
+        }
+    );
+
+    $('#aetDetailSearch').addEventListener(
+        'input',
+        renderDetail
+    );
+
+    // ========================================================
+    // 22. AKSI PADA DETAIL
+    // ========================================================
+
+    function clickAset(event) {
+        const button = event.target.closest(
+            'button'
+        );
+
+        if (!button) {
+            return;
+        }
+
+        if (button.dataset.focus) {
+            const item = details.find(
+                value =>
+                    String(value.id) ===
+                    button.dataset.focus
+            );
+
+            if (item) {
+                focusAsset(item);
+            }
+
+        } else if (button.dataset.edit) {
+            edit(button.dataset.edit);
+
+        } else if (button.dataset.delete) {
+            remove(button.dataset.delete);
+
+        } else if (
+            button.hasAttribute(
+                'data-focus-close'
+            )
+        ) {
+            $('#aetFocus').hidden = true;
+        }
+    }
+
+    $('#aetDetailBody').addEventListener(
+        'click',
+        clickAset
+    );
+
+    $('#aetFocus').addEventListener(
+        'click',
+        clickAset
+    );
+
+    // ========================================================
+    // 23. DETAIL NILAI ASET K.I.B E
+    // ========================================================
+
+    async function showNilai(id) {
+        $('#aetNilaiBody').innerHTML = `
+            <tr>
+                <td
+                    colspan="8"
+                    class="aet-empty"
+                >
+                    Memuat transaksi...
+                </td>
+            </tr>
+        `;
+
+        $('#aetNilaiTitle').textContent =
+            'Detail Nilai Aset Tetap Lainnya';
+
+        open('aetNilaiDialog');
+
+        try {
+            const data = await request(
+                lokasiUrl(id) + '/nilai'
+            );
+
+            $('#aetNilaiSub').textContent =
+                `${
+                    data.lokasi.lokasi || '—'
+                } · ${
+                    data.lokasi.alamat || '—'
+                }`;
+
+            $('#aetNilaiTotal').textContent =
+                money(data.total);
+
+            $('#aetNilaiCount').textContent =
+                `${number(data.count)} transaksi`;
+
+            $('#aetNilaiBody').innerHTML =
+                data.data.length
+
+                    ? data.data.map(
+                        (item, index) => `
+                        <tr>
+                            <td>
+                                ${index + 1}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    item.kode_aktiva || '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    item.nama_aktiva || '—'
+                                )}
+                            </td>
+
+                            <td>
+                                ${date(item.tgl_voucher)}
+                            </td>
+
+                            <td>
+                                ${esc(item.tahun || '—')}
+                            </td>
+
+                            <td>
+                                <b>
+                                    ${money(item.nilai)}
+                                </b>
+                            </td>
+
+                            <td>
+                                ${esc(item.urai || '—')}
+                            </td>
+
+                            <td>
+                                ${esc(
+                                    item.no_voucher || '—'
+                                )}
+                            </td>
+                        </tr>
+                        `
+                    ).join('')
+
+                    : `
+                    <tr>
+                        <td
+                            colspan="8"
+                            class="aet-empty"
+                        >
+                            Belum ada transaksi
+                            Nilai Aset pada lokasi ini.
+                        </td>
+                    </tr>
+                    `;
+
+        } catch (error) {
+            $('#aetNilaiBody').innerHTML = `
+                <tr>
+                    <td
+                        colspan="8"
+                        class="aet-empty"
+                    >
+                        ${esc(error.message)}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // ========================================================
+    // 24. DAFTAR PDF
+    // ========================================================
+
+    async function showPdfs(id) {
+        $('#aetPdfList').textContent =
+            'Memuat daftar dokumen...';
+
+        open('aetPdfDialog');
+
+        try {
+            const data = await request(
+                lokasiUrl(id)
+            );
+
+            const docs = (
+                data.data || []
+            ).filter(
+                item => !!item.dok
+            );
+
+            $('#aetPdfTitle').textContent =
+                'PDF — ' +
+                (
+                    data.lokasi.lokasi ||
+                    'Lokasi'
+                );
+
+            $('#aetPdfList').innerHTML =
+                docs.length
+
+                    ? docs.map(
+                        (item, index) => `
+                        <div class="aet-pdf-row">
+
+                            <span>
+                                ${index + 1}.
+                                ${esc(
+                                    item.nama_barang ||
+                                    'Aset'
+                                )}
+                                ·
+                                ${esc(
+                                    item.kode || '—'
+                                )}
+                            </span>
+
+                            <a
+                                class="aet-btn pale"
+                                href="${fileUrl(
+                                    item.id,
+                                    'dokumen'
+                                )}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <i data-lucide="file-text"></i>
+                                Buka PDF
+                            </a>
+                        </div>
+                        `
+                    ).join('')
+
+                    : `
+                    <p>
+                        Belum ada dokumen PDF
+                        pada lokasi ini.
+                    </p>
+                    `;
+
+            icon();
+
+        } catch (error) {
+            $('#aetPdfList').textContent =
+                error.message;
+        }
+    }
+
+    // ========================================================
+    // 25. NILAI DAN PDF DALAM MODAL DETAIL
+    // ========================================================
+
+    $('#aetDetailNilai').addEventListener(
+        'click',
+        () => {
+            if (activeLocationE !== null) {
+                showNilai(activeLocationE);
+            }
+        }
+    );
+
+    $('#aetDetailPdf').addEventListener(
+        'click',
+        () => {
+            if (activeLocationE !== null) {
+                showPdfs(activeLocationE);
+            }
+        }
+    );
+
+    // ========================================================
+    // 26. FOTO HISTORIS
+    // ========================================================
+
+    $$('#aetTable .aet-photo-button img').forEach(
+        image => {
+            image.addEventListener(
+                'error',
+                () => {
+                    const placeholder =
+                        document.createElement('span');
+
+                    placeholder.className =
+                        'aet-no-photo';
+
+                    placeholder.textContent =
+                        'Foto tidak tersedia';
+
+                    image.replaceWith(
+                        placeholder
+                    );
+                },
+                { once: true }
+            );
+        }
+    );
+
+    // ========================================================
+    // 27. TOMBOL TABEL UTAMA
+    // ========================================================
+
+    $('#aetTable').addEventListener(
+        'click',
+        event => {
+            const button = event.target.closest(
+                'button'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            if (button.dataset.nilai) {
+                return showNilai(
+                    button.dataset.nilai
+                );
+            }
+
+            if (button.dataset.pdfs) {
+                return showPdfs(
+                    button.dataset.pdfs
+                );
+            }
+
+            if (button.dataset.view) {
+                return loadLokasi(
+                    button.dataset.view,
+                    'view'
+                );
+            }
+
+            if (button.dataset.editLocation) {
+                return loadLokasi(
+                    button.dataset.editLocation,
+                    'edit'
+                );
+            }
+
+            if (button.dataset.deleteLocation) {
+                return loadLokasi(
+                    button.dataset.deleteLocation,
+                    'delete'
+                );
+            }
+        }
+    );
+
+    // ========================================================
+    // 28. AKSI DARI TAB ASET TERBARU
+    // ========================================================
+
+    $$('[data-aset]').forEach(button => {
+        button.addEventListener(
+            'click',
+            async () => {
+                try {
+                    const data = await request(
+                        assetUrl(button.dataset.aset)
+                    );
+
+                    await loadLokasi(
+                        data.data.id_lokasi
+                    );
+
+                    const item = details.find(
+                        value =>
+                            String(value.id) ===
+                            String(
+                                button.dataset.aset
+                            )
+                    );
+
+                    if (item) {
+                        focusAsset(item);
+                    }
+
+                } catch (error) {
+                    notify(error.message);
+                }
+            }
+        );
+    });
+
+    // ========================================================
+    // 29. INISIALISASI
+    // ========================================================
+
+    renderPage();
+
+    icon();
+});

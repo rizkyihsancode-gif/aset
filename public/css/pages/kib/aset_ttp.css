@@ -1803,3 +1803,218 @@
     }
 
 }
+
+
+/* ============================================================
+   REVISI K.I.B E — 4 KOLOM, GALERI FOTO, JAM WITA
+   Gaya ini hanya memengaruhi halaman Aset Tetap Lainnya.
+   ============================================================ */
+
+.aet-date-card {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 13px;
+    background: rgba(255, 255, 255, .96);
+    border: 1px solid #d6e4f4;
+    border-radius: 10px;
+    box-shadow: 0 5px 18px rgba(10, 55, 110, .06);
+}
+
+.aet-date-icon {
+    display: grid;
+    place-items: center;
+    width: 35px;
+    height: 35px;
+    color: #0968ec;
+    background: #e9f3ff;
+    border-radius: 8px;
+}
+
+.aet-date-card strong {
+    display: block;
+    color: #11376e;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.aet-date-card small {
+    display: block;
+    color: #6682a1;
+    font-size: 12px;
+}
+
+/* Tabel 4 kolom: No, Lokasi, Alamat, Gambar */
+#aetTable {
+    width: 100%;
+    min-width: 690px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+#aetTable th,
+#aetTable td {
+    border: 1px solid #d9e5f2;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 12px;
+    vertical-align: middle;
+}
+
+#aetTable th:nth-child(1),
+#aetTable td:nth-child(1) {
+    width: 6%;
+    text-align: center;
+}
+
+#aetTable th:nth-child(2),
+#aetTable td:nth-child(2) {
+    width: 33%;
+    text-align: left;
+}
+
+#aetTable th:nth-child(3),
+#aetTable td:nth-child(3) {
+    width: 40%;
+    text-align: left;
+}
+
+#aetTable th:nth-child(4),
+#aetTable td:nth-child(4) {
+    width: 21%;
+    text-align: center;
+}
+
+#aetTable .aet-location-name {
+    font-size: 14px;
+    font-weight: 850;
+    color: #12396f;
+}
+
+.aet-photo-button {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 135px;
+    padding: 6px;
+    color: #1262b7;
+    border: 1px solid #d6e5f6;
+    border-radius: 9px;
+    background: #f5faff;
+    cursor: pointer;
+}
+
+.aet-photo-button img {
+    display: block;
+    width: 120px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 5px;
+    background: #eaf2fa;
+}
+
+.aet-no-photo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 120px;
+    height: 75px;
+    color: #6985a6;
+    font-size: 11px;
+}
+
+.aet-no-photo svg {
+    width: 21px;
+    height: 21px;
+}
+
+.aet-photo-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.aet-photo-action svg {
+    width: 14px;
+    height: 14px;
+}
+
+.aet-photo-button:hover,
+.aet-photo-button:focus-visible {
+    background: #e5f2ff;
+    border-color: #7fb7f0;
+}
+
+.aet-source-selected {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: #eefbf3;
+    border: 1px solid #b8e3c8;
+    border-radius: 9px;
+}
+
+.aet-source-selected > svg {
+    width: 24px;
+    height: 24px;
+    color: #148a50;
+}
+
+.aet-source-selected > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.aet-source-selected strong {
+    display: block;
+    font-size: 13px;
+    color: #15583a;
+}
+
+.aet-source-selected p {
+    margin: 4px 0 0;
+    color: #45775b;
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+    .aet-date-card {
+        position: static;
+        width: max-content;
+        max-width: 100%;
+        margin-bottom: 14px;
+    }
+}
+
+@media (max-width: 650px) {
+    .aet-date-card {
+        width: 100%;
+    }
+
+    .aet-source-selected {
+        flex-wrap: wrap;
+    }
+}
+
+/* Akses fungsi lama Nilai/PDF tetap di modal Detail Lokasi. */
+.aet-detail-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.aet-detail-links .aet-btn {
+    min-height: 34px;
+}

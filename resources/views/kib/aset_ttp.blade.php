@@ -34,6 +34,24 @@
                     <b>Aset Tetap Lainnya</b>
                 </nav>
 
+                {{-- TANGGAL DAN JAM WITA --}}
+                <div class="aet-date-card">
+                    <span class="aet-date-icon">
+                        <i data-lucide="calendar-days"></i>
+                    </span>
+
+                    <div>
+                        <strong id="aetTanggal">
+                            {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
+                        </strong>
+
+                        <small>
+                            <span id="aetJam">{{ now('Asia/Makassar')->format('H:i:s') }}</span>
+                            WITA
+                        </small>
+                    </div>
+                </div>
+
                 <h1>Aset Tetap Lainnya</h1>
 
                 <p>
@@ -103,6 +121,12 @@
             </div>
         </header>
 
+        {{-- DATA PENDING DARI KOMPONEN KIB YANG SUDAH TERSEDIA --}}
+        <x-kib.pending-card
+            module="aset_tetap"
+            title="Data Aset Tetap Lainnya Menunggu Diproses"
+        />
+
         {{-- ===================================================
          PANEL UTAMA
     ==================================================== --}}
@@ -151,7 +175,7 @@
                     <label class="aet-search">
                         <i data-lucide="search"></i>
 
-                        <input id="aetSearch" type="search" placeholder="Cari lokasi, alamat, atau nilai...">
+                        <input id="aetSearch" type="search" placeholder="Cari nama lokasi atau alamat...">
                     </label>
 
                     <label class="aet-limit">
@@ -184,31 +208,32 @@
                                 <th>No</th>
                                 <th>Lokasi</th>
                                 <th>Alamat</th>
-                                <th>Nilai Aktiva</th>
-                                <th>PDF</th>
-                                <th>Aksi</th>
+                                <th>Gambar</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            @forelse($lokasiAset as $row)
-                                <tr class="aet-location-row"
+                            @forelse ($lokasiAset as $row)
+                                <tr
+                                    class="aet-location-row"
                                     data-search="{{ mb_strtolower(trim((string) $row->lokasi) . ' ' . trim((string) $row->alamat)) }}"
-                                    data-location="{{ $row->id_lokasi }}" data-name="{{ trim((string) $row->lokasi) }}"
-                                    data-address="{{ trim((string) $row->alamat) }}" data-value="{{ $row->nilai_total }}"
-                                    data-count="{{ $row->jumlah_aset }}">
+                                    data-location="{{ $row->id_lokasi }}"
+                                    data-name="{{ trim((string) $row->lokasi) }}"
+                                    data-address="{{ trim((string) $row->alamat) }}"
+                                    data-value="{{ $row->nilai_total }}"
+                                    data-count="{{ $row->jumlah_aset }}"
+                                >
                                     <td data-order></td>
 
                                     <td>
-                                        <b>
-                                            {{ trim((string) $row->lokasi) ?: '—' }}
-                                        </b>
+                                        <strong class="aet-location-name">
+                                            {{ trim((string) $row->lokasi) ?: 'Belum dipetakan' }}
+                                        </strong>
 
                                         <small>
-                                            {{ number_format($row->jumlah_aset, 0, ',', '.') }}
-                                            inventaris ·
-                                            {{ number_format($row->jumlah_unit, 0, ',', '.') }}
-                                            unit
+                                            {{ number_format((int) $row->jumlah_aset, 0, ',', '.') }} inventaris
+                                            &middot;
+                                            {{ number_format((int) $row->jumlah_unit, 0, ',', '.') }} unit
                                         </small>
                                     </td>
 
@@ -216,59 +241,41 @@
                                         {{ trim((string) $row->alamat) ?: '—' }}
                                     </td>
 
-                                    <td>
-                                        <button class="aet-value-btn" type="button" data-nilai="{{ $row->id_lokasi }}">
-                                            {{ $rupiah($row->nilai_total) }}
+                                    <td class="aet-photo-cell">
+                                        <button
+                                            class="aet-photo-button"
+                                            type="button"
+                                            data-view="{{ $row->id_lokasi }}"
+                                            aria-label="Lihat inventaris lokasi {{ $row->lokasi }}"
+                                            title="Lihat detail inventaris lokasi"
+                                        >
+                                            @if ($row->foto_id)
+                                                <img
+                                                    src="{{ route('kib.aset_ttp.file', [
+                                                        'aset' => $row->foto_id,
+                                                        'jenis' => 'foto',
+                                                    ]) }}"
+                                                    alt="Foto aset {{ $row->lokasi }}"
+                                                    loading="lazy"
+                                                >
+                                            @else
+                                                <span class="aet-no-photo">
+                                                    <i data-lucide="image-off"></i>
+                                                    Belum ada foto
+                                                </span>
+                                            @endif
 
-                                            <i data-lucide="external-link"></i>
-                                        </button>
-
-                                        <small>
-                                            {{ $row->jumlah_transaksi }}
-                                            transaksi
-                                        </small>
-                                    </td>
-
-                                    <td class="aet-center">
-                                        @if ((int) $row->jumlah_pdf > 0)
-                                            <button type="button" class="aet-pdf-btn" data-pdfs="{{ $row->id_lokasi }}">
-                                                <i data-lucide="file-text"></i>
-                                                {{ $row->jumlah_pdf }} PDF
-                                            </button>
-                                        @else
-                                            <span class="aet-muted">—</span>
-                                        @endif
-                                    </td>
-
-                                    <td>
-                                        <div class="aet-actions">
-
-                                            <button type="button" class="detail" data-view="{{ $row->id_lokasi }}"
-                                                title="Detail lokasi">
+                                            <span class="aet-photo-action">
                                                 <i data-lucide="eye"></i>
-                                            </button>
-
-                                            <button type="button" class="edit"
-                                                data-edit-location="{{ $row->id_lokasi }}" title="Pilih aset untuk edit">
-                                                <i data-lucide="square-pen"></i>
-                                            </button>
-
-                                            <button type="button" class="delete"
-                                                data-delete-location="{{ $row->id_lokasi }}"
-                                                title="Pilih aset untuk hapus">
-                                                <i data-lucide="trash-2"></i>
-                                            </button>
-
-                                        </div>
+                                                Lihat Detail
+                                            </span>
+                                        </button>
                                     </td>
                                 </tr>
-
                             @empty
                                 <tr>
-                                    <td colspan="6" class="aet-empty">
+                                    <td colspan="4" class="aet-empty">
                                         Belum ada data K.I.B E.
-                                        Klik Tambah Aset untuk
-                                        melakukan pendataan.
                                     </td>
                                 </tr>
                             @endforelse
@@ -484,6 +491,19 @@
 
                 <form id="aetForm" enctype="multipart/form-data" novalidate>
                     @csrf
+                    <input type="hidden" name="id_nilai_aktiva" id="aetSourceId" value="">
+
+                    <div class="aet-source-selected" id="aetSourceSelected" hidden>
+                        <i data-lucide="circle-check-big"></i>
+                        <div>
+                            <small>TRANSAKSI NILAI ASET TERPILIH</small>
+                            <strong id="aetSourceVoucher">—</strong>
+                            <p id="aetSourceDescription"></p>
+                        </div>
+                        <button type="button" id="aetClearSource" class="aet-btn pale">
+                            Ganti / Input Manual
+                        </button>
+                    </div>
 
                     <section class="aet-section">
                         <h3>
@@ -721,6 +741,19 @@
                     <p id="aetDetailSub">
                         Pilih departemen/divisi untuk melihat aset.
                     </p>
+
+                    {{-- Akses Nilai dan PDF tetap tersedia meski tabel utama 4 kolom. --}}
+                    <div class="aet-detail-links">
+                        <button class="aet-btn pale" type="button" id="aetDetailNilai">
+                            <i data-lucide="wallet"></i>
+                            Rincian Nilai
+                        </button>
+
+                        <button class="aet-btn pale" type="button" id="aetDetailPdf">
+                            <i data-lucide="file-text"></i>
+                            Daftar PDF
+                        </button>
+                    </div>
                 </div>
 
                 <button type="button" data-close="aetDetailDialog">
