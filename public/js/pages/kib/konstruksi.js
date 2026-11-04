@@ -1,52 +1,26 @@
 
 /*
 |--------------------------------------------------------------------------
-| SISTEM ASET — K.I.B F KONSTRUKSI MANUAL
-| PERUMDA TIRTA KENCANA KOTA SAMARINDA
+| K.I.B F — KONSTRUKSI MANUAL
+| SISTEM ASET PERUMDA TIRTA KENCANA
 |--------------------------------------------------------------------------
-|
-| Fitur:
-| 1. Create / Tambah Konstruksi
-| 2. Read / View Detail Konstruksi
-| 3. Update / Edit Konstruksi
-| 4. Delete / Hapus Konstruksi
-| 5. Konfirmasi penghapusan
-| 6. Multiple PDF dan gambar
-| 7. Hapus lampiran tersimpan saat Edit
-| 8. Validasi dan pesan kesalahan
-| 9. Tampilan detail dengan format uraian pekerjaan
-|
-| Database:
-| - kib_konstruksi_manual
-| - kib_konstruksi_dokumens
-|
-| Controller:
-| - KIBController.php
-|
-| Arsip lama:
-| - kib_f_s (read-only)
+| Controller : KIBController.php
+| Database   : kib_konstruksi_manual
+| Dokumen    : kib_konstruksi_dokumens
+| Arsip      : kib_f_s (read-only)
 |--------------------------------------------------------------------------
 */
 
 (() => {
     'use strict';
 
-    /*
-    |--------------------------------------------------------------------------
-    | INISIALISASI
-    |--------------------------------------------------------------------------
-    */
-
     const root = document.getElementById('kfApp');
 
-    if (!root || root.dataset.initialized === '1') {
-        return;
-    }
+    if (!root || root.dataset.initialized === '1') return;
 
     root.dataset.initialized = '1';
 
-    const $ = (id) => document.getElementById(id);
-
+    const $ = id => document.getElementById(id);
     const base = (root.dataset.base || '').replace(/\/$/, '');
     const token = root.dataset.token;
 
@@ -55,11 +29,13 @@
     const detailDialog = $('kfModalDetail');
     const deleteDialog = $('kfModalDelete');
 
-    /*
-    |--------------------------------------------------------------------------
-    | FIELD FORM KONSTRUKSI
-    |--------------------------------------------------------------------------
-    */
+    let active = null;
+    let editId = null;
+    let deleteTarget = null;
+    let saving = false;
+    let deleting = false;
+    let newFiles = [];
+    let toastTimer = null;
 
     const fields = [
         'nama_barang_manual',
@@ -82,138 +58,146 @@
         'ket'
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | STATE
-    |--------------------------------------------------------------------------
-    */
-
-    let active = null;
-    let editId = null;
-
-    let newFiles = [];
-
-    let saving = false;
-    let deleting = false;
-
-    let deleteTarget = null;
-    let toastTimer = null;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | FORMAT RUPIAH
-    |--------------------------------------------------------------------------
-    */
-
-    const money = (value) => {
-        const number = Number(value) || 0;
-
-        return 'Rp ' + number.toLocaleString('id-ID', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        });
+    const money = value => {
+        return 'Rp ' + (Number(value) || 0)
+            .toLocaleString('id-ID', {
+                maximumFractionDigits: 2
+            });
     };
 
+    const normalize = value => String(value ?? '')
+        .trim()
+        .toLocaleLowerCase('id-ID');
 
-    /*
-    |--------------------------------------------------------------------------
-    | FORMAT KATEGORI
-    |--------------------------------------------------------------------------
-    */
+    const normalizeCategory = value => String(value ?? '')
+        .trim()
+        .toUpperCase();
 
-    function formatKategori(value) {
-        const kategori = String(value || '').toUpperCase();
+    const categories = ['IPA', 'BOOSTER', 'PERPIPAAN'];
 
-        switch (kategori) {
-            case 'IPA':
-                return 'Instalasi Pengolahan Air (IPA)';
 
-            case 'BOOSTER':
-                return 'Booster';
+    /* ======================================================
+       MASTER DATA DARI BLADE
+    ====================================================== */
 
-            case 'PERPIPAAN':
-                return 'Perpipaan';
+    function readJson(id, fallback) {
+        try {
+            const element = $(id);
 
-            default:
-                return 'Belum Dikategorikan';
+            if (!element) return fallback;
+
+            return JSON.parse(element.textContent);
+        } catch (error) {
+            console.warn('Gagal membaca data:', id, error);
+            return fallback;
         }
     }
 
+    const master = readJson('kfMasterOptions', {
+        lokasi: [],
+        departemen: [],
+        divisi: []
+    });
 
-    /*
-    |--------------------------------------------------------------------------
-    | FORMAT JENIS BANGUNAN
-    |--------------------------------------------------------------------------
-    */
+    const history = readJson('kfHistoryOptions', {});
 
-    function formatBangunan(value) {
-        switch (String(value || '').toUpperCase()) {
-            case 'P':
-                return 'Permanen';
+    const masterLokasi = Array.isArray(master.lokasi)
+        ? master.lokasi : [];
 
-            case 'SP':
-                return 'Semi Permanen';
+    const masterDepartemen = Array.isArray(master.departemen)
+        ? master.departemen : [];
 
-            case 'D':
-                return 'Darurat';
-
-            default:
-                return value || '—';
-        }
-    }
+    const masterDivisi = Array.isArray(master.divisi)
+        ? master.divisi : [];
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | REFRESH ICON LUCIDE
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       ICON
+    ====================================================== */
 
     function refreshIcons() {
-        if (
-            window.lucide &&
-            typeof window.lucide.createIcons === 'function'
-        ) {
-            window.lucide.createIcons();
-        }
+        window.lucide?.createIcons?.();
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | MODAL HELPER
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       JAM WITA
+    ====================================================== */
+
+    function initializeClock() {
+        const tanggal = $('kfTanggal');
+        const jam = $('kfJam');
+
+        if (!tanggal || !jam) return;
+
+        const dateFormatter = new Intl.DateTimeFormat(
+            'id-ID',
+            {
+                timeZone: 'Asia/Makassar',
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            }
+        );
+
+        const timeFormatter = new Intl.DateTimeFormat(
+            'id-ID',
+            {
+                timeZone: 'Asia/Makassar',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }
+        );
+
+        function updateClock() {
+            const now = new Date();
+
+            const dateText = dateFormatter.format(now);
+
+            tanggal.textContent =
+                dateText.charAt(0).toUpperCase() +
+                dateText.slice(1);
+
+            jam.textContent = timeFormatter
+                .format(now)
+                .replace(/\./g, ':');
+        }
+
+        updateClock();
+
+        setInterval(updateClock, 1000);
+    }
+
+
+    /* ======================================================
+       MODAL
+    ====================================================== */
 
     function openDialog(dialog) {
-        if (!dialog) {
-            return;
-        }
+        if (!dialog || dialog.open) return;
 
-        if (
-            !dialog.open &&
-            typeof dialog.showModal === 'function'
-        ) {
-            dialog.showModal();
-        }
-
+        dialog.showModal();
         refreshIcons();
     }
 
-
     function closeDialog(dialog) {
-        if (dialog && dialog.open) {
-            dialog.close();
-        }
+        if (dialog?.open) dialog.close();
     }
 
+    document.querySelectorAll('[data-kf-close]')
+        .forEach(button => {
+            button.addEventListener('click', () => {
+                closeDialog($(button.dataset.kfClose));
+            });
+        });
 
-    /*
-    |--------------------------------------------------------------------------
-    | TOAST NOTIFICATION
-    |--------------------------------------------------------------------------
-    */
+
+    /* ======================================================
+       NOTIFIKASI
+    ====================================================== */
 
     function showToast(message) {
         const node = $('kfToast');
@@ -226,28 +210,17 @@
         node.textContent = message;
         node.hidden = false;
 
-        if (toastTimer) {
-            clearTimeout(toastTimer);
-        }
+        clearTimeout(toastTimer);
 
         toastTimer = setTimeout(() => {
             node.hidden = true;
         }, 4000);
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | FORM ERROR MESSAGE
-    |--------------------------------------------------------------------------
-    */
-
     function showError(message) {
         const node = $('kfError');
 
-        if (!node) {
-            return;
-        }
+        if (!node) return;
 
         node.textContent = message || '';
         node.hidden = !message;
@@ -261,27 +234,18 @@
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | API HELPER
-    |--------------------------------------------------------------------------
-    |
-    | Menggunakan endpoint Konstruksi yang ada
-    | pada KIBController.php.
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       REQUEST API LARAVEL
+    ====================================================== */
 
     async function api(url, options = {}) {
         const response = await fetch(url, {
             credentials: 'same-origin',
-
             ...options,
-
             headers: {
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': token,
-
                 ...(options.headers || {})
             }
         });
@@ -289,35 +253,23 @@
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok || data.success === false) {
-            const validationMessages = data.errors
-                ? Object.values(data.errors)
-                    .flat()
-                    .join('\n')
+            const validation = data.errors
+                ? Object.values(data.errors).flat().join('\n')
                 : '';
 
-            let message =
-                validationMessages ||
-                data.message ||
+            let message = validation || data.message ||
                 `Permintaan gagal (HTTP ${response.status}).`;
 
             if (response.status === 413) {
-                message =
-                    'Ukuran unggahan melebihi batas konfigurasi server.';
+                message = 'Ukuran unggahan melebihi batas server.';
             }
 
             if (response.status === 419) {
-                message =
-                    'Sesi login telah habis. Silakan refresh halaman.';
+                message = 'Sesi login habis. Refresh halaman.';
             }
 
             if (response.status === 403) {
-                message =
-                    'Akun tidak memiliki izin untuk melakukan tindakan ini.';
-            }
-
-            if (response.status === 404) {
-                message =
-                    'Data Konstruksi tidak ditemukan.';
+                message = 'Kamu tidak memiliki izin untuk tindakan ini.';
             }
 
             throw new Error(message);
@@ -327,84 +279,573 @@
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | TUTUP MODAL DARI TOMBOL
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       SEARCHABLE DROPDOWN
+    ====================================================== */
 
-    document.querySelectorAll('[data-kf-close]')
-        .forEach((button) => {
-            button.addEventListener('click', () => {
-                const dialogId = button.dataset.kfClose;
+    const comboWidgets = new Map();
 
-                closeDialog($(dialogId));
+    const predefined = {
+        kategori: [
+            {
+                value: 'IPA',
+                label: 'Instalasi Pengolahan Air (IPA)'
+            },
+            {
+                value: 'BOOSTER',
+                label: 'Booster'
+            },
+            {
+                value: 'PERPIPAAN',
+                label: 'Perpipaan'
+            }
+        ],
+
+        bangunan: [
+            { value: 'P', label: 'Permanen' },
+            { value: 'SP', label: 'Semi Permanen' },
+            { value: 'D', label: 'Darurat' }
+        ],
+
+        struktur: [
+            { value: 'BERTINGKAT', label: 'Bertingkat' },
+            {
+                value: 'TIDAK BERTINGKAT',
+                label: 'Tidak Bertingkat'
+            }
+        ],
+
+        material: [
+            { value: 'BETON', label: 'Beton' },
+            { value: 'TIDAK BETON', label: 'Tidak Beton' }
+        ],
+
+        status_tanah: [
+            { value: 'Pemkot', label: '' },
+            { value: 'Hak Pakai', label: '' },
+            { value: 'Milik Perumda', label: '' }
+        ],
+
+        asal: [
+            { value: 'Pemprov', label: '' },
+            { value: 'Pemkot', label: '' },
+            { value: 'Perumda', label: '' },
+            { value: 'Hibah', label: '' }
+        ],
+
+        status_aset: [
+            { value: 'Serah Terima', label: '' },
+            { value: 'Dalam Pengerjaan', label: '' },
+            { value: 'Selesai', label: '' }
+        ]
+    };
+
+
+    function historicalOptions(source) {
+        const key = {
+            lokasi: 'lokasi',
+            departemen: 'departemen',
+            divisi: 'divisi',
+            cakupan: 'cakupan'
+        }[source];
+
+        const list = key && Array.isArray(history[key])
+            ? history[key]
+            : [];
+
+        return list.map(value => ({
+            value: String(value),
+            label: '',
+            info: null
+        }));
+    }
+
+
+    function getOptions(source) {
+        let options = [];
+
+        if (source === 'lokasi') {
+            options = masterLokasi
+                .filter(row => row.lokasi)
+                .map(row => ({
+                    value: String(row.lokasi),
+                    label: String(row.alamat || ''),
+                    info: row
+                }));
+        }
+
+        else if (source === 'departemen') {
+            options = masterDepartemen
+                .filter(row => row.nama_dep)
+                .map(row => ({
+                    value: String(row.nama_dep),
+                    label: '',
+                    info: row
+                }));
+        }
+
+        else if (source === 'divisi') {
+            const selectedDepartment = normalize(
+                $('kfDepartemen')?.value
+            );
+
+            const department = masterDepartemen.find(
+                row => normalize(row.nama_dep) ===
+                    selectedDepartment
+            );
+
+            const filtered = department
+                ? masterDivisi.filter(
+                    row => String(row.id_dep) ===
+                        String(department.id)
+                )
+                : masterDivisi;
+
+            options = filtered
+                .filter(row => row.nama_div)
+                .map(row => ({
+                    value: String(row.nama_div),
+                    label: '',
+                    info: row
+                }));
+        }
+
+        else if (source === 'cakupan') {
+            options = historicalOptions('cakupan');
+        }
+
+        else {
+            options = predefined[source] || [];
+        }
+
+        /*
+         * Gabungkan Master Data dengan data manual
+         * yang pernah disimpan sebelumnya.
+         */
+
+        if (['lokasi', 'departemen', 'divisi'].includes(source)) {
+            options = [
+                ...options,
+                ...historicalOptions(source)
+            ];
+        }
+
+        /*
+         * Hapus pilihan duplikat.
+         */
+
+        const used = new Set();
+
+        return options.filter(option => {
+            const key = normalize(option.value);
+
+            if (!key || used.has(key)) return false;
+
+            used.add(key);
+            return true;
+        });
+    }
+
+
+    function initializeComboboxes() {
+        if (!form) return;
+
+        const inputs = form.querySelectorAll(
+            'input[data-kf-combo]'
+        );
+
+        inputs.forEach(input => {
+            if (input.dataset.ready === '1') return;
+
+            input.dataset.ready = '1';
+
+            const source = input.dataset.kfCombo;
+
+            input.autocomplete = 'off';
+            input.setAttribute('role', 'combobox');
+            input.setAttribute('aria-autocomplete', 'list');
+            input.setAttribute('aria-expanded', 'false');
+
+            const wrapper = document.createElement('div');
+
+            wrapper.className = 'kf-combo';
+
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            /*
+             * Tombol dropdown.
+             */
+
+            const arrow = document.createElement('button');
+
+            arrow.type = 'button';
+            arrow.className = 'kf-combo-arrow';
+
+            arrow.setAttribute(
+                'aria-label',
+                'Tampilkan pilihan'
+            );
+
+            arrow.innerHTML = `
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="m6 9 6 6 6-6"></path>
+                </svg>
+            `;
+
+            /*
+             * Daftar pilihan.
+             */
+
+            const panel = document.createElement('div');
+
+            panel.id = `${input.id}-options`;
+            panel.className = 'kf-combo-options';
+
+            panel.setAttribute('role', 'listbox');
+
+            panel.hidden = true;
+
+            input.setAttribute('aria-controls', panel.id);
+
+            wrapper.append(arrow, panel);
+
+            let visible = false;
+            let currentOptions = [];
+            let activeIndex = -1;
+
+
+            function closeMenu() {
+                visible = false;
+
+                panel.hidden = true;
+
+                wrapper.classList.remove('kf-combo-open');
+
+                input.setAttribute('aria-expanded', 'false');
+                input.removeAttribute('aria-activedescendant');
+            }
+
+
+            function highlight(index) {
+                const rows = Array.from(
+                    panel.querySelectorAll('.kf-combo-option')
+                );
+
+                if (!rows.length) return;
+
+                activeIndex =
+                    (index + rows.length) % rows.length;
+
+                rows.forEach((row, i) => {
+                    const selected = i === activeIndex;
+
+                    row.classList.toggle('active', selected);
+
+                    row.setAttribute(
+                        'aria-selected',
+                        String(selected)
+                    );
+
+                    if (selected) {
+                        input.setAttribute(
+                            'aria-activedescendant',
+                            row.id
+                        );
+
+                        row.scrollIntoView({
+                            block: 'nearest'
+                        });
+                    }
+                });
+            }
+
+
+            function selectOption(option) {
+                input.value = option.value;
+
+                /*
+                 * Isi alamat lokasi otomatis hanya
+                 * jika alamat belum diisi.
+                 */
+
+                if (
+                    source === 'lokasi' &&
+                    option.info?.alamat
+                ) {
+                    const address = $('kfAlamat');
+
+                    if (address && !address.value.trim()) {
+                        address.value = String(
+                            option.info.alamat
+                        );
+                    }
+                }
+
+                input.dispatchEvent(
+                    new Event('input', { bubbles: true })
+                );
+
+                input.dispatchEvent(
+                    new Event('change', { bubbles: true })
+                );
+
+                closeMenu();
+
+                input.focus({ preventScroll: true });
+            }
+
+
+            function renderOptions(showAll = false) {
+                const query = showAll
+                    ? ''
+                    : normalize(input.value);
+
+                currentOptions = getOptions(source)
+                    .filter(option => {
+                        const text = normalize(
+                            `${option.value} ${option.label}`
+                        );
+
+                        return text.includes(query);
+                    })
+                    .slice(0, 100);
+
+                panel.replaceChildren();
+
+                activeIndex = -1;
+
+                if (currentOptions.length === 0) {
+                    const empty = document.createElement('div');
+
+                    empty.className = 'kf-combo-empty';
+
+                    empty.textContent = source === 'kategori'
+                        ? 'Pilih IPA, Booster, atau Perpipaan.'
+                        : 'Data tidak ditemukan. Kamu tetap dapat mengetik nilai baru.';
+
+                    panel.appendChild(empty);
+                }
+
+                currentOptions.forEach((option, index) => {
+                    const button = document.createElement('button');
+
+                    button.type = 'button';
+                    button.className = 'kf-combo-option';
+
+                    button.id = `${panel.id}-${index}`;
+
+                    button.setAttribute('role', 'option');
+                    button.setAttribute(
+                        'aria-selected',
+                        'false'
+                    );
+
+                    const title = document.createElement('strong');
+
+                    title.textContent = option.value;
+
+                    button.appendChild(title);
+
+                    if (
+                        option.label &&
+                        normalize(option.label) !==
+                            normalize(option.value)
+                    ) {
+                        const subtitle =
+                            document.createElement('small');
+
+                        subtitle.textContent = option.label;
+
+                        button.appendChild(subtitle);
+                    }
+
+                    button.addEventListener(
+                        'mousedown',
+                        event => event.preventDefault()
+                    );
+
+                    button.addEventListener('click', () => {
+                        selectOption(option);
+                    });
+
+                    panel.appendChild(button);
+                });
+
+                visible = true;
+                panel.hidden = false;
+
+                wrapper.classList.add('kf-combo-open');
+
+                input.setAttribute('aria-expanded', 'true');
+            }
+
+
+            /*
+             * Mengetik akan memfilter pilihan.
+             */
+
+            input.addEventListener('input', () => {
+                input.setCustomValidity('');
+                renderOptions();
+            });
+
+
+            /*
+             * Fokus membuka daftar.
+             */
+
+            input.addEventListener('focus', () => {
+                if (!visible) renderOptions();
+            });
+
+
+            /*
+             * Navigasi keyboard.
+             */
+
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Escape') {
+                    if (visible) {
+                        event.preventDefault();
+                        closeMenu();
+                    }
+                }
+
+                else if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+
+                    if (!visible) renderOptions();
+
+                    if (currentOptions.length) {
+                        highlight(activeIndex + 1);
+                    }
+                }
+
+                else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+
+                    if (!visible) renderOptions();
+
+                    if (currentOptions.length) {
+                        highlight(activeIndex - 1);
+                    }
+                }
+
+                else if (
+                    event.key === 'Enter' &&
+                    visible &&
+                    activeIndex >= 0
+                ) {
+                    event.preventDefault();
+
+                    selectOption(
+                        currentOptions[activeIndex]
+                    );
+                }
+            });
+
+
+            /*
+             * Tombol panah.
+             */
+
+            arrow.addEventListener(
+                'mousedown',
+                event => event.preventDefault()
+            );
+
+            arrow.addEventListener('click', () => {
+                if (visible) {
+                    closeMenu();
+                } else {
+                    input.focus({ preventScroll: true });
+                    renderOptions(true);
+                }
+            });
+
+            comboWidgets.set(input.id, {
+                wrapper,
+                closeMenu,
+                renderOptions
             });
         });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | TUTUP MODAL DENGAN KLIK BACKDROP
-    |--------------------------------------------------------------------------
-    */
+        /*
+         * Klik di luar dropdown menutup pilihan.
+         */
 
-    [
-        formDialog,
-        detailDialog,
-        deleteDialog
-    ].forEach((dialog) => {
-        dialog?.addEventListener('click', (event) => {
-            if (event.target === dialog) {
-                closeDialog(dialog);
+        document.addEventListener('pointerdown', event => {
+            comboWidgets.forEach(widget => {
+                if (!widget.wrapper.contains(event.target)) {
+                    widget.closeMenu();
+                }
+            });
+        });
+
+
+        /*
+         * Departemen berubah: perbarui pilihan Divisi.
+         */
+
+        $('kfDepartemen')?.addEventListener('input', () => {
+            const widget = comboWidgets.get('kfDivisi');
+
+            if (
+                widget &&
+                widget.wrapper.classList.contains('kf-combo-open')
+            ) {
+                widget.renderOptions();
             }
         });
-    });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | RESET PILIHAN DOKUMEN
-    |--------------------------------------------------------------------------
-    */
+        form.addEventListener('reset', () => {
+            comboWidgets.forEach(widget => {
+                widget.closeMenu();
+            });
+        });
+    }
+
+
+    /* ======================================================
+       DOKUMEN BARU
+    ====================================================== */
 
     function resetFiles() {
         newFiles = [];
 
         const input = $('kfDokumens');
 
-        if (input) {
-            input.value = '';
-        }
+        if (input) input.value = '';
 
         $('kfSelectedFiles')?.replaceChildren();
         $('kfSavedFiles')?.replaceChildren();
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | TAMPILKAN DAFTAR FILE BARU
-    |--------------------------------------------------------------------------
-    */
-
     function renderSelectedFiles() {
         const container = $('kfSelectedFiles');
 
-        if (!container) {
-            return;
-        }
+        if (!container) return;
 
         container.replaceChildren();
 
-        if (newFiles.length === 0) {
-            return;
-        }
+        if (!newFiles.length) return;
 
         const heading = document.createElement('strong');
 
         heading.textContent =
-            `${newFiles.length} lampiran baru dipilih:`;
+            `${newFiles.length} file baru dipilih`;
 
         container.appendChild(heading);
 
@@ -413,125 +854,70 @@
 
             row.className = 'kf-file-row';
 
-            const filename = document.createElement('span');
+            const name = document.createElement('span');
 
-            const sizeMB = (
-                file.size / 1024 / 1024
-            ).toFixed(2);
+            name.textContent =
+                `${file.name} — ${(file.size / 1048576).toFixed(2)} MB`;
 
-            filename.textContent =
-                `${file.name} (${sizeMB} MB)`;
+            const remove = document.createElement('button');
 
-            const removeButton =
-                document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'kf-link';
+            remove.textContent = 'Batalkan';
 
-            removeButton.type = 'button';
-            removeButton.className = 'kf-link';
-            removeButton.textContent = 'Batalkan';
-
-            removeButton.addEventListener('click', () => {
+            remove.addEventListener('click', () => {
                 newFiles.splice(index, 1);
-
                 renderSelectedFiles();
             });
 
-            row.append(
-                filename,
-                removeButton
-            );
-
+            row.append(name, remove);
             container.appendChild(row);
         });
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPLOAD MULTIPLE PDF / GAMBAR
-    |--------------------------------------------------------------------------
-    |
-    | File disimpan dalam array.
-    |
-    | Contoh:
-    | - Pilih 2 PDF
-    | - Pilih lagi 3 PDF
-    | - Total menjadi 5 PDF
-    |
-    | Tidak menghapus pilihan sebelumnya.
-    |--------------------------------------------------------------------------
-    */
+    $('kfDokumens')?.addEventListener('change', event => {
+        const files = Array.from(event.target.files || []);
 
-    $('kfDokumens')?.addEventListener(
-        'change',
-        (event) => {
-            const selected = Array.from(
-                event.target.files || []
-            );
-
-            for (const file of selected) {
-                const allowed =
-                    /\.(pdf|jpe?g|png|webp)$/i.test(file.name);
-
-                if (!allowed) {
-                    showToast(
-                        `${file.name}: format file tidak didukung.`
-                    );
-
-                    continue;
-                }
-
-                const duplicate = newFiles.some((old) => {
-                    return (
-                        old.name === file.name &&
-                        old.size === file.size &&
-                        old.lastModified === file.lastModified
-                    );
-                });
-
-                if (!duplicate) {
-                    newFiles.push(file);
-                }
+        files.forEach(file => {
+            if (!/\.(pdf|jpe?g|png|webp)$/i.test(file.name)) {
+                showToast(`${file.name}: format tidak didukung.`);
+                return;
             }
 
-            /*
-             * Reset elemen input agar pengguna
-             * bisa memilih file lainnya.
-             */
+            const exists = newFiles.some(old =>
+                old.name === file.name &&
+                old.size === file.size &&
+                old.lastModified === file.lastModified
+            );
 
-            event.target.value = '';
+            if (!exists) newFiles.push(file);
+        });
 
-            renderSelectedFiles();
-        }
-    );
+        event.target.value = '';
 
+        renderSelectedFiles();
+    });
 
-    /*
-    |--------------------------------------------------------------------------
-    | LAMPIRAN YANG SUDAH TERSIMPAN
-    |--------------------------------------------------------------------------
-    */
 
     function renderSavedFiles(documents) {
         const container = $('kfSavedFiles');
 
-        if (!container) {
-            return;
-        }
+        if (!container) return;
 
         container.replaceChildren();
 
-        if (!Array.isArray(documents) || documents.length === 0) {
+        if (!Array.isArray(documents) || !documents.length) {
             return;
         }
 
         const heading = document.createElement('strong');
 
-        heading.textContent =
-            'Lampiran tersimpan (centang untuk menghapus saat menyimpan):';
+        heading.textContent = 'Lampiran tersimpan:';
 
         container.appendChild(heading);
 
-        documents.forEach((doc) => {
+        documents.forEach(doc => {
             const row = document.createElement('div');
 
             row.className = 'kf-file-row';
@@ -541,15 +927,11 @@
             link.href = doc.url;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-
-            link.textContent = doc.nama || 'Lihat Dokumen';
+            link.textContent = doc.nama || 'Dokumen';
 
             row.appendChild(link);
 
-            if (
-                doc.id !== null &&
-                doc.id !== undefined
-            ) {
+            if (doc.id != null) {
                 const label = document.createElement('label');
 
                 label.className = 'kf-remove-file';
@@ -562,7 +944,7 @@
 
                 label.append(
                     checkbox,
-                    document.createTextNode(' Hapus lampiran')
+                    document.createTextNode(' Hapus saat simpan')
                 );
 
                 row.appendChild(label);
@@ -573,270 +955,163 @@
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE — FORM TAMBAH KONSTRUKSI
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       FORM CREATE
+    ====================================================== */
 
     function newForm() {
-        saving = false;
+        if (!form) return;
 
         active = null;
         editId = null;
-
-        if (!form) {
-            showToast('Form Konstruksi tidak ditemukan.');
-            return;
-        }
+        saving = false;
 
         form.reset();
-
         resetFiles();
         showError('');
 
         $('kfFormTitle').textContent =
             'Tambah Data Konstruksi';
 
-        const submit = $('kfSimpan');
+        $('kfSimpan').disabled = false;
 
-        submit.disabled = false;
-        submit.textContent = 'Simpan Konstruksi';
+        $('kfSimpan').innerHTML =
+            '<span>Simpan Konstruksi</span>';
 
-        $('kfTahun').value =
-            new Date().getFullYear();
+        $('kfTahun').value = new Date().getFullYear();
 
         openDialog(formDialog);
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE — FORM EDIT KONSTRUKSI
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       FORM UPDATE
+    ====================================================== */
 
     function editForm(item) {
-        if (!item || !form) {
-            return;
-        }
-
-        saving = false;
+        if (!form || !item) return;
 
         active = item;
         editId = Number(item.id);
+        saving = false;
 
         form.reset();
-
         resetFiles();
         showError('');
 
         $('kfFormTitle').textContent =
             'Edit Data Konstruksi';
 
-        /*
-         * Fallback alias dari KIBController.php.
-         */
-
         const fallback = {
-            nama_barang_manual:
-                item.nama_barang,
-
-            lokasi_manual:
-                item.nama_lokasi,
-
-            alamat_manual:
-                item.alamat_lokasi,
-
-            departemen_manual:
-                item.nama_departemen,
-
-            divisi_manual:
-                item.nama_divisi
+            nama_barang_manual: item.nama_barang,
+            lokasi_manual: item.nama_lokasi,
+            alamat_manual: item.alamat_lokasi,
+            departemen_manual: item.nama_departemen,
+            divisi_manual: item.nama_divisi
         };
 
-        for (const key of fields) {
-            const input = form.elements.namedItem(key);
+        fields.forEach(field => {
+            const input = form.elements.namedItem(field);
 
-            if (!input) {
-                continue;
-            }
+            if (!input) return;
 
             input.value = String(
-                item[key] ??
-                fallback[key] ??
-                ''
+                item[field] ?? fallback[field] ?? ''
             ).trim();
-        }
-
-        /*
-         * Tampilkan dokumen yang sudah tersimpan.
-         */
+        });
 
         renderSavedFiles(item.dokumens || []);
 
-        const submit = $('kfSimpan');
+        $('kfSimpan').disabled = false;
 
-        submit.disabled = false;
-        submit.textContent = 'Simpan Perubahan';
+        $('kfSimpan').textContent = 'Simpan Perubahan';
 
         openDialog(formDialog);
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | EVENT TOMBOL TAMBAH
-    |--------------------------------------------------------------------------
-    */
-
-    $('kfTambah')?.addEventListener(
-        'click',
-        newForm
-    );
+    $('kfTambah')?.addEventListener('click', newForm);
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | HELPER ELEMEN DETAIL AMAN
-    |--------------------------------------------------------------------------
-    |
-    | textContent menghindari eksekusi HTML
-    | dari data yang diinput pengguna.
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       DETAIL HELPER AMAN
+    ====================================================== */
 
-    function textElement(
-        tag,
-        content,
-        className = ''
-    ) {
+    function createText(tag, content, className = '') {
         const element = document.createElement(tag);
 
-        if (
-            content === null ||
-            content === undefined ||
-            content === ''
-        ) {
-            element.textContent = '—';
-        } else {
-            element.textContent = String(content);
-        }
+        element.textContent =
+            content == null || content === ''
+                ? '—'
+                : String(content);
 
-        if (className) {
-            element.className = className;
-        }
+        if (className) element.className = className;
 
         return element;
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | READ — MODAL DETAIL KONSTRUKSI
-    |--------------------------------------------------------------------------
-    */
+    function formatCategory(value) {
+        return {
+            IPA: 'Instalasi Pengolahan Air (IPA)',
+            BOOSTER: 'Booster',
+            PERPIPAAN: 'Perpipaan'
+        }[normalizeCategory(value)] || 'Belum Dikategorikan';
+    }
+
+
+    function formatBuilding(value) {
+        return {
+            P: 'Permanen',
+            SP: 'Semi Permanen',
+            D: 'Darurat'
+        }[String(value || '').toUpperCase()] || value || '—';
+    }
+
+
+    /* ======================================================
+       VIEW DETAIL
+    ====================================================== */
 
     function showDetail(item) {
-        if (!item) {
-            return;
-        }
-
         active = item;
 
         $('kfDetailTitle').textContent =
-            item.nama_barang ||
-            'Detail Konstruksi';
+            item.nama_barang || 'Detail Konstruksi';
 
         const body = $('kfDetailBody');
 
-        if (!body) {
-            return;
-        }
-
         body.replaceChildren();
-
-        /*
-         * Grid informasi konstruksi.
-         */
 
         const grid = document.createElement('div');
 
         grid.className = 'kf-detail-grid';
 
-        const labels = [
-            [
-                'Nama Barang / Pekerjaan',
-                item.nama_barang
-            ],
-            [
-                'Kategori',
-                formatKategori(item.kategori)
-            ],
-            [
-                'Cakupan',
-                item.cakupan
-            ],
-            [
-                'Tahun Pekerjaan',
-                item.tahun
-            ],
-            [
-                'Lokasi',
-                item.nama_lokasi
-            ],
-            [
-                'Alamat Lokasi',
-                item.alamat_lokasi
-            ],
-            [
-                'Departemen',
-                item.nama_departemen
-            ],
-            [
-                'Divisi',
-                item.nama_divisi
-            ],
-            [
-                'Bangunan',
-                formatBangunan(item.type)
-            ],
-            [
-                'Bertingkat / Tidak',
-                item.struktur
-            ],
-            [
-                'Beton / Tidak',
-                item.materi
-            ],
-            [
-                'Letak / Lokasi Alamat',
-                item.letak
-            ],
-            [
-                'Status Tanah',
-                item.status_tanah
-            ],
-            [
-                'Asal Usul Pembiayaan',
-                item.asal
-            ],
-            [
-                'Status Aset',
-                item.status_aset
-            ],
-            [
-                'Nilai Konstruksi',
-                money(item.nilai)
-            ]
+        const info = [
+            ['Nama Pekerjaan', item.nama_barang],
+            ['Kategori', formatCategory(item.kategori)],
+            ['Cakupan', item.cakupan],
+            ['Tahun', item.tahun],
+            ['Lokasi', item.nama_lokasi],
+            ['Alamat', item.alamat_lokasi],
+            ['Departemen', item.nama_departemen],
+            ['Divisi', item.nama_divisi],
+            ['Bangunan', formatBuilding(item.type)],
+            ['Bertingkat / Tidak', item.struktur],
+            ['Beton / Tidak', item.materi],
+            ['Letak / Lokasi Alamat', item.letak],
+            ['Status Tanah', item.status_tanah],
+            ['Asal Pembiayaan', item.asal],
+            ['Status Aset', item.status_aset],
+            ['Nilai Konstruksi', money(item.nilai)]
         ];
 
-        labels.forEach(([label, value]) => {
+        info.forEach(([label, value]) => {
             const box = document.createElement('div');
 
             box.append(
-                textElement('small', label),
-                textElement('strong', value)
+                createText('small', label),
+                createText('strong', value)
             );
 
             grid.appendChild(box);
@@ -844,93 +1119,48 @@
 
         body.appendChild(grid);
 
-        /*
-         * Uraian pekerjaan dengan baris baru.
-         */
-
         body.append(
-            textElement(
-                'h3',
-                'Uraian Pekerjaan'
-            ),
-
-            textElement(
-                'p',
-                item.urai,
-                'kf-preline'
-            )
+            createText('h3', 'Uraian Pekerjaan'),
+            createText('p', item.urai, 'kf-preline')
         );
 
-        /*
-         * Keterangan dan berita acara.
-         */
-
         body.append(
-            textElement(
-                'h3',
-                'Keterangan / Berita Acara'
-            ),
-
-            textElement(
-                'p',
-                item.ket,
-                'kf-preline'
-            )
+            createText('h3', 'Keterangan / Berita Acara'),
+            createText('p', item.ket, 'kf-preline')
         );
-
-        /*
-         * Foto utama.
-         */
 
         if (item.foto_url) {
             const image = document.createElement('img');
 
-            image.className = 'kf-photo';
             image.src = item.foto_url;
-            image.alt = 'Foto Konstruksi';
+            image.alt = 'Foto konstruksi';
+            image.className = 'kf-photo';
 
             body.appendChild(image);
         }
 
-        /*
-         * Dokumen pendukung.
-         */
-
         body.appendChild(
-            textElement(
-                'h3',
-                'Dokumen Pendukung'
-            )
+            createText('h3', 'Dokumen Pendukung')
         );
 
         const links = document.createElement('div');
 
         links.className = 'kf-file-list';
 
-        const documents = Array.isArray(item.dokumens)
-            ? item.dokumens
-            : [];
-
-        if (documents.length === 0) {
+        if (!item.dokumens?.length) {
             links.appendChild(
-                textElement(
-                    'p',
-                    'Belum ada lampiran.'
-                )
+                createText('p', 'Belum ada lampiran.')
             );
         }
 
-        documents.forEach((doc) => {
+        (item.dokumens || []).forEach(doc => {
             const link = document.createElement('a');
 
             link.href = doc.url;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-
             link.className = 'kf-btn kf-outline';
-
-            link.textContent =
-                doc.nama || 'Lihat Dokumen';
+            link.textContent = doc.nama || 'Lihat Dokumen';
 
             links.appendChild(link);
         });
@@ -941,11 +1171,9 @@
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | AMBIL DETAIL DARI CONTROLLER
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       FETCH DETAIL
+    ====================================================== */
 
     async function fetchKonstruksi(id) {
         const response = await api(
@@ -953,82 +1181,44 @@
         );
 
         if (!response.data) {
-            throw new Error(
-                'Data Konstruksi tidak ditemukan.'
-            );
+            throw new Error('Data Konstruksi tidak ditemukan.');
         }
 
         return response.data;
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | CRUD LANGSUNG DARI TABEL
-    |--------------------------------------------------------------------------
-    |
-    | Blade menggunakan:
-    |
-    | data-kf-action="view"
-    | data-kf-action="edit"
-    | data-kf-action="delete"
-    |
-    | data-kf-id="ID"
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       AKSI LANGSUNG DARI TABEL
+    ====================================================== */
 
-    root.addEventListener('click', async (event) => {
-        const target = event.target;
+    root.addEventListener('click', async event => {
+        if (!(event.target instanceof Element)) return;
 
-        if (!(target instanceof Element)) {
-            return;
-        }
-
-        const button = target.closest(
+        const button = event.target.closest(
             'button[data-kf-action]'
         );
 
-        if (!button || !root.contains(button)) {
-            return;
-        }
+        if (!button || button.disabled) return;
 
-        const id = button.dataset.kfId;
         const action = button.dataset.kfAction;
+        const id = button.dataset.kfId;
 
         if (!/^\d+$/.test(String(id))) {
             showToast('ID Konstruksi tidak valid.');
             return;
         }
 
-        /*
-         * DELETE:
-         * Buka konfirmasi, jangan langsung menghapus.
-         */
-
         if (action === 'delete') {
             askDelete({
                 id: Number(id),
-
-                nama_barang:
-                    button.dataset.kfName ||
-                    `Konstruksi #${id}`
+                nama_barang: button.dataset.kfName
             });
 
             return;
         }
 
-        /*
-         * VIEW / EDIT:
-         * Ambil data terbaru dari database.
-         */
-
-        if (!['view', 'edit'].includes(action)) {
-            return;
-        }
-
-        if (button.disabled) {
-            return;
-        }
+        if (!['view', 'edit'].includes(action)) return;
 
         button.disabled = true;
 
@@ -1037,113 +1227,62 @@
 
             if (action === 'view') {
                 showDetail(item);
-            }
-
-            if (action === 'edit') {
+            } else {
                 editForm(item);
             }
-
         } catch (exception) {
             showToast(exception.message);
-
         } finally {
             button.disabled = false;
         }
     });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT MELALUI MODAL DETAIL
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       EDIT DAN DELETE MELALUI DETAIL
+    ====================================================== */
 
     $('kfEdit')?.addEventListener('click', () => {
-        if (!active) {
-            return;
-        }
+        if (!active) return;
 
         const item = active;
 
         closeDialog(detailDialog);
-
         editForm(item);
     });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | TAMPILKAN MODAL KONFIRMASI DELETE
-    |--------------------------------------------------------------------------
-    */
-
     function askDelete(item) {
-        if (!item || deleting) {
-            return;
-        }
+        if (!item || deleting) return;
 
         deleteTarget = {
             id: Number(item.id),
-
-            name:
-                item.nama_barang ||
+            name: item.nama_barang ||
                 item.nama_pekerjaan ||
                 `Konstruksi #${item.id}`
         };
 
-        const nameElement = $('kfDeleteName');
+        $('kfDeleteName').textContent = deleteTarget.name;
 
-        if (nameElement) {
-            nameElement.textContent =
-                deleteTarget.name;
-        }
-
-        if (detailDialog?.open) {
-            closeDialog(detailDialog);
-        }
-
-        if (!deleteDialog) {
-            showToast(
-                'Modal konfirmasi hapus tidak ditemukan.'
-            );
-
-            deleteTarget = null;
-            return;
-        }
+        closeDialog(detailDialog);
 
         openDialog(deleteDialog);
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | HAPUS MELALUI MODAL DETAIL
-    |--------------------------------------------------------------------------
-    */
-
     $('kfHapus')?.addEventListener('click', () => {
-        if (active) {
-            askDelete(active);
-        }
+        if (active) askDelete(active);
     });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE — KONFIRMASI HAPUS
-    |--------------------------------------------------------------------------
-    |
-    | Request DELETE hanya dikirim setelah
-    | pengguna menekan "Ya, Hapus Data".
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       KONFIRMASI DELETE
+    ====================================================== */
 
     $('kfDeleteConfirm')?.addEventListener(
         'click',
         async () => {
-            if (!deleteTarget || deleting) {
-                return;
-            }
+            if (!deleteTarget || deleting) return;
 
             deleting = true;
 
@@ -1151,28 +1290,15 @@
 
             button.disabled = true;
 
-            const id = deleteTarget.id;
-
             try {
                 await api(
-                    `${base}/${encodeURIComponent(id)}`,
-                    {
-                        method: 'DELETE'
-                    }
+                    `${base}/${deleteTarget.id}`,
+                    { method: 'DELETE' }
                 );
 
-                closeDialog(deleteDialog);
-
-                /*
-                 * Refresh agar tabel, jumlah inventaris,
-                 * dan nilai konstruksi ikut diperbarui.
-                 */
-
                 window.location.reload();
-
             } catch (exception) {
                 showToast(exception.message);
-
             } finally {
                 deleting = false;
                 button.disabled = false;
@@ -1181,144 +1307,125 @@
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | RESET TARGET DELETE KETIKA MODAL DITUTUP
-    |--------------------------------------------------------------------------
-    */
-
     deleteDialog?.addEventListener('close', () => {
-        if (!deleting) {
-            deleteTarget = null;
+        if (!deleting) deleteTarget = null;
+    });
+
+
+    /* ======================================================
+       VALIDASI KATEGORI
+    ====================================================== */
+
+    function validateCategory() {
+        const input = $('kfKategori');
+
+        if (!input) return true;
+
+        const value = normalizeCategory(input.value);
+
+        input.value = value;
+
+        input.setCustomValidity('');
+
+        if (!categories.includes(value)) {
+            input.setCustomValidity(
+                'Pilih kategori IPA, BOOSTER, atau PERPIPAAN.'
+            );
+
+            input.reportValidity();
+
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /* ======================================================
+       SUBMIT CREATE / UPDATE
+    ====================================================== */
+
+    form?.addEventListener('submit', async event => {
+        event.preventDefault();
+
+        if (saving) return;
+
+        showError('');
+
+        if (!validateCategory()) return;
+
+        if (!form.reportValidity()) return;
+
+        saving = true;
+
+        const submit = $('kfSimpan');
+
+        submit.disabled = true;
+
+        const data = new FormData(form);
+
+        data.set(
+            'kategori',
+            normalizeCategory(data.get('kategori'))
+        );
+
+        /*
+         * Dokumen dipilih berulang.
+         * Gunakan array newFiles.
+         */
+
+        data.delete('dokumens[]');
+
+        newFiles.forEach(file => {
+            data.append(
+                'dokumens[]',
+                file,
+                file.name
+            );
+        });
+
+        let url = base;
+
+        if (editId !== null) {
+            url = `${base}/${encodeURIComponent(editId)}`;
+            data.set('_method', 'PUT');
+        }
+
+        try {
+            await api(url, {
+                method: 'POST',
+                body: data
+            });
+
+            /*
+             * Jika tambah dari tab arsip,
+             * kembali ke daftar manual baru.
+             */
+
+            const params = new URLSearchParams(
+                window.location.search
+            );
+
+            if (params.get('view') === 'arsip') {
+                window.location.assign(base);
+            } else {
+                window.location.reload();
+            }
+        } catch (exception) {
+            showError(exception.message);
+
+            submit.disabled = false;
+            saving = false;
         }
     });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | NORMALISASI INPUT KATEGORI
-    |--------------------------------------------------------------------------
-    */
+    /* ======================================================
+       INISIALISASI
+    ====================================================== */
 
-    $('kfKategori')?.addEventListener(
-        'change',
-        (event) => {
-            event.target.value = String(
-                event.target.value || ''
-            ).trim().toUpperCase();
-        }
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | SIMPAN KONSTRUKSI — CREATE / UPDATE
-    |--------------------------------------------------------------------------
-    */
-
-    form?.addEventListener(
-        'submit',
-        async (event) => {
-            event.preventDefault();
-
-            if (saving) {
-                return;
-            }
-
-            showError('');
-
-            /*
-             * Validasi field required.
-             */
-
-            if (!form.reportValidity()) {
-                return;
-            }
-
-            saving = true;
-
-            const submit = $('kfSimpan');
-
-            submit.disabled = true;
-
-            /*
-             * Ambil seluruh input form.
-             */
-
-            const data = new FormData(form);
-
-            /*
-             * Kategori disimpan uppercase.
-             */
-
-            const kategori = String(
-                data.get('kategori') || ''
-            ).trim().toUpperCase();
-
-            data.set('kategori', kategori);
-
-            /*
-             * Semua lampiran diambil dari array.
-             *
-             * File input sudah direset saat pengguna
-             * memilih file agar bisa memilih berulang.
-             */
-
-            data.delete('dokumens[]');
-
-            newFiles.forEach((file) => {
-                data.append(
-                    'dokumens[]',
-                    file,
-                    file.name
-                );
-            });
-
-            /*
-             * CREATE:
-             * POST /kib/konstruksi
-             *
-             * UPDATE:
-             * POST /kib/konstruksi/{id}
-             * + _method = PUT
-             */
-
-            let url = base;
-
-            if (editId !== null) {
-                url = `${base}/${encodeURIComponent(editId)}`;
-
-                data.set('_method', 'PUT');
-            }
-
-            try {
-                await api(url, {
-                    method: 'POST',
-                    body: data
-                });
-
-                /*
-                 * Reload tabel dan statistik.
-                 */
-
-                window.location.reload();
-
-            } catch (exception) {
-                showError(exception.message);
-
-                submit.disabled = false;
-                saving = false;
-            }
-        }
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | INITIALIZATION
-    |--------------------------------------------------------------------------
-    */
-
+    initializeClock();
+    initializeComboboxes();
     refreshIcons();
 
 })();

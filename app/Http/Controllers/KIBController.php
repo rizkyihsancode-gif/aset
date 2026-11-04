@@ -6394,20 +6394,55 @@ class KIBController extends Controller
                 ->pluck($column);
         }
 
-        return view(
-            'kib.konstruksi',
-            compact(
-                'items',
-                'total',
-                'nilai',
-                'jumlahLokasi',
-                'search',
-                'category',
-                'view',
-                'archiveCount',
-                'suggestions'
-            )
-        );
+
+
+        /*
+|--------------------------------------------------------------------------
+| MASTER DATA UNTUK DROPDOWN KONSTRUKSI
+|--------------------------------------------------------------------------
+| Hanya mengambil pilihan dari database.
+| Tidak membuat foreign key atau mengubah tabel Konstruksi.
+|--------------------------------------------------------------------------
+*/
+
+        $kfMasterOptions = [
+
+            // MASTER LOKASI
+            'lokasi' => DB::table('lokasis')
+                ->select('id', 'lokasi', 'alamat')
+                ->whereNotNull('lokasi')
+                ->orderBy('lokasi')
+                ->get(),
+
+            // MASTER DEPARTEMEN
+            'departemen' => DB::table('departemens')
+                ->select('id', 'nama_dep')
+                ->whereNotNull('nama_dep')
+                ->orderBy('nama_dep')
+                ->get(),
+
+            // MASTER DIVISI
+            'divisi' => DB::table('divisis')
+                ->select('id', 'id_dep', 'nama_div')
+                ->whereNotNull('nama_div')
+                ->orderBy('nama_div')
+                ->get(),
+
+        ];
+
+
+        return view('kib.konstruksi', compact(
+            'items',
+            'total',
+            'nilai',
+            'jumlahLokasi',
+            'search',
+            'category',
+            'view',
+            'archiveCount',
+            'suggestions',
+            'kfMasterOptions'
+        ));
     }
 
 
