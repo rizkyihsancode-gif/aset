@@ -6,40 +6,38 @@
     | SISTEM ASET — SIDEBAR
     | PERUMDA TIRTA KENCANA KOTA SAMARINDA
     |--------------------------------------------------------------------------
+    | Dropdown Master Data dan K.I.B
+    | Hamburger Desktop dan Mobile
+    | Penyimpanan kondisi sidebar
+    |--------------------------------------------------------------------------
     */
 
-    // Notifikasi data Pending seluruh K.I.B.
     $kibNotification = $kibNotificationService->summary();
 
     $kibTotalNotification = (int) ($kibNotification['_total'] ?? 0);
 
-    // Menu yang sedang aktif.
     $masterOpen = request()->is('master-data/*');
-
     $kibOpen = request()->is('kib/*');
 
-    // Angka badge maksimal 99+.
     $badgeValue = function ($value) {
         $value = (int) ($value ?? 0);
 
         return $value > 99 ? '99+' : (string) $value;
     };
 
-    // Jumlah Pending berdasarkan modul.
     $notifTanah = (int) ($kibNotification['tanah']['total'] ?? 0);
-
     $notifMesin = (int) ($kibNotification['mesin']['total'] ?? 0);
-
     $notifGedung = (int) ($kibNotification['gedung']['total'] ?? 0);
-
     $notifJalan = (int) ($kibNotification['jalan']['total'] ?? 0);
-
     $notifAsetTetap = (int) ($kibNotification['aset_tetap']['total'] ?? 0);
-
     $notifKonstruksi = (int) ($kibNotification['konstruksi']['total'] ?? 0);
-
     $notifKir = (int) ($kibNotification['kir']['total'] ?? 0);
 @endphp
+
+
+{{-- ============================================================
+     SIDEBAR UTAMA
+============================================================ --}}
 
 <aside class="sidebar" id="sidebar" aria-label="Navigasi utama Sistem Aset">
 
@@ -91,7 +89,9 @@
         </a>
 
 
-        {{-- PENGELOLAAN --}}
+        {{-- ====================================================
+             PENGELOLAAN
+        ==================================================== --}}
 
         <div class="sidebar-section-title">
             PENGELOLAAN
@@ -275,7 +275,8 @@
                     K.I.B
                 </span>
 
-                {{-- TOTAL NOTIFIKASI K.I.B --}}
+
+                {{-- NOTIFIKASI TOTAL K.I.B --}}
 
                 @if ($kibTotalNotification > 0)
                     <span class="sidebar-kib-parent-count"
@@ -283,6 +284,7 @@
                         {{ $badgeValue($kibTotalNotification) }}
                     </span>
                 @endif
+
 
                 <span class="sidebar-arrow">
                     <i data-lucide="chevron-down"></i>
@@ -521,10 +523,7 @@
         </div>
 
 
-        {{-- ====================================================
-             FORM LOGOUT
-             Method POST + CSRF
-        ==================================================== --}}
+        {{-- FORM LOGOUT --}}
 
         <form id="sidebarLogoutForm" class="sidebar-logout-form" method="POST" action="{{ route('logout') }}">
 
@@ -549,128 +548,520 @@
 
 
 {{-- ============================================================
-     JAVASCRIPT SIDEBAR DROPDOWN
-     MASTER DATA DAN K.I.B
+     JAVASCRIPT — SIDEBAR SYSTEM
+     Hamburger, Dropdown, Mobile, Desktop, Local Storage
 ============================================================ --}}
 
 <script>
-    (() => {
+    (function() {
         'use strict';
 
         /*
         |--------------------------------------------------------------------------
-        | KONFIGURASI SIDEBAR
+        | KONFIGURASI
         |--------------------------------------------------------------------------
         */
 
+        const MOBILE_BREAKPOINT = 820;
+
+        const STORAGE_KEY = 'aset-sidebar-collapsed';
+
         const sidebar = document.getElementById('sidebar');
 
-        const mobileBreakpoint = 820;
-
         if (!sidebar) {
+            console.warn(
+                'Sistem Aset: Elemen #sidebar tidak ditemukan.'
+            );
+
             return;
         }
 
         /*
         |--------------------------------------------------------------------------
-        | TOMBOL MENU MASTER DATA DAN K.I.B
+        | REFERENSI ELEMEN
         |--------------------------------------------------------------------------
         */
 
-        const buttons = sidebar.querySelectorAll(
-            '[data-sidebar-toggle]'
-        );
+        function getOverlay() {
+            return document.getElementById('sidebarOverlay');
+        }
 
-        buttons.forEach((button) => {
+        function isMobile() {
+            return window.innerWidth <= MOBILE_BREAKPOINT;
+        }
 
-            // Hindari event listener ganda.
-            if (button.dataset.sidebarBound === '1') {
-                return;
+        /*
+        |--------------------------------------------------------------------------
+        | LOCAL STORAGE
+        |--------------------------------------------------------------------------
+        */
+
+        function getSavedCollapsed() {
+            try {
+                return localStorage.getItem(STORAGE_KEY) === '1';
+            } catch (error) {
+                return false;
             }
+        }
 
-            button.dataset.sidebarBound = '1';
+        function saveCollapsed(value) {
+            try {
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    value ? '1' : '0'
+                );
+            } catch (error) {
+                console.warn(
+                    'Status sidebar tidak dapat disimpan.',
+                    error
+                );
+            }
+        }
 
-            button.addEventListener('click', () => {
+        /*
+        |--------------------------------------------------------------------------
+        | SINKRONISASI TOMBOL HAMBURGER
+        |--------------------------------------------------------------------------
+        */
 
-                const groupId = button.dataset.sidebarToggle;
-
-                const group = document.getElementById(
-                    groupId
+        function updateHamburgerState() {
+            const isExpanded = isMobile() ?
+                sidebar.classList.contains('open') :
+                !document.body.classList.contains(
+                    'sidebar-collapsed'
                 );
 
-                if (!group || !sidebar.contains(group)) {
-                    return;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | PERIKSA SIDEBAR COLLAPSED
-                |--------------------------------------------------------------------------
-                */
-
-                const wasCollapsed =
-                    window.innerWidth > mobileBreakpoint &&
-                    document.body.classList.contains(
-                        'sidebar-collapsed'
-                    );
-
-                /*
-                |--------------------------------------------------------------------------
-                | BUKA SIDEBAR JIKA COLLAPSED
-                |--------------------------------------------------------------------------
-                */
-
-                if (wasCollapsed) {
-
-                    document.body.classList.remove(
-                        'sidebar-collapsed'
-                    );
-
-                    try {
-
-                        localStorage.setItem(
-                            'aset-sidebar-collapsed',
-                            '0'
-                        );
-
-                    } catch (error) {
-
-                        console.warn(
-                            'Preferensi sidebar tidak tersimpan.',
-                            error
-                        );
-
-                    }
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | BUKA / TUTUP SUBMENU
-                |--------------------------------------------------------------------------
-                */
-
-                const isOpen = wasCollapsed ?
-                    true :
-                    !group.classList.contains('open');
-
-                group.classList.toggle(
-                    'open',
-                    isOpen
-                );
-
-                /*
-                |--------------------------------------------------------------------------
-                | UPDATE ARIA EXPANDED
-                |--------------------------------------------------------------------------
-                */
+            document.querySelectorAll(
+                '.sidebar-toggle, #sidebarToggle, [data-sidebar-hamburger]'
+            ).forEach(function(button) {
 
                 button.setAttribute(
                     'aria-expanded',
-                    String(isOpen)
+                    String(isExpanded)
+                );
+
+                button.setAttribute(
+                    'aria-controls',
+                    'sidebar'
+                );
+
+                button.setAttribute(
+                    'aria-label',
+                    isExpanded ?
+                    'Tutup sidebar' :
+                    'Buka sidebar'
                 );
 
             });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SINKRONISASI STATUS DROPDOWN
+        |--------------------------------------------------------------------------
+        */
+
+        function updateDropdownState(group) {
+            if (!group) {
+                return;
+            }
+
+            const button = group.querySelector(
+                '[data-sidebar-toggle]'
+            );
+
+            if (!button) {
+                return;
+            }
+
+            const expanded = group.classList.contains('open');
+
+            button.setAttribute(
+                'aria-expanded',
+                String(expanded)
+            );
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MEMBUKA SIDEBAR DESKTOP
+        |--------------------------------------------------------------------------
+        */
+
+        function expandDesktopSidebar() {
+            document.body.classList.remove(
+                'sidebar-collapsed'
+            );
+
+            saveCollapsed(false);
+
+            updateHamburgerState();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MENUTUP SIDEBAR MOBILE
+        |--------------------------------------------------------------------------
+        */
+
+        function closeMobileSidebar() {
+            sidebar.classList.remove('open');
+
+            const overlay = getOverlay();
+
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+
+            updateHamburgerState();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FUNGSI UTAMA HAMBURGER
+        |--------------------------------------------------------------------------
+        |
+        | Mobile:
+        | - Sidebar open / close
+        | - Overlay muncul / hilang
+        |
+        | Desktop:
+        | - Sidebar collapsed / expanded
+        | - Status tersimpan di localStorage
+        |--------------------------------------------------------------------------
+        */
+
+        function toggleSidebar() {
+
+            if (isMobile()) {
+
+                const isOpen = sidebar.classList.toggle(
+                    'open'
+                );
+
+                const overlay = getOverlay();
+
+                if (overlay) {
+                    overlay.classList.toggle(
+                        'show',
+                        isOpen
+                    );
+                }
+
+                document.body.classList.remove(
+                    'sidebar-collapsed'
+                );
+
+                updateHamburgerState();
+
+                return;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | DESKTOP
+            |--------------------------------------------------------------------------
+            */
+
+            const collapsed = document.body.classList.toggle(
+                'sidebar-collapsed'
+            );
+
+            saveCollapsed(collapsed);
+
+            sidebar.classList.remove('open');
+
+            const overlay = getOverlay();
+
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+
+            updateHamburgerState();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FUNGSI DROPDOWN MASTER DATA DAN K.I.B
+        |--------------------------------------------------------------------------
+        */
+
+        function toggleMenu(groupId) {
+
+            const group = document.getElementById(groupId);
+
+            if (!group || !sidebar.contains(group)) {
+                console.warn(
+                    'Sidebar group tidak ditemukan:',
+                    groupId
+                );
+
+                return;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | JIKA SIDEBAR DESKTOP SEDANG COLLAPSED
+            |--------------------------------------------------------------------------
+            */
+
+            const wasCollapsed = !isMobile() &&
+                document.body.classList.contains(
+                    'sidebar-collapsed'
+                );
+
+            if (wasCollapsed) {
+                expandDesktopSidebar();
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | OPEN / CLOSE DROPDOWN
+            |--------------------------------------------------------------------------
+            */
+
+            const shouldOpen = wasCollapsed ?
+                true :
+                !group.classList.contains('open');
+
+            group.classList.toggle(
+                'open',
+                shouldOpen
+            );
+
+            updateDropdownState(group);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FUNGSI GLOBAL
+        |--------------------------------------------------------------------------
+        |
+        | Kompatibel dengan layout lama:
+        |
+        | onclick="toggleSidebar()"
+        | onclick="toggleMenu('masterGroup')"
+        | onclick="toggleMenu('kibGroup')"
+        |--------------------------------------------------------------------------
+        */
+
+        window.toggleSidebar = toggleSidebar;
+
+        window.toggleMenu = toggleMenu;
+
+        window.closeMobileSidebar = closeMobileSidebar;
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE STATUS SIDEBAR
+        |--------------------------------------------------------------------------
+        */
+
+        function restoreSidebarState() {
+
+            if (isMobile()) {
+
+                document.body.classList.remove(
+                    'sidebar-collapsed'
+                );
+
+                closeMobileSidebar();
+
+                return;
+            }
+
+            document.body.classList.toggle(
+                'sidebar-collapsed',
+                getSavedCollapsed()
+            );
+
+            sidebar.classList.remove('open');
+
+            const overlay = getOverlay();
+
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+
+            updateHamburgerState();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SETUP SEMUA DROPDOWN
+        |--------------------------------------------------------------------------
+        */
+
+        function initializeDropdowns() {
+
+            sidebar.querySelectorAll(
+                '.sidebar-menu-group'
+            ).forEach(function(group) {
+
+                updateDropdownState(group);
+
+            });
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | KLIK HAMBURGER DAN OVERLAY
+        |--------------------------------------------------------------------------
+        |
+        | Event delegation pada capture phase.
+        | Menghindari tombol diproses dua kali
+        | ketika layout lama memakai onclick.
+        |--------------------------------------------------------------------------
+        */
+
+        document.addEventListener('click', function(event) {
+
+            const target = event.target;
+
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const hamburger = target.closest(
+                '.sidebar-toggle, #sidebarToggle, [data-sidebar-hamburger]'
+            );
+
+            if (hamburger) {
+
+                event.preventDefault();
+
+                // Hindari pemanggilan ganda dari onclick lama.
+                event.stopImmediatePropagation();
+
+                toggleSidebar();
+
+                return;
+            }
+
+            const overlay = target.closest(
+                '#sidebarOverlay'
+            );
+
+            if (overlay && isMobile()) {
+
+                event.preventDefault();
+
+                event.stopImmediatePropagation();
+
+                closeMobileSidebar();
+
+                return;
+            }
+
+            const dropdownButton = target.closest(
+                '[data-sidebar-toggle]'
+            );
+
+            if (
+                dropdownButton &&
+                sidebar.contains(dropdownButton)
+            ) {
+
+                event.preventDefault();
+
+                event.stopImmediatePropagation();
+
+                const groupId = dropdownButton.getAttribute(
+                    'data-sidebar-toggle'
+                );
+
+                if (groupId) {
+                    toggleMenu(groupId);
+                }
+
+            }
+
+        }, true);
+
+        /*
+        |--------------------------------------------------------------------------
+        | TUTUP SIDEBAR MOBILE SAAT LINK MENU DIKLIK
+        |--------------------------------------------------------------------------
+        */
+
+        sidebar.addEventListener('click', function(event) {
+
+            const target = event.target;
+
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const link = target.closest('a[href]');
+
+            if (!link || !sidebar.contains(link)) {
+                return;
+            }
+
+            if (isMobile()) {
+                closeMobileSidebar();
+            }
+
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESTORE KETIKA UKURAN LAYAR BERUBAH
+        |--------------------------------------------------------------------------
+        */
+
+        let previousMobileState = isMobile();
+
+        window.addEventListener('resize', function() {
+
+            const currentMobileState = isMobile();
+
+            if (currentMobileState !== previousMobileState) {
+
+                previousMobileState = currentMobileState;
+
+                restoreSidebarState();
+
+            } else {
+
+                updateHamburgerState();
+
+            }
+
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | INISIALISASI
+        |--------------------------------------------------------------------------
+        */
+
+        function initializeSidebar() {
+
+            restoreSidebarState();
+
+            initializeDropdowns();
+
+            updateHamburgerState();
+
+        }
+
+        if (document.readyState === 'loading') {
+
+            document.addEventListener(
+                'DOMContentLoaded',
+                initializeSidebar, {
+                    once: true
+                }
+            );
+
+        } else {
+
+            initializeSidebar();
+
+        }
 
     })();
 </script>
