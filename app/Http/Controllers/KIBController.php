@@ -5154,13 +5154,24 @@ class KIBController extends Controller
             );
     }
 
+
     /*
-        |--------------------------------------------------------------------------
-        | HALAMAN UTAMA ASET TETAP LAINNYA
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | K.I.B E — HALAMAN UTAMA ASET TETAP LAINNYA
+    |--------------------------------------------------------------------------
+    | Menampilkan data lokasi, statistik, gambar pertama,
+    | master data form, dan rincian nilai aset.
+    |--------------------------------------------------------------------------
+    */
+
     public function dataAsetTetapLainnya()
     {
+        /*
+        |--------------------------------------------------------------------------
+        | 1. PERIKSA TABEL UTAMA
+        |--------------------------------------------------------------------------
+        */
+
         foreach (
             [
                 'kib_e_s',
@@ -5178,21 +5189,46 @@ class KIBController extends Controller
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | 2. KATEGORI NILAI ASET K.I.B E
+        |--------------------------------------------------------------------------
+        */
+
         $cat = $this->kategoriAsetTetapLainnya();
 
-        // Nilai dari transaksi Nilai Aset,
-        // bukan harga satuan yang dikarang.
+        /*
+        |--------------------------------------------------------------------------
+        | 3. NILAI TRANSAKSI BERDASARKAN LOKASI
+        |--------------------------------------------------------------------------
+        | Total nilai berasal dari nilai_aktivas,
+        | bukan dari perkiraan harga inventaris.
+        |--------------------------------------------------------------------------
+        */
+
         $nilaiPerLokasi = DB::table('nilai_aktivas as n')
+
             ->where('n.cat', $cat ?? -1)
+
             ->whereNotNull('n.id_lokasi')
+
             ->select('n.id_lokasi')
+
             ->selectRaw(
                 'COALESCE(SUM(n.nilai), 0) AS nilai_total'
             )
+
             ->selectRaw(
                 'COUNT(n.id) AS transaksi_total'
             )
+
             ->groupBy('n.id_lokasi');
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4. PERIKSA KETERSEDIAAN KOLOM DOKUMEN
+        |--------------------------------------------------------------------------
+        */
 
         $hasDok = Schema::hasColumn(
             'kib_e_s',
@@ -5200,55 +5236,118 @@ class KIBController extends Controller
         );
 
         $pdfCount = $hasDok
-            ? "COUNT(DISTINCT CASE
-                    WHEN NULLIF(BTRIM(COALESCE(e.dok, '')), '') IS NOT NULL
+            ? "COUNT(
+                DISTINCT CASE
+                    WHEN NULLIF(
+                        BTRIM(COALESCE(e.dok, '')),
+                        ''
+                    ) IS NOT NULL
                     THEN e.id
-                END)"
+                END
+            )"
             : '0';
 
+        /*
+        |--------------------------------------------------------------------------
+        | 5. QUERY UTAMA DAFTAR LOKASI
+        |--------------------------------------------------------------------------
+        |
+        | FOTO_ID:
+        | Mengambil ID inventaris yang mempunyai foto
+        | untuk dipakai pada thumbnail tabel lokasi.
+        |
+        | Inilah bagian penting untuk memperbaiki
+        | error Undefined property stdClass::$foto_id.
+        |--------------------------------------------------------------------------
+        */
+
         $lokasiAset = DB::table('kib_e_s as e')
+
             ->join(
                 'lokasis as l',
                 'l.id',
                 '=',
                 'e.id_lokasi'
             )
+
             ->leftJoinSub(
                 $nilaiPerLokasi,
                 'n',
-                fn($join) => $join->on(
-                    'n.id_lokasi',
-                    '=',
-                    'e.id_lokasi'
-                )
+                function ($join) {
+                    $join->on(
+                        'n.id_lokasi',
+                        '=',
+                        'e.id_lokasi'
+                    );
+                }
             )
+
             ->select('e.id_lokasi')
+
             ->selectRaw(
                 'MIN(l.lokasi) AS lokasi'
             )
+
             ->selectRaw(
                 'MIN(l.alamat) AS alamat'
             )
+
             ->selectRaw(
                 'COUNT(DISTINCT e.id) AS jumlah_aset'
             )
+
             ->selectRaw(
                 'COALESCE(SUM(e.jumlah), 0) AS jumlah_unit'
             )
+
             ->selectRaw(
                 'COALESCE(MAX(n.nilai_total), 0) AS nilai_total'
             )
+
             ->selectRaw(
                 'COALESCE(MAX(n.transaksi_total), 0) AS jumlah_transaksi'
             )
+
             ->selectRaw(
                 "{$pdfCount} AS jumlah_pdf"
             )
+
+            /*
+            |--------------------------------------------------------------------------
+            | ID INVENTARIS YANG MEMILIKI GAMBAR
+            |--------------------------------------------------------------------------
+            */
+
+            ->selectRaw(
+                "
+                MIN(
+                    CASE
+                        WHEN NULLIF(
+                            BTRIM(COALESCE(e.img, '')),
+                            ''
+                        ) IS NOT NULL
+                        THEN e.id
+                    END
+                ) AS foto_id
+                "
+            )
+
             ->groupBy('e.id_lokasi')
-            ->orderByRaw('MIN(l.lokasi) ASC')
+
+            ->orderByRaw(
+                'MIN(l.lokasi) ASC'
+            )
+
             ->get();
 
-        $totalAset = DB::table('kib_e_s')->count();
+        /*
+        |--------------------------------------------------------------------------
+        | 6. STATISTIK INVENTARIS
+        |--------------------------------------------------------------------------
+        */
+
+        $totalAset = DB::table('kib_e_s')
+            ->count();
 
         $totalUnit = (int) DB::table('kib_e_s')
             ->sum('jumlah');
@@ -5265,76 +5364,157 @@ class KIBController extends Controller
             )
             ->count();
 
+        /*
+        |--------------------------------------------------------------------------
+        | 7. REKAP KONDISI ASET
+        |--------------------------------------------------------------------------
+        */
+
         $kondisi = DB::table('kib_e_s')
+
             ->select('kondisi')
-            ->selectRaw('COUNT(*) AS jumlah')
+
+            ->selectRaw(
+                'COUNT(*) AS jumlah'
+            )
+
             ->groupBy('kondisi')
+
             ->orderByDesc('jumlah')
+
             ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 8. DAFTAR ASET TERBARU
+        |--------------------------------------------------------------------------
+        */
 
         $terbaru = $this->queryInventarisAsetTetap()
+
             ->orderByDesc('e.id')
+
             ->limit(5)
+
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | 9. MASTER BARANG
+        |--------------------------------------------------------------------------
+        */
+
         $barangRows = DB::table('barangs')
+
             ->select(
                 'id',
                 'nama_barang',
                 'kode_barang'
             )
+
             ->orderBy('nama_barang')
+
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | 10. MASTER LOKASI
+        |--------------------------------------------------------------------------
+        */
+
         $lokasiRows = DB::table('lokasis')
+
             ->select(
                 'id',
                 'lokasi',
                 'alamat'
             )
+
             ->orderBy('lokasi')
+
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | 11. MASTER DEPARTEMEN
+        |--------------------------------------------------------------------------
+        */
+
         $departemenRows = DB::table('departemens')
+
             ->select(
                 'id',
                 'kode_dep',
                 'nama_dep'
             )
+
             ->orderBy('nama_dep')
+
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | 12. MASTER DIVISI
+        |--------------------------------------------------------------------------
+        */
+
         $divisiRows = DB::table('divisis')
+
             ->select(
                 'id',
                 'id_dep',
                 'nama_div'
             )
+
             ->orderBy('nama_div')
+
             ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 13. MASTER BAHAN
+        |--------------------------------------------------------------------------
+        */
 
         $bahanRows = DB::table('bahans')
-            ->select('id', 'nama')
+
+            ->select(
+                'id',
+                'nama'
+            )
+
             ->orderBy('nama')
+
             ->get();
 
-        return view('kib.aset_ttp', compact(
-            'lokasiAset',
-            'totalAset',
-            'totalUnit',
-            'totalLokasi',
-            'totalNilai',
-            'totalBaik',
-            'kondisi',
-            'terbaru',
-            'barangRows',
-            'lokasiRows',
-            'departemenRows',
-            'divisiRows',
-            'bahanRows',
-            'hasDok'
-        ));
+        /*
+        |--------------------------------------------------------------------------
+        | 14. TAMPILKAN HALAMAN K.I.B E
+        |--------------------------------------------------------------------------
+        */
+
+        return view(
+            'kib.aset_ttp',
+
+            compact(
+                'lokasiAset',
+                'totalAset',
+                'totalUnit',
+                'totalLokasi',
+                'totalNilai',
+                'totalBaik',
+                'kondisi',
+                'terbaru',
+                'barangRows',
+                'lokasiRows',
+                'departemenRows',
+                'divisiRows',
+                'bahanRows',
+                'hasDok'
+            )
+        );
     }
+
 
     /*
         |--------------------------------------------------------------------------
