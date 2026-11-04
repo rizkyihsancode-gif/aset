@@ -14,7 +14,10 @@
 
     $kibNotification = $kibNotificationService->summary();
 
-    $kibTotalNotification = (int) ($kibNotification['_total'] ?? 0);
+    $kibTotalNotification = max(
+        0,
+        (int) ($kibNotification['_total'] ?? 0) - (int) ($kibNotification['konstruksi']['total'] ?? 0),
+    );
 
     $masterOpen = request()->is('master-data/*');
     $kibOpen = request()->is('kib/*');
@@ -30,7 +33,7 @@
     $notifGedung = (int) ($kibNotification['gedung']['total'] ?? 0);
     $notifJalan = (int) ($kibNotification['jalan']['total'] ?? 0);
     $notifAsetTetap = (int) ($kibNotification['aset_tetap']['total'] ?? 0);
-    $notifKonstruksi = (int) ($kibNotification['konstruksi']['total'] ?? 0);
+    $notifKonstruksi = 0;
     $notifKir = (int) ($kibNotification['kir']['total'] ?? 0);
 @endphp
 

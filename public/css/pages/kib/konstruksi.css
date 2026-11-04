@@ -1,1367 +1,801 @@
 
-/* ==========================================================
-   K.I.B F - KONSTRUKSI
-   PERUMDA TIRTA KENCANA KOTA SAMARINDA
-========================================================== */
+/* ============================================================
+   SISTEM ASET — K.I.B F KONSTRUKSI MANUAL
+   Perumda Tirta Kencana Kota Samarinda
+   ============================================================ */
 
-.kf {
-    --kf-blue: #0968ec;
-    --kf-dark: #0a306a;
-    --kf-text: #23476f;
-    --kf-muted: #667f9e;
-    --kf-line: #dbe6f5;
-
-    min-height: 100vh;
-
-    color: var(--kf-text);
-    background: #f4f8fd;
-
-    font-size: 14px;
+.kf-page {
+    padding: 20px 18px 40px;
+    color: #102f5d;
+    font-family: inherit;
 }
 
-.kf *,
-.kf-dialog * {
+.kf-page *,
+.kf-page *::before,
+.kf-page *::after {
     box-sizing: border-box;
 }
 
-.kf [hidden],
-.kf-dialog [hidden] {
+.kf-page button,
+.kf-page input,
+.kf-page textarea {
+    font: inherit;
+}
+
+.kf-page [hidden] {
     display: none !important;
 }
 
-/* HEADER */
+
+/* ============================================================
+   HEADER
+   ============================================================ */
 
 .kf-hero {
-    margin: -21px -24px 15px;
+    border-radius: 16px;
     padding: 24px;
-
-    background-image:
-        linear-gradient(
-            90deg,
-            rgba(247, 251, 255, .99) 0%,
-            rgba(238, 248, 255, .97) 35%,
-            rgba(222, 240, 255, .85) 65%,
-            rgba(209, 233, 252, .22) 100%
-        ),
-        url('/images/master/pdam4.png');
-
-    background-size: cover;
-    background-position: right center;
-
-    border-bottom: 1px solid #d9eafa;
+    background: linear-gradient(
+        115deg,
+        #f0f8ff,
+        #ffffff 65%,
+        #e3f2ff
+    );
+    border: 1px solid #d8e7f7;
+    margin-bottom: 18px;
 }
 
-.kf-crumb {
+.kf-breadcrumb {
     display: flex;
     align-items: center;
-    gap: 8px;
-
+    gap: 9px;
+    font-size: 12px;
+    color: #607d9f;
     margin-bottom: 14px;
-
-    color: #56799f;
-    font-size: 12px;
-    font-weight: 700;
 }
 
-.kf-crumb a {
-    color: #0968ec;
-}
-
-.kf-crumb svg {
-    width: 15px;
-    height: 15px;
-}
-
-.kf-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 18px;
-    margin-bottom: 20px;
-}
-
-.kf-heading small {
-    color: #176ac8;
-
-    font-size: 11px;
-    font-weight: 850;
-    letter-spacing: .7px;
-}
-
-.kf-heading h1 {
-    margin: 4px 0 5px;
-
-    color: #092d65;
-
-    font-size: 33px;
-    font-weight: 850;
-}
-
-.kf-heading p {
-    margin: 0;
-
-    color: #537497;
-
-    font-size: 13px;
-    font-weight: 550;
-}
-
-/* KARTU TANGGAL */
-
-.kf-date-card {
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
-    padding: 11px 13px;
-
-    background: rgba(255,255,255,.96);
-
-    border: 1px solid #dae7f7;
-    border-radius: 11px;
-
-    box-shadow: 0 5px 18px rgba(13,65,125,.06);
-}
-
-.kf-date-icon {
-    display: grid;
-    place-items: center;
-
-    width: 37px;
-    height: 37px;
-
-    background: #e9f3ff;
-    color: #0968ec;
-
-    border-radius: 8px;
-}
-
-.kf-date-icon svg {
-    width: 19px;
-    height: 19px;
-}
-
-.kf-date-card strong {
-    display: block;
-
-    color: #153d72;
-
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.kf-date-card span:not(.kf-date-icon) {
-    display: block;
-
-    color: #6481a1;
-
-    font-size: 12px;
-    font-weight: 600;
-}
-
-/* KPI */
-
-.kf-kpis {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0,1fr));
-
-    gap: 12px;
-}
-
-.kf-kpis article {
-    display: flex;
-    align-items: center;
-
-    gap: 13px;
-    min-height: 100px;
-    padding: 14px;
-
-    background: #ffffff;
-
-    border: 1px solid #dce8f6;
-    border-radius: 11px;
-}
-
-.kf-kpi-icon {
-    display: grid;
-    place-items: center;
-
-    width: 43px;
-    height: 43px;
-    flex-shrink: 0;
-
-    background: #0968ec;
-    color: white;
-
-    border-radius: 9px;
-}
-
-.kf-kpi-icon svg {
-    width: 21px;
-    height: 21px;
-}
-
-.kf-kpis small {
-    display: block;
-
-    color: #53749a;
-
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.kf-kpis strong {
-    display: block;
-
-    color: #092e66;
-
-    font-size: 24px;
-    font-weight: 850;
-
-    overflow-wrap: anywhere;
-}
-
-.kf-kpis strong.kf-money-small {
-    font-size: 19px;
-}
-
-.kf-kpis strong.kf-date-small {
-    font-size: 16px;
-}
-
-.kf-kpis article span:not(.kf-kpi-icon) {
-    color: #7389a5;
-    font-size: 11px;
-}
-
-/* BUTTON */
-
-.kf-btn,
-.kf-dialog .kf-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 8px;
-    min-height: 39px;
-    padding: 9px 13px;
-
-    background: white;
-    color: #1b5eae;
-
-    border: 1px solid #d3e2f5;
-    border-radius: 8px;
-
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 800;
-
-    cursor: pointer;
+.kf-breadcrumb a {
+    color: #0567d7;
     text-decoration: none;
 }
 
-.kf-btn svg,
-.kf-dialog .kf-btn svg {
-    width: 16px;
-    height: 16px;
+.kf-breadcrumb svg {
+    width: 14px;
+    height: 14px;
 }
 
-.kf-btn.primary,
-.kf-dialog .kf-btn.primary {
-    background: #0968ec;
-    border-color: #0968ec;
-    color: white;
-}
-
-.kf-btn.warning,
-.kf-dialog .kf-btn.warning {
-    background: #fff1d6;
-    color: #976500;
-    border-color: #f2d49c;
-}
-
-.kf-btn.danger,
-.kf-dialog .kf-btn.danger {
-    background: #ffedf0;
-    color: #be2b45;
-    border-color: #ffd3db;
-}
-
-.kf-btn:disabled,
-.kf-dialog .kf-btn:disabled {
-    opacity: .55;
-    cursor: not-allowed;
-}
-
-/* DATA MASUK */
-
-.kf-incoming {
-    display: flex;
-    align-items: center;
-
-    gap: 14px;
-    margin-bottom: 14px;
-    padding: 17px;
-
-    background: white;
-
-    border: 1px solid #d9e6f5;
-    border-radius: 11px;
-}
-
-.kf-incoming-icon {
-    display: grid;
-    place-items: center;
-
-    width: 44px;
-    height: 44px;
-    flex-shrink: 0;
-
-    background: #e9f3ff;
-    color: #0968ec;
-
-    border-radius: 10px;
-}
-
-.kf-incoming-icon svg {
-    width: 21px;
-    height: 21px;
-}
-
-.kf-incoming-body {
-    flex: 1;
-}
-
-.kf-incoming-body small {
-    color: #2b75c8;
-    font-size: 11px;
-    font-weight: 850;
-}
-
-.kf-incoming-body h3 {
-    margin: 2px 0 5px;
-
-    color: #10386e;
-    font-size: 16px;
-    font-weight: 850;
-}
-
-.kf-incoming-body p {
-    margin: 0;
-
-    color: #5c7899;
-    font-size: 13px;
-}
-
-/* CARD */
-
-.kf-card {
-    margin-bottom: 14px;
-    padding: 16px;
-
-    background: white;
-
-    border: 1px solid #dce7f5;
-    border-radius: 11px;
-}
-
-.kf-card-head {
+.kf-hero-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 16px;
 }
 
-.kf-card-head h2 {
-    margin: 0 0 4px;
-
-    color: #10386e;
-    font-size: 17px;
-    font-weight: 850;
-}
-
-.kf-card-head p {
-    margin: 0;
-    color: #6c83a1;
-    font-size: 13px;
-}
-
-.kf-card-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.kf-pill {
-    display: inline-flex;
-    align-items: center;
-
-    gap: 7px;
-    padding: 8px 10px;
-
-    background: #eaf4ff;
-    color: #0968ec;
-
-    border-radius: 8px;
-    font-size: 12px;
+.kf-hero-head h1 {
+    font-size: 29px;
+    line-height: 1.15;
+    margin: 5px 0 8px;
+    color: #07295a;
     font-weight: 800;
 }
 
-.kf-pill svg {
-    width: 16px;
-    height: 16px;
+.kf-hero-head p:not(.kf-eyebrow) {
+    color: #617b9c;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0;
 }
 
-/* FILTER */
+.kf-eyebrow {
+    font-size: 10px;
+    letter-spacing: .1em;
+    font-weight: 800;
+    color: #0869d6;
+    margin: 0;
+}
+
+
+/* ============================================================
+   STATISTIK
+   ============================================================ */
+
+.kf-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 13px;
+    margin-top: 20px;
+}
+
+.kf-stats article {
+    background: #fff;
+    border: 1px solid #dce6f0;
+    border-radius: 12px;
+    padding: 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    box-shadow: 0 3px 9px #153b6610;
+}
+
+.kf-stats span {
+    font-size: 12px;
+    color: #385c86;
+    font-weight: 700;
+}
+
+.kf-stats strong {
+    font-size: 24px;
+    color: #092d66;
+    overflow-wrap: anywhere;
+}
+
+.kf-stats small {
+    font-size: 11px;
+    color: #748ba5;
+}
+
+
+/* ============================================================
+   PANEL
+   ============================================================ */
+
+.kf-panel {
+    background: #fff;
+    border: 1px solid #dbe6f1;
+    border-radius: 14px;
+    box-shadow: 0 8px 26px #234b7410;
+    padding: 17px;
+}
+
+.kf-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 16px;
+}
+
+.kf-section-head h2 {
+    font-size: 17px;
+    margin: 0 0 5px;
+    color: #0a2e65;
+}
+
+.kf-section-head p {
+    margin: 0;
+    color: #748aa7;
+    font-size: 12px;
+}
+
+.kf-chip,
+.kf-badge {
+    background: #e8f2ff;
+    color: #1664ae;
+    border: 1px solid #d8e9fa;
+    border-radius: 7px;
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.kf-badge {
+    display: inline-block;
+    white-space: normal;
+}
+
+
+/* ============================================================
+   TABS MANUAL / ARSIP
+   ============================================================ */
+
+.kf-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    border-bottom: 1px solid #e1ebf5;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+}
+
+.kf-tabs a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    border: 1px solid #d7e6f5;
+    color: #1c5795;
+    background: #f8fbff;
+    border-radius: 9px;
+    padding: 9px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: .18s ease;
+}
+
+.kf-tabs a:hover {
+    background: #edf6ff;
+}
+
+.kf-tabs a.active {
+    color: #fff;
+    background: #0867d9;
+    border-color: #0867d9;
+}
+
+.kf-tabs svg {
+    width: 15px;
+    height: 15px;
+}
+
+.kf-archive-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f5f8fc;
+    border: 1px solid #dce5f0;
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-size: 12px;
+    margin: 12px 0;
+    color: #3c5671;
+}
+
+.kf-archive-notice svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+
+/* ============================================================
+   FILTER
+   ============================================================ */
 
 .kf-toolbar {
     display: flex;
-    align-items: end;
     gap: 10px;
+    align-items: stretch;
+    margin-bottom: 15px;
 }
 
 .kf-search {
-    display: flex;
-    align-items: center;
-
+    position: relative;
     flex: 1;
-    gap: 9px;
-    padding: 0 12px;
-
-    background: #f6faff;
-
-    border: 1px solid #dbe7f6;
-    border-radius: 8px;
+    min-width: 200px;
 }
 
 .kf-search svg {
-    width: 17px;
-    height: 17px;
-    color: #7c96b6;
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 12px;
+    top: 12px;
+    color: #8298b0;
+    pointer-events: none;
 }
 
 .kf-search input {
+    padding-left: 35px !important;
+}
+
+.kf-search input,
+.kf-filter input {
     width: 100%;
     height: 40px;
-
-    border: none;
+    background: #fff;
+    border: 1px solid #d6e2ee;
+    border-radius: 9px;
+    padding: 9px 12px;
+    color: #143c6d;
     outline: none;
-
-    background: transparent;
-
-    color: #244b76;
-    font-size: 13px;
 }
 
-.kf-limit {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.kf-filter {
+    width: 245px;
+}
 
-    color: #335b86;
+
+/* ============================================================
+   TOMBOL
+   ============================================================ */
+
+.kf-btn {
+    cursor: pointer;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    padding: 9px 13px;
+    text-decoration: none;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    font-weight: 700;
     font-size: 12px;
-    font-weight: 750;
+    white-space: nowrap;
+    transition: .18s ease;
 }
 
-.kf-limit select {
-    min-width: 110px;
-    height: 40px;
-
-    padding: 8px;
-
-    border: 1px solid #dbe7f6;
-    border-radius: 8px;
-
-    background: white;
+.kf-btn svg {
+    width: 15px;
+    height: 15px;
 }
 
-/* TABEL */
+.kf-btn:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.kf-primary {
+    background: #0867d9;
+    color: #fff;
+    box-shadow: 0 3px 9px #0a5dcb26;
+}
+
+.kf-primary:hover {
+    background: #0355b7;
+}
+
+.kf-outline {
+    background: #fff;
+    color: #1761a8;
+    border-color: #d3e1f1;
+}
+
+.kf-outline:hover {
+    background: #eef6ff;
+}
+
+.kf-danger {
+    background: #d43c48;
+    color: #fff;
+}
+
+.kf-danger:hover {
+    background: #b82938;
+}
+
+.kf-small {
+    padding: 7px 9px;
+    font-size: 11px;
+}
+
+
+/* ============================================================
+   TABEL — FORMAT EXCEL K.I.B F
+   ============================================================ */
 
 .kf-table-wrap {
-    max-width: 100%;
     overflow: auto;
-
-    border: 1px solid #dce7f5;
-    border-radius: 8px;
+    border: 1px solid #d7e2ef;
+    border-radius: 10px;
 }
 
-.kf-table,
-.kf-dialog .kf-table {
+.kf-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1650px;
     width: 100%;
-    min-width: 700px;
-
-    border-collapse: collapse;
+    font-size: 12px;
+    color: #254268;
 }
 
-.kf-table th,
-.kf-dialog .kf-table th {
-    padding: 12px;
-
-    background: #e8f2fd;
-    color: #153f77;
-
-    border-bottom: 1px solid #d8e4f3;
-
-    font-size: 13px;
-    font-weight: 850;
-    text-align: left;
+.kf-table th {
+    background: #dceaf9;
+    color: #123965;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: center;
+    padding: 12px 10px;
+    border-right: 1px solid #cadbec;
+    border-bottom: 1px solid #c3d7e9;
+    vertical-align: middle;
 }
 
-.kf-table td,
-.kf-dialog .kf-table td {
-    padding: 12px;
-
-    color: #315578;
-
-    border-bottom: 1px solid #e8eef7;
-
-    font-size: 13px;
-    line-height: 1.6;
-}
-
-.kf-table td strong,
-.kf-dialog .kf-table td strong {
-    color: #103a72;
-    font-weight: 850;
+.kf-table td {
+    padding: 12px 10px;
+    border-right: 1px solid #e0eaf5;
+    border-bottom: 1px solid #e0eaf5;
+    vertical-align: top;
+    line-height: 1.55;
 }
 
 .kf-table tbody tr:nth-child(even) {
-    background: #fbfdff;
+    background: #f9fcff;
 }
 
 .kf-table tbody tr:hover {
-    background: #f3f9ff;
+    background: #f0f7ff;
 }
 
-.kf-table tr[hidden] {
-    display: none !important;
+.kf-main-name {
+    min-width: 260px;
+    max-width: 335px;
 }
 
-.kf-location {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.kf-location-icon {
-    display: grid;
-    place-items: center;
-
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-
-    background: #e8f3ff;
-    color: #0968ec;
-
-    border-radius: 8px;
-}
-
-.kf-location-icon svg {
-    width: 16px;
-    height: 16px;
-}
-
-.kf-location small {
+.kf-main-name strong {
     display: block;
-    color: #7a91ad;
-    font-size: 11px;
-}
-
-.kf-count {
-    display: inline-flex;
-    align-items: center;
-
-    gap: 7px;
-    padding: 7px 10px;
-
-    background: #ecf6ff;
-    color: #1264be;
-
-    border: 1px solid #cce2fb;
-    border-radius: 7px;
-
+    color: #0c3c7c;
     font-size: 12px;
-    font-weight: 800;
 }
 
-.kf-count svg {
-    width: 16px;
-    height: 16px;
+.kf-main-name small {
+    display: block;
+    color: #758aa5;
+    margin: 3px 0 6px;
+}
+
+.kf-uraian {
+    white-space: pre-line;
+    min-width: 150px;
+    overflow-wrap: anywhere;
+}
+
+.kf-money {
+    white-space: nowrap;
+    font-weight: 800;
+    color: #124c8a;
 }
 
 .kf-empty {
-    padding: 26px !important;
-    text-align: center;
-    color: #8a9bb1 !important;
+    text-align: center !important;
+    padding: 35px !important;
+    color: #7890a9;
 }
 
-.kf-price {
-    color: #0757ac !important;
-    font-weight: 850;
-    white-space: nowrap;
+.kf-pagination {
+    padding-top: 16px;
 }
 
-/* NILAI KLIK */
+.kf-archive-table {
+    min-width: 1100px;
+}
 
-.kf-value-button {
-    display: inline-flex;
-    align-items: center;
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
+.kf-dialog {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 25px 90px #001c4266;
+    width: min(850px, calc(100vw - 26px));
+    max-height: calc(100vh - 32px);
+    padding: 0;
+    overflow: hidden;
+    color: #103c72;
+}
+
+.kf-dialog::backdrop {
+    background: #06152a8a;
+    backdrop-filter: blur(3px);
+}
+
+.kf-dialog form {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+}
+
+.kf-dialog-head {
+    padding: 17px 20px;
+    border-bottom: 1px solid #dfebf8;
+    background: #fff;
+    display: flex;
+    align-items: flex-start;
     justify-content: space-between;
-
-    gap: 9px;
-    padding: 8px 10px;
-
-    background: #eaf5ff;
-
-    border: 1px solid #cee4fb;
-    border-radius: 8px;
-
-    cursor: pointer;
-    text-align: left;
+    gap: 12px;
 }
 
-.kf-value-button strong {
-    color: #0759b2;
-    font-size: 13px;
-    font-weight: 850;
-    white-space: nowrap;
-}
-
-.kf-value-button small {
+.kf-dialog-head small {
     display: block;
-    color: #708aa8;
-    font-size: 11px;
+    color: #0871de;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    margin-bottom: 4px;
 }
 
-.kf-value-button svg {
-    width: 15px;
-    height: 15px;
-    color: #0968ec;
+.kf-dialog-head h2 {
+    font-size: 18px;
+    margin: 0 0 5px;
+    color: #062a60;
 }
 
-.kf-value-button:hover {
-    background: #dceeff;
+.kf-dialog-head p {
+    font-size: 12px;
+    color: #7b8ea4;
+    margin: 0;
 }
 
-/* AKSI */
-
-.kf-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.kf-icon-btn {
-    display: inline-grid;
-    place-items: center;
-
-    width: 35px;
-    height: 35px;
-
-    border: none;
+.kf-x {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: #edf4fc;
     border-radius: 8px;
-
     cursor: pointer;
+    color: #6282a7;
+    display: grid;
+    place-items: center;
 }
 
-.kf-icon-btn svg {
+.kf-x svg {
     width: 17px;
     height: 17px;
 }
 
-.kf-icon-btn.view {
-    background: #e8f3ff;
-    color: #0968ec;
-}
-
-.kf-icon-btn.edit {
-    background: #fff0d7;
-    color: #b77800;
-}
-
-.kf-icon-btn.delete {
-    background: #ffedf0;
-    color: #c5304a;
-}
-
-/* PAGINATION */
-
-.kf-table-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 12px;
-    padding-top: 12px;
-
-    font-size: 12px;
-    color: #7489a4;
-}
-
-.kf-pages {
-    display: flex;
-    gap: 5px;
-}
-
-.kf-pages button {
-    min-width: 32px;
-    height: 32px;
-
-    border: 1px solid #d9e6f5;
-    border-radius: 7px;
-
-    background: white;
-    color: #1a5eac;
-
-    cursor: pointer;
-}
-
-.kf-pages button.active {
-    background: #0968ec;
-    color: white;
-}
-
-/* MODAL */
-
-.kf-dialog {
-    width: min(970px, calc(100vw - 24px));
-    max-width: none;
-    max-height: calc(100dvh - 24px);
-
-    padding: 0;
-
-    background: white;
-    color: #21476f;
-
-    border: 1px solid #dbe6f5;
-    border-radius: 12px;
-
-    overflow: hidden;
-
-    box-shadow: 0 25px 80px rgba(5,30,70,.3);
-}
-
-.kf-dialog.wide {
-    width: min(1280px, calc(100vw - 24px));
-}
-
-.kf-dialog::backdrop {
-    background: rgba(9,30,67,.62);
-    backdrop-filter: blur(2px);
-}
-
-.kf-dialog-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 12px;
-    padding: 16px 20px;
-
-    background: #f8fbff;
-
-    border-bottom: 1px solid #dfe8f5;
-}
-
-.kf-dialog-head small {
-    color: #2373c8;
-    font-size: 11px;
-    font-weight: 850;
-}
-
-.kf-dialog-head h2 {
-    margin: 4px 0;
-
-    color: #103970;
-    font-size: 22px;
-    font-weight: 850;
-}
-
-.kf-dialog-head p {
-    margin: 0;
-    color: #6781a0;
-    font-size: 13px;
-}
-
-.kf-close {
-    display: grid;
-    place-items: center;
-
-    width: 35px;
-    height: 35px;
-
-    background: #edf5ff;
-    color: #51759d;
-
-    border: none;
-    border-radius: 8px;
-
-    cursor: pointer;
-}
-
-.kf-close svg {
-    width: 19px;
-    height: 19px;
-}
-
-.kf-dialog-content {
-    max-height: calc(100dvh - 160px);
-    padding: 18px 20px;
-
-    overflow: auto;
+.kf-dialog-body {
+    padding: 17px 20px;
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1;
+    max-height: calc(100vh - 165px);
 }
 
 .kf-dialog-foot {
     display: flex;
-    align-items: center;
     justify-content: flex-end;
-
-    gap: 9px;
+    gap: 8px;
     padding: 13px 20px;
-
-    border-top: 1px solid #e1eaf5;
-    background: white;
+    border-top: 1px solid #e0ebf4;
+    background: #f9fcff;
 }
 
-/* LOKASI */
 
-.kf-lokasi-grid {
-    display: grid;
-    grid-template-columns: 220px minmax(0,1fr);
+/* ============================================================
+   FORM TAMBAH / EDIT
+   ============================================================ */
 
-    gap: 13px;
-    min-height: 470px;
-}
-
-.kf-tree-panel,
-.kf-aset-panel {
-    min-width: 0;
-    padding: 14px;
-
-    border: 1px solid #e0e9f5;
-    border-radius: 9px;
-}
-
-.kf-tree-panel {
-    background: #f7fbff;
-}
-
-.kf-tree-panel h3,
-.kf-aset-panel h3 {
-    margin: 0 0 12px;
-
-    color: #133c73;
-    font-size: 16px;
-    font-weight: 850;
-}
-
-.kf-tree-panel h4 {
-    color: #577a9c;
-    font-size: 12px;
-    font-weight: 850;
-}
-
-.kf-tree-btn {
-    display: flex;
-    align-items: center;
-
-    gap: 9px;
-
-    width: 100%;
-    margin-bottom: 6px;
-    padding: 9px;
-
-    background: white;
-    color: #315d86;
-
-    border: 1px solid #dce8f5;
-    border-radius: 7px;
-
-    text-align: left;
-    font-size: 13px;
-    font-weight: 700;
-
-    cursor: pointer;
-}
-
-.kf-tree-btn svg {
-    width: 16px;
-    height: 16px;
-}
-
-.kf-tree-btn.active {
-    background: #e8f3ff;
-    color: #0968ec;
-    border-color: #81b8f2;
-}
-
-/* TABEL EXCEL */
-
-.kf-subtitle {
-    color: #7188a3;
-    font-size: 12px;
-}
-
-.kf-excel-table {
-    min-width: 1850px !important;
-}
-
-.kf-excel-table th {
-    text-align: center !important;
-}
-
-.kf-excel-table td {
-    vertical-align: top;
-    min-width: 75px;
-}
-
-.kf-excel-name {
-    min-width: 250px !important;
-}
-
-.kf-excel-name p {
-    margin: 5px 0;
-    white-space: pre-wrap;
-}
-
-.kf-excel-table td:last-child {
-    min-width: 240px;
-}
-
-.kf-excel-table td:last-child p {
-    white-space: pre-wrap;
-}
-
-/* QUICK ACTIONS */
-
-.kf-quick-actions {
-    margin: 12px 0;
-    padding: 12px;
-
-    background: #fffaf0;
-    border: 1px solid #f3dfb4;
-    border-radius: 9px;
-}
-
-.kf-quick-heading strong {
-    color: #775218;
-    font-size: 14px;
-    font-weight: 850;
-}
-
-.kf-quick-heading p {
-    margin: 4px 0 10px;
-
-    color: #876d47;
-    font-size: 12px;
-}
-
-.kf-quick-list {
-    max-height: 240px;
-    overflow: auto;
-}
-
-.kf-quick-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 12px;
-    margin-bottom: 7px;
-    padding: 10px;
-
-    background: white;
-    border: 1px solid #e9e0d0;
-    border-radius: 8px;
-}
-
-.kf-quick-row strong {
-    display: block;
-    font-size: 13px;
-}
-
-.kf-quick-row small {
-    color: #748ba4;
-    font-size: 12px;
-}
-
-/* RINCIAN NILAI */
-
-.kf-nilai-summary {
-    margin-bottom: 13px;
-    padding: 14px;
-
-    background: #ecf6ff;
-    border: 1px solid #d3e6fa;
-    border-radius: 9px;
-
-    color: #42668c;
-    font-weight: 750;
-}
-
-.kf-nilai-summary strong {
-    color: #0754aa;
-    font-size: 19px;
-    font-weight: 850;
-}
-
-.kf-nilai-table {
-    min-width: 740px !important;
-}
-
-.kf-nilai-table small {
-    display: block;
-    color: #7189a5;
-}
-
-/* DETAIL INVENTARIS */
-
-.kf-summary {
+.kf-fieldset {
+    margin: 0 0 14px;
     padding: 15px;
-    margin-bottom: 14px;
-
-    background: #edf6ff;
-    border: 1px solid #d5e7fa;
-    border-radius: 9px;
+    border: 1px solid #d9e6f5;
+    border-radius: 11px;
 }
 
-.kf-summary strong {
-    color: #103d76;
-    font-size: 17px;
-    font-weight: 850;
-}
-
-.kf-summary p {
-    margin: 5px 0;
-    color: #6884a2;
-}
-
-.kf-photo {
-    display: block;
-    width: 100%;
-    max-height: 280px;
-    object-fit: contain;
-}
-
-.kf-detail-title {
-    margin: 17px 0 12px;
-    color: #123d76;
-    font-size: 16px;
-    font-weight: 850;
-}
-
-.kf-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2,minmax(0,1fr));
-    gap: 10px;
-}
-
-.kf-detail-field {
-    padding: 12px;
-
-    background: #fbfdff;
-    border: 1px solid #e0e9f5;
-    border-radius: 8px;
-}
-
-.kf-detail-field small {
-    display: block;
-    margin-bottom: 5px;
-
-    color: #6683a2;
-    font-size: 12px;
-    font-weight: 750;
-}
-
-.kf-detail-field strong {
-    color: #174475;
-    font-size: 14px;
+.kf-fieldset legend {
+    padding: 0 8px;
+    font-size: 13px;
     font-weight: 800;
-    white-space: pre-wrap;
+    color: #154b8c;
 }
 
-.kf-detail-text h3 {
-    margin: 18px 0 8px;
-    color: #153e74;
-    font-size: 15px;
-}
-
-.kf-detail-text p {
-    white-space: pre-wrap;
-    line-height: 1.7;
-}
-
-.kf-muted {
-    color: #8095ad;
-}
-
-/* FORM */
-
-.kf-form-dialog form {
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100dvh - 24px);
-}
-
-.kf-form-dialog .kf-dialog-content {
-    flex: 1;
-    min-height: 0;
-    max-height: none;
-    overflow-y: auto;
-}
-
-.kf-form-section {
-    margin-bottom: 15px;
-    padding: 15px;
-
-    border: 1px solid #dce7f5;
-    border-radius: 10px;
-    background: #ffffff;
-}
-
-.kf-section-title {
-    display: flex;
-    gap: 11px;
-    margin-bottom: 15px;
-}
-
-.kf-section-title > span {
-    display: grid;
+.kf-fieldset legend span {
+    display: inline-grid;
     place-items: center;
-
-    width: 30px;
-    height: 30px;
-    flex-shrink: 0;
-
-    border-radius: 7px;
-    background: #e9f3ff;
-    color: #0968ec;
-
-    font-weight: 850;
-}
-
-.kf-section-title h3 {
-    margin: 0;
-    color: #153f76;
-    font-size: 16px;
-    font-weight: 850;
-}
-
-.kf-section-title p {
-    margin: 4px 0;
-    color: #6f86a1;
-    font-size: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #e5f0ff;
+    color: #086ddd;
+    margin-right: 5px;
 }
 
 .kf-fields {
     display: grid;
+    grid-template-columns: repeat(
+        2,
+        minmax(0, 1fr)
+    );
     gap: 13px;
 }
 
-.kf-fields.two {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-}
-
 .kf-fields label {
-    color: #31547d;
-    font-size: 13px;
-    font-weight: 750;
-}
-
-.kf-fields label.full {
-    grid-column: 1 / -1;
-}
-
-.kf-fields label b {
-    color: #d33349;
+    font-size: 11px;
+    color: #2b537f;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
 }
 
 .kf-fields input,
-.kf-fields select,
 .kf-fields textarea {
-    display: block;
-
     width: 100%;
     min-width: 0;
-    min-height: 40px;
-
-    margin-top: 6px;
-    padding: 9px 11px;
-
-    border: 1px solid #d8e5f3;
+    border: 1px solid #d5e3f2;
     border-radius: 8px;
-
-    background: #ffffff;
-    color: #214a76;
-
-    font-family: inherit;
-    font-size: 13px;
+    background: #fff;
+    padding: 10px 11px;
+    color: #163d72;
     outline: none;
+    resize: vertical;
+    font-size: 12px;
 }
 
 .kf-fields input:focus,
-.kf-fields select:focus,
-.kf-fields textarea:focus {
-    border-color: #4d9af0;
-    box-shadow: 0 0 0 3px rgba(40,130,235,.08);
+.kf-fields textarea:focus,
+.kf-search input:focus,
+.kf-filter input:focus {
+    border-color: #086ddd;
+    box-shadow: 0 0 0 3px #0b68d21a;
 }
 
-.kf-fields input[readonly] {
-    background: #f4f8fc;
-    color: #6683a2;
+.kf-fields small {
+    color: #8092a7;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.5;
 }
 
-.kf-fields textarea {
-    min-height: 95px;
-    resize: vertical;
+.kf-fields em {
+    color: #df4756;
+    font-style: normal;
 }
 
-.kf-fields label small,
-.kf-hint {
-    display: block;
-    margin-top: 5px;
+.kf-full {
+    grid-column: 1 / -1;
+}
 
-    color: #758ba5;
+.kf-error {
+    white-space: pre-line;
+    border: 1px solid #fac9ce;
+    background: #fff2f3;
+    color: #a52133;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 13px;
     font-size: 12px;
 }
 
-/* PENDING */
 
-.kf-pending-toolbar {
+/* ============================================================
+   DETAIL KONSTRUKSI
+   ============================================================ */
+
+.kf-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        2,
+        minmax(0, 1fr)
+    );
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.kf-detail-grid > div {
+    border: 1px solid #dfebf7;
+    background: #fafdff;
+    border-radius: 9px;
+    padding: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.kf-detail-grid small {
+    color: #7189a3;
+    font-size: 10px;
+}
+
+.kf-detail-grid strong {
+    color: #193d68;
+    font-size: 12px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.kf-dialog-body h3 {
+    font-size: 14px;
+    margin: 17px 0 8px;
+    color: #0d407b;
+}
+
+.kf-preline {
+    white-space: pre-line;
+    background: #f8fbff;
+    border: 1px solid #e0eaf5;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+
+/* ============================================================
+   DOKUMEN
+   ============================================================ */
+
+.kf-file-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    margin-bottom: 11px;
-}
-
-.kf-pending-toolbar .kf-search {
-    flex: 1;
-}
-
-.kf-pending-toolbar > span {
-    color: #6884a2;
+    border: 1px solid #e1eaf3;
+    border-radius: 8px;
+    background: #fbfdff;
+    padding: 9px 10px;
+    margin-top: 7px;
     font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.kf-file-row a {
+    color: #0967d0;
+    word-break: break-word;
+}
+
+.kf-file-row small {
+    color: #8799ad;
+}
+
+.kf-link {
+    border: 0;
+    background: none;
+    color: #d64353;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.kf-remove-file {
+    display: flex !important;
+    align-items: center;
+    flex-direction: row !important;
     white-space: nowrap;
 }
 
-.kf-pending-wrap {
-    max-height: 310px;
+.kf-remove-file input {
+    width: auto !important;
 }
 
-.kf-pending-table {
-    min-width: 1100px !important;
-}
-
-.kf-pending-table td {
-    vertical-align: top;
-}
-
-.kf-pending-table td small {
-    display: block;
-    color: #7b93ac;
-    font-size: 11px;
-}
-
-/* VOUCHER TERPILIH */
-
-.kf-selected-source {
+.kf-file-list {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
 
-    margin-bottom: 15px;
-    padding: 13px;
-
-    background: #effbf4;
-    border: 1px solid #bce5cd;
+.kf-photo {
+    width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border: 1px solid #dce8f4;
     border-radius: 9px;
+    background: #f8fbff;
 }
 
-.kf-selected-source > svg {
-    width: 24px;
-    height: 24px;
-    color: #139253;
-}
 
-.kf-selected-source > div {
-    flex: 1;
-}
+/* ============================================================
+   TOAST
+   ============================================================ */
 
-.kf-selected-source small {
-    display: block;
-    color: #3e8b62;
-}
-
-.kf-selected-source strong {
-    color: #175b3b;
-    font-weight: 850;
-}
-
-.kf-selected-source p {
-    margin: 4px 0 0;
-    color: #4f8066;
-    font-size: 12px;
-}
-
-/* ERROR */
-
-.kf-error {
-    padding: 12px;
-    margin-bottom: 14px;
-
-    background: #fff0f2;
-    color: #b12c42;
-
-    border: 1px solid #ffd1d9;
-    border-radius: 8px;
-
-    white-space: pre-wrap;
+.kf-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    background: #113963;
+    color: #fff;
+    border-radius: 10px;
+    padding: 13px 16px;
+    box-shadow: 0 10px 30px #001f453f;
+    max-width: min(420px, 90vw);
     font-size: 13px;
 }
 
-/* RESPONSIVE */
 
-@media (max-width: 1100px) {
-    .kf-kpis {
-        grid-template-columns: repeat(2,minmax(0,1fr));
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 800px) {
+
+    .kf-page {
+        padding: 12px;
     }
-}
 
-@media (max-width: 900px) {
-    .kf-lokasi-grid {
+    .kf-stats {
         grid-template-columns: 1fr;
     }
 
-    .kf-heading {
-        flex-direction: column;
+    .kf-hero-head {
         align-items: flex-start;
+        flex-direction: column;
     }
 
-    .kf-card-head {
-        flex-wrap: wrap;
-    }
-}
-
-@media (max-width: 650px) {
-    .kf-hero {
-        margin: -16px -12px 12px;
-        padding: 16px 12px;
-    }
-
-    .kf-kpis {
-        grid-template-columns: 1fr;
-    }
-
-    .kf-date-card {
-        width: 100%;
-    }
-
-    .kf-toolbar,
-    .kf-incoming {
+    .kf-toolbar {
         flex-wrap: wrap;
     }
 
@@ -1369,365 +803,26 @@
         flex-basis: 100%;
     }
 
-    .kf-card-actions {
+    .kf-filter {
         width: 100%;
-        flex-wrap: wrap;
     }
 
-    .kf-card-actions .kf-btn {
-        flex: 1;
-    }
-
-    .kf-fields.two,
+    .kf-fields,
     .kf-detail-grid {
         grid-template-columns: 1fr;
     }
 
-    .kf-dialog {
-        width: calc(100vw - 12px);
+    .kf-full {
+        grid-column: auto;
     }
 
     .kf-dialog-head,
-    .kf-dialog-content,
+    .kf-dialog-body,
     .kf-dialog-foot {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding: 14px;
     }
 
     .kf-dialog-foot {
         flex-wrap: wrap;
     }
-
-    .kf-quick-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
-
-/* ==========================================================
-   K.I.B F — DETAIL LOKASI FULL WIDTH
-   Hanya memengaruhi modal Detail Konstruksi.
-========================================================== */
-
-/* Modal hampir memenuhi layar */
-
-#kfModalLokasi[open] {
-    display: flex;
-    flex-direction: column;
-
-    width: calc(100vw - 20px);
-    max-width: none;
-
-    height: calc(100dvh - 20px);
-    max-height: calc(100dvh - 20px);
-
-    padding: 0;
-    margin: auto;
-
-    overflow: hidden;
-
-    border-radius: 12px;
-}
-
-/* Header dan footer tetap pada tempatnya */
-
-#kfModalLokasi > .kf-dialog-head,
-#kfModalLokasi > .kf-dialog-foot {
-    flex-shrink: 0;
-}
-
-/* Konten utama menggunakan ruang yang tersedia */
-
-#kfModalLokasi .kf-lokasi-grid {
-    display: grid;
-
-    grid-template-columns:
-        190px minmax(0, 1fr);
-
-    gap: 12px;
-
-    flex: 1;
-    min-height: 0;
-    max-height: none;
-
-    padding: 14px;
-
-    overflow: hidden;
-}
-
-/* Panel Departemen dan Divisi */
-
-#kfModalLokasi .kf-tree-panel {
-    min-width: 0;
-    min-height: 0;
-
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-/* Panel tabel Konstruksi */
-
-#kfModalLokasi .kf-aset-panel {
-    display: flex;
-    flex-direction: column;
-
-    min-width: 0;
-    min-height: 0;
-
-    overflow: hidden;
-}
-
-/* Area tabel bisa digeser tanpa terpotong */
-
-#kfModalLokasi .kf-excel-wrap {
-    flex: 1;
-
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-    max-height: none;
-
-    overflow-x: auto;
-    overflow-y: auto;
-
-    border: 1px solid #dce7f5;
-    border-radius: 8px;
-}
-
-/* Tabel Excel */
-
-#kfModalLokasi .kf-excel-table {
-    width: 100%;
-    min-width: 1550px !important;
-
-    border-collapse: separate;
-    border-spacing: 0;
-
-    font-size: 13px;
-}
-
-/* Judul tabel */
-
-#kfModalLokasi .kf-excel-table th {
-    padding: 12px 10px;
-
-    background: #e7f1fc;
-    color: #103b72;
-
-    font-size: 13px;
-    font-weight: 850;
-
-    text-align: center;
-    vertical-align: middle;
-
-    line-height: 1.45;
-}
-
-/* Isi tabel */
-
-#kfModalLokasi .kf-excel-table td {
-    padding: 12px 10px;
-
-    color: #294c75;
-
-    font-size: 13px;
-    line-height: 1.6;
-
-    vertical-align: top;
-
-    white-space: normal;
-    overflow-wrap: anywhere;
-}
-
-/* Nama konstruksi tetap menonjol */
-
-#kfModalLokasi .kf-excel-name {
-    min-width: 220px !important;
-}
-
-#kfModalLokasi .kf-excel-name strong {
-    font-size: 13px;
-    font-weight: 850;
-}
-
-/* Dokumen pendukung */
-
-#kfModalLokasi .kf-excel-table td:last-child {
-    min-width: 230px;
-}
-
-/* ==========================================================
-   MODE PERLUAS TABEL
-========================================================== */
-
-#kfModalLokasi.kf-table-expanded .kf-lokasi-grid {
-    grid-template-columns: minmax(0, 1fr);
-}
-
-/* Sembunyikan sementara panel organisasi */
-
-#kfModalLokasi.kf-table-expanded .kf-tree-panel {
-    display: none;
-}
-
-/* Maksimalkan ruang tabel */
-
-#kfModalLokasi.kf-table-expanded .kf-aset-panel {
-    width: 100%;
-}
-
-/* Gunakan lebar lebih proporsional */
-
-#kfModalLokasi.kf-table-expanded .kf-excel-table {
-    min-width: 1450px !important;
-}
-
-/* Tombol perluas */
-
-#kfPerluasTabel {
-    white-space: nowrap;
-}
-
-#kfPerluasTabel svg {
-    width: 16px;
-    height: 16px;
-}
-
-/* ==========================================================
-   RESPONSIVE
-========================================================== */
-
-@media (max-width: 900px) {
-
-    #kfModalLokasi .kf-lokasi-grid {
-        grid-template-columns: 170px minmax(0, 1fr);
-    }
-}
-
-@media (max-width: 650px) {
-
-    #kfModalLokasi[open] {
-        width: calc(100vw - 10px);
-        height: calc(100dvh - 10px);
-        max-height: calc(100dvh - 10px);
-    }
-
-    #kfModalLokasi .kf-lokasi-grid {
-        grid-template-columns: minmax(0, 1fr);
-
-        overflow-y: auto;
-    }
-
-    #kfModalLokasi .kf-tree-panel {
-        max-height: 170px;
-    }
-
-    #kfModalLokasi .kf-excel-wrap {
-        min-height: 350px;
-    }
-}
-
-/* ==========================================================
-   K.I.B F — GARIS TABEL SEPERTI HALAMAN TANAH
-   Berlaku pada tabel utama dan seluruh modal Konstruksi
-========================================================== */
-
-/* Bingkai luar tabel */
-
-.kf .kf-table-wrap,
-.kf-dialog .kf-table-wrap {
-    border: 1px solid #d7e3f0;
-    border-radius: 8px;
-
-    overflow: auto;
-}
-
-/* Struktur tabel */
-
-.kf .kf-table,
-.kf-dialog .kf-table {
-    width: 100%;
-
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-/* Garis header tabel */
-
-.kf .kf-table thead th,
-.kf-dialog .kf-table thead th {
-    background: #e8f2fd;
-    color: #123b71;
-
-    border-right: 1px solid #d7e3f0;
-    border-bottom: 1px solid #d7e3f0;
-
-    padding: 12px 11px;
-
-    font-size: 13px;
-    font-weight: 850;
-
-    vertical-align: middle;
-}
-
-/* Garis setiap baris dan kolom */
-
-.kf .kf-table tbody td,
-.kf-dialog .kf-table tbody td {
-    border-right: 1px solid #e0e8f2;
-    border-bottom: 1px solid #e0e8f2;
-
-    padding: 12px 11px;
-
-    font-size: 13px;
-    line-height: 1.6;
-
-    vertical-align: middle;
-}
-
-/* Hilangkan garis ganda di sisi kanan */
-
-.kf .kf-table tr > :last-child,
-.kf-dialog .kf-table tr > :last-child {
-    border-right: 0;
-}
-
-/* Baris terakhir menggunakan border bingkai */
-
-.kf .kf-table tbody tr:last-child td,
-.kf-dialog .kf-table tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-/* Warna baris bergantian */
-
-.kf .kf-table tbody tr:nth-child(odd),
-.kf-dialog .kf-table tbody tr:nth-child(odd) {
-    background: #ffffff;
-}
-
-.kf .kf-table tbody tr:nth-child(even),
-.kf-dialog .kf-table tbody tr:nth-child(even) {
-    background: #f8fbff;
-}
-
-/* Hover baris */
-
-.kf .kf-table tbody tr:hover,
-.kf-dialog .kf-table tbody tr:hover {
-    background: #eef6ff;
-}
-
-/* Khusus tabel Excel K.I.B F */
-
-#kfModalLokasi .kf-excel-table tbody td {
-    vertical-align: top;
-
-    border-right: 1px solid #dce6f1;
-    border-bottom: 1px solid #dce6f1;
-}
-
-#kfModalLokasi .kf-excel-table thead th {
-    border-right: 1px solid #ceddec;
-    border-bottom: 1px solid #ceddec;
 }

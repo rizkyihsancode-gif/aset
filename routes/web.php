@@ -802,63 +802,58 @@ Route::redirect('/kib/aset-tetap', '/kib/aset_ttp');
 
 
 
+
 // ========================================================
-// K.I.B F — KONSTRUKSI
-// Controller: KIBController
+// K.I.B F — KONSTRUKSI MANUAL
+// Menggunakan KIBController.php yang sudah ada
 // ========================================================
 
-// Halaman utama
 Route::get(
     '/kib/konstruksi',
-    [KIBController::class, 'dataKonstruksi']
+    [KIBController::class, 'dataKonstruksiManual']
 )->name('kib.konstruksi');
 
-// Detail Lokasi
-Route::get(
-    '/kib/konstruksi/lokasi/{lokasi}',
-    [KIBController::class, 'detailKonstruksiLokasi']
-)
-    ->whereNumber('lokasi')
-    ->name('kib.konstruksi.lokasi');
+Route::post(
+    '/kib/konstruksi',
+    [KIBController::class, 'storeKonstruksiManual']
+)->name('kib.konstruksi.store');
 
-// File Foto dan PDF
 Route::get(
-    '/kib/konstruksi/{konstruksi}/file/{jenis}',
-    [KIBController::class, 'fileKonstruksi']
+    '/kib/konstruksi/{konstruksi}/foto',
+    [KIBController::class, 'fotoKonstruksiManual']
 )
     ->whereNumber('konstruksi')
-    ->where('jenis', 'foto|dokumen')
-    ->name('kib.konstruksi.file');
+    ->name('kib.konstruksi.foto');
 
-// Detail Satu Inventaris
+Route::get(
+    '/kib/konstruksi/{konstruksi}/dokumen/{dokumen}',
+    [KIBController::class, 'dokumenKonstruksiManual']
+)
+    ->whereNumber('konstruksi')
+    ->whereNumber('dokumen')
+    ->name('kib.konstruksi.dokumen');
+
 Route::get(
     '/kib/konstruksi/{konstruksi}',
-    [KIBController::class, 'showKonstruksi']
+    [KIBController::class, 'showKonstruksiManual']
 )
     ->whereNumber('konstruksi')
     ->name('kib.konstruksi.show');
 
-// Tambah dari Pending
-Route::post(
-    '/kib/konstruksi',
-    [KIBController::class, 'storeKonstruksi']
-)->name('kib.konstruksi.store');
-
-// Edit
 Route::put(
     '/kib/konstruksi/{konstruksi}',
-    [KIBController::class, 'updateKonstruksi']
+    [KIBController::class, 'updateKonstruksiManual']
 )
     ->whereNumber('konstruksi')
     ->name('kib.konstruksi.update');
 
-// Hapus
 Route::delete(
     '/kib/konstruksi/{konstruksi}',
-    [KIBController::class, 'destroyKonstruksi']
+    [KIBController::class, 'destroyKonstruksiManual']
 )
     ->whereNumber('konstruksi')
     ->name('kib.konstruksi.destroy');
+
 
 
 
