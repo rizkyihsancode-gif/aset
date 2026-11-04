@@ -2,18 +2,40 @@
 /*
 |--------------------------------------------------------------------------
 | SISTEM ASET — K.I.B F KONSTRUKSI MANUAL
-| Perumda Tirta Kencana Kota Samarinda
+| PERUMDA TIRTA KENCANA KOTA SAMARINDA
 |--------------------------------------------------------------------------
 |
-| - Tanpa voucher / kode aktiva / Data Pending
-| - Tambah, Edit, Detail, Hapus
-| - Pemilihan banyak PDF / gambar
-| - File baru tidak menghapus lampiran yang sudah ada
+| Fitur:
+| 1. Create / Tambah Konstruksi
+| 2. Read / View Detail Konstruksi
+| 3. Update / Edit Konstruksi
+| 4. Delete / Hapus Konstruksi
+| 5. Konfirmasi penghapusan
+| 6. Multiple PDF dan gambar
+| 7. Hapus lampiran tersimpan saat Edit
+| 8. Validasi dan pesan kesalahan
+| 9. Tampilan detail dengan format uraian pekerjaan
 |
+| Database:
+| - kib_konstruksi_manual
+| - kib_konstruksi_dokumens
+|
+| Controller:
+| - KIBController.php
+|
+| Arsip lama:
+| - kib_f_s (read-only)
+|--------------------------------------------------------------------------
 */
 
 (() => {
     'use strict';
+
+    /*
+    |--------------------------------------------------------------------------
+    | INISIALISASI
+    |--------------------------------------------------------------------------
+    */
 
     const root = document.getElementById('kfApp');
 
@@ -23,14 +45,21 @@
 
     root.dataset.initialized = '1';
 
-    const $ = id => document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
 
-    const base = root.dataset.base;
+    const base = (root.dataset.base || '').replace(/\/$/, '');
     const token = root.dataset.token;
 
     const form = $('kfForm');
     const formDialog = $('kfModalForm');
     const detailDialog = $('kfModalDetail');
+    const deleteDialog = $('kfModalDelete');
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIELD FORM KONSTRUKSI
+    |--------------------------------------------------------------------------
+    */
 
     const fields = [
         'nama_barang_manual',
@@ -50,39 +79,119 @@
         'status_aset',
         'nilai',
         'urai',
-        'ket',
+        'ket'
     ];
 
-    const money = value =>
-        'Rp ' + (Number(value) || 0)
-            .toLocaleString('id-ID');
+    /*
+    |--------------------------------------------------------------------------
+    | STATE
+    |--------------------------------------------------------------------------
+    */
 
     let active = null;
     let editId = null;
+
     let newFiles = [];
+
     let saving = false;
+    let deleting = false;
+
+    let deleteTarget = null;
+    let toastTimer = null;
 
 
     /*
     |--------------------------------------------------------------------------
-    | ICON LUCIDE
+    | FORMAT RUPIAH
     |--------------------------------------------------------------------------
     */
 
-    function refreshIcons() {
-        window.lucide?.createIcons?.();
+    const money = (value) => {
+        const number = Number(value) || 0;
+
+        return 'Rp ' + number.toLocaleString('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
+    };
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FORMAT KATEGORI
+    |--------------------------------------------------------------------------
+    */
+
+    function formatKategori(value) {
+        const kategori = String(value || '').toUpperCase();
+
+        switch (kategori) {
+            case 'IPA':
+                return 'Instalasi Pengolahan Air (IPA)';
+
+            case 'BOOSTER':
+                return 'Booster';
+
+            case 'PERPIPAAN':
+                return 'Perpipaan';
+
+            default:
+                return 'Belum Dikategorikan';
+        }
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | MODAL
+    | FORMAT JENIS BANGUNAN
+    |--------------------------------------------------------------------------
+    */
+
+    function formatBangunan(value) {
+        switch (String(value || '').toUpperCase()) {
+            case 'P':
+                return 'Permanen';
+
+            case 'SP':
+                return 'Semi Permanen';
+
+            case 'D':
+                return 'Darurat';
+
+            default:
+                return value || '—';
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | REFRESH ICON LUCIDE
+    |--------------------------------------------------------------------------
+    */
+
+    function refreshIcons() {
+        if (
+            window.lucide &&
+            typeof window.lucide.createIcons === 'function'
+        ) {
+            window.lucide.createIcons();
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MODAL HELPER
     |--------------------------------------------------------------------------
     */
 
     function openDialog(dialog) {
+        if (!dialog) {
+            return;
+        }
+
         if (
-            dialog &&
             !dialog.open &&
             typeof dialog.showModal === 'function'
         ) {
@@ -92,8 +201,9 @@
         refreshIcons();
     }
 
+
     function closeDialog(dialog) {
-        if (dialog?.open) {
+        if (dialog && dialog.open) {
             dialog.close();
         }
     }
@@ -101,38 +211,43 @@
 
     /*
     |--------------------------------------------------------------------------
-    | TOAST NOTIFIKASI
+    | TOAST NOTIFICATION
     |--------------------------------------------------------------------------
     */
 
-    let toastTimer;
-
-    function toast(message) {
+    function showToast(message) {
         const node = $('kfToast');
 
-        if (!node) return;
+        if (!node) {
+            console.warn(message);
+            return;
+        }
 
         node.textContent = message;
         node.hidden = false;
 
-        clearTimeout(toastTimer);
+        if (toastTimer) {
+            clearTimeout(toastTimer);
+        }
 
         toastTimer = setTimeout(() => {
             node.hidden = true;
-        }, 3800);
+        }, 4000);
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | PESAN VALIDASI
+    | FORM ERROR MESSAGE
     |--------------------------------------------------------------------------
     */
 
     function showError(message) {
         const node = $('kfError');
 
-        if (!node) return;
+        if (!node) {
+            return;
+        }
 
         node.textContent = message || '';
         node.hidden = !message;
@@ -148,7 +263,11 @@
 
     /*
     |--------------------------------------------------------------------------
-    | FETCH LARAVEL
+    | API HELPER
+    |--------------------------------------------------------------------------
+    |
+    | Menggunakan endpoint Konstruksi yang ada
+    | pada KIBController.php.
     |--------------------------------------------------------------------------
     */
 
@@ -159,25 +278,17 @@
             ...options,
 
             headers: {
-                Accept: 'application/json',
-
+                'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-
                 'X-CSRF-TOKEN': token,
 
-                ...options.headers
+                ...(options.headers || {})
             }
         });
 
-        const data = await response
-            .json()
-            .catch(() => ({}));
+        const data = await response.json().catch(() => ({}));
 
-        if (
-            !response.ok ||
-            data.success === false
-        ) {
-
+        if (!response.ok || data.success === false) {
             const validationMessages = data.errors
                 ? Object.values(data.errors)
                     .flat()
@@ -191,12 +302,22 @@
 
             if (response.status === 413) {
                 message =
-                    'Ukuran total dokumen melebihi batas upload server.';
+                    'Ukuran unggahan melebihi batas konfigurasi server.';
             }
 
             if (response.status === 419) {
                 message =
-                    'Sesi login telah habis. Refresh halaman dan login kembali.';
+                    'Sesi login telah habis. Silakan refresh halaman.';
+            }
+
+            if (response.status === 403) {
+                message =
+                    'Akun tidak memiliki izin untuk melakukan tindakan ini.';
+            }
+
+            if (response.status === 404) {
+                message =
+                    'Data Konstruksi tidak ditemukan.';
             }
 
             throw new Error(message);
@@ -208,90 +329,97 @@
 
     /*
     |--------------------------------------------------------------------------
-    | TUTUP MODAL
+    | TUTUP MODAL DARI TOMBOL
     |--------------------------------------------------------------------------
     */
 
-    document
-        .querySelectorAll('[data-kf-close]')
-        .forEach(button => {
-
+    document.querySelectorAll('[data-kf-close]')
+        .forEach((button) => {
             button.addEventListener('click', () => {
-
-                const dialogId =
-                    button.dataset.kfClose;
+                const dialogId = button.dataset.kfClose;
 
                 closeDialog($(dialogId));
             });
         });
 
-    for (const dialog of [
+
+    /*
+    |--------------------------------------------------------------------------
+    | TUTUP MODAL DENGAN KLIK BACKDROP
+    |--------------------------------------------------------------------------
+    */
+
+    [
         formDialog,
-        detailDialog
-    ]) {
-
-        dialog?.addEventListener('click', event => {
-
+        detailDialog,
+        deleteDialog
+    ].forEach((dialog) => {
+        dialog?.addEventListener('click', (event) => {
             if (event.target === dialog) {
                 closeDialog(dialog);
             }
         });
-    }
+    });
 
 
     /*
     |--------------------------------------------------------------------------
-    | RESET LAMPIRAN BARU
+    | RESET PILIHAN DOKUMEN
     |--------------------------------------------------------------------------
     */
 
     function resetFiles() {
         newFiles = [];
 
-        if ($('kfDokumens')) {
-            $('kfDokumens').value = '';
+        const input = $('kfDokumens');
+
+        if (input) {
+            input.value = '';
         }
 
         $('kfSelectedFiles')?.replaceChildren();
-
         $('kfSavedFiles')?.replaceChildren();
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | DAFTAR FILE YANG DIPILIH
+    | TAMPILKAN DAFTAR FILE BARU
     |--------------------------------------------------------------------------
     */
 
-    function syncFiles() {
-        const list = $('kfSelectedFiles');
+    function renderSelectedFiles() {
+        const container = $('kfSelectedFiles');
 
-        if (!list) return;
+        if (!container) {
+            return;
+        }
 
-        list.replaceChildren();
+        container.replaceChildren();
 
-        if (!newFiles.length) return;
+        if (newFiles.length === 0) {
+            return;
+        }
 
         const heading = document.createElement('strong');
 
         heading.textContent =
             `${newFiles.length} lampiran baru dipilih:`;
 
-        list.appendChild(heading);
+        container.appendChild(heading);
 
         newFiles.forEach((file, index) => {
-
             const row = document.createElement('div');
+
             row.className = 'kf-file-row';
 
-            const span = document.createElement('span');
+            const filename = document.createElement('span');
 
             const sizeMB = (
                 file.size / 1024 / 1024
             ).toFixed(2);
 
-            span.textContent =
+            filename.textContent =
                 `${file.name} (${sizeMB} MB)`;
 
             const removeButton =
@@ -302,59 +430,63 @@
             removeButton.textContent = 'Batalkan';
 
             removeButton.addEventListener('click', () => {
-
                 newFiles.splice(index, 1);
 
-                syncFiles();
+                renderSelectedFiles();
             });
 
             row.append(
-                span,
+                filename,
                 removeButton
             );
 
-            list.appendChild(row);
+            container.appendChild(row);
         });
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | PILIH FILE BERULANG
+    | UPLOAD MULTIPLE PDF / GAMBAR
     |--------------------------------------------------------------------------
     |
-    | File disimpan sementara dalam array newFiles.
-    | Memilih file berikutnya tidak mengganti file sebelumnya.
+    | File disimpan dalam array.
     |
+    | Contoh:
+    | - Pilih 2 PDF
+    | - Pilih lagi 3 PDF
+    | - Total menjadi 5 PDF
+    |
+    | Tidak menghapus pilihan sebelumnya.
+    |--------------------------------------------------------------------------
     */
 
     $('kfDokumens')?.addEventListener(
         'change',
-        event => {
-
+        (event) => {
             const selected = Array.from(
                 event.target.files || []
             );
 
             for (const file of selected) {
-
-                const allowed = /\.(pdf|jpe?g|png|webp)$/i
-                    .test(file.name);
+                const allowed =
+                    /\.(pdf|jpe?g|png|webp)$/i.test(file.name);
 
                 if (!allowed) {
-
-                    toast(
+                    showToast(
                         `${file.name}: format file tidak didukung.`
                     );
 
                     continue;
                 }
 
-                const duplicate = newFiles.some(old =>
-                    old.name === file.name &&
-                    old.size === file.size &&
-                    old.lastModified === file.lastModified
-                );
+                const duplicate = newFiles.some((old) => {
+                    return (
+                        old.name === file.name &&
+                        old.size === file.size &&
+                        old.lastModified === file.lastModified
+                    );
+                });
 
                 if (!duplicate) {
                     newFiles.push(file);
@@ -362,13 +494,13 @@
             }
 
             /*
-             * Reset elemen file input.
-             * Daftar tetap disimpan dalam newFiles.
+             * Reset elemen input agar pengguna
+             * bisa memilih file lainnya.
              */
 
             event.target.value = '';
 
-            syncFiles();
+            renderSelectedFiles();
         }
     );
 
@@ -382,22 +514,26 @@
     function renderSavedFiles(documents) {
         const container = $('kfSavedFiles');
 
-        if (!container) return;
+        if (!container) {
+            return;
+        }
 
         container.replaceChildren();
 
-        if (!documents?.length) return;
+        if (!Array.isArray(documents) || documents.length === 0) {
+            return;
+        }
 
         const heading = document.createElement('strong');
 
         heading.textContent =
-            'Lampiran tersimpan. Centang untuk menghapus saat Edit:';
+            'Lampiran tersimpan (centang untuk menghapus saat menyimpan):';
 
         container.appendChild(heading);
 
-        documents.forEach(doc => {
-
+        documents.forEach((doc) => {
             const row = document.createElement('div');
+
             row.className = 'kf-file-row';
 
             const link = document.createElement('a');
@@ -405,7 +541,8 @@
             link.href = doc.url;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.textContent = doc.nama;
+
+            link.textContent = doc.nama || 'Lihat Dokumen';
 
             row.appendChild(link);
 
@@ -413,7 +550,6 @@
                 doc.id !== null &&
                 doc.id !== undefined
             ) {
-
                 const label = document.createElement('label');
 
                 label.className = 'kf-remove-file';
@@ -439,27 +575,33 @@
 
     /*
     |--------------------------------------------------------------------------
-    | FORM TAMBAH
+    | CREATE — FORM TAMBAH KONSTRUKSI
     |--------------------------------------------------------------------------
     */
 
     function newForm() {
-        editId = null;
+        saving = false;
+
         active = null;
+        editId = null;
+
+        if (!form) {
+            showToast('Form Konstruksi tidak ditemukan.');
+            return;
+        }
 
         form.reset();
+
         resetFiles();
         showError('');
 
         $('kfFormTitle').textContent =
             'Tambah Data Konstruksi';
 
-        $('kfSimpan').disabled = false;
+        const submit = $('kfSimpan');
 
-        $('kfSimpan').textContent =
-            'Simpan Konstruksi';
-
-        saving = false;
+        submit.disabled = false;
+        submit.textContent = 'Simpan Konstruksi';
 
         $('kfTahun').value =
             new Date().getFullYear();
@@ -470,19 +612,31 @@
 
     /*
     |--------------------------------------------------------------------------
-    | FORM EDIT
+    | UPDATE — FORM EDIT KONSTRUKSI
     |--------------------------------------------------------------------------
     */
 
     function editForm(item) {
+        if (!item || !form) {
+            return;
+        }
+
+        saving = false;
+
+        active = item;
         editId = Number(item.id);
 
         form.reset();
+
         resetFiles();
         showError('');
 
         $('kfFormTitle').textContent =
             'Edit Data Konstruksi';
+
+        /*
+         * Fallback alias dari KIBController.php.
+         */
 
         const fallback = {
             nama_barang_manual:
@@ -502,10 +656,11 @@
         };
 
         for (const key of fields) {
-
             const input = form.elements.namedItem(key);
 
-            if (!input) continue;
+            if (!input) {
+                continue;
+            }
 
             input.value = String(
                 item[key] ??
@@ -514,14 +669,16 @@
             ).trim();
         }
 
-        renderSavedFiles(
-            item.dokumens || []
-        );
+        /*
+         * Tampilkan dokumen yang sudah tersimpan.
+         */
 
-        saving = false;
+        renderSavedFiles(item.dokumens || []);
 
-        $('kfSimpan').disabled = false;
-        $('kfSimpan').textContent = 'Simpan Perubahan';
+        const submit = $('kfSimpan');
+
+        submit.disabled = false;
+        submit.textContent = 'Simpan Perubahan';
 
         openDialog(formDialog);
     }
@@ -529,7 +686,7 @@
 
     /*
     |--------------------------------------------------------------------------
-    | KLIK TAMBAH KONSTRUKSI
+    | EVENT TOMBOL TAMBAH
     |--------------------------------------------------------------------------
     */
 
@@ -541,12 +698,12 @@
 
     /*
     |--------------------------------------------------------------------------
-    | PEMBUAT ELEMEN AMAN
+    | HELPER ELEMEN DETAIL AMAN
     |--------------------------------------------------------------------------
     |
-    | Data database ditempatkan dengan textContent.
-    | Tidak menjalankan HTML dari isian pengguna.
-    |
+    | textContent menghindari eksekusi HTML
+    | dari data yang diinput pengguna.
+    |--------------------------------------------------------------------------
     */
 
     function textElement(
@@ -554,15 +711,17 @@
         content,
         className = ''
     ) {
-
         const element = document.createElement(tag);
 
-        element.textContent =
+        if (
             content === null ||
             content === undefined ||
             content === ''
-                ? '—'
-                : String(content);
+        ) {
+            element.textContent = '—';
+        } else {
+            element.textContent = String(content);
+        }
 
         if (className) {
             element.className = className;
@@ -574,11 +733,14 @@
 
     /*
     |--------------------------------------------------------------------------
-    | TAMPILKAN DETAIL KONSTRUKSI
+    | READ — MODAL DETAIL KONSTRUKSI
     |--------------------------------------------------------------------------
     */
 
     function showDetail(item) {
+        if (!item) {
+            return;
+        }
 
         active = item;
 
@@ -588,58 +750,88 @@
 
         const body = $('kfDetailBody');
 
+        if (!body) {
+            return;
+        }
+
         body.replaceChildren();
+
+        /*
+         * Grid informasi konstruksi.
+         */
 
         const grid = document.createElement('div');
 
         grid.className = 'kf-detail-grid';
 
         const labels = [
-
-            ['Kategori', (
-                item.kategori === 'IPA'
-                    ? 'Instalasi Pengolahan Air (IPA)'
-                    : item.kategori
-            ) || 'Belum Dikategorikan'],
-
-            ['Cakupan', item.cakupan],
-
-            ['Nama Pekerjaan', item.nama_barang],
-
-            ['Tahun Pekerjaan', item.tahun],
-
-            ['Lokasi', item.nama_lokasi],
-
-            ['Alamat', item.alamat_lokasi],
-
-            ['Departemen', item.nama_departemen],
-
-            ['Divisi', item.nama_divisi],
-
-            ['Bangunan', {
-                P: 'Permanen',
-                SP: 'Semi Permanen',
-                D: 'Darurat'
-            }[item.type] || item.type],
-
-            ['Bertingkat / Tidak', item.struktur],
-
-            ['Beton / Tidak', item.materi],
-
-            ['Letak', item.letak],
-
-            ['Status Tanah', item.status_tanah],
-
-            ['Asal Pembiayaan', item.asal],
-
-            ['Status Aset', item.status_aset],
-
-            ['Nilai Konstruksi', money(item.nilai)]
-
+            [
+                'Nama Barang / Pekerjaan',
+                item.nama_barang
+            ],
+            [
+                'Kategori',
+                formatKategori(item.kategori)
+            ],
+            [
+                'Cakupan',
+                item.cakupan
+            ],
+            [
+                'Tahun Pekerjaan',
+                item.tahun
+            ],
+            [
+                'Lokasi',
+                item.nama_lokasi
+            ],
+            [
+                'Alamat Lokasi',
+                item.alamat_lokasi
+            ],
+            [
+                'Departemen',
+                item.nama_departemen
+            ],
+            [
+                'Divisi',
+                item.nama_divisi
+            ],
+            [
+                'Bangunan',
+                formatBangunan(item.type)
+            ],
+            [
+                'Bertingkat / Tidak',
+                item.struktur
+            ],
+            [
+                'Beton / Tidak',
+                item.materi
+            ],
+            [
+                'Letak / Lokasi Alamat',
+                item.letak
+            ],
+            [
+                'Status Tanah',
+                item.status_tanah
+            ],
+            [
+                'Asal Usul Pembiayaan',
+                item.asal
+            ],
+            [
+                'Status Aset',
+                item.status_aset
+            ],
+            [
+                'Nilai Konstruksi',
+                money(item.nilai)
+            ]
         ];
 
-        for (const [label, value] of labels) {
-
+        labels.forEach(([label, value]) => {
             const box = document.createElement('div');
 
             box.append(
@@ -648,13 +840,12 @@
             );
 
             grid.appendChild(box);
-        }
+        });
 
         body.appendChild(grid);
 
-
         /*
-         * Uraian Pekerjaan.
+         * Uraian pekerjaan dengan baris baru.
          */
 
         body.append(
@@ -670,9 +861,8 @@
             )
         );
 
-
         /*
-         * Keterangan.
+         * Keterangan dan berita acara.
          */
 
         body.append(
@@ -688,37 +878,40 @@
             )
         );
 
-
         /*
-         * Foto konstruksi.
+         * Foto utama.
          */
 
         if (item.foto_url) {
+            const image = document.createElement('img');
 
-            const img = document.createElement('img');
+            image.className = 'kf-photo';
+            image.src = item.foto_url;
+            image.alt = 'Foto Konstruksi';
 
-            img.className = 'kf-photo';
-            img.src = item.foto_url;
-            img.alt = 'Foto konstruksi';
-
-            body.appendChild(img);
+            body.appendChild(image);
         }
-
 
         /*
          * Dokumen pendukung.
          */
 
         body.appendChild(
-            textElement('h3', 'Dokumen Pendukung')
+            textElement(
+                'h3',
+                'Dokumen Pendukung'
+            )
         );
 
         const links = document.createElement('div');
 
         links.className = 'kf-file-list';
 
-        if (!item.dokumens?.length) {
+        const documents = Array.isArray(item.dokumens)
+            ? item.dokumens
+            : [];
 
+        if (documents.length === 0) {
             links.appendChild(
                 textElement(
                     'p',
@@ -727,21 +920,20 @@
             );
         }
 
-        for (const doc of (item.dokumens || [])) {
-
+        documents.forEach((doc) => {
             const link = document.createElement('a');
 
             link.href = doc.url;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
 
-            link.className =
-                'kf-btn kf-outline';
+            link.className = 'kf-btn kf-outline';
 
-            link.textContent = doc.nama;
+            link.textContent =
+                doc.nama || 'Lihat Dokumen';
 
             links.appendChild(link);
-        }
+        });
 
         body.appendChild(links);
 
@@ -751,97 +943,238 @@
 
     /*
     |--------------------------------------------------------------------------
-    | TOMBOL DETAIL PADA TABEL
+    | AMBIL DETAIL DARI CONTROLLER
     |--------------------------------------------------------------------------
     */
 
-    document
-        .querySelectorAll('[data-kf-detail]')
-        .forEach(button => {
+    async function fetchKonstruksi(id) {
+        const response = await api(
+            `${base}/${encodeURIComponent(id)}`
+        );
 
-            button.addEventListener(
-                'click',
-                async () => {
-
-                    const id =
-                        button.dataset.kfDetail;
-
-                    button.disabled = true;
-
-                    try {
-
-                        const response = await api(
-                            `${base}/${encodeURIComponent(id)}`
-                        );
-
-                        showDetail(response.data);
-
-                    } catch (e) {
-
-                        toast(e.message);
-
-                    } finally {
-
-                        button.disabled = false;
-                    }
-                }
+        if (!response.data) {
+            throw new Error(
+                'Data Konstruksi tidak ditemukan.'
             );
-        });
+        }
+
+        return response.data;
+    }
 
 
     /*
     |--------------------------------------------------------------------------
-    | TOMBOL EDIT
+    | CRUD LANGSUNG DARI TABEL
+    |--------------------------------------------------------------------------
+    |
+    | Blade menggunakan:
+    |
+    | data-kf-action="view"
+    | data-kf-action="edit"
+    | data-kf-action="delete"
+    |
+    | data-kf-id="ID"
     |--------------------------------------------------------------------------
     */
 
-    $('kfEdit')?.addEventListener('click', () => {
+    root.addEventListener('click', async (event) => {
+        const target = event.target;
 
-        if (!active) return;
+        if (!(target instanceof Element)) {
+            return;
+        }
 
-        closeDialog(detailDialog);
+        const button = target.closest(
+            'button[data-kf-action]'
+        );
 
-        editForm(active);
+        if (!button || !root.contains(button)) {
+            return;
+        }
+
+        const id = button.dataset.kfId;
+        const action = button.dataset.kfAction;
+
+        if (!/^\d+$/.test(String(id))) {
+            showToast('ID Konstruksi tidak valid.');
+            return;
+        }
+
+        /*
+         * DELETE:
+         * Buka konfirmasi, jangan langsung menghapus.
+         */
+
+        if (action === 'delete') {
+            askDelete({
+                id: Number(id),
+
+                nama_barang:
+                    button.dataset.kfName ||
+                    `Konstruksi #${id}`
+            });
+
+            return;
+        }
+
+        /*
+         * VIEW / EDIT:
+         * Ambil data terbaru dari database.
+         */
+
+        if (!['view', 'edit'].includes(action)) {
+            return;
+        }
+
+        if (button.disabled) {
+            return;
+        }
+
+        button.disabled = true;
+
+        try {
+            const item = await fetchKonstruksi(id);
+
+            if (action === 'view') {
+                showDetail(item);
+            }
+
+            if (action === 'edit') {
+                editForm(item);
+            }
+
+        } catch (exception) {
+            showToast(exception.message);
+
+        } finally {
+            button.disabled = false;
+        }
     });
 
 
     /*
     |--------------------------------------------------------------------------
-    | TOMBOL HAPUS
+    | EDIT MELALUI MODAL DETAIL
     |--------------------------------------------------------------------------
     */
 
-    $('kfHapus')?.addEventListener(
-        'click',
-        async () => {
+    $('kfEdit')?.addEventListener('click', () => {
+        if (!active) {
+            return;
+        }
 
-            if (!active) return;
+        const item = active;
 
-            const confirmDelete = confirm(
-                `Hapus catatan konstruksi "${active.nama_barang}"?`
+        closeDialog(detailDialog);
+
+        editForm(item);
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TAMPILKAN MODAL KONFIRMASI DELETE
+    |--------------------------------------------------------------------------
+    */
+
+    function askDelete(item) {
+        if (!item || deleting) {
+            return;
+        }
+
+        deleteTarget = {
+            id: Number(item.id),
+
+            name:
+                item.nama_barang ||
+                item.nama_pekerjaan ||
+                `Konstruksi #${item.id}`
+        };
+
+        const nameElement = $('kfDeleteName');
+
+        if (nameElement) {
+            nameElement.textContent =
+                deleteTarget.name;
+        }
+
+        if (detailDialog?.open) {
+            closeDialog(detailDialog);
+        }
+
+        if (!deleteDialog) {
+            showToast(
+                'Modal konfirmasi hapus tidak ditemukan.'
             );
 
-            if (!confirmDelete) return;
+            deleteTarget = null;
+            return;
+        }
 
-            const button = $('kfHapus');
+        openDialog(deleteDialog);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HAPUS MELALUI MODAL DETAIL
+    |--------------------------------------------------------------------------
+    */
+
+    $('kfHapus')?.addEventListener('click', () => {
+        if (active) {
+            askDelete(active);
+        }
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE — KONFIRMASI HAPUS
+    |--------------------------------------------------------------------------
+    |
+    | Request DELETE hanya dikirim setelah
+    | pengguna menekan "Ya, Hapus Data".
+    |--------------------------------------------------------------------------
+    */
+
+    $('kfDeleteConfirm')?.addEventListener(
+        'click',
+        async () => {
+            if (!deleteTarget || deleting) {
+                return;
+            }
+
+            deleting = true;
+
+            const button = $('kfDeleteConfirm');
 
             button.disabled = true;
 
-            try {
+            const id = deleteTarget.id;
 
+            try {
                 await api(
-                    `${base}/${active.id}`,
+                    `${base}/${encodeURIComponent(id)}`,
                     {
                         method: 'DELETE'
                     }
                 );
 
+                closeDialog(deleteDialog);
+
+                /*
+                 * Refresh agar tabel, jumlah inventaris,
+                 * dan nilai konstruksi ikut diperbarui.
+                 */
+
                 window.location.reload();
 
-            } catch (e) {
+            } catch (exception) {
+                showToast(exception.message);
 
-                toast(e.message);
-
+            } finally {
+                deleting = false;
                 button.disabled = false;
             }
         }
@@ -850,19 +1183,53 @@
 
     /*
     |--------------------------------------------------------------------------
-    | SUBMIT TAMBAH / EDIT
+    | RESET TARGET DELETE KETIKA MODAL DITUTUP
+    |--------------------------------------------------------------------------
+    */
+
+    deleteDialog?.addEventListener('close', () => {
+        if (!deleting) {
+            deleteTarget = null;
+        }
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | NORMALISASI INPUT KATEGORI
+    |--------------------------------------------------------------------------
+    */
+
+    $('kfKategori')?.addEventListener(
+        'change',
+        (event) => {
+            event.target.value = String(
+                event.target.value || ''
+            ).trim().toUpperCase();
+        }
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SIMPAN KONSTRUKSI — CREATE / UPDATE
     |--------------------------------------------------------------------------
     */
 
     form?.addEventListener(
         'submit',
-        async event => {
-
+        async (event) => {
             event.preventDefault();
 
-            if (saving) return;
+            if (saving) {
+                return;
+            }
 
             showError('');
+
+            /*
+             * Validasi field required.
+             */
 
             if (!form.reportValidity()) {
                 return;
@@ -875,60 +1242,82 @@
             submit.disabled = true;
 
             /*
-             * Ambil seluruh isi form.
+             * Ambil seluruh input form.
              */
 
             const data = new FormData(form);
 
             /*
-             * File input sudah dikosongkan saat
-             * pengguna memilih dokumen.
-             * Lampiran diambil dari array newFiles.
+             * Kategori disimpan uppercase.
+             */
+
+            const kategori = String(
+                data.get('kategori') || ''
+            ).trim().toUpperCase();
+
+            data.set('kategori', kategori);
+
+            /*
+             * Semua lampiran diambil dari array.
+             *
+             * File input sudah direset saat pengguna
+             * memilih file agar bisa memilih berulang.
              */
 
             data.delete('dokumens[]');
 
-            for (const file of newFiles) {
-
+            newFiles.forEach((file) => {
                 data.append(
                     'dokumens[]',
                     file,
                     file.name
                 );
-            }
+            });
 
             /*
-             * Laravel:
-             * Tambah = POST
-             * Edit   = POST + _method PUT
+             * CREATE:
+             * POST /kib/konstruksi
+             *
+             * UPDATE:
+             * POST /kib/konstruksi/{id}
+             * + _method = PUT
              */
 
+            let url = base;
+
             if (editId !== null) {
-                data.append('_method', 'PUT');
+                url = `${base}/${encodeURIComponent(editId)}`;
+
+                data.set('_method', 'PUT');
             }
 
-            const url = editId === null
-                ? base
-                : `${base}/${editId}`;
-
             try {
-
                 await api(url, {
                     method: 'POST',
                     body: data
                 });
 
+                /*
+                 * Reload tabel dan statistik.
+                 */
+
                 window.location.reload();
 
-            } catch (e) {
-
-                showError(e.message);
+            } catch (exception) {
+                showError(exception.message);
 
                 submit.disabled = false;
                 saving = false;
             }
         }
     );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | INITIALIZATION
+    |--------------------------------------------------------------------------
+    */
 
     refreshIcons();
 

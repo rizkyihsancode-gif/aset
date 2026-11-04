@@ -81,7 +81,7 @@
             <div class="kf-section-head">
                 <div>
                     <h2>{{ $view === 'arsip' ? 'Arsip Konstruksi Lama' : 'Daftar Konstruksi' }}</h2>
-                    <p>{{ $view === 'arsip' ? 'Data historis konstruksi yang hanya dapat dilihat.' : 'Lihat dan kelola data konstruksi berdasarkan kategori, cakupan, dan lokasi.' }}
+                    <p>{{ $view === 'arsip' ? 'Data historis konstruksi yang hanya dapat dilihat.' : 'Kelola data konstruksi melalui aksi View, Edit, dan Delete pada tiap baris.' }}
                     </p>
                 </div>
                 <div class="kf-panel-actions">
@@ -143,7 +143,7 @@
                                 <th rowspan="2">Status Aset</th>
                                 <th rowspan="2">Nilai (Rp)</th>
                                 <th rowspan="2">Dokumen Pendukung</th>
-                                <th rowspan="2">Aksi</th>
+                                <th rowspan="2" class="kf-actions-head">Aksi</th>
                             </tr>
                             <tr>
                                 <th>Bertingkat / Tidak</th>
@@ -172,11 +172,27 @@
                                     <td>{{ $item->status_aset ?: '—' }}</td>
                                     <td class="kf-money">{{ $rupiah($item->nilai) }}</td>
                                     <td class="kf-uraian">{{ $item->ket ?: 'Buka detail untuk lampiran' }}</td>
-                                    <td>
-                                        <button type="button" class="kf-btn kf-outline kf-small"
-                                            data-kf-detail="{{ $item->id }}">
-                                            <i data-lucide="eye"></i> Detail
-                                        </button>
+                                    {{-- Aksi CRUD tersedia hanya untuk data manual baru. --}}
+                                    <td class="kf-actions-cell">
+                                        <div class="kf-row-actions" role="group"
+                                            aria-label="Aksi {{ $item->nama_barang }}">
+                                            <button type="button" class="kf-action-btn kf-action-view"
+                                                data-kf-action="view" data-kf-id="{{ $item->id }}"
+                                                title="Lihat detail" aria-label="Lihat {{ $item->nama_barang }}">
+                                                <i data-lucide="eye"></i>
+                                            </button>
+                                            <button type="button" class="kf-action-btn kf-action-edit"
+                                                data-kf-action="edit" data-kf-id="{{ $item->id }}" title="Edit data"
+                                                aria-label="Edit {{ $item->nama_barang }}">
+                                                <i data-lucide="pencil"></i>
+                                            </button>
+                                            <button type="button" class="kf-action-btn kf-action-delete"
+                                                data-kf-action="delete" data-kf-id="{{ $item->id }}"
+                                                data-kf-name="{{ $item->nama_barang }}" title="Hapus data"
+                                                aria-label="Hapus {{ $item->nama_barang }}">
+                                                <i data-lucide="trash-2"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -394,6 +410,32 @@
                     data-kf-close="kfModalDetail">Tutup</button><button type="button" class="kf-btn kf-outline"
                     id="kfEdit">Edit</button><button type="button" class="kf-btn kf-danger"
                     id="kfHapus">Hapus</button></footer>
+        </dialog>
+        {{-- Konfirmasi hapus data manual. Arsip lama tidak dapat dihapus di sini. --}}
+        <dialog id="kfModalDelete" class="kf-dialog kf-confirm-dialog" aria-labelledby="kfDeleteTitle"
+            aria-describedby="kfDeleteDescription">
+            <div class="kf-dialog-head">
+                <div>
+                    <small>KONFIRMASI PENGHAPUSAN</small>
+                    <h2 id="kfDeleteTitle">Hapus Data Konstruksi?</h2>
+                </div>
+                <button type="button" class="kf-x" data-kf-close="kfModalDelete"
+                    aria-label="Batal dan tutup konfirmasi">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="kf-confirm-content">
+                <span class="kf-confirm-icon"><i data-lucide="triangle-alert"></i></span>
+                <p id="kfDeleteDescription">Data berikut beserta seluruh lampirannya akan dihapus permanen:</p>
+                <strong id="kfDeleteName"></strong>
+                <small>Tindakan ini hanya berlaku pada data manual baru. Arsip Konstruksi lama tetap aman.</small>
+            </div>
+            <div class="kf-dialog-foot">
+                <button type="button" class="kf-btn kf-outline" data-kf-close="kfModalDelete">Batal</button>
+                <button type="button" class="kf-btn kf-danger" id="kfDeleteConfirm">
+                    <i data-lucide="trash-2"></i> Ya, Hapus Data
+                </button>
+            </div>
         </dialog>
         <div id="kfToast" class="kf-toast" hidden role="status"></div>
     </section>

@@ -311,6 +311,76 @@
 }
 .kf-archive-notice svg { width: 16px; height: 16px; }
 
+/* AKSI CRUD K.I.B F — tampilan ikon seirama K.I.B lain. */
+.kf-table .kf-actions-head {
+    position: sticky;
+    right: 0;
+    z-index: 3;
+    width: 138px;
+    min-width: 138px;
+    background: #e8f2fd;
+    box-shadow: -5px 0 12px rgba(17, 60, 110, .055);
+}
+.kf-table .kf-actions-cell {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    width: 138px;
+    min-width: 138px;
+    padding: 11px 8px;
+    background: #fff;
+    box-shadow: -5px 0 12px rgba(17, 60, 110, .055);
+    vertical-align: middle;
+}
+.kf-table tbody tr:nth-child(even) > .kf-actions-cell { background: #fafcff; }
+.kf-table tbody tr:hover > .kf-actions-cell { background: #f1f7ff; }
+.kf-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.kf-action-btn {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 33px;
+    width: 33px;
+    height: 33px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #f3f7fc;
+    cursor: pointer;
+    transition: transform .16s ease, background .16s ease, border-color .16s ease;
+}
+.kf-action-btn svg { width: 15px; height: 15px; stroke-width: 2.1; }
+.kf-action-btn:hover { transform: translateY(-1px); }
+.kf-action-btn:focus-visible { outline: 3px solid #91c3ff; outline-offset: 2px; }
+.kf-action-btn:disabled { cursor: wait; opacity: .5; transform: none; }
+.kf-action-view { color: #1467cf; background: #eaf3ff; border-color: #d1e4ff; }
+.kf-action-view:hover { background: #d9eaff; }
+.kf-action-edit { color: #a56c09; background: #fff7e6; border-color: #f8e8bd; }
+.kf-action-edit:hover { background: #ffedc4; }
+.kf-action-delete { color: #ce3648; background: #fff0f2; border-color: #f8d8df; }
+.kf-action-delete:hover { background: #ffe1e7; }
+
+/* Dialog konfirmasi dibuat terpisah dari form tambah/edit. */
+.kf-confirm-dialog { width: min(460px, calc(100vw - 26px)); }
+.kf-confirm-content { padding: 20px; text-align: center; }
+.kf-confirm-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 10px;
+    border-radius: 14px;
+    background: #fff0f2;
+    color: #d43c50;
+}
+.kf-confirm-icon svg { width: 24px; height: 24px; }
+.kf-confirm-content p { margin: 6px 0 9px; font-size: 13px; color: #55708c; }
+.kf-confirm-content strong { display: block; color: #12396e; font-size: 14px; overflow-wrap: anywhere; }
+.kf-confirm-content small { display: block; margin-top: 13px; color: #7188a3; font-size: 11px; line-height: 1.6; }
+
 /* MODAL — mempertahankan seluruh ID serta kontrol JS lama */
 .kf-dialog {
     width: min(840px, calc(100vw - 26px));
