@@ -741,64 +741,60 @@ Route::get('/kib/jalan', function () {
     return view('kib.jalan');
 })->name('kib.jalan');
 
-/*
-|--------------------------------------------------------------------------
-| K.I.B E — ASET TETAP LAINNYA
-|--------------------------------------------------------------------------
-*/
 
-// Halaman utama
+// ========================================================
+// K.I.B E — ASET TETAP LAINNYA MANUAL
+// Controller yang digunakan: KIBController.php
+// ========================================================
+
 Route::get(
     '/kib/aset_ttp',
-    [KIBController::class, 'dataAsetTetapLainnya']
+    [KIBController::class, 'dataAsetTetapManual']
 )->name('kib.aset_ttp');
 
-// Rincian nilai berdasarkan lokasi
-Route::get(
-    '/kib/aset_ttp/lokasi/{lokasi}/nilai',
-    [KIBController::class, 'nilaiAsetTetapLainnyaLokasi']
-)->whereNumber('lokasi')->name('kib.aset_ttp.lokasi.nilai');
-
-// Inventaris berdasarkan lokasi
-Route::get(
-    '/kib/aset_ttp/lokasi/{lokasi}',
-    [KIBController::class, 'detailAsetTetapLainnyaLokasi']
-)->whereNumber('lokasi')->name('kib.aset_ttp.lokasi');
-
-// Foto dan dokumen
-Route::get(
-    '/kib/aset_ttp/{aset}/file/{jenis}',
-    [KIBController::class, 'fileAsetTetapLainnya']
-)->whereNumber('aset')
-    ->where('jenis', 'foto|dokumen')
-    ->name('kib.aset_ttp.file');
-
-// Detail satu aset
-Route::get(
-    '/kib/aset_ttp/{aset}',
-    [KIBController::class, 'showAsetTetapLainnya']
-)->whereNumber('aset')->name('kib.aset_ttp.show');
-
-// Tambah
 Route::post(
     '/kib/aset_ttp',
-    [KIBController::class, 'storeAsetTetapLainnya']
+    [KIBController::class, 'storeAsetTetapManual']
 )->name('kib.aset_ttp.store');
 
-// Edit
+Route::get(
+    '/kib/aset_ttp/{aset}/foto',
+    [KIBController::class, 'fotoAsetTetapManual']
+)
+    ->whereNumber('aset')
+    ->name('kib.aset_ttp.manual.foto');
+
+Route::get(
+    '/kib/aset_ttp/{aset}/dokumen/{dokumen}',
+    [KIBController::class, 'dokumenAsetTetapManual']
+)
+    ->whereNumber('aset')
+    ->whereNumber('dokumen')
+    ->name('kib.aset_ttp.manual.dokumen');
+
+Route::get(
+    '/kib/aset_ttp/{aset}',
+    [KIBController::class, 'showAsetTetapManual']
+)
+    ->whereNumber('aset')
+    ->name('kib.aset_ttp.show');
+
 Route::put(
     '/kib/aset_ttp/{aset}',
-    [KIBController::class, 'updateAsetTetapLainnya']
-)->whereNumber('aset')->name('kib.aset_ttp.update');
+    [KIBController::class, 'updateAsetTetapManual']
+)
+    ->whereNumber('aset')
+    ->name('kib.aset_ttp.update');
 
-// Hapus
 Route::delete(
     '/kib/aset_ttp/{aset}',
-    [KIBController::class, 'destroyAsetTetapLainnya']
-)->whereNumber('aset')->name('kib.aset_ttp.destroy');
+    [KIBController::class, 'destroyAsetTetapManual']
+)
+    ->whereNumber('aset')
+    ->name('kib.aset_ttp.destroy');
 
-// Kompatibilitas URL sidebar alternatif
 Route::redirect('/kib/aset-tetap', '/kib/aset_ttp');
+
 
 
 

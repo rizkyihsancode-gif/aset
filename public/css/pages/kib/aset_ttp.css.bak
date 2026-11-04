@@ -1,0 +1,1176 @@
+
+/* ============================================================
+   K.I.B E — ASET TETAP LAINNYA
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+   ============================================================ */
+
+.aem-page {
+    --blue: #0969df;
+    --navy: #0b326b;
+    --line: #dce7f4;
+    --muted: #718ba9;
+
+    padding: 0 16px 36px;
+    color: var(--navy);
+    font-family: inherit;
+}
+
+.aem-page *,
+.aem-page *::before,
+.aem-page *::after {
+    box-sizing: border-box;
+}
+
+.aem-page input,
+.aem-page select,
+.aem-page button,
+.aem-page textarea {
+    font: inherit;
+}
+
+.aem-page [hidden] {
+    display: none !important;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.aem-hero {
+    position: relative;
+    isolation: isolate;
+
+    padding: 24px 16px 18px;
+    margin: 0 -16px 18px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(249,252,255,.98) 0%,
+            rgba(248,251,255,.87) 55%,
+            rgba(232,244,255,.57) 100%
+        ),
+        url('/images/master/pdam4.png')
+        center / cover no-repeat;
+}
+
+.aem-crumb {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    color: #6886a5;
+    font-size: 11px;
+    margin-bottom: 17px;
+}
+
+.aem-crumb svg {
+    width: 15px;
+    height: 15px;
+}
+
+.aem-crumb a {
+    color: var(--blue);
+    display: inline-flex;
+}
+
+.aem-date {
+    position: absolute;
+    right: 16px;
+    top: 22px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+
+    padding: 11px 13px;
+    box-shadow: 0 5px 16px #163d6817;
+}
+
+.aem-date > svg {
+    color: var(--blue);
+    width: 22px;
+    height: 22px;
+}
+
+.aem-date strong,
+.aem-date small {
+    display: block;
+}
+
+.aem-date strong {
+    font-size: 11px;
+}
+
+.aem-date small {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+.aem-hero h1 {
+    font-size: 29px;
+    color: #082b60;
+
+    margin: 0 0 8px;
+    font-weight: 800;
+}
+
+.aem-hero p {
+    margin: 0;
+    color: #557aa5;
+    font-size: 12px;
+
+    max-width: 900px;
+    line-height: 1.75;
+}
+
+
+/* ============================================================
+   STATISTIK
+   ============================================================ */
+
+.aem-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+
+    margin-top: 23px;
+}
+
+.aem-kpis article {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+
+    min-width: 0;
+    padding: 17px;
+
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+
+    box-shadow: 0 3px 14px #143f6710;
+}
+
+.aem-kpi-icon {
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 44px;
+    height: 44px;
+
+    background: var(--blue);
+    color: #fff;
+    border-radius: 9px;
+}
+
+.aem-kpi-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.aem-kpis small {
+    display: block;
+    font-weight: 800;
+    font-size: 11px;
+    color: #31598b;
+}
+
+.aem-kpis strong {
+    display: block;
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1.3;
+
+    margin: 4px 0;
+    color: #062c62;
+}
+
+.aem-kpis article div > span {
+    font-size: 10px;
+    color: #8299b5;
+}
+
+
+/* ============================================================
+   PANEL
+   ============================================================ */
+
+.aem-panel {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+
+    background: #fff;
+    box-shadow: 0 5px 19px #173c6010;
+    padding: 17px;
+}
+
+.aem-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    margin-bottom: 15px;
+}
+
+.aem-heading h2 {
+    font-size: 17px;
+    margin: 0 0 6px;
+    font-weight: 800;
+}
+
+.aem-heading p {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0;
+}
+
+
+/* ============================================================
+   TOMBOL
+   ============================================================ */
+
+.aem-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    min-height: 37px;
+    padding: 9px 13px;
+
+    border: 1px solid transparent;
+    border-radius: 8px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+
+    transition: .15s;
+}
+
+.aem-btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+.aem-btn.primary {
+    background: var(--blue);
+    color: #fff;
+}
+
+.aem-btn.primary:hover {
+    background: #0754b8;
+}
+
+.aem-btn.outline {
+    background: #fff;
+    color: #1c5f9f;
+    border-color: #d5e3f1;
+}
+
+.aem-btn.outline:hover {
+    background: #edf6ff;
+}
+
+.aem-btn.danger {
+    background: #d33f51;
+    color: #fff;
+}
+
+.aem-btn:disabled,
+.aem-action:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+
+/* ============================================================
+   TAB
+   ============================================================ */
+
+.aem-tabs {
+    display: flex;
+    gap: 20px;
+
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+
+    overflow-x: auto;
+}
+
+.aem-tabs a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 11px 3px;
+    text-decoration: none;
+
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+
+    border-bottom: 3px solid transparent;
+    color: #4d76a7;
+}
+
+.aem-tabs a.active {
+    color: var(--blue);
+    border-bottom-color: var(--blue);
+}
+
+.aem-tabs svg {
+    width: 15px;
+    height: 15px;
+}
+
+
+/* ============================================================
+   FILTER
+   ============================================================ */
+
+.aem-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin-bottom: 15px;
+}
+
+.aem-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.aem-search svg {
+    position: absolute;
+    top: 11px;
+    left: 12px;
+
+    width: 15px;
+    height: 15px;
+
+    color: #91a5bc;
+    pointer-events: none;
+}
+
+.aem-toolbar input,
+.aem-toolbar select {
+    height: 38px;
+    width: 100%;
+
+    border: 1px solid #d4e2f0;
+    border-radius: 7px;
+    outline: 0;
+
+    background: #fff;
+    color: #204b7b;
+    font-size: 11px;
+
+    padding: 9px 11px;
+}
+
+.aem-toolbar .aem-search input {
+    padding-left: 36px;
+}
+
+.aem-toolbar select {
+    max-width: 205px;
+}
+
+.aem-toolbar input:focus,
+.aem-toolbar select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px #086ae61e;
+}
+
+.aem-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    border: 1px solid #ddeaf6;
+    background: #f5faff;
+
+    padding: 11px;
+    margin-bottom: 13px;
+    border-radius: 8px;
+
+    color: #526d88;
+    font-size: 12px;
+}
+
+.aem-notice svg {
+    width: 17px;
+    height: 17px;
+}
+
+
+/* ============================================================
+   TABEL INVENTARIS
+   ============================================================ */
+
+.aem-table-wrap {
+    overflow: auto;
+    max-width: 100%;
+
+    border: 1px solid #dbe7f2;
+    border-radius: 9px;
+}
+
+.aem-table {
+    border-spacing: 0;
+    border-collapse: separate;
+
+    width: 100%;
+    min-width: 1100px;
+
+    color: #254d78;
+    font-size: 11px;
+}
+
+.aem-table th {
+    background: #dcebf9;
+    text-align: center;
+
+    color: #164073;
+    font-size: 11px;
+
+    padding: 14px 12px;
+
+    border-right: 1px solid #cddfeb;
+    border-bottom: 1px solid #c7dbeb;
+}
+
+.aem-table td {
+    padding: 13px 11px;
+
+    border-right: 1px solid #e4edf6;
+    border-bottom: 1px solid #e4edf6;
+
+    vertical-align: middle;
+    line-height: 1.6;
+}
+
+.aem-table tbody tr:nth-child(even) {
+    background: #fafdff;
+}
+
+.aem-table tbody tr:hover {
+    background: #edf6ff;
+}
+
+.aem-name {
+    font-size: 12px;
+    color: #103b75;
+}
+
+.aem-code {
+    color: #31629a;
+    font-weight: 700;
+}
+
+.aem-table small {
+    color: #8196af;
+    display: block;
+}
+
+.aem-center {
+    text-align: center;
+}
+
+.aem-condition {
+    display: inline-block;
+
+    padding: 5px 9px;
+    border-radius: 7px;
+
+    background: #e8f4ff;
+    color: #1a5c9e;
+    border: 1px solid #d3e8fb;
+
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.aem-empty {
+    text-align: center !important;
+    padding: 35px !important;
+    color: #859bb0;
+}
+
+
+/* ============================================================
+   VIEW / EDIT / DELETE
+   ============================================================ */
+
+.aem-action-head,
+.aem-action-cell {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+
+    min-width: 144px;
+    text-align: center;
+
+    background: #fff;
+    box-shadow: -5px 0 12px #183f640d;
+}
+
+.aem-action-head {
+    background: #dcebf9 !important;
+    z-index: 3;
+}
+
+.aem-table tbody tr:nth-child(even) .aem-action-cell {
+    background: #fafdff;
+}
+
+.aem-table tbody tr:hover .aem-action-cell {
+    background: #edf6ff;
+}
+
+.aem-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.aem-action {
+    width: 33px;
+    height: 33px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 7px;
+    border: 1px solid transparent;
+
+    cursor: pointer;
+}
+
+.aem-action svg {
+    width: 15px;
+    height: 15px;
+}
+
+.aem-action.view {
+    background: #e8f2ff;
+    color: #0969df;
+    border-color: #d2e6fa;
+}
+
+.aem-action.edit {
+    background: #fff5df;
+    color: #9d6c1e;
+    border-color: #fae6bf;
+}
+
+.aem-action.delete {
+    background: #fff0f2;
+    color: #cd3f53;
+    border-color: #f4d7dd;
+}
+
+.aem-pagination {
+    margin-top: 16px;
+}
+
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
+.aem-dialog {
+    width: min(880px, calc(100vw - 28px));
+    max-height: calc(100dvh - 32px);
+
+    padding: 0;
+    border: 0;
+    border-radius: 14px;
+
+    color: #1a4778;
+    background: #fff;
+
+    box-shadow: 0 25px 80px #061b385c;
+    overflow: hidden;
+}
+
+.aem-dialog:not([open]) {
+    display: none;
+}
+
+.aem-dialog::backdrop {
+    background: #041931a8;
+    backdrop-filter: blur(3px);
+}
+
+.aem-dialog form {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 32px);
+}
+
+.aem-dialog-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+
+    padding: 17px 19px;
+}
+
+.aem-dialog-head small {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--blue);
+}
+
+.aem-dialog-head h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0b336a;
+    margin: 4px 0;
+}
+
+.aem-dialog-head p {
+    font-size: 11px;
+    color: #8298b1;
+    margin: 0;
+}
+
+.aem-x {
+    width: 32px;
+    height: 32px;
+
+    display: grid;
+    place-items: center;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #eff6fc;
+    color: #5f81a8;
+    cursor: pointer;
+}
+
+.aem-x svg {
+    width: 16px;
+    height: 16px;
+}
+
+.aem-dialog-body {
+    flex: 1 1 auto;
+
+    max-height: calc(100dvh - 158px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    padding: 18px;
+}
+
+.aem-dialog-foot {
+    display: flex;
+    gap: 9px;
+    justify-content: flex-end;
+
+    background: #fafdff;
+    border-top: 1px solid var(--line);
+
+    padding: 13px 18px;
+}
+
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+.aem-dialog fieldset {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+
+    margin: 0 0 16px;
+    padding: 15px;
+}
+
+.aem-dialog legend {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1a4a84;
+
+    padding: 0 7px;
+}
+
+.aem-dialog legend span {
+    width: 22px;
+    height: 22px;
+
+    display: inline-grid;
+    place-items: center;
+
+    background: #e9f3ff;
+    color: var(--blue);
+    border-radius: 6px;
+
+    margin-right: 7px;
+}
+
+.aem-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.aem-fields > label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    font-size: 11px;
+    font-weight: 700;
+    color: #31598a;
+
+    min-width: 0;
+    position: relative;
+}
+
+.aem-fields > label:focus-within {
+    z-index: 30;
+}
+
+.aem-fields input,
+.aem-fields textarea {
+    width: 100%;
+    min-width: 0;
+
+    border: 1px solid #d6e3f1;
+    border-radius: 7px;
+    outline: 0;
+
+    padding: 10px 11px;
+
+    background: #fff;
+    color: #17406e;
+    font-size: 12px;
+}
+
+.aem-fields textarea {
+    line-height: 1.65;
+    resize: vertical;
+}
+
+.aem-fields input:focus,
+.aem-fields textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px #0869e71c;
+}
+
+.aem-fields input[type="file"] {
+    padding: 8px;
+}
+
+.aem-fields small {
+    color: #8198b0;
+    font-size: 10px;
+    font-weight: 400;
+}
+
+.aem-fields em {
+    color: #cf4454;
+    font-style: normal;
+}
+
+.aem-full {
+    grid-column: 1 / -1;
+}
+
+.aem-error {
+    white-space: pre-line;
+
+    background: #fff2f4;
+    border: 1px solid #f8c6ce;
+    border-radius: 8px;
+
+    padding: 12px;
+
+    color: #b2273a;
+    margin-bottom: 13px;
+    font-size: 12px;
+}
+
+
+/* ============================================================
+   SEARCHABLE COMBOBOX
+   ============================================================ */
+
+.aem-combo {
+    position: relative;
+    min-width: 0;
+    width: 100%;
+}
+
+.aem-combo input {
+    padding-right: 40px;
+}
+
+.aem-combo-arrow {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+
+    transform: translateY(-50%);
+
+    width: 32px;
+    height: 32px;
+
+    border: 0;
+    background: transparent;
+    border-radius: 6px;
+
+    color: #6b88a7;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.aem-combo-arrow:hover,
+.aem-combo.opened .aem-combo-arrow {
+    background: #e9f3ff;
+    color: #0869e7;
+}
+
+.aem-combo-options {
+    position: absolute;
+
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+
+    max-height: 220px;
+    overflow-y: auto;
+
+    background: #fff;
+    border: 1px solid #cfdfef;
+    border-radius: 9px;
+
+    padding: 5px;
+    box-shadow: 0 15px 36px #0c37622a;
+
+    z-index: 1000;
+}
+
+.aem-combo.up .aem-combo-options {
+    top: auto;
+    bottom: calc(100% + 5px);
+}
+
+.aem-combo-options[hidden] {
+    display: none !important;
+}
+
+.aem-combo-item {
+    width: 100%;
+    padding: 10px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #fff;
+    text-align: left;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    cursor: pointer;
+    color: #1e4979;
+}
+
+.aem-combo-item strong {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.aem-combo-item small {
+    font-size: 10px;
+    color: #7c94ac;
+}
+
+.aem-combo-item:hover,
+.aem-combo-item.active {
+    background: #eaf4ff;
+    color: var(--blue);
+}
+
+.aem-combo-empty {
+    padding: 12px;
+    font-size: 11px;
+    color: #728ba8;
+}
+
+
+/* ============================================================
+   DOKUMEN
+   ============================================================ */
+
+.aem-file-row {
+    border: 1px solid #deebf6;
+    border-radius: 7px;
+
+    background: #fafdff;
+    padding: 9px 10px;
+    margin-top: 7px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.aem-file-row a {
+    color: var(--blue);
+}
+
+.aem-file-remove {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+}
+
+.aem-file-remove input {
+    width: auto;
+}
+
+.aem-link {
+    border: 0;
+    background: transparent;
+
+    color: #d43b4e;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   DETAIL
+   ============================================================ */
+
+.aem-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.aem-detail-grid > div {
+    padding: 11px;
+
+    border-radius: 8px;
+    background: #f9fcff;
+    border: 1px solid #e0ebf6;
+}
+
+.aem-detail-grid small {
+    display: block;
+
+    font-size: 10px;
+    color: #7891ac;
+    margin-bottom: 5px;
+}
+
+.aem-detail-grid strong {
+    font-size: 12px;
+    color: #1a4778;
+
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.aem-dialog-body h3 {
+    font-size: 14px;
+    color: #1a4778;
+    margin: 16px 0 8px;
+}
+
+.aem-dialog-body > p {
+    white-space: pre-line;
+    line-height: 1.7;
+    font-size: 12px;
+
+    border: 1px solid #e0ebf6;
+    background: #f9fcff;
+    border-radius: 8px;
+
+    padding: 12px;
+}
+
+.aem-photo {
+    width: 100%;
+    max-height: 270px;
+    object-fit: contain;
+
+    border: 1px solid #e0ebf6;
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.aem-doc-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+
+/* ============================================================
+   DELETE CONFIRMATION
+   ============================================================ */
+
+.aem-confirm {
+    width: min(470px, calc(100vw - 28px));
+}
+
+.aem-confirm-content {
+    text-align: center;
+    padding: 25px 20px;
+
+    color: #4a688b;
+    font-size: 12px;
+}
+
+.aem-confirm-content > svg {
+    width: 42px;
+    height: 42px;
+
+    color: #d34255;
+    background: #fff0f2;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+.aem-confirm-content strong {
+    display: block;
+
+    border-radius: 8px;
+    background: #f6faff;
+    color: #123c76;
+
+    padding: 12px;
+    margin: 11px 0;
+}
+
+.aem-confirm-content small {
+    color: #8198af;
+}
+
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+.aem-toast {
+    position: fixed;
+
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+
+    background: #163f70;
+    color: #fff;
+
+    border-radius: 9px;
+    padding: 13px 17px;
+
+    font-size: 12px;
+    box-shadow: 0 10px 32px #0b2a4f50;
+
+    max-width: 90vw;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1040px) {
+
+    .aem-date {
+        position: static;
+        width: max-content;
+        max-width: 100%;
+        margin-bottom: 17px;
+    }
+}
+
+@media (max-width: 790px) {
+
+    .aem-page {
+        padding: 0 12px 30px;
+    }
+
+    .aem-hero {
+        margin: 0 -12px 16px;
+        padding: 18px 12px;
+    }
+
+    .aem-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .aem-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .aem-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .aem-search {
+        flex-basis: 100%;
+    }
+
+    .aem-toolbar select {
+        max-width: none;
+        flex: 1;
+    }
+
+    .aem-fields,
+    .aem-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .aem-full {
+        grid-column: auto;
+    }
+
+    .aem-dialog-head,
+    .aem-dialog-foot,
+    .aem-dialog-body {
+        padding: 13px;
+    }
+
+    .aem-dialog-foot {
+        flex-wrap: wrap;
+    }
+}
+    
