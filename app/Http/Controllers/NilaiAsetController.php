@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -36,6 +37,7 @@ class NilaiAsetController extends Controller
             ->leftJoin('golongans as g', 'g.id', '=', 'n.cat')
             ->select([
                 'n.*',
+                DB::raw('(SELECT COUNT(*) FROM nilai_aset_dokumens nd WHERE nd.nilai_aktiva_id = n.id) AS pdf_count'),
                 'a.kode as aktiva_kode',
                 'a.aktiva as aktiva_nama',
                 'a.kib as aktiva_kib',
@@ -209,61 +211,146 @@ class NilaiAsetController extends Controller
             'tahun_aktif' => $tahunAktif ?: $currentYear,
         ];
 
-        // TREND NILAI ASET
-        $trendYears = collect(
-            range($currentYear - 4, $currentYear)
-        );
+        // =======================================================
+        // GRAFIK K.I.B — BERASAL DARI NILAI AKTIVA RIIL
+        // =======================================================
+        // Nilai hanya dihitung sebagai K.I.B jika golongan
+        // n.cat dikenali, atau fallback aktivas.kib dikenali.
+        // Transaksi yang tidak bisa dipetakan tidak direkayasa.
 
-        $trendRaw = DB::table('nilai_aktivas')
-            ->selectRaw(
-                'tahun, SUM(COALESCE(nilai, 0)) AS total'
-            )
-            ->whereIn(
-                'tahun',
-                $trendYears
-                    ->map(fn($tahun) => (string) $tahun)
-                    ->all()
-            )
-            ->groupBy('tahun')
-            ->pluck('total', 'tahun');
+        $modules = config('kib.modules', []);
+        $service = app(KibNotificationService::class);
+        $catToModule = [];
+        $moduleAliases = [];
+        $moduleLabels = [];
 
-        $trendLabels = [];
-        $trendValues = [];
+        $normalizeKib = static function ($value): string {
+            $value = mb_strtoupper(trim((string) ($value ?? '')));
+            $value = preg_replace('/[^A-Z0-9]+/u', ' ', $value) ?? '';
+            return trim(preg_replace('/\\s+/u', ' ', $value) ?? '');
+        };
 
-        foreach ($trendYears as $tahun) {
-            $trendLabels[] = (string) $tahun;
+        foreach ($modules as $module => $config) {
+            $id = $service->categoryId($module);
 
-            $trendValues[] = (int) (
-                $trendRaw[(string) $tahun] ?? 0
-            );
+            if ($id !== null) {
+                $catToModule[(int) $id] = $module;
+            }
+
+            $moduleLabels[$module] = (string) ($config['label'] ?? $module);
+            $moduleAliases[$module] = array_values(array_filter(
+                array_map($normalizeKib, array_merge(
+                    $config['aliases'] ?? [],
+                    [$config['label'] ?? '']
+                ))
+            ));
         }
 
-        // DISTRIBUSI GOLONGAN
-        $distribution = DB::table('nilai_aktivas as n')
-            ->leftJoin(
-                'golongans as g',
-                'g.id',
-                '=',
-                'n.cat'
-            )
-            ->selectRaw(
-                "COALESCE(TRIM(g.nama), 'Tanpa Golongan') AS nama,
-                 SUM(COALESCE(n.nilai, 0)) AS total"
-            )
-            ->groupBy('g.id', 'g.nama')
-            ->orderBy('g.id')
+        $identifyModule = static function ($cat, $aktivaKib)
+        use ($catToModule, $moduleAliases, $normalizeKib): ?string {
+
+            if ($cat !== null && isset($catToModule[(int) $cat])) {
+                return $catToModule[(int) $cat];
+            }
+
+            $text = $normalizeKib($aktivaKib);
+            if ($text === '') {
+                return null;
+            }
+
+            // Mendukung kode K.I.B pendek pada master Aktiva.
+            if (preg_match('/(?:^| )KIB ([ABCDEF])(?: |$)/', $text, $match)) {
+                $letterToModule = [
+                    'A' => 'tanah',
+                    'B' => 'mesin',
+                    'C' => 'gedung',
+                    'D' => 'jalan',
+                    'E' => 'aset_tetap',
+                    'F' => 'konstruksi',
+                ];
+                $short = $letterToModule[$match[1]] ?? null;
+                if ($short !== null && array_key_exists($short, $moduleAliases)) {
+                    return $short;
+                }
+            }
+
+            // Gunakan kecocokan label/alias terpanjang agar tepat.
+            $matched = null;
+            $score = 0;
+
+            foreach ($moduleAliases as $module => $aliases) {
+                foreach ($aliases as $alias) {
+                    if (
+                        $text === $alias ||
+                        (strlen($alias) >= 8 && str_contains($text, $alias))
+                    ) {
+                        $length = strlen($alias);
+                        if ($length > $score) {
+                            $matched = $module;
+                            $score = $length;
+                        }
+                    }
+                }
+            }
+
+            return $matched;
+        };
+
+        $currentYear = (int) now('Asia/Makassar')->format('Y');
+        $trendYears = range($currentYear - 4, $currentYear);
+        $trendByYear = array_fill_keys(
+            array_map('strval', $trendYears),
+            0
+        );
+        $categoryTotals = array_fill_keys(array_keys($modules), 0);
+
+        $unclassifiedTotal = 0;
+        $unclassifiedCount = 0;
+
+        // Grup di PostgreSQL: tidak memuat 12.000+ record mentah.
+        $grouped = DB::table('nilai_aktivas as n')
+            ->leftJoin('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+            ->select('n.cat', 'n.tahun', 'a.kib AS aktiva_kib')
+            ->selectRaw('COUNT(*) AS jumlah, SUM(COALESCE(n.nilai, 0)) AS total')
+            ->groupBy('n.cat', 'n.tahun', 'a.kib')
             ->get();
 
-        $categoryLabels = $distribution
-            ->pluck('nama')
-            ->values()
-            ->all();
+        foreach ($grouped as $record) {
+            $module = $identifyModule(
+                $record->cat,
+                $record->aktiva_kib
+            );
+            $value = (int) $record->total;
 
-        $categoryValues = $distribution
-            ->pluck('total')
-            ->map(fn($value) => (int) $value)
-            ->values()
-            ->all();
+            if ($module === null) {
+                $unclassifiedTotal += $value;
+                $unclassifiedCount += (int) $record->jumlah;
+                continue;
+            }
+
+            $categoryTotals[$module] += $value;
+
+            $year = (string) $record->tahun;
+            if (array_key_exists($year, $trendByYear)) {
+                $trendByYear[$year] += $value;
+            }
+        }
+
+        $trendLabels = array_map('strval', $trendYears);
+        $trendValues = array_values($trendByYear);
+
+        $categoryLabels = [];
+        $categoryValues = [];
+
+        foreach ($categoryTotals as $module => $total) {
+            $categoryLabels[] = $moduleLabels[$module];
+            $categoryValues[] = (int) $total;
+        }
+
+        $kibChartTotal = array_sum($categoryValues);
+
+        // Data tanpa klasifikasi dicatat terpisah,
+        // tidak dipaksakan masuk ke golongan K.I.B tertentu.
 
         return view('main.nilai', compact(
             'nilaiAsets',
@@ -279,7 +366,10 @@ class NilaiAsetController extends Controller
             'trendLabels',
             'trendValues',
             'categoryLabels',
-            'categoryValues'
+            'categoryValues',
+            'kibChartTotal',
+            'unclassifiedTotal',
+            'unclassifiedCount'
         ));
     }
 
@@ -309,6 +399,9 @@ class NilaiAsetController extends Controller
             ->first();
 
         abort_if(!$data, 404);
+
+        // Termasuk dokumen legacy agar file lama tetap bisa dibuka.
+        $documents = $this->documentsForNilai($nilai, $data);
 
         return response()->json([
             'success' => true,
@@ -364,6 +457,7 @@ class NilaiAsetController extends Controller
                 'pdf_download_url' => $data->dokumen_pdf
                     ? route('nilai.pdf.download', $data->id)
                     : null,
+                'documents' => $documents,
             ],
         ]);
     }
@@ -408,6 +502,7 @@ class NilaiAsetController extends Controller
                         '_token',
                         '_method',
                         'dokumen_pdf',
+                        'dokumen_pdf_baru',
                     ])
                 );
         }
@@ -422,10 +517,12 @@ class NilaiAsetController extends Controller
 
         // 4. PERSIAPKAN PDF
         $pdf = $request->file('dokumen_pdf');
+        $pdfs = $request->file('dokumen_pdf_baru', []);
 
-        unset($validated['dokumen_pdf']);
+        unset($validated['dokumen_pdf'], $validated['dokumen_pdf_baru']);
 
         $uploadedPath = null;
+        $uploadedExtraPaths = [];
 
         try {
             // 5. SIMPAN KE POSTGRESQL
@@ -433,7 +530,9 @@ class NilaiAsetController extends Controller
                 function () use (
                     $validated,
                     $pdf,
-                    &$uploadedPath
+                    $pdfs,
+                    &$uploadedPath,
+                    &$uploadedExtraPaths
                 ): void {
 
                     $record = NilaiAktiva::create($validated);
@@ -445,14 +544,24 @@ class NilaiAsetController extends Controller
                             $pdf
                         );
                     }
+
+                    foreach ($pdfs as $file) {
+                        $uploadedExtraPaths[] = $this->storeExtraPdf(
+                            $record,
+                            $file
+                        );
+                    }
                 }
             );
         } catch (\Throwable $exception) {
 
             // Bersihkan file apabila transaksi gagal.
-            if ($uploadedPath) {
-                Storage::disk('local')
-                    ->delete($uploadedPath);
+            $clean = array_filter(array_merge(
+                [$uploadedPath],
+                $uploadedExtraPaths
+            ));
+            if ($clean) {
+                Storage::disk('local')->delete($clean);
             }
 
             // Catat penyebab teknis di laravel.log.
@@ -476,6 +585,7 @@ class NilaiAsetController extends Controller
                         '_token',
                         '_method',
                         'dokumen_pdf',
+                        'dokumen_pdf_baru',
                     ])
                 );
         }
@@ -502,11 +612,13 @@ class NilaiAsetController extends Controller
         $this->checkGolonganAktiva($validated);
 
         $pdf = $request->file('dokumen_pdf');
+        $pdfs = $request->file('dokumen_pdf_baru', []);
 
-        unset($validated['dokumen_pdf']);
+        unset($validated['dokumen_pdf'], $validated['dokumen_pdf_baru']);
 
         $oldPdf = null;
         $newPdf = null;
+        $newExtraPaths = [];
 
         try {
             DB::transaction(
@@ -514,8 +626,10 @@ class NilaiAsetController extends Controller
                     $nilai,
                     $validated,
                     $pdf,
+                    $pdfs,
                     &$oldPdf,
-                    &$newPdf
+                    &$newPdf,
+                    &$newExtraPaths
                 ): void {
 
                     $record = NilaiAktiva::query()
@@ -572,11 +686,19 @@ class NilaiAsetController extends Controller
                             $pdf
                         );
                     }
+
+                    foreach ($pdfs as $file) {
+                        $newExtraPaths[] = $this->storeExtraPdf(
+                            $record,
+                            $file
+                        );
+                    }
                 }
             );
         } catch (\Throwable $exception) {
-            if ($newPdf) {
-                Storage::disk('local')->delete($newPdf);
+            $clean = array_filter(array_merge([$newPdf], $newExtraPaths));
+            if ($clean) {
+                Storage::disk('local')->delete($clean);
             }
 
             throw $exception;
@@ -608,8 +730,13 @@ class NilaiAsetController extends Controller
     public function destroy(int $nilai)
     {
         $pdfPath = null;
+        $extraPaths = [];
 
-        DB::transaction(function () use ($nilai, &$pdfPath): void {
+        DB::transaction(function () use (
+            $nilai,
+            &$pdfPath,
+            &$extraPaths
+        ): void {
 
             $record = NilaiAktiva::query()
                 ->whereKey($nilai)
@@ -664,8 +791,14 @@ class NilaiAsetController extends Controller
          */
             $pdfPath = $record->dokumen_pdf;
 
+            $extraPaths = DB::table('nilai_aset_dokumens')
+                ->where('nilai_aktiva_id', $record->id)
+                ->pluck('path')
+                ->all();
+
             /*
          * Hapus data yang memenuhi persyaratan.
+         * File fisik baru dihapus setelah COMMIT berhasil.
          */
             $record->delete();
         });
@@ -674,8 +807,9 @@ class NilaiAsetController extends Controller
      * Hapus dokumen setelah transaksi
      * database berhasil diselesaikan.
      */
-        if ($pdfPath) {
-            Storage::disk('local')->delete($pdfPath);
+        $clean = array_filter(array_merge([$pdfPath], $extraPaths));
+        if ($clean) {
+            Storage::disk('local')->delete($clean);
         }
 
         /*
@@ -916,7 +1050,13 @@ class NilaiAsetController extends Controller
                     'file',
                     'mimes:pdf',
                     'mimetypes:application/pdf',
-                    'max:15360',
+                ],
+                'dokumen_pdf_baru' => ['nullable', 'array'],
+                'dokumen_pdf_baru.*' => [
+                    'required',
+                    'file',
+                    'mimes:pdf',
+                    'mimetypes:application/pdf',
                 ],
             ],
 
@@ -960,8 +1100,8 @@ class NilaiAsetController extends Controller
                 'dokumen_pdf.mimes' =>
                 'Dokumen harus berformat PDF.',
 
-                'dokumen_pdf.max' =>
-                'Ukuran PDF maksimal 15 MB.',
+                'dokumen_pdf_baru.*.mimes' =>
+                'Semua lampiran harus berformat PDF.',
             ]
         );
     }
@@ -1053,6 +1193,128 @@ class NilaiAsetController extends Controller
                 'Content-Type' =>
                 'application/pdf',
             ]
+        );
+    }
+
+    /**
+     * Kumpulan dokumen milik satu transaksi, termasuk PDF legacy.
+     */
+    private function documentsForNilai(int $nilai, object $record): array
+    {
+        $result = [];
+
+        if (!empty($record->dokumen_pdf)) {
+            $result[] = [
+                'id' => null,
+                'name' => $record->dokumen_pdf_nama_asli ?: 'Dokumen lama.pdf',
+                'size' => (int) ($record->dokumen_pdf_size ?? 0),
+                'preview_url' => route('nilai.pdf.preview', $nilai),
+                'download_url' => route('nilai.pdf.download', $nilai),
+            ];
+        }
+
+        $rows = DB::table('nilai_aset_dokumens')
+            ->where('nilai_aktiva_id', $nilai)
+            ->orderBy('id')
+            ->get();
+
+        foreach ($rows as $doc) {
+            $result[] = [
+                'id' => $doc->id,
+                'name' => $doc->original_name,
+                'size' => (int) $doc->file_size,
+                'preview_url' => URL::temporarySignedRoute(
+                    'nilai.dokumen.preview',
+                    now()->addMinutes(30),
+                    ['nilai' => $nilai, 'dokumen' => $doc->id]
+                ),
+                'download_url' => URL::temporarySignedRoute(
+                    'nilai.dokumen.download',
+                    now()->addMinutes(30),
+                    ['nilai' => $nilai, 'dokumen' => $doc->id]
+                ),
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Simpan PDF tambahan tanpa mengubah/menghapus PDF sebelumnya.
+     * Validasi PDF harus selesai sebelum method ini dipanggil.
+     */
+    private function storeExtraPdf(
+        NilaiAktiva $record,
+        UploadedFile $file
+    ): string {
+        $year = preg_match('/^\\d{4}$/', (string) $record->tahun)
+            ? (string) $record->tahun
+            : now('Asia/Makassar')->format('Y');
+
+        $path = $file->storeAs(
+            'nilai-aset/' . $year,
+            (string) Str::uuid() . '.pdf',
+            'local'
+        );
+
+        if (!$path) {
+            throw new \RuntimeException('Gagal menyimpan PDF ke storage.');
+        }
+
+        try {
+            DB::table('nilai_aset_dokumens')->insert([
+                'nilai_aktiva_id' => $record->id,
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'file_size' => (int) $file->getSize(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($path);
+            throw $exception;
+        }
+
+        return $path;
+    }
+
+    /**
+     * Preview PDF lampiran tambahan (akses melalui ID transaksi + dokumen).
+     */
+    public function previewDokumen(int $nilai, int $dokumen)
+    {
+        $doc = DB::table('nilai_aset_dokumens')
+            ->where('nilai_aktiva_id', $nilai)
+            ->where('id', $dokumen)
+            ->first();
+
+        abort_if(!$doc || !Storage::disk('local')->exists($doc->path), 404);
+
+        return response()->file(
+            Storage::disk('local')->path($doc->path),
+            [
+                'Content-Type' => 'application/pdf',
+                'X-Content-Type-Options' => 'nosniff',
+            ]
+        );
+    }
+
+    /**
+     * Download lampiran tambahan; tidak membuka storage publik.
+     */
+    public function downloadDokumen(int $nilai, int $dokumen)
+    {
+        $doc = DB::table('nilai_aset_dokumens')
+            ->where('nilai_aktiva_id', $nilai)
+            ->where('id', $dokumen)
+            ->first();
+
+        abort_if(!$doc || !Storage::disk('local')->exists($doc->path), 404);
+
+        return response()->download(
+            Storage::disk('local')->path($doc->path),
+            basename(str_replace('\\\\', '/', $doc->original_name)),
+            ['Content-Type' => 'application/pdf']
         );
     }
 

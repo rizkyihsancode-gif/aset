@@ -321,11 +321,11 @@
                     <div>
 
                         <h2>
-                            Tren Nilai Aset 5 Tahun Terakhir
+                            Tren Nilai K.I.B 5 Tahun Terakhir
                         </h2>
 
                         <p>
-                            Nilai transaksi berdasarkan tahun pencatatan.
+                            Total nilai transaksi yang terpetakan ke golongan K.I.B berdasarkan tahun pencatatan.
                         </p>
 
                     </div>
@@ -353,11 +353,11 @@
                     <div>
 
                         <h2>
-                            Distribusi Nilai Aset
+                            Distribusi Nilai K.I.B
                         </h2>
 
                         <p>
-                            Berdasarkan golongan aset.
+                            Berdasarkan K.I.B A sampai F dan K.I.R yang valid.
                         </p>
 
                     </div>
@@ -374,11 +374,11 @@
                         <div class="nilai-donut-center">
 
                             <strong>
-                                {{ $compactRupiah($stats['total_nilai']) }}
+                                {{ $compactRupiah($kibChartTotal) }}
                             </strong>
 
                             <span>
-                                Total Nilai
+                                Nilai K.I.B
                             </span>
 
                         </div>
@@ -389,6 +389,16 @@
                     <div id="nilaiDonutLegend" class="nilai-donut-legend"></div>
 
                 </div>
+
+                @if ($unclassifiedCount > 0)
+                    <p class="nilai-chart-notice">
+                        <i data-lucide="info"></i>
+                        {{ number_format($unclassifiedCount, 0, ',', '.') }} transaksi
+                        ({{ $compactRupiah($unclassifiedTotal) }}) belum dapat
+                        dipetakan ke golongan K.I.B; tidak dimasukkan ke grafik.
+                        Periksa golongan dan kode aktiva transaksi tersebut.
+                    </p>
+                @endif
 
             </article>
 
@@ -724,11 +734,9 @@
 
                                     <td class="nilai-pdf-column">
 
-                                        @if (!empty($item->dokumen_pdf))
+                                        @if (!empty($item->dokumen_pdf) || ($item->pdf_count ?? 0) > 0)
                                             <button type="button" class="nilai-pdf-button js-pdf-button"
-                                                data-preview-url="{{ route('nilai.pdf.preview', $item->id) }}"
-                                                data-download-url="{{ route('nilai.pdf.download', $item->id) }}"
-                                                data-pdf-name="{{ $item->dokumen_pdf_nama_asli ?? 'Dokumen PDF' }}">
+                                                data-url="{{ route('nilai.show', $item->id) }}">
 
                                                 <i data-lucide="file-text"></i>
 
@@ -1254,8 +1262,8 @@
 
                             <div class="nilai-upload-box">
 
-                                <input type="file" name="dokumen_pdf" id="nilaiPdfInput"
-                                    accept=".pdf,application/pdf">
+                                <input type="file" name="dokumen_pdf_baru[]" id="nilaiPdfInput"
+                                    accept=".pdf,application/pdf" multiple>
 
 
                                 <div class="nilai-upload-content">
@@ -1270,11 +1278,12 @@
                                     <div>
 
                                         <strong>
-                                            Pilih file PDF
+                                            Pilih satu atau beberapa file PDF
                                         </strong>
 
                                         <span>
-                                            Format PDF, maksimal 15 MB.
+                                            Format PDF. Bisa memilih banyak file. Tidak ada batas ukuran pada validasi
+                                            aplikasi; batas infrastruktur mengikuti konfigurasi server.
                                         </span>
 
                                     </div>
@@ -1285,6 +1294,10 @@
 
                         </div>
 
+
+                        <div id="nilaiSelectedPdfList" class="nilai-selected-pdf-list nilai-field-full" hidden></div>
+
+                        <div id="nilaiSavedDocuments" class="nilai-saved-documents nilai-field-full" hidden></div>
 
                         <div id="nilaiExistingPdf" class="nilai-existing-pdf nilai-field-full" hidden>
 
@@ -1467,7 +1480,7 @@
 
                     <i data-lucide="file-text"></i>
 
-                    Lihat PDF
+                    Lihat Semua PDF
 
                 </button>
 
@@ -1592,6 +1605,26 @@
 
             </form>
 
+        </dialog>
+
+
+        {{-- =====================================================
+             MODAL DAFTAR DOKUMEN PDF (LEGACY + MULTI)
+        ====================================================== --}}
+
+        <dialog id="nilaiDocumentsModal" class="nilai-modal nilai-documents-modal">
+            <div class="nilai-modal-header">
+                <div>
+                    <span class="nilai-modal-eyebrow">DOKUMEN NILAI ASET</span>
+                    <h3>Daftar Lampiran PDF</h3>
+                    <p>Pilih dokumen untuk preview atau download.</p>
+                </div>
+                <button type="button" class="nilai-modal-close" data-close-dialog="nilaiDocumentsModal"
+                    aria-label="Tutup daftar dokumen">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div id="nilaiDocumentsList" class="nilai-documents-list"></div>
         </dialog>
 
 

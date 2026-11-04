@@ -10,13 +10,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const $ = (selector, root = document) => root.querySelector(selector);
     const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-    const numberFormat = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
-    const formatRupiah = value => 'Rp ' + numberFormat.format(Number(value) || 0);
+
+    const numberFormat = new Intl.NumberFormat('id-ID', {
+        maximumFractionDigits: 0
+    });
+
+    const formatRupiah = value =>
+        'Rp ' + numberFormat.format(Number(value) || 0);
+
     const refreshIcons = () => window.lucide?.createIcons?.();
 
     function formatCompact(value) {
         const n = Number(value) || 0;
         const a = Math.abs(n);
+
         const units = [
             [1_000_000_000_000, ' T'],
             [1_000_000_000, ' M'],
@@ -26,7 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const [unit, suffix] of units) {
             if (a >= unit) {
                 const scaled = n / unit;
-                const truncated = (scaled < 0 ? Math.ceil(scaled * 100) : Math.floor(scaled * 100)) / 100;
+
+                const truncated = (
+                    scaled < 0
+                        ? Math.ceil(scaled * 100)
+                        : Math.floor(scaled * 100)
+                ) / 100;
 
                 return 'Rp ' + truncated.toLocaleString('id-ID', {
                     minimumFractionDigits: 2,
@@ -55,17 +67,322 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
+    // ========================================================
+    // SEARCHABLE DROPDOWN NILAI ASET (VANILLA JS)
+    // Select asli tetap menyimpan ID yang dipakai Controller.
+    // ========================================================
+
+    const nilaiCombos = new Map();
+
+    function syncCombos() {
+        for (const combo of nilaiCombos.values()) {
+            combo.sync();
+        }
+    }
+
+    function enhanceSearchableSelect(select) {
+        if (!select || select.dataset.combobox === 'yes') return;
+
+        select.dataset.combobox = 'yes';
+
+        const originallyRequired = select.required;
+        select.required = false;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'nilai-combo';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'nilai-combo-search';
+        input.autocomplete = 'off';
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-expanded', 'false');
+
+        input.setAttribute(
+            'aria-label',
+            'Cari ' + (
+                select.closest('.nilai-field')
+                    ?.querySelector('label')
+                    ?.textContent || 'pilihan'
+            ).trim()
+        );
+
+        input.placeholder = 'Ketik untuk mencari...';
+        input.required = originallyRequired;
+
+        const menu = document.createElement('div');
+        menu.className = 'nilai-combo-options';
+        menu.setAttribute('role', 'listbox');
+        menu.hidden = true;
+
+        const parent = select.parentNode;
+        parent.insertBefore(wrapper, select);
+
+        wrapper.append(input, menu, select);
+
+        select.classList.add('nilai-original-select');
+        select.tabIndex = -1;
+
+        let visibleOptions = [];
+        let activeIndex = -1;
+
+        const selectedLabel = () => {
+            const option = select.selectedOptions?.[0];
+
+            return option?.value
+                ? option.textContent.trim().replace(/\s+/g, ' ')
+                : '';
+        };
+
+        const selectable = () =>
+            Array.from(select.options).filter(option =>
+                option.value &&
+                !option.disabled &&
+                !option.hidden
+            );
+
+        function positionMenu() {
+            if (menu.hidden) return;
+
+            const rect = input.getBoundingClientRect();
+            const availableBelow = window.innerHeight - rect.bottom;
+
+            const height = Math.min(
+                260,
+                (visibleOptions.length || 1) * 38 + 8
+            );
+
+            const above =
+                availableBelow < Math.min(190, height) &&
+                rect.top > availableBelow;
+
+            menu.style.left = Math.round(rect.left) + 'px';
+            menu.style.width = Math.round(rect.width) + 'px';
+
+            menu.style.top = Math.round(
+                above
+                    ? Math.max(4, rect.top - height - 4)
+                    : rect.bottom + 4
+            ) + 'px';
+
+            menu.style.maxHeight = Math.max(
+                80,
+                above ? rect.top - 12 : availableBelow - 12
+            ) + 'px';
+        }
+
+        function close() {
+            menu.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            activeIndex = -1;
+        }
+
+        function sync() {
+            input.value = selectedLabel();
+
+            input.setCustomValidity(
+                originallyRequired && !select.value
+                    ? 'Pilih salah satu data yang tersedia.'
+                    : ''
+            );
+
+            if (!menu.hidden) {
+                render(input.value, true);
+            }
+        }
+
+        function choose(option) {
+            select.value = option.value;
+            input.value = selectedLabel();
+
+            input.setCustomValidity('');
+
+            select.dispatchEvent(
+                new Event('change', { bubbles: true })
+            );
+
+            close();
+            input.focus();
+        }
+
+        function render(keyword = '', showAll = false) {
+            const text = String(keyword)
+                .trim()
+                .toLocaleLowerCase('id-ID');
+
+            const options = selectable().filter(option =>
+                showAll ||
+                option.textContent
+                    .toLocaleLowerCase('id-ID')
+                    .includes(text)
+            );
+
+            visibleOptions = options.slice(0, 100);
+            menu.replaceChildren();
+
+            if (visibleOptions.length === 0) {
+                const info = document.createElement('div');
+                info.className = 'nilai-combo-empty';
+                info.textContent = 'Tidak ada data yang cocok.';
+                menu.appendChild(info);
+            }
+
+            for (const option of visibleOptions) {
+                const row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'nilai-combo-option';
+                row.setAttribute('role', 'option');
+
+                row.textContent = option.textContent
+                    .trim()
+                    .replace(/\s+/g, ' ');
+
+                row.addEventListener(
+                    'pointerdown',
+                    event => event.preventDefault()
+                );
+
+                row.addEventListener(
+                    'click',
+                    () => choose(option)
+                );
+
+                menu.appendChild(row);
+            }
+
+            if (options.length > 100) {
+                const info = document.createElement('div');
+                info.className = 'nilai-combo-empty';
+                info.textContent =
+                    'Masih ada pilihan lain; ketik lebih spesifik.';
+
+                menu.appendChild(info);
+            }
+
+            activeIndex = -1;
+            menu.hidden = false;
+
+            input.setAttribute('aria-expanded', 'true');
+            positionMenu();
+        }
+
+        input.addEventListener('focus', () => render('', true));
+        input.addEventListener('click', () => render('', true));
+
+        input.addEventListener('input', () => {
+            // Jangan mengirim ID lama saat pengguna mengetik ulang.
+            select.value = '';
+
+            input.setCustomValidity(
+                'Pilih salah satu data yang tersedia.'
+            );
+
+            render(input.value);
+        });
+
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                close();
+                input.value = selectedLabel();
+                event.stopPropagation();
+            }
+
+            if (
+                event.key === 'ArrowDown' ||
+                event.key === 'ArrowUp'
+            ) {
+                event.preventDefault();
+
+                if (menu.hidden) render('', true);
+
+                activeIndex = Math.max(
+                    0,
+                    Math.min(
+                        visibleOptions.length - 1,
+                        activeIndex + (
+                            event.key === 'ArrowDown' ? 1 : -1
+                        )
+                    )
+                );
+
+                menu.querySelectorAll('.nilai-combo-option')
+                    .forEach((row, i) => {
+                        row.classList.toggle(
+                            'highlighted',
+                            i === activeIndex
+                        );
+                    });
+            }
+
+            if (
+                event.key === 'Enter' &&
+                !menu.hidden &&
+                visibleOptions[activeIndex]
+            ) {
+                event.preventDefault();
+                choose(visibleOptions[activeIndex]);
+            }
+
+            if (event.key === 'Tab') close();
+        });
+
+        select.addEventListener('change', () => {
+            if (select.value) {
+                sync();
+            } else if (
+                !document.activeElement?.isSameNode(input)
+            ) {
+                sync();
+            }
+        });
+
+        document.addEventListener('pointerdown', event => {
+            if (!wrapper.contains(event.target)) close();
+        });
+
+        window.addEventListener('resize', positionMenu);
+        document.addEventListener('scroll', positionMenu, true);
+
+        nilaiCombos.set(select.id, {
+            sync,
+            close,
+            select
+        });
+
+        sync();
+    }
+
+    document.querySelectorAll(
+        '#nilaiForm select[name]'
+    ).forEach(enhanceSearchableSelect);
+
+
+    // ========================================================
+    // FUNGSI MODAL
+    // ========================================================
+
     function openDialog(dialog) {
-        if (dialog && !dialog.open && typeof dialog.showModal === 'function') {
+        if (
+            dialog &&
+            !dialog.open &&
+            typeof dialog.showModal === 'function'
+        ) {
             dialog.showModal();
         }
     }
 
     function closeDialog(dialog) {
-        if (dialog && dialog.open && typeof dialog.close === 'function') {
+        if (
+            dialog &&
+            dialog.open &&
+            typeof dialog.close === 'function'
+        ) {
             dialog.close();
         }
     }
+
 
     // ========================================================
     // 1. MENUTUP MODAL
@@ -73,7 +390,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $$('[data-close-dialog]').forEach(button => {
         button.addEventListener('click', () => {
-            closeDialog($('#' + button.dataset.closeDialog));
+            closeDialog(
+                $('#' + button.dataset.closeDialog)
+            );
         });
     });
 
@@ -85,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+
     // ========================================================
     // 2. FILTER DEPARTEMEN DAN DIVISI
     // ========================================================
@@ -95,7 +415,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function filterDivisiByDepartemen(preserveCurrent = false) {
         if (!departemenSelect || !divisiSelect) return;
 
-        const departemen = String(departemenSelect.value || '');
+        const departemen = String(
+            departemenSelect.value || ''
+        );
+
         const previous = divisiSelect.value;
 
         Array.from(divisiSelect.options).forEach(option => {
@@ -116,11 +439,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const oldOption = Array.from(divisiSelect.options)
             .find(option => option.value === previous);
 
-        if (preserveCurrent && oldOption && !oldOption.disabled) {
+        if (
+            preserveCurrent &&
+            oldOption &&
+            !oldOption.disabled
+        ) {
             divisiSelect.value = previous;
-        } else if (divisiSelect.selectedOptions[0]?.disabled) {
+        } else if (
+            divisiSelect.selectedOptions[0]?.disabled
+        ) {
             divisiSelect.value = '';
         }
+
+        syncCombos();
     }
 
     departemenSelect?.addEventListener('change', () => {
@@ -129,16 +460,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filterDivisiByDepartemen(true);
 
+
     // ========================================================
     // 3. FILTER KODE AKTIVA — GEDUNG DAN BANGUNAN
-    // ========================================================
-    //
-    // Membutuhkan data-kib pada option nilaiAktiva:
-    //
-    // data-kib="{{ $item->kib }}"
-    //
-    // Golongan lain tidak difilter oleh fungsi ini.
-    // Validasi kesesuaian tetap dilakukan Controller.
     // ========================================================
 
     const golonganForm = $('#nilaiGolongan');
@@ -166,7 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const option of aktivaForm.options) {
             if (!option.value) continue;
 
-            const kib = normalizeKib(option.dataset.kib);
+            const kib = normalizeKib(
+                option.dataset.kib
+            );
 
             const match =
                 /(?:^| )KIB C(?: |$)/.test(kib) ||
@@ -181,11 +507,11 @@ document.addEventListener('DOMContentLoaded', () => {
             option.hidden = !allowed;
         }
 
-        // Kosongkan Kode Aktiva apabila kode sebelumnya
-        // tidak sesuai dengan golongan yang baru dipilih.
         if (aktivaForm.selectedOptions[0]?.disabled) {
             aktivaForm.value = '';
         }
+
+        syncCombos();
     }
 
     golonganForm?.addEventListener(
@@ -195,6 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filterAktivaGedung();
 
+
     // ========================================================
     // 4. FORM TAMBAH DAN EDIT NILAI ASET
     // ========================================================
@@ -203,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = $('#nilaiForm');
     const method = $('#nilaiFormMethod');
     const formTitle = $('#nilaiFormTitle');
+
     const storeUrl = form?.action || '';
 
     const existingPdf = $('#nilaiExistingPdf');
@@ -218,8 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         form.action = storeUrl;
 
-        // Tambah: gunakan POST murni.
-        // _method tidak boleh ikut dikirim.
+        // Tambah: POST murni.
         if (method) {
             method.value = 'PUT';
             method.disabled = true;
@@ -230,7 +557,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const tahun = $('#nilaiTahun');
-        const currentYear = String(new Date().getFullYear());
+        const currentYear = String(
+            new Date().getFullYear()
+        );
 
         if (
             tahun &&
@@ -248,10 +577,15 @@ document.addEventListener('DOMContentLoaded', () => {
             existingPdf.hidden = true;
         }
 
+        renderSavedDocuments([]);
         clearLocalPdfPreview();
+        resetSelectedPdfFiles();
+
         filterDivisiByDepartemen(false);
         filterAktivaGedung();
+        syncCombos();
     }
+
 
     // ========================================================
     // 5. TOMBOL TAMBAH NILAI ASET
@@ -263,6 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshIcons();
     });
 
+
     // ========================================================
     // 6. MENGAMBIL DETAIL DATA DARI CONTROLLER
     // ========================================================
@@ -271,13 +606,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const response = await fetch(path, {
             credentials: 'same-origin',
             headers: {
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(
+                `HTTP ${response.status}`
+            );
         }
 
         const body = await response.json();
@@ -290,6 +627,130 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return body.data;
     }
+
+
+    // ========================================================
+    // DAFTAR PDF — LEGACY DAN BANYAK LAMPIRAN
+    // ========================================================
+
+    const documentsModal = $('#nilaiDocumentsModal');
+    const documentsList = $('#nilaiDocumentsList');
+    const savedDocuments = $('#nilaiSavedDocuments');
+
+    function formatBytes(bytes) {
+        const n = Number(bytes) || 0;
+
+        if (n <= 0) {
+            return 'Ukuran tidak tersedia';
+        }
+
+        const units = [
+            'B', 'KB', 'MB', 'GB', 'TB'
+        ];
+
+        let size = n;
+        let unit = 0;
+
+        while (
+            size >= 1024 &&
+            unit < units.length - 1
+        ) {
+            size /= 1024;
+            unit++;
+        }
+
+        return size.toLocaleString('id-ID', {
+            maximumFractionDigits: 2
+        }) + ' ' + units[unit];
+    }
+
+    function createDocumentRow(doc) {
+        const row = document.createElement('div');
+        row.className = 'nilai-document-item';
+
+        const info = document.createElement('div');
+
+        const name = document.createElement('strong');
+        name.textContent = doc.name || 'Dokumen PDF';
+
+        const size = document.createElement('small');
+        size.textContent = formatBytes(doc.size);
+
+        info.append(name, size);
+
+        const actions = document.createElement('div');
+        actions.className = 'nilai-document-actions';
+
+        const preview = document.createElement('button');
+        preview.type = 'button';
+        preview.className = 'nilai-outline-button';
+        preview.textContent = 'Preview';
+
+        preview.addEventListener('click', () => {
+            openPdfModal(
+                doc.preview_url,
+                doc.download_url,
+                doc.name
+            );
+        });
+
+        const download = document.createElement('a');
+        download.className = 'nilai-outline-button';
+        download.href = doc.download_url;
+        download.textContent = 'Download';
+
+        actions.append(preview, download);
+        row.append(info, actions);
+
+        return row;
+    }
+
+    function renderSavedDocuments(documents) {
+        if (!savedDocuments) return;
+
+        savedDocuments.replaceChildren();
+        savedDocuments.hidden = !documents.length;
+
+        if (documents.length) {
+            const heading = document.createElement('strong');
+
+            heading.textContent =
+                'Dokumen yang sudah tersimpan (' +
+                documents.length + ')';
+
+            savedDocuments.appendChild(heading);
+
+            documents.forEach(doc => {
+                savedDocuments.appendChild(
+                    createDocumentRow(doc)
+                );
+            });
+        }
+    }
+
+    function openDocuments(documents) {
+        if (!documentsModal || !documentsList) return;
+
+        documentsList.replaceChildren();
+
+        if (!documents.length) {
+            const info = document.createElement('p');
+
+            info.textContent =
+                'Belum ada PDF untuk transaksi ini.';
+
+            documentsList.appendChild(info);
+        } else {
+            documents.forEach(doc => {
+                documentsList.appendChild(
+                    createDocumentRow(doc)
+                );
+            });
+        }
+
+        openDialog(documentsModal);
+    }
+
 
     // ========================================================
     // 7. EDIT NILAI ASET
@@ -318,13 +779,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 $('#nilaiTanggal').value =
                     String(data.tgl_voucher || '').slice(0, 10);
 
-                // Golongan ditentukan terlebih dahulu.
+                // Pilih golongan terlebih dahulu.
                 setSelectValue(
                     '#nilaiGolongan',
                     data.cat
                 );
 
-                // Lalu filter Kode Aktiva.
                 filterAktivaGedung();
 
                 setSelectValue(
@@ -372,8 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     data.pdf_download_url || null;
 
                 if (existingPdf) {
-                    existingPdf.hidden =
-                        !existingPdfPreviewUrl;
+                    existingPdf.hidden = true;
                 }
 
                 if (existingPdfName) {
@@ -382,11 +841,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Dokumen PDF';
                 }
 
+                renderSavedDocuments(
+                    data.documents || []
+                );
+
+                syncCombos();
                 openDialog(formModal);
                 refreshIcons();
 
             } catch (error) {
-                console.error('EDIT NILAI:', error);
+                console.error(
+                    'EDIT NILAI:',
+                    error
+                );
 
                 alert(
                     'Data Nilai Aset tidak dapat dimuat.'
@@ -395,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // PDF lama pada saat Edit.
+    // PDF lama tetap tersedia dalam daftar dokumen.
     existingPdfButton?.addEventListener('click', () => {
         if (existingPdfPreviewUrl) {
             openPdfModal(
@@ -406,6 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
     // ========================================================
     // 8. MODAL DETAIL NILAI ASET
     // ========================================================
@@ -415,6 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let detailPdfPreviewUrl = null;
     let detailPdfDownloadUrl = null;
+    let detailDocuments = [];
 
     $$('.js-view').forEach(button => {
         button.addEventListener('click', async () => {
@@ -465,7 +934,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         data.urai || '-'
                 };
 
-                for (const [id, value] of Object.entries(fields)) {
+                for (
+                    const [id, value]
+                    of Object.entries(fields)
+                ) {
                     const element = $('#' + id);
 
                     if (element) {
@@ -479,16 +951,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 detailPdfDownloadUrl =
                     data.pdf_download_url || null;
 
+                detailDocuments = Array.isArray(data.documents)
+                    ? data.documents
+                    : [];
+
                 if (detailPdfButton) {
                     detailPdfButton.hidden =
-                        !detailPdfPreviewUrl;
+                        detailDocuments.length === 0;
+
+                    detailPdfButton.textContent =
+                        `Lihat ${detailDocuments.length} Dokumen PDF`;
                 }
 
                 openDialog(detailModal);
                 refreshIcons();
 
             } catch (error) {
-                console.error('DETAIL NILAI:', error);
+                console.error(
+                    'DETAIL NILAI:',
+                    error
+                );
 
                 alert(
                     'Detail Nilai Aset tidak dapat dimuat.'
@@ -497,16 +979,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // PDF dari modal Detail.
     detailPdfButton?.addEventListener('click', () => {
-        if (detailPdfPreviewUrl) {
-            openPdfModal(
-                detailPdfPreviewUrl,
-                detailPdfDownloadUrl,
-                'Dokumen Nilai Aset'
-            );
-        }
+        openDocuments(detailDocuments);
     });
+
 
     // ========================================================
     // 9. HAPUS NILAI ASET
@@ -532,6 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
             refreshIcons();
         });
     });
+
 
     // ========================================================
     // 10. PREVIEW DAN DOWNLOAD PDF SERVER
@@ -563,34 +1040,50 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshIcons();
     }
 
-    // Tombol PDF pada tabel Nilai Aset.
     $$('.js-pdf-button').forEach(button => {
-        button.addEventListener('click', () => {
-            openPdfModal(
-                button.dataset.previewUrl,
-                button.dataset.downloadUrl,
-                button.dataset.pdfName
-            );
+        button.addEventListener('click', async () => {
+            try {
+                const data = await fetchDetail(
+                    button.dataset.url
+                );
+
+                openDocuments(
+                    data.documents || []
+                );
+
+            } catch (error) {
+                console.error(
+                    'Gagal membuka daftar dokumen:',
+                    error
+                );
+
+                alert(
+                    'Daftar dokumen tidak dapat dimuat.'
+                );
+            }
         });
     });
 
-    // Bersihkan iframe ketika modal PDF ditutup.
     pdfModal?.addEventListener('close', () => {
         if (pdfFrame) {
             pdfFrame.src = 'about:blank';
         }
     });
 
+
     // ========================================================
-    // 11. PREVIEW PDF LOKAL SEBELUM UPLOAD
+    // 11. MULTI PDF — TANPA LIMIT UKURAN DI JAVASCRIPT
+    // Jumlah/ukuran aktual tetap dibatasi kapasitas server.
     // ========================================================
 
     const pdfInput = $('#nilaiPdfInput');
     const localPdfPreview = $('#nilaiLocalPdfPreview');
     const localPdfFrame = $('#nilaiLocalPdfFrame');
     const localPdfName = $('#nilaiLocalPdfName');
+    const selectedPdfList = $('#nilaiSelectedPdfList');
 
     let localPdfUrl = null;
+    let selectedPdfFiles = [];
 
     function clearLocalPdfPreview() {
         if (localPdfUrl) {
@@ -611,36 +1104,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    pdfInput?.addEventListener('change', () => {
+    function setPdfInputFiles() {
+        if (!pdfInput) return;
+
+        const dataTransfer = new DataTransfer();
+
+        selectedPdfFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+
+        pdfInput.files = dataTransfer.files;
+    }
+
+    function previewSelectedPdf(index) {
         clearLocalPdfPreview();
 
-        const file = pdfInput.files?.[0];
-
+        const file = selectedPdfFiles[index];
         if (!file) return;
-
-        const isPdf =
-            file.type === 'application/pdf' ||
-            file.name.toLowerCase().endsWith('.pdf');
-
-        if (!isPdf) {
-            alert(
-                'File harus berformat PDF.'
-            );
-
-            pdfInput.value = '';
-            return;
-        }
-
-        const maxSize = 15 * 1024 * 1024;
-
-        if (file.size > maxSize) {
-            alert(
-                'Ukuran PDF maksimal 15 MB.'
-            );
-
-            pdfInput.value = '';
-            return;
-        }
 
         localPdfUrl = URL.createObjectURL(file);
 
@@ -655,7 +1135,123 @@ document.addEventListener('DOMContentLoaded', () => {
         if (localPdfPreview) {
             localPdfPreview.hidden = false;
         }
+    }
+
+    function renderSelectedPdfFiles() {
+        if (!selectedPdfList) return;
+
+        selectedPdfList.replaceChildren();
+
+        selectedPdfList.hidden =
+            selectedPdfFiles.length === 0;
+
+        if (!selectedPdfFiles.length) {
+            clearLocalPdfPreview();
+            return;
+        }
+
+        const summary = document.createElement('strong');
+
+        summary.textContent =
+            selectedPdfFiles.length + ' PDF siap diunggah';
+
+        selectedPdfList.appendChild(summary);
+
+        selectedPdfFiles.forEach((file, index) => {
+            const row = document.createElement('div');
+            row.className = 'nilai-document-item';
+
+            const details = document.createElement('div');
+
+            const name = document.createElement('strong');
+            name.textContent = file.name;
+
+            const size = document.createElement('small');
+            size.textContent = formatBytes(file.size);
+
+            details.append(name, size);
+
+            const buttons = document.createElement('div');
+            buttons.className = 'nilai-document-actions';
+
+            const preview = document.createElement('button');
+            preview.type = 'button';
+            preview.textContent = 'Preview';
+
+            preview.addEventListener('click', () => {
+                previewSelectedPdf(index);
+            });
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.textContent = 'Hapus';
+
+            remove.addEventListener('click', () => {
+                selectedPdfFiles.splice(index, 1);
+
+                setPdfInputFiles();
+                renderSelectedPdfFiles();
+
+                if (selectedPdfFiles.length) {
+                    previewSelectedPdf(0);
+                }
+            });
+
+            buttons.append(preview, remove);
+            row.append(details, buttons);
+
+            selectedPdfList.appendChild(row);
+        });
+    }
+
+    function resetSelectedPdfFiles() {
+        selectedPdfFiles = [];
+
+        if (pdfInput) {
+            pdfInput.value = '';
+        }
+
+        renderSelectedPdfFiles();
+    }
+
+    pdfInput?.addEventListener('change', () => {
+        // Pilihan berikutnya ditambahkan ke daftar sebelumnya.
+        const incoming = Array.from(
+            pdfInput.files || []
+        );
+
+        for (const file of incoming) {
+            const pdf =
+                file.type === 'application/pdf' ||
+                file.name.toLowerCase().endsWith('.pdf');
+
+            if (!pdf) {
+                alert(
+                    file.name + ' bukan file PDF.'
+                );
+
+                continue;
+            }
+
+            const duplicate = selectedPdfFiles.some(old =>
+                old.name === file.name &&
+                old.size === file.size &&
+                old.lastModified === file.lastModified
+            );
+
+            if (!duplicate) {
+                selectedPdfFiles.push(file);
+            }
+        }
+
+        setPdfInputFiles();
+        renderSelectedPdfFiles();
+
+        if (selectedPdfFiles.length) {
+            previewSelectedPdf(0);
+        }
     });
+
 
     // ========================================================
     // 12. VALIDASI ERROR LARAVEL
@@ -666,13 +1262,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (
         pageRoot?.dataset.validationErrors === '1'
     ) {
-        // Jangan reset input ketika validasi gagal.
-        // Data lama dari old() Blade tetap ditampilkan.
+        // Pertahankan data old() dari Blade.
         filterDivisiByDepartemen(true);
         filterAktivaGedung();
 
         openDialog(formModal);
     }
+
 
     // ========================================================
     // 13. MEMBACA DATA GRAFIK DARI BLADE
@@ -700,8 +1296,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
     // ========================================================
-    // 14. GRAFIK TREND NILAI ASET (CANVAS)
+    // 14. GRAFIK TREN NILAI ASET (CANVAS)
     // ========================================================
 
     const trendCanvas = $('#nilaiTrendCanvas');
@@ -755,8 +1352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chartData.trendLabels || [];
 
         const values =
-            (chartData.trendValues || [])
-                .map(Number);
+            (chartData.trendValues || []).map(Number);
 
         if (!labels.length) return;
 
@@ -785,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.font = '11px Arial, sans-serif';
         ctx.lineWidth = 1;
 
-        // Garis grid horizontal dan label nilai.
+        // Garis grid dan label angka.
         for (let i = 0; i <= 4; i++) {
             const y =
                 padding.top + gh * i / 4;
@@ -824,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
             value
         }));
 
-        // Gradasi area grafik.
+        // Gradasi area di bawah garis.
         const gradient = ctx.createLinearGradient(
             0,
             padding.top,
@@ -850,7 +1446,10 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         points.forEach(point => {
-            ctx.lineTo(point.x, point.y);
+            ctx.lineTo(
+                point.x,
+                point.y
+            );
         });
 
         ctx.lineTo(
@@ -867,9 +1466,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         points.forEach((point, i) => {
             if (i === 0) {
-                ctx.moveTo(point.x, point.y);
+                ctx.moveTo(
+                    point.x,
+                    point.y
+                );
             } else {
-                ctx.lineTo(point.x, point.y);
+                ctx.lineTo(
+                    point.x,
+                    point.y
+                );
             }
         });
 
@@ -877,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // Titik dan label tahun.
+        // Titik dan tahun.
         points.forEach((point, i) => {
             ctx.beginPath();
 
@@ -901,7 +1506,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 height - 8
             );
         });
+
+        // Tooltip berdasarkan angka asli dari database.
+        trendCanvas.onpointermove = event => {
+            const rect =
+                trendCanvas.getBoundingClientRect();
+
+            const x = event.clientX - rect.left;
+
+            const nearest = points.reduce(
+                (winner, point, index) =>
+                    Math.abs(point.x - x) <
+                    Math.abs(points[winner].x - x)
+                        ? index
+                        : winner,
+                0
+            );
+
+            trendCanvas.title =
+                labels[nearest] + ': ' +
+                formatRupiah(
+                    points[nearest].value
+                );
+        };
     }
+
 
     // ========================================================
     // 15. GRAFIK DONUT DAN LEGENDA
@@ -931,11 +1560,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const parent = donutCanvas.parentElement;
 
-        const size =
-            Math.min(
-                parent.clientWidth,
-                parent.clientHeight
-            ) || 165;
+        const size = Math.min(
+            parent.clientWidth,
+            parent.clientHeight
+        ) || 165;
 
         const dpr = window.devicePixelRatio || 1;
 
@@ -966,8 +1594,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chartData.categoryLabels || [];
 
         const values =
-            (chartData.categoryValues || [])
-                .map(Number);
+            (chartData.categoryValues || []).map(Number);
 
         const total = values.reduce(
             (sum, n) => sum + n,
@@ -978,7 +1605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const radius = size * 0.39;
         const thickness = size * 0.18;
 
-        // Jika tidak ada data.
+        // Kondisi tanpa data.
         if (total <= 0) {
             ctx.beginPath();
 
@@ -1003,7 +1630,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let start = -Math.PI / 2;
 
-        // Menggambar setiap segmen.
+        // Segmen grafik berdasarkan nilai kategori.
         values.forEach((value, i) => {
             const angle =
                 value / total * Math.PI * 2;
@@ -1029,19 +1656,59 @@ document.addEventListener('DOMContentLoaded', () => {
             start += angle;
         });
 
-        // Menampilkan legenda dan persentase.
+        // Tooltip saat kursor berada di grafik.
+        donutCanvas.onpointermove = event => {
+            const rect =
+                donutCanvas.getBoundingClientRect();
+
+            const x = event.clientX - rect.left - center;
+            const y = event.clientY - rect.top - center;
+
+            const distance = Math.hypot(x, y);
+
+            if (
+                distance < radius - thickness ||
+                distance > radius + thickness
+            ) {
+                donutCanvas.title =
+                    'Nilai K.I.B: ' +
+                    formatRupiah(total);
+
+                return;
+            }
+
+            let angle =
+                Math.atan2(y, x) + Math.PI / 2;
+
+            if (angle < 0) {
+                angle += Math.PI * 2;
+            }
+
+            let cursor = 0;
+
+            for (let i = 0; i < values.length; i++) {
+                cursor +=
+                    values[i] / total * Math.PI * 2;
+
+                if (angle <= cursor) {
+                    donutCanvas.title =
+                        labels[i] + ': ' +
+                        formatRupiah(values[i]);
+
+                    break;
+                }
+            }
+        };
+
+        // Legenda dan persentase.
         if (donutLegend) {
             donutLegend.replaceChildren();
 
             labels.forEach((label, i) => {
-                const row =
-                    document.createElement('div');
-
+                const row = document.createElement('div');
                 row.className = 'nilai-legend-item';
 
-                const dot =
-                    document.createElement('span');
-
+                const dot = document.createElement('span');
                 dot.className = 'nilai-legend-dot';
 
                 dot.style.background =
@@ -1049,25 +1716,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         i % donutColors.length
                     ];
 
-                const name =
-                    document.createElement('span');
-
+                const name = document.createElement('span');
                 name.textContent = label;
 
                 const percentage =
                     document.createElement('strong');
 
-                percentage.textContent =
-                    (
-                        100 *
-                        (values[i] || 0) /
-                        total
-                    ).toLocaleString(
-                        'id-ID',
-                        {
-                            maximumFractionDigits: 1
-                        }
-                    ) + '%';
+                percentage.textContent = (
+                    100 *
+                    (values[i] || 0) /
+                    total
+                ).toLocaleString('id-ID', {
+                    maximumFractionDigits: 1
+                }) + '%';
 
                 row.append(
                     dot,
@@ -1079,6 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
 
     // ========================================================
     // 16. RESPONSIVE GRAFIK
@@ -1099,6 +1761,7 @@ document.addEventListener('DOMContentLoaded', () => {
             120
         );
     });
+
 
     // ========================================================
     // 17. INITIALISASI
