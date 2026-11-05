@@ -1,37 +1,30 @@
 
-/* ============================================================
-   SISTEM ASET — K.I.B F KONSTRUKSI
+/* ==========================================================
+   K.I.B F — KONSTRUKSI MANUAL
    PERUMDA TIRTA KENCANA KOTA SAMARINDA
-
-   TABLE    : 9 KOLOM RINGKAS
-   DETAIL   : INFORMASI LENGKAP
-   FORM     : TAMBAH / EDIT
-   DROPDOWN : SEARCHABLE COMBOBOX
-   CRUD     : VIEW / EDIT / DELETE
-   ============================================================ */
-
-
-/* ============================================================
-   ROOT
-   ============================================================ */
+   ========================================================== */
 
 .kf-page {
     --kf-primary: #0869e7;
-    --kf-primary-dark: #0759be;
-    --kf-navy: #092e64;
-    --kf-border: #dae6f4;
-    --kf-muted: #7b92af;
-    --kf-soft: #f6faff;
+    --kf-primary-dark: #0758bb;
+    --kf-navy: #0b326b;
+    --kf-line: #dce7f4;
+    --kf-muted: #7690ad;
 
-    padding: 0 16px 32px;
+    padding: 0 16px 35px;
     color: var(--kf-navy);
     font-family: inherit;
+    font-size: 12px;
 }
 
 .kf-page *,
 .kf-page *::before,
 .kf-page *::after {
     box-sizing: border-box;
+}
+
+.kf-page [hidden] {
+    display: none !important;
 }
 
 .kf-page input,
@@ -41,36 +34,27 @@
     font: inherit;
 }
 
-.kf-page [hidden] {
-    display: none !important;
-}
 
-
-/* ============================================================
-   HEADER K.I.B
-   ============================================================ */
+/* ==========================================================
+   HEADER
+   ========================================================== */
 
 .kf-hero {
     position: relative;
     isolation: isolate;
 
-    margin: 0 -16px 16px;
-    padding: 23px 16px 19px;
+    margin: 0 -16px 18px;
+    padding: 24px 16px 20px;
 
     background:
         linear-gradient(
             90deg,
-            rgba(249, 252, 255, .98) 0%,
-            rgba(249, 252, 255, .89) 48%,
-            rgba(232, 244, 255, .55) 100%
+            rgba(249,252,255,.98),
+            rgba(249,252,255,.89) 54%,
+            rgba(232,244,255,.52)
         ),
         url('/images/master/pdam4.png')
         center / cover no-repeat;
-}
-
-.kf-hero > * {
-    position: relative;
-    z-index: 1;
 }
 
 .kf-breadcrumb {
@@ -78,86 +62,77 @@
     align-items: center;
     gap: 9px;
 
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 
+    color: #6885a3;
     font-size: 11px;
-    color: #617e9d;
 }
 
 .kf-breadcrumb a {
     display: inline-flex;
-    color: #3173be;
-    text-decoration: none;
+    color: var(--kf-primary);
 }
 
 .kf-breadcrumb svg {
-    width: 14px;
-    height: 14px;
-}
-
-.kf-breadcrumb strong {
-    color: #31649c;
-    font-weight: 700;
+    width: 15px;
+    height: 15px;
 }
 
 .kf-hero h1 {
-    margin: 0 0 8px;
-    color: #072a5e;
+    margin: 0 0 7px;
+
+    color: #082b60;
     font-size: 29px;
     font-weight: 800;
-    line-height: 1.2;
 }
 
 .kf-hero-description {
-    max-width: 830px;
+    max-width: 850px;
     margin: 0;
 
+    color: #557aa5;
     font-size: 12px;
     line-height: 1.7;
-    color: #5476a0;
 }
 
 
-/* ============================================================
-   TANGGAL DAN JAM
-   ============================================================ */
+/* ==========================================================
+   TANGGAL WITA
+   ========================================================== */
 
 .kf-date-card {
     position: absolute;
-    top: 22px;
     right: 16px;
+    top: 22px;
 
     display: flex;
     align-items: center;
     gap: 11px;
 
-    max-width: 330px;
-    padding: 12px 14px;
+    padding: 11px 13px;
 
     background: #fff;
-    border: 1px solid #dfebf7;
+    border: 1px solid var(--kf-line);
     border-radius: 10px;
 
-    box-shadow: 0 5px 16px rgba(33, 72, 116, .12);
+    box-shadow: 0 5px 16px rgba(22,61,104,.10);
 }
 
 .kf-date-icon {
-    flex-shrink: 0;
-
     display: grid;
     place-items: center;
 
-    width: 38px;
-    height: 38px;
+    width: 39px;
+    height: 39px;
 
-    background: #eaf3ff;
-    color: #0869e7;
+    background: #e9f3ff;
+    color: var(--kf-primary);
     border-radius: 8px;
 }
 
 .kf-date-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
 }
 
 .kf-date-card strong,
@@ -166,54 +141,51 @@
 }
 
 .kf-date-card strong {
-    color: #103a77;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
 }
 
 .kf-date-card small {
     margin-top: 4px;
-    color: #6584a9;
+    color: #8298b2;
     font-size: 10px;
 }
 
 
-/* ============================================================
-   CARD STATISTIK
-   ============================================================ */
+/* ==========================================================
+   KARTU STATISTIK
+   ========================================================== */
 
 .kf-stats {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0,1fr));
     gap: 12px;
-
-    margin-top: 21px;
+    margin-top: 24px;
 }
 
-.kf-stat-card {
+.kf-stats article {
     display: flex;
     align-items: center;
     gap: 13px;
 
     min-width: 0;
-    min-height: 90px;
-    padding: 16px 15px;
+    padding: 17px;
 
     background: #fff;
-    border: 1px solid var(--kf-border);
+    border: 1px solid var(--kf-line);
     border-radius: 11px;
 
-    box-shadow: 0 4px 12px rgba(29, 70, 116, .07);
+    box-shadow: 0 3px 15px rgba(23,62,101,.07);
 }
 
 .kf-stat-icon {
-    flex: 0 0 43px;
+    flex: 0 0 44px;
 
     display: grid;
     place-items: center;
 
-    width: 43px;
-    height: 43px;
+    width: 44px;
+    height: 44px;
 
     background: var(--kf-primary);
     color: #fff;
@@ -225,55 +197,55 @@
     height: 21px;
 }
 
-.kf-stat-card > div {
-    min-width: 0;
-}
-
-.kf-stat-card small {
+.kf-stats small {
     display: block;
+
+    color: #31598b;
     font-size: 11px;
     font-weight: 800;
-    color: #325889;
 }
 
-.kf-stat-card strong {
+.kf-stats strong {
     display: block;
 
     margin: 5px 0;
 
-    font-size: 23px;
-    line-height: 1.2;
+    color: #092f68;
+    font-size: 22px;
     font-weight: 800;
-    color: #07306b;
 
     overflow-wrap: anywhere;
 }
 
-.kf-stat-card > div > span {
-    color: #7b96b4;
+.kf-stats .kf-stat-value {
+    font-size: 19px;
+}
+
+.kf-stats article div > span {
+    color: #8299b5;
     font-size: 10px;
 }
 
 
-/* ============================================================
+/* ==========================================================
    PANEL UTAMA
-   ============================================================ */
+   ========================================================== */
 
 .kf-panel {
-    padding: 16px;
+    padding: 17px;
 
     background: #fff;
-    border: 1px solid var(--kf-border);
+    border: 1px solid var(--kf-line);
     border-radius: 12px;
 
-    box-shadow: 0 6px 22px rgba(24, 63, 104, .05);
+    box-shadow: 0 5px 18px rgba(23,60,96,.05);
 }
 
 .kf-section-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
+    gap: 15px;
 
     margin-bottom: 15px;
 }
@@ -281,9 +253,9 @@
 .kf-section-head h2 {
     margin: 0 0 5px;
 
+    color: #113b73;
     font-size: 17px;
     font-weight: 800;
-    color: #0a326d;
 }
 
 .kf-section-head p {
@@ -291,7 +263,6 @@
 
     color: var(--kf-muted);
     font-size: 11px;
-    line-height: 1.5;
 }
 
 .kf-panel-actions {
@@ -302,24 +273,23 @@
 
 .kf-chip {
     display: inline-flex;
-    align-items: center;
 
-    padding: 7px 9px;
+    padding: 7px 10px;
 
     background: #eaf3ff;
-    border: 1px solid #d8e7fa;
+    color: #1764ba;
+
     border-radius: 7px;
 
-    color: #095dbc;
     font-size: 10px;
     font-weight: 800;
     white-space: nowrap;
 }
 
 
-/* ============================================================
-   BUTTON
-   ============================================================ */
+/* ==========================================================
+   TOMBOL
+   ========================================================== */
 
 .kf-btn {
     display: inline-flex;
@@ -333,18 +303,14 @@
     border: 1px solid transparent;
     border-radius: 8px;
 
+    background: #fff;
     text-decoration: none;
-    cursor: pointer;
     white-space: nowrap;
+
+    cursor: pointer;
 
     font-size: 11px;
     font-weight: 700;
-    line-height: 1.3;
-
-    transition:
-        background .18s ease,
-        color .18s ease,
-        border-color .18s ease;
 }
 
 .kf-btn svg {
@@ -352,15 +318,9 @@
     height: 15px;
 }
 
-.kf-btn:disabled {
-    opacity: .55;
-    cursor: wait;
-}
-
 .kf-primary {
     background: var(--kf-primary);
     color: #fff;
-    box-shadow: 0 3px 8px rgba(8, 105, 231, .15);
 }
 
 .kf-primary:hover {
@@ -369,35 +329,41 @@
 
 .kf-outline {
     background: #fff;
-    color: #1764b8;
-    border-color: #d6e4f5;
+    color: #1c64a8;
+    border-color: #d5e3f1;
 }
 
 .kf-outline:hover {
-    background: #f0f7ff;
+    background: #eef7ff;
 }
 
 .kf-danger {
-    background: #da4054;
+    background: #d33f53;
     color: #fff;
 }
 
 .kf-danger:hover {
-    background: #b92c40;
+    background: #b83145;
+}
+
+.kf-btn:disabled,
+.kf-action-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
 }
 
 
-/* ============================================================
-   TAB MANUAL DAN ARSIP
-   ============================================================ */
+/* ==========================================================
+   TAB
+   ========================================================== */
 
 .kf-tabs {
     display: flex;
     gap: 20px;
 
-    margin-bottom: 15px;
-    border-bottom: 1px solid #e2ebf5;
+    margin-bottom: 16px;
 
+    border-bottom: 1px solid var(--kf-line);
     overflow-x: auto;
 }
 
@@ -408,13 +374,14 @@
 
     padding: 11px 3px;
 
+    color: #5279a9;
+    text-decoration: none;
+    white-space: nowrap;
+
+    border-bottom: 3px solid transparent;
+
     font-size: 12px;
     font-weight: 700;
-    white-space: nowrap;
-    text-decoration: none;
-
-    color: #4a76ad;
-    border-bottom: 3px solid transparent;
 }
 
 .kf-tabs a.active {
@@ -428,110 +395,114 @@
 }
 
 
-/* ============================================================
+/* ==========================================================
    FILTER
-   ============================================================ */
+   ========================================================== */
 
 .kf-toolbar {
     display: flex;
     align-items: center;
     gap: 9px;
 
-    margin-bottom: 14px;
+    margin-bottom: 15px;
 }
 
 .kf-search {
     position: relative;
+
+    display: block;
     flex: 1;
-    min-width: 180px;
+    min-width: 200px;
 }
 
 .kf-search svg {
     position: absolute;
-    left: 12px;
     top: 11px;
+    left: 12px;
 
     width: 15px;
     height: 15px;
 
-    color: #8aa0bb;
+    color: #8ca1bc;
     pointer-events: none;
 }
 
-.kf-search input {
-    padding-left: 35px !important;
-}
-
-.kf-search input,
+.kf-toolbar input,
 .kf-filter {
     width: 100%;
     height: 38px;
-    padding: 8px 11px;
+
+    padding: 9px 11px;
 
     background: #fff;
-    border: 1px solid #d6e3f3;
+    color: #244d80;
+
+    border: 1px solid #d5e3f1;
     border-radius: 7px;
 
     outline: none;
-    color: #254d7d;
     font-size: 11px;
 }
 
-.kf-filter {
-    flex: 0 0 230px;
-    max-width: 230px;
+.kf-toolbar .kf-search input {
+    padding-left: 36px;
 }
 
-.kf-search input:focus,
+.kf-filter {
+    flex: 0 0 200px;
+    max-width: 200px;
+}
+
+.kf-toolbar input:focus,
 .kf-filter:focus {
     border-color: var(--kf-primary);
-    box-shadow: 0 0 0 3px rgba(8,105,231,.10);
+    box-shadow: 0 0 0 3px rgba(8,105,231,.11);
 }
 
 
-/* ============================================================
-   TABEL UMUM
-   ============================================================ */
+/* ==========================================================
+   TABEL UTAMA
+   ========================================================== */
 
 .kf-table-wrap {
     width: 100%;
     max-width: 100%;
+
     overflow-x: auto;
 
-    border: 1px solid #d8e4f1;
+    border: 1px solid #dbe7f2;
     border-radius: 9px;
 }
 
 .kf-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    min-width: 1100px;
 
-    color: #29466c;
+    border-spacing: 0;
+    border-collapse: separate;
+
+    color: #254d78;
     font-size: 11px;
 }
 
-.kf-table thead th {
+.kf-table th {
+    padding: 13px 10px;
+
+    background: #dcebf9;
+    color: #164073;
+
+    border-right: 1px solid #cddfed;
+    border-bottom: 1px solid #c7dbeb;
+
+    font-weight: 800;
+    text-align: center;
+}
+
+.kf-table td {
     padding: 13px 11px;
 
-    border-right: 1px solid #cfdfef;
-    border-bottom: 1px solid #c7d9eb;
-
-    background: #dceaf9;
-    color: #153e73;
-
-    text-align: center;
-    vertical-align: middle;
-
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.kf-table tbody td {
-    padding: 14px 11px;
-
-    border-right: 1px solid #e0e9f3;
-    border-bottom: 1px solid #e0e9f3;
+    border-right: 1px solid #e4edf6;
+    border-bottom: 1px solid #e4edf6;
 
     vertical-align: middle;
     line-height: 1.6;
@@ -540,146 +511,101 @@
 }
 
 .kf-table tbody tr:nth-child(even) {
-    background: #f9fcff;
+    background: #fafdff;
 }
 
 .kf-table tbody tr:hover {
-    background: #f0f7ff;
+    background: #edf6ff;
 }
 
-
-/* ============================================================
-   TABEL RINGKASAN 9 KOLOM
-   ============================================================ */
-
-.kf-table-summary {
-    min-width: 1120px;
-    table-layout: auto;
+.kf-table-summary th:nth-child(1) {
+    width: 55px;
 }
 
-.kf-table-summary .kf-col-no {
-    width: 54px;
-    min-width: 54px;
-    text-align: center;
+.kf-table-summary th:nth-child(2) {
+    min-width: 220px;
 }
 
-.kf-table-summary .kf-col-nama,
-.kf-table-summary .kf-main-name {
-    min-width: 225px;
-    max-width: 320px;
-}
-
-.kf-table-summary .kf-col-kategori {
-    min-width: 140px;
-}
-
-.kf-table-summary .kf-col-cakupan {
+.kf-table-summary th:nth-child(3),
+.kf-table-summary th:nth-child(4) {
     min-width: 130px;
 }
 
-.kf-table-summary .kf-col-tahun {
-    width: 74px;
-    min-width: 74px;
-    text-align: center;
+.kf-table-summary th:nth-child(5) {
+    width: 70px;
 }
 
-.kf-table-summary .kf-col-lokasi {
+.kf-table-summary th:nth-child(6) {
     min-width: 155px;
 }
 
-.kf-table-summary .kf-col-status {
-    min-width: 125px;
+.kf-table-summary th:nth-child(8) {
+    min-width: 140px;
 }
 
-.kf-table-summary .kf-col-nilai {
-    min-width: 150px;
+.kf-center {
+    text-align: center;
 }
 
 .kf-main-name strong {
     display: block;
 
-    color: #0b3c7a;
+    color: #0d3d78;
     font-size: 12px;
     font-weight: 800;
-    line-height: 1.55;
 }
 
-.kf-text-cell {
-    color: #385a84;
+.kf-table small {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #8299b5;
+    font-size: 10px;
 }
 
 .kf-location-name {
-    color: #23558d;
-    font-size: 11px;
-    font-weight: 700;
+    color: #255b94;
+    font-weight: 750;
 }
 
-.kf-badge {
+.kf-badge,
+.kf-status {
     display: inline-flex;
 
     padding: 6px 9px;
 
     background: #eaf3ff;
-    border: 1px solid #d7e6fa;
+    border: 1px solid #d3e5fb;
     border-radius: 6px;
 
-    color: #1264b7;
+    color: #1764b6;
     font-size: 10px;
     font-weight: 700;
-
-    white-space: normal;
 }
 
-.kf-status-badge {
-    display: inline-flex;
-    align-items: center;
-
-    padding: 6px 9px;
-
-    border: 1px solid #d5e5f4;
-    border-radius: 6px;
+.kf-status {
     background: #f0f7ff;
-
-    color: #286399;
-    font-size: 10px;
-    font-weight: 700;
-
-    white-space: normal;
 }
 
 .kf-money {
     text-align: right;
-    color: #0d488c;
-    font-weight: 800;
     white-space: nowrap;
+
+    color: #104c8c;
+    font-weight: 800;
+}
+
+.kf-preline {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
 }
 
 .kf-empty {
-    padding: 38px 18px !important;
-    text-align: center;
-    color: #859bb5;
-}
+    padding: 32px !important;
 
-.kf-empty-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 9px;
-}
-
-.kf-empty-content svg {
-    width: 30px;
-    height: 30px;
-    color: #9cb3cf;
-}
-
-.kf-empty-content strong {
-    font-size: 13px;
-    color: #476c99;
-}
-
-.kf-empty-content span {
-    font-size: 11px;
+    color: #8198b0;
+    text-align: center !important;
 }
 
 .kf-pagination {
@@ -687,64 +613,48 @@
 }
 
 
-/* ============================================================
-   AKSI VIEW / EDIT / DELETE
-   ============================================================ */
+/* ==========================================================
+   TOMBOL AKSI
+   ========================================================== */
 
 .kf-actions-head,
 .kf-actions-cell {
     position: sticky;
     right: 0;
+    z-index: 2;
 
-    min-width: 137px;
-    width: 137px;
+    width: 145px;
+    min-width: 145px;
 
     text-align: center;
 
     background: #fff;
-    box-shadow: -5px 0 12px rgba(15,44,80,.05);
+    box-shadow: -5px 0 12px rgba(24,63,100,.05);
 }
 
 .kf-actions-head {
     z-index: 3;
-    background: #dceaf9 !important;
-}
-
-.kf-actions-cell {
-    z-index: 2;
-}
-
-.kf-table tbody tr:nth-child(even) .kf-actions-cell {
-    background: #f9fcff;
-}
-
-.kf-table tbody tr:hover .kf-actions-cell {
-    background: #f0f7ff;
+    background: #dcebf9 !important;
 }
 
 .kf-row-actions {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     gap: 7px;
 }
 
 .kf-action-btn {
-    flex-shrink: 0;
-
     display: grid;
     place-items: center;
 
-    width: 33px;
-    height: 33px;
+    width: 34px;
+    height: 34px;
 
     border: 1px solid transparent;
     border-radius: 7px;
 
-    background: #fff;
     cursor: pointer;
-
-    transition: background .18s ease;
 }
 
 .kf-action-btn svg {
@@ -752,27 +662,22 @@
     height: 15px;
 }
 
-.kf-action-btn:disabled {
-    opacity: .5;
-    cursor: wait;
-}
-
 .kf-action-view {
+    background: #e8f3ff;
     color: #0869e7;
-    background: #e9f3ff;
-    border-color: #d3e7fc;
+    border-color: #d2e6fb;
 }
 
 .kf-action-edit {
-    color: #a76d13;
-    background: #fff5de;
-    border-color: #f4e3bb;
+    background: #fff5df;
+    color: #a16d1c;
+    border-color: #f6e4bc;
 }
 
 .kf-action-delete {
-    color: #d13d50;
     background: #fff0f2;
-    border-color: #f4d8de;
+    color: #d03e52;
+    border-color: #f4d7dd;
 }
 
 .kf-action-view:hover {
@@ -780,121 +685,451 @@
 }
 
 .kf-action-edit:hover {
-    background: #ffedc0;
+    background: #ffedc4;
 }
 
 .kf-action-delete:hover {
-    background: #ffe0e5;
+    background: #ffe1e6;
 }
 
 
-/* ============================================================
-   ARSIP LAMA
-   ============================================================ */
-
-.kf-archive-table {
-    min-width: 1100px;
-}
-
-.kf-archive-table .kf-main-name {
-    min-width: 210px;
-}
+/* ==========================================================
+   ARSIP
+   ========================================================== */
 
 .kf-archive-notice {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
 
     margin-bottom: 13px;
     padding: 12px;
 
-    background: #f4f8fd;
-    border: 1px solid #dce8f5;
+    background: #f4f9ff;
+    border: 1px solid #dce9f6;
     border-radius: 8px;
 
-    color: #4c698b;
+    color: #526f90;
     font-size: 11px;
 }
 
 .kf-archive-notice svg {
-    flex-shrink: 0;
     width: 17px;
     height: 17px;
 }
 
-.kf-uraian {
-    white-space: pre-line;
+.kf-archive-table {
+    min-width: 1150px;
+}
+
+
+/* ==========================================================
+   POPUP DETAIL KELOMPOK
+   ========================================================== */
+
+.kf-group-dialog {
+    width: min(1340px, calc(100vw - 40px));
+    max-width: none;
+
+    height: min(810px, calc(100dvh - 40px));
+    max-height: calc(100dvh - 40px);
+
+    margin: auto;
+    padding: 0;
+
+    background: #fff;
+    color: #153e73;
+
+    border: 1px solid #dbe7f5;
+    border-radius: 15px;
+
+    box-shadow: 0 25px 85px rgba(3,25,57,.36);
+    overflow: hidden;
+}
+
+.kf-group-dialog:not([open]) {
+    display: none;
+}
+
+.kf-group-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.kf-group-dialog::backdrop {
+    background: rgba(4,24,54,.61);
+    backdrop-filter: blur(4px);
+}
+
+.kf-group-header {
+    flex-shrink: 0;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+
+    padding: 18px 21px;
+
+    background: linear-gradient(110deg,#fff,#f0f7ff);
+    border-bottom: 1px solid #dce8f5;
+}
+
+.kf-group-header small {
+    color: var(--kf-primary);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.kf-group-header h2 {
+    margin: 6px 0;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.kf-group-header p {
+    margin: 0;
+    color: #8195ad;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.kf-group-layout {
+    flex: 1 1 auto;
+
+    display: grid;
+    grid-template-columns: minmax(250px,28%) minmax(0,1fr);
+    gap: 15px;
+
+    min-height: 0;
+    padding: 17px;
+
+    background: #f7fbff;
+    overflow-y: auto;
+}
+
+.kf-group-left,
+.kf-group-right {
+    min-width: 0;
+    padding: 15px;
+
+    background: #fff;
+    border: 1px solid #dce8f5;
+    border-radius: 10px;
+}
+
+.kf-group-left h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin: 0 0 14px;
+
+    color: #164981;
+    font-size: 13px;
+}
+
+.kf-group-left h3 svg {
+    width: 18px;
+    height: 18px;
+}
+
+.kf-group-search {
+    position: relative;
+    display: block;
+    flex: 1;
+    min-width: 0;
+}
+
+.kf-group-search > svg {
+    position: absolute;
+    top: 11px;
+    left: 11px;
+
+    width: 15px;
+    height: 15px;
+
+    color: #8ba2bc;
+    pointer-events: none;
+}
+
+.kf-group-search input {
+    width: 100%;
+    height: 38px;
+    padding: 8px 10px 8px 34px;
+
+    background: #fff;
+    color: #173e71;
+
+    border: 1px solid #d5e3f1;
+    border-radius: 7px;
+
+    outline: none;
+    font-size: 11px;
+}
+
+.kf-group-search input:focus {
+    border-color: var(--kf-primary);
+    box-shadow: 0 0 0 3px rgba(8,105,231,.11);
+}
+
+
+/* PANEL KIRI */
+
+.kf-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+
+    max-height: 510px;
+    margin-top: 13px;
+
+    overflow-y: auto;
+}
+
+.kf-group-category {
+    padding: 10px;
+
+    background: #f8fbff;
+    border: 1px solid #e0eaf6;
+    border-radius: 8px;
+}
+
+.kf-group-category h4 {
+    margin: 0 0 9px;
+
+    color: #1459ab;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.kf-group-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+
+    background: #fff;
+    color: #245180;
+
+    border: 1px solid transparent;
+    border-radius: 7px;
+
+    text-align: left;
+    cursor: pointer;
+}
+
+.kf-group-option:hover {
+    background: #edf6ff;
+}
+
+.kf-group-option.active {
+    background: #e5f1ff;
+    border-color: #bdd9f8;
+    color: #095cb9;
+}
+
+.kf-group-option > span {
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.kf-group-option > small {
+    color: #7894b1;
+    font-size: 10px;
+}
+
+
+/* PANEL KANAN */
+
+.kf-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    margin-bottom: 14px;
+}
+
+.kf-group-title small {
+    color: var(--kf-primary);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.kf-group-title h3 {
+    margin: 5px 0;
+
+    color: #0c3871;
+    font-size: 17px;
+}
+
+.kf-group-title p {
+    margin: 0;
+
+    color: #7892af;
+    font-size: 11px;
+}
+
+.kf-group-count {
+    padding: 7px 9px;
+
+    background: #edf6ff;
+    color: #1268bd;
+
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+.kf-group-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 12px;
+}
+
+.kf-group-table {
+    width: 100%;
+    min-width: 770px;
+
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.kf-group-table th {
+    padding: 12px 9px;
+
+    background: #dcebf9;
+    color: #164074;
+
+    border: 1px solid #d1e1ef;
+    text-align: center;
+}
+
+.kf-group-table td {
+    padding: 12px 9px;
+
+    color: #244d7c;
+
+    border: 1px solid #e0eaf4;
+
+    vertical-align: middle;
     overflow-wrap: anywhere;
 }
 
-.kf-block-muted {
-    display: block;
-    margin-top: 4px;
-    color: #8298b1;
+.kf-group-table tbody tr:hover {
+    background: #f0f7ff;
+}
+
+.kf-group-table td:last-child {
+    text-align: center;
+}
+
+.kf-group-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+
+    margin-top: 13px;
+
+    color: #7590ad;
+    font-size: 11px;
+}
+
+.kf-group-footer > div {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.kf-group-dialog-footer {
+    flex-shrink: 0;
+
+    display: flex;
+    justify-content: flex-end;
+
+    padding: 12px 19px;
+
+    background: #fff;
+    border-top: 1px solid #dce8f5;
 }
 
 
-/* ============================================================
-   MODAL FORM DAN DETAIL
-   ============================================================ */
+/* ==========================================================
+   MODAL FORM / VIEW / DELETE
+   ========================================================== */
 
 .kf-dialog {
-    width: min(860px, calc(100vw - 28px));
-    max-height: calc(100dvh - 32px);
+    width: min(880px, calc(100vw - 28px));
+    max-width: none;
 
+    max-height: calc(100dvh - 32px);
+    margin: auto;
     padding: 0;
+
+    background: #fff;
+    color: #194473;
 
     border: 0;
     border-radius: 13px;
 
-    background: #fff;
-    color: #1a4778;
-
+    box-shadow: 0 25px 80px rgba(5,25,55,.34);
     overflow: hidden;
-
-    box-shadow: 0 22px 75px rgba(0,22,55,.35);
 }
 
 .kf-dialog:not([open]) {
     display: none;
 }
 
+.kf-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
 .kf-dialog::backdrop {
-    background: rgba(5,25,55,.64);
+    background: rgba(4,24,51,.65);
     backdrop-filter: blur(3px);
 }
 
 .kf-dialog form {
     display: flex;
     flex-direction: column;
+    min-height: 0;
     max-height: calc(100dvh - 32px);
 }
 
 .kf-dialog-head {
+    flex-shrink: 0;
+
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 14px;
 
-    padding: 17px 19px;
+    padding: 18px 20px;
 
-    background: #fff;
-    border-bottom: 1px solid #e1ebf6;
+    border-bottom: 1px solid var(--kf-line);
 }
 
 .kf-dialog-head small {
-    display: block;
-    margin-bottom: 5px;
-
-    color: #0870e5;
+    color: var(--kf-primary);
     font-size: 10px;
     font-weight: 800;
 }
 
 .kf-dialog-head h2 {
-    margin: 0 0 5px;
+    margin: 4px 0;
 
-    color: #092f68;
+    color: #0a316b;
     font-size: 18px;
     font-weight: 800;
 }
@@ -902,9 +1137,8 @@
 .kf-dialog-head p {
     margin: 0;
 
-    color: #7d94b0;
+    color: #7d95b0;
     font-size: 11px;
-    line-height: 1.5;
 }
 
 .kf-x {
@@ -913,60 +1147,68 @@
     display: grid;
     place-items: center;
 
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+
+    background: #eff6ff;
+    color: #6583a7;
 
     border: 0;
-    border-radius: 7px;
+    border-radius: 8px;
 
-    background: #eef5fd;
-    color: #6383a9;
     cursor: pointer;
 }
 
 .kf-x svg {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
+}
+
+.kf-x:hover {
+    background: #dfeeff;
+    color: var(--kf-primary);
 }
 
 .kf-dialog-body {
     flex: 1 1 auto;
 
-    padding: 17px 19px;
-    max-height: calc(100dvh - 162px);
+    min-height: 0;
+    padding: 19px;
 
     overflow-y: auto;
     overscroll-behavior: contain;
 }
 
 .kf-dialog-foot {
+    flex-shrink: 0;
+
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 9px;
 
     padding: 13px 19px;
 
-    border-top: 1px solid #e1ebf6;
-    background: #fbfdff;
+    background: #fafdff;
+    border-top: 1px solid var(--kf-line);
 }
 
 
-/* ============================================================
-   FIELDSET / FORM INPUT
-   ============================================================ */
+/* ==========================================================
+   FORM
+   ========================================================== */
 
 .kf-fieldset {
-    margin: 0 0 15px;
+    margin: 0 0 16px;
     padding: 15px;
 
-    border: 1px solid #dbe6f4;
+    border: 1px solid var(--kf-line);
     border-radius: 9px;
 }
 
 .kf-fieldset legend {
     padding: 0 8px;
 
-    color: #174c87;
+    color: #1a4a84;
     font-size: 13px;
     font-weight: 800;
 }
@@ -977,12 +1219,12 @@
 
     width: 23px;
     height: 23px;
-    margin-right: 6px;
+    margin-right: 7px;
 
-    border-radius: 5px;
-    background: #eaf3ff;
+    background: #e9f3ff;
+    color: var(--kf-primary);
 
-    color: #0870e8;
+    border-radius: 6px;
 }
 
 .kf-fields {
@@ -1006,7 +1248,7 @@
 }
 
 .kf-fields > label:focus-within {
-    z-index: 40;
+    z-index: 30;
 }
 
 .kf-fields input,
@@ -1016,13 +1258,13 @@
 
     padding: 10px 11px;
 
-    border: 1px solid #d5e3f1;
-    border-radius: 7px;
-
-    outline: none;
     background: #fff;
     color: #173e70;
 
+    border: 1px solid #d5e3f1;
+    border-radius: 7px;
+
+    outline: 0;
     font-size: 12px;
 }
 
@@ -1033,24 +1275,22 @@
 }
 
 .kf-fields textarea {
-    min-height: 100px;
     resize: vertical;
     line-height: 1.7;
 }
 
 .kf-fields input[type="file"] {
-    padding: 9px;
+    padding: 8px;
 }
 
 .kf-fields small {
     color: #8196af;
     font-size: 10px;
     font-weight: 400;
-    line-height: 1.55;
 }
 
 .kf-fields em {
-    color: #df4255;
+    color: #d63f51;
     font-style: normal;
 }
 
@@ -1059,36 +1299,32 @@
 }
 
 .kf-error {
-    margin-bottom: 13px;
     padding: 12px;
+    margin-bottom: 13px;
 
-    white-space: pre-line;
+    color: #aa2a3e;
+    background: #fff1f4;
 
-    border: 1px solid #fac5cf;
+    border: 1px solid #f7c7d0;
     border-radius: 8px;
 
-    background: #fff1f4;
-    color: #a6263e;
-
+    white-space: pre-line;
     font-size: 12px;
 }
 
 
-/* ============================================================
+/* ==========================================================
    SEARCHABLE DROPDOWN
-   ============================================================ */
+   ========================================================== */
 
 .kf-combo {
     position: relative;
-    display: block;
-
     width: 100%;
     min-width: 0;
 }
 
-.kf-combo > input {
-    width: 100%;
-    padding-right: 42px !important;
+.kf-combo input {
+    padding-right: 42px;
 }
 
 .kf-combo-arrow {
@@ -1098,67 +1334,47 @@
 
     transform: translateY(-50%);
 
-    display: grid;
-    place-items: center;
-
     width: 32px;
     height: 32px;
+
+    color: #6988aa;
+    background: transparent;
 
     border: 0;
     border-radius: 7px;
 
-    background: transparent;
-    color: #6283a8;
-
     cursor: pointer;
-    z-index: 2;
+    font-size: 20px;
 }
 
 .kf-combo-arrow:hover,
-.kf-combo-open .kf-combo-arrow {
-    background: #eaf3ff;
+.kf-combo.opened .kf-combo-arrow {
     color: var(--kf-primary);
+    background: #eaf3ff;
 }
 
-.kf-combo-arrow svg {
-    width: 17px;
-    height: 17px;
-
-    transition: transform .18s ease;
-}
-
-.kf-combo-open .kf-combo-arrow svg {
-    transform: rotate(180deg);
-}
-
-.kf-combo-options {
+.kf-combo-list {
     position: absolute;
-
     top: calc(100% + 5px);
     left: 0;
     right: 0;
-
     z-index: 1000;
 
-    max-height: 220px;
-    overflow-y: auto;
-
+    max-height: 225px;
     padding: 5px;
+
+    overflow-y: auto;
 
     background: #fff;
     border: 1px solid #cbdcf0;
     border-radius: 9px;
 
-    box-shadow: 0 14px 34px rgba(26,59,98,.20);
+    box-shadow: 0 14px 34px rgba(26,59,98,.19);
 }
 
-.kf-combo-up .kf-combo-options {
+.kf-combo.up .kf-combo-list {
     top: auto;
     bottom: calc(100% + 5px);
-}
-
-.kf-combo-options[hidden] {
-    display: none !important;
 }
 
 .kf-combo-option {
@@ -1169,26 +1385,22 @@
     width: 100%;
     padding: 10px 11px;
 
-    text-align: left;
-    white-space: normal;
-
     background: #fff;
-    color: #183e70;
+    color: #204b79;
 
     border: 0;
     border-radius: 7px;
 
+    text-align: left;
     cursor: pointer;
 }
 
 .kf-combo-option strong {
-    color: inherit;
     font-size: 12px;
-    font-weight: 750;
 }
 
 .kf-combo-option small {
-    color: #7f94ad;
+    color: #7e94ad;
     font-size: 10px;
 }
 
@@ -1200,94 +1412,14 @@
 
 .kf-combo-empty {
     padding: 12px;
-
-    color: #6884a3;
+    color: #7289a6;
     font-size: 11px;
-    line-height: 1.6;
 }
 
 
-/* ============================================================
-   VIEW DETAIL
-   ============================================================ */
-
-.kf-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: 10px;
-
-    margin-bottom: 18px;
-}
-
-.kf-detail-grid > div {
-    padding: 12px;
-
-    background: #f9fcff;
-    border: 1px solid #e0ebf6;
-    border-radius: 8px;
-}
-
-.kf-detail-grid small {
-    display: block;
-
-    margin-bottom: 6px;
-
-    color: #7891ad;
-    font-size: 10px;
-}
-
-.kf-detail-grid strong {
-    display: block;
-
-    color: #173e70;
-    font-size: 12px;
-    font-weight: 750;
-
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-}
-
-.kf-detail-section-title {
-    margin: 18px 0 9px;
-
-    color: #133d78;
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.kf-preline {
-    padding: 13px;
-
-    white-space: pre-line;
-    overflow-wrap: anywhere;
-
-    border: 1px solid #e0ebf6;
-    border-radius: 8px;
-
-    background: #f9fcff;
-
-    color: #31547d;
-    font-size: 12px;
-    line-height: 1.8;
-}
-
-.kf-photo {
-    display: block;
-
-    width: 100%;
-    max-height: 280px;
-
-    object-fit: contain;
-
-    background: #f8fbff;
-    border: 1px solid #e0eaf6;
-    border-radius: 8px;
-}
-
-
-/* ============================================================
-   FILE DAN DOKUMEN
-   ============================================================ */
+/* ==========================================================
+   LAMPIRAN FORM
+   ========================================================== */
 
 .kf-file-row {
     display: flex;
@@ -1303,264 +1435,66 @@
     border: 1px solid #e1ecf6;
     border-radius: 7px;
 
-    color: #2a517e;
-    font-size: 12px;
+    color: #315680;
+    font-size: 11px;
 }
 
 .kf-file-row a {
-    color: #0869e7;
+    color: var(--kf-primary);
     overflow-wrap: anywhere;
 }
 
-.kf-file-row small {
-    color: #899bb1;
+.kf-remove-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.kf-remove-file input {
+    width: auto;
 }
 
 .kf-link {
-    padding: 3px 5px;
+    padding: 4px;
 
-    color: #d63b50;
+    color: #d53b50;
     background: transparent;
 
     border: 0;
     text-decoration: underline;
+
     cursor: pointer;
-}
-
-.kf-remove-file {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    align-items: center;
-    gap: 6px;
-}
-
-.kf-remove-file input {
-    width: auto !important;
-}
-
-.kf-file-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-
-    margin-bottom: 15px;
-}
-
-
-/* ============================================================
-   KONFIRMASI DELETE
-   ============================================================ */
-
-.kf-confirm-dialog {
-    width: min(465px, calc(100vw - 28px));
-}
-
-.kf-confirm-content {
-    padding: 24px 20px;
-    text-align: center;
-}
-
-.kf-confirm-icon {
-    display: grid;
-    place-items: center;
-
-    width: 54px;
-    height: 54px;
-    margin: 0 auto 13px;
-
-    border-radius: 50%;
-    background: #fff0f2;
-    color: #d53e53;
-}
-
-.kf-confirm-icon svg {
-    width: 25px;
-    height: 25px;
-}
-
-.kf-confirm-content p {
-    color: #506c8c;
-    font-size: 12px;
-    line-height: 1.65;
-}
-
-.kf-confirm-content strong {
-    display: block;
-
-    margin: 10px 0;
-    padding: 11px;
-
-    border-radius: 8px;
-    background: #f5f9fe;
-
-    color: #153e75;
-    font-size: 13px;
-
-    overflow-wrap: anywhere;
-}
-
-.kf-confirm-content small {
-    color: #8a9db2;
-    font-size: 11px;
-}
-
-
-/* ============================================================
-   TOAST
-   ============================================================ */
-
-.kf-toast {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-
-    z-index: 9999;
-
-    max-width: min(420px, 90vw);
-    padding: 12px 16px;
-
-    background: #173f70;
-    color: #fff;
-
-    border-radius: 9px;
-    box-shadow: 0 12px 32px rgba(0,30,67,.25);
-
-    font-size: 12px;
-}
-
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
-@media (max-width: 1100px) {
-
-    .kf-date-card {
-        position: static;
-
-        width: max-content;
-        max-width: 100%;
-
-        margin-bottom: 15px;
-    }
-
-}
-
-
-@media (max-width: 800px) {
-
-    .kf-page {
-        padding: 0 12px 25px;
-    }
-
-    .kf-hero {
-        margin: 0 -12px 14px;
-        padding: 18px 12px;
-    }
-
-    .kf-hero h1 {
-        font-size: 26px;
-    }
-
-    .kf-stats {
-        grid-template-columns: 1fr;
-        gap: 9px;
-    }
-
-    .kf-section-head {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .kf-panel-actions {
-        flex-wrap: wrap;
-        width: 100%;
-    }
-
-    .kf-toolbar {
-        flex-wrap: wrap;
-    }
-
-    .kf-search {
-        flex-basis: 100%;
-    }
-
-    .kf-filter {
-        flex: 1 1 100%;
-        max-width: none;
-    }
-
-    .kf-fields,
-    .kf-detail-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .kf-full {
-        grid-column: auto;
-    }
-
-    .kf-dialog-head,
-    .kf-dialog-body,
-    .kf-dialog-foot {
-        padding: 14px;
-    }
-
-    .kf-dialog-foot {
-        flex-wrap: wrap;
-    }
-
-    .kf-table-summary {
-        min-width: 1080px;
-    }
-
 }
 
 
 /* ==========================================================
-   K.I.B F — VIEW DETAIL BERBENTUK TABEL EXCEL
-   Hanya berlaku untuk modal detail Konstruksi.
+   VIEW EXCEL — POPUP LEBAR
    ========================================================== */
 
-/* MODAL DETAIL LEBIH LEBAR */
-
-#kfModalDetail {
-    width: min(1450px, calc(100vw - 36px));
+#kfModalDetail.kf-excel-dialog {
+    width: min(1500px, calc(100vw - 30px));
     max-width: none;
 
-    height: min(830px, calc(100dvh - 36px));
-    max-height: calc(100dvh - 36px);
-
-    margin: auto;
-}
-
-#kfModalDetail[open] {
-    display: flex;
-    flex-direction: column;
-}
-
-#kfModalDetail > .kf-dialog-head,
-#kfModalDetail > .kf-dialog-foot {
-    flex-shrink: 0;
+    height: min(850px, calc(100dvh - 30px));
+    max-height: calc(100dvh - 30px);
 }
 
 #kfDetailBody {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: none;
 
     overflow-y: auto;
-
-    padding: 20px;
+    padding: 18px;
 }
 
 
 /* KOP KIB F */
 
 .kf-excel-heading {
-    padding: 12px 10px 18px;
+    padding: 14px 10px 20px;
 
-    text-align: center;
     color: #153b70;
+    text-align: center;
 }
 
 .kf-excel-heading strong {
@@ -1581,71 +1515,58 @@
     display: block;
 
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 750;
 }
 
 
-/* INFORMASI ORGANISASI */
+/* IDENTITAS ORGANISASI */
 
 .kf-excel-meta {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    gap: 8px 28px;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 8px 25px;
 
     padding: 14px;
-    margin-bottom: 18px;
+    margin-bottom: 17px;
 
     background: #f7fbff;
-
     border: 1px solid #dbe7f5;
     border-radius: 8px;
 }
 
 .kf-excel-meta-row {
     display: grid;
-    grid-template-columns: 130px 8px minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns: 125px 8px minmax(0,1fr);
     gap: 7px;
 
-    color: #315680;
     font-size: 11px;
+    color: #315680;
 }
 
-.kf-excel-meta-label {
+.kf-excel-meta-row > span:first-child {
     font-weight: 800;
 }
 
-.kf-excel-meta-colon {
-    font-weight: 700;
-}
-
 .kf-excel-meta-row strong {
-    color: #163c74;
-    font-weight: 750;
     overflow-wrap: anywhere;
 }
 
 
-/* KONTAINER SCROLL HORIZONTAL */
+/* TABEL EXCEL */
 
 .kf-excel-scroll {
     width: 100%;
     max-width: 100%;
 
     overflow-x: auto;
-    overflow-y: hidden;
 
     border: 1px solid #9fb9d2;
     border-radius: 7px;
 }
 
-
-/* TABEL GAYA KARTU INVENTARIS BARANG */
-
 .kf-excel-table {
     width: 100%;
-    min-width: 1550px;
+    min-width: 1650px;
 
     border-collapse: collapse;
     table-layout: fixed;
@@ -1654,25 +1575,24 @@
     color: #1b3557;
 
     font-size: 11px;
-    line-height: 1.65;
+    line-height: 1.7;
 }
 
 .kf-excel-table th {
-    padding: 13px 9px;
+    padding: 12px 9px;
 
-    color: #153c6b;
     background: #c7dff2;
+    color: #143b6b;
 
     border: 1px solid #9fb9d2;
 
     text-align: center;
     vertical-align: middle;
-
     font-weight: 800;
 }
 
 .kf-excel-table td {
-    padding: 13px 10px;
+    padding: 12px 10px;
 
     background: #fff;
     border: 1px solid #b8cadb;
@@ -1681,142 +1601,315 @@
     overflow-wrap: anywhere;
 }
 
-
-/* UKURAN MASING-MASING KOLOM */
-
 .kf-excel-table th:nth-child(1) {
-    width: 48px;
+    width: 50px;
 }
 
-.kf-excel-table th:nth-child(2) {
-    width: 320px;
+.kf-excel-table .kf-col-name {
+    width: 330px;
 }
 
-.kf-excel-table th:nth-child(3) {
+.kf-excel-table .kf-col-year {
     width: 70px;
 }
 
-.kf-excel-table th:nth-child(4) {
-    width: 105px;
-}
-
-.kf-excel-table th:nth-child(5),
-.kf-excel-table th:nth-child(6) {
-    width: 105px;
-}
-
-.kf-excel-table th:nth-child(7) {
-    width: 185px;
-}
-
-.kf-excel-table th:nth-child(8),
-.kf-excel-table th:nth-child(9),
-.kf-excel-table th:nth-child(10) {
+.kf-excel-table .kf-col-small {
     width: 110px;
 }
 
-.kf-excel-table th:nth-child(11) {
+.kf-excel-table .kf-col-location {
+    width: 190px;
+}
+
+.kf-excel-table .kf-col-money {
     width: 155px;
 }
 
-.kf-excel-table th:nth-child(12) {
-    width: 240px;
+.kf-excel-table .kf-col-doc {
+    width: 255px;
 }
 
-
-/* ISI TABEL */
-
-.kf-excel-number,
 .kf-excel-center {
     text-align: center;
 }
 
-.kf-excel-name {
-    text-align: left;
-}
-
-.kf-excel-item-name {
+.kf-excel-name strong {
     display: block;
 
-    margin-bottom: 13px;
+    margin-bottom: 12px;
 
+    color: #0b3975;
     font-size: 12px;
     font-weight: 800;
-    color: #0b3975;
 }
 
 .kf-excel-subtitle {
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 
-    color: #2f5279;
+    color: #31537e;
     font-weight: 800;
 }
 
 .kf-excel-multiline {
     white-space: pre-line;
-    overflow-wrap: anywhere;
-
     line-height: 1.8;
+    overflow-wrap: anywhere;
 }
 
 .kf-excel-money {
+    color: #0c4e91;
     text-align: right;
     font-weight: 800;
-    color: #0c4f91;
-
     white-space: nowrap;
 }
 
 
-/* FOTO DAN LAMPIRAN */
+/* DOKUMEN DALAM TABEL EXCEL */
+
+.kf-excel-attachments {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+
+    margin-top: 12px;
+    padding-top: 10px;
+
+    border-top: 1px dashed #d5e1ef;
+}
+
+.kf-doc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    max-width: 100%;
+    padding: 7px 9px;
+    margin: 2px 0;
+
+    background: #f1f7ff;
+    color: #1664b5;
+
+    border: 1px solid #d7e8fa;
+    border-radius: 7px;
+
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.kf-doc-link:hover {
+    background: #e2f0ff;
+    color: #0757aa;
+}
+
+.kf-doc-link svg {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+}
+
+.kf-doc-link span {
+    overflow-wrap: anywhere;
+}
+
+.kf-doc-pdf svg {
+    color: #cf3b4b;
+}
+
+.kf-doc-image svg {
+    color: #0869e7;
+}
+
+.kf-group-docs {
+    min-width: 160px;
+    vertical-align: top;
+}
 
 .kf-excel-section {
-    margin-top: 22px;
-    padding-top: 15px;
+    margin-top: 18px;
+    padding: 15px;
 
-    border-top: 1px solid #dce8f5;
+    background: #f9fcff;
+    border: 1px solid #dce8f5;
+    border-radius: 8px;
 }
 
 .kf-excel-section h4 {
-    margin: 0 0 12px;
+    margin: 0 0 9px;
 
     color: #103c78;
     font-size: 13px;
     font-weight: 800;
 }
 
-.kf-excel-photo {
-    display: block;
+.kf-excel-section p {
+    margin: 0;
 
-    max-width: 500px;
-    width: 100%;
-    max-height: 330px;
-
-    object-fit: contain;
-
-    background: #f8fbff;
-    border: 1px solid #dce8f5;
-    border-radius: 8px;
+    color: #456991;
+    font-size: 11px;
+    line-height: 1.7;
 }
 
-.kf-excel-files {
+.kf-excel-file-list {
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
     gap: 9px;
 }
 
-.kf-excel-files p {
-    margin: 0;
 
-    color: #7c91ab;
+/* ==========================================================
+   KONFIRMASI DELETE
+   ========================================================== */
+
+.kf-confirm-dialog {
+    width: min(465px, calc(100vw - 28px));
+}
+
+.kf-confirm-content {
+    padding: 25px 20px;
+
+    color: #4a688b;
+    text-align: center;
+
+    font-size: 12px;
+}
+
+.kf-confirm-content > svg {
+    width: 42px;
+    height: 42px;
+
+    color: #d34255;
+}
+
+.kf-confirm-content strong {
+    display: block;
+
+    padding: 12px;
+    margin: 11px 0;
+
+    background: #f6faff;
+    color: #123c76;
+
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================
+   TOAST
+   ========================================================== */
+
+.kf-toast {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9999;
+
+    max-width: 90vw;
+    padding: 13px 17px;
+
+    background: #163f70;
+    color: #fff;
+
+    border-radius: 9px;
+    box-shadow: 0 10px 32px rgba(11,42,79,.30);
+
     font-size: 12px;
 }
 
 
-/* RESPONSIVE */
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
 
-@media (max-width: 768px) {
+@media (max-width: 1050px) {
+    .kf-date-card {
+        position: static;
+        width: max-content;
+        max-width: 100%;
+        margin-bottom: 17px;
+    }
+}
+
+@media (max-width: 850px) {
+
+    .kf-group-dialog {
+        width: calc(100vw - 18px);
+        height: calc(100dvh - 20px);
+        max-height: calc(100dvh - 20px);
+    }
+
+    .kf-group-layout {
+        grid-template-columns: 1fr;
+        padding: 11px;
+    }
+
+    .kf-group-list {
+        max-height: 225px;
+    }
+
+    .kf-group-toolbar,
+    .kf-group-footer {
+        flex-wrap: wrap;
+    }
+
+    .kf-excel-meta {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 790px) {
+
+    .kf-page {
+        padding: 0 12px 30px;
+    }
+
+    .kf-hero {
+        margin: 0 -12px 16px;
+        padding: 18px 12px;
+    }
+
+    .kf-hero h1 {
+        font-size: 26px;
+    }
+
+    .kf-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .kf-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .kf-panel-actions,
+    .kf-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .kf-search {
+        flex-basis: 100%;
+    }
+
+    .kf-filter {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+
+    .kf-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .kf-full {
+        grid-column: auto;
+    }
+
+    .kf-dialog-head,
+    .kf-dialog-body,
+    .kf-dialog-foot {
+        padding: 13px;
+    }
 
     #kfModalDetail {
         width: calc(100vw - 16px);
@@ -1826,18 +1919,5 @@
 
     #kfDetailBody {
         padding: 12px;
-    }
-
-    .kf-excel-meta {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .kf-excel-meta-row {
-        grid-template-columns: 112px 8px minmax(0, 1fr);
-    }
-
-    .kf-excel-table {
-        min-width: 1550px;
     }
 }

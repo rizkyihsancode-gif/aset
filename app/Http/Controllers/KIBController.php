@@ -6047,38 +6047,53 @@ class KIBController extends Controller
     }
 
 
+
     /*
 |--------------------------------------------------------------------------
-| K.I.B E — DETAIL KELOMPOK MANUAL
+| K.I.B F — DETAIL KELOMPOK KONSTRUKSI MANUAL
 |--------------------------------------------------------------------------
-| Sumber: kib_aset_tetap_manual
-| Kelompok: lokasi + divisi (teks manual)
-| Arsip lama dan Kode Aktiva tidak digunakan.
+| Database:
+|   kib_konstruksi_manual
+|   kib_konstruksi_dokumens
+|
+| Kelompok:
+|   Kategori → Lokasi → Divisi
+|
+| Tidak ada hubungan wajib ke Kode Aktiva dan Nilai Aset.
 |--------------------------------------------------------------------------
 */
 
-    public function kelompokAsetTetapManual(Request $request)
-    {
+    public function kelompokKonstruksiManual(
+        \Illuminate\Http\Request $request
+    ) {
         $request->validate([
-            'lokasi' => ['nullable', 'string', 'max:500'],
-            'divisi' => ['nullable', 'string', 'max:255'],
-            'q' => ['nullable', 'string', 'max:150'],
-            'page' => ['nullable', 'integer', 'min:1'],
+            'kategori' => ['nullable', 'string', 'max:30'],
+            'lokasi'   => ['nullable', 'string', 'max:500'],
+            'divisi'   => ['nullable', 'string', 'max:255'],
+            'q'        => ['nullable', 'string', 'max:150'],
+            'page'     => ['nullable', 'integer', 'min:1'],
         ]);
 
         /*
-     * Nilai kosong diberi label tanpa mengubah
-     * isi database.
+     * Normalisasi hanya untuk pengelompokan.
+     * Tidak mengubah data yang tersimpan.
      */
 
-        $lokasiExpr = "
+        $kategoriSql = "
+        COALESCE(
+            NULLIF(BTRIM(kategori), ''),
+            'Tanpa Kategori'
+        )
+    ";
+
+        $lokasiSql = "
         COALESCE(
             NULLIF(BTRIM(lokasi), ''),
             'Tanpa Lokasi'
         )
     ";
 
-        $divisiExpr = "
+        $divisiSql = "
         COALESCE(
             NULLIF(BTRIM(divisi), ''),
             'Tanpa Divisi'
@@ -6086,54 +6101,52 @@ class KIBController extends Controller
     ";
 
         /*
-     * PANEL KIRI:
-     * Semua kombinasi lokasi dan divisi
-     * dari tabel manual K.I.B E.
+     * PANEL KIRI
      */
 
-        $kelompok = DB::table('kib_aset_tetap_manual')
-
-            ->selectRaw(
-                "{$lokasiExpr} AS lokasi,
-             {$divisiExpr} AS divisi,
-             COUNT(*) AS jumlah"
-            )
-
-            ->groupByRaw(
-                "{$lokasiExpr}, {$divisiExpr}"
-            )
-
+        $groups = \Illuminate\Support\Facades\DB::table(
+            'kib_konstruksi_manual'
+        )
+            ->selectRaw("
+            {$kategoriSql} AS kategori,
+            {$lokasiSql} AS lokasi,
+            {$divisiSql} AS divisi,
+            COUNT(*) AS jumlah
+        ")
+            ->groupByRaw("
+            {$kategoriSql},
+            {$lokasiSql},
+            {$divisiSql}
+        ")
+            ->orderBy('kategori')
             ->orderBy('lokasi')
             ->orderBy('divisi')
             ->get();
 
         /*
-     * Menentukan kelompok yang dipilih.
+     * Pilih kelompok sesuai tombol Detail.
      */
 
-        $requestedLocation = trim(
+        $requestedKategori = trim(
+            (string) $request->query('kategori', '')
+        );
+
+        $requestedLokasi = trim(
             (string) $request->query('lokasi', '')
         );
 
-        $requestedDivision = trim(
+        $requestedDivisi = trim(
             (string) $request->query('divisi', '')
         );
 
-        $pilihan = $kelompok->first(
-            function ($grup) use (
-                $requestedLocation,
-                $requestedDivision
-            ) {
-                return $grup->lokasi === $requestedLocation
-                    && $grup->divisi === $requestedDivision;
-            }
-        ) ?? $kelompok->first();
+        $selected = $groups->first(
+            fn($group) =>
+            $group->kategori === $requestedKategori &&
+                $group->lokasi === $requestedLokasi &&
+                $group->divisi === $requestedDivisi
+        ) ?? $groups->first();
 
-        /*
-     * Tidak ada aset manual.
-     */
-
-        if (!$pilihan) {
+        if (!$selected) {
             return response()->json([
                 'success' => true,
                 'groups' => [],
@@ -6150,154 +6163,172 @@ class KIBController extends Controller
         }
 
         /*
-     * PANEL KANAN:
-     * Ambil barang dari kelompok terpilih.
+     * PANEL KANAN
      */
 
-        $query = DB::table('kib_aset_tetap_manual')
-
+        $query = \Illuminate\Support\Facades\DB::table(
+            'kib_konstruksi_manual'
+        )
             ->whereRaw(
-                "{$lokasiExpr} = ?",
-                [$pilihan->lokasi]
+                "{$kategoriSql} = ?",
+                [$selected->kategori]
             )
-
             ->whereRaw(
-                "{$divisiExpr} = ?",
-                [$pilihan->divisi]
+                "{$lokasiSql} = ?",
+                [$selected->lokasi]
+            )
+            ->whereRaw(
+                "{$divisiSql} = ?",
+                [$selected->divisi]
             );
 
-        /*
-     * Pencarian di panel kanan.
-     */
-
-        $q = trim(
+        $search = trim(
             (string) $request->query('q', '')
         );
 
-        if ($q !== '') {
+        if ($search !== '') {
+            $like = '%' . $search . '%';
 
-            $like = '%' . $q . '%';
-
-            $query->where(
-                function ($builder) use ($like) {
-
-                    foreach (
-                        [
-                            'nama_aset',
-                            'kode_inventaris',
-                            'nomor_register',
-                            'bahan'
-                        ] as $column
-                    ) {
-
-                        $builder->orWhere(
-                            $column,
-                            'ILIKE',
-                            $like
-                        );
-                    }
+            $query->where(function ($builder) use ($like) {
+                foreach (
+                    [
+                        'nama_pekerjaan',
+                        'cakupan',
+                        'uraian_pekerjaan',
+                        'keterangan',
+                    ] as $column
+                ) {
+                    $builder->orWhere(
+                        $column,
+                        'ILIKE',
+                        $like
+                    );
                 }
-            );
+            });
         }
 
         /*
-     * Pagination 10 barang per halaman.
+     * Pagination 10 pekerjaan.
      */
 
-        $halaman = $query
-            ->orderBy('nama_aset')
+        $page = $query
+            ->select([
+                'id',
+                'nama_pekerjaan',
+                'cakupan',
+                'tahun',
+                'nilai',
+                'status_aset',
+                'foto_path',
+            ])
+            ->orderBy('nama_pekerjaan')
             ->orderBy('id')
             ->paginate(10);
 
         /*
-     * URL foto dari endpoint yang sudah ada.
+     * Ambil dokumen berdasarkan pekerjaan
+     * yang tampil pada halaman aktif.
      */
 
-        $baris = $halaman->getCollection()
-            ->map(function ($item) {
+        $ids = $page
+            ->getCollection()
+            ->pluck('id')
+            ->all();
 
-                $fotoUrl = null;
+        $documents = \Illuminate\Support\Facades\DB::table(
+            'kib_konstruksi_dokumens'
+        )
+            ->whereIn('konstruksi_id', $ids)
+            ->select([
+                'id',
+                'konstruksi_id',
+                'nama_asli',
+            ])
+            ->orderBy('id')
+            ->get()
+            ->groupBy('konstruksi_id');
+
+        /*
+     * FORMAT JSON PANEL KANAN
+     */
+
+        $items = $page
+            ->getCollection()
+            ->map(function ($row) use ($documents) {
+                $id = (int) $row->id;
+
+                $photoUrl = null;
 
                 if (
-                    $item->foto_path &&
-                    Storage::disk('local')->exists(
-                        $item->foto_path
-                    )
+                    $row->foto_path &&
+                    \Illuminate\Support\Facades\Storage::disk('local')
+                    ->exists($row->foto_path)
                 ) {
-                    $fotoUrl = route(
-                        'kib.aset_ttp.manual.foto',
-                        ['aset' => $item->id]
+                    $photoUrl = route(
+                        'kib.konstruksi.foto',
+                        ['konstruksi' => $id]
                     );
                 }
 
                 return [
-                    'id' => (int) $item->id,
+                    'id' => $id,
+                    'nama_barang' => $row->nama_pekerjaan,
+                    'cakupan' => $row->cakupan,
+                    'tahun' => $row->tahun,
+                    'nilai' => $row->nilai,
+                    'status_aset' => $row->status_aset,
+                    'foto_url' => $photoUrl,
 
-                    'nama_aset' => $item->nama_aset,
-
-                    'kode_inventaris' =>
-                    $item->kode_inventaris,
-
-                    'nomor_register' =>
-                    $item->nomor_register,
-
-                    'tahun' => $item->tahun,
-
-                    'jumlah_unit' =>
-                    (int) $item->jumlah_unit,
-
-                    'kondisi' => $item->kondisi,
-
-                    'foto_url' => $fotoUrl,
+                    'dokumens' => (
+                        $documents->get($id) ?? collect()
+                    )
+                        ->map(fn($doc) => [
+                            'id' => (int) $doc->id,
+                            'nama' => $doc->nama_asli,
+                            'url' => route(
+                                'kib.konstruksi.dokumen',
+                                [
+                                    'konstruksi' => $id,
+                                    'dokumen' => $doc->id,
+                                ]
+                            ),
+                        ])
+                        ->values()
+                        ->all(),
                 ];
             })
             ->all();
 
-        /*
-     * Hasil JSON untuk JavaScript.
-     */
-
         return response()->json([
-
             'success' => true,
 
-            'groups' => $kelompok
+            'groups' => $groups
                 ->map(fn($group) => [
-
+                    'kategori' => $group->kategori,
                     'lokasi' => $group->lokasi,
-
                     'divisi' => $group->divisi,
-
                     'jumlah' => (int) $group->jumlah,
-
                 ])
                 ->all(),
 
             'selected' => [
-
-                'lokasi' => $pilihan->lokasi,
-
-                'divisi' => $pilihan->divisi,
-
+                'kategori' => $selected->kategori,
+                'lokasi' => $selected->lokasi,
+                'divisi' => $selected->divisi,
             ],
 
-            'items' => $baris,
+            'items' => $items,
 
             'pagination' => [
-
-                'page' => $halaman->currentPage(),
-
-                'last_page' => $halaman->lastPage(),
-
-                'total' => $halaman->total(),
-
-                'from' => $halaman->firstItem() ?? 0,
-
-                'to' => $halaman->lastItem() ?? 0,
-
+                'page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'total' => $page->total(),
+                'from' => $page->firstItem() ?? 0,
+                'to' => $page->lastItem() ?? 0,
             ],
         ]);
     }
+
 
 
 
