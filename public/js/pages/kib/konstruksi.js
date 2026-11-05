@@ -1599,249 +1599,447 @@
     }
 
 
+   
+/*
+|--------------------------------------------------------------------------
+| VIEW DETAIL K.I.B F — FORMAT TABEL MEMANJANG
+| Mengikuti susunan Excel Kartu Inventaris Barang.
+|--------------------------------------------------------------------------
+*/
+
+function showDetail(item) {
+    if (!item) return;
+
+    active = item;
+
+    const body = $('kfDetailBody');
+    const title = $('kfDetailTitle');
+
+    if (!body || !title) return;
+
+    body.replaceChildren();
+
+    title.textContent =
+        item.nama_barang || 'Detail Konstruksi';
+
+
     /*
-    |--------------------------------------------------------------------------
-    | VIEW — DETAIL LENGKAP SESUAI EXCEL
-    |--------------------------------------------------------------------------
-    */
+     * HELPER PEMBUATAN ELEMENT AMAN
+     */
 
-    function showDetail(item) {
-        if (!item) {
-            return;
+    function element(tag, className = '', value = null) {
+        const node = document.createElement(tag);
+
+        if (className) {
+            node.className = className;
         }
 
-        active = item;
-
-        $('kfDetailTitle').textContent =
-            item.nama_barang || 'Detail Konstruksi';
-
-        const body = $('kfDetailBody');
-
-        if (!body) {
-            return;
+        if (value !== null && value !== undefined) {
+            node.textContent = String(value);
         }
 
-        body.replaceChildren();
-
-
-        /*
-         * DATA IDENTITAS DAN SPESIFIKASI
-         */
-
-        const grid = document.createElement('div');
-
-        grid.className = 'kf-detail-grid';
-
-        const details = [
-
-            [
-                'Nama Barang / Jenis Pekerjaan',
-                item.nama_barang
-            ],
-
-            [
-                'Kategori',
-                formatCategory(item.kategori)
-            ],
-
-            [
-                'Cakupan',
-                item.cakupan
-            ],
-
-            [
-                'Tahun Pekerjaan',
-                item.tahun
-            ],
-
-            [
-                'Lokasi / Unit Kerja',
-                item.nama_lokasi
-            ],
-
-            [
-                'Alamat Lokasi',
-                item.alamat_lokasi
-            ],
-
-            [
-                'Departemen',
-                item.nama_departemen
-            ],
-
-            [
-                'Divisi',
-                item.nama_divisi
-            ],
-
-            [
-                'Bangunan (P, SP, D)',
-                formatBuilding(item.type)
-            ],
-
-            [
-                'Konstruksi Bertingkat / Tidak',
-                item.struktur
-            ],
-
-            [
-                'Konstruksi Beton / Tidak',
-                item.materi
-            ],
-
-            [
-                'Letak / Lokasi Alamat',
-                item.letak
-            ],
-
-            [
-                'Status Tanah',
-                item.status_tanah
-            ],
-
-            [
-                'Asal Usul Pembiayaan',
-                item.asal
-            ],
-
-            [
-                'Status Aset',
-                item.status_aset
-            ],
-
-            [
-                'Nilai Konstruksi',
-                money(item.nilai)
-            ]
-        ];
-
-
-        details.forEach(([label, value]) => {
-
-            const box = document.createElement('div');
-
-            box.append(
-                createText('small', label),
-                createText('strong', value)
-            );
-
-            grid.appendChild(box);
-        });
-
-        body.appendChild(grid);
-
-
-        /*
-         * URAIAN PEKERJAAN
-         */
-
-        body.append(
-            createText(
-                'h3',
-                'Uraian Pekerjaan',
-                'kf-detail-section-title'
-            ),
-
-            createText(
-                'p',
-                item.urai,
-                'kf-preline'
-            )
-        );
-
-
-        /*
-         * DOKUMEN DAN KETERANGAN
-         */
-
-        body.append(
-            createText(
-                'h3',
-                'Dokumen Pendukung / Keterangan',
-                'kf-detail-section-title'
-            ),
-
-            createText(
-                'p',
-                item.ket,
-                'kf-preline'
-            )
-        );
-
-
-        /*
-         * FOTO UTAMA
-         */
-
-        if (item.foto_url) {
-
-            body.appendChild(
-                createText(
-                    'h3',
-                    'Foto Konstruksi',
-                    'kf-detail-section-title'
-                )
-            );
-
-            const image = document.createElement('img');
-
-            image.src = item.foto_url;
-            image.alt = 'Foto Konstruksi';
-            image.className = 'kf-photo';
-
-            body.appendChild(image);
-        }
-
-
-        /*
-         * SEMUA LAMPIRAN
-         */
-
-        body.appendChild(
-            createText(
-                'h3',
-                'File Dokumen Pendukung',
-                'kf-detail-section-title'
-            )
-        );
-
-        const links = document.createElement('div');
-
-        links.className = 'kf-file-list';
-
-        const documents = Array.isArray(item.dokumens)
-            ? item.dokumens
-            : [];
-
-        if (!documents.length) {
-            links.appendChild(
-                createText(
-                    'p',
-                    'Belum ada lampiran.'
-                )
-            );
-        }
-
-
-        documents.forEach(doc => {
-
-            const link = document.createElement('a');
-
-            link.href = doc.url;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.className = 'kf-btn kf-outline';
-
-            link.textContent =
-                doc.nama || 'Lihat Dokumen';
-
-            links.appendChild(link);
-        });
-
-        body.appendChild(links);
-
-        openDialog(detailDialog);
+        return node;
     }
+
+    const display = value => {
+        const text = String(value ?? '').trim();
+        return text || '—';
+    };
+
+    const period = new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'Asia/Makassar',
+        month: 'long',
+        year: 'numeric'
+    }).format(new Date()).toUpperCase();
+
+    const category = {
+        IPA: 'Instalasi Pengolahan Air (IPA)',
+        BOOSTER: 'Booster',
+        PERPIPAAN: 'Perpipaan'
+    }[String(item.kategori || '').toUpperCase()]
+        || display(item.kategori);
+
+    const building = {
+        P: 'Permanen',
+        SP: 'Semi Permanen',
+        D: 'Darurat'
+    }[String(item.type || '').toUpperCase()]
+        || display(item.type);
+
+
+    /*
+     * KOP KIB F
+     */
+
+    const heading = element('div', 'kf-excel-heading');
+
+    heading.append(
+        element(
+            'strong',
+            '',
+            'KARTU INVENTARIS BARANG (KIB) F'
+        ),
+        element('h3', '', 'KONSTRUKSI'),
+        element('span', '', `S/D BULAN ${period}`)
+    );
+
+    body.appendChild(heading);
+
+
+    /*
+     * INFORMASI ORGANISASI DI ATAS TABEL
+     */
+
+    const meta = element('div', 'kf-excel-meta');
+
+    const metadata = [
+        ['PROVINSI', 'KALIMANTAN TIMUR'],
+        ['KOTA', 'SAMARINDA'],
+        ['UNIT', 'PERUMDA TIRTA KENCANA'],
+        ['DEPARTEMEN', item.nama_departemen],
+        ['DIVISI', item.nama_divisi],
+        ['KATEGORI', category],
+        ['CAKUPAN', item.cakupan],
+        ['LOKASI / UNIT KERJA', item.nama_lokasi]
+    ];
+
+    metadata.forEach(([label, value]) => {
+        const row = element('div', 'kf-excel-meta-row');
+
+        row.append(
+            element('span', 'kf-excel-meta-label', label),
+            element('span', 'kf-excel-meta-colon', ':'),
+            element('strong', '', display(value))
+        );
+
+        meta.appendChild(row);
+    });
+
+    body.appendChild(meta);
+
+
+    /*
+     * KONTAINER TABEL HORIZONTAL
+     */
+
+    const scroll = element('div', 'kf-excel-scroll');
+
+    const table = element('table', 'kf-excel-table');
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    const headers = [
+        'No.',
+        'Nama Barang / Jenis Barang',
+        'Tahun',
+        'Bangunan (P, SP, D)',
+        'Bertingkat / Tidak',
+        'Beton / Tidak',
+        'Letak / Lokasi Alamat',
+        'Status Tanah',
+        'Asal Usul Pembiayaan',
+        'Status Aset',
+        'Nilai (Rp)',
+        'Dokumen Pendukung'
+    ];
+
+    headers.forEach(text => {
+        headerRow.appendChild(
+            element('th', '', text)
+        );
+    });
+
+    thead.appendChild(headerRow);
+
+
+    /*
+     * DATA TUNGGAL KONSTRUKSI
+     */
+
+    const tbody = document.createElement('tbody');
+
+    const dataRow = document.createElement('tr');
+
+
+    /*
+     * KOLOM NO.
+     */
+
+    dataRow.appendChild(
+        element('td', 'kf-excel-number', '1')
+    );
+
+
+    /*
+     * KOLOM NAMA BARANG DAN URAIAN
+     */
+
+    const nameCell = element('td', 'kf-excel-name');
+
+    nameCell.appendChild(
+        element(
+            'strong',
+            'kf-excel-item-name',
+            display(item.nama_barang)
+        )
+    );
+
+    nameCell.appendChild(
+        element(
+            'div',
+            'kf-excel-subtitle',
+            'Uraian Pekerjaan:'
+        )
+    );
+
+    nameCell.appendChild(
+        element(
+            'div',
+            'kf-excel-multiline',
+            display(item.urai)
+        )
+    );
+
+    dataRow.appendChild(nameCell);
+
+
+    /*
+     * KOLOM TAHUN
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-center',
+            display(item.tahun)
+        )
+    );
+
+
+    /*
+     * KOLOM JENIS BANGUNAN
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-center',
+            building
+        )
+    );
+
+
+    /*
+     * KOLOM BERTINGKAT / TIDAK
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-center',
+            display(item.struktur)
+        )
+    );
+
+
+    /*
+     * KOLOM BETON / TIDAK
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-center',
+            display(item.materi)
+        )
+    );
+
+
+    /*
+     * KOLOM LOKASI DAN ALAMAT
+     */
+
+    const location = [
+        item.nama_lokasi,
+        item.alamat_lokasi,
+        item.letak
+    ]
+        .map(value => String(value ?? '').trim())
+        .filter(Boolean)
+        .filter((value, index, array) =>
+            array.findIndex(
+                x => x.toLowerCase() === value.toLowerCase()
+            ) === index
+        )
+        .join('\n');
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-multiline',
+            display(location)
+        )
+    );
+
+
+    /*
+     * KOLOM STATUS TANAH
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-center',
+            display(item.status_tanah)
+        )
+    );
+
+
+    /*
+     * KOLOM ASAL PEMBIAYAAN
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-center',
+            display(item.asal)
+        )
+    );
+
+
+    /*
+     * KOLOM STATUS ASET
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-center',
+            display(item.status_aset)
+        )
+    );
+
+
+    /*
+     * KOLOM NILAI KONSTRUKSI
+     */
+
+    const nominal = Number(item.nilai) || 0;
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-money',
+            'Rp ' + nominal.toLocaleString('id-ID', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            })
+        )
+    );
+
+
+    /*
+     * KOLOM DOKUMEN PENDUKUNG / KETERANGAN
+     */
+
+    dataRow.appendChild(
+        element(
+            'td',
+            'kf-excel-multiline',
+            display(item.ket)
+        )
+    );
+
+
+    tbody.appendChild(dataRow);
+
+    table.append(thead, tbody);
+    scroll.appendChild(table);
+
+    body.appendChild(scroll);
+
+
+    /*
+     * FOTO UTAMA DI BAWAH TABEL
+     */
+
+    if (item.foto_url) {
+        const photoSection = element(
+            'section',
+            'kf-excel-section'
+        );
+
+        photoSection.appendChild(
+            element('h4', '', 'Foto Konstruksi')
+        );
+
+        const photo = document.createElement('img');
+
+        photo.src = item.foto_url;
+        photo.alt = 'Foto Konstruksi';
+        photo.className = 'kf-excel-photo';
+
+        photoSection.appendChild(photo);
+        body.appendChild(photoSection);
+    }
+
+
+    /*
+     * LAMPIRAN PDF DAN GAMBAR
+     */
+
+    const documentSection = element(
+        'section',
+        'kf-excel-section'
+    );
+
+    documentSection.appendChild(
+        element('h4', '', 'Lampiran Dokumen Pendukung')
+    );
+
+    const documentList = element(
+        'div',
+        'kf-excel-files'
+    );
+
+    const documents = Array.isArray(item.dokumens)
+        ? item.dokumens
+        : [];
+
+    if (!documents.length) {
+        documentList.appendChild(
+            element('p', '', 'Belum ada lampiran.')
+        );
+    }
+
+    documents.forEach(doc => {
+        if (!doc.url) return;
+
+        const link = document.createElement('a');
+
+        link.href = doc.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+
+        link.className = 'kf-btn kf-outline';
+        link.textContent = doc.nama || 'Lihat Dokumen';
+
+        documentList.appendChild(link);
+    });
+
+    documentSection.appendChild(documentList);
+    body.appendChild(documentSection);
+
+
+    /*
+     * TAMPILKAN MODAL DETAIL
+     */
+
+    openDialog(detailDialog);
+}
+
 
 
     /*

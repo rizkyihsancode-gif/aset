@@ -1514,4 +1514,330 @@
     }
 
 }
-    
+
+
+/* ==========================================================
+   K.I.B F — VIEW DETAIL BERBENTUK TABEL EXCEL
+   Hanya berlaku untuk modal detail Konstruksi.
+   ========================================================== */
+
+/* MODAL DETAIL LEBIH LEBAR */
+
+#kfModalDetail {
+    width: min(1450px, calc(100vw - 36px));
+    max-width: none;
+
+    height: min(830px, calc(100dvh - 36px));
+    max-height: calc(100dvh - 36px);
+
+    margin: auto;
+}
+
+#kfModalDetail[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+#kfModalDetail > .kf-dialog-head,
+#kfModalDetail > .kf-dialog-foot {
+    flex-shrink: 0;
+}
+
+#kfDetailBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+
+    overflow-y: auto;
+
+    padding: 20px;
+}
+
+
+/* KOP KIB F */
+
+.kf-excel-heading {
+    padding: 12px 10px 18px;
+
+    text-align: center;
+    color: #153b70;
+}
+
+.kf-excel-heading strong {
+    display: block;
+
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.kf-excel-heading h3 {
+    margin: 5px 0;
+
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.kf-excel-heading span {
+    display: block;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* INFORMASI ORGANISASI */
+
+.kf-excel-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 8px 28px;
+
+    padding: 14px;
+    margin-bottom: 18px;
+
+    background: #f7fbff;
+
+    border: 1px solid #dbe7f5;
+    border-radius: 8px;
+}
+
+.kf-excel-meta-row {
+    display: grid;
+    grid-template-columns: 130px 8px minmax(0, 1fr);
+    align-items: start;
+    gap: 7px;
+
+    color: #315680;
+    font-size: 11px;
+}
+
+.kf-excel-meta-label {
+    font-weight: 800;
+}
+
+.kf-excel-meta-colon {
+    font-weight: 700;
+}
+
+.kf-excel-meta-row strong {
+    color: #163c74;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+
+/* KONTAINER SCROLL HORIZONTAL */
+
+.kf-excel-scroll {
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    border: 1px solid #9fb9d2;
+    border-radius: 7px;
+}
+
+
+/* TABEL GAYA KARTU INVENTARIS BARANG */
+
+.kf-excel-table {
+    width: 100%;
+    min-width: 1550px;
+
+    border-collapse: collapse;
+    table-layout: fixed;
+
+    background: #fff;
+    color: #1b3557;
+
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+.kf-excel-table th {
+    padding: 13px 9px;
+
+    color: #153c6b;
+    background: #c7dff2;
+
+    border: 1px solid #9fb9d2;
+
+    text-align: center;
+    vertical-align: middle;
+
+    font-weight: 800;
+}
+
+.kf-excel-table td {
+    padding: 13px 10px;
+
+    background: #fff;
+    border: 1px solid #b8cadb;
+
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+
+/* UKURAN MASING-MASING KOLOM */
+
+.kf-excel-table th:nth-child(1) {
+    width: 48px;
+}
+
+.kf-excel-table th:nth-child(2) {
+    width: 320px;
+}
+
+.kf-excel-table th:nth-child(3) {
+    width: 70px;
+}
+
+.kf-excel-table th:nth-child(4) {
+    width: 105px;
+}
+
+.kf-excel-table th:nth-child(5),
+.kf-excel-table th:nth-child(6) {
+    width: 105px;
+}
+
+.kf-excel-table th:nth-child(7) {
+    width: 185px;
+}
+
+.kf-excel-table th:nth-child(8),
+.kf-excel-table th:nth-child(9),
+.kf-excel-table th:nth-child(10) {
+    width: 110px;
+}
+
+.kf-excel-table th:nth-child(11) {
+    width: 155px;
+}
+
+.kf-excel-table th:nth-child(12) {
+    width: 240px;
+}
+
+
+/* ISI TABEL */
+
+.kf-excel-number,
+.kf-excel-center {
+    text-align: center;
+}
+
+.kf-excel-name {
+    text-align: left;
+}
+
+.kf-excel-item-name {
+    display: block;
+
+    margin-bottom: 13px;
+
+    font-size: 12px;
+    font-weight: 800;
+    color: #0b3975;
+}
+
+.kf-excel-subtitle {
+    margin-bottom: 6px;
+
+    color: #2f5279;
+    font-weight: 800;
+}
+
+.kf-excel-multiline {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+
+    line-height: 1.8;
+}
+
+.kf-excel-money {
+    text-align: right;
+    font-weight: 800;
+    color: #0c4f91;
+
+    white-space: nowrap;
+}
+
+
+/* FOTO DAN LAMPIRAN */
+
+.kf-excel-section {
+    margin-top: 22px;
+    padding-top: 15px;
+
+    border-top: 1px solid #dce8f5;
+}
+
+.kf-excel-section h4 {
+    margin: 0 0 12px;
+
+    color: #103c78;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.kf-excel-photo {
+    display: block;
+
+    max-width: 500px;
+    width: 100%;
+    max-height: 330px;
+
+    object-fit: contain;
+
+    background: #f8fbff;
+    border: 1px solid #dce8f5;
+    border-radius: 8px;
+}
+
+.kf-excel-files {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.kf-excel-files p {
+    margin: 0;
+
+    color: #7c91ab;
+    font-size: 12px;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+    #kfModalDetail {
+        width: calc(100vw - 16px);
+        height: calc(100dvh - 20px);
+        max-height: calc(100dvh - 20px);
+    }
+
+    #kfDetailBody {
+        padding: 12px;
+    }
+
+    .kf-excel-meta {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .kf-excel-meta-row {
+        grid-template-columns: 112px 8px minmax(0, 1fr);
+    }
+
+    .kf-excel-table {
+        min-width: 1550px;
+    }
+}
