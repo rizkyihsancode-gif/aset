@@ -864,7 +864,10 @@ Route::delete(
     ->whereNumber('konstruksi')
     ->name('kib.konstruksi.destroy');
 
-
+Route::get(
+    '/kib/konstruksi/kelompok',
+    [KIBController::class, 'kelompokKonstruksiManual']
+)->name('kib.konstruksi.kelompok');
 
 
 /*
