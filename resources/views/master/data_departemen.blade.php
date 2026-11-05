@@ -297,11 +297,11 @@
                             </th>
 
                             <th>
-                                Kode Departemen
+                                Nama Departemen
                             </th>
 
                             <th>
-                                Nama Departemen
+                                Kode Departemen
                             </th>
 
                             <th class="dept-col-role">
