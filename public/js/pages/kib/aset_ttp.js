@@ -4,19 +4,23 @@
 | K.I.B E — ASET TETAP LAINNYA
 | PERUMDA TIRTA KENCANA KOTA SAMARINDA
 |--------------------------------------------------------------------------
+|
+| Fitur:
+| 1. Tabel utama Aset Tetap Lainnya
+| 2. Popup Detail Kelompok
+| 3. Panel lokasi dan divisi
+| 4. Panel daftar barang
+| 5. Popup View barang dengan foto utama
+| 6. Create / Edit / Delete
+| 7. Searchable dropdown Master Data
+| 8. Upload banyak PDF dan gambar
+| 9. Arsip lama tetap read-only
+|
 | Database:
 | - kib_aset_tetap_manual
 | - kib_aset_tetap_dokumens
 |
-| Fitur:
-| - Tabel utama
-| - Detail kelompok lokasi dan divisi
-| - Daftar barang di panel kanan
-| - Modal View foto dan informasi lengkap
-| - Create, Edit, Delete
-| - Searchable dropdown
-| - Master Data sebagai saran pilihan
-| - Upload multiple PDF / gambar
+| Tidak memiliki relasi wajib ke Kode Aktiva.
 |--------------------------------------------------------------------------
 */
 
@@ -31,22 +35,16 @@
 
     const $ = id => document.getElementById(id);
 
-    const base = root.dataset.base.replace(/\/$/, '');
+    const base = (root.dataset.base || '').replace(/\/$/, '');
     const groupUrl = root.dataset.groupUrl;
     const token = root.dataset.token;
 
     const form = $('aemForm');
 
-    const formDialog = $('aemFormDialog');
+    const groupDialog = $('aemGroupPanel');
     const detailDialog = $('aemDetailDialog');
+    const formDialog = $('aemFormDialog');
     const deleteDialog = $('aemDeleteDialog');
-
-    const listPanel = $('aemListPanel');
-    const groupPanel = $('aemGroupPanel');
-
-    const normalize = value => String(value ?? '')
-        .trim()
-        .toLocaleLowerCase('id-ID');
 
     const fields = [
         'nama_aset',
@@ -72,16 +70,17 @@
     let deleting = false;
 
     let addedFiles = [];
-
     let toastTimer = null;
-    let groupController = null;
-    let searchDelay = null;
 
     const combos = new Map();
 
+    const normalize = value => String(value ?? '')
+        .trim()
+        .toLocaleLowerCase('id-ID');
+
 
     /* ======================================================
-       DATA MASTER
+       BACA DATA MASTER DARI BLADE
     ====================================================== */
 
     function readJson(id, fallback) {
@@ -91,30 +90,33 @@
             if (!element) return fallback;
 
             return JSON.parse(element.textContent) || fallback;
-        } catch {
+        } catch (exception) {
+            console.warn(
+                'Data JSON tidak dapat dibaca:',
+                id,
+                exception
+            );
+
             return fallback;
         }
     }
 
-    const master = readJson('aemMaster', {
-        lokasi: [],
-        departemen: [],
-        divisi: [],
-        bahan: []
-    });
-
+    const master = readJson('aemMaster', {});
     const history = readJson('aemHistory', {});
+
+    const list = value =>
+        Array.isArray(value) ? value : [];
 
 
     /* ======================================================
-       DOM HELPER
+       ICON DAN DOM HELPER
     ====================================================== */
 
-    function icons() {
+    function refreshIcons() {
         window.lucide?.createIcons?.();
     }
 
-    function txt(tag, value) {
+    function textElement(tag, value, className = '') {
         const element = document.createElement(tag);
 
         element.textContent =
@@ -124,62 +126,69 @@
                 ? '—'
                 : String(value);
 
+        if (className) {
+            element.className = className;
+        }
+
         return element;
     }
 
-    function cell(row, content, className = '') {
-        const td = document.createElement('td');
+    function addCell(row, content, className = '') {
+        const cell = document.createElement('td');
 
         if (
             typeof content === 'string' ||
             typeof content === 'number'
         ) {
-            td.textContent = String(content);
+            cell.textContent = String(content);
         } else if (content) {
-            td.append(content);
+            cell.appendChild(content);
         }
 
-        if (className) td.className = className;
+        if (className) {
+            cell.className = className;
+        }
 
-        row.append(td);
+        row.appendChild(cell);
 
-        return td;
+        return cell;
     }
 
 
     /* ======================================================
-       MODAL
+       HELPER MODAL
     ====================================================== */
 
-    function show(dialog) {
-        if (dialog && !dialog.open) {
-            dialog.showModal();
-        }
+    function showDialog(dialog) {
+        if (!dialog || dialog.open) return;
 
-        icons();
+        dialog.showModal();
+        refreshIcons();
     }
 
-    function hide(dialog) {
-        if (dialog?.open) dialog.close();
+    function hideDialog(dialog) {
+        if (dialog?.open) {
+            dialog.close();
+        }
     }
 
     document
         .querySelectorAll('[data-aem-close]')
         .forEach(button => {
-
             button.addEventListener('click', () => {
-                hide($(button.dataset.aemClose));
+                hideDialog($(button.dataset.aemClose));
             });
-
         });
 
 
     /* ======================================================
-       TOAST DAN ERROR
+       TOAST
     ====================================================== */
 
     function toast(message) {
         const element = $('aemToast');
+
+        if (!element) return;
 
         element.textContent = message;
         element.hidden = false;
@@ -191,8 +200,15 @@
         }, 4000);
     }
 
-    function error(message) {
+
+    /* ======================================================
+       ERROR VALIDASI
+    ====================================================== */
+
+    function showError(message) {
         const element = $('aemError');
+
+        if (!element) return;
 
         element.textContent = message || '';
         element.hidden = !message;
@@ -206,7 +222,7 @@
 
 
     /* ======================================================
-       API LARAVEL
+       REQUEST KE LARAVEL
     ====================================================== */
 
     async function api(url, options = {}) {
@@ -219,6 +235,7 @@
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': token,
+
                 ...(options.headers || {})
             }
         });
@@ -228,7 +245,7 @@
             response.url.includes('/login')
         ) {
             throw new Error(
-                'Sesi login telah habis. Login kembali.'
+                'Sesi login habis. Silakan login kembali.'
             );
         }
 
@@ -237,20 +254,34 @@
             .catch(() => ({}));
 
         if (!response.ok || data.success === false) {
-            const details = data.errors
-                ? Object.values(data.errors).flat().join('\n')
+            const errors = data.errors
+                ? Object.values(data.errors)
+                    .flat()
+                    .join('\n')
                 : '';
 
-            let message = details ||
+            let message = errors ||
                 data.message ||
                 `Permintaan gagal (HTTP ${response.status}).`;
 
             if (response.status === 413) {
-                message = 'Ukuran file melebihi batas server.';
+                message =
+                    'Ukuran lampiran melebihi batas server.';
             }
 
             if (response.status === 419) {
-                message = 'Sesi login habis. Refresh halaman.';
+                message =
+                    'Sesi login telah habis. Refresh halaman.';
+            }
+
+            if (response.status === 403) {
+                message =
+                    'Akun tidak memiliki izin untuk tindakan ini.';
+            }
+
+            if (response.status === 404) {
+                message =
+                    'Data atau halaman tidak ditemukan.';
             }
 
             throw new Error(message);
@@ -261,45 +292,59 @@
 
 
     /* ======================================================
-       JAM WITA
+       TANGGAL DAN JAM WITA
     ====================================================== */
 
-    const dateFormat = new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Makassar',
-        weekday: 'long',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    });
+    function initializeClock() {
+        const dateElement = $('aemDate');
+        const timeElement = $('aemTime');
 
-    const timeFormat = new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Makassar',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-    });
+        if (!dateElement || !timeElement) return;
 
-    function updateClock() {
-        const now = new Date();
+        const dateFormatter = new Intl.DateTimeFormat(
+            'id-ID',
+            {
+                timeZone: 'Asia/Makassar',
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            }
+        );
 
-        const date = dateFormat.format(now);
+        const timeFormatter = new Intl.DateTimeFormat(
+            'id-ID',
+            {
+                timeZone: 'Asia/Makassar',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }
+        );
 
-        $('aemDate').textContent =
-            date.charAt(0).toUpperCase() + date.slice(1);
+        function update() {
+            const now = new Date();
 
-        $('aemTime').textContent = timeFormat
-            .format(now)
-            .replace(/\./g, ':');
+            const date = dateFormatter.format(now);
+
+            dateElement.textContent =
+                date.charAt(0).toUpperCase() +
+                date.slice(1);
+
+            timeElement.textContent = timeFormatter
+                .format(now)
+                .replace(/\./g, ':');
+        }
+
+        update();
+
+        setInterval(update, 1000);
     }
-
-    updateClock();
-
-    setInterval(updateClock, 1000);
 
 
     /* ======================================================
-       SEARCHABLE DROPDOWN
+       PILIHAN DROPDOWN
     ====================================================== */
 
     const predefined = {
@@ -318,56 +363,68 @@
         ]
     };
 
+
     function getOptions(source) {
-        let list = [];
+        let options = [];
 
         if (source === 'lokasi') {
-            list = (master.lokasi || []).map(row => ({
-                value: row.lokasi,
-                label: row.alamat || '',
-                ref: row
-            }));
+            options = list(master.lokasi)
+                .filter(row => row.lokasi)
+                .map(row => ({
+                    value: row.lokasi,
+                    label: row.alamat || '',
+                    ref: row
+                }));
         }
 
         if (source === 'departemen') {
-            list = (master.departemen || []).map(row => ({
-                value: row.nama_dep,
-                label: '',
-                ref: row
-            }));
+            options = list(master.departemen)
+                .filter(row => row.nama_dep)
+                .map(row => ({
+                    value: row.nama_dep,
+                    label: '',
+                    ref: row
+                }));
         }
 
         if (source === 'bahan') {
-            list = (master.bahan || []).map(row => ({
-                value: row.nama,
-                label: '',
-                ref: row
-            }));
+            options = list(master.bahan)
+                .map(row => ({
+                    value: row.nama || row.nama_bahan,
+                    label: '',
+                    ref: row
+                }))
+                .filter(row => row.value);
         }
 
         if (source === 'divisi') {
-            const department = (master.departemen || [])
+            const departmentName = normalize(
+                $('aemDep')?.value
+            );
+
+            const department = list(master.departemen)
                 .find(row =>
-                    normalize(row.nama_dep) ===
-                    normalize($('aemDep')?.value)
+                    normalize(row.nama_dep) === departmentName
                 );
 
             const available = department
-                ? (master.divisi || []).filter(
+                ? list(master.divisi).filter(
                     row => String(row.id_dep) ===
                         String(department.id)
                 )
-                : (master.divisi || []);
+                : list(master.divisi);
 
-            list = available.map(row => ({
-                value: row.nama_div,
-                label: '',
-                ref: row
-            }));
+            options = available
+                .filter(row => row.nama_div)
+                .map(row => ({
+                    value: row.nama_div,
+                    label: '',
+                    ref: row
+                }));
 
             if (!department) {
-                list.push(
-                    ...(history.divisi || []).map(value => ({
+                options.push(
+                    ...list(history.divisi).map(value => ({
                         value,
                         label: ''
                     }))
@@ -376,53 +433,61 @@
         }
 
         if (source === 'asal') {
-            list = [...predefined.asal];
+            options = [...predefined.asal];
         }
 
         if (source === 'kondisi') {
-            list = [...predefined.kondisi];
+            options = [...predefined.kondisi];
         }
 
-        const extras = {
-            lokasi: history.lokasi || [],
-            departemen: history.departemen || [],
-            bahan: history.bahan || [],
-            asal: history.asal_perolehan || []
+        const histories = {
+            lokasi: history.lokasi,
+            departemen: history.departemen,
+            bahan: history.bahan,
+            asal: history.asal_perolehan
         };
 
-        for (const value of extras[source] || []) {
-            list.push({
+        for (const value of list(histories[source])) {
+            options.push({
                 value: String(value),
                 label: ''
             });
         }
 
-        const known = new Set();
+        const used = new Set();
 
-        return list.filter(item => {
-            const key = normalize(item.value);
+        return options.filter(option => {
+            const key = normalize(option.value);
 
-            if (!key || known.has(key)) return false;
+            if (!key || used.has(key)) {
+                return false;
+            }
 
-            known.add(key);
-
+            used.add(key);
             return true;
         });
     }
 
 
+    /* ======================================================
+       SEARCHABLE DROPDOWN CUSTOM
+    ====================================================== */
+
     function initializeComboboxes() {
         if (!form) return;
 
-        form
-            .querySelectorAll('[data-aem-combo]')
+        form.querySelectorAll('[data-aem-combo]')
             .forEach(input => {
-
                 const source = input.dataset.aemCombo;
 
-                const wrapper =
-                    document.createElement('div');
+                if (input.dataset.initialized === '1') {
+                    return;
+                }
 
+                input.dataset.initialized = '1';
+                input.autocomplete = 'off';
+
+                const wrapper = document.createElement('div');
                 wrapper.className = 'aem-combo';
 
                 input.parentNode.insertBefore(
@@ -432,43 +497,67 @@
 
                 wrapper.appendChild(input);
 
-                const arrow =
-                    document.createElement('button');
+                const arrow = document.createElement('button');
 
                 arrow.type = 'button';
                 arrow.className = 'aem-combo-arrow';
                 arrow.textContent = '⌄';
 
-                const panel =
-                    document.createElement('div');
+                arrow.setAttribute(
+                    'aria-label',
+                    'Tampilkan pilihan'
+                );
 
+                const panel = document.createElement('div');
+
+                panel.id = `${input.id}-list`;
                 panel.className = 'aem-combo-options';
-                panel.id = input.id + '-list';
                 panel.hidden = true;
 
                 panel.setAttribute('role', 'listbox');
 
                 input.setAttribute('role', 'combobox');
-                input.setAttribute('aria-controls', panel.id);
-                input.setAttribute('aria-expanded', 'false');
-                input.setAttribute('aria-autocomplete', 'list');
+                input.setAttribute(
+                    'aria-autocomplete',
+                    'list'
+                );
+
+                input.setAttribute(
+                    'aria-controls',
+                    panel.id
+                );
+
+                input.setAttribute(
+                    'aria-expanded',
+                    'false'
+                );
 
                 wrapper.append(arrow, panel);
 
                 let shown = [];
-                let active = -1;
+                let activeIndex = -1;
+
 
                 function close() {
                     panel.hidden = true;
-                    wrapper.classList.remove('opened', 'up');
+
+                    wrapper.classList.remove(
+                        'opened',
+                        'up'
+                    );
 
                     input.setAttribute(
                         'aria-expanded',
                         'false'
                     );
 
-                    active = -1;
+                    input.removeAttribute(
+                        'aria-activedescendant'
+                    );
+
+                    activeIndex = -1;
                 }
+
 
                 function choose(item) {
                     input.value = String(item.value);
@@ -484,17 +573,64 @@
                     }
 
                     input.dispatchEvent(
-                        new Event('change', { bubbles: true })
+                        new Event('change', {
+                            bubbles: true
+                        })
                     );
 
                     close();
 
-                    input.focus({ preventScroll: true });
+                    input.focus({
+                        preventScroll: true
+                    });
                 }
+
+
+                function highlight(index) {
+                    const buttons = Array.from(
+                        panel.querySelectorAll(
+                            '.aem-combo-item'
+                        )
+                    );
+
+                    if (!buttons.length) return;
+
+                    activeIndex = (
+                        index + buttons.length
+                    ) % buttons.length;
+
+                    buttons.forEach((button, i) => {
+                        const selected = i === activeIndex;
+
+                        button.classList.toggle(
+                            'active',
+                            selected
+                        );
+
+                        button.setAttribute(
+                            'aria-selected',
+                            String(selected)
+                        );
+
+                        if (selected) {
+                            input.setAttribute(
+                                'aria-activedescendant',
+                                button.id
+                            );
+
+                            button.scrollIntoView({
+                                block: 'nearest'
+                            });
+                        }
+                    });
+                }
+
 
                 function render(showAll = false) {
                     combos.forEach((widget, id) => {
-                        if (id !== input.id) widget.close();
+                        if (id !== input.id) {
+                            widget.close();
+                        }
                     });
 
                     const query = showAll
@@ -502,15 +638,15 @@
                         : normalize(input.value);
 
                     shown = getOptions(source)
-                        .filter(item =>
-                            normalize(
+                        .filter(item => {
+                            return normalize(
                                 `${item.value} ${item.label || ''}`
-                            ).includes(query)
-                        )
+                            ).includes(query);
+                        })
                         .slice(0, 150);
 
                     panel.replaceChildren();
-                    active = -1;
+                    activeIndex = -1;
 
                     if (!shown.length) {
                         const empty =
@@ -521,39 +657,43 @@
                         empty.textContent =
                             source === 'kondisi'
                                 ? 'Pilih kondisi yang tersedia.'
-                                : 'Tidak ditemukan. Kamu boleh mengetik nilai baru.';
+                                : 'Data tidak ditemukan. Kamu boleh mengetik nilai baru.';
 
-                        panel.append(empty);
+                        panel.appendChild(empty);
                     }
 
-                    shown.forEach(item => {
+                    shown.forEach((item, index) => {
                         const button =
                             document.createElement('button');
 
                         button.type = 'button';
+                        button.id =
+                            `${panel.id}-item-${index}`;
+
                         button.className = 'aem-combo-item';
 
-                        const label = txt('strong', item.value);
+                        button.setAttribute('role', 'option');
 
-                        button.append(label);
+                        button.appendChild(
+                            textElement('strong', item.value)
+                        );
 
                         if (item.label) {
-                            button.append(
-                                txt('small', item.label)
+                            button.appendChild(
+                                textElement('small', item.label)
                             );
                         }
 
                         button.addEventListener(
                             'mousedown',
-                            e => e.preventDefault()
+                            event => event.preventDefault()
                         );
 
-                        button.addEventListener(
-                            'click',
-                            () => choose(item)
-                        );
+                        button.addEventListener('click', () => {
+                            choose(item);
+                        });
 
-                        panel.append(button);
+                        panel.appendChild(button);
                     });
 
                     panel.hidden = false;
@@ -569,10 +709,12 @@
 
                     wrapper.classList.toggle(
                         'up',
-                        window.innerHeight - rect.bottom < 190 &&
+                        window.innerHeight -
+                            rect.bottom < 190 &&
                         rect.top > 230
                     );
                 }
+
 
                 input.addEventListener('focus', () => {
                     if (panel.hidden) render(true);
@@ -585,69 +727,68 @@
 
                 arrow.addEventListener(
                     'mousedown',
-                    e => e.preventDefault()
+                    event => event.preventDefault()
                 );
 
                 arrow.addEventListener('click', () => {
-                    if (panel.hidden) {
-                        input.focus({ preventScroll: true });
-                        render(true);
-                    } else {
+                    if (!panel.hidden) {
                         close();
+                        return;
                     }
+
+                    input.focus({
+                        preventScroll: true
+                    });
+
+                    render(true);
                 });
 
-                input.addEventListener('keydown', e => {
-                    if (e.key === 'Escape') {
+
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Escape') {
                         if (!panel.hidden) {
-                            e.preventDefault();
+                            event.preventDefault();
                             close();
                         }
                     }
 
                     if (
-                        e.key === 'ArrowDown' ||
-                        e.key === 'ArrowUp'
+                        event.key === 'ArrowDown' ||
+                        event.key === 'ArrowUp'
                     ) {
-                        e.preventDefault();
+                        event.preventDefault();
 
-                        if (panel.hidden) render(true);
+                        if (panel.hidden) {
+                            render(true);
+                        }
 
                         if (shown.length) {
-                            const step =
-                                e.key === 'ArrowDown' ? 1 : -1;
+                            const direction =
+                                event.key === 'ArrowDown'
+                                    ? 1
+                                    : -1;
 
-                            active = (
-                                active + step + shown.length
-                            ) % shown.length;
-
-                            panel
-                                .querySelectorAll('.aem-combo-item')
-                                .forEach((element, index) => {
-                                    element.classList.toggle(
-                                        'active',
-                                        index === active
-                                    );
-                                });
-
-                            panel.children[active]
-                                ?.scrollIntoView({
-                                    block: 'nearest'
-                                });
+                            highlight(
+                                activeIndex + direction
+                            );
                         }
                     }
 
                     if (
-                        e.key === 'Enter' &&
+                        event.key === 'Enter' &&
                         !panel.hidden &&
-                        active >= 0
+                        activeIndex >= 0
                     ) {
-                        e.preventDefault();
-                        choose(shown[active]);
+                        event.preventDefault();
+
+                        choose(shown[activeIndex]);
                     }
 
-                    if (e.key === 'Tab') close();
+                    if (event.key === 'Tab') {
+                        close();
+                    }
                 });
+
 
                 combos.set(input.id, {
                     close,
@@ -656,53 +797,63 @@
                 });
             });
 
-        document.addEventListener('pointerdown', e => {
+
+        document.addEventListener('pointerdown', event => {
             combos.forEach(widget => {
-                if (!widget.wrapper.contains(e.target)) {
+                if (!widget.wrapper.contains(event.target)) {
                     widget.close();
                 }
             });
         });
 
+
         $('aemDep')?.addEventListener('change', () => {
-            $('aemDiv').value = '';
+            if ($('aemDiv').value) {
+                $('aemDiv').value = '';
+            }
+
             combos.get('aemDiv')?.close();
         });
     }
 
-    initializeComboboxes();
-
 
     /* ======================================================
-       DOKUMEN DAN LAMPIRAN
+       FILE DOKUMEN
     ====================================================== */
 
-    function resetDocs() {
+    function resetDocuments() {
         addedFiles = [];
 
-        $('aemDocsInput').value = '';
+        const input = $('aemDocsInput');
 
-        $('aemSelectedDocs').replaceChildren();
-        $('aemSavedDocs').replaceChildren();
+        if (input) input.value = '';
+
+        $('aemSelectedDocs')?.replaceChildren();
+        $('aemSavedDocs')?.replaceChildren();
     }
 
-    function renderNewDocs() {
+
+    function renderNewDocuments() {
         const container = $('aemSelectedDocs');
+
+        if (!container) return;
 
         container.replaceChildren();
 
         if (!addedFiles.length) return;
 
-        container.append(
-            txt('strong', `${addedFiles.length} lampiran baru`)
+        container.appendChild(
+            textElement(
+                'strong',
+                `${addedFiles.length} lampiran baru`
+            )
         );
 
         addedFiles.forEach((file, index) => {
             const row = document.createElement('div');
-
             row.className = 'aem-file-row';
 
-            const label = txt(
+            const label = textElement(
                 'span',
                 `${file.name} (${(file.size / 1048576).toFixed(2)} MB)`
             );
@@ -715,49 +866,66 @@
 
             remove.addEventListener('click', () => {
                 addedFiles.splice(index, 1);
-                renderNewDocs();
+                renderNewDocuments();
             });
 
             row.append(label, remove);
-            container.append(row);
+            container.appendChild(row);
         });
     }
 
-    $('aemDocsInput')?.addEventListener('change', e => {
-        for (const file of Array.from(e.target.files || [])) {
+
+    $('aemDocsInput')?.addEventListener('change', event => {
+        const files = Array.from(
+            event.target.files || []
+        );
+
+        for (const file of files) {
             if (!/\.(pdf|jpe?g|png|webp)$/i.test(file.name)) {
-                toast(`${file.name}: format tidak didukung.`);
+                toast(
+                    `${file.name}: format tidak didukung.`
+                );
+
                 continue;
             }
 
-            const duplicate = addedFiles.some(old =>
+            const duplicate = addedFiles.some(old => (
                 old.name === file.name &&
                 old.size === file.size &&
                 old.lastModified === file.lastModified
-            );
+            ));
 
-            if (!duplicate) addedFiles.push(file);
+            if (!duplicate) {
+                addedFiles.push(file);
+            }
         }
 
-        e.target.value = '';
+        event.target.value = '';
 
-        renderNewDocs();
+        renderNewDocuments();
     });
 
-    function renderSavedDocs(documents) {
+
+    function renderSavedDocuments(documents) {
         const container = $('aemSavedDocs');
+
+        if (!container) return;
 
         container.replaceChildren();
 
-        if (!documents?.length) return;
+        if (!Array.isArray(documents) || !documents.length) {
+            return;
+        }
 
-        container.append(
-            txt('strong', 'Lampiran yang sudah tersimpan:')
+        container.appendChild(
+            textElement(
+                'strong',
+                'Lampiran yang sudah tersimpan:'
+            )
         );
 
         documents.forEach(doc => {
             const row = document.createElement('div');
-
             row.className = 'aem-file-row';
 
             const link = document.createElement('a');
@@ -765,41 +933,54 @@
             link.href = doc.url;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.textContent = doc.nama;
+            link.textContent = doc.nama || 'Dokumen';
 
-            const label = document.createElement('label');
+            row.appendChild(link);
 
-            label.className = 'aem-file-remove';
+            if (doc.id != null) {
+                const label = document.createElement('label');
 
-            const checkbox = document.createElement('input');
+                label.className = 'aem-file-remove';
 
-            checkbox.type = 'checkbox';
-            checkbox.name = 'hapus_dokumen_ids[]';
-            checkbox.value = String(doc.id);
+                const checkbox =
+                    document.createElement('input');
 
-            label.append(
-                checkbox,
-                document.createTextNode(' Hapus saat simpan')
-            );
+                checkbox.type = 'checkbox';
+                checkbox.name = 'hapus_dokumen_ids[]';
+                checkbox.value = String(doc.id);
 
-            row.append(link, label);
-            container.append(row);
+                label.append(
+                    checkbox,
+                    document.createTextNode(
+                        ' Hapus saat simpan'
+                    )
+                );
+
+                row.appendChild(label);
+            }
+
+            container.appendChild(row);
         });
     }
 
 
     /* ======================================================
-       FORM TAMBAH / EDIT
+       FORM TAMBAH ASET
     ====================================================== */
 
     function addForm() {
-        editId = null;
+        if (!form) return;
+
         current = null;
+        editId = null;
         saving = false;
 
         form.reset();
-        resetDocs();
-        error('');
+
+        $('aemKondisi')?.setCustomValidity('');
+
+        resetDocuments();
+        showError('');
 
         form.elements.namedItem('tahun').value =
             new Date().getFullYear();
@@ -814,17 +995,27 @@
 
         combos.forEach(widget => widget.close());
 
-        show(formDialog);
+        showDialog(formDialog);
     }
 
+
+    /* ======================================================
+       FORM EDIT ASET
+    ====================================================== */
+
     function editForm(item) {
-        editId = Number(item.id);
+        if (!form || !item) return;
+
         current = item;
+        editId = Number(item.id);
         saving = false;
 
         form.reset();
-        resetDocs();
-        error('');
+
+        $('aemKondisi')?.setCustomValidity('');
+
+        resetDocuments();
+        showError('');
 
         fields.forEach(field => {
             const input = form.elements.namedItem(field);
@@ -834,7 +1025,7 @@
             }
         });
 
-        renderSavedDocs(item.dokumens || []);
+        renderSavedDocuments(item.dokumens || []);
 
         $('aemFormTitle').textContent =
             'Edit Aset Tetap Lainnya';
@@ -844,34 +1035,66 @@
 
         combos.forEach(widget => widget.close());
 
-        show(formDialog);
+        showDialog(formDialog);
     }
+
 
     $('aemAdd')?.addEventListener('click', addForm);
 
 
     /* ======================================================
-       VIEW BARANG — FOTO BESAR DI ATAS
+       AMBIL DETAIL SATU BARANG
     ====================================================== */
 
-    function makePhotoPlaceholder() {
+    async function fetchItem(id) {
+        const response = await api(
+            `${base}/${encodeURIComponent(id)}`
+        );
+
+        if (!response.data) {
+            throw new Error(
+                'Data aset tidak ditemukan.'
+            );
+        }
+
+        return response.data;
+    }
+
+
+    /* ======================================================
+       PLACEHOLDER FOTO
+    ====================================================== */
+
+    function photoPlaceholder() {
         const box = document.createElement('div');
 
         box.className = 'aem-photo-placeholder';
 
-        const imageIcon = document.createElement('i');
+        const icon = document.createElement('i');
 
-        imageIcon.setAttribute('data-lucide', 'image-off');
+        icon.setAttribute(
+            'data-lucide',
+            'image-off'
+        );
 
         box.append(
-            imageIcon,
-            txt('span', 'Foto aset belum tersedia')
+            icon,
+            textElement(
+                'span',
+                'Foto aset belum tersedia'
+            )
         );
 
         return box;
     }
 
-    function detail(item) {
+
+    /* ======================================================
+       POPUP VIEW BARANG
+       Foto besar, detail lengkap dan dokumen.
+    ====================================================== */
+
+    function showDetail(item) {
         current = item;
 
         const body = $('aemDetailBody');
@@ -881,72 +1104,135 @@
         $('aemDetailTitle').textContent =
             item.nama_aset || 'Detail Inventaris';
 
-        // Foto utama.
+
+        /*
+         * FOTO UTAMA
+         */
+
         if (item.foto_url) {
             const photo = document.createElement('img');
 
             photo.src = item.foto_url;
-            photo.alt = 'Foto ' + (item.nama_aset || 'aset');
+            photo.alt =
+                'Foto ' + (item.nama_aset || 'aset');
+
             photo.className = 'aem-photo-large';
 
-            photo.onerror = () => {
-                photo.replaceWith(makePhotoPlaceholder());
-                icons();
-            };
+            photo.addEventListener('error', () => {
+                photo.replaceWith(photoPlaceholder());
+                refreshIcons();
+            });
 
-            body.append(photo);
+            body.appendChild(photo);
         } else {
-            body.append(makePhotoPlaceholder());
+            body.appendChild(photoPlaceholder());
         }
 
-        const caption = txt(
-            'div',
-            item.nama_aset || 'Inventaris K.I.B E'
+
+        /*
+         * NAMA BARANG
+         */
+
+        body.appendChild(
+            textElement(
+                'div',
+                item.nama_aset || 'Inventaris K.I.B E',
+                'aem-detail-caption'
+            )
         );
 
-        caption.className = 'aem-detail-caption';
 
-        body.append(caption);
+        /*
+         * INFORMASI INVENTARIS
+         */
 
-        // Informasi lengkap.
         const grid = document.createElement('div');
 
         grid.className = 'aem-detail-grid';
 
         const details = [
-            ['Kode Inventaris (Manual)', item.kode_inventaris],
-            ['Nama Aset', item.nama_aset],
-            ['Nomor Register', item.nomor_register],
-            ['Jumlah Unit', item.jumlah_unit],
-            ['Kondisi', item.kondisi],
-            ['Bahan', item.bahan],
-            ['Tahun Pengadaan', item.tahun],
-            ['Asal Perolehan', item.asal_perolehan],
-            ['Lokasi', item.lokasi],
-            ['Alamat', item.alamat],
-            ['Departemen', item.departemen],
-            ['Divisi', item.divisi]
+            [
+                'Kode Inventaris (Manual)',
+                item.kode_inventaris
+            ],
+            [
+                'Nama Barang',
+                item.nama_aset
+            ],
+            [
+                'Nomor Register',
+                item.nomor_register
+            ],
+            [
+                'Jumlah Unit',
+                item.jumlah_unit != null
+                    ? `${item.jumlah_unit} Unit`
+                    : '—'
+            ],
+            [
+                'Kondisi',
+                item.kondisi
+            ],
+            [
+                'Bahan',
+                item.bahan
+            ],
+            [
+                'Tahun Pengadaan',
+                item.tahun
+            ],
+            [
+                'Asal Perolehan',
+                item.asal_perolehan
+            ],
+            [
+                'Lokasi / Unit Kerja',
+                item.lokasi
+            ],
+            [
+                'Alamat',
+                item.alamat
+            ],
+            [
+                'Departemen',
+                item.departemen
+            ],
+            [
+                'Divisi',
+                item.divisi
+            ]
         ];
 
-        for (const [label, value] of details) {
+        details.forEach(([label, value]) => {
             const box = document.createElement('div');
 
             box.append(
-                txt('small', label),
-                txt('strong', value)
+                textElement('small', label),
+                textElement('strong', value)
             );
 
-            grid.append(box);
-        }
+            grid.appendChild(box);
+        });
+
+        body.appendChild(grid);
+
+
+        /*
+         * KETERANGAN
+         */
 
         body.append(
-            grid,
-            txt('h3', 'Keterangan'),
-            txt('p', item.keterangan)
+            textElement('h3', 'Keterangan'),
+            textElement('p', item.keterangan)
         );
 
-        body.append(
-            txt('h3', 'Dokumen Pendukung')
+
+        /*
+         * DOKUMEN PENDUKUNG
+         */
+
+        body.appendChild(
+            textElement('h3', 'Dokumen Pendukung')
         );
 
         const documents = document.createElement('div');
@@ -954,8 +1240,8 @@
         documents.className = 'aem-doc-links';
 
         if (!item.dokumens?.length) {
-            documents.append(
-                txt('p', 'Belum ada lampiran.')
+            documents.appendChild(
+                textElement('p', 'Belum ada lampiran.')
             );
         }
 
@@ -963,34 +1249,31 @@
             const link = document.createElement('a');
 
             link.href = doc.url;
-            link.textContent = doc.nama || 'Dokumen';
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
+
+            link.textContent =
+                doc.nama || 'Lihat Dokumen';
+
             link.className = 'aem-btn outline';
 
-            documents.append(link);
+            documents.appendChild(link);
         }
 
-        body.append(documents);
+        body.appendChild(documents);
 
-        show(detailDialog);
-    }
 
-    async function fetchItem(id) {
-        const response = await api(
-            `${base}/${encodeURIComponent(id)}`
-        );
+        /*
+         * Modal View dibuka di atas Modal Kelompok.
+         * Popup Kelompok tetap terbuka di bawah.
+         */
 
-        if (!response.data) {
-            throw new Error('Data aset tidak ditemukan.');
-        }
-
-        return response.data;
+        showDialog(detailDialog);
     }
 
 
     /* ======================================================
-       DETAIL KELOMPOK
+       STATE DETAIL KELOMPOK
     ====================================================== */
 
     const groupState = {
@@ -998,14 +1281,23 @@
         divisi: '',
         q: '',
         page: 1,
+
         groups: [],
         selected: null,
         pagination: null
     };
 
+    let groupController = null;
+    let searchDelay = null;
+
+
     function groupKey(lokasi, divisi) {
-        return JSON.stringify([lokasi, divisi]);
+        return JSON.stringify([
+            lokasi,
+            divisi
+        ]);
     }
+
 
     function groupMessage(message) {
         const element = $('aemGroupAlert');
@@ -1016,14 +1308,27 @@
         element.hidden = !message;
     }
 
+
+    /* ======================================================
+       BUKA POPUP DETAIL KELOMPOK
+    ====================================================== */
+
     function openGroup(lokasi, divisi) {
-        if (!groupPanel || !groupUrl) return;
+        if (!groupDialog || !groupUrl) {
+            toast(
+                'Route Detail Kelompok belum tersedia.'
+            );
+
+            return;
+        }
 
         groupState.lokasi =
-            String(lokasi || '').trim() || 'Tanpa Lokasi';
+            String(lokasi || '').trim() ||
+            'Tanpa Lokasi';
 
         groupState.divisi =
-            String(divisi || '').trim() || 'Tanpa Divisi';
+            String(divisi || '').trim() ||
+            'Tanpa Divisi';
 
         groupState.q = '';
         groupState.page = 1;
@@ -1031,20 +1336,15 @@
         $('aemGroupItemSearch').value = '';
         $('aemGroupSearch').value = '';
 
-        listPanel.hidden = true;
-        groupPanel.hidden = false;
-
-        groupPanel.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
+        showDialog(groupDialog);
 
         loadGroup();
     }
 
 
     /* ======================================================
-       PANEL KIRI — LOKASI DAN DIVISI
+       RENDER PANEL KIRI
+       Daftar lokasi dan divisi dari database manual.
     ====================================================== */
 
     function renderGroups() {
@@ -1065,8 +1365,11 @@
         );
 
         if (!groups.length) {
-            container.append(
-                txt('div', 'Tidak ada kelompok yang cocok.')
+            container.appendChild(
+                textElement(
+                    'div',
+                    'Tidak ada lokasi atau divisi yang cocok.'
+                )
             );
 
             return;
@@ -1082,6 +1385,11 @@
             locations.get(group.lokasi).push(group);
         }
 
+
+        /*
+         * SETIAP LOKASI
+         */
+
         for (const [location, children] of locations) {
             const section = document.createElement('div');
 
@@ -1091,16 +1399,25 @@
 
             title.className = 'aem-group-location-title';
 
-            const icon = document.createElement('i');
+            const folderIcon =
+                document.createElement('i');
 
-            icon.setAttribute('data-lucide', 'folder');
-
-            title.append(
-                icon,
-                txt('span', location)
+            folderIcon.setAttribute(
+                'data-lucide',
+                'folder'
             );
 
-            section.append(title);
+            title.append(
+                folderIcon,
+                textElement('span', location)
+            );
+
+            section.appendChild(title);
+
+
+            /*
+             * SETIAP DIVISI DALAM LOKASI
+             */
 
             for (const group of children) {
                 const button = document.createElement('button');
@@ -1108,7 +1425,7 @@
                 button.type = 'button';
                 button.className = 'aem-group-select';
 
-                const chosen =
+                const isSelected =
                     groupState.selected &&
                     groupKey(
                         groupState.selected.lokasi,
@@ -1118,23 +1435,24 @@
                         group.divisi
                     );
 
-                if (chosen) {
+                if (isSelected) {
                     button.classList.add('active');
                 }
 
                 button.setAttribute(
                     'aria-pressed',
-                    String(Boolean(chosen))
+                    String(Boolean(isSelected))
                 );
 
                 button.append(
-                    txt('span', group.divisi),
-                    txt('span', group.jumlah)
+                    textElement('span', group.divisi),
+                    textElement('span', group.jumlah)
                 );
 
                 button.addEventListener('click', () => {
                     groupState.lokasi = group.lokasi;
                     groupState.divisi = group.divisi;
+
                     groupState.page = 1;
                     groupState.q = '';
 
@@ -1143,18 +1461,18 @@
                     loadGroup();
                 });
 
-                section.append(button);
+                section.appendChild(button);
             }
 
-            container.append(section);
+            container.appendChild(section);
         }
 
-        icons();
+        refreshIcons();
     }
 
 
     /* ======================================================
-       PANEL KANAN — TABEL BARANG
+       RENDER TABEL PANEL KANAN
     ====================================================== */
 
     function renderGroupRows(items) {
@@ -1167,13 +1485,14 @@
         if (!items.length) {
             const row = document.createElement('tr');
 
-            cell(
+            addCell(
                 row,
-                'Tidak ada aset dalam kelompok ini.',
+                'Tidak ada aset pada kelompok atau pencarian ini.',
                 'aem-empty'
             ).colSpan = 6;
 
-            body.append(row);
+            body.appendChild(row);
+
             return;
         }
 
@@ -1184,24 +1503,54 @@
         items.forEach((item, index) => {
             const row = document.createElement('tr');
 
-            cell(row, first + index, 'aem-center');
+            /*
+             * NOMOR
+             */
 
-            cell(
+            addCell(
                 row,
-                txt('strong', item.nama_aset || '—')
+                first + index,
+                'aem-center'
             );
 
-            cell(
+
+            /*
+             * NAMA BARANG
+             */
+
+            addCell(
+                row,
+                textElement(
+                    'strong',
+                    item.nama_aset || '—'
+                )
+            );
+
+
+            /*
+             * KODE INVENTARIS MANUAL
+             */
+
+            addCell(
                 row,
                 item.kode_inventaris || '—'
             );
 
-            cell(
+
+            /*
+             * NOMOR REGISTER
+             */
+
+            addCell(
                 row,
                 item.nomor_register || '—'
             );
 
-            // Thumbnail foto.
+
+            /*
+             * THUMBNAIL FOTO
+             */
+
             const photoBox = document.createElement('div');
 
             if (item.foto_url) {
@@ -1209,28 +1558,42 @@
 
                 image.className = 'aem-group-thumb';
                 image.src = item.foto_url;
-                image.alt = 'Foto ' + item.nama_aset;
 
-                image.onerror = () => {
-                    const empty = txt('div', 'Tanpa foto');
+                image.alt =
+                    'Foto ' + (item.nama_aset || 'aset');
 
-                    empty.className = 'aem-group-no-photo';
+                image.addEventListener('error', () => {
+                    const placeholder = textElement(
+                        'div',
+                        'Tanpa foto',
+                        'aem-group-no-photo'
+                    );
 
-                    image.replaceWith(empty);
-                };
+                    image.replaceWith(placeholder);
+                });
 
-                photoBox.append(image);
+                photoBox.appendChild(image);
             } else {
-                const empty = txt('div', 'Tanpa foto');
-
-                empty.className = 'aem-group-no-photo';
-
-                photoBox.append(empty);
+                photoBox.appendChild(
+                    textElement(
+                        'div',
+                        'Tanpa foto',
+                        'aem-group-no-photo'
+                    )
+                );
             }
 
-            cell(row, photoBox, 'aem-center');
+            addCell(
+                row,
+                photoBox,
+                'aem-center'
+            );
 
-            // Tombol View per barang.
+
+            /*
+             * AKSI VIEW BARANG
+             */
+
             const view = document.createElement('button');
 
             view.type = 'button';
@@ -1242,30 +1605,37 @@
 
             view.setAttribute(
                 'aria-label',
-                'View ' + item.nama_aset
+                `Lihat detail ${item.nama_aset || 'aset'}`
             );
 
             const icon = document.createElement('i');
 
-            icon.setAttribute('data-lucide', 'eye');
+            icon.setAttribute(
+                'data-lucide',
+                'eye'
+            );
 
-            view.append(icon);
+            view.appendChild(icon);
 
-            cell(row, view, 'aem-center');
+            addCell(
+                row,
+                view,
+                'aem-center'
+            );
 
-            body.append(row);
+            body.appendChild(row);
         });
 
-        icons();
+        refreshIcons();
     }
 
 
     /* ======================================================
-       LOAD DETAIL KELOMPOK KE CONTROLLER
+       REQUEST DAFTAR KELOMPOK KE CONTROLLER
     ====================================================== */
 
     async function loadGroup() {
-        if (!groupPanel || !groupUrl) return;
+        if (!groupDialog || !groupUrl) return;
 
         if (groupController) {
             groupController.abort();
@@ -1277,15 +1647,20 @@
 
         const body = $('aemGroupRows');
 
-        const loader = document.createElement('tr');
+        const loaderRow = document.createElement('tr');
 
-        cell(
-            loader,
+        addCell(
+            loaderRow,
             'Memuat daftar aset...',
             'aem-group-spinner'
         ).colSpan = 6;
 
-        body.replaceChildren(loader);
+        body.replaceChildren(loaderRow);
+
+
+        /*
+         * PARAMETER FILTER
+         */
 
         const params = new URLSearchParams({
             lokasi: groupState.lokasi,
@@ -1294,21 +1669,39 @@
             page: String(groupState.page)
         });
 
+
         try {
             const result = await api(
-                `${groupUrl}?${params}`,
+                `${groupUrl}?${params.toString()}`,
                 {
                     signal: groupController.signal
                 }
             );
 
-            groupState.groups = result.groups || [];
-            groupState.selected = result.selected;
-            groupState.pagination = result.pagination;
+            if (!groupDialog.open) return;
+
+            groupState.groups =
+                Array.isArray(result.groups)
+                    ? result.groups
+                    : [];
+
+            groupState.selected =
+                result.selected || null;
+
+            groupState.pagination =
+                result.pagination || null;
+
+
+            /*
+             * JUDUL KELOMPOK
+             */
 
             if (result.selected) {
-                groupState.lokasi = result.selected.lokasi;
-                groupState.divisi = result.selected.divisi;
+                groupState.lokasi =
+                    result.selected.lokasi;
+
+                groupState.divisi =
+                    result.selected.divisi;
 
                 $('aemGroupTitle').textContent =
                     result.selected.divisi;
@@ -1320,32 +1713,52 @@
                     'Belum Ada Kelompok Aset';
 
                 $('aemGroupSubtitle').textContent =
-                    'Tambahkan catatan inventaris terlebih dahulu.';
+                    'Tambahkan data manual terlebih dahulu.';
             }
 
+
+            /*
+             * INFORMASI JUMLAH DAN PAGINATION
+             */
+
+            const pagination = result.pagination || {};
+
             $('aemGroupCount').textContent =
-                `${result.pagination?.total || 0} barang`;
+                `${pagination.total || 0} barang`;
 
             $('aemGroupInfo').textContent =
-                `${result.pagination?.from || 0}–${result.pagination?.to || 0} dari ${result.pagination?.total || 0} data`;
+                `${pagination.from || 0}–${pagination.to || 0} dari ${pagination.total || 0} data`;
 
             $('aemGroupPage').textContent =
-                `${result.pagination?.page || 1} / ${result.pagination?.last_page || 1}`;
+                `${pagination.page || 1} / ${pagination.last_page || 1}`;
 
             $('aemGroupPrev').disabled =
-                (result.pagination?.page || 1) <= 1;
+                (pagination.page || 1) <= 1;
 
             $('aemGroupNext').disabled =
-                (result.pagination?.page || 1) >=
-                (result.pagination?.last_page || 1);
+                (pagination.page || 1) >=
+                (pagination.last_page || 1);
+
+
+            /*
+             * PERBARUI PANEL KIRI DAN KANAN
+             */
 
             renderGroups();
 
-            renderGroupRows(result.items || []);
+            renderGroupRows(
+                Array.isArray(result.items)
+                    ? result.items
+                    : []
+            );
+
         } catch (exception) {
             if (exception.name === 'AbortError') return;
 
-            groupMessage(exception.message);
+            groupMessage(
+                exception.message ||
+                'Tidak dapat mengambil data kelompok.'
+            );
 
             body.replaceChildren();
         }
@@ -1353,25 +1766,42 @@
 
 
     /* ======================================================
-       KONTROL NAVIGASI KELOMPOK
+       MENUTUP POPUP KELOMPOK
     ====================================================== */
 
-    $('aemBack')?.addEventListener('click', () => {
+    function closeGroupDialog() {
+        hideDialog(groupDialog);
+    }
+
+    $('aemBack')?.addEventListener(
+        'click',
+        closeGroupDialog
+    );
+
+    $('aemGroupClose')?.addEventListener(
+        'click',
+        closeGroupDialog
+    );
+
+    groupDialog?.addEventListener('close', () => {
         groupController?.abort();
-
-        groupPanel.hidden = true;
-        listPanel.hidden = false;
-
-        listPanel.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
+        clearTimeout(searchDelay);
     });
+
+
+    /* ======================================================
+       CARI KELOMPOK DI PANEL KIRI
+    ====================================================== */
 
     $('aemGroupSearch')?.addEventListener(
         'input',
         renderGroups
     );
+
+
+    /* ======================================================
+       CARI BARANG DI PANEL KANAN
+    ====================================================== */
 
     $('aemGroupItemSearch')?.addEventListener(
         'input',
@@ -1387,16 +1817,29 @@
         }
     );
 
-    $('aemGroupRefresh')?.addEventListener('click', () => {
-        clearTimeout(searchDelay);
 
-        groupState.q = '';
-        groupState.page = 1;
+    /* ======================================================
+       RESET PENCARIAN
+    ====================================================== */
 
-        $('aemGroupItemSearch').value = '';
+    $('aemGroupRefresh')?.addEventListener(
+        'click',
+        () => {
+            clearTimeout(searchDelay);
 
-        loadGroup();
-    });
+            groupState.q = '';
+            groupState.page = 1;
+
+            $('aemGroupItemSearch').value = '';
+
+            loadGroup();
+        }
+    );
+
+
+    /* ======================================================
+       PAGINATION
+    ====================================================== */
 
     $('aemGroupPrev')?.addEventListener('click', () => {
         if (groupState.page > 1) {
@@ -1421,7 +1864,9 @@
     ====================================================== */
 
     root.addEventListener('click', async event => {
-        if (!(event.target instanceof Element)) return;
+        if (!(event.target instanceof Element)) {
+            return;
+        }
 
         const button = event.target.closest(
             'button[data-aem-action]'
@@ -1438,9 +1883,16 @@
         const action = button.dataset.aemAction;
         const id = button.dataset.id;
 
-        if (!/^\d+$/.test(String(id))) return;
+        if (!/^\d+$/.test(String(id))) {
+            toast('ID aset tidak valid.');
+            return;
+        }
 
-        // Detail kelompok dari tabel utama.
+
+        /*
+         * DETAIL KELOMPOK
+         */
+
         if (action === 'group') {
             openGroup(
                 button.dataset.location,
@@ -1450,13 +1902,28 @@
             return;
         }
 
-        // Delete dari tabel utama.
+
+        /*
+         * DELETE LANGSUNG
+         */
+
         if (action === 'delete') {
-            confirmDelete(id, button.dataset.name);
+            confirmDelete(
+                id,
+                button.dataset.name
+            );
+
             return;
         }
 
-        if (!['view', 'edit'].includes(action)) return;
+
+        /*
+         * VIEW ATAU EDIT BARANG
+         */
+
+        if (!['view', 'edit'].includes(action)) {
+            return;
+        }
 
         button.disabled = true;
 
@@ -1466,7 +1933,7 @@
             if (action === 'edit') {
                 editForm(item);
             } else {
-                detail(item);
+                showDetail(item);
             }
         } catch (exception) {
             toast(exception.message);
@@ -1477,7 +1944,7 @@
 
 
     /* ======================================================
-       EDIT / DELETE DARI MODAL VIEW
+       EDIT DARI POPUP VIEW
     ====================================================== */
 
     $('aemEditDetail')?.addEventListener('click', () => {
@@ -1485,9 +1952,15 @@
 
         const item = current;
 
-        hide(detailDialog);
+        hideDialog(detailDialog);
+
         editForm(item);
     });
+
+
+    /* ======================================================
+       KONFIRMASI DELETE
+    ====================================================== */
 
     function confirmDelete(id, name) {
         deleteId = Number(id);
@@ -1495,20 +1968,24 @@
         $('aemDeleteName').textContent =
             name || `Aset #${id}`;
 
-        hide(detailDialog);
+        hideDialog(detailDialog);
 
-        show(deleteDialog);
+        showDialog(deleteDialog);
     }
 
+
     $('aemDeleteDetail')?.addEventListener('click', () => {
-        if (current) {
-            confirmDelete(current.id, current.nama_aset);
-        }
+        if (!current) return;
+
+        confirmDelete(
+            current.id,
+            current.nama_aset
+        );
     });
 
 
     /* ======================================================
-       DELETE DATABASE
+       HAPUS DATA DARI DATABASE
     ====================================================== */
 
     $('aemConfirmDelete')?.addEventListener(
@@ -1524,13 +2001,14 @@
 
             try {
                 await api(
-                    `${base}/${deleteId}`,
+                    `${base}/${encodeURIComponent(deleteId)}`,
                     {
                         method: 'DELETE'
                     }
                 );
 
                 window.location.assign(base);
+
             } catch (exception) {
                 toast(exception.message);
 
@@ -1540,13 +2018,16 @@
         }
     );
 
+
     deleteDialog?.addEventListener('close', () => {
-        if (!deleting) deleteId = null;
+        if (!deleting) {
+            deleteId = null;
+        }
     });
 
 
     /* ======================================================
-       CREATE / UPDATE DATABASE
+       SIMPAN FORM CREATE / UPDATE
     ====================================================== */
 
     form?.addEventListener('submit', async event => {
@@ -1554,13 +2035,18 @@
 
         if (saving) return;
 
-        error('');
+        showError('');
+
+
+        /*
+         * VALIDASI KONDISI
+         */
 
         const condition = $('aemKondisi');
 
-        condition.value = String(condition.value)
-            .trim()
-            .toUpperCase();
+        condition.value = String(
+            condition.value || ''
+        ).trim().toUpperCase();
 
         const validConditions = [
             'BAIK',
@@ -1575,7 +2061,14 @@
                 : 'Pilih kondisi yang tersedia.'
         );
 
-        if (!form.reportValidity()) return;
+        if (!form.reportValidity()) {
+            return;
+        }
+
+
+        /*
+         * KUNCI TOMBOL SAAT MENYIMPAN
+         */
 
         saving = true;
 
@@ -1583,26 +2076,42 @@
 
         save.disabled = true;
 
+
+        /*
+         * AMBIL DATA FORM
+         */
+
         const data = new FormData(form);
 
-        // File yang dipilih berulang kali.
         data.delete('dokumens[]');
 
-        for (const file of addedFiles) {
+
+        /*
+         * MASUKKAN SEMUA DOKUMEN BARU
+         */
+
+        addedFiles.forEach(file => {
             data.append(
                 'dokumens[]',
                 file,
                 file.name
             );
-        }
+        });
+
+
+        /*
+         * UPDATE MEMAKAI METHOD SPOOFING PUT
+         */
 
         if (editId !== null) {
             data.set('_method', 'PUT');
         }
 
+
         const url = editId !== null
             ? `${base}/${encodeURIComponent(editId)}`
             : base;
+
 
         try {
             await api(url, {
@@ -1610,9 +2119,14 @@
                 body: data
             });
 
+            /*
+             * KEMBALI KE HALAMAN MANUAL
+             */
+
             window.location.assign(base);
+
         } catch (exception) {
-            error(exception.message);
+            showError(exception.message);
 
             saving = false;
             save.disabled = false;
@@ -1621,9 +2135,11 @@
 
 
     /* ======================================================
-       SELESAI
+       INITIALIZATION
     ====================================================== */
 
-    icons();
+    initializeClock();
+    initializeComboboxes();
+    refreshIcons();
 
 })();

@@ -1,17 +1,24 @@
 
 /* ==========================================================
    K.I.B E — ASET TETAP LAINNYA
-   Tampilan utama, Detail Kelompok, View Barang, CRUD
+   SISTEM ASET PERUMDA TIRTA KENCANA
+
+   - Halaman Utama
+   - Popup Detail Kelompok
+   - Popup View Barang
+   - Popup Form Tambah / Edit
+   - Searchable Dropdown
    ========================================================== */
 
 .aem-page {
-    --blue: #0969df;
-    --navy: #0b326b;
-    --line: #dce7f4;
-    --muted: #718ba9;
+    --aem-blue: #0869e7;
+    --aem-blue-dark: #0756ba;
+    --aem-navy: #0b326b;
+    --aem-line: #dce7f4;
+    --aem-muted: #718ba9;
 
     padding: 0 16px 36px;
-    color: var(--navy);
+    color: var(--aem-navy);
     font-family: inherit;
 }
 
@@ -33,20 +40,23 @@
 }
 
 
-/* HEADER */
+/* ==========================================================
+   HEADER
+   ========================================================== */
 
 .aem-hero {
     position: relative;
     isolation: isolate;
-    padding: 24px 16px 18px;
+
     margin: 0 -16px 18px;
+    padding: 24px 16px 18px;
 
     background:
         linear-gradient(
             90deg,
-            rgba(249,252,255,.98),
-            rgba(248,251,255,.87) 55%,
-            rgba(232,244,255,.57)
+            rgba(249,252,255,.98) 0%,
+            rgba(248,251,255,.88) 55%,
+            rgba(232,244,255,.57) 100%
         ),
         url('/images/master/pdam4.png')
         center / cover no-repeat;
@@ -56,9 +66,16 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    color: #6886a5;
-    font-size: 11px;
+
     margin-bottom: 17px;
+
+    font-size: 11px;
+    color: #6886a5;
+}
+
+.aem-crumb a {
+    display: inline-flex;
+    color: var(--aem-blue);
 }
 
 .aem-crumb svg {
@@ -66,44 +83,49 @@
     height: 15px;
 }
 
-.aem-crumb a {
-    color: var(--blue);
-    display: inline-flex;
-}
-
 .aem-hero h1 {
-    font-size: 29px;
-    color: #082b60;
     margin: 0 0 8px;
+    font-size: 29px;
     font-weight: 800;
+    color: #082b60;
 }
 
 .aem-hero p {
+    max-width: 900px;
     margin: 0;
+
     color: #557aa5;
     font-size: 12px;
-    max-width: 900px;
     line-height: 1.75;
 }
 
+
+/* ==========================================================
+   TANGGAL DAN JAM
+   ========================================================== */
+
 .aem-date {
     position: absolute;
-    right: 16px;
     top: 22px;
+    right: 16px;
+
     display: flex;
     align-items: center;
     gap: 12px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: #fff;
+
     padding: 11px 13px;
-    box-shadow: 0 5px 16px #163d6817;
+
+    background: #fff;
+    border: 1px solid var(--aem-line);
+    border-radius: 10px;
+
+    box-shadow: 0 5px 16px rgba(22,61,104,.09);
 }
 
 .aem-date > svg {
-    color: var(--blue);
     width: 22px;
     height: 22px;
+    color: var(--aem-blue);
 }
 
 .aem-date strong,
@@ -116,13 +138,15 @@
 }
 
 .aem-date small {
-    font-size: 10px;
-    color: var(--muted);
     margin-top: 3px;
+    font-size: 10px;
+    color: var(--aem-muted);
 }
 
 
-/* STATISTIK */
+/* ==========================================================
+   TIGA KARTU STATISTIK
+   ========================================================== */
 
 .aem-kpis {
     display: grid;
@@ -132,24 +156,31 @@
 }
 
 .aem-kpis article {
-    background: #fff;
-    min-width: 0;
-    border: 1px solid var(--line);
-    border-radius: 11px;
-    padding: 17px;
     display: flex;
     align-items: center;
     gap: 13px;
-    box-shadow: 0 3px 14px #143f6710;
+
+    min-width: 0;
+    padding: 17px;
+
+    background: #fff;
+    border: 1px solid var(--aem-line);
+    border-radius: 11px;
+
+    box-shadow: 0 3px 14px rgba(20,63,103,.06);
 }
 
 .aem-kpi-icon {
+    flex: 0 0 44px;
+
     display: grid;
     place-items: center;
-    flex: 0 0 44px;
+
+    width: 44px;
     height: 44px;
-    background: var(--blue);
+
     color: #fff;
+    background: var(--aem-blue);
     border-radius: 9px;
 }
 
@@ -160,17 +191,19 @@
 
 .aem-kpis small {
     display: block;
-    font-weight: 800;
     font-size: 11px;
+    font-weight: 800;
     color: #31598b;
 }
 
 .aem-kpis strong {
     display: block;
+
+    margin: 4px 0;
+
+    color: #062c62;
     font-size: 23px;
     font-weight: 800;
-    margin: 4px 0;
-    color: #062c62;
 }
 
 .aem-kpis article div > span {
@@ -179,56 +212,69 @@
 }
 
 
-/* PANEL */
+/* ==========================================================
+   PANEL UTAMA
+   ========================================================== */
 
-.aem-panel,
-.aem-group-page {
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: #fff;
+.aem-panel {
     padding: 17px;
-    box-shadow: 0 5px 19px #173c6010;
+
+    background: #fff;
+    border: 1px solid var(--aem-line);
+    border-radius: 12px;
+
+    box-shadow: 0 5px 19px rgba(23,60,96,.06);
 }
 
 .aem-heading {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     gap: 16px;
+
     margin-bottom: 15px;
 }
 
 .aem-heading h2 {
-    font-size: 17px;
     margin: 0 0 6px;
+    font-size: 17px;
     font-weight: 800;
 }
 
 .aem-heading p {
-    font-size: 11px;
-    color: var(--muted);
     margin: 0;
+
+    color: var(--aem-muted);
+    font-size: 11px;
 }
 
 
-/* TOMBOL */
+/* ==========================================================
+   TOMBOL
+   ========================================================== */
 
 .aem-btn {
     display: inline-flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     gap: 7px;
+
     min-height: 37px;
     padding: 9px 13px;
 
     border: 1px solid transparent;
     border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
+
+    cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
-    cursor: pointer;
-    transition: .15s;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease;
 }
 
 .aem-btn svg {
@@ -237,12 +283,12 @@
 }
 
 .aem-btn.primary {
-    background: var(--blue);
+    background: var(--aem-blue);
     color: #fff;
 }
 
 .aem-btn.primary:hover {
-    background: #0754b8;
+    background: var(--aem-blue-dark);
 }
 
 .aem-btn.outline {
@@ -260,20 +306,28 @@
     color: #fff;
 }
 
+.aem-btn.danger:hover {
+    background: #b72c40;
+}
+
 .aem-btn:disabled,
 .aem-action:disabled {
     opacity: .55;
-    cursor: wait;
+    cursor: not-allowed;
 }
 
 
-/* TAB DAN FILTER */
+/* ==========================================================
+   TAB
+   ========================================================== */
 
 .aem-tabs {
     display: flex;
     gap: 20px;
-    border-bottom: 1px solid var(--line);
+
     margin-bottom: 16px;
+
+    border-bottom: 1px solid var(--aem-line);
     overflow-x: auto;
 }
 
@@ -281,18 +335,22 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+
     padding: 11px 3px;
+
+    color: #4d76a7;
     text-decoration: none;
+    white-space: nowrap;
+
+    border-bottom: 3px solid transparent;
+
     font-size: 12px;
     font-weight: 750;
-    white-space: nowrap;
-    border-bottom: 3px solid transparent;
-    color: #4d76a7;
 }
 
 .aem-tabs a.active {
-    color: var(--blue);
-    border-bottom-color: var(--blue);
+    color: var(--aem-blue);
+    border-bottom-color: var(--aem-blue);
 }
 
 .aem-tabs svg {
@@ -300,49 +358,54 @@
     height: 15px;
 }
 
-.aem-toolbar,
-.aem-group-toolbar {
+
+/* ==========================================================
+   FILTER PENCARIAN
+   ========================================================== */
+
+.aem-toolbar {
     display: flex;
     align-items: center;
     gap: 9px;
     margin-bottom: 15px;
 }
 
-.aem-search,
-.aem-group-search {
+.aem-search {
     position: relative;
     flex: 1;
-    min-width: 0;
+    min-width: 200px;
 }
 
-.aem-search svg,
-.aem-group-search svg {
+.aem-search svg {
     position: absolute;
     top: 11px;
     left: 12px;
+
     width: 15px;
     height: 15px;
+
     color: #91a5bc;
     pointer-events: none;
 }
 
 .aem-toolbar input,
-.aem-toolbar select,
-.aem-group-search input {
-    height: 38px;
+.aem-toolbar select {
     width: 100%;
+    height: 38px;
+    padding: 9px 11px;
+
+    background: #fff;
+    color: #204b7b;
+
     border: 1px solid #d4e2f0;
     border-radius: 7px;
     outline: 0;
-    background: #fff;
-    color: #204b7b;
+
     font-size: 11px;
-    padding: 9px 11px;
 }
 
-.aem-search input,
-.aem-group-search input {
-    padding-left: 36px !important;
+.aem-toolbar .aem-search input {
+    padding-left: 36px;
 }
 
 .aem-toolbar select {
@@ -350,21 +413,23 @@
 }
 
 .aem-toolbar input:focus,
-.aem-toolbar select:focus,
-.aem-group-search input:focus {
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px #086ae61e;
+.aem-toolbar select:focus {
+    border-color: var(--aem-blue);
+    box-shadow: 0 0 0 3px rgba(8,105,231,.11);
 }
 
 .aem-notice {
     display: flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid #ddeaf6;
-    background: #f5faff;
+
     padding: 11px;
     margin-bottom: 13px;
+
+    background: #f5faff;
+    border: 1px solid #ddeaf6;
     border-radius: 8px;
+
     color: #526d88;
     font-size: 12px;
 }
@@ -375,40 +440,50 @@
 }
 
 
-/* TABEL */
+/* ==========================================================
+   TABEL
+   ========================================================== */
 
 .aem-table-wrap {
-    overflow: auto;
     max-width: 100%;
+    overflow: auto;
+
     border: 1px solid #dbe7f2;
     border-radius: 9px;
 }
 
 .aem-table {
-    border-spacing: 0;
-    border-collapse: separate;
     width: 100%;
     min-width: 1100px;
+
+    border-spacing: 0;
+    border-collapse: separate;
+
     color: #254d78;
     font-size: 11px;
 }
 
 .aem-table th {
-    background: #dcebf9;
-    text-align: center;
-    color: #164073;
-    font-size: 11px;
     padding: 14px 12px;
+
+    background: #dcebf9;
+    color: #164073;
+
+    text-align: center;
+    font-size: 11px;
+
     border-right: 1px solid #cddfeb;
     border-bottom: 1px solid #c7dbeb;
 }
 
 .aem-table td {
     padding: 13px 11px;
-    border-right: 1px solid #e4edf6;
-    border-bottom: 1px solid #e4edf6;
+
     vertical-align: middle;
     line-height: 1.6;
+
+    border-right: 1px solid #e4edf6;
+    border-bottom: 1px solid #e4edf6;
 }
 
 .aem-table tbody tr:nth-child(even) {
@@ -430,8 +505,8 @@
 }
 
 .aem-table small {
-    color: #8196af;
     display: block;
+    color: #8196af;
 }
 
 .aem-center {
@@ -440,52 +515,78 @@
 
 .aem-condition {
     display: inline-block;
+
     padding: 5px 9px;
-    border-radius: 7px;
+
     background: #e8f4ff;
     color: #1a5c9e;
+
     border: 1px solid #d3e8fb;
+    border-radius: 7px;
+
     font-size: 10px;
     font-weight: 700;
     white-space: nowrap;
 }
 
 .aem-empty {
-    text-align: center !important;
     padding: 35px !important;
+    text-align: center !important;
     color: #859bb0;
 }
+
+.aem-pagination {
+    margin-top: 16px;
+}
+
+
+/* ==========================================================
+   AKSI TABEL
+   ========================================================== */
 
 .aem-action-head,
 .aem-action-cell {
     position: sticky;
     right: 0;
     z-index: 2;
+
     min-width: 144px;
     text-align: center;
+
     background: #fff;
-    box-shadow: -5px 0 12px #183f640d;
+    box-shadow: -5px 0 12px rgba(24,63,100,.05);
 }
 
 .aem-action-head {
-    background: #dcebf9 !important;
     z-index: 3;
+    background: #dcebf9 !important;
+}
+
+.aem-table tbody tr:nth-child(even) .aem-action-cell {
+    background: #fafdff;
+}
+
+.aem-table tbody tr:hover .aem-action-cell {
+    background: #edf6ff;
 }
 
 .aem-actions {
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     gap: 7px;
 }
 
 .aem-action {
-    width: 33px;
-    height: 33px;
     display: grid;
     place-items: center;
-    border-radius: 7px;
+
+    width: 33px;
+    height: 33px;
+
     border: 1px solid transparent;
+    border-radius: 7px;
+
     cursor: pointer;
 }
 
@@ -512,42 +613,97 @@
     border-color: #f4d7dd;
 }
 
-.aem-pagination {
-    margin-top: 16px;
+.aem-action.view:hover {
+    background: #d9ebff;
+}
+
+.aem-action.edit:hover {
+    background: #ffecc0;
+}
+
+.aem-action.delete:hover {
+    background: #ffe0e5;
 }
 
 
 /* ==========================================================
-   DETAIL KELOMPOK
+   POPUP DETAIL KELOMPOK
    ========================================================== */
 
-.aem-group-page[hidden] {
+.aem-group-dialog {
+    width: min(1280px, calc(100vw - 48px));
+    max-width: none;
+
+    height: min(790px, calc(100dvh - 64px));
+    max-height: calc(100dvh - 64px);
+
+    margin: auto;
+    padding: 0;
+
+    background: #fff;
+    color: #163e75;
+
+    border: 1px solid #d8e6f5;
+    border-radius: 18px;
+
+    box-shadow: 0 30px 90px rgba(4,26,58,.34);
+    overflow: hidden;
+}
+
+.aem-group-dialog:not([open]) {
     display: none !important;
 }
 
+.aem-group-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.aem-group-dialog::backdrop {
+    background: rgba(5,23,52,.60);
+    backdrop-filter: blur(5px);
+}
+
+.aem-group-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+
+    min-height: 0;
+    background: #fff;
+}
+
+
+/* ==========================================================
+   HEADER POPUP KELOMPOK
+   ========================================================== */
+
 .aem-group-top {
-    margin-bottom: 17px;
-}
+    flex-shrink: 0;
 
-.aem-group-top h2 {
-    margin: 9px 0 5px;
-    font-size: 19px;
-    font-weight: 800;
-    color: #0a326b;
-}
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
 
-.aem-group-top p {
-    margin: 0;
-    color: #7990a9;
-    font-size: 11px;
+    padding: 19px 23px 17px;
+
+    background: linear-gradient(
+        110deg,
+        #fff 0%,
+        #f0f7ff 100%
+    );
+
+    border-bottom: 1px solid #dce8f6;
 }
 
 .aem-group-breadcrumb {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 11px;
+
     color: #8398b1;
+    font-size: 11px;
 }
 
 .aem-group-breadcrumb > svg {
@@ -559,12 +715,17 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+
+    padding: 0;
+
     border: 0;
     background: none;
-    color: var(--blue);
-    font-weight: 750;
+
+    color: var(--aem-blue);
     cursor: pointer;
-    padding: 0;
+
+    font-size: 11px;
+    font-weight: 750;
 }
 
 .aem-back-link svg {
@@ -572,89 +733,221 @@
     height: 15px;
 }
 
+.aem-group-top h2 {
+    margin: 8px 0 6px;
+
+    color: #0a326b;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.aem-group-top p {
+    margin: 0;
+
+    color: #7990a9;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.aem-group-close {
+    flex-shrink: 0;
+
+    display: grid;
+    place-items: center;
+
+    width: 36px;
+    height: 36px;
+
+    color: #557ca6;
+    background: #fff;
+
+    border: 1px solid #d8e5f4;
+    border-radius: 9px;
+
+    cursor: pointer;
+}
+
+.aem-group-close:hover {
+    background: #e9f3ff;
+    color: var(--aem-blue);
+}
+
+.aem-group-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+
+/* ==========================================================
+   LAYOUT DUA PANEL DI DALAM POPUP
+   ========================================================== */
+
 .aem-group-layout {
+    flex: 1 1 auto;
+
     display: grid;
     grid-template-columns:
-        minmax(235px, 29%)
+        minmax(245px, 27%)
         minmax(0, 1fr);
-    gap: 14px;
-    min-height: 400px;
+
+    gap: 16px;
+    min-height: 0;
+
+    padding: 18px 21px 22px;
+    overflow-y: auto;
+
+    background: #f8fbff;
 }
 
 .aem-group-left,
 .aem-group-right {
-    border: 1px solid #dce7f4;
-    border-radius: 10px;
-    background: #fff;
     min-width: 0;
+
+    background: #fff;
+
+    border: 1px solid #dae7f6;
+    border-radius: 12px;
+
+    box-shadow: 0 3px 12px rgba(12,60,112,.04);
 }
 
 .aem-group-left {
-    padding: 13px;
+    padding: 14px;
+}
+
+.aem-group-right {
+    padding: 16px;
 }
 
 .aem-group-side-head {
     display: flex;
     align-items: center;
     gap: 9px;
+
     padding: 4px 3px 14px;
+    margin-bottom: 12px;
+
     color: #174a81;
     font-size: 13px;
+
+    border-bottom: 1px solid #edf2f9;
 }
 
 .aem-group-side-head svg {
     width: 18px;
     height: 18px;
-    color: var(--blue);
+    color: var(--aem-blue);
 }
+
+
+/* ==========================================================
+   SEARCH DALAM POPUP
+   ========================================================== */
+
+.aem-group-search {
+    position: relative;
+    display: block;
+
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+}
+
+.aem-group-search svg {
+    position: absolute;
+    top: 11px;
+    left: 11px;
+
+    width: 15px;
+    height: 15px;
+
+    color: #839cb5;
+    pointer-events: none;
+}
+
+.aem-group-search input {
+    width: 100%;
+    height: 38px;
+    padding: 8px 10px 8px 34px;
+
+    color: #214c7f;
+    background: #fff;
+
+    border: 1px solid #d4e3f1;
+    border-radius: 7px;
+    outline: none;
+
+    font-size: 11px;
+}
+
+.aem-group-search input:focus {
+    border-color: var(--aem-blue);
+    box-shadow: 0 0 0 3px rgba(8,105,231,.12);
+}
+
+
+/* ==========================================================
+   KELOMPOK LOKASI DAN DIVISI
+   ========================================================== */
 
 .aem-group-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 610px;
+
+    max-height: 500px;
+    padding: 12px 2px 5px 0;
+
     overflow-y: auto;
-    padding: 12px 0 5px;
 }
 
 .aem-group-location {
-    background: #f5f9fe;
+    padding: 10px;
+
+    background: #f9fbfe;
     border: 1px solid #e0eaf6;
     border-radius: 8px;
-    padding: 10px;
 }
 
 .aem-group-location-title {
     display: flex;
     align-items: flex-start;
     gap: 8px;
+
+    margin-bottom: 8px;
+
     color: #1d4c83;
     font-size: 11px;
     font-weight: 800;
-    margin-bottom: 8px;
+
     overflow-wrap: anywhere;
 }
 
 .aem-group-location-title svg {
+    flex: none;
     width: 15px;
     height: 15px;
-    flex: none;
-    color: var(--blue);
+
+    color: var(--aem-blue);
 }
 
 .aem-group-select {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    text-align: left;
-    width: 100%;
+    align-items: center;
     gap: 8px;
+
+    width: 100%;
     padding: 9px 8px;
     margin-top: 4px;
+
+    text-align: left;
+    color: #365e88;
+
     background: #fff;
     border: 1px solid transparent;
     border-radius: 7px;
-    color: #365e88;
+
     cursor: pointer;
     font-size: 11px;
 }
@@ -664,9 +957,10 @@
 }
 
 .aem-group-select.active {
+    background: #e5f1ff;
     color: #075bc4;
-    background: #e7f2ff;
-    border-color: #cbdffc;
+
+    border-color: #b9d9fb;
     font-weight: 800;
 }
 
@@ -675,84 +969,139 @@
 }
 
 .aem-group-select span:last-child {
-    flex: none;
-    border-radius: 30px;
+    flex-shrink: 0;
+
     padding: 2px 6px;
+
     background: #e9eef5;
+    border-radius: 30px;
     font-size: 10px;
 }
 
-.aem-group-right {
-    padding: 14px;
-}
+
+/* ==========================================================
+   HEADER PANEL KANAN
+   ========================================================== */
 
 .aem-group-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+
     margin-bottom: 15px;
 }
 
 .aem-group-heading small {
+    color: var(--aem-blue);
     font-size: 10px;
     font-weight: 800;
-    color: var(--blue);
 }
 
 .aem-group-heading h3 {
-    font-size: 16px;
-    color: #123c72;
     margin: 5px 0;
+
+    color: #123c72;
+    font-size: 18px;
+
+    overflow-wrap: anywhere;
 }
 
 .aem-group-heading p {
-    font-size: 11px;
-    color: #7e93ad;
     margin: 0;
+
+    color: #7e93ad;
+    font-size: 11px;
 }
 
 .aem-group-count {
-    font-size: 10px;
-    font-weight: 800;
+    padding: 8px 9px;
     border-radius: 7px;
+
     background: #ecf5ff;
     color: #1465b8;
-    padding: 8px 9px;
+
+    font-size: 10px;
+    font-weight: 800;
     white-space: nowrap;
 }
 
-.aem-group-table {
-    min-width: 680px;
+.aem-group-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    margin-bottom: 12px;
 }
 
-.aem-group-table th,
+.aem-group-alert {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+
+    background: #fff4f5;
+    border: 1px solid #f0d0d4;
+    border-radius: 7px;
+
+    color: #b72b41;
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   TABEL BARANG PANEL KANAN
+   ========================================================== */
+
+.aem-group-table {
+    min-width: 650px;
+}
+
+.aem-group-table th {
+    padding: 11px 9px;
+    font-size: 10px;
+}
+
 .aem-group-table td {
     padding: 11px 9px;
     font-size: 11px;
 }
 
 .aem-group-thumb {
+    display: block;
+
     width: 62px;
     height: 45px;
+    margin: auto;
+
+    object-fit: cover;
+
+    background: #f2f7fc;
     border: 1px solid #dce8f4;
     border-radius: 6px;
-    object-fit: cover;
-    display: block;
-    margin: auto;
 }
 
 .aem-group-no-photo {
     display: grid;
     place-items: center;
-    margin: auto;
+
     width: 62px;
     height: 45px;
-    background: #f1f6fb;
+    margin: auto;
+
     color: #829ab3;
-    font-size: 9px;
+    background: #f1f6fb;
+
     border: 1px dashed #d8e5f4;
     border-radius: 6px;
+
+    font-size: 9px;
+}
+
+.aem-group-spinner {
+    padding: 30px;
+    color: #7d94ae;
+
+    font-size: 12px;
+    text-align: center;
 }
 
 .aem-group-pagination {
@@ -760,7 +1109,9 @@
     justify-content: space-between;
     align-items: center;
     gap: 12px;
+
     margin-top: 14px;
+
     color: #728ca8;
     font-size: 11px;
 }
@@ -776,37 +1127,26 @@
     padding: 6px 9px;
 }
 
-.aem-group-spinner {
-    text-align: center;
-    padding: 30px;
-    color: #7d94ae;
-}
-
-.aem-group-alert {
-    padding: 11px;
-    margin-bottom: 12px;
-    border: 1px solid #f0d0d4;
-    background: #fff4f5;
-    color: #b72b41;
-    border-radius: 7px;
-    font-size: 12px;
-}
-
 
 /* ==========================================================
-   MODAL DAN FORM
+   MODAL FORM / VIEW / DELETE
    ========================================================== */
 
 .aem-dialog {
     width: min(880px, calc(100vw - 28px));
     max-height: calc(100dvh - 32px);
+
+    margin: auto;
     padding: 0;
-    border: 0;
-    border-radius: 14px;
+
     color: #1a4778;
     background: #fff;
-    box-shadow: 0 25px 80px #061b385c;
+
+    border: 0;
+    border-radius: 14px;
+
     overflow: hidden;
+    box-shadow: 0 25px 80px rgba(6,27,56,.36);
 }
 
 .aem-dialog:not([open]) {
@@ -814,13 +1154,14 @@
 }
 
 .aem-dialog::backdrop {
-    background: #041931a8;
+    background: rgba(4,25,49,.66);
     backdrop-filter: blur(3px);
 }
 
 .aem-dialog form {
     display: flex;
     flex-direction: column;
+
     max-height: calc(100dvh - 32px);
 }
 
@@ -829,39 +1170,53 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    border-bottom: 1px solid var(--line);
+
     padding: 17px 19px;
+
+    background: #fff;
+    border-bottom: 1px solid var(--aem-line);
 }
 
 .aem-dialog-head small {
+    color: var(--aem-blue);
     font-size: 10px;
     font-weight: 800;
-    color: var(--blue);
 }
 
 .aem-dialog-head h2 {
+    margin: 4px 0;
+
+    color: #0b336a;
     font-size: 18px;
     font-weight: 800;
-    color: #0b336a;
-    margin: 4px 0;
 }
 
 .aem-dialog-head p {
-    font-size: 11px;
-    color: #8298b1;
     margin: 0;
+
+    color: #8298b1;
+    font-size: 11px;
 }
 
 .aem-x {
-    width: 32px;
-    height: 32px;
     display: grid;
     place-items: center;
+
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+
+    color: #5f81a8;
+    background: #eff6fc;
+
     border: 0;
     border-radius: 7px;
-    background: #eff6fc;
-    color: #5f81a8;
     cursor: pointer;
+}
+
+.aem-x:hover {
+    background: #e1f0ff;
+    color: var(--aem-blue);
 }
 
 .aem-x svg {
@@ -871,44 +1226,57 @@
 
 .aem-dialog-body {
     flex: 1 1 auto;
+
     max-height: calc(100dvh - 158px);
+    padding: 18px;
+
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 18px;
 }
 
 .aem-dialog-foot {
     display: flex;
-    gap: 9px;
     justify-content: flex-end;
-    background: #fafdff;
-    border-top: 1px solid var(--line);
+    gap: 9px;
+
     padding: 13px 18px;
+
+    background: #fafdff;
+    border-top: 1px solid var(--aem-line);
 }
 
+
+/* ==========================================================
+   FIELDSET FORM
+   ========================================================== */
+
 .aem-dialog fieldset {
-    border: 1px solid var(--line);
-    border-radius: 9px;
     margin: 0 0 16px;
     padding: 15px;
+
+    border: 1px solid var(--aem-line);
+    border-radius: 9px;
 }
 
 .aem-dialog legend {
+    padding: 0 7px;
+
+    color: #1a4a84;
     font-size: 13px;
     font-weight: 800;
-    color: #1a4a84;
-    padding: 0 7px;
 }
 
 .aem-dialog legend span {
-    width: 22px;
-    height: 22px;
     display: inline-grid;
     place-items: center;
-    background: #e9f3ff;
-    color: var(--blue);
-    border-radius: 6px;
+
+    width: 22px;
+    height: 22px;
     margin-right: 7px;
+
+    background: #e9f3ff;
+    color: var(--aem-blue);
+    border-radius: 6px;
 }
 
 .aem-fields {
@@ -918,14 +1286,17 @@
 }
 
 .aem-fields > label {
+    position: relative;
+
     display: flex;
     flex-direction: column;
     gap: 6px;
+
+    min-width: 0;
+
+    color: #31598a;
     font-size: 11px;
     font-weight: 700;
-    color: #31598a;
-    min-width: 0;
-    position: relative;
 }
 
 .aem-fields > label:focus-within {
@@ -936,27 +1307,30 @@
 .aem-fields textarea {
     width: 100%;
     min-width: 0;
+    padding: 10px 11px;
+
+    color: #17406e;
+    background: #fff;
+
     border: 1px solid #d6e3f1;
     border-radius: 7px;
     outline: 0;
-    padding: 10px 11px;
-    background: #fff;
-    color: #17406e;
+
     font-size: 12px;
 }
 
 .aem-fields textarea {
-    line-height: 1.65;
     resize: vertical;
+    line-height: 1.65;
 }
 
 .aem-fields input:focus,
 .aem-fields textarea:focus {
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px #0869e71c;
+    border-color: var(--aem-blue);
+    box-shadow: 0 0 0 3px rgba(8,105,231,.11);
 }
 
-.aem-fields input[type=file] {
+.aem-fields input[type="file"] {
     padding: 8px;
 }
 
@@ -976,23 +1350,28 @@
 }
 
 .aem-error {
-    white-space: pre-line;
+    padding: 12px;
+    margin-bottom: 13px;
+
+    color: #b2273a;
     background: #fff2f4;
+
     border: 1px solid #f8c6ce;
     border-radius: 8px;
-    padding: 12px;
-    color: #b2273a;
-    margin-bottom: 13px;
+
     font-size: 12px;
+    white-space: pre-line;
 }
 
 
-/* SEARCHABLE DROPDOWN */
+/* ==========================================================
+   SEARCHABLE DROPDOWN
+   ========================================================== */
 
 .aem-combo {
     position: relative;
-    min-width: 0;
     width: 100%;
+    min-width: 0;
 }
 
 .aem-combo input {
@@ -1003,21 +1382,26 @@
     position: absolute;
     top: 50%;
     right: 4px;
+
     transform: translateY(-50%);
+
     width: 32px;
     height: 32px;
-    border: 0;
-    background: transparent;
-    border-radius: 6px;
+
     color: #6b88a7;
+    background: transparent;
+
+    border: 0;
+    border-radius: 6px;
+
     cursor: pointer;
     font-size: 20px;
 }
 
 .aem-combo-arrow:hover,
 .aem-combo.opened .aem-combo-arrow {
+    color: var(--aem-blue);
     background: #e9f3ff;
-    color: var(--blue);
 }
 
 .aem-combo-options {
@@ -1025,14 +1409,17 @@
     top: calc(100% + 5px);
     left: 0;
     right: 0;
+    z-index: 1000;
+
     max-height: 220px;
+    padding: 5px;
     overflow-y: auto;
+
     background: #fff;
     border: 1px solid #cfdfef;
     border-radius: 9px;
-    padding: 5px;
-    box-shadow: 0 15px 36px #0c37622a;
-    z-index: 1000;
+
+    box-shadow: 0 15px 36px rgba(12,55,98,.17);
 }
 
 .aem-combo.up .aem-combo-options {
@@ -1040,60 +1427,76 @@
     bottom: calc(100% + 5px);
 }
 
+.aem-combo-options[hidden] {
+    display: none !important;
+}
+
 .aem-combo-item {
-    width: 100%;
-    padding: 10px;
-    border: 0;
-    border-radius: 7px;
-    background: white;
-    text-align: left;
     display: flex;
     flex-direction: column;
     gap: 3px;
-    cursor: pointer;
+
+    width: 100%;
+    padding: 10px;
+
+    background: #fff;
     color: #1e4979;
+
+    text-align: left;
+
+    border: 0;
+    border-radius: 7px;
+
+    cursor: pointer;
 }
 
 .aem-combo-item strong {
     font-size: 12px;
+    font-weight: 700;
 }
 
 .aem-combo-item small {
-    font-size: 10px;
     color: #7c94ac;
+    font-size: 10px;
 }
 
 .aem-combo-item:hover,
 .aem-combo-item.active {
+    color: var(--aem-blue);
     background: #eaf4ff;
-    color: var(--blue);
 }
 
 .aem-combo-empty {
     padding: 12px;
-    font-size: 11px;
     color: #728ba8;
+    font-size: 11px;
 }
 
 
-/* DOKUMEN */
+/* ==========================================================
+   DOKUMEN
+   ========================================================== */
 
 .aem-file-row {
-    border: 1px solid #deebf6;
-    border-radius: 7px;
-    background: #fafdff;
-    padding: 9px 10px;
-    margin-top: 7px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 9px;
+
+    padding: 9px 10px;
+    margin-top: 7px;
+
+    background: #fafdff;
+    border: 1px solid #deebf6;
+    border-radius: 7px;
+
     font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
 .aem-file-row a {
-    color: var(--blue);
+    color: var(--aem-blue);
 }
 
 .aem-file-remove {
@@ -1108,26 +1511,32 @@
 }
 
 .aem-link {
-    border: 0;
-    background: transparent;
     color: #d43b4e;
+    background: transparent;
+
+    border: 0;
     text-decoration: underline;
     cursor: pointer;
 }
 
 
-/* VIEW BARANG */
+/* ==========================================================
+   MODAL VIEW BARANG
+   ========================================================== */
 
 .aem-photo-large {
     display: block;
-    max-width: min(100%,520px);
+
     width: 100%;
+    max-width: min(100%, 520px);
     max-height: 315px;
-    object-fit: contain;
-    border-radius: 9px;
-    border: 1px solid #dce7f5;
-    background: #f6faff;
     margin: 0 auto 20px;
+
+    object-fit: contain;
+
+    background: #f6faff;
+    border: 1px solid #dce7f5;
+    border-radius: 9px;
 }
 
 .aem-photo-placeholder {
@@ -1136,84 +1545,105 @@
     align-items: center;
     justify-content: center;
     gap: 9px;
-    margin: 0 auto 20px;
+
+    width: 100%;
     max-width: 520px;
     height: 190px;
+    margin: 0 auto 20px;
+
     background: #f5f9fe;
+    color: #8a9db4;
+
     border: 1px dashed #d7e4f2;
     border-radius: 9px;
-    color: #8a9db4;
+
     font-size: 11px;
 }
 
+.aem-photo-placeholder svg {
+    width: 26px;
+    height: 26px;
+}
+
 .aem-detail-caption {
+    margin: 6px 0 12px;
+
+    color: #1762aa;
     font-size: 11px;
     font-weight: 800;
-    color: #1762aa;
-    margin: 6px 0 12px;
+
     text-align: center;
 }
 
 .aem-detail-grid {
     display: grid;
-    grid-template-columns: repeat(2,minmax(0,1fr));
+    grid-template-columns: repeat(2, minmax(0,1fr));
     gap: 10px;
 }
 
 .aem-detail-grid > div {
     padding: 11px;
-    border-radius: 8px;
+
     background: #f9fcff;
     border: 1px solid #e0ebf6;
+    border-radius: 8px;
 }
 
 .aem-detail-grid small {
     display: block;
-    font-size: 10px;
-    color: #7891ac;
     margin-bottom: 5px;
+
+    color: #7891ac;
+    font-size: 10px;
 }
 
 .aem-detail-grid strong {
-    font-size: 12px;
     color: #1a4778;
-    white-space: pre-line;
+    font-size: 12px;
+
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
 .aem-dialog-body h3 {
-    font-size: 14px;
-    color: #1a4778;
     margin: 16px 0 8px;
+
+    color: #1a4778;
+    font-size: 14px;
 }
 
 .aem-dialog-body > p {
-    white-space: pre-line;
-    line-height: 1.7;
-    font-size: 12px;
-    border: 1px solid #e0ebf6;
-    background: #f9fcff;
-    border-radius: 8px;
     padding: 12px;
+
+    background: #f9fcff;
+    border: 1px solid #e0ebf6;
+    border-radius: 8px;
+
+    font-size: 12px;
+    line-height: 1.7;
+    white-space: pre-line;
 }
 
 .aem-doc-links {
     display: flex;
-    gap: 8px;
     flex-wrap: wrap;
+    gap: 8px;
 }
 
 
-/* DELETE & TOAST */
+/* ==========================================================
+   KONFIRMASI DELETE
+   ========================================================== */
 
 .aem-confirm {
     width: min(470px, calc(100vw - 28px));
 }
 
 .aem-confirm-content {
-    text-align: center;
     padding: 25px 20px;
     color: #4a688b;
+
+    text-align: center;
     font-size: 12px;
 }
 
@@ -1225,28 +1655,47 @@
 
 .aem-confirm-content strong {
     display: block;
-    border-radius: 8px;
-    background: #f6faff;
-    color: #123c76;
+
     padding: 12px;
     margin: 11px 0;
+
+    color: #123c76;
+    background: #f6faff;
+
+    border-radius: 8px;
 }
+
+.aem-confirm-content small {
+    color: #8198af;
+}
+
+
+/* ==========================================================
+   NOTIFIKASI TOAST
+   ========================================================== */
 
 .aem-toast {
     position: fixed;
-    bottom: 20px;
     right: 20px;
+    bottom: 20px;
     z-index: 9999;
+
+    max-width: 90vw;
+    padding: 13px 17px;
+
     background: #163f70;
     color: #fff;
+
     border-radius: 9px;
-    padding: 13px 17px;
+
+    box-shadow: 0 10px 32px rgba(11,42,79,.3);
     font-size: 12px;
-    box-shadow: 0 10px 32px #0b2a4f50;
 }
 
 
-/* RESPONSIVE */
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
 
 @media (max-width: 1040px) {
     .aem-date {
@@ -1258,12 +1707,39 @@
 }
 
 @media (max-width: 850px) {
+
+    .aem-group-dialog {
+        width: calc(100vw - 20px);
+        height: calc(100dvh - 20px);
+        max-height: calc(100dvh - 20px);
+        border-radius: 13px;
+    }
+
     .aem-group-layout {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+
+        gap: 12px;
+        padding: 12px;
+
+        overflow-y: auto;
+    }
+
+    .aem-group-top {
+        padding: 14px;
+    }
+
+    .aem-group-top h2 {
+        font-size: 16px;
+    }
+
+    .aem-group-left,
+    .aem-group-right {
+        flex: none;
     }
 
     .aem-group-list {
-        max-height: 260px;
+        max-height: 210px;
     }
 
     .aem-group-toolbar,
@@ -1273,6 +1749,7 @@
 }
 
 @media (max-width: 790px) {
+
     .aem-page {
         padding: 0 12px 30px;
     }
@@ -1299,6 +1776,11 @@
         flex-basis: 100%;
     }
 
+    .aem-toolbar select {
+        max-width: none;
+        flex: 1;
+    }
+
     .aem-fields,
     .aem-detail-grid {
         grid-template-columns: 1fr;
@@ -1312,5 +1794,9 @@
     .aem-dialog-foot,
     .aem-dialog-body {
         padding: 13px;
+    }
+
+    .aem-dialog-foot {
+        flex-wrap: wrap;
     }
 }
