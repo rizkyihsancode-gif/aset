@@ -796,6 +796,20 @@ Route::delete(
 Route::redirect('/kib/aset-tetap', '/kib/aset_ttp');
 
 
+/*
+|--------------------------------------------------------------------------
+| K.I.B E — DETAIL KELOMPOK ASET MANUAL
+|--------------------------------------------------------------------------
+| Tidak mengganti route CRUD K.I.B E sebelumnya.
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/kib/aset_ttp/kelompok',
+    [KIBController::class, 'kelompokAsetTetapManual']
+)->name('kib.aset_ttp.kelompok');
+
+
 
 
 

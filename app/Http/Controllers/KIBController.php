@@ -6047,6 +6047,259 @@ class KIBController extends Controller
     }
 
 
+    /*
+|--------------------------------------------------------------------------
+| K.I.B E — DETAIL KELOMPOK MANUAL
+|--------------------------------------------------------------------------
+| Sumber: kib_aset_tetap_manual
+| Kelompok: lokasi + divisi (teks manual)
+| Arsip lama dan Kode Aktiva tidak digunakan.
+|--------------------------------------------------------------------------
+*/
+
+    public function kelompokAsetTetapManual(Request $request)
+    {
+        $request->validate([
+            'lokasi' => ['nullable', 'string', 'max:500'],
+            'divisi' => ['nullable', 'string', 'max:255'],
+            'q' => ['nullable', 'string', 'max:150'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        /*
+     * Nilai kosong diberi label tanpa mengubah
+     * isi database.
+     */
+
+        $lokasiExpr = "
+        COALESCE(
+            NULLIF(BTRIM(lokasi), ''),
+            'Tanpa Lokasi'
+        )
+    ";
+
+        $divisiExpr = "
+        COALESCE(
+            NULLIF(BTRIM(divisi), ''),
+            'Tanpa Divisi'
+        )
+    ";
+
+        /*
+     * PANEL KIRI:
+     * Semua kombinasi lokasi dan divisi
+     * dari tabel manual K.I.B E.
+     */
+
+        $kelompok = DB::table('kib_aset_tetap_manual')
+
+            ->selectRaw(
+                "{$lokasiExpr} AS lokasi,
+             {$divisiExpr} AS divisi,
+             COUNT(*) AS jumlah"
+            )
+
+            ->groupByRaw(
+                "{$lokasiExpr}, {$divisiExpr}"
+            )
+
+            ->orderBy('lokasi')
+            ->orderBy('divisi')
+            ->get();
+
+        /*
+     * Menentukan kelompok yang dipilih.
+     */
+
+        $requestedLocation = trim(
+            (string) $request->query('lokasi', '')
+        );
+
+        $requestedDivision = trim(
+            (string) $request->query('divisi', '')
+        );
+
+        $pilihan = $kelompok->first(
+            function ($grup) use (
+                $requestedLocation,
+                $requestedDivision
+            ) {
+                return $grup->lokasi === $requestedLocation
+                    && $grup->divisi === $requestedDivision;
+            }
+        ) ?? $kelompok->first();
+
+        /*
+     * Tidak ada aset manual.
+     */
+
+        if (!$pilihan) {
+            return response()->json([
+                'success' => true,
+                'groups' => [],
+                'selected' => null,
+                'items' => [],
+                'pagination' => [
+                    'page' => 1,
+                    'last_page' => 1,
+                    'total' => 0,
+                    'from' => 0,
+                    'to' => 0,
+                ],
+            ]);
+        }
+
+        /*
+     * PANEL KANAN:
+     * Ambil barang dari kelompok terpilih.
+     */
+
+        $query = DB::table('kib_aset_tetap_manual')
+
+            ->whereRaw(
+                "{$lokasiExpr} = ?",
+                [$pilihan->lokasi]
+            )
+
+            ->whereRaw(
+                "{$divisiExpr} = ?",
+                [$pilihan->divisi]
+            );
+
+        /*
+     * Pencarian di panel kanan.
+     */
+
+        $q = trim(
+            (string) $request->query('q', '')
+        );
+
+        if ($q !== '') {
+
+            $like = '%' . $q . '%';
+
+            $query->where(
+                function ($builder) use ($like) {
+
+                    foreach (
+                        [
+                            'nama_aset',
+                            'kode_inventaris',
+                            'nomor_register',
+                            'bahan'
+                        ] as $column
+                    ) {
+
+                        $builder->orWhere(
+                            $column,
+                            'ILIKE',
+                            $like
+                        );
+                    }
+                }
+            );
+        }
+
+        /*
+     * Pagination 10 barang per halaman.
+     */
+
+        $halaman = $query
+            ->orderBy('nama_aset')
+            ->orderBy('id')
+            ->paginate(10);
+
+        /*
+     * URL foto dari endpoint yang sudah ada.
+     */
+
+        $baris = $halaman->getCollection()
+            ->map(function ($item) {
+
+                $fotoUrl = null;
+
+                if (
+                    $item->foto_path &&
+                    Storage::disk('local')->exists(
+                        $item->foto_path
+                    )
+                ) {
+                    $fotoUrl = route(
+                        'kib.aset_ttp.manual.foto',
+                        ['aset' => $item->id]
+                    );
+                }
+
+                return [
+                    'id' => (int) $item->id,
+
+                    'nama_aset' => $item->nama_aset,
+
+                    'kode_inventaris' =>
+                    $item->kode_inventaris,
+
+                    'nomor_register' =>
+                    $item->nomor_register,
+
+                    'tahun' => $item->tahun,
+
+                    'jumlah_unit' =>
+                    (int) $item->jumlah_unit,
+
+                    'kondisi' => $item->kondisi,
+
+                    'foto_url' => $fotoUrl,
+                ];
+            })
+            ->all();
+
+        /*
+     * Hasil JSON untuk JavaScript.
+     */
+
+        return response()->json([
+
+            'success' => true,
+
+            'groups' => $kelompok
+                ->map(fn($group) => [
+
+                    'lokasi' => $group->lokasi,
+
+                    'divisi' => $group->divisi,
+
+                    'jumlah' => (int) $group->jumlah,
+
+                ])
+                ->all(),
+
+            'selected' => [
+
+                'lokasi' => $pilihan->lokasi,
+
+                'divisi' => $pilihan->divisi,
+
+            ],
+
+            'items' => $baris,
+
+            'pagination' => [
+
+                'page' => $halaman->currentPage(),
+
+                'last_page' => $halaman->lastPage(),
+
+                'total' => $halaman->total(),
+
+                'from' => $halaman->firstItem() ?? 0,
+
+                'to' => $halaman->lastItem() ?? 0,
+
+            ],
+        ]);
+    }
+
+
 
     /*
     |--------------------------------------------------------------------------
