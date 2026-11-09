@@ -1563,3 +1563,76 @@
             minmax(0, 1fr);
     }
 }
+
+/* =====================================================
+   DETAIL KELOMPOK — TABEL EXCEL KIB E
+   ===================================================== */
+
+#aemGroupPanel .aem-group-right {
+    min-width: 0;
+    overflow: hidden;
+}
+
+#aemGroupPanel .aem-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+#aemGroupPanel .aem-group-table {
+    width: 100%;
+    min-width: 1510px;
+
+    border-collapse: collapse;
+    table-layout: fixed;
+
+    font-size: 11px;
+}
+
+#aemGroupPanel .aem-group-table th {
+    padding: 11px 9px;
+    background: #dcebf9;
+    color: #174579;
+
+    border: 1px solid #b6cee3;
+    vertical-align: middle;
+    text-align: center;
+
+    white-space: normal;
+}
+
+#aemGroupPanel .aem-group-table td {
+    padding: 11px 9px;
+    vertical-align: top;
+
+    border: 1px solid #dbe7f2;
+
+    overflow-wrap: anywhere;
+}
+
+#aemGroupPanel .aem-group-number-row th {
+    padding: 5px;
+    background: #edf5fc;
+    font-size: 10px;
+}
+
+#aemGroupPanel .aem-group-table th:nth-child(1) {
+    width: 50px;
+}
+
+#aemGroupPanel .aem-group-table th:nth-child(2) {
+    width: 235px;
+}
+
+#aemGroupPanel .aem-group-table th:nth-child(3) {
+    width: 250px;
+}
+
+.aem-kib-notes {
+    white-space: pre-line;
+    line-height: 1.7;
+}
+
+#aemGroupPanel .aem-group-table tbody tr:hover {
+    background: #f0f7ff;
+}

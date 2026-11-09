@@ -5988,6 +5988,248 @@ class KIBController extends Controller
     }
 
 
+    public function kelompokAsetTetapManual(
+        \Illuminate\Http\Request $request
+    ) {
+        $request->validate([
+            'lokasi' => ['nullable', 'string', 'max:500'],
+            'divisi' => ['nullable', 'string', 'max:255'],
+            'q' => ['nullable', 'string', 'max:150'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $lokasiExpr =
+            "COALESCE(NULLIF(BTRIM(lokasi), ''), 'Tanpa Lokasi')";
+
+        $divisiExpr =
+            "COALESCE(NULLIF(BTRIM(divisi), ''), 'Tanpa Divisi')";
+
+        /*
+    |--------------------------------------------------------------------------
+    | PANEL KIRI: KELOMPOK LOKASI DAN DIVISI
+    |--------------------------------------------------------------------------
+    */
+
+        $groups = \Illuminate\Support\Facades\DB::table(
+            'kib_aset_tetap_manual'
+        )
+            ->selectRaw("
+            {$lokasiExpr} AS lokasi,
+            {$divisiExpr} AS divisi,
+            COUNT(*) AS jumlah
+        ")
+            ->groupByRaw("{$lokasiExpr}, {$divisiExpr}")
+            ->orderBy('lokasi')
+            ->orderBy('divisi')
+            ->get();
+
+        $requestedLocation = trim(
+            (string) $request->query('lokasi', '')
+        );
+
+        $requestedDivision = trim(
+            (string) $request->query('divisi', '')
+        );
+
+        $selected = $groups->first(
+            fn($group) =>
+            $group->lokasi === $requestedLocation &&
+                $group->divisi === $requestedDivision
+        ) ?? $groups->first();
+
+        if (!$selected) {
+            return response()->json([
+                'success' => true,
+                'groups' => [],
+                'selected' => null,
+                'items' => [],
+                'pagination' => [
+                    'page' => 1,
+                    'last_page' => 1,
+                    'total' => 0,
+                    'from' => 0,
+                    'to' => 0,
+                ],
+            ]);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | PANEL KANAN: DATA BARANG SESUAI KIB E
+    |--------------------------------------------------------------------------
+    */
+
+        $query = \Illuminate\Support\Facades\DB::table(
+            'kib_aset_tetap_manual'
+        )
+            ->whereRaw(
+                "{$lokasiExpr} = ?",
+                [$selected->lokasi]
+            )
+            ->whereRaw(
+                "{$divisiExpr} = ?",
+                [$selected->divisi]
+            );
+
+        $search = trim(
+            (string) $request->query('q', '')
+        );
+
+        if ($search !== '') {
+            $like = '%' . $search . '%';
+
+            $query->where(
+                function ($builder) use ($like) {
+                    foreach (
+                        [
+                            'nama_aset',
+                            'kode_inventaris',
+                            'nomor_register',
+                            'bahan',
+                            'keterangan',
+                        ] as $column
+                    ) {
+                        $builder->orWhere(
+                            $column,
+                            'ILIKE',
+                            $like
+                        );
+                    }
+                }
+            );
+        }
+
+        $page = $query
+            ->select([
+                'id',
+                'nama_aset',
+                'kode_inventaris',
+                'nomor_register',
+                'kondisi',
+                'bahan',
+                'tahun',
+                'jumlah_unit',
+                'asal_perolehan',
+                'keterangan',
+                'foto_path',
+            ])
+            ->orderBy('nama_aset')
+            ->orderBy('id')
+            ->paginate(10);
+
+        /*
+    |--------------------------------------------------------------------------
+    | PERIKSA ROUTE FOTO
+    |--------------------------------------------------------------------------
+    | Jangan membuat seluruh popup gagal
+    | apabila nama route foto berbeda.
+    |--------------------------------------------------------------------------
+    */
+
+        $photoRoute = null;
+
+        foreach (
+            [
+                'kib.aset_ttp.manual.foto',
+                'kib.aset_ttp.foto',
+            ] as $name
+        ) {
+            if (
+                \Illuminate\Support\Facades\Route::has($name)
+            ) {
+                $photoRoute = $name;
+                break;
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | DATA JSON UNTUK PANEL KANAN
+    |--------------------------------------------------------------------------
+    */
+
+        $items = $page
+            ->getCollection()
+            ->map(function ($row) use ($photoRoute) {
+
+                $photoUrl = null;
+
+                if (
+                    $photoRoute &&
+                    !empty($row->foto_path)
+                ) {
+                    $photoUrl = route(
+                        $photoRoute,
+                        [$row->id]
+                    );
+                }
+
+                return [
+                    'id' => (int) $row->id,
+
+                    'nama_aset' =>
+                    $row->nama_aset,
+
+                    'kode_inventaris' =>
+                    $row->kode_inventaris,
+
+                    'nomor_register' =>
+                    $row->nomor_register,
+
+                    'kondisi' =>
+                    $row->kondisi,
+
+                    'bahan' =>
+                    $row->bahan,
+
+                    'tahun' =>
+                    $row->tahun,
+
+                    'jumlah_unit' =>
+                    (int) ($row->jumlah_unit ?? 0),
+
+                    'asal_perolehan' =>
+                    $row->asal_perolehan,
+
+                    'keterangan' =>
+                    $row->keterangan,
+
+                    'foto_url' =>
+                    $photoUrl,
+                ];
+            })
+            ->all();
+
+        return response()->json([
+            'success' => true,
+
+            'groups' => $groups->map(
+                fn($group) => [
+                    'lokasi' => $group->lokasi,
+                    'divisi' => $group->divisi,
+                    'jumlah' => (int) $group->jumlah,
+                ]
+            )->all(),
+
+            'selected' => [
+                'lokasi' => $selected->lokasi,
+                'divisi' => $selected->divisi,
+            ],
+
+            'items' => $items,
+
+            'pagination' => [
+                'page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'total' => $page->total(),
+                'from' => $page->firstItem() ?? 0,
+                'to' => $page->lastItem() ?? 0,
+            ],
+        ]);
+    }
+
+
+
     /*
     |--------------------------------------------------------------------------
     | PREVIEW / DOWNLOAD DOKUMEN

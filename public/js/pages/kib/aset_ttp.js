@@ -1651,129 +1651,171 @@
        PANEL KANAN — DAFTAR BARANG
     ====================================================== */
 
-    function renderGroupRows(items) {
-        const body = $('aemGroupRows');
+    
+function renderGroupRows(items) {
+    const body = $('aemGroupRows');
 
-        if (!body) return;
+    if (!body) return;
 
-        body.replaceChildren();
+    body.replaceChildren();
 
-        if (!items.length) {
-            const row = document.createElement('tr');
+    if (!items.length) {
+        const row = document.createElement('tr');
 
-            addCell(
-                row,
-                'Tidak ada aset pada kelompok ini.',
-                'aem-empty'
-            ).colSpan = 6;
+        addCell(
+            row,
+            'Tidak ada aset pada kelompok ini.',
+            'aem-empty'
+        ).colSpan = 11;
 
-            body.append(row);
-            return;
-        }
+        body.append(row);
+        return;
+    }
 
-        const first = Number(
-            groupState.pagination?.from || 1
+    const start = Number(
+        groupState.pagination?.from || 1
+    );
+
+    const conditionLabels = {
+        'BAIK': 'Baik (B)',
+        'KURANG BAIK': 'Kurang Baik (KB)',
+        'RUSAK BERAT': 'Rusak Berat (RB)',
+        'CUKUP': 'Cukup (data lama)',
+        'RUSAK RINGAN': 'Rusak Ringan (data lama)'
+    };
+
+    const shown = value =>
+        String(value ?? '').trim() || '—';
+
+    items.forEach((item, index) => {
+        const row = document.createElement('tr');
+
+        const value = String(item.kondisi || '')
+            .trim()
+            .toUpperCase();
+
+        const condition =
+            conditionLabels[value] ||
+            shown(item.kondisi);
+
+        // 1. NOMOR
+
+        addCell(
+            row,
+            start + index,
+            'aem-center'
         );
 
+        // 2. NAMA BARANG
 
-        items.forEach((item, index) => {
-            const row = document.createElement('tr');
+        addCell(
+            row,
+            shown(item.nama_aset)
+        );
 
-            addCell(
-                row,
-                first + index,
-                'aem-center'
-            );
+        // 3. KODE BARANG
 
-            addCell(
-                row,
-                txt('strong', item.nama_aset || '—')
-            );
+        addCell(
+            row,
+            shown(item.kode_inventaris)
+        );
 
-            addCell(
-                row,
-                item.kode_inventaris || '—'
-            );
+        // 4. REGISTER
 
-            addCell(
-                row,
-                item.nomor_register || '—'
-            );
+        addCell(
+            row,
+            shown(item.nomor_register)
+        );
 
+        // 5. KONDISI
 
-            /* FOTO */
+        addCell(
+            row,
+            condition
+        );
 
-            const photoBox =
-                document.createElement('div');
+        // 6. BAHAN
 
-            function noPhoto() {
-                const empty = txt('div', 'Tanpa foto');
+        addCell(
+            row,
+            shown(item.bahan)
+        );
 
-                empty.className = 'aem-group-no-photo';
+        // 7. TAHUN
 
-                return empty;
-            }
+        addCell(
+            row,
+            shown(item.tahun),
+            'aem-center'
+        );
 
-            if (item.foto_url) {
-                const img = document.createElement('img');
+        // 8. JUMLAH
 
-                img.className = 'aem-group-thumb';
-                img.src = item.foto_url;
+        addCell(
+            row,
+            item.jumlah_unit == null
+                ? '—'
+                : `${Number(item.jumlah_unit)
+                    .toLocaleString('id-ID')} buah`,
+            'aem-center'
+        );
 
-                img.alt =
-                    'Foto ' + (item.nama_aset || 'aset');
+        // 9. ASAL USUL
 
-                img.onerror = () => {
-                    img.replaceWith(noPhoto());
-                };
+        addCell(
+            row,
+            shown(item.asal_perolehan)
+        );
 
-                photoBox.append(img);
-            } else {
-                photoBox.append(noPhoto());
-            }
+        // 10. KETERANGAN
 
-            addCell(
-                row,
-                photoBox,
-                'aem-center'
-            );
+        addCell(
+            row,
+            shown(item.keterangan),
+            'aem-kib-notes'
+        );
 
+        // 11. TOMBOL VIEW
 
-            /* VIEW BUTTON */
+        const button =
+            document.createElement('button');
 
-            const view =
-                document.createElement('button');
+        button.type = 'button';
+        button.className = 'aem-icon view';
 
-            view.type = 'button';
-            view.className = 'aem-icon view';
-            view.title = 'View KIB E';
+        button.dataset.aemAction = 'view';
+        button.dataset.id = String(item.id);
 
-            view.setAttribute(
-                'aria-label',
-                `Lihat detail ${item.nama_aset}`
-            );
+        button.title =
+            'View lembar KIB E lengkap';
 
-            view.dataset.aemAction = 'view';
-            view.dataset.id = String(item.id);
+        button.setAttribute(
+            'aria-label',
+            `Lihat detail ${shown(item.nama_aset)}`
+        );
 
-            const eye =
-                document.createElement('i');
+        const icon =
+            document.createElement('i');
 
-            eye.setAttribute('data-lucide', 'eye');
+        icon.setAttribute(
+            'data-lucide',
+            'eye'
+        );
 
-            view.append(eye);
+        button.append(icon);
 
-            addCell(
-                row,
-                view,
-                'aem-center'
-            );
+        addCell(
+            row,
+            button,
+            'aem-center'
+        );
 
-            body.append(row);
-        });
+        body.append(row);
+    });
 
-        icons();
-    }
+    icons();
+}
+
 
 
     /* ======================================================
@@ -1799,7 +1841,7 @@
             loader,
             'Memuat daftar aset...',
             'aem-empty'
-        ).colSpan = 6;
+        ).colSpan = 11;
 
         body.replaceChildren(loader);
 
