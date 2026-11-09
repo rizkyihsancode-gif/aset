@@ -4,56 +4,35 @@
 | K.I.B E — ASET TETAP LAINNYA
 | PERUMDAM TIRTA KENCANA KOTA SAMARINDA
 |--------------------------------------------------------------------------
-|
-| FITUR:
-| 1. Daftar Aset Tetap Lainnya
-| 2. Form Tambah dan Edit
-| 3. Searchable Dropdown
-| 4. Popup Detail Kelompok
-| 5. Pengelompokan Lokasi dan Divisi
-| 6. Pencarian dan Pagination
-| 7. View Detail Format Excel KIB E
-| 8. Foto dan Dokumen PDF
-| 9. Hapus Data
-|
-| CATATAN:
-| - Tanpa tanda tangan / pengesahan.
-| - Kode Barang dan Register diisi manual.
-| - Tidak terhubung dengan Kode Aktiva.
-| - Arsip kib_e_s tetap read-only.
+| Database: kib_aset_tetap_manual
+| Popup Kelompok: 10 kolom Excel + 1 View
+| Popup Detail: Format Excel tanpa TTD
 |--------------------------------------------------------------------------
 */
 
 (() => {
     'use strict';
 
-    /* ======================================================
-       INITIAL CONFIGURATION
-    ====================================================== */
-
     const root = document.getElementById('aemApp');
 
-    if (!root || root.dataset.loaded === '1') {
-        return;
-    }
+    if (!root || root.dataset.loaded === '1') return;
 
     root.dataset.loaded = '1';
 
     const $ = id => document.getElementById(id);
 
-    const form = $('aemForm');
-
-    const formDialog = $('aemFormDialog');
-    const detailDialog = $('aemDetailDialog');
-    const deleteDialog = $('aemDeleteDialog');
-    const groupDialog = $('aemGroupPanel');
-
     const base = String(
         root.dataset.base || ''
     ).replace(/\/$/, '');
 
-    const groupUrl = root.dataset.groupUrl || '';
-    const token = root.dataset.token || '';
+    const groupUrl = String(root.dataset.groupUrl || '');
+    const token = String(root.dataset.token || '');
+
+    const form = $('aemForm');
+    const formDialog = $('aemFormDialog');
+    const groupDialog = $('aemGroupPanel');
+    const detailDialog = $('aemDetailDialog');
+    const deleteDialog = $('aemDeleteDialog');
 
     const fields = [
         'nama_aset',
@@ -64,20 +43,15 @@
         'kode_struktur',
         'kode_inventaris',
         'nomor_register',
+        'kondisi',
         'bahan',
         'tahun',
         'jumlah_unit',
-        'kondisi',
         'asal_perolehan',
         'keterangan'
     ];
 
-
-    /* ======================================================
-       HELPERS
-    ====================================================== */
-
-    const normalize = value =>
+    const norm = value =>
         String(value ?? '')
             .trim()
             .toLocaleLowerCase('id-ID');
@@ -85,147 +59,113 @@
     const showValue = value =>
         String(value ?? '').trim() || '—';
 
-    const array = value =>
+    const asArray = value =>
         Array.isArray(value) ? value : [];
 
-    function create(
+    const elem = (
         tag,
-        className = '',
+        cls = '',
         value = null
-    ) {
-        const element = document.createElement(tag);
+    ) => {
+        const e = document.createElement(tag);
 
-        if (className) {
-            element.className = className;
-        }
+        if (cls) e.className = cls;
 
         if (value !== null && value !== undefined) {
-            element.textContent = String(value);
+            e.textContent = String(value);
         }
 
-        return element;
-    }
+        return e;
+    };
 
-    function addCell(row, content, className = '') {
-        const cell = document.createElement('td');
+    const cell = (
+        row,
+        content,
+        cls = ''
+    ) => {
+        const td = elem('td', cls);
 
-        if (className) {
-            cell.className = className;
+        if (content instanceof Node) {
+            td.append(content);
+        } else {
+            td.textContent = String(content ?? '—');
         }
 
-        if (
-            typeof content === 'string' ||
-            typeof content === 'number'
-        ) {
-            cell.textContent = String(content);
+        row.append(td);
 
-        } else if (content instanceof Node) {
-            cell.appendChild(content);
-        }
+        return td;
+    };
 
-        row.appendChild(cell);
-
-        return cell;
-    }
-
-    function icons() {
+    const icons = () =>
         window.lucide?.createIcons?.();
-    }
 
-    function showDialog(dialog) {
-        if (!dialog || dialog.open) {
-            return;
+    const open = dialog => {
+        if (dialog && !dialog.open) {
+            dialog.showModal();
         }
-
-        dialog.showModal();
 
         icons();
-    }
+    };
 
-    function hideDialog(dialog) {
-        if (dialog?.open) {
-            dialog.close();
-        }
-    }
+    const close = dialog => {
+        if (dialog?.open) dialog.close();
+    };
 
-    function readJson(id, fallback = {}) {
+    const parseScript = id => {
         try {
-            const node = $(id);
-
-            if (!node) return fallback;
-
-            return JSON.parse(node.textContent) || fallback;
-
-        } catch (error) {
-            console.warn(
-                'Gagal membaca data JSON:',
-                id,
-                error
-            );
-
-            return fallback;
+            return JSON.parse(
+                $(id)?.textContent || '{}'
+            ) || {};
+        } catch {
+            return {};
         }
-    }
+    };
 
-    const master = readJson('aemMaster');
-    const history = readJson('aemHistory');
+    const master = parseScript('aemMaster');
+    const history = parseScript('aemHistory');
 
     const combos = new Map();
 
-    let current = null;
+    let active = null;
     let editId = null;
     let deleteId = null;
-
-    let addedFiles = [];
 
     let saving = false;
     let deleting = false;
 
-    let toastTimer = null;
-
+    let newFiles = [];
+    let toastTimer;
 
     /* ======================================================
        TOAST
     ====================================================== */
 
     function toast(message) {
-        const node = $('aemToast');
+        const box = $('aemToast');
 
-        if (!node) return;
+        if (!box) return;
 
-        node.textContent = message;
-        node.hidden = false;
+        box.textContent = message;
+        box.hidden = false;
 
         clearTimeout(toastTimer);
 
         toastTimer = setTimeout(() => {
-            node.hidden = true;
+            box.hidden = true;
         }, 4000);
     }
 
+    function error(message) {
+        const box = $('aemError');
 
-    /* ======================================================
-       FORM ERROR
-    ====================================================== */
+        if (!box) return;
 
-    function showError(message) {
-        const node = $('aemError');
-
-        if (!node) return;
-
-        node.textContent = message || '';
-        node.hidden = !message;
-
-        if (message) {
-            node.scrollIntoView({
-                block: 'nearest'
-            });
-        }
+        box.textContent = message || '';
+        box.hidden = !message;
     }
 
-
     /* ======================================================
-       AJAX API LARAVEL
+       API REQUEST
     ====================================================== */
 
     async function api(url, options = {}) {
@@ -235,7 +175,7 @@
             ...options,
 
             headers: {
-                'Accept': 'application/json',
+                Accept: 'application/json',
 
                 'X-Requested-With':
                     'XMLHttpRequest',
@@ -245,15 +185,6 @@
                 ...(options.headers || {})
             }
         });
-
-        if (
-            response.redirected &&
-            response.url.includes('/login')
-        ) {
-            throw new Error(
-                'Sesi login habis. Silakan login kembali.'
-            );
-        }
 
         const result = await response
             .json()
@@ -276,22 +207,20 @@
 
             if (response.status === 419) {
                 message =
-                    'Sesi login habis. Refresh halaman.';
+                    'Sesi login habis. Muat ulang halaman.';
             }
 
             if (response.status === 413) {
                 message =
-                    'Ukuran file melebihi batas server.';
+                    'Ukuran file melampaui batas server.';
             }
 
-            if (response.status === 403) {
+            if (
+                response.status === 401 ||
+                response.status === 403
+            ) {
                 message =
-                    'Anda tidak memiliki izin.';
-            }
-
-            if (response.status === 404) {
-                message =
-                    'Data atau endpoint tidak ditemukan.';
+                    'Akses ditolak atau sesi login habis.';
             }
 
             throw new Error(message);
@@ -300,81 +229,69 @@
         return result;
     }
 
-
     /* ======================================================
-       TANGGAL DAN JAM WITA
-    ====================================================== */
-
-    function initClock() {
-        const dateNode = $('aemDate');
-        const timeNode = $('aemTime');
-
-        if (!dateNode || !timeNode) {
-            return;
-        }
-
-        const dateFormat = new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone: 'Asia/Makassar',
-                weekday: 'long',
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-            }
-        );
-
-        const timeFormat = new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone: 'Asia/Makassar',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            }
-        );
-
-        function update() {
-            const now = new Date();
-
-            const date = dateFormat.format(now);
-
-            dateNode.textContent =
-                date.charAt(0).toUpperCase() +
-                date.slice(1);
-
-            timeNode.textContent = timeFormat
-                .format(now)
-                .replace(/\./g, ':');
-        }
-
-        update();
-
-        setInterval(update, 1000);
-    }
-
-
-    /* ======================================================
-       TOMBOL CLOSE MODAL
+       TOMBOL TUTUP MODAL
     ====================================================== */
 
     root
         .querySelectorAll('[data-aem-close]')
         .forEach(button => {
             button.addEventListener('click', () => {
-                hideDialog(
-                    $(button.dataset.aemClose)
-                );
+                close($(button.dataset.aemClose));
             });
         });
 
+    /* ======================================================
+       TANGGAL DAN JAM WITA
+    ====================================================== */
+
+    const dateFmt = new Intl.DateTimeFormat(
+        'id-ID',
+        {
+            timeZone: 'Asia/Makassar',
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        }
+    );
+
+    const timeFmt = new Intl.DateTimeFormat(
+        'id-ID',
+        {
+            timeZone: 'Asia/Makassar',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }
+    );
+
+    function tick() {
+        if ($('aemDate')) {
+            $('aemDate').textContent =
+                dateFmt.format(new Date());
+        }
+
+        if ($('aemTime')) {
+            $('aemTime').textContent =
+                timeFmt
+                    .format(new Date())
+                    .replace(/\./g, ':');
+        }
+    }
+
+    tick();
+
+    if ($('aemDate') || $('aemTime')) {
+        setInterval(tick, 1000);
+    }
 
     /* ======================================================
        SEARCHABLE DROPDOWN
     ====================================================== */
 
-    const predefined = {
+    const presets = {
         kondisi: [
             {
                 value: 'BAIK',
@@ -390,145 +307,104 @@
             },
             {
                 value: 'CUKUP',
-                label: 'Kondisi data lama'
+                label: 'Data lama'
             },
             {
                 value: 'RUSAK RINGAN',
-                label: 'Kondisi data lama'
+                label: 'Data lama'
             }
         ],
 
         asal: [
-            {
-                value: 'PENGADAAN',
-                label: 'Pengadaan barang'
-            },
-            {
-                value: 'PEMBELIAN',
-                label: 'Pembelian langsung'
-            },
-            {
-                value: 'HIBAH',
-                label: 'Hibah'
-            },
-            {
-                value: 'BANTUAN',
-                label: 'Bantuan'
-            },
-            {
-                value: 'LAINNYA',
-                label: 'Perolehan lainnya'
-            }
-        ]
+            'PENGADAAN',
+            'PEMBELIAN',
+            'HIBAH',
+            'BANTUAN',
+            'LAINNYA'
+        ].map(value => ({ value }))
     };
 
+    function comboOptions(type) {
+        let options = [];
 
-    /* ======================================================
-       OPTIONS MASTER DATA
-    ====================================================== */
-
-    function getOptions(source) {
-        let result = [];
-
-        if (source === 'lokasi') {
-            result = array(master.lokasi)
-                .filter(row => row.lokasi)
-                .map(row => ({
-                    value: row.lokasi,
-                    label: row.alamat || '',
-                    ref: row
+        if (type === 'lokasi') {
+            options = asArray(master.lokasi)
+                .map(o => ({
+                    value: o.lokasi,
+                    label: o.alamat || '',
+                    raw: o
                 }));
         }
 
-        if (source === 'departemen') {
-            result = array(master.departemen)
-                .filter(row => row.nama_dep)
-                .map(row => ({
-                    value: row.nama_dep,
-                    ref: row
+        if (type === 'departemen') {
+            options = asArray(master.departemen)
+                .map(o => ({
+                    value: o.nama_dep,
+                    raw: o
                 }));
         }
 
-        if (source === 'divisi') {
-            const selectedDepartment =
-                array(master.departemen)
-                    .find(row =>
-                        normalize(row.nama_dep) ===
-                        normalize($('aemDep')?.value)
-                    );
-
-            const available = selectedDepartment
-                ? array(master.divisi).filter(row =>
-                    String(row.id_dep) ===
-                    String(selectedDepartment.id)
-                )
-                : array(master.divisi);
-
-            result = available
-                .filter(row => row.nama_div)
-                .map(row => ({
-                    value: row.nama_div,
-                    ref: row
-                }));
-
-            if (!selectedDepartment) {
-                result.push(
-                    ...array(history.divisi)
-                        .map(value => ({
-                            value: String(value)
-                        }))
+        if (type === 'divisi') {
+            const dep = asArray(master.departemen)
+                .find(o =>
+                    norm(o.nama_dep) ===
+                    norm($('aemDep')?.value)
                 );
-            }
+
+            const data = dep
+                ? asArray(master.divisi)
+                    .filter(o =>
+                        String(o.id_dep) ===
+                        String(dep.id)
+                    )
+                : asArray(master.divisi);
+
+            options = data.map(o => ({
+                value: o.nama_div,
+                raw: o
+            }));
         }
 
-        if (source === 'bahan') {
-            result = array(master.bahan)
-                .map(row => ({
+        if (type === 'bahan') {
+            options = asArray(master.bahan)
+                .map(o => ({
                     value:
-                        row.nama ||
-                        row.nama_bahan ||
-                        ''
+                        o.nama ||
+                        o.nama_bahan
                 }));
         }
 
-        if (predefined[source]) {
-            result.push(
-                ...predefined[source]
-            );
+        if (presets[type]) {
+            options.push(...presets[type]);
         }
 
-        const extras = {
+        const more = {
             lokasi: history.lokasi,
             departemen: history.departemen,
+            divisi: history.divisi,
             bahan: history.bahan,
             asal: history.asal_perolehan
         };
 
-        for (const value of array(extras[source])) {
-            result.push({
+        for (const value of asArray(more[type])) {
+            options.push({
                 value: String(value)
             });
         }
 
-        const known = new Set();
+        const seen = new Set();
 
-        return result.filter(option => {
-            const key = normalize(option.value);
+        return options.filter(o => {
+            const key = norm(o.value);
 
-            if (!key || known.has(key)) {
+            if (!key || seen.has(key)) {
                 return false;
             }
 
-            known.add(key);
-
+            seen.add(key);
             return true;
         });
     }
-
-
-    /* ======================================================
-       INITIALIZE COMBOBOXES
-    ====================================================== */
 
     function initCombos() {
         if (!form) return;
@@ -542,10 +418,9 @@
 
                 input.dataset.ready = '1';
 
-                const source =
-                    input.dataset.aemCombo;
+                const type = input.dataset.aemCombo;
 
-                const wrapper = create(
+                const wrapper = elem(
                     'div',
                     'aem-combo'
                 );
@@ -555,28 +430,22 @@
                     input
                 );
 
-                wrapper.appendChild(input);
+                wrapper.append(input);
 
-
-                /* BUTTON DROPDOWN */
-
-                const arrow = create(
+                const toggle = elem(
                     'button',
                     'aem-combo-arrow',
                     '⌄'
                 );
 
-                arrow.type = 'button';
+                toggle.type = 'button';
 
-                arrow.setAttribute(
+                toggle.setAttribute(
                     'aria-label',
                     'Tampilkan pilihan'
                 );
 
-
-                /* OPTION PANEL */
-
-                const panel = create(
+                const panel = elem(
                     'div',
                     'aem-combo-options'
                 );
@@ -584,13 +453,12 @@
                 panel.hidden = true;
                 panel.setAttribute('role', 'listbox');
 
-                wrapper.append(arrow, panel);
+                wrapper.append(toggle, panel);
 
-                let displayed = [];
-                let activeIndex = -1;
+                let visible = [];
+                let selection = -1;
 
-
-                function close() {
+                function hideList() {
                     panel.hidden = true;
 
                     wrapper.classList.remove(
@@ -598,30 +466,21 @@
                         'up'
                     );
 
-                    activeIndex = -1;
-
-                    input.setAttribute(
-                        'aria-expanded',
-                        'false'
-                    );
+                    selection = -1;
                 }
 
-
-                function choose(option) {
-                    input.value = String(
-                        option.value
-                    );
-
+                function selectOption(option) {
+                    input.value = String(option.value);
                     input.setCustomValidity('');
 
                     if (
-                        source === 'lokasi' &&
-                        option.ref?.alamat &&
+                        type === 'lokasi' &&
+                        option.raw?.alamat &&
                         $('aemAlamat') &&
                         !$('aemAlamat').value.trim()
                     ) {
                         $('aemAlamat').value =
-                            String(option.ref.alamat);
+                            String(option.raw.alamat);
                     }
 
                     input.dispatchEvent(
@@ -630,13 +489,12 @@
                         })
                     );
 
-                    close();
+                    hideList();
 
                     input.focus({
                         preventScroll: true
                     });
                 }
-
 
                 function render(showAll = false) {
                     combos.forEach((combo, key) => {
@@ -647,44 +505,41 @@
 
                     const search = showAll
                         ? ''
-                        : normalize(input.value);
+                        : norm(input.value);
 
-                    displayed = getOptions(source)
-                        .filter(option =>
-                            normalize(
-                                `${option.value} ${option.label || ''}`
+                    visible = comboOptions(type)
+                        .filter(o =>
+                            norm(
+                                `${o.value} ${o.label || ''}`
                             ).includes(search)
                         )
                         .slice(0, 150);
 
                     panel.replaceChildren();
+                    selection = -1;
 
-                    activeIndex = -1;
-
-
-                    if (!displayed.length) {
-                        panel.appendChild(
-                            create(
+                    if (!visible.length) {
+                        panel.append(
+                            elem(
                                 'div',
                                 'aem-combo-empty',
-                                source === 'kondisi'
+                                type === 'kondisi'
                                     ? 'Pilih kondisi yang tersedia.'
-                                    : 'Tidak ada pilihan. Nilai manual dapat diketik.'
+                                    : 'Belum ada pilihan. Kamu bisa mengetik nilai baru.'
                             )
                         );
                     }
 
-
-                    displayed.forEach(option => {
-                        const button = create(
+                    visible.forEach(option => {
+                        const button = elem(
                             'button',
                             'aem-combo-item'
                         );
 
                         button.type = 'button';
 
-                        button.appendChild(
-                            create(
+                        button.append(
+                            elem(
                                 'strong',
                                 '',
                                 option.value
@@ -692,8 +547,8 @@
                         );
 
                         if (option.label) {
-                            button.appendChild(
-                                create(
+                            button.append(
+                                elem(
                                     'small',
                                     '',
                                     option.label
@@ -703,186 +558,147 @@
 
                         button.addEventListener(
                             'mousedown',
-                            event => event.preventDefault()
+                            e => e.preventDefault()
                         );
 
                         button.addEventListener(
                             'click',
-                            () => choose(option)
+                            () => selectOption(option)
                         );
 
-                        panel.appendChild(button);
+                        panel.append(button);
                     });
 
-
                     panel.hidden = false;
-
-                    wrapper.classList.add(
-                        'opened'
-                    );
+                    wrapper.classList.add('opened');
 
                     input.setAttribute(
                         'aria-expanded',
                         'true'
                     );
 
-
                     const rect =
                         wrapper.getBoundingClientRect();
 
                     wrapper.classList.toggle(
                         'up',
-                        window.innerHeight - rect.bottom < 190 &&
+                        window.innerHeight -
+                            rect.bottom < 190 &&
                         rect.top > 230
                     );
                 }
 
-
-                function highlight(index) {
-                    const buttons = Array.from(
-                        panel.querySelectorAll(
-                            '.aem-combo-item'
-                        )
-                    );
-
-                    if (!buttons.length) return;
-
-                    activeIndex =
-                        (index + buttons.length) %
-                        buttons.length;
-
-                    buttons.forEach((button, i) => {
-                        button.classList.toggle(
-                            'active',
-                            i === activeIndex
-                        );
-                    });
-
-                    buttons[activeIndex].scrollIntoView({
-                        block: 'nearest'
-                    });
-                }
-
-
-                input.addEventListener(
-                    'focus',
-                    () => {
-                        if (panel.hidden) {
-                            render(true);
-                        }
-                    }
-                );
-
-                input.addEventListener(
-                    'input',
-                    () => {
-                        input.setCustomValidity('');
-                        render(false);
-                    }
-                );
-
-
-                arrow.addEventListener(
-                    'mousedown',
-                    event => event.preventDefault()
-                );
-
-                arrow.addEventListener('click', () => {
+                input.addEventListener('focus', () => {
                     if (panel.hidden) {
-                        input.focus({
-                            preventScroll: true
-                        });
-
                         render(true);
-                    } else {
-                        close();
                     }
                 });
 
+                input.addEventListener('input', () => {
+                    input.setCustomValidity('');
+                    render(false);
+                });
 
-                input.addEventListener(
-                    'keydown',
-                    event => {
-                        if (event.key === 'Escape') {
-                            if (!panel.hidden) {
-                                event.preventDefault();
-                                close();
-                            }
-                        }
-
-                        if (
-                            event.key === 'ArrowDown' ||
-                            event.key === 'ArrowUp'
-                        ) {
-                            event.preventDefault();
-
-                            if (panel.hidden) {
-                                render(true);
-                            }
-
-                            if (displayed.length) {
-                                const step =
-                                    event.key === 'ArrowDown'
-                                        ? 1
-                                        : -1;
-
-                                highlight(
-                                    activeIndex + step
-                                );
-                            }
-                        }
-
-                        if (
-                            event.key === 'Enter' &&
-                            !panel.hidden &&
-                            activeIndex >= 0
-                        ) {
-                            event.preventDefault();
-
-                            choose(
-                                displayed[activeIndex]
-                            );
-                        }
-
-                        if (event.key === 'Tab') {
-                            close();
-                        }
-                    }
+                toggle.addEventListener(
+                    'mousedown',
+                    e => e.preventDefault()
                 );
 
+                toggle.addEventListener('click', () => {
+                    if (panel.hidden) {
+                        render(true);
+                    } else {
+                        hideList();
+                    }
+                });
+
+                input.addEventListener('keydown', e => {
+                    if (
+                        e.key === 'Escape' &&
+                        !panel.hidden
+                    ) {
+                        e.preventDefault();
+                        hideList();
+                    }
+
+                    if (e.key === 'Tab') {
+                        hideList();
+                    }
+
+                    if (
+                        ['ArrowDown', 'ArrowUp']
+                            .includes(e.key)
+                    ) {
+                        e.preventDefault();
+
+                        if (panel.hidden) {
+                            render(true);
+                        }
+
+                        if (visible.length) {
+                            selection = (
+                                selection +
+                                (
+                                    e.key === 'ArrowDown'
+                                        ? 1
+                                        : -1
+                                ) +
+                                visible.length
+                            ) % visible.length;
+
+                            panel
+                                .querySelectorAll(
+                                    '.aem-combo-item'
+                                )
+                                .forEach((node, i) => {
+                                    node.classList.toggle(
+                                        'active',
+                                        i === selection
+                                    );
+
+                                    if (i === selection) {
+                                        node.scrollIntoView({
+                                            block: 'nearest'
+                                        });
+                                    }
+                                });
+                        }
+                    }
+
+                    if (
+                        e.key === 'Enter' &&
+                        !panel.hidden &&
+                        selection >= 0
+                    ) {
+                        e.preventDefault();
+
+                        selectOption(
+                            visible[selection]
+                        );
+                    }
+                });
 
                 combos.set(input.name, {
-                    close,
+                    close: hideList,
                     wrapper
                 });
             });
 
-
-        document.addEventListener(
-            'pointerdown',
-            event => {
-                combos.forEach(combo => {
-                    if (
-                        !combo.wrapper.contains(
-                            event.target
-                        )
-                    ) {
-                        combo.close();
-                    }
-                });
-            }
-        );
-
-
-        /* DEPARTEMEN → DIVISI */
+        document.addEventListener('pointerdown', e => {
+            combos.forEach(combo => {
+                if (
+                    !combo.wrapper.contains(e.target)
+                ) {
+                    combo.close();
+                }
+            });
+        });
 
         $('aemDep')?.addEventListener(
             'change',
             () => {
-                const division = $('aemDiv');
-
-                if (division) {
-                    division.value = '';
+                if ($('aemDiv')) {
+                    $('aemDiv').value = '';
                 }
 
                 combos.get('divisi')?.close();
@@ -890,13 +706,12 @@
         );
     }
 
-
     /* ======================================================
-       FILE UPLOAD
+       LAMPIRAN FOTO DAN PDF
     ====================================================== */
 
     function resetDocs() {
-        addedFiles = [];
+        newFiles = [];
 
         if ($('aemDocsInput')) {
             $('aemDocsInput').value = '';
@@ -906,7 +721,6 @@
         $('aemSavedDocs')?.replaceChildren();
     }
 
-
     function renderNewDocs() {
         const box = $('aemSelectedDocs');
 
@@ -914,25 +728,24 @@
 
         box.replaceChildren();
 
-        if (!addedFiles.length) return;
+        if (!newFiles.length) return;
 
-        box.appendChild(
-            create(
+        box.append(
+            elem(
                 'strong',
                 '',
-                `${addedFiles.length} lampiran baru`
+                `${newFiles.length} lampiran baru`
             )
         );
 
-
-        addedFiles.forEach((file, index) => {
-            const row = create(
+        newFiles.forEach((file, index) => {
+            const row = elem(
                 'div',
                 'aem-file-row'
             );
 
-            row.appendChild(
-                create(
+            row.append(
+                elem(
                     'span',
                     '',
                     `${file.name} (${(
@@ -941,7 +754,7 @@
                 )
             );
 
-            const remove = create(
+            const remove = elem(
                 'button',
                 'aem-link',
                 'Batalkan'
@@ -949,265 +762,257 @@
 
             remove.type = 'button';
 
-            remove.addEventListener(
-                'click',
-                () => {
-                    addedFiles.splice(index, 1);
-                    renderNewDocs();
-                }
-            );
+            remove.addEventListener('click', () => {
+                newFiles.splice(index, 1);
+                renderNewDocs();
+            });
 
-            row.appendChild(remove);
-            box.appendChild(row);
+            row.append(remove);
+            box.append(row);
         });
     }
 
-
     $('aemDocsInput')?.addEventListener(
         'change',
-        event => {
-            const selected = Array.from(
-                event.target.files || []
-            );
-
-            for (const file of selected) {
+        e => {
+            for (
+                const file of Array.from(
+                    e.target.files || []
+                )
+            ) {
                 if (
-                    !/\.(pdf|jpe?g|png|webp)$/i.test(
-                        file.name
-                    )
+                    !/\.(pdf|jpe?g|png|webp)$/i
+                        .test(file.name)
                 ) {
                     toast(
-                        `${file.name}: format file tidak didukung.`
+                        `${file.name}: format tidak didukung.`
                     );
 
                     continue;
                 }
 
                 const duplicate =
-                    addedFiles.some(old =>
+                    newFiles.some(old =>
                         old.name === file.name &&
                         old.size === file.size &&
-                        old.lastModified === file.lastModified
+                        old.lastModified ===
+                            file.lastModified
                     );
 
                 if (!duplicate) {
-                    addedFiles.push(file);
+                    newFiles.push(file);
                 }
             }
 
-            event.target.value = '';
+            e.target.value = '';
 
             renderNewDocs();
         }
     );
 
+    function fileLink(url, name, iconName) {
+        if (!url) return null;
 
-    /* ======================================================
-       LAMPIRAN TERSIMPAN
-    ====================================================== */
+        const a = elem(
+            'a',
+            'aem-kib-file'
+        );
 
-    function renderSavedDocs(documents) {
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+
+        const i = elem('i');
+
+        i.setAttribute(
+            'data-lucide',
+            iconName
+        );
+
+        a.append(
+            i,
+            elem(
+                'span',
+                '',
+                name || 'Lampiran'
+            )
+        );
+
+        return a;
+    }
+
+    function renderSavedDocs(docs) {
         const box = $('aemSavedDocs');
 
         if (!box) return;
 
         box.replaceChildren();
 
-        if (!array(documents).length) return;
+        if (!asArray(docs).length) return;
 
-        box.appendChild(
-            create(
+        box.append(
+            elem(
                 'strong',
                 '',
-                'Lampiran yang sudah tersimpan:'
+                'Lampiran tersimpan:'
             )
         );
 
-
-        documents.forEach(doc => {
-            const row = create(
+        asArray(docs).forEach(doc => {
+            const row = elem(
                 'div',
                 'aem-file-row'
             );
 
             if (doc.url) {
-                const link = create(
-                    'a',
-                    '',
-                    doc.nama || 'Dokumen'
+                const a = fileLink(
+                    doc.url,
+                    doc.nama,
+                    /\.pdf$/i.test(doc.nama || '')
+                        ? 'file-text'
+                        : 'image'
                 );
 
-                link.href = doc.url;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-
-                row.appendChild(link);
+                if (a) row.append(a);
             }
 
             if (doc.id != null) {
-                const label = create(
+                const label = elem(
                     'label',
                     'aem-file-remove'
                 );
 
-                const checkbox =
-                    document.createElement('input');
+                const check = elem('input');
 
-                checkbox.type = 'checkbox';
-                checkbox.name =
-                    'hapus_dokumen_ids[]';
-
-                checkbox.value =
-                    String(doc.id);
+                check.type = 'checkbox';
+                check.name = 'hapus_dokumen_ids[]';
+                check.value = String(doc.id);
 
                 label.append(
-                    checkbox,
+                    check,
                     document.createTextNode(
                         ' Hapus saat simpan'
                     )
                 );
 
-                row.appendChild(label);
+                row.append(label);
             }
 
-            box.appendChild(row);
+            box.append(row);
         });
+
+        icons();
     }
 
-
     /* ======================================================
-       FORM TAMBAH
+       FORM TAMBAH / EDIT
     ====================================================== */
 
-    function addForm() {
+    function prepareForm() {
         if (!form) return;
 
-        current = null;
-        editId = null;
-        saving = false;
-
         form.reset();
-
         resetDocs();
-        showError('');
+        error('');
+
+        saving = false;
 
         form.querySelectorAll('input')
             .forEach(input => {
                 input.setCustomValidity('');
             });
 
-        const year = form.elements.namedItem(
-            'tahun'
-        );
+        $('aemSave').disabled = false;
 
-        if (year) {
-            year.value =
+        combos.forEach(combo => combo.close());
+    }
+
+    function addForm() {
+        if (!form) return;
+
+        prepareForm();
+
+        active = null;
+        editId = null;
+
+        if (form.elements.namedItem('tahun')) {
+            form.elements.namedItem('tahun').value =
                 new Date().getFullYear();
         }
 
-        const quantity = form.elements.namedItem(
-            'jumlah_unit'
-        );
-
-        if (quantity) {
-            quantity.value = 1;
+        if (form.elements.namedItem('jumlah_unit')) {
+            form.elements.namedItem(
+                'jumlah_unit'
+            ).value = 1;
         }
 
         $('aemFormTitle').textContent =
             'Tambah Aset Tetap Lainnya';
 
-        $('aemSave').disabled = false;
         $('aemSave').textContent =
             'Simpan Aset';
 
-        combos.forEach(combo => combo.close());
-
-        showDialog(formDialog);
+        open(formDialog);
     }
-
-
-    /* ======================================================
-       FORM EDIT
-    ====================================================== */
 
     function editForm(item) {
         if (!form || !item) return;
 
-        current = item;
+        prepareForm();
+
+        active = item;
         editId = Number(item.id);
-        saving = false;
 
-        form.reset();
-
-        resetDocs();
-        showError('');
-
-        form.querySelectorAll('input')
-            .forEach(input => {
-                input.setCustomValidity('');
-            });
-
-        fields.forEach(field => {
+        fields.forEach(name => {
             const input =
-                form.elements.namedItem(field);
+                form.elements.namedItem(name);
 
             if (input) {
-                input.value =
-                    item[field] ?? '';
+                input.value = String(
+                    item[name] ?? ''
+                );
             }
         });
 
-        renderSavedDocs(
-            item.dokumens || []
-        );
+        renderSavedDocs(item.dokumens);
 
         $('aemFormTitle').textContent =
             'Edit Aset Tetap Lainnya';
 
-        $('aemSave').disabled = false;
         $('aemSave').textContent =
             'Simpan Perubahan';
 
-        combos.forEach(combo => combo.close());
-
-        showDialog(formDialog);
+        open(formDialog);
     }
-
 
     $('aemAdd')?.addEventListener(
         'click',
         addForm
     );
 
-
-    /* ======================================================
-       AMBIL DETAIL SATU BARANG
-    ====================================================== */
-
     async function fetchItem(id) {
-        const result = await api(
+        const res = await api(
             `${base}/${encodeURIComponent(id)}`
         );
 
-        if (!result.data) {
+        if (!res.data) {
             throw new Error(
-                'Data aset tidak ditemukan.'
+                'Data barang tidak ditemukan.'
             );
         }
 
-        return result.data;
+        return res.data;
     }
 
-
     /* ======================================================
-       VIEW DETAIL KIB E — EXCEL
-       TANPA TANDA TANGAN / PENGESAHAN
+       VIEW DETAIL EXCEL KIB E
+       TANPA TANDA TANGAN
     ====================================================== */
 
     function detail(item) {
         if (!item) return;
 
-        current = item;
+        active = item;
 
         const body = $('aemDetailBody');
 
@@ -1217,336 +1022,225 @@
 
         $('aemDetailTitle').textContent =
             item.nama_aset ||
-            'Kartu Inventaris Barang (KIB) E';
+            'Detail Inventaris KIB E';
 
-
-        /* KONDISI BARANG */
-
-        const conditions = {
+        const kondisi = {
             'BAIK': 'Baik (B)',
+            'B': 'Baik (B)',
             'KURANG BAIK': 'Kurang Baik (KB)',
+            'KB': 'Kurang Baik (KB)',
             'RUSAK BERAT': 'Rusak Berat (RB)',
+            'RB': 'Rusak Berat (RB)',
             'CUKUP': 'Cukup (data lama)',
             'RUSAK RINGAN':
                 'Rusak Ringan (data lama)'
-        };
-
-        const condition =
-            conditions[
-                String(item.kondisi ?? '')
-                    .trim()
-                    .toUpperCase()
-            ] || showValue(item.kondisi);
-
+        }[
+            String(item.kondisi ?? '')
+                .trim()
+                .toUpperCase()
+        ] || showValue(item.kondisi);
 
         /* LEMBAR KIB E */
 
-        const sheet = create(
+        const sheet = elem(
             'section',
             'aem-kib-sheet'
         );
 
+        /* KOP PERUSAHAAN */
 
-        /* ==============================================
-           KOP LAPORAN
-        ============================================== */
-
-        const heading = create(
+        const heading = elem(
             'div',
             'aem-kib-heading'
         );
 
-        const brand = create(
+        const brand = elem(
             'div',
             'aem-kib-brand'
         );
 
         if (root.dataset.logoUrl) {
-            const logo = create(
+            const logo = elem(
                 'img',
                 'aem-kib-logo'
             );
 
             logo.src = root.dataset.logoUrl;
-
             logo.alt =
                 'Logo Perumdam Tirta Kencana';
 
-            logo.onerror = () => {
-                logo.remove();
-            };
+            logo.onerror = () => logo.remove();
 
-            brand.appendChild(logo);
+            brand.append(logo);
         }
 
         brand.append(
-            create(
+            elem(
                 'strong',
                 '',
                 'PERUMDAM TIRTA KENCANA'
             ),
 
-            create(
+            elem(
                 'strong',
                 '',
                 'KOTA SAMARINDA'
             )
         );
 
-
-        const headingTitle = create(
+        const title = elem(
             'div',
             'aem-kib-heading-title'
         );
 
-        headingTitle.append(
-            create(
+        title.append(
+            elem(
                 'div',
                 '',
                 'KARTU INVENTARIS BARANG (KIB)'
             ),
 
-            create(
+            elem(
                 'strong',
                 '',
                 'E. ASET TETAP LAINNYA'
             )
         );
 
-        heading.append(
-            brand,
-            headingTitle
-        );
+        heading.append(brand, title);
+        sheet.append(heading);
 
-        sheet.appendChild(heading);
+        /* IDENTITAS ORGANISASI */
 
-
-        /* ==============================================
-           IDENTITAS ORGANISASI
-        ============================================== */
-
-        const identity = create(
+        const meta = elem(
             'div',
             'aem-kib-identity'
         );
 
-        const info = [
-            [
-                'PROVINSI',
-                'KALIMANTAN TIMUR'
-            ],
-            [
-                'KOTA',
-                'SAMARINDA'
-            ],
-            [
-                'UNIT',
-                'PERUMDAM TIRTA KENCANA'
-            ],
-            [
-                'DEPARTEMEN',
-                item.departemen
-            ],
-            [
-                'DIVISI',
-                item.divisi
-            ],
-            [
-                'KODE STRUKTUR',
-                item.kode_struktur
-            ],
-            [
-                'LOKASI / UNIT KERJA',
-                item.lokasi
-            ],
-            [
-                'ALAMAT',
-                item.alamat
-            ]
+        const metadata = [
+            ['PROVINSI', 'KALIMANTAN TIMUR'],
+            ['KOTA', 'SAMARINDA'],
+            ['UNIT', 'PERUMDAM TIRTA KENCANA'],
+            ['DEPARTEMEN', item.departemen],
+            ['DIVISI', item.divisi],
+            ['KODE STRUKTUR', item.kode_struktur],
+            ['LOKASI / UNIT KERJA', item.lokasi],
+            ['ALAMAT', item.alamat]
         ];
 
-
-        info.forEach(([label, value]) => {
-            const row = create(
+        metadata.forEach(([label, value]) => {
+            const row = elem(
                 'div',
                 'aem-kib-identity-row'
             );
 
             row.append(
-                create(
-                    'span',
-                    '',
-                    label
-                ),
-
-                create(
-                    'span',
-                    '',
-                    ':'
-                ),
-
-                create(
+                elem('span', '', label),
+                elem('span', '', ':'),
+                elem(
                     'strong',
                     '',
                     showValue(value)
                 )
             );
 
-            identity.appendChild(row);
+            meta.append(row);
         });
 
-        sheet.appendChild(identity);
+        sheet.append(meta);
 
+        /* TABEL EXCEL 10 KOLOM */
 
-        /* ==============================================
-           TABEL EXCEL KIB E
-        ============================================== */
-
-        const scroll = create(
+        const scroll = elem(
             'div',
             'aem-kib-table-scroll'
         );
 
-        const table = create(
+        const table = elem(
             'table',
             'aem-kib-table'
         );
 
-        const colgroup = create('colgroup');
+        const cols = elem('colgroup');
 
         for (let i = 0; i < 10; i++) {
-            colgroup.appendChild(
-                create('col')
-            );
+            cols.append(elem('col'));
         }
 
-        table.appendChild(colgroup);
+        table.append(cols);
 
+        const head = elem('thead');
 
-        /* HEADER */
+        const h1 = elem('tr');
+        const h2 = elem('tr');
+        const nums = elem('tr');
 
-        const thead = create('thead');
-
-        const header1 = create('tr');
-        const header2 = create('tr');
-        const headerNumbers = create('tr');
-
-
-        function addHeader(
+        const th = (
             row,
-            title,
-            rowSpan = 1,
-            colSpan = 1
-        ) {
-            const cell = create(
+            value,
+            rowspan = 1,
+            colspan = 1
+        ) => {
+            const e = elem(
                 'th',
                 '',
-                title
+                value
             );
 
-            cell.rowSpan = rowSpan;
-            cell.colSpan = colSpan;
+            e.rowSpan = rowspan;
+            e.colSpan = colspan;
 
-            row.appendChild(cell);
-        }
+            row.append(e);
+        };
 
+        th(h1, 'No.', 2);
 
-        /* HEADER BARIS PERTAMA */
-
-        addHeader(
-            header1,
-            'No.',
-            2
-        );
-
-        addHeader(
-            header1,
+        th(
+            h1,
             'Nama Barang / Jenis Barang',
             2
         );
 
-        addHeader(
-            header1,
-            'Nomor',
-            1,
-            2
-        );
+        th(h1, 'Nomor', 1, 2);
 
-        addHeader(
-            header1,
+        th(
+            h1,
             'Kondisi Barang (B, KB, RB)',
             2
         );
 
-        addHeader(
-            header1,
-            'Bahan',
-            2
-        );
+        th(h1, 'Bahan', 2);
 
-        addHeader(
-            header1,
+        th(
+            h1,
             'Tahun Pengadaan / Perolehan',
             2
         );
 
-        addHeader(
-            header1,
-            'Jumlah',
-            2
-        );
+        th(h1, 'Jumlah', 2);
 
-        addHeader(
-            header1,
+        th(
+            h1,
             'Asal Usul / Cara Perolehan',
             2
         );
 
-        addHeader(
-            header1,
-            'Keterangan',
-            2
-        );
+        th(h1, 'Keterangan', 2);
 
-
-        /* HEADER BARIS KEDUA */
-
-        addHeader(
-            header2,
-            'Kode Barang'
-        );
-
-        addHeader(
-            header2,
-            'Register'
-        );
-
-
-        /* NOMOR KOLOM EXCEL */
+        th(h2, 'Kode Barang');
+        th(h2, 'Register');
 
         for (let i = 1; i <= 10; i++) {
-            addHeader(
-                headerNumbers,
-                String(i)
-            );
+            th(nums, String(i));
         }
 
-        thead.append(
-            header1,
-            header2,
-            headerNumbers
-        );
+        head.append(h1, h2, nums);
 
+        /* ISI TABEL DETAIL */
 
-        /* ==============================================
-           ISI TABEL BARANG
-        ============================================== */
+        const tr = elem('tr');
 
-        const tbody = create('tbody');
-
-        const dataRow = create('tr');
-
-        const data = [
+        const values = [
             '1',
 
             showValue(item.nama_aset),
@@ -1555,7 +1249,7 @@
 
             showValue(item.nomor_register),
 
-            condition,
+            kondisi,
 
             showValue(item.bahan),
 
@@ -1563,150 +1257,87 @@
 
             item.jumlah_unit == null
                 ? '—'
-                : (
-                    Number(item.jumlah_unit)
-                        .toLocaleString('id-ID') +
-                    ' buah'
-                ),
+                : `${Number(item.jumlah_unit)
+                    .toLocaleString('id-ID')} buah`,
 
             showValue(item.asal_perolehan),
 
             showValue(item.keterangan)
         ];
 
-
-        data.forEach((value, index) => {
-            const cell = create(
-                'td',
+        values.forEach((value, index) => {
+            cell(
+                tr,
+                value,
                 index === 0
                     ? 'aem-kib-center'
-                    : '',
-                value
+                    : ''
             );
-
-            dataRow.appendChild(cell);
         });
 
-        tbody.appendChild(dataRow);
+        const tbody = elem('tbody');
 
-        table.append(
-            thead,
-            tbody
-        );
+        tbody.append(tr);
 
-        scroll.appendChild(table);
+        table.append(head, tbody);
+        scroll.append(table);
+        sheet.append(scroll);
 
-        sheet.appendChild(scroll);
+        /*
+         * TANPA TANDA TANGAN.
+         * Setelah tabel langsung tampil.
+         */
 
+        body.append(sheet);
 
-        /* ==============================================
-           TANPA BAGIAN PENGESAHAN / TTD
+        /* FOTO DAN DOKUMEN PENDUKUNG */
 
-           Setelah tabel langsung ditampilkan.
-           Tidak ada Direktur Umum,
-           Manajer Keuangan,
-           Asisten Manajer Aset,
-           ataupun Staf Aset.
-        ============================================== */
-
-        body.appendChild(sheet);
-
-
-        /* ==============================================
-           FOTO DAN DOKUMEN PENDUKUNG
-        ============================================== */
-
-        const attachments = create(
+        const attachment = elem(
             'section',
             'aem-kib-attachments'
         );
 
-        attachments.appendChild(
-            create(
+        attachment.append(
+            elem(
                 'h3',
                 '',
                 'Foto dan Dokumen Pendukung'
             )
         );
 
-        const links = create(
+        const links = elem(
             'div',
             'aem-kib-file-links'
         );
 
-
-        /* MEMBUAT LINK FILE */
-
-        function addLink(
-            url,
-            name,
-            iconName
-        ) {
-            if (!url) return;
-
-            const link = create(
-                'a',
-                'aem-kib-file'
-            );
-
-            link.href = url;
-            link.target = '_blank';
-
-            link.rel =
-                'noopener noreferrer';
-
-            const icon = create('i');
-
-            icon.setAttribute(
-                'data-lucide',
-                iconName
-            );
-
-            link.append(
-                icon,
-                create('span', '', name)
-            );
-
-            links.appendChild(link);
-        }
-
-
-        /* FOTO UTAMA */
-
-        addLink(
+        const photo = fileLink(
             item.foto_url,
             'Lihat Foto Utama',
             'image'
         );
 
+        if (photo) {
+            links.append(photo);
+        }
 
-        /* DOKUMEN PDF / GAMBAR */
+        asArray(item.dokumens)
+            .forEach(doc => {
+                const link = fileLink(
+                    doc.url,
+                    doc.nama || 'Lampiran',
+                    /\.pdf$/i.test(doc.nama || '')
+                        ? 'file-text'
+                        : 'image'
+                );
 
-        array(item.dokumens).forEach(doc => {
-            if (!doc.url) return;
-
-            const fileName =
-                doc.nama || 'Lampiran';
-
-            const isPdf = /\.pdf$/i.test(
-                fileName
-            );
-
-            addLink(
-                doc.url,
-                fileName,
-                isPdf
-                    ? 'file-text'
-                    : 'image'
-            );
-        });
-
-
-        /* JIKA TIDAK ADA LAMPIRAN */
+                if (link) {
+                    links.append(link);
+                }
+            });
 
         if (!links.childElementCount) {
-            links.appendChild(
-                create(
+            links.append(
+                elem(
                     'p',
                     '',
                     'Belum ada foto atau dokumen pendukung.'
@@ -1714,45 +1345,29 @@
             );
         }
 
-        attachments.appendChild(links);
+        attachment.append(links);
+        body.append(attachment);
 
-        body.appendChild(attachments);
-
-
-        /* BUKA POPUP DETAIL */
-
-        showDialog(detailDialog);
-
+        open(detailDialog);
         icons();
     }
-
 
     /* ======================================================
        DETAIL KELOMPOK
     ====================================================== */
 
-    const groupState = {
+    const gs = {
         lokasi: '',
         divisi: '',
         q: '',
         page: 1,
-
         groups: [],
         selected: null,
         pagination: null
     };
 
-    let groupController = null;
-    let searchTimer = null;
-
-
-    function groupKey(location, division) {
-        return JSON.stringify([
-            location,
-            division
-        ]);
-    }
-
+    let groupRequest = null;
+    let groupTimer = null;
 
     function groupError(message) {
         const node = $('aemGroupAlert');
@@ -1763,42 +1378,35 @@
         node.hidden = !message;
     }
 
-
-    /* ======================================================
-       BUKA DETAIL KELOMPOK
-    ====================================================== */
-
-    function openGroup(location, division) {
+    function openGroup(lokasi, divisi) {
         if (!groupDialog || !groupUrl) {
             toast(
-                'Route Detail Kelompok belum tersedia.'
+                'Endpoint Detail Kelompok belum tersedia.'
             );
 
             return;
         }
 
-        groupState.lokasi =
-            String(location ?? '').trim() ||
+        gs.lokasi =
+            String(lokasi ?? '').trim() ||
             'Tanpa Lokasi';
 
-        groupState.divisi =
-            String(division ?? '').trim() ||
+        gs.divisi =
+            String(divisi ?? '').trim() ||
             'Tanpa Divisi';
 
-        groupState.q = '';
-        groupState.page = 1;
+        gs.page = 1;
+        gs.q = '';
 
-        $('aemGroupItemSearch').value = '';
         $('aemGroupSearch').value = '';
+        $('aemGroupItemSearch').value = '';
 
-        showDialog(groupDialog);
-
+        open(groupDialog);
         loadGroup();
     }
 
-
     /* ======================================================
-       PANEL KIRI — LOKASI DAN DIVISI
+       PANEL KIRI — LOKASI / DIVISI
     ====================================================== */
 
     function renderGroups() {
@@ -1808,35 +1416,31 @@
 
         container.replaceChildren();
 
-        const search = normalize(
-            $('aemGroupSearch').value
+        const q = norm(
+            $('aemGroupSearch')?.value
         );
 
-        const groups =
-            groupState.groups.filter(group =>
-                normalize(
-                    `${group.lokasi} ${group.divisi}`
-                ).includes(search)
-            );
+        const entries = gs.groups.filter(g =>
+            norm(
+                `${g.lokasi} ${g.divisi}`
+            ).includes(q)
+        );
 
-        if (!groups.length) {
-            container.appendChild(
-                create(
+        if (!entries.length) {
+            container.append(
+                elem(
                     'div',
                     'aem-empty',
-                    'Tidak ada kelompok yang cocok.'
+                    'Tidak ada kelompok yang sesuai.'
                 )
             );
 
             return;
         }
 
-
-        /* KELOMPOKKAN BERDASARKAN LOKASI */
-
         const locations = new Map();
 
-        groups.forEach(group => {
+        entries.forEach(group => {
             if (!locations.has(group.lokasi)) {
                 locations.set(
                     group.lokasi,
@@ -1849,19 +1453,18 @@
                 .push(group);
         });
 
-
-        locations.forEach((children, location) => {
-            const section = create(
+        locations.forEach((groups, location) => {
+            const section = elem(
                 'div',
                 'aem-group-location'
             );
 
-            const title = create(
+            const title = elem(
                 'div',
                 'aem-group-location-title'
             );
 
-            const folder = create('i');
+            const folder = elem('i');
 
             folder.setAttribute(
                 'data-lucide',
@@ -1870,296 +1473,258 @@
 
             title.append(
                 folder,
-                create(
-                    'span',
-                    '',
-                    location
-                )
+                elem('span', '', location)
             );
 
-            section.appendChild(title);
+            section.append(title);
 
-
-            /* DAFTAR DIVISI */
-
-            children.forEach(group => {
-                const button = create(
+            groups.forEach(g => {
+                const button = elem(
                     'button',
                     'aem-group-select'
                 );
 
                 button.type = 'button';
 
-                const selected =
-                    groupState.selected &&
-                    groupKey(
-                        groupState.selected.lokasi,
-                        groupState.selected.divisi
-                    ) === groupKey(
-                        group.lokasi,
-                        group.divisi
-                    );
+                const chosen =
+                    gs.selected &&
+                    gs.selected.lokasi === g.lokasi &&
+                    gs.selected.divisi === g.divisi;
 
-                if (selected) {
-                    button.classList.add(
-                        'active'
-                    );
+                if (chosen) {
+                    button.classList.add('active');
                 }
 
                 button.setAttribute(
                     'aria-pressed',
-                    String(Boolean(selected))
+                    String(Boolean(chosen))
                 );
 
                 button.append(
-                    create(
+                    elem(
                         'span',
                         '',
-                        group.divisi
+                        g.divisi
                     ),
 
-                    create(
+                    elem(
                         'span',
                         '',
-                        group.jumlah
+                        g.jumlah
                     )
                 );
 
+                button.addEventListener('click', () => {
+                    gs.lokasi = g.lokasi;
+                    gs.divisi = g.divisi;
+                    gs.page = 1;
+                    gs.q = '';
 
-                button.addEventListener(
-                    'click',
-                    () => {
-                        groupState.lokasi =
-                            group.lokasi;
+                    $('aemGroupItemSearch').value = '';
 
-                        groupState.divisi =
-                            group.divisi;
+                    loadGroup();
+                });
 
-                        groupState.q = '';
-                        groupState.page = 1;
-
-                        $('aemGroupItemSearch').value =
-                            '';
-
-                        loadGroup();
-                    }
-                );
-
-                section.appendChild(button);
+                section.append(button);
             });
 
-            container.appendChild(section);
+            container.append(section);
         });
 
         icons();
     }
 
+    /* ======================================================
+       LABEL KONDISI BARANG
+    ====================================================== */
+
+    const conditions = {
+        'BAIK': 'Baik (B)',
+        'B': 'Baik (B)',
+        'KURANG BAIK': 'Kurang Baik (KB)',
+        'KB': 'Kurang Baik (KB)',
+        'RUSAK BERAT': 'Rusak Berat (RB)',
+        'RB': 'Rusak Berat (RB)',
+        'CUKUP': 'Cukup (data lama)',
+        'RUSAK RINGAN':
+            'Rusak Ringan (data lama)'
+    };
 
     /* ======================================================
-       PANEL KANAN — DAFTAR BARANG
+       PANEL KANAN — 11 KOLOM SESUAI EXCEL
     ====================================================== */
 
     function renderGroupRows(items) {
-        const body = $('aemGroupRows');
+        const tbody = $('aemGroupRows');
 
-        if (!body) return;
+        if (!tbody) return;
 
-        body.replaceChildren();
+        tbody.replaceChildren();
 
         if (!items.length) {
-            const row = create('tr');
+            const tr = elem('tr');
 
-            addCell(
-                row,
-                'Tidak ada aset pada kelompok ini.',
+            cell(
+                tr,
+                'Tidak ada barang pada kelompok ini.',
                 'aem-empty'
-            ).colSpan = 6;
+            ).colSpan = 11;
 
-            body.appendChild(row);
+            tbody.append(tr);
 
             return;
         }
 
-        const first = Number(
-            groupState.pagination?.from || 1
+        const start = Number(
+            gs.pagination?.from ?? 1
         );
 
-
         items.forEach((item, index) => {
-            const row = create('tr');
+            const tr = elem('tr');
 
+            const condition =
+                conditions[
+                    String(item.kondisi ?? '')
+                        .trim()
+                        .toUpperCase()
+                ] || showValue(item.kondisi);
 
-            /* NOMOR */
+            /*
+             * KOLOM 1–10
+             * URUTAN WAJIB SAMA DENGAN EXCEL
+             */
 
-            addCell(
-                row,
-                first + index,
-                'aem-center'
-            );
+            const values = [
+                // 1. No.
+                start + index,
 
+                // 2. Nama Barang
+                showValue(item.nama_aset),
 
-            /* NAMA BARANG */
+                // 3. Kode Barang
+                showValue(item.kode_inventaris),
 
-            const name = create('div');
+                // 4. Register
+                showValue(item.nomor_register),
 
-            name.appendChild(
-                create(
-                    'strong',
-                    '',
-                    item.nama_aset || '—'
-                )
-            );
+                // 5. Kondisi Barang
+                condition,
 
-            addCell(row, name);
+                // 6. Bahan
+                showValue(item.bahan),
 
+                // 7. Tahun
+                showValue(item.tahun),
 
-            /* KODE BARANG */
+                // 8. Jumlah
+                item.jumlah_unit == null
+                    ? '—'
+                    : `${Number(item.jumlah_unit)
+                        .toLocaleString('id-ID')} buah`,
 
-            addCell(
-                row,
-                showValue(item.kode_inventaris)
-            );
+                // 9. Asal Perolehan
+                showValue(item.asal_perolehan),
 
+                // 10. Keterangan
+                showValue(item.keterangan)
+            ];
 
-            /* REGISTER */
+            values.forEach((value, i) => {
+                const centered =
+                    [0, 6, 7].includes(i);
 
-            addCell(
-                row,
-                showValue(item.nomor_register)
-            );
-
-
-            /* FOTO */
-
-            const photoBox = create('div');
-
-            function noPhoto() {
-                return create(
-                    'div',
-                    'aem-group-no-photo',
-                    'Tanpa foto'
+                cell(
+                    tr,
+                    value,
+                    centered
+                        ? 'aem-center'
+                        : i === 9
+                            ? 'aem-kib-notes'
+                            : ''
                 );
-            }
+            });
 
-            if (item.foto_url) {
-                const image = create(
-                    'img',
-                    'aem-group-thumb'
-                );
+            /*
+             * KOLOM 11 — TOMBOL VIEW
+             * Tidak ada kolom foto tambahan.
+             */
 
-                image.src = item.foto_url;
-
-                image.alt =
-                    'Foto ' +
-                    (item.nama_aset || 'aset');
-
-                image.onerror = () => {
-                    image.replaceWith(
-                        noPhoto()
-                    );
-                };
-
-                photoBox.appendChild(image);
-
-            } else {
-                photoBox.appendChild(
-                    noPhoto()
-                );
-            }
-
-            addCell(
-                row,
-                photoBox,
-                'aem-center'
-            );
-
-
-            /* TOMBOL VIEW */
-
-            const view = create(
+            const button = elem(
                 'button',
                 'aem-icon view'
             );
 
-            view.type = 'button';
+            button.type = 'button';
 
-            view.title =
-                'Lihat Detail Excel KIB E';
+            button.title =
+                'Lihat Detail KIB E';
 
-            view.dataset.aemAction = 'view';
+            button.dataset.aemAction = 'view';
+            button.dataset.id = String(item.id);
 
-            view.dataset.id =
-                String(item.id);
-
-            view.setAttribute(
+            button.setAttribute(
                 'aria-label',
-                `Lihat detail ${item.nama_aset || 'aset'}`
+                `Lihat detail ${showValue(item.nama_aset)}`
             );
 
-            const eye = create('i');
+            const eye = elem('i');
 
             eye.setAttribute(
                 'data-lucide',
                 'eye'
             );
 
-            view.appendChild(eye);
+            button.append(eye);
 
-            addCell(
-                row,
-                view,
+            cell(
+                tr,
+                button,
                 'aem-center'
             );
 
-            body.appendChild(row);
+            tbody.append(tr);
         });
 
         icons();
     }
 
-
     /* ======================================================
-       AMBIL DATA DETAIL KELOMPOK
+       LOAD KELOMPOK DARI LARAVEL
     ====================================================== */
 
     async function loadGroup() {
-        if (!groupDialog || !groupUrl) {
-            return;
-        }
+        if (!groupDialog || !groupUrl) return;
 
-        groupController?.abort();
+        groupRequest?.abort();
 
-        const controller =
-            new AbortController();
+        const controller = new AbortController();
 
-        groupController = controller;
+        groupRequest = controller;
 
         groupError('');
 
-        const body = $('aemGroupRows');
+        const tbody = $('aemGroupRows');
 
-        const loader = create('tr');
+        const loading = elem('tr');
 
-        addCell(
-            loader,
-            'Memuat daftar aset...',
+        cell(
+            loading,
+            'Memuat data barang...',
             'aem-empty'
-        ).colSpan = 6;
+        ).colSpan = 11;
 
-        body.replaceChildren(loader);
+        tbody.replaceChildren(loading);
 
-
-        const query = new URLSearchParams({
-            lokasi: groupState.lokasi,
-            divisi: groupState.divisi,
-            q: groupState.q,
-            page: String(groupState.page)
+        const params = new URLSearchParams({
+            lokasi: gs.lokasi,
+            divisi: gs.divisi,
+            q: gs.q,
+            page: String(gs.page)
         });
-
 
         try {
             const result = await api(
-                `${groupUrl}?${query.toString()}`,
+                `${groupUrl}?${params}`,
                 {
                     signal: controller.signal
                 }
@@ -2172,32 +1737,19 @@
                 return;
             }
 
-            groupState.groups =
-                array(result.groups);
+            gs.groups = asArray(result.groups);
+            gs.selected = result.selected || null;
+            gs.pagination = result.pagination || {};
 
-            groupState.selected =
-                result.selected || null;
-
-            groupState.pagination =
-                result.pagination || {};
-
-
-            /* KELOMPOK TERPILIH */
-
-            if (result.selected) {
-                groupState.lokasi =
-                    result.selected.lokasi;
-
-                groupState.divisi =
-                    result.selected.divisi;
+            if (gs.selected) {
+                gs.lokasi = gs.selected.lokasi;
+                gs.divisi = gs.selected.divisi;
 
                 $('aemGroupTitle').textContent =
-                    result.selected.divisi;
+                    gs.selected.divisi;
 
                 $('aemGroupSubtitle').textContent =
-                    'Lokasi: ' +
-                    result.selected.lokasi;
-
+                    `Lokasi: ${gs.selected.lokasi}`;
             } else {
                 $('aemGroupTitle').textContent =
                     'Belum ada kelompok aset';
@@ -2206,56 +1758,63 @@
                     'Tambahkan data manual terlebih dahulu.';
             }
 
-
-            /* PAGINATION */
-
-            const pagination =
-                groupState.pagination;
+            const p = gs.pagination;
 
             $('aemGroupCount').textContent =
-                `${pagination.total || 0} barang`;
+                `${p.total || 0} barang`;
 
             $('aemGroupInfo').textContent =
-                `${pagination.from || 0}–${pagination.to || 0} dari ${pagination.total || 0} data`;
+                `${p.from || 0}–${p.to || 0} dari ${p.total || 0} data`;
 
             $('aemGroupPage').textContent =
-                `${pagination.page || 1} / ${pagination.last_page || 1}`;
+                `${p.page || 1} / ${p.last_page || 1}`;
 
             $('aemGroupPrev').disabled =
-                (pagination.page || 1) <= 1;
+                (p.page || 1) <= 1;
 
             $('aemGroupNext').disabled =
-                (pagination.page || 1) >=
-                (pagination.last_page || 1);
-
+                (p.page || 1) >=
+                (p.last_page || 1);
 
             renderGroups();
 
             renderGroupRows(
-                array(result.items)
+                asArray(result.items)
             );
 
-        } catch (exception) {
-            if (exception.name === 'AbortError') {
+            /*
+             * Mulai tabel dari kolom pertama
+             * saat kelompok diganti.
+             */
+
+            const scroller =
+                groupDialog.querySelector(
+                    '.aem-group-right .aem-table-wrap'
+                );
+
+            if (scroller) {
+                scroller.scrollLeft = 0;
+            }
+        } catch (e) {
+            if (e.name === 'AbortError') {
                 return;
             }
 
             groupError(
-                exception.message ||
-                'Tidak dapat memuat kelompok.'
+                e.message ||
+                'Gagal mengambil data kelompok.'
             );
 
-            body.replaceChildren();
+            tbody.replaceChildren();
         }
     }
 
-
     /* ======================================================
-       TUTUP KELOMPOK
+       EVENT DETAIL KELOMPOK
     ====================================================== */
 
     function closeGroup() {
-        hideDialog(groupDialog);
+        close(groupDialog);
     }
 
     $('aemBack')?.addEventListener(
@@ -2268,212 +1827,158 @@
         closeGroup
     );
 
-
     groupDialog?.addEventListener(
         'close',
         () => {
-            groupController?.abort();
-
-            clearTimeout(searchTimer);
+            groupRequest?.abort();
+            clearTimeout(groupTimer);
         }
     );
-
-
-    /* ======================================================
-       PENCARIAN KELOMPOK
-    ====================================================== */
 
     $('aemGroupSearch')?.addEventListener(
         'input',
         renderGroups
     );
 
-
     $('aemGroupItemSearch')?.addEventListener(
         'input',
-        event => {
-            clearTimeout(searchTimer);
+        e => {
+            const q = e.target.value.trim();
 
-            const search =
-                event.target.value.trim();
+            clearTimeout(groupTimer);
 
-            searchTimer = setTimeout(
-                () => {
-                    groupState.q = search;
-                    groupState.page = 1;
+            groupTimer = setTimeout(() => {
+                gs.q = q;
+                gs.page = 1;
 
-                    loadGroup();
-                },
-                300
-            );
+                loadGroup();
+            }, 300);
         }
     );
-
 
     $('aemGroupRefresh')?.addEventListener(
         'click',
         () => {
-            clearTimeout(searchTimer);
+            clearTimeout(groupTimer);
 
-            groupState.q = '';
-            groupState.page = 1;
+            gs.q = '';
+            gs.page = 1;
 
-            $('aemGroupItemSearch').value =
-                '';
+            $('aemGroupItemSearch').value = '';
 
             loadGroup();
         }
     );
 
-
-    /* ======================================================
-       PAGINATION KELOMPOK
-    ====================================================== */
-
     $('aemGroupPrev')?.addEventListener(
         'click',
         () => {
-            if (groupState.page > 1) {
-                groupState.page--;
-
+            if (gs.page > 1) {
+                gs.page--;
                 loadGroup();
             }
         }
     );
-
 
     $('aemGroupNext')?.addEventListener(
         'click',
         () => {
-            const lastPage =
-                groupState.pagination?.last_page ||
-                1;
-
-            if (groupState.page < lastPage) {
-                groupState.page++;
-
+            if (
+                gs.page <
+                (gs.pagination?.last_page || 1)
+            ) {
+                gs.page++;
                 loadGroup();
             }
         }
     );
 
-
     /* ======================================================
-       TOMBOL AKSI TABEL
+       AKSI TABEL UTAMA DAN KELOMPOK
     ====================================================== */
 
-    root.addEventListener(
-        'click',
-        async event => {
-            if (
-                !(event.target instanceof Element)
-            ) {
-                return;
-            }
-
-            const button =
-                event.target.closest(
-                    'button[data-aem-action]'
-                );
-
-            if (
-                !button ||
-                !root.contains(button) ||
-                button.disabled
-            ) {
-                return;
-            }
-
-            const action =
-                button.dataset.aemAction;
-
-            const id =
-                button.dataset.id;
-
-            if (
-                !/^\d+$/.test(
-                    String(id)
-                )
-            ) {
-                toast('ID aset tidak valid.');
-                return;
-            }
-
-
-            /* DETAIL KELOMPOK */
-
-            if (action === 'group') {
-                openGroup(
-                    button.dataset.location,
-                    button.dataset.division
-                );
-
-                return;
-            }
-
-
-            /* HAPUS DATA */
-
-            if (action === 'delete') {
-                confirmDelete(
-                    id,
-                    button.dataset.name
-                );
-
-                return;
-            }
-
-
-            /* VIEW DAN EDIT */
-
-            if (
-                !['view', 'edit'].includes(action)
-            ) {
-                return;
-            }
-
-            button.disabled = true;
-
-            try {
-                const item =
-                    await fetchItem(id);
-
-                if (action === 'edit') {
-                    editForm(item);
-                } else {
-                    detail(item);
-                }
-
-            } catch (exception) {
-                toast(exception.message);
-
-            } finally {
-                button.disabled = false;
-            }
+    root.addEventListener('click', async e => {
+        if (!(e.target instanceof Element)) {
+            return;
         }
-    );
 
+        const btn = e.target.closest(
+            'button[data-aem-action]'
+        );
+
+        if (
+            !btn ||
+            !root.contains(btn) ||
+            btn.disabled
+        ) {
+            return;
+        }
+
+        const action = btn.dataset.aemAction;
+        const id = btn.dataset.id;
+
+        if (!/^\d+$/.test(String(id))) {
+            toast('ID aset tidak valid.');
+            return;
+        }
+
+        if (action === 'group') {
+            openGroup(
+                btn.dataset.location,
+                btn.dataset.division
+            );
+
+            return;
+        }
+
+        if (action === 'delete') {
+            confirmDelete(
+                id,
+                btn.dataset.name
+            );
+
+            return;
+        }
+
+        if (!['view', 'edit'].includes(action)) {
+            return;
+        }
+
+        btn.disabled = true;
+
+        try {
+            const item = await fetchItem(id);
+
+            if (action === 'edit') {
+                editForm(item);
+            } else {
+                detail(item);
+            }
+        } catch (err) {
+            toast(err.message);
+        } finally {
+            btn.disabled = false;
+        }
+    });
 
     /* ======================================================
-       EDIT DARI DETAIL
+       EDIT DARI POPUP VIEW
     ====================================================== */
 
     $('aemEditDetail')?.addEventListener(
         'click',
         () => {
-            if (!current) return;
+            if (!active) return;
 
-            const item = current;
+            const item = active;
 
-            hideDialog(detailDialog);
-
+            close(detailDialog);
             editForm(item);
         }
     );
 
-
     /* ======================================================
-       KONFIRMASI DELETE
+       DELETE DATA
     ====================================================== */
 
     function confirmDelete(id, name) {
@@ -2482,43 +1987,32 @@
         $('aemDeleteName').textContent =
             name || `Aset #${id}`;
 
-        hideDialog(detailDialog);
-
-        showDialog(deleteDialog);
+        close(detailDialog);
+        open(deleteDialog);
     }
-
 
     $('aemDeleteDetail')?.addEventListener(
         'click',
         () => {
-            if (!current) return;
-
-            confirmDelete(
-                current.id,
-                current.nama_aset
-            );
+            if (active) {
+                confirmDelete(
+                    active.id,
+                    active.nama_aset
+                );
+            }
         }
     );
-
-
-    /* ======================================================
-       HAPUS KE DATABASE
-    ====================================================== */
 
     $('aemConfirmDelete')?.addEventListener(
         'click',
         async () => {
-            if (!deleteId || deleting) {
-                return;
-            }
+            if (!deleteId || deleting) return;
 
             deleting = true;
 
-            const button =
-                $('aemConfirmDelete');
+            const btn = $('aemConfirmDelete');
 
-            button.disabled = true;
-
+            btn.disabled = true;
 
             try {
                 await api(
@@ -2529,17 +2023,14 @@
                 );
 
                 window.location.assign(base);
-
-            } catch (exception) {
-                toast(exception.message);
+            } catch (err) {
+                toast(err.message);
 
                 deleting = false;
-
-                button.disabled = false;
+                btn.disabled = false;
             }
         }
     );
-
 
     deleteDialog?.addEventListener(
         'close',
@@ -2550,64 +2041,41 @@
         }
     );
 
-
-    /* ======================================================
-       VALIDASI KONDISI BARANG
-    ====================================================== */
-
-    function validateCondition() {
-        const input = $('aemKondisi');
-
-        if (!input) return true;
-
-        input.value = String(
-            input.value ?? ''
-        )
-            .trim()
-            .toUpperCase();
-
-        const allowed = [
-            'BAIK',
-            'KURANG BAIK',
-            'RUSAK BERAT',
-
-            // Nilai lama
-            'CUKUP',
-            'RUSAK RINGAN'
-        ];
-
-        const valid =
-            allowed.includes(input.value);
-
-        input.setCustomValidity(
-            valid
-                ? ''
-                : 'Pilih BAIK, KURANG BAIK, atau RUSAK BERAT.'
-        );
-
-        if (!valid) {
-            input.reportValidity();
-        }
-
-        return valid;
-    }
-
-
     /* ======================================================
        SIMPAN TAMBAH / EDIT
     ====================================================== */
 
     form?.addEventListener(
         'submit',
-        async event => {
-            event.preventDefault();
+        async e => {
+            e.preventDefault();
 
             if (saving) return;
 
-            showError('');
+            error('');
 
-            if (!validateCondition()) {
-                return;
+            const condition = $('aemKondisi');
+
+            if (condition) {
+                condition.value = String(
+                    condition.value ?? ''
+                )
+                    .trim()
+                    .toUpperCase();
+
+                const allowed = [
+                    'BAIK',
+                    'KURANG BAIK',
+                    'RUSAK BERAT',
+                    'CUKUP',
+                    'RUSAK RINGAN'
+                ];
+
+                condition.setCustomValidity(
+                    allowed.includes(condition.value)
+                        ? ''
+                        : 'Pilih BAIK, KURANG BAIK, atau RUSAK BERAT.'
+                );
             }
 
             if (!form.reportValidity()) {
@@ -2616,30 +2084,21 @@
 
             saving = true;
 
-            const button = $('aemSave');
+            const saveBtn = $('aemSave');
 
-            button.disabled = true;
-
-
-            /* FORM DATA */
+            saveBtn.disabled = true;
 
             const data = new FormData(form);
 
-
-            /* LAMPIRAN BARU */
-
             data.delete('dokumens[]');
 
-            addedFiles.forEach(file => {
+            newFiles.forEach(file => {
                 data.append(
                     'dokumens[]',
                     file,
                     file.name
                 );
             });
-
-
-            /* UPDATE MENGGUNAKAN PUT */
 
             if (editId !== null) {
                 data.set(
@@ -2648,42 +2107,31 @@
                 );
             }
 
-            const url = editId !== null
-                ? `${base}/${encodeURIComponent(editId)}`
-                : base;
-
+            const url = editId === null
+                ? base
+                : `${base}/${encodeURIComponent(editId)}`;
 
             try {
-                await api(
-                    url,
-                    {
-                        method: 'POST',
-                        body: data
-                    }
-                );
+                await api(url, {
+                    method: 'POST',
+                    body: data
+                });
 
                 window.location.assign(base);
-
-            } catch (exception) {
-                showError(exception.message);
+            } catch (err) {
+                error(err.message);
 
                 saving = false;
-
-                button.disabled = false;
+                saveBtn.disabled = false;
             }
         }
     );
-
 
     /* ======================================================
        INITIALIZE
     ====================================================== */
 
-    initClock();
-
     initCombos();
-
     icons();
 
 })();
-    

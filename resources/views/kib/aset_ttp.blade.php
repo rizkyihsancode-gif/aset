@@ -436,12 +436,35 @@
                         <div class="aem-table-wrap">
 
 
+
+                            {{-- ==========================================================
+     TABEL KELOMPOK KIB E — FORMAT EXCEL
+     10 KOLOM INVENTARIS + 1 KOLOM VIEW
+========================================================== --}}
+
                             <table class="aem-table aem-group-table">
+
+                                <colgroup>
+                                    <col class="aem-col-no">
+                                    <col class="aem-col-name">
+                                    <col class="aem-col-code">
+                                    <col class="aem-col-register">
+                                    <col class="aem-col-condition">
+                                    <col class="aem-col-material">
+                                    <col class="aem-col-year">
+                                    <col class="aem-col-quantity">
+                                    <col class="aem-col-origin">
+                                    <col class="aem-col-description">
+                                    <col class="aem-col-view">
+                                </colgroup>
 
                                 <thead>
 
                                     <tr>
-                                        <th rowspan="2">No.</th>
+
+                                        <th rowspan="2">
+                                            No.
+                                        </th>
 
                                         <th rowspan="2">
                                             Nama Barang / Jenis Barang
@@ -478,6 +501,7 @@
                                         <th rowspan="2">
                                             View
                                         </th>
+
                                     </tr>
 
                                     <tr>
@@ -485,12 +509,16 @@
                                         <th>Register</th>
                                     </tr>
 
+                                    {{-- Nomor kolom sesuai lembar Excel --}}
+
                                     <tr class="aem-group-number-row">
+
                                         @for ($i = 1; $i <= 10; $i++)
                                             <th>{{ $i }}</th>
                                         @endfor
 
                                         <th>—</th>
+
                                     </tr>
 
                                 </thead>
@@ -499,13 +527,14 @@
 
                                     <tr>
                                         <td colspan="11" class="aem-empty">
-                                            Memuat daftar aset...
+                                            Memuat data inventaris...
                                         </td>
                                     </tr>
 
                                 </tbody>
 
                             </table>
+
 
 
                         </div>

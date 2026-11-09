@@ -5988,6 +5988,7 @@ class KIBController extends Controller
     }
 
 
+
     public function kelompokAsetTetapManual(
         \Illuminate\Http\Request $request
     ) {
@@ -5998,15 +5999,29 @@ class KIBController extends Controller
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $lokasiExpr =
-            "COALESCE(NULLIF(BTRIM(lokasi), ''), 'Tanpa Lokasi')";
+        /*
+    |--------------------------------------------------------------------------
+    | NORMALISASI KELOMPOK
+    |--------------------------------------------------------------------------
+    */
 
-        $divisiExpr =
-            "COALESCE(NULLIF(BTRIM(divisi), ''), 'Tanpa Divisi')";
+        $lokasiExpr = "
+        COALESCE(
+            NULLIF(BTRIM(lokasi), ''),
+            'Tanpa Lokasi'
+        )
+    ";
+
+        $divisiExpr = "
+        COALESCE(
+            NULLIF(BTRIM(divisi), ''),
+            'Tanpa Divisi'
+        )
+    ";
 
         /*
     |--------------------------------------------------------------------------
-    | PANEL KIRI: KELOMPOK LOKASI DAN DIVISI
+    | PANEL KIRI — LOKASI DAN DIVISI
     |--------------------------------------------------------------------------
     */
 
@@ -6018,23 +6033,26 @@ class KIBController extends Controller
             {$divisiExpr} AS divisi,
             COUNT(*) AS jumlah
         ")
-            ->groupByRaw("{$lokasiExpr}, {$divisiExpr}")
+            ->groupByRaw("
+            {$lokasiExpr},
+            {$divisiExpr}
+        ")
             ->orderBy('lokasi')
             ->orderBy('divisi')
             ->get();
 
-        $requestedLocation = trim(
+        $requestedLokasi = trim(
             (string) $request->query('lokasi', '')
         );
 
-        $requestedDivision = trim(
+        $requestedDivisi = trim(
             (string) $request->query('divisi', '')
         );
 
         $selected = $groups->first(
             fn($group) =>
-            $group->lokasi === $requestedLocation &&
-                $group->divisi === $requestedDivision
+            $group->lokasi === $requestedLokasi &&
+                $group->divisi === $requestedDivisi
         ) ?? $groups->first();
 
         if (!$selected) {
@@ -6055,7 +6073,7 @@ class KIBController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | PANEL KANAN: DATA BARANG SESUAI KIB E
+    | PANEL KANAN — AMBIL SEMUA KOLOM EXCEL
     |--------------------------------------------------------------------------
     */
 
@@ -6078,25 +6096,35 @@ class KIBController extends Controller
         if ($search !== '') {
             $like = '%' . $search . '%';
 
-            $query->where(
-                function ($builder) use ($like) {
-                    foreach (
-                        [
-                            'nama_aset',
-                            'kode_inventaris',
-                            'nomor_register',
-                            'bahan',
-                            'keterangan',
-                        ] as $column
-                    ) {
-                        $builder->orWhere(
-                            $column,
-                            'ILIKE',
-                            $like
-                        );
-                    }
-                }
-            );
+            $query->where(function ($builder) use ($like) {
+                $builder
+                    ->where('nama_aset', 'ILIKE', $like)
+                    ->orWhere(
+                        'kode_inventaris',
+                        'ILIKE',
+                        $like
+                    )
+                    ->orWhere(
+                        'nomor_register',
+                        'ILIKE',
+                        $like
+                    )
+                    ->orWhere(
+                        'bahan',
+                        'ILIKE',
+                        $like
+                    )
+                    ->orWhere(
+                        'asal_perolehan',
+                        'ILIKE',
+                        $like
+                    )
+                    ->orWhere(
+                        'keterangan',
+                        'ILIKE',
+                        $like
+                    );
+            });
         }
 
         $page = $query
@@ -6111,7 +6139,6 @@ class KIBController extends Controller
                 'jumlah_unit',
                 'asal_perolehan',
                 'keterangan',
-                'foto_path',
             ])
             ->orderBy('nama_aset')
             ->orderBy('id')
@@ -6119,97 +6146,49 @@ class KIBController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | PERIKSA ROUTE FOTO
-    |--------------------------------------------------------------------------
-    | Jangan membuat seluruh popup gagal
-    | apabila nama route foto berbeda.
-    |--------------------------------------------------------------------------
-    */
-
-        $photoRoute = null;
-
-        foreach (
-            [
-                'kib.aset_ttp.manual.foto',
-                'kib.aset_ttp.foto',
-            ] as $name
-        ) {
-            if (
-                \Illuminate\Support\Facades\Route::has($name)
-            ) {
-                $photoRoute = $name;
-                break;
-            }
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | DATA JSON UNTUK PANEL KANAN
+    | FORMAT JSON
+    | Semua kolom Excel dikirim ke frontend.
     |--------------------------------------------------------------------------
     */
 
         $items = $page
             ->getCollection()
-            ->map(function ($row) use ($photoRoute) {
+            ->map(fn($row) => [
+                'id' => (int) $row->id,
 
-                $photoUrl = null;
+                'nama_aset' => $row->nama_aset,
 
-                if (
-                    $photoRoute &&
-                    !empty($row->foto_path)
-                ) {
-                    $photoUrl = route(
-                        $photoRoute,
-                        [$row->id]
-                    );
-                }
+                'kode_inventaris' =>
+                $row->kode_inventaris,
 
-                return [
-                    'id' => (int) $row->id,
+                'nomor_register' =>
+                $row->nomor_register,
 
-                    'nama_aset' =>
-                    $row->nama_aset,
+                'kondisi' => $row->kondisi,
 
-                    'kode_inventaris' =>
-                    $row->kode_inventaris,
+                'bahan' => $row->bahan,
 
-                    'nomor_register' =>
-                    $row->nomor_register,
+                'tahun' => $row->tahun,
 
-                    'kondisi' =>
-                    $row->kondisi,
+                'jumlah_unit' => $row->jumlah_unit,
 
-                    'bahan' =>
-                    $row->bahan,
+                'asal_perolehan' =>
+                $row->asal_perolehan,
 
-                    'tahun' =>
-                    $row->tahun,
-
-                    'jumlah_unit' =>
-                    (int) ($row->jumlah_unit ?? 0),
-
-                    'asal_perolehan' =>
-                    $row->asal_perolehan,
-
-                    'keterangan' =>
-                    $row->keterangan,
-
-                    'foto_url' =>
-                    $photoUrl,
-                ];
-            })
+                'keterangan' => $row->keterangan,
+            ])
             ->all();
 
         return response()->json([
             'success' => true,
 
-            'groups' => $groups->map(
-                fn($group) => [
+            'groups' => $groups
+                ->map(fn($group) => [
                     'lokasi' => $group->lokasi,
                     'divisi' => $group->divisi,
                     'jumlah' => (int) $group->jumlah,
-                ]
-            )->all(),
+                ])
+                ->all(),
 
             'selected' => [
                 'lokasi' => $selected->lokasi,
@@ -6227,6 +6206,7 @@ class KIBController extends Controller
             ],
         ]);
     }
+
 
 
 
