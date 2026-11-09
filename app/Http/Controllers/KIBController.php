@@ -5349,91 +5349,99 @@ class KIBController extends Controller
     |--------------------------------------------------------------------------
     */
 
+
     private function validasiAsetTetapManual(
-        Request $request
+        \Illuminate\Http\Request $request
     ): array {
-
         return $request->validate([
-
             'nama_aset' => [
                 'required',
                 'string',
-                'max:500',
+                'max:500'
             ],
 
             'lokasi' => [
                 'required',
                 'string',
-                'max:500',
+                'max:500'
             ],
 
             'alamat' => [
                 'nullable',
                 'string',
-                'max:500',
+                'max:500'
             ],
 
             'departemen' => [
                 'nullable',
                 'string',
-                'max:255',
+                'max:255'
             ],
 
             'divisi' => [
                 'nullable',
                 'string',
-                'max:255',
+                'max:255'
+            ],
+
+            'kode_struktur' => [
+                'nullable',
+                'string',
+                'max:100'
             ],
 
             'kode_inventaris' => [
                 'required',
                 'string',
-                'max:255',
+                'max:255'
             ],
 
             'nomor_register' => [
                 'required',
                 'string',
-                'max:255',
+                'max:255'
             ],
 
             'bahan' => [
                 'nullable',
                 'string',
-                'max:255',
+                'max:255'
             ],
 
             'tahun' => [
                 'required',
                 'integer',
-                'between:1900,2100',
+                'between:1900,2100'
             ],
 
             'jumlah_unit' => [
                 'required',
                 'integer',
-                'min:1',
+                'min:1'
             ],
 
             'kondisi' => [
                 'required',
-                Rule::in([
+                \Illuminate\Validation\Rule::in([
                     'BAIK',
+                    'KURANG BAIK',
+                    'RUSAK BERAT',
+
+                    // Kompatibilitas dengan data lama
                     'CUKUP',
                     'RUSAK RINGAN',
-                    'RUSAK BERAT',
                 ]),
             ],
 
             'asal_perolehan' => [
                 'nullable',
                 'string',
-                'max:255',
+                'max:255'
             ],
 
             'keterangan' => [
                 'nullable',
-                'string',
+                'string'
             ],
 
             'foto' => [
@@ -5445,7 +5453,7 @@ class KIBController extends Controller
 
             'dokumens' => [
                 'nullable',
-                'array',
+                'array'
             ],
 
             'dokumens.*' => [
@@ -5456,14 +5464,15 @@ class KIBController extends Controller
 
             'hapus_dokumen_ids' => [
                 'nullable',
-                'array',
+                'array'
             ],
 
             'hapus_dokumen_ids.*' => [
-                'integer',
+                'integer'
             ],
         ]);
     }
+
 
 
     /*
@@ -5472,10 +5481,10 @@ class KIBController extends Controller
     |--------------------------------------------------------------------------
     */
 
+
     private function fieldsAsetTetapManual(
         array $data
     ): array {
-
         $result = [];
 
         foreach (
@@ -5485,6 +5494,7 @@ class KIBController extends Controller
                 'alamat',
                 'departemen',
                 'divisi',
+                'kode_struktur',
                 'kode_inventaris',
                 'nomor_register',
                 'bahan',
@@ -5495,7 +5505,6 @@ class KIBController extends Controller
                 'keterangan',
             ] as $key
         ) {
-
             $result[$key] = $data[$key] ?? null;
         }
 

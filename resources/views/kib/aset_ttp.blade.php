@@ -1,551 +1,623 @@
+
 @extends('layouts.main')
 
 @section('title', 'Aset Tetap Lainnya')
 
 @section('content')
 
-    @php
-        $viewMode = ($viewMode ?? 'manual') === 'arsip' ? 'arsip' : 'manual';
+@php
+    $viewMode = ($viewMode ?? 'manual') === 'arsip'
+        ? 'arsip'
+        : 'manual';
 
-        $condLabel = fn($value) => mb_convert_case(mb_strtolower((string) ($value ?? '')), MB_CASE_TITLE, 'UTF-8');
-    @endphp
+    $labelKondisi = fn($value) => match (
+        strtoupper(trim((string) $value))
+    ) {
+        'BAIK' => 'Baik (B)',
+        'KURANG BAIK' => 'Kurang Baik (KB)',
+        'RUSAK BERAT' => 'Rusak Berat (RB)',
+        'CUKUP' => 'Cukup (lama)',
+        'RUSAK RINGAN' => 'Rusak Ringan (lama)',
+        default => $value ?: '—'
+    };
+@endphp
 
-    <link rel="stylesheet"
-        href="{{ asset('css/pages/kib/aset_ttp.css') }}?v={{ file_exists(public_path('css/pages/kib/aset_ttp.css')) ? filemtime(public_path('css/pages/kib/aset_ttp.css')) : '1' }}">
+<link
+    rel="stylesheet"
+    href="{{ asset('css/pages/kib/aset_ttp.css') }}?v={{ file_exists(public_path('css/pages/kib/aset_ttp.css')) ? filemtime(public_path('css/pages/kib/aset_ttp.css')) : '1' }}"
+>
 
-    <section id="aemApp" class="aem-page" data-base="{{ url('/kib/aset_ttp') }}"
-        data-group-url="{{ route('kib.aset_ttp.kelompok') }}" data-token="{{ csrf_token() }}">
+<section
+    id="aemApp"
+    class="aem-page"
+    data-base="{{ url('/kib/aset_ttp') }}"
+    data-group-url="{{ route('kib.aset_ttp.kelompok') }}"
+    data-token="{{ csrf_token() }}"
+    data-logo-url="{{ asset('images/logo.png') }}"
+>
 
-        {{-- =====================================================
-         HEADER K.I.B E
-    ====================================================== --}}
+    {{-- HEADER --}}
 
-        <header class="aem-hero">
+    <header class="aem-hero">
 
-            <nav class="aem-crumb" aria-label="Breadcrumb">
+        <nav class="aem-crumb">
 
-                <a href="{{ route('dashboard') }}" aria-label="Dashboard">
-                    <i data-lucide="house"></i>
-                </a>
+            <a
+                href="{{ route('dashboard') }}"
+                aria-label="Dashboard"
+            >
+                <i data-lucide="house"></i>
+            </a>
 
-                <i data-lucide="chevron-right"></i>
-                <span>K.I.B</span>
+            <i data-lucide="chevron-right"></i>
+            <span>K.I.B</span>
+            <i data-lucide="chevron-right"></i>
+            <strong>Aset Tetap Lainnya</strong>
 
-                <i data-lucide="chevron-right"></i>
-                <strong>Aset Tetap Lainnya</strong>
+        </nav>
 
-            </nav>
+        <div class="aem-date">
 
-            <div class="aem-date">
+            <i data-lucide="calendar-days"></i>
 
-                <i data-lucide="calendar-days"></i>
+            <div>
 
+                <strong id="aemDate">
+                    {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
+                </strong>
+
+                <small>
+                    <span id="aemTime">
+                        {{ now('Asia/Makassar')->format('H:i:s') }}
+                    </span>
+                    WITA
+                </small>
+
+            </div>
+
+        </div>
+
+        <h1>Aset Tetap Lainnya</h1>
+
+        <p>
+            Kartu Inventaris Barang (KIB) E —
+            pencatatan manual, kelompok lokasi dan divisi,
+            serta lampiran dokumen pendukung.
+        </p>
+
+        <div class="aem-kpis">
+
+            <article>
+                <i data-lucide="package-open"></i>
                 <div>
-                    <strong id="aemDate">
-                        {{ now('Asia/Makassar')->locale('id')->translatedFormat('l, d F Y') }}
+                    <small>Total Inventaris</small>
+                    <strong>
+                        {{ number_format($totalAset ?? 0, 0, ',', '.') }}
                     </strong>
-
-                    <small>
-                        <span id="aemTime">
-                            {{ now('Asia/Makassar')->format('H:i:s') }}
-                        </span>
-                        WITA
-                    </small>
+                    <span>Catatan barang</span>
                 </div>
+            </article>
 
-            </div>
-
-            <h1>Aset Tetap Lainnya</h1>
-
-            <p>
-                Pengelolaan inventaris K.I.B E melalui pencatatan
-                manual, pengelompokan lokasi dan divisi, serta
-                dokumen pendukung Perumda Tirta Kencana
-                Kota Samarinda.
-            </p>
-
-            {{-- KARTU STATISTIK --}}
-
-            <div class="aem-kpis">
-
-                <article>
-                    <span class="aem-kpi-icon">
-                        <i data-lucide="package-open"></i>
-                    </span>
-
-                    <div>
-                        <small>Total Inventaris</small>
-
-                        <strong>
-                            {{ number_format($totalAset, 0, ',', '.') }}
-                        </strong>
-
-                        <span>Catatan inventaris manual</span>
-                    </div>
-                </article>
-
-                <article>
-                    <span class="aem-kpi-icon">
-                        <i data-lucide="boxes"></i>
-                    </span>
-
-                    <div>
-                        <small>Total Unit</small>
-
-                        <strong>
-                            {{ number_format($totalUnit, 0, ',', '.') }}
-                        </strong>
-
-                        <span>Akumulasi jumlah barang</span>
-                    </div>
-                </article>
-
-                <article>
-                    <span class="aem-kpi-icon">
-                        <i data-lucide="map-pin"></i>
-                    </span>
-
-                    <div>
-                        <small>Jumlah Lokasi</small>
-
-                        <strong>
-                            {{ number_format($totalLokasi, 0, ',', '.') }}
-                        </strong>
-
-                        <span>Lokasi berbeda</span>
-                    </div>
-                </article>
-
-            </div>
-
-        </header>
-
-
-        {{-- =====================================================
-         HALAMAN UTAMA ASET TETAP LAINNYA
-    ====================================================== --}}
-
-        <section class="aem-panel" id="aemListPanel">
-
-            <div class="aem-heading">
-
+            <article>
+                <i data-lucide="boxes"></i>
                 <div>
-                    <h2>
-                        {{ $viewMode === 'arsip' ? 'Arsip Aset Tetap Lainnya' : 'Daftar Aset Tetap Lainnya' }}
-                    </h2>
-
-                    <p>
-                        {{ $viewMode === 'arsip'
-                            ? 'Riwayat K.I.B E lama yang hanya dapat dibaca.'
-                            : 'Kelola inventaris melalui Detail Kelompok, Edit, dan Delete.' }}
-                    </p>
+                    <small>Total Unit</small>
+                    <strong>
+                        {{ number_format($totalUnit ?? 0, 0, ',', '.') }}
+                    </strong>
+                    <span>Akumulasi jumlah barang</span>
                 </div>
+            </article>
 
-                <button type="button" class="aem-btn primary" id="aemAdd">
+            <article>
+                <i data-lucide="map-pin"></i>
+                <div>
+                    <small>Jumlah Lokasi</small>
+                    <strong>
+                        {{ number_format($totalLokasi ?? 0, 0, ',', '.') }}
+                    </strong>
+                    <span>Lokasi berbeda</span>
+                </div>
+            </article>
+
+        </div>
+
+    </header>
+
+
+    {{-- ================================================
+         HALAMAN UTAMA
+    ================================================= --}}
+
+    <section class="aem-panel" id="aemListPanel">
+
+        <div class="aem-panel-head">
+
+            <div>
+                <h2>
+                    {{ $viewMode === 'arsip'
+                        ? 'Arsip Aset Tetap Lainnya'
+                        : 'Daftar Aset Tetap Lainnya' }}
+                </h2>
+
+                <p>
+                    {{ $viewMode === 'arsip'
+                        ? 'Catatan lama, hanya dapat dibaca.'
+                        : 'Klik folder untuk membuka kelompok, atau edit dan hapus catatan manual.' }}
+                </p>
+            </div>
+
+            @if($viewMode === 'manual')
+
+                <button
+                    type="button"
+                    class="aem-btn primary"
+                    id="aemAdd"
+                >
                     <i data-lucide="plus"></i>
                     Tambah Aset
                 </button>
 
-            </div>
-
-
-            {{-- TAB MANUAL DAN ARSIP --}}
-
-            <nav class="aem-tabs" aria-label="Sumber Inventaris">
-
-                <a href="{{ route('kib.aset_ttp') }}" class="{{ $viewMode === 'manual' ? 'active' : '' }}">
-                    <i data-lucide="clipboard-list"></i>
-                    Data Manual ({{ $totalAset }})
-                </a>
-
-                <a href="{{ route('kib.aset_ttp', ['view' => 'arsip']) }}"
-                    class="{{ $viewMode === 'arsip' ? 'active' : '' }}">
-                    <i data-lucide="archive"></i>
-                    Arsip Data Lama ({{ $archiveCount }})
-                </a>
-
-            </nav>
-
-
-            {{-- FILTER PENCARIAN --}}
-
-            <form method="GET" action="{{ route('kib.aset_ttp') }}" class="aem-toolbar">
-
-                <input type="hidden" name="view" value="{{ $viewMode }}">
-
-                <label class="aem-search">
-                    <i data-lucide="search"></i>
-
-                    <input type="search" name="q" value="{{ $search ?? '' }}"
-                        placeholder="Cari nama aset, kode, register, lokasi...">
-                </label>
-
-                @if ($viewMode === 'manual')
-
-                    <select name="kondisi" aria-label="Filter Kondisi">
-                        <option value="">
-                            Semua Kondisi
-                        </option>
-
-                        @foreach ([
-            'BAIK' => 'Baik',
-            'CUKUP' => 'Cukup',
-            'RUSAK RINGAN' => 'Rusak Ringan',
-            'RUSAK BERAT' => 'Rusak Berat',
-        ] as $value => $label)
-                            <option value="{{ $value }}" @selected(($condition ?? '') === $value)>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-
-                    </select>
-
-                @endif
-
-                <button type="submit" class="aem-btn primary">
-                    <i data-lucide="filter"></i>
-                    Filter
-                </button>
-
-                <a href="{{ route('kib.aset_ttp', $viewMode === 'arsip' ? ['view' => 'arsip'] : []) }}"
-                    class="aem-btn outline">
-                    Reset
-                </a>
-
-            </form>
-
-
-            {{-- PEMBERITAHUAN ARSIP --}}
-
-            @if ($viewMode === 'arsip')
-                <div class="aem-notice">
-                    <i data-lucide="lock-keyhole"></i>
-
-                    Data pada tab ini berasal dari tabel
-                    <code>kib_e_s</code>.
-                    Seluruh arsip hanya dapat dibaca.
-                </div>
             @endif
 
+        </div>
 
-            {{-- TABEL RINGKASAN --}}
 
-            <div class="aem-table-wrap">
+        {{-- TAB --}}
 
-                <table class="aem-table">
+        <nav class="aem-tabs">
 
-                    <thead>
+            <a
+                class="{{ $viewMode === 'manual' ? 'active' : '' }}"
+                href="{{ route('kib.aset_ttp') }}"
+            >
+                <i data-lucide="clipboard-list"></i>
+                Data Manual ({{ $totalAset ?? 0 }})
+            </a>
+
+            <a
+                class="{{ $viewMode === 'arsip' ? 'active' : '' }}"
+                href="{{ route('kib.aset_ttp', ['view' => 'arsip']) }}"
+            >
+                <i data-lucide="archive"></i>
+                Arsip Lama ({{ $archiveCount ?? 0 }})
+            </a>
+
+        </nav>
+
+
+        {{-- PENCARIAN DAN FILTER --}}
+
+        <form
+            action="{{ route('kib.aset_ttp') }}"
+            method="GET"
+            class="aem-toolbar"
+        >
+
+            <input
+                type="hidden"
+                name="view"
+                value="{{ $viewMode }}"
+            >
+
+            <label class="aem-search">
+
+                <i data-lucide="search"></i>
+
+                <input
+                    name="q"
+                    type="search"
+                    value="{{ $search ?? '' }}"
+                    placeholder="Cari nama, kode barang, register, lokasi..."
+                >
+
+            </label>
+
+            @if($viewMode === 'manual')
+
+                <select
+                    name="kondisi"
+                    aria-label="Filter kondisi"
+                >
+                    <option value="">Semua Kondisi</option>
+
+                    @foreach([
+                        'BAIK' => 'Baik (B)',
+                        'KURANG BAIK' => 'Kurang Baik (KB)',
+                        'RUSAK BERAT' => 'Rusak Berat (RB)',
+                        'CUKUP' => 'Cukup (lama)',
+                        'RUSAK RINGAN' => 'Rusak Ringan (lama)'
+                    ] as $value => $label)
+
+                        <option
+                            value="{{ $value }}"
+                            @selected(($condition ?? '') === $value)
+                        >
+                            {{ $label }}
+                        </option>
+
+                    @endforeach
+                </select>
+
+            @endif
+
+            <button type="submit" class="aem-btn primary">
+                <i data-lucide="filter"></i>
+                Filter
+            </button>
+
+            <a
+                class="aem-btn outline"
+                href="{{ route(
+                    'kib.aset_ttp',
+                    $viewMode === 'arsip'
+                        ? ['view' => 'arsip']
+                        : []
+                ) }}"
+            >
+                Reset
+            </a>
+
+        </form>
+
+
+        @if($viewMode === 'arsip')
+
+            <div class="aem-notice">
+                <i data-lucide="lock-keyhole"></i>
+                Sumber: <code>kib_e_s</code>.
+                Arsip ini baca-saja dan tidak berubah.
+            </div>
+
+        @endif
+
+
+        {{-- TABEL RINGKASAN --}}
+
+        <div class="aem-table-wrap">
+
+            <table class="aem-table aem-main-table">
+
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Nama Barang</th>
+                        <th>Kode Barang / Register</th>
+                        <th>Tahun</th>
+                        <th>Jumlah</th>
+                        <th>Kondisi</th>
+                        <th>Lokasi</th>
+                        <th>
+                            {{ $viewMode === 'manual'
+                                ? 'Aksi'
+                                : 'Asal' }}
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @forelse($items as $item)
+
                         <tr>
-                            <th>No.</th>
-                            <th>Nama Aset</th>
-                            <th>Kode / Register</th>
-                            <th>Tahun</th>
-                            <th>Jumlah Unit</th>
-                            <th>Kondisi</th>
-                            <th>Lokasi</th>
 
-                            @if ($viewMode === 'manual')
-                                <th class="aem-action-head">Aksi</th>
-                            @else
-                                <th>Asal</th>
-                            @endif
-                        </tr>
-                    </thead>
+                            <td class="aem-center">
+                                {{ $items->firstItem() + $loop->index }}
+                            </td>
 
-                    <tbody>
+                            <td>
+                                <strong>
+                                    {{ $item->nama_aset ?: '—' }}
+                                </strong>
+                            </td>
 
-                        @forelse ($items as $item)
-                            <tr>
+                            <td>
+                                <strong>
+                                    {{ $viewMode === 'manual'
+                                        ? ($item->kode_inventaris ?: '—')
+                                        : ($item->kode ?: '—') }}
+                                </strong>
 
-                                <td class="aem-center">
-                                    {{ $items->firstItem() + $loop->index }}
-                                </td>
+                                <small>
+                                    Register:
+                                    {{ $viewMode === 'manual'
+                                        ? ($item->nomor_register ?: '—')
+                                        : ($item->reg ?: '—') }}
+                                </small>
+                            </td>
 
-                                <td>
-                                    <strong class="aem-name">
-                                        {{ $item->nama_aset ?: '—' }}
-                                    </strong>
-                                </td>
+                            <td class="aem-center">
+                                {{ $item->tahun ?: '—' }}
+                            </td>
 
-                                <td>
-                                    <div class="aem-code">
-                                        {{ $viewMode === 'arsip' ? ($item->kode ?: '—') : ($item->kode_inventaris ?: '—') }}
+                            <td class="aem-center">
+                                {{ number_format(
+                                    (int) (
+                                        $viewMode === 'manual'
+                                            ? $item->jumlah_unit
+                                            : $item->jumlah
+                                    ),
+                                    0,
+                                    ',',
+                                    '.'
+                                ) }}
+                            </td>
+
+                            <td>
+                                <span class="aem-pill">
+                                    {{ $labelKondisi($item->kondisi) }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {{ $item->lokasi ?: '—' }}
+                            </td>
+
+                            <td class="aem-action-cell">
+
+                                @if($viewMode === 'manual')
+
+                                    <div class="aem-actions">
+
+                                        <button
+                                            type="button"
+                                            class="aem-icon view"
+                                            data-aem-action="group"
+                                            data-id="{{ $item->id }}"
+                                            data-location="{{ $item->lokasi }}"
+                                            data-division="{{ $item->divisi }}"
+                                            title="Detail Kelompok"
+                                            aria-label="Detail Kelompok"
+                                        >
+                                            <i data-lucide="folder-open"></i>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="aem-icon edit"
+                                            data-aem-action="edit"
+                                            data-id="{{ $item->id }}"
+                                            title="Edit Aset"
+                                            aria-label="Edit Aset"
+                                        >
+                                            <i data-lucide="pencil"></i>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="aem-icon delete"
+                                            data-aem-action="delete"
+                                            data-id="{{ $item->id }}"
+                                            data-name="{{ $item->nama_aset }}"
+                                            title="Hapus Aset"
+                                            aria-label="Hapus Aset"
+                                        >
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+
                                     </div>
 
-                                    <small>
-                                        {{ $viewMode === 'arsip' ? ($item->reg ?: '—') : ($item->nomor_register ?: '—') }}
-                                    </small>
-                                </td>
-
-                                <td class="aem-center">
-                                    {{ $item->tahun ?: '—' }}
-                                </td>
-
-                                <td class="aem-center">
-                                    {{ number_format((int) ($viewMode === 'arsip' ? $item->jumlah : $item->jumlah_unit), 0, ',', '.') }}
-                                </td>
-
-                                <td>
-                                    <span class="aem-condition">
-                                        {{ $condLabel($item->kondisi) ?: '—' }}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    {{ $item->lokasi ?: '—' }}
-                                </td>
-
-                                @if ($viewMode === 'manual')
-                                    <td class="aem-action-cell">
-
-                                        <div class="aem-actions">
-
-                                            {{-- DETAIL KELOMPOK --}}
-
-                                            <button type="button" class="aem-action view" data-aem-action="group"
-                                                data-id="{{ $item->id }}" data-location="{{ $item->lokasi }}"
-                                                data-division="{{ $item->divisi }}" title="Detail Kelompok"
-                                                aria-label="Buka Detail Kelompok">
-                                                <i data-lucide="folder-open"></i>
-                                            </button>
-
-                                            {{-- EDIT --}}
-
-                                            <button type="button" class="aem-action edit" data-aem-action="edit"
-                                                data-id="{{ $item->id }}" title="Edit Aset" aria-label="Edit Aset">
-                                                <i data-lucide="pencil"></i>
-                                            </button>
-
-                                            {{-- HAPUS --}}
-
-                                            <button type="button" class="aem-action delete" data-aem-action="delete"
-                                                data-id="{{ $item->id }}" data-name="{{ $item->nama_aset }}"
-                                                title="Hapus Aset" aria-label="Hapus Aset">
-                                                <i data-lucide="trash-2"></i>
-                                            </button>
-
-                                        </div>
-
-                                    </td>
                                 @else
-                                    <td>
-                                        {{ $item->asal ?: '—' }}
-                                    </td>
+
+                                    {{ $item->asal ?: '—' }}
+
                                 @endif
 
-                            </tr>
+                            </td>
 
-                        @empty
+                        </tr>
 
-                            <tr>
-                                <td colspan="8" class="aem-empty">
-                                    Belum ada data pada tampilan ini.
-                                </td>
-                            </tr>
-                        @endforelse
+                    @empty
 
-                    </tbody>
+                        <tr>
+                            <td colspan="8" class="aem-empty">
+                                Belum ada data yang sesuai.
+                            </td>
+                        </tr>
 
-                </table>
+                    @endforelse
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="aem-pagination">
+            {{ $items->links() }}
+        </div>
+
+    </section>
+
+
+    {{-- ================================================
+         POPUP DETAIL KELOMPOK
+         Panel kiri: Lokasi / Divisi
+         Panel kanan: Daftar Barang
+    ================================================= --}}
+
+    @if($viewMode === 'manual')
+
+        <dialog
+            id="aemGroupPanel"
+            class="aem-group-dialog"
+            aria-labelledby="aemGroupDialogTitle"
+        >
+
+            <div class="aem-group-header">
+
+                <div>
+                    <small>K.I.B E — INVENTARIS MANUAL</small>
+
+                    <h2 id="aemGroupDialogTitle">
+                        Detail Kelompok Aset
+                    </h2>
+
+                    <p>
+                        Lokasi dan divisi di kiri;
+                        daftar barang di kanan.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="aem-close"
+                    id="aemGroupClose"
+                    aria-label="Tutup"
+                >
+                    <i data-lucide="x"></i>
+                </button>
 
             </div>
 
-            <div class="aem-pagination">
-                {{ $items->links() }}
-            </div>
 
-        </section>
+            <div class="aem-group-layout">
+
+                {{-- PANEL KIRI --}}
+
+                <aside class="aem-group-left">
+
+                    <h3>
+                        <i data-lucide="folder-tree"></i>
+                        Lokasi & Divisi
+                    </h3>
+
+                    <label class="aem-search">
+
+                        <i data-lucide="search"></i>
+
+                        <input
+                            id="aemGroupSearch"
+                            type="search"
+                            placeholder="Cari lokasi atau divisi..."
+                        >
+
+                    </label>
+
+                    <div
+                        id="aemGroupList"
+                        class="aem-group-list"
+                    ></div>
+
+                </aside>
 
 
-        {{-- =====================================================
-         POPUP DETAIL KELOMPOK ASET
-         Menggunakan tabel manual, bukan Kode Aktiva.
-    ====================================================== --}}
+                {{-- PANEL KANAN --}}
 
-        @if ($viewMode === 'manual')
-            <dialog id="aemGroupPanel" class="aem-group-dialog" aria-labelledby="aemGroupDialogTitle">
+                <section class="aem-group-right">
 
-                <section class="aem-group-page">
+                    <div class="aem-panel-head">
 
-                    {{-- HEADER POPUP --}}
+                        <div>
+                            <small>DAFTAR BARANG</small>
 
-                    <header class="aem-group-top">
+                            <h3 id="aemGroupTitle">
+                                Pilih kelompok
+                            </h3>
+
+                            <p id="aemGroupSubtitle">—</p>
+                        </div>
+
+                        <span
+                            id="aemGroupCount"
+                            class="aem-pill"
+                        >
+                            0 barang
+                        </span>
+
+                    </div>
+
+
+                    <div class="aem-toolbar">
+
+                        <label class="aem-search">
+
+                            <i data-lucide="search"></i>
+
+                            <input
+                                id="aemGroupItemSearch"
+                                type="search"
+                                placeholder="Cari nama, kode, register..."
+                            >
+
+                        </label>
+
+                        <button
+                            type="button"
+                            class="aem-btn outline"
+                            id="aemGroupRefresh"
+                        >
+                            Reset Cari
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="aemGroupAlert"
+                        class="aem-error"
+                        hidden
+                    ></div>
+
+
+                    <div class="aem-table-wrap">
+
+                        <table class="aem-table aem-group-table">
+
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Nama Barang</th>
+                                    <th>Kode Barang</th>
+                                    <th>Register</th>
+                                    <th>Foto</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="aemGroupRows">
+
+                                <tr>
+                                    <td
+                                        colspan="6"
+                                        class="aem-empty"
+                                    >
+                                        Memuat kelompok...
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <div class="aem-group-footer">
+
+                        <span id="aemGroupInfo">0 data</span>
 
                         <div>
 
-                            <nav class="aem-group-breadcrumb" aria-label="Navigasi Detail">
-
-                                <button type="button" id="aemBack" class="aem-back-link">
-                                    <i data-lucide="arrow-left"></i>
-                                    Kembali ke Daftar
-                                </button>
-
-                                <i data-lucide="chevron-right"></i>
-
-                                <span>Detail Kelompok Aset</span>
-
-                            </nav>
-
-                            <h2 id="aemGroupDialogTitle">
-                                Detail Kelompok Aset Tetap Lainnya
-                            </h2>
-
-                            <p>
-                                Telusuri lokasi dan divisi, kemudian
-                                pilih barang untuk melihat foto serta
-                                informasi inventarisnya.
-                            </p>
-
-                        </div>
-
-                        <button type="button" id="aemGroupClose" class="aem-group-close" title="Tutup Detail Kelompok"
-                            aria-label="Tutup Detail Kelompok">
-                            <i data-lucide="x"></i>
-                        </button>
-
-                    </header>
-
-
-                    {{-- KONTEN DUA PANEL --}}
-
-                    <div class="aem-group-layout">
-
-                        {{-- PANEL KIRI --}}
-
-                        <aside class="aem-group-left" aria-label="Daftar Kelompok">
-
-                            <div class="aem-group-side-head">
-
-                                <i data-lucide="folder-tree"></i>
-
-                                <strong>Lokasi & Divisi</strong>
-
-                            </div>
-
-                            <label class="aem-group-search">
-
-                                <i data-lucide="search"></i>
-
-                                <input id="aemGroupSearch" type="search" placeholder="Cari lokasi atau divisi..."
-                                    autocomplete="off">
-
-                            </label>
-
-                            <div id="aemGroupList" class="aem-group-list" aria-live="polite"></div>
-
-                        </aside>
-
-
-                        {{-- PANEL KANAN --}}
-
-                        <div class="aem-group-right">
-
-                            <div class="aem-group-heading">
-
-                                <div>
-
-                                    <small>
-                                        DAFTAR BARANG PADA KELOMPOK
-                                    </small>
-
-                                    <h3 id="aemGroupTitle">
-                                        Pilih Kelompok di Panel Kiri
-                                    </h3>
-
-                                    <p id="aemGroupSubtitle">
-                                        —
-                                    </p>
-
-                                </div>
-
-                                <span class="aem-group-count" id="aemGroupCount">
-                                    0 barang
-                                </span>
-
-                            </div>
-
-
-                            {{-- SEARCH PANEL KANAN --}}
-
-                            <div class="aem-group-toolbar">
-
-                                <label class="aem-group-search">
-
-                                    <i data-lucide="search"></i>
-
-                                    <input id="aemGroupItemSearch" type="search"
-                                        placeholder="Cari nama, kode, atau register..." autocomplete="off">
-
-                                </label>
-
-                                <button type="button" class="aem-btn outline" id="aemGroupRefresh">
-                                    <i data-lucide="refresh-cw"></i>
-                                    Reset Cari
-                                </button>
-
-                            </div>
-
-
-                            <div id="aemGroupAlert" class="aem-group-alert" hidden></div>
-
-
-                            {{-- TABEL BARANG DALAM KELOMPOK --}}
-
-                            <div class="aem-table-wrap">
-
-                                <table class="aem-table aem-group-table">
-
-                                    <thead>
-                                        <tr>
-                                            <th>No.</th>
-                                            <th>Nama Aset</th>
-                                            <th>Kode</th>
-                                            <th>Registrasi</th>
-                                            <th>Foto</th>
-                                            <th>Aksi</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody id="aemGroupRows">
-
-                                        <tr>
-                                            <td colspan="6" class="aem-empty">
-                                                Pilih kelompok di panel kiri.
-                                            </td>
-                                        </tr>
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
-
-                            {{-- PAGINATION PANEL KANAN --}}
-
-                            <div class="aem-group-pagination">
-
-                                <span id="aemGroupInfo">
-                                    0 data
-                                </span>
-
-                                <div>
-
-                                    <button type="button" id="aemGroupPrev" class="aem-btn outline">
-                                        Sebelumnya
-                                    </button>
-
-                                    <span id="aemGroupPage">
-                                        1 / 1
-                                    </span>
-
-                                    <button type="button" id="aemGroupNext" class="aem-btn outline">
-                                        Berikutnya
-                                    </button>
-
-                                </div>
-
-                            </div>
+                            <button
+                                type="button"
+                                class="aem-btn outline"
+                                id="aemGroupPrev"
+                            >
+                                Sebelumnya
+                            </button>
+
+                            <span id="aemGroupPage">
+                                1 / 1
+                            </span>
+
+                            <button
+                                type="button"
+                                class="aem-btn outline"
+                                id="aemGroupNext"
+                            >
+                                Berikutnya
+                            </button>
 
                         </div>
 
@@ -553,349 +625,556 @@
 
                 </section>
 
-            </dialog>
-        @endif
+            </div>
 
-
-        {{-- =====================================================
-         POPUP FORM TAMBAH / EDIT
-    ====================================================== --}}
-
-        <dialog id="aemFormDialog" class="aem-dialog" aria-labelledby="aemFormTitle">
-
-            <form id="aemForm" enctype="multipart/form-data" novalidate>
-
-                @csrf
-
-                <header class="aem-dialog-head">
-
-                    <div>
-                        <small>FORM K.I.B E — INPUT MANUAL</small>
-
-                        <h2 id="aemFormTitle">
-                            Tambah Aset Tetap Lainnya
-                        </h2>
-
-                        <p>
-                            Masukkan inventaris sesuai kondisi fisik
-                            dan dokumen yang tersedia.
-                        </p>
-                    </div>
-
-                    <button type="button" class="aem-x" data-aem-close="aemFormDialog" aria-label="Tutup Form">
-                        <i data-lucide="x"></i>
-                    </button>
-
-                </header>
-
-
-                <div class="aem-dialog-body">
-
-                    <div class="aem-error" id="aemError" role="alert" hidden></div>
-
-
-                    {{-- BAGIAN 1 --}}
-
-                    <fieldset>
-
-                        <legend>
-                            <span>1</span>
-                            Lokasi dan Organisasi
-                        </legend>
-
-                        <div class="aem-fields">
-
-                            <label>
-                                Lokasi / Unit Kerja <em>*</em>
-
-                                <input name="lokasi" id="aemLokasi" data-aem-combo="lokasi" maxlength="500"
-                                    autocomplete="off" required placeholder="Cari atau ketik lokasi">
-                            </label>
-
-                            <label>
-                                Alamat Lokasi
-
-                                <input name="alamat" id="aemAlamat" maxlength="500" placeholder="Alamat lengkap">
-                            </label>
-
-                            <label>
-                                Departemen
-
-                                <input name="departemen" id="aemDep" data-aem-combo="departemen" maxlength="255"
-                                    autocomplete="off" placeholder="Cari atau ketik departemen">
-                            </label>
-
-                            <label>
-                                Divisi
-
-                                <input name="divisi" id="aemDiv" data-aem-combo="divisi" maxlength="255"
-                                    autocomplete="off" placeholder="Cari atau ketik divisi">
-                            </label>
-
-                        </div>
-
-                    </fieldset>
-
-
-                    {{-- BAGIAN 2 --}}
-
-                    <fieldset>
-
-                        <legend>
-                            <span>2</span>
-                            Identitas Inventaris
-                        </legend>
-
-                        <div class="aem-fields">
-
-                            <label class="aem-full">
-                                Nama Barang / Jenis Aset <em>*</em>
-
-                                <input name="nama_aset" id="aemNama" maxlength="500" required
-                                    placeholder="Nama aset yang dicatat manual">
-                            </label>
-
-                            <label>
-                                Kode Inventaris <em>*</em>
-
-                                <input name="kode_inventaris" maxlength="255" required
-                                    placeholder="Kode inventaris manual">
-                            </label>
-
-                            <label>
-                                Nomor Register <em>*</em>
-
-                                <input name="nomor_register" maxlength="255" required placeholder="Nomor register aset">
-                            </label>
-
-                            <label>
-                                Kondisi <em>*</em>
-
-                                <input name="kondisi" id="aemKondisi" data-aem-combo="kondisi" maxlength="100"
-                                    autocomplete="off" required placeholder="Pilih kondisi">
-                            </label>
-
-                            <label>
-                                Bahan
-
-                                <input name="bahan" id="aemBahan" data-aem-combo="bahan" maxlength="255"
-                                    autocomplete="off" placeholder="Cari atau ketik bahan">
-                            </label>
-
-                            <label>
-                                Tahun Pengadaan <em>*</em>
-
-                                <input type="number" name="tahun" min="1900" max="2100" required
-                                    placeholder="2026">
-                            </label>
-
-                            <label>
-                                Jumlah Unit <em>*</em>
-
-                                <input type="number" name="jumlah_unit" min="1" required value="1">
-                            </label>
-
-                            <label>
-                                Asal Perolehan
-
-                                <input name="asal_perolehan" id="aemAsal" data-aem-combo="asal" maxlength="255"
-                                    autocomplete="off" placeholder="Cari atau ketik asal perolehan">
-                            </label>
-
-                            <label class="aem-full">
-                                Keterangan
-
-                                <textarea name="keterangan" rows="4" placeholder="Kondisi, penggunaan, berita acara, atau catatan inventaris"></textarea>
-                            </label>
-
-                        </div>
-
-                    </fieldset>
-
-
-                    {{-- BAGIAN 3 --}}
-
-                    <fieldset>
-
-                        <legend>
-                            <span>3</span>
-                            Foto dan Dokumen Pendukung
-                        </legend>
-
-                        <div class="aem-fields">
-
-                            <label>
-                                Foto Utama
-
-                                <input name="foto" type="file" accept="image/jpeg,image/png,image/webp">
-
-                                <small>
-                                    Opsional. Maksimal 5 MB.
-                                </small>
-                            </label>
-
-                            <label>
-                                Lampiran Dokumen
-
-                                <input name="dokumens[]" id="aemDocsInput" type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp" multiple>
-
-                                <small>
-                                    Dapat memilih banyak PDF atau gambar
-                                    secara berulang.
-                                </small>
-                            </label>
-
-                            <div id="aemSelectedDocs" class="aem-full"></div>
-
-                            <div id="aemSavedDocs" class="aem-full"></div>
-
-                        </div>
-
-                    </fieldset>
-
-                </div>
-
-
-                <footer class="aem-dialog-foot">
-
-                    <button type="button" class="aem-btn outline" data-aem-close="aemFormDialog">
-                        Batal
-                    </button>
-
-                    <button type="submit" class="aem-btn primary" id="aemSave">
-                        <i data-lucide="save"></i>
-                        Simpan Aset
-                    </button>
-
-                </footer>
-
-            </form>
-
-        </dialog>
-
-
-        {{-- =====================================================
-         POPUP VIEW BARANG
-         Dibuka di atas Detail Kelompok.
-    ====================================================== --}}
-
-        <dialog id="aemDetailDialog" class="aem-dialog" aria-labelledby="aemDetailTitle">
-
-            <header class="aem-dialog-head">
-
-                <div>
-                    <small>DETAIL BARANG K.I.B E</small>
-
-                    <h2 id="aemDetailTitle">
-                        Detail Inventaris
-                    </h2>
-                </div>
-
-                <button type="button" class="aem-x" data-aem-close="aemDetailDialog" aria-label="Tutup Detail">
-                    <i data-lucide="x"></i>
-                </button>
-
-            </header>
-
-            <div class="aem-dialog-body" id="aemDetailBody"></div>
 
             <footer class="aem-dialog-foot">
 
-                <button type="button" class="aem-btn outline" data-aem-close="aemDetailDialog">
-                    Tutup
-                </button>
-
-                <button type="button" class="aem-btn outline" id="aemEditDetail">
-                    <i data-lucide="pencil"></i>
-                    Edit
-                </button>
-
-                <button type="button" class="aem-btn danger" id="aemDeleteDetail">
-                    <i data-lucide="trash-2"></i>
-                    Hapus
+                <button
+                    type="button"
+                    class="aem-btn outline"
+                    id="aemBack"
+                >
+                    Kembali ke Daftar
                 </button>
 
             </footer>
 
         </dialog>
 
+    @endif
 
-        {{-- =====================================================
-         POPUP KONFIRMASI HAPUS
-    ====================================================== --}}
 
-        <dialog id="aemDeleteDialog" class="aem-dialog aem-confirm" aria-labelledby="aemDeleteTitle">
+    {{-- ================================================
+         POPUP FORM TAMBAH / EDIT KIB E
+    ================================================= --}}
+
+    <dialog
+        id="aemFormDialog"
+        class="aem-dialog"
+        aria-labelledby="aemFormTitle"
+    >
+
+        <form
+            id="aemForm"
+            enctype="multipart/form-data"
+            novalidate
+        >
+
+            @csrf
 
             <header class="aem-dialog-head">
 
                 <div>
-                    <small>KONFIRMASI PENGHAPUSAN</small>
+                    <small>
+                        FORM KARTU INVENTARIS BARANG (KIB) E
+                    </small>
 
-                    <h2 id="aemDeleteTitle">
-                        Hapus Aset?
+                    <h2 id="aemFormTitle">
+                        Tambah Aset Tetap Lainnya
                     </h2>
+
+                    <p>
+                        Catat manual, tidak terhubung
+                        ke Master Kode Aktiva.
+                    </p>
                 </div>
 
-                <button type="button" class="aem-x" data-aem-close="aemDeleteDialog" aria-label="Tutup">
+                <button
+                    type="button"
+                    class="aem-close"
+                    data-aem-close="aemFormDialog"
+                    aria-label="Tutup"
+                >
                     <i data-lucide="x"></i>
                 </button>
 
             </header>
 
-            <div class="aem-confirm-content">
 
-                <i data-lucide="triangle-alert"></i>
+            <div class="aem-dialog-body">
 
-                <p>
-                    Aset dan seluruh lampirannya akan dihapus permanen:
-                </p>
+                <div
+                    id="aemError"
+                    class="aem-error"
+                    role="alert"
+                    hidden
+                ></div>
 
-                <strong id="aemDeleteName"></strong>
 
-                <small>
-                    Arsip pada tabel lama tidak ikut dihapus.
-                </small>
+                {{-- IDENTITAS KIB E --}}
+
+                <fieldset>
+
+                    <legend>
+                        1. Identitas KIB E
+                    </legend>
+
+                    <div class="aem-fields">
+
+                        <label>
+                            Provinsi
+
+                            <input
+                                readonly
+                                value="KALIMANTAN TIMUR"
+                            >
+                        </label>
+
+                        <label>
+                            Kota
+
+                            <input
+                                readonly
+                                value="SAMARINDA"
+                            >
+                        </label>
+
+                        <label class="aem-full">
+                            Unit
+
+                            <input
+                                readonly
+                                value="PERUMDAM TIRTA KENCANA"
+                            >
+                        </label>
+
+                        <label>
+                            Departemen
+
+                            <input
+                                name="departemen"
+                                id="aemDep"
+                                data-aem-combo="departemen"
+                                autocomplete="off"
+                                maxlength="255"
+                                placeholder="Cari atau ketik departemen"
+                            >
+                        </label>
+
+                        <label>
+                            Divisi
+
+                            <input
+                                name="divisi"
+                                id="aemDiv"
+                                data-aem-combo="divisi"
+                                autocomplete="off"
+                                maxlength="255"
+                                placeholder="Cari atau ketik divisi"
+                            >
+                        </label>
+
+                        <label>
+                            Kode Struktur
+
+                            <input
+                                name="kode_struktur"
+                                maxlength="100"
+                                placeholder="Contoh: 04.03.04"
+                            >
+
+                            <small>
+                                Catatan manual, bukan
+                                relasi Kode Aktiva.
+                            </small>
+                        </label>
+
+                        <label>
+                            Lokasi / Unit Kerja <em>*</em>
+
+                            <input
+                                name="lokasi"
+                                id="aemLokasi"
+                                data-aem-combo="lokasi"
+                                maxlength="500"
+                                required
+                                autocomplete="off"
+                                placeholder="Cari atau ketik lokasi"
+                            >
+                        </label>
+
+                        <label class="aem-full">
+                            Alamat Lokasi
+
+                            <input
+                                name="alamat"
+                                id="aemAlamat"
+                                maxlength="500"
+                                placeholder="Alamat lokasi"
+                            >
+                        </label>
+
+                    </div>
+
+                </fieldset>
+
+
+                {{-- DATA BARANG SESUAI EXCEL --}}
+
+                <fieldset>
+
+                    <legend>
+                        2. Informasi Barang — Sesuai Excel
+                    </legend>
+
+                    <div class="aem-fields">
+
+                        <label class="aem-full">
+                            Nama Barang / Jenis Barang <em>*</em>
+
+                            <input
+                                name="nama_aset"
+                                maxlength="500"
+                                required
+                                placeholder="Papan Nama Instansi"
+                            >
+                        </label>
+
+                        <label>
+                            Nomor — Kode Barang <em>*</em>
+
+                            <input
+                                name="kode_inventaris"
+                                maxlength="255"
+                                required
+                                placeholder="02.06.01.05.06"
+                            >
+                        </label>
+
+                        <label>
+                            Nomor — Register <em>*</em>
+
+                            <input
+                                name="nomor_register"
+                                maxlength="255"
+                                required
+                                placeholder="001"
+                            >
+
+                            <small>
+                                Teks, agar nol di depan
+                                tidak hilang.
+                            </small>
+                        </label>
+
+                        <label>
+                            Kondisi Barang (B, KB, RB) <em>*</em>
+
+                            <input
+                                name="kondisi"
+                                id="aemKondisi"
+                                data-aem-combo="kondisi"
+                                required
+                                autocomplete="off"
+                                placeholder="Baik / Kurang Baik / Rusak Berat"
+                            >
+                        </label>
+
+                        <label>
+                            Bahan
+
+                            <input
+                                name="bahan"
+                                id="aemBahan"
+                                data-aem-combo="bahan"
+                                maxlength="255"
+                                autocomplete="off"
+                                placeholder="Aluminium"
+                            >
+                        </label>
+
+                        <label>
+                            Tahun Pengadaan / Perolehan <em>*</em>
+
+                            <input
+                                name="tahun"
+                                type="number"
+                                min="1900"
+                                max="2100"
+                                required
+                                placeholder="2026"
+                            >
+                        </label>
+
+                        <label>
+                            Jumlah <em>*</em>
+
+                            <input
+                                name="jumlah_unit"
+                                type="number"
+                                min="1"
+                                required
+                                value="1"
+                            >
+                        </label>
+
+                        <label class="aem-full">
+                            Asal Usul / Cara Perolehan
+
+                            <input
+                                name="asal_perolehan"
+                                id="aemAsal"
+                                data-aem-combo="asal"
+                                maxlength="255"
+                                autocomplete="off"
+                                placeholder="Pengadaan / Hibah / Bantuan"
+                            >
+                        </label>
+
+                        <label class="aem-full">
+                            Keterangan
+
+                            <textarea
+                                name="keterangan"
+                                rows="4"
+                                placeholder="Kantor Pusat, UPW I, nomor berita acara, dll."
+                            ></textarea>
+                        </label>
+
+                    </div>
+
+                </fieldset>
+
+
+                {{-- FOTO DAN DOKUMEN --}}
+
+                <fieldset>
+
+                    <legend>
+                        3. Foto dan Dokumen Pendukung
+                    </legend>
+
+                    <div class="aem-fields">
+
+                        <label>
+                            Foto Utama
+
+                            <input
+                                name="foto"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                            >
+
+                            <small>
+                                Opsional, maksimum 5 MB.
+                            </small>
+                        </label>
+
+                        <label>
+                            Dokumen PDF / Gambar
+
+                            <input
+                                id="aemDocsInput"
+                                name="dokumens[]"
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                multiple
+                            >
+
+                            <small>
+                                Bisa memilih beberapa kali.
+                            </small>
+                        </label>
+
+                        <div
+                            class="aem-full"
+                            id="aemSelectedDocs"
+                        ></div>
+
+                        <div
+                            class="aem-full"
+                            id="aemSavedDocs"
+                        ></div>
+
+                    </div>
+
+                </fieldset>
 
             </div>
 
+
             <footer class="aem-dialog-foot">
 
-                <button type="button" class="aem-btn outline" data-aem-close="aemDeleteDialog">
+                <button
+                    type="button"
+                    class="aem-btn outline"
+                    data-aem-close="aemFormDialog"
+                >
                     Batal
                 </button>
 
-                <button type="button" class="aem-btn danger" id="aemConfirmDelete">
-                    Ya, Hapus
+                <button
+                    type="submit"
+                    id="aemSave"
+                    class="aem-btn primary"
+                >
+                    <i data-lucide="save"></i>
+                    Simpan Aset
                 </button>
 
             </footer>
 
-        </dialog>
+        </form>
+
+    </dialog>
 
 
-        {{-- NOTIFIKASI --}}
+    {{-- ================================================
+         POPUP VIEW EXCEL KIB E
+    ================================================= --}}
 
-        <div id="aemToast" class="aem-toast" role="status" hidden></div>
+    <dialog
+        id="aemDetailDialog"
+        class="aem-dialog aem-excel-dialog"
+        aria-labelledby="aemDetailTitle"
+    >
 
-    </section>
+        <header class="aem-dialog-head">
+
+            <div>
+                <small>
+                    VIEW KARTU INVENTARIS BARANG (KIB) E
+                </small>
+
+                <h2 id="aemDetailTitle">
+                    Detail Inventaris
+                </h2>
+            </div>
+
+            <button
+                type="button"
+                class="aem-close"
+                data-aem-close="aemDetailDialog"
+                aria-label="Tutup"
+            >
+                <i data-lucide="x"></i>
+            </button>
+
+        </header>
+
+        <div
+            class="aem-dialog-body"
+            id="aemDetailBody"
+        ></div>
+
+        <footer class="aem-dialog-foot">
+
+            <button
+                type="button"
+                class="aem-btn outline"
+                data-aem-close="aemDetailDialog"
+            >
+                Tutup
+            </button>
+
+            <button
+                type="button"
+                id="aemEditDetail"
+                class="aem-btn outline"
+            >
+                <i data-lucide="pencil"></i>
+                Edit
+            </button>
+
+            <button
+                type="button"
+                id="aemDeleteDetail"
+                class="aem-btn danger"
+            >
+                <i data-lucide="trash-2"></i>
+                Hapus
+            </button>
+
+        </footer>
+
+    </dialog>
 
 
-    {{-- DATA MASTER DAN RIWAYAT PILIHAN --}}
+    {{-- MODAL HAPUS --}}
 
-    <script id="aemMaster" type="application/json">
+    <dialog
+        id="aemDeleteDialog"
+        class="aem-dialog aem-confirm"
+        aria-labelledby="aemDeleteTitle"
+    >
+
+        <header class="aem-dialog-head">
+
+            <div>
+                <small>KONFIRMASI</small>
+                <h2 id="aemDeleteTitle">Hapus Aset?</h2>
+            </div>
+
+            <button
+                type="button"
+                class="aem-close"
+                data-aem-close="aemDeleteDialog"
+            >
+                <i data-lucide="x"></i>
+            </button>
+
+        </header>
+
+        <div class="aem-confirm-body">
+
+            <i data-lucide="triangle-alert"></i>
+
+            <p>
+                Aset dan lampirannya akan dihapus permanen:
+            </p>
+
+            <strong id="aemDeleteName"></strong>
+
+            <small>
+                Arsip <code>kib_e_s</code>
+                tidak akan diubah.
+            </small>
+
+        </div>
+
+        <footer class="aem-dialog-foot">
+
+            <button
+                type="button"
+                class="aem-btn outline"
+                data-aem-close="aemDeleteDialog"
+            >
+                Batal
+            </button>
+
+            <button
+                type="button"
+                class="aem-btn danger"
+                id="aemConfirmDelete"
+            >
+                Ya, Hapus
+            </button>
+
+        </footer>
+
+    </dialog>
+
+    <div
+        id="aemToast"
+        class="aem-toast"
+        role="status"
+        hidden
+    ></div>
+
+</section>
+
+
+<script id="aemMaster" type="application/json">
 @json($master ?? [])
 </script>
 
-    <script id="aemHistory" type="application/json">
+<script id="aemHistory" type="application/json">
 @json($history ?? [])
 </script>
 
-
-    {{-- JAVASCRIPT UTAMA --}}
-
-    <script
-        src="{{ asset('js/pages/kib/aset_ttp.js') }}?v={{ file_exists(public_path('js/pages/kib/aset_ttp.js')) ? filemtime(public_path('js/pages/kib/aset_ttp.js')) : '1' }}">
-    </script>
+<script
+    src="{{ asset('js/pages/kib/aset_ttp.js') }}?v={{ file_exists(public_path('js/pages/kib/aset_ttp.js')) ? filemtime(public_path('js/pages/kib/aset_ttp.js')) : '1' }}"
+></script>
 
 @endsection

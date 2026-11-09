@@ -1,25 +1,23 @@
 
 /* ==========================================================
    K.I.B E — ASET TETAP LAINNYA
-   SISTEM ASET PERUMDA TIRTA KENCANA
+   PERUMDAM TIRTA KENCANA KOTA SAMARINDA
 
-   - Halaman Utama
-   - Popup Detail Kelompok
-   - Popup View Barang
-   - Popup Form Tambah / Edit
-   - Searchable Dropdown
+   Halaman Utama
+   Popup Detail Kelompok
+   Form Tambah / Edit
+   View KIB E Format Excel
    ========================================================== */
 
 .aem-page {
     --aem-blue: #0869e7;
-    --aem-blue-dark: #0756ba;
     --aem-navy: #0b326b;
     --aem-line: #dce7f4;
     --aem-muted: #718ba9;
 
-    padding: 0 16px 36px;
+    padding: 0 16px 35px;
     color: var(--aem-navy);
-    font-family: inherit;
+    font-size: 12px;
 }
 
 .aem-page *,
@@ -28,35 +26,39 @@
     box-sizing: border-box;
 }
 
-.aem-page input,
-.aem-page select,
-.aem-page button,
-.aem-page textarea {
-    font: inherit;
-}
-
 .aem-page [hidden] {
     display: none !important;
 }
 
+.aem-page button,
+.aem-page input,
+.aem-page select,
+.aem-page textarea {
+    font: inherit;
+}
+
+.aem-page svg {
+    width: 16px;
+    height: 16px;
+}
+
 
 /* ==========================================================
-   HEADER
+   HEADER DAN BREADCRUMB
    ========================================================== */
 
 .aem-hero {
     position: relative;
-    isolation: isolate;
 
     margin: 0 -16px 18px;
-    padding: 24px 16px 18px;
+    padding: 24px 16px 20px;
 
     background:
         linear-gradient(
             90deg,
-            rgba(249,252,255,.98) 0%,
-            rgba(248,251,255,.88) 55%,
-            rgba(232,244,255,.57) 100%
+            #f9fcfff9,
+            #f8fbffdd 56%,
+            #e9f4ff88
         ),
         url('/images/master/pdam4.png')
         center / cover no-repeat;
@@ -67,47 +69,40 @@
     align-items: center;
     gap: 9px;
 
-    margin-bottom: 17px;
+    margin-bottom: 18px;
 
+    color: #6b87a5;
     font-size: 11px;
-    color: #6886a5;
 }
 
 .aem-crumb a {
-    display: inline-flex;
     color: var(--aem-blue);
-}
-
-.aem-crumb svg {
-    width: 15px;
-    height: 15px;
+    display: inline-flex;
 }
 
 .aem-hero h1 {
-    margin: 0 0 8px;
+    margin: 0 0 7px;
+
     font-size: 29px;
     font-weight: 800;
     color: #082b60;
 }
 
-.aem-hero p {
-    max-width: 900px;
+.aem-hero > p {
     margin: 0;
 
-    color: #557aa5;
+    color: #567ca3;
+    line-height: 1.7;
     font-size: 12px;
-    line-height: 1.75;
 }
 
 
-/* ==========================================================
-   TANGGAL DAN JAM
-   ========================================================== */
+/* TANGGAL WITA */
 
 .aem-date {
     position: absolute;
-    top: 22px;
     right: 16px;
+    top: 22px;
 
     display: flex;
     align-items: center;
@@ -119,13 +114,13 @@
     border: 1px solid var(--aem-line);
     border-radius: 10px;
 
-    box-shadow: 0 5px 16px rgba(22,61,104,.09);
+    box-shadow: 0 5px 16px #183f6416;
 }
 
 .aem-date > svg {
+    color: var(--aem-blue);
     width: 22px;
     height: 22px;
-    color: var(--aem-blue);
 }
 
 .aem-date strong,
@@ -138,21 +133,21 @@
 }
 
 .aem-date small {
-    margin-top: 3px;
     font-size: 10px;
     color: var(--aem-muted);
+    margin-top: 3px;
 }
 
 
 /* ==========================================================
-   TIGA KARTU STATISTIK
+   STATISTIK
    ========================================================== */
 
 .aem-kpis {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0,1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 23px;
+    margin-top: 24px;
 }
 
 .aem-kpis article {
@@ -160,55 +155,48 @@
     align-items: center;
     gap: 13px;
 
-    min-width: 0;
     padding: 17px;
+    min-width: 0;
 
     background: #fff;
     border: 1px solid var(--aem-line);
     border-radius: 11px;
 
-    box-shadow: 0 3px 14px rgba(20,63,103,.06);
+    box-shadow: 0 4px 15px #143f6710;
 }
 
-.aem-kpi-icon {
-    flex: 0 0 44px;
-
-    display: grid;
-    place-items: center;
+.aem-kpis article > svg {
+    flex-shrink: 0;
 
     width: 44px;
     height: 44px;
+    padding: 11px;
 
     color: #fff;
     background: var(--aem-blue);
     border-radius: 9px;
 }
 
-.aem-kpi-icon svg {
-    width: 21px;
-    height: 21px;
+.aem-kpis small,
+.aem-kpis strong,
+.aem-kpis article span {
+    display: block;
 }
 
 .aem-kpis small {
-    display: block;
     font-size: 11px;
     font-weight: 800;
-    color: #31598b;
 }
 
 .aem-kpis strong {
-    display: block;
-
-    margin: 4px 0;
-
-    color: #062c62;
     font-size: 23px;
     font-weight: 800;
+    margin: 4px 0;
 }
 
-.aem-kpis article div > span {
-    color: #8299b5;
+.aem-kpis article span {
     font-size: 10px;
+    color: #8299b5;
 }
 
 
@@ -223,29 +211,35 @@
     border: 1px solid var(--aem-line);
     border-radius: 12px;
 
-    box-shadow: 0 5px 19px rgba(23,60,96,.06);
+    box-shadow: 0 4px 19px #173c6011;
 }
 
-.aem-heading {
+.aem-panel-head {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
+    gap: 15px;
 
-    margin-bottom: 15px;
+    margin-bottom: 14px;
 }
 
-.aem-heading h2 {
-    margin: 0 0 6px;
+.aem-panel-head h2,
+.aem-panel-head h3 {
     font-size: 17px;
+    margin: 0 0 5px;
     font-weight: 800;
 }
 
-.aem-heading p {
-    margin: 0;
-
-    color: var(--aem-muted);
+.aem-panel-head p {
     font-size: 11px;
+    color: var(--aem-muted);
+    margin: 0;
+}
+
+.aem-panel-head small {
+    color: var(--aem-blue);
+    font-weight: 800;
+    font-size: 10px;
 }
 
 
@@ -255,31 +249,22 @@
 
 .aem-btn {
     display: inline-flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     gap: 7px;
 
-    min-height: 37px;
-    padding: 9px 13px;
+    min-height: 36px;
+    padding: 8px 12px;
 
     border: 1px solid transparent;
     border-radius: 8px;
 
-    cursor: pointer;
-    text-decoration: none;
     white-space: nowrap;
+    text-decoration: none;
 
     font-size: 11px;
-    font-weight: 700;
-
-    transition:
-        background .15s ease,
-        border-color .15s ease;
-}
-
-.aem-btn svg {
-    width: 15px;
-    height: 15px;
+    font-weight: 750;
+    cursor: pointer;
 }
 
 .aem-btn.primary {
@@ -288,12 +273,12 @@
 }
 
 .aem-btn.primary:hover {
-    background: var(--aem-blue-dark);
+    background: #0757b9;
 }
 
 .aem-btn.outline {
     background: #fff;
-    color: #1c5f9f;
+    color: #175b9f;
     border-color: #d5e3f1;
 }
 
@@ -302,17 +287,13 @@
 }
 
 .aem-btn.danger {
-    background: #d33f51;
+    background: #d33f53;
     color: #fff;
 }
 
-.aem-btn.danger:hover {
-    background: #b72c40;
-}
-
 .aem-btn:disabled,
-.aem-action:disabled {
-    opacity: .55;
+.aem-icon:disabled {
+    opacity: .5;
     cursor: not-allowed;
 }
 
@@ -338,13 +319,11 @@
 
     padding: 11px 3px;
 
-    color: #4d76a7;
+    color: #557da8;
     text-decoration: none;
     white-space: nowrap;
 
     border-bottom: 3px solid transparent;
-
-    font-size: 12px;
     font-weight: 750;
 }
 
@@ -353,95 +332,84 @@
     border-bottom-color: var(--aem-blue);
 }
 
-.aem-tabs svg {
-    width: 15px;
-    height: 15px;
-}
-
 
 /* ==========================================================
-   FILTER PENCARIAN
+   FILTER DAN PENCARIAN
    ========================================================== */
 
 .aem-toolbar {
     display: flex;
     align-items: center;
     gap: 9px;
-    margin-bottom: 15px;
+
+    margin-bottom: 14px;
 }
 
 .aem-search {
     position: relative;
+    display: block;
+
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
 }
 
-.aem-search svg {
+.aem-search > svg {
     position: absolute;
+    left: 11px;
     top: 11px;
-    left: 12px;
-
-    width: 15px;
-    height: 15px;
 
     color: #91a5bc;
     pointer-events: none;
 }
 
-.aem-toolbar input,
+.aem-search input,
 .aem-toolbar select {
     width: 100%;
     height: 38px;
+
     padding: 9px 11px;
 
-    background: #fff;
-    color: #204b7b;
-
-    border: 1px solid #d4e2f0;
+    border: 1px solid #d6e4f1;
     border-radius: 7px;
-    outline: 0;
+    outline: none;
 
+    color: #244d80;
+    background: #fff;
     font-size: 11px;
 }
 
-.aem-toolbar .aem-search input {
-    padding-left: 36px;
+.aem-search input {
+    padding-left: 34px;
 }
 
 .aem-toolbar select {
-    max-width: 205px;
+    max-width: 220px;
 }
 
-.aem-toolbar input:focus,
+.aem-search input:focus,
 .aem-toolbar select:focus {
     border-color: var(--aem-blue);
-    box-shadow: 0 0 0 3px rgba(8,105,231,.11);
+    box-shadow: 0 0 0 3px #0869e71a;
 }
 
 .aem-notice {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
 
-    padding: 11px;
-    margin-bottom: 13px;
+    padding: 12px;
+    margin-bottom: 12px;
 
     background: #f5faff;
-    border: 1px solid #ddeaf6;
+    border: 1px solid var(--aem-line);
     border-radius: 8px;
 
-    color: #526d88;
-    font-size: 12px;
-}
-
-.aem-notice svg {
-    width: 17px;
-    height: 17px;
+    font-size: 11px;
 }
 
 
 /* ==========================================================
-   TABEL
+   TABEL UTAMA
    ========================================================== */
 
 .aem-table-wrap {
@@ -454,36 +422,35 @@
 
 .aem-table {
     width: 100%;
-    min-width: 1100px;
+    min-width: 980px;
 
-    border-spacing: 0;
     border-collapse: separate;
+    border-spacing: 0;
 
     color: #254d78;
     font-size: 11px;
 }
 
 .aem-table th {
-    padding: 14px 12px;
+    padding: 13px 10px;
+
+    text-align: center;
 
     background: #dcebf9;
     color: #164073;
-
-    text-align: center;
-    font-size: 11px;
 
     border-right: 1px solid #cddfeb;
     border-bottom: 1px solid #c7dbeb;
 }
 
 .aem-table td {
-    padding: 13px 11px;
-
+    padding: 12px 10px;
     vertical-align: middle;
-    line-height: 1.6;
 
     border-right: 1px solid #e4edf6;
     border-bottom: 1px solid #e4edf6;
+
+    line-height: 1.6;
 }
 
 .aem-table tbody tr:nth-child(even) {
@@ -494,91 +461,57 @@
     background: #edf6ff;
 }
 
-.aem-name {
-    font-size: 12px;
-    color: #103b75;
-}
-
-.aem-code {
-    color: #31629a;
-    font-weight: 700;
-}
-
 .aem-table small {
     display: block;
-    color: #8196af;
+    color: #8299b5;
+    margin-top: 4px;
 }
 
 .aem-center {
     text-align: center;
 }
 
-.aem-condition {
-    display: inline-block;
+.aem-empty {
+    padding: 28px !important;
+    color: #8198af;
+    text-align: center !important;
+}
 
-    padding: 5px 9px;
+.aem-pill {
+    display: inline-flex;
+    padding: 6px 9px;
 
     background: #e8f4ff;
-    color: #1a5c9e;
+    color: #1762ad;
 
-    border: 1px solid #d3e8fb;
+    border: 1px solid #d3e7fa;
     border-radius: 7px;
 
     font-size: 10px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.aem-empty {
-    padding: 35px !important;
-    text-align: center !important;
-    color: #859bb0;
+    font-weight: 800;
 }
 
 .aem-pagination {
-    margin-top: 16px;
+    margin-top: 15px;
 }
 
 
-/* ==========================================================
-   AKSI TABEL
-   ========================================================== */
+/* AKSI TABEL */
 
-.aem-action-head,
 .aem-action-cell {
-    position: sticky;
-    right: 0;
-    z-index: 2;
-
-    min-width: 144px;
     text-align: center;
-
-    background: #fff;
-    box-shadow: -5px 0 12px rgba(24,63,100,.05);
-}
-
-.aem-action-head {
-    z-index: 3;
-    background: #dcebf9 !important;
-}
-
-.aem-table tbody tr:nth-child(even) .aem-action-cell {
-    background: #fafdff;
-}
-
-.aem-table tbody tr:hover .aem-action-cell {
-    background: #edf6ff;
+    min-width: 140px;
 }
 
 .aem-actions {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     gap: 7px;
 }
 
-.aem-action {
-    display: grid;
+.aem-icon {
+    display: inline-grid;
     place-items: center;
 
     width: 33px;
@@ -590,571 +523,64 @@
     cursor: pointer;
 }
 
-.aem-action svg {
-    width: 15px;
-    height: 15px;
+.aem-icon.view {
+    background: #e8f3ff;
+    color: #0869e7;
+    border-color: #d2e6fb;
 }
 
-.aem-action.view {
-    background: #e8f2ff;
-    color: #0969df;
-    border-color: #d2e6fa;
-}
-
-.aem-action.edit {
+.aem-icon.edit {
     background: #fff5df;
-    color: #9d6c1e;
-    border-color: #fae6bf;
+    color: #a16d1c;
+    border-color: #f6e4bc;
 }
 
-.aem-action.delete {
+.aem-icon.delete {
     background: #fff0f2;
-    color: #cd3f53;
+    color: #ce4054;
     border-color: #f4d7dd;
 }
 
-.aem-action.view:hover {
-    background: #d9ebff;
-}
-
-.aem-action.edit:hover {
-    background: #ffecc0;
-}
-
-.aem-action.delete:hover {
-    background: #ffe0e5;
-}
-
 
 /* ==========================================================
-   POPUP DETAIL KELOMPOK
+   DIALOG / POPUP UMUM
    ========================================================== */
 
+.aem-dialog,
 .aem-group-dialog {
-    width: min(1280px, calc(100vw - 48px));
+    margin: auto;
+    padding: 0;
     max-width: none;
 
-    height: min(790px, calc(100dvh - 64px));
-    max-height: calc(100dvh - 64px);
-
-    margin: auto;
-    padding: 0;
-
-    background: #fff;
-    color: #163e75;
-
-    border: 1px solid #d8e6f5;
-    border-radius: 18px;
-
-    box-shadow: 0 30px 90px rgba(4,26,58,.34);
-    overflow: hidden;
-}
-
-.aem-group-dialog:not([open]) {
-    display: none !important;
-}
-
-.aem-group-dialog[open] {
-    display: flex;
-    flex-direction: column;
-}
-
-.aem-group-dialog::backdrop {
-    background: rgba(5,23,52,.60);
-    backdrop-filter: blur(5px);
-}
-
-.aem-group-page {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-
-    min-height: 0;
-    background: #fff;
-}
-
-
-/* ==========================================================
-   HEADER POPUP KELOMPOK
-   ========================================================== */
-
-.aem-group-top {
-    flex-shrink: 0;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
-
-    padding: 19px 23px 17px;
-
-    background: linear-gradient(
-        110deg,
-        #fff 0%,
-        #f0f7ff 100%
-    );
-
-    border-bottom: 1px solid #dce8f6;
-}
-
-.aem-group-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    color: #8398b1;
-    font-size: 11px;
-}
-
-.aem-group-breadcrumb > svg {
-    width: 14px;
-    height: 14px;
-}
-
-.aem-back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-
-    padding: 0;
-
-    border: 0;
-    background: none;
-
-    color: var(--aem-blue);
-    cursor: pointer;
-
-    font-size: 11px;
-    font-weight: 750;
-}
-
-.aem-back-link svg {
-    width: 15px;
-    height: 15px;
-}
-
-.aem-group-top h2 {
-    margin: 8px 0 6px;
-
-    color: #0a326b;
-    font-size: 19px;
-    font-weight: 800;
-}
-
-.aem-group-top p {
-    margin: 0;
-
-    color: #7990a9;
-    font-size: 11px;
-    line-height: 1.6;
-}
-
-.aem-group-close {
-    flex-shrink: 0;
-
-    display: grid;
-    place-items: center;
-
-    width: 36px;
-    height: 36px;
-
-    color: #557ca6;
-    background: #fff;
-
-    border: 1px solid #d8e5f4;
-    border-radius: 9px;
-
-    cursor: pointer;
-}
-
-.aem-group-close:hover {
-    background: #e9f3ff;
-    color: var(--aem-blue);
-}
-
-.aem-group-close svg {
-    width: 18px;
-    height: 18px;
-}
-
-
-/* ==========================================================
-   LAYOUT DUA PANEL DI DALAM POPUP
-   ========================================================== */
-
-.aem-group-layout {
-    flex: 1 1 auto;
-
-    display: grid;
-    grid-template-columns:
-        minmax(245px, 27%)
-        minmax(0, 1fr);
-
-    gap: 16px;
-    min-height: 0;
-
-    padding: 18px 21px 22px;
-    overflow-y: auto;
-
-    background: #f8fbff;
-}
-
-.aem-group-left,
-.aem-group-right {
-    min-width: 0;
-
-    background: #fff;
-
-    border: 1px solid #dae7f6;
-    border-radius: 12px;
-
-    box-shadow: 0 3px 12px rgba(12,60,112,.04);
-}
-
-.aem-group-left {
-    padding: 14px;
-}
-
-.aem-group-right {
-    padding: 16px;
-}
-
-.aem-group-side-head {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-
-    padding: 4px 3px 14px;
-    margin-bottom: 12px;
-
-    color: #174a81;
-    font-size: 13px;
-
-    border-bottom: 1px solid #edf2f9;
-}
-
-.aem-group-side-head svg {
-    width: 18px;
-    height: 18px;
-    color: var(--aem-blue);
-}
-
-
-/* ==========================================================
-   SEARCH DALAM POPUP
-   ========================================================== */
-
-.aem-group-search {
-    position: relative;
-    display: block;
-
-    flex: 1;
-    width: 100%;
-    min-width: 0;
-}
-
-.aem-group-search svg {
-    position: absolute;
-    top: 11px;
-    left: 11px;
-
-    width: 15px;
-    height: 15px;
-
-    color: #839cb5;
-    pointer-events: none;
-}
-
-.aem-group-search input {
-    width: 100%;
-    height: 38px;
-    padding: 8px 10px 8px 34px;
-
-    color: #214c7f;
-    background: #fff;
-
-    border: 1px solid #d4e3f1;
-    border-radius: 7px;
-    outline: none;
-
-    font-size: 11px;
-}
-
-.aem-group-search input:focus {
-    border-color: var(--aem-blue);
-    box-shadow: 0 0 0 3px rgba(8,105,231,.12);
-}
-
-
-/* ==========================================================
-   KELOMPOK LOKASI DAN DIVISI
-   ========================================================== */
-
-.aem-group-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    max-height: 500px;
-    padding: 12px 2px 5px 0;
-
-    overflow-y: auto;
-}
-
-.aem-group-location {
-    padding: 10px;
-
-    background: #f9fbfe;
-    border: 1px solid #e0eaf6;
-    border-radius: 8px;
-}
-
-.aem-group-location-title {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-
-    margin-bottom: 8px;
-
-    color: #1d4c83;
-    font-size: 11px;
-    font-weight: 800;
-
-    overflow-wrap: anywhere;
-}
-
-.aem-group-location-title svg {
-    flex: none;
-    width: 15px;
-    height: 15px;
-
-    color: var(--aem-blue);
-}
-
-.aem-group-select {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-
-    width: 100%;
-    padding: 9px 8px;
-    margin-top: 4px;
-
-    text-align: left;
-    color: #365e88;
-
-    background: #fff;
-    border: 1px solid transparent;
-    border-radius: 7px;
-
-    cursor: pointer;
-    font-size: 11px;
-}
-
-.aem-group-select:hover {
-    background: #e9f3ff;
-}
-
-.aem-group-select.active {
-    background: #e5f1ff;
-    color: #075bc4;
-
-    border-color: #b9d9fb;
-    font-weight: 800;
-}
-
-.aem-group-select span:first-child {
-    overflow-wrap: anywhere;
-}
-
-.aem-group-select span:last-child {
-    flex-shrink: 0;
-
-    padding: 2px 6px;
-
-    background: #e9eef5;
-    border-radius: 30px;
-    font-size: 10px;
-}
-
-
-/* ==========================================================
-   HEADER PANEL KANAN
-   ========================================================== */
-
-.aem-group-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-
-    margin-bottom: 15px;
-}
-
-.aem-group-heading small {
-    color: var(--aem-blue);
-    font-size: 10px;
-    font-weight: 800;
-}
-
-.aem-group-heading h3 {
-    margin: 5px 0;
-
-    color: #123c72;
-    font-size: 18px;
-
-    overflow-wrap: anywhere;
-}
-
-.aem-group-heading p {
-    margin: 0;
-
-    color: #7e93ad;
-    font-size: 11px;
-}
-
-.aem-group-count {
-    padding: 8px 9px;
-    border-radius: 7px;
-
-    background: #ecf5ff;
-    color: #1465b8;
-
-    font-size: 10px;
-    font-weight: 800;
-    white-space: nowrap;
-}
-
-.aem-group-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-
-    margin-bottom: 12px;
-}
-
-.aem-group-alert {
-    padding: 10px 12px;
-    margin-bottom: 12px;
-
-    background: #fff4f5;
-    border: 1px solid #f0d0d4;
-    border-radius: 7px;
-
-    color: #b72b41;
-    font-size: 12px;
-}
-
-
-/* ==========================================================
-   TABEL BARANG PANEL KANAN
-   ========================================================== */
-
-.aem-group-table {
-    min-width: 650px;
-}
-
-.aem-group-table th {
-    padding: 11px 9px;
-    font-size: 10px;
-}
-
-.aem-group-table td {
-    padding: 11px 9px;
-    font-size: 11px;
-}
-
-.aem-group-thumb {
-    display: block;
-
-    width: 62px;
-    height: 45px;
-    margin: auto;
-
-    object-fit: cover;
-
-    background: #f2f7fc;
-    border: 1px solid #dce8f4;
-    border-radius: 6px;
-}
-
-.aem-group-no-photo {
-    display: grid;
-    place-items: center;
-
-    width: 62px;
-    height: 45px;
-    margin: auto;
-
-    color: #829ab3;
-    background: #f1f6fb;
-
-    border: 1px dashed #d8e5f4;
-    border-radius: 6px;
-
-    font-size: 9px;
-}
-
-.aem-group-spinner {
-    padding: 30px;
-    color: #7d94ae;
-
-    font-size: 12px;
-    text-align: center;
-}
-
-.aem-group-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-
-    margin-top: 14px;
-
-    color: #728ca8;
-    font-size: 11px;
-}
-
-.aem-group-pagination > div {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.aem-group-pagination .aem-btn {
-    min-height: 30px;
-    padding: 6px 9px;
-}
-
-
-/* ==========================================================
-   MODAL FORM / VIEW / DELETE
-   ========================================================== */
-
-.aem-dialog {
-    width: min(880px, calc(100vw - 28px));
-    max-height: calc(100dvh - 32px);
-
-    margin: auto;
-    padding: 0;
-
-    color: #1a4778;
+    color: #194473;
     background: #fff;
 
     border: 0;
     border-radius: 14px;
 
     overflow: hidden;
-    box-shadow: 0 25px 80px rgba(6,27,56,.36);
+    box-shadow: 0 25px 80px #061b385b;
 }
 
-.aem-dialog:not([open]) {
-    display: none;
+.aem-dialog {
+    width: min(890px, calc(100vw - 30px));
+    max-height: calc(100dvh - 32px);
 }
 
-.aem-dialog::backdrop {
-    background: rgba(4,25,49,.66);
+.aem-dialog[open],
+.aem-group-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+.aem-dialog:not([open]),
+.aem-group-dialog:not([open]) {
+    display: none !important;
+}
+
+.aem-dialog::backdrop,
+.aem-group-dialog::backdrop {
+    background: #0419319c;
     backdrop-filter: blur(3px);
 }
 
@@ -1162,145 +588,132 @@
     display: flex;
     flex-direction: column;
 
+    min-height: 0;
     max-height: calc(100dvh - 32px);
 }
 
-.aem-dialog-head {
+.aem-dialog-head,
+.aem-group-header {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 15px;
 
     padding: 17px 19px;
 
     background: #fff;
     border-bottom: 1px solid var(--aem-line);
+
+    flex-shrink: 0;
 }
 
-.aem-dialog-head small {
-    color: var(--aem-blue);
+.aem-dialog-head small,
+.aem-group-header small {
     font-size: 10px;
     font-weight: 800;
+    color: var(--aem-blue);
 }
 
-.aem-dialog-head h2 {
-    margin: 4px 0;
-
-    color: #0b336a;
+.aem-dialog-head h2,
+.aem-group-header h2 {
     font-size: 18px;
+    margin: 5px 0;
     font-weight: 800;
 }
 
-.aem-dialog-head p {
+.aem-dialog-head p,
+.aem-group-header p {
     margin: 0;
-
     color: #8298b1;
     font-size: 11px;
 }
 
-.aem-x {
+.aem-close {
     display: grid;
     place-items: center;
-
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
 
-    color: #5f81a8;
-    background: #eff6fc;
+    width: 34px;
+    height: 34px;
 
     border: 0;
-    border-radius: 7px;
+    border-radius: 8px;
+
+    background: #edf5fd;
+    color: #6a88aa;
+
     cursor: pointer;
 }
 
-.aem-x:hover {
-    background: #e1f0ff;
-    color: var(--aem-blue);
-}
-
-.aem-x svg {
-    width: 16px;
-    height: 16px;
-}
-
 .aem-dialog-body {
-    flex: 1 1 auto;
-
-    max-height: calc(100dvh - 158px);
-    padding: 18px;
+    flex: 1;
+    min-height: 0;
 
     overflow-y: auto;
+    padding: 18px;
     overscroll-behavior: contain;
 }
 
 .aem-dialog-foot {
+    flex-shrink: 0;
+
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 9px;
 
-    padding: 13px 18px;
+    padding: 12px 18px;
 
-    background: #fafdff;
     border-top: 1px solid var(--aem-line);
+    background: #fafdff;
 }
 
 
 /* ==========================================================
-   FIELDSET FORM
+   FORM
    ========================================================== */
 
 .aem-dialog fieldset {
-    margin: 0 0 16px;
-    padding: 15px;
-
     border: 1px solid var(--aem-line);
     border-radius: 9px;
+
+    margin: 0 0 16px;
+    padding: 15px;
 }
 
 .aem-dialog legend {
-    padding: 0 7px;
+    padding: 0 8px;
 
-    color: #1a4a84;
-    font-size: 13px;
     font-weight: 800;
-}
-
-.aem-dialog legend span {
-    display: inline-grid;
-    place-items: center;
-
-    width: 22px;
-    height: 22px;
-    margin-right: 7px;
-
-    background: #e9f3ff;
-    color: var(--aem-blue);
-    border-radius: 6px;
+    font-size: 13px;
+    color: #1a4a84;
 }
 
 .aem-fields {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 13px;
 }
 
 .aem-fields > label {
-    position: relative;
-
     display: flex;
     flex-direction: column;
     gap: 6px;
 
     min-width: 0;
+    position: relative;
 
-    color: #31598a;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 750;
+    color: #31598a;
 }
 
 .aem-fields > label:focus-within {
     z-index: 30;
+}
+
+.aem-full {
+    grid-column: 1 / -1;
 }
 
 .aem-fields input,
@@ -1309,25 +722,30 @@
     min-width: 0;
     padding: 10px 11px;
 
-    color: #17406e;
-    background: #fff;
-
     border: 1px solid #d6e3f1;
     border-radius: 7px;
-    outline: 0;
 
+    background: #fff;
+    color: #17406e;
+
+    outline: none;
     font-size: 12px;
-}
-
-.aem-fields textarea {
-    resize: vertical;
-    line-height: 1.65;
 }
 
 .aem-fields input:focus,
 .aem-fields textarea:focus {
     border-color: var(--aem-blue);
-    box-shadow: 0 0 0 3px rgba(8,105,231,.11);
+    box-shadow: 0 0 0 3px #0869e71c;
+}
+
+.aem-fields textarea {
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.aem-fields input[readonly] {
+    background: #f4f8fc;
+    color: #5c7697;
 }
 
 .aem-fields input[type="file"] {
@@ -1335,30 +753,25 @@
 }
 
 .aem-fields small {
-    color: #8198b0;
+    color: #8197b0;
     font-size: 10px;
     font-weight: 400;
 }
 
 .aem-fields em {
-    color: #cf4454;
+    color: #d34255;
     font-style: normal;
 }
 
-.aem-full {
-    grid-column: 1 / -1;
-}
-
 .aem-error {
-    padding: 12px;
-    margin-bottom: 13px;
+    padding: 11px;
+    margin-bottom: 12px;
 
-    color: #b2273a;
     background: #fff2f4;
-
     border: 1px solid #f8c6ce;
     border-radius: 8px;
 
+    color: #ac273c;
     font-size: 12px;
     white-space: pre-line;
 }
@@ -1380,46 +793,45 @@
 
 .aem-combo-arrow {
     position: absolute;
-    top: 50%;
     right: 4px;
+    top: 50%;
 
     transform: translateY(-50%);
 
     width: 32px;
     height: 32px;
 
-    color: #6b88a7;
-    background: transparent;
-
     border: 0;
     border-radius: 6px;
 
+    background: transparent;
+    color: #6a88a8;
+
     cursor: pointer;
-    font-size: 20px;
 }
 
-.aem-combo-arrow:hover,
-.aem-combo.opened .aem-combo-arrow {
-    color: var(--aem-blue);
+.aem-combo-arrow:hover {
     background: #e9f3ff;
 }
 
 .aem-combo-options {
     position: absolute;
+    z-index: 1000;
+
     top: calc(100% + 5px);
     left: 0;
     right: 0;
-    z-index: 1000;
 
     max-height: 220px;
+    overflow: auto;
+
     padding: 5px;
-    overflow-y: auto;
 
     background: #fff;
     border: 1px solid #cfdfef;
     border-radius: 9px;
 
-    box-shadow: 0 15px 36px rgba(12,55,98,.17);
+    box-shadow: 0 14px 36px #0c37622a;
 }
 
 .aem-combo.up .aem-combo-options {
@@ -1427,83 +839,66 @@
     bottom: calc(100% + 5px);
 }
 
-.aem-combo-options[hidden] {
-    display: none !important;
-}
-
 .aem-combo-item {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
 
     width: 100%;
-    padding: 10px;
+    padding: 9px 10px;
+
+    border: 0;
+    border-radius: 7px;
 
     background: #fff;
     color: #1e4979;
 
     text-align: left;
-
-    border: 0;
-    border-radius: 7px;
-
     cursor: pointer;
-}
-
-.aem-combo-item strong {
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.aem-combo-item small {
-    color: #7c94ac;
-    font-size: 10px;
 }
 
 .aem-combo-item:hover,
 .aem-combo-item.active {
-    color: var(--aem-blue);
     background: #eaf4ff;
+    color: var(--aem-blue);
+}
+
+.aem-combo-item small {
+    color: #7d94ae;
 }
 
 .aem-combo-empty {
-    padding: 12px;
-    color: #728ba8;
+    padding: 11px;
+    color: #8198ae;
     font-size: 11px;
 }
 
 
 /* ==========================================================
-   DOKUMEN
+   LAMPIRAN FORM
    ========================================================== */
 
 .aem-file-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: 9px;
 
+    margin: 7px 0;
     padding: 9px 10px;
-    margin-top: 7px;
 
     background: #fafdff;
-    border: 1px solid #deebf6;
+    border: 1px solid #e0ebf6;
     border-radius: 7px;
 
-    font-size: 12px;
     overflow-wrap: anywhere;
-}
-
-.aem-file-row a {
-    color: var(--aem-blue);
 }
 
 .aem-file-remove {
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 11px;
 }
 
 .aem-file-remove input {
@@ -1511,168 +906,527 @@
 }
 
 .aem-link {
-    color: #d43b4e;
-    background: transparent;
-
     border: 0;
+    background: none;
+    color: #d43b4e;
     text-decoration: underline;
     cursor: pointer;
 }
 
 
 /* ==========================================================
-   MODAL VIEW BARANG
+   POPUP DETAIL KELOMPOK
    ========================================================== */
 
-.aem-photo-large {
-    display: block;
-
-    width: 100%;
-    max-width: min(100%, 520px);
-    max-height: 315px;
-    margin: 0 auto 20px;
-
-    object-fit: contain;
-
-    background: #f6faff;
-    border: 1px solid #dce7f5;
-    border-radius: 9px;
+.aem-group-dialog {
+    width: min(1320px, calc(100vw - 40px));
+    height: min(790px, calc(100dvh - 40px));
+    max-height: calc(100dvh - 40px);
 }
 
-.aem-photo-placeholder {
+.aem-group-header {
+    background: linear-gradient(
+        110deg,
+        #fff,
+        #f0f7ff
+    );
+}
+
+.aem-group-layout {
+    display: grid;
+    grid-template-columns:
+        minmax(235px, 29%)
+        minmax(0, 1fr);
+    gap: 15px;
+
+    flex: 1;
+    min-height: 0;
+
+    padding: 17px;
+
+    background: #f8fbff;
+    overflow-y: auto;
+}
+
+.aem-group-left,
+.aem-group-right {
+    min-width: 0;
+
+    background: #fff;
+    border: 1px solid #dce8f5;
+    border-radius: 10px;
+
+    padding: 14px;
+}
+
+.aem-group-left h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin: 0 0 14px;
+    font-size: 13px;
+}
+
+.aem-group-list {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-
-    width: 100%;
-    max-width: 520px;
-    height: 190px;
-    margin: 0 auto 20px;
-
-    background: #f5f9fe;
-    color: #8a9db4;
-
-    border: 1px dashed #d7e4f2;
-    border-radius: 9px;
-
-    font-size: 11px;
-}
-
-.aem-photo-placeholder svg {
-    width: 26px;
-    height: 26px;
-}
-
-.aem-detail-caption {
-    margin: 6px 0 12px;
-
-    color: #1762aa;
-    font-size: 11px;
-    font-weight: 800;
-
-    text-align: center;
-}
-
-.aem-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
     gap: 10px;
+
+    max-height: 520px;
+    overflow: auto;
+
+    margin-top: 12px;
 }
 
-.aem-detail-grid > div {
-    padding: 11px;
+.aem-group-location {
+    padding: 10px;
 
-    background: #f9fcff;
-    border: 1px solid #e0ebf6;
+    border: 1px solid #e0eaf6;
     border-radius: 8px;
+
+    background: #f8fbff;
 }
 
-.aem-detail-grid small {
-    display: block;
-    margin-bottom: 5px;
+.aem-group-location-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
 
-    color: #7891ac;
-    font-size: 10px;
-}
+    font-weight: 800;
+    font-size: 11px;
 
-.aem-detail-grid strong {
-    color: #1a4778;
-    font-size: 12px;
-
-    white-space: pre-wrap;
+    margin-bottom: 8px;
     overflow-wrap: anywhere;
 }
 
-.aem-dialog-body h3 {
-    margin: 16px 0 8px;
-
-    color: #1a4778;
-    font-size: 14px;
-}
-
-.aem-dialog-body > p {
-    padding: 12px;
-
-    background: #f9fcff;
-    border: 1px solid #e0ebf6;
-    border-radius: 8px;
-
-    font-size: 12px;
-    line-height: 1.7;
-    white-space: pre-line;
-}
-
-.aem-doc-links {
+.aem-group-select {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    width: 100%;
+    padding: 9px 8px;
+
+    border: 1px solid transparent;
+    border-radius: 7px;
+
+    margin-top: 4px;
+    background: #fff;
+    color: #3c628b;
+
+    text-align: left;
+    cursor: pointer;
+}
+
+.aem-group-select:hover,
+.aem-group-select.active {
+    background: #e7f2ff;
+    border-color: #c9def9;
+}
+
+.aem-group-select span:last-child {
+    background: #e8eff7;
+    border-radius: 20px;
+    padding: 2px 7px;
+}
+
+.aem-group-table {
+    min-width: 650px;
+}
+
+.aem-group-thumb,
+.aem-group-no-photo {
+    display: grid;
+    place-items: center;
+
+    width: 60px;
+    height: 45px;
+    margin: auto;
+
+    border: 1px solid #d8e7f4;
+    border-radius: 6px;
+
+    object-fit: cover;
+}
+
+.aem-group-no-photo {
+    font-size: 9px;
+    background: #f2f7fc;
+    color: #8aa0b8;
+}
+
+.aem-group-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    margin-top: 14px;
+
+    font-size: 11px;
+    color: #8197ac;
+}
+
+.aem-group-footer > div {
+    display: flex;
+    align-items: center;
     gap: 8px;
 }
 
 
 /* ==========================================================
-   KONFIRMASI DELETE
+   POPUP EXCEL KIB E
    ========================================================== */
 
-.aem-confirm {
-    width: min(470px, calc(100vw - 28px));
+#aemDetailDialog.aem-excel-dialog {
+    width: min(1480px, calc(100vw - 30px));
+    height: min(850px, calc(100dvh - 30px));
+    max-height: calc(100dvh - 30px);
 }
 
-.aem-confirm-content {
-    padding: 25px 20px;
-    color: #4a688b;
+#aemDetailBody {
+    flex: 1;
+    min-height: 0;
 
-    text-align: center;
-    font-size: 12px;
+    overflow-y: auto;
+    padding: 18px;
 }
 
-.aem-confirm-content > svg {
-    width: 42px;
-    height: 42px;
-    color: #d34255;
+.aem-kib-sheet {
+    padding: 16px;
+
+    background: #fff;
+    border: 1px solid #d8e5f1;
+    border-radius: 9px;
 }
 
-.aem-confirm-content strong {
+
+/* KOP KIB E */
+
+.aem-kib-heading {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 15px;
+    align-items: center;
+
+    padding: 12px 5px 16px;
+
+    border-bottom: 2px solid #adc4d9;
+}
+
+.aem-kib-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.aem-kib-logo {
     display: block;
 
-    padding: 12px;
-    margin: 11px 0;
+    width: 64px;
+    max-height: 70px;
 
-    color: #123c76;
-    background: #f6faff;
+    object-fit: contain;
+    margin-bottom: 8px;
+}
 
+.aem-kib-heading-title {
+    text-align: center;
+    padding-right: 250px;
+    font-size: 15px;
+}
+
+.aem-kib-heading-title strong {
+    display: block;
+    font-size: 17px;
+    margin-top: 4px;
+}
+
+
+/* IDENTITAS ORGANISASI */
+
+.aem-kib-identity {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 20px;
+
+    margin: 14px 0 20px;
+    padding: 13px;
+
+    background: #f8fbff;
+    border: 1px solid #e0eaf4;
     border-radius: 8px;
 }
 
-.aem-confirm-content small {
-    color: #8198af;
+.aem-kib-identity-row {
+    display: grid;
+    grid-template-columns:
+        145px
+        8px
+        minmax(0, 1fr);
+    gap: 6px;
+
+    font-size: 11px;
+}
+
+.aem-kib-identity-row span:first-child {
+    font-weight: 800;
+}
+
+.aem-kib-identity-row strong {
+    overflow-wrap: anywhere;
+}
+
+
+/* TABEL 10 KOLOM EXCEL */
+
+.aem-kib-table-scroll {
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: auto;
+
+    border: 1px solid #9fb9d2;
+    border-radius: 6px;
+}
+
+.aem-kib-table {
+    width: 100%;
+    min-width: 1320px;
+
+    table-layout: fixed;
+    border-collapse: collapse;
+
+    color: #1b3557;
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+.aem-kib-table th {
+    padding: 10px 8px;
+
+    background: #c6dff3;
+
+    border: 1px solid #9fb9d2;
+
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 800;
+}
+
+.aem-kib-table thead tr:last-child th {
+    padding: 5px;
+    background: #e8f2fb;
+}
+
+.aem-kib-table td {
+    padding: 12px 9px;
+
+    border: 1px solid #b8cadb;
+
+    vertical-align: top;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+.aem-kib-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+.aem-kib-table .aem-kib-center {
+    text-align: center;
+}
+
+
+/* LEBAR KOLOM */
+
+.aem-kib-table col:nth-child(1) {
+    width: 45px;
+}
+
+.aem-kib-table col:nth-child(2) {
+    width: 250px;
+}
+
+.aem-kib-table col:nth-child(3) {
+    width: 155px;
+}
+
+.aem-kib-table col:nth-child(4) {
+    width: 95px;
+}
+
+.aem-kib-table col:nth-child(5) {
+    width: 140px;
+}
+
+.aem-kib-table col:nth-child(6) {
+    width: 120px;
+}
+
+.aem-kib-table col:nth-child(7) {
+    width: 125px;
+}
+
+.aem-kib-table col:nth-child(8) {
+    width: 100px;
+}
+
+.aem-kib-table col:nth-child(9) {
+    width: 145px;
+}
+
+.aem-kib-table col:nth-child(10) {
+    width: 200px;
+}
+
+
+/* PENGESAHAN */
+
+.aem-kib-signatures {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+
+    margin-top: 25px;
+    padding-top: 16px;
+
+    border-top: 1px solid #d5e3ef;
+}
+
+.aem-kib-signature {
+    min-height: 135px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+
+    text-align: center;
+    font-size: 11px;
+    color: #28496c;
+}
+
+.aem-kib-signature strong {
+    font-weight: 800;
+}
+
+.aem-kib-signature-line {
+    margin-top: auto;
+
+    width: 95%;
+    padding-bottom: 5px;
+
+    border-bottom: 1px solid #a1b5c9;
+
+    color: #849bb2;
+    font-size: 10px;
+}
+
+.aem-kib-date {
+    color: #486d95;
+    font-size: 10px;
+    margin-bottom: 3px;
+}
+
+
+/* FOTO DAN DOKUMEN */
+
+.aem-kib-attachments {
+    margin-top: 16px;
+    padding: 15px;
+
+    background: #f8fbff;
+
+    border: 1px solid #dce9f6;
+    border-radius: 9px;
+}
+
+.aem-kib-attachments h3 {
+    font-size: 13px;
+    margin: 0 0 12px;
+}
+
+.aem-kib-file-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.aem-kib-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    max-width: 100%;
+    padding: 9px 11px;
+
+    background: #fff;
+
+    border: 1px solid #d5e5f4;
+    border-radius: 7px;
+
+    color: #1264b8;
+    text-decoration: none;
+
+    font-size: 11px;
+    font-weight: 750;
+
+    overflow-wrap: anywhere;
+}
+
+.aem-kib-file:hover {
+    background: #e7f3ff;
+}
+
+.aem-kib-file svg {
+    flex-shrink: 0;
+}
+
+.aem-kib-file-links p {
+    margin: 0;
+    color: #8197af;
 }
 
 
 /* ==========================================================
-   NOTIFIKASI TOAST
+   DELETE DAN TOAST
    ========================================================== */
+
+.aem-confirm {
+    width: min(460px, calc(100vw - 28px));
+}
+
+.aem-confirm-body {
+    text-align: center;
+    padding: 25px 20px;
+    font-size: 12px;
+}
+
+.aem-confirm-body > svg {
+    width: 42px;
+    height: 42px;
+    color: #d33f53;
+}
+
+.aem-confirm-body strong {
+    display: block;
+    margin: 11px 0;
+    padding: 12px;
+
+    border-radius: 7px;
+    background: #f6faff;
+}
+
+.aem-confirm-body small {
+    color: #8197ad;
+}
 
 .aem-toast {
     position: fixed;
@@ -1687,9 +1441,7 @@
     color: #fff;
 
     border-radius: 9px;
-
-    box-shadow: 0 10px 32px rgba(11,42,79,.3);
-    font-size: 12px;
+    box-shadow: 0 10px 32px #0b2a4f50;
 }
 
 
@@ -1697,12 +1449,27 @@
    RESPONSIVE
    ========================================================== */
 
-@media (max-width: 1040px) {
+@media (max-width: 1000px) {
+
     .aem-date {
         position: static;
+
         width: max-content;
         max-width: 100%;
-        margin-bottom: 17px;
+        margin-bottom: 18px;
+    }
+
+    .aem-kib-heading {
+        grid-template-columns: 1fr;
+    }
+
+    .aem-kib-heading-title {
+        text-align: left;
+        padding-right: 0;
+    }
+
+    .aem-kib-identity {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -1712,43 +1479,22 @@
         width: calc(100vw - 20px);
         height: calc(100dvh - 20px);
         max-height: calc(100dvh - 20px);
-        border-radius: 13px;
     }
 
     .aem-group-layout {
-        display: flex;
-        flex-direction: column;
-
-        gap: 12px;
-        padding: 12px;
-
-        overflow-y: auto;
-    }
-
-    .aem-group-top {
-        padding: 14px;
-    }
-
-    .aem-group-top h2 {
-        font-size: 16px;
-    }
-
-    .aem-group-left,
-    .aem-group-right {
-        flex: none;
+        grid-template-columns: 1fr;
     }
 
     .aem-group-list {
-        max-height: 210px;
+        max-height: 220px;
     }
 
-    .aem-group-toolbar,
-    .aem-group-pagination {
-        flex-wrap: wrap;
+    .aem-kib-signatures {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 790px) {
+@media (max-width: 700px) {
 
     .aem-page {
         padding: 0 12px 30px;
@@ -1763,12 +1509,9 @@
         grid-template-columns: 1fr;
     }
 
-    .aem-heading {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .aem-toolbar {
+    .aem-panel-head,
+    .aem-toolbar,
+    .aem-group-footer {
         flex-wrap: wrap;
     }
 
@@ -1781,8 +1524,7 @@
         flex: 1;
     }
 
-    .aem-fields,
-    .aem-detail-grid {
+    .aem-fields {
         grid-template-columns: 1fr;
     }
 
@@ -1793,10 +1535,31 @@
     .aem-dialog-head,
     .aem-dialog-foot,
     .aem-dialog-body {
-        padding: 13px;
+        padding: 12px;
     }
 
-    .aem-dialog-foot {
-        flex-wrap: wrap;
+    #aemDetailDialog.aem-excel-dialog {
+        width: calc(100vw - 14px);
+        height: calc(100dvh - 16px);
+        max-height: calc(100dvh - 16px);
+    }
+
+    #aemDetailBody {
+        padding: 10px;
+    }
+
+    .aem-kib-sheet {
+        padding: 10px;
+    }
+
+    .aem-kib-heading-title {
+        font-size: 13px;
+    }
+
+    .aem-kib-identity-row {
+        grid-template-columns:
+            115px
+            8px
+            minmax(0, 1fr);
     }
 }
