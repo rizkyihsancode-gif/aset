@@ -7,38 +7,34 @@
     @php
         $view = ($view ?? 'manual') === 'arsip' ? 'arsip' : 'manual';
 
-        $rupiah = fn($v) => 'Rp ' . number_format((float) ($v ?? 0), 0, ',', '.');
+        $rupiah = fn($value) => 'Rp ' . number_format((float) ($value ?? 0), 0, ',', '.');
 
-        $kategoriNama = fn($v) => match (strtoupper(trim((string) $v))) {
+        $kategoriNama = fn($value) => match (strtoupper(trim((string) $value))) {
             'IPA' => 'Instalasi Pengolahan Air (IPA)',
             'BOOSTER' => 'Booster',
             'PERPIPAAN' => 'Perpipaan',
-            default => $v ?: '—',
+            default => $value ?: '—',
         };
 
-        $suggestions = $suggestions ?? [
-            'lokasi' => [],
-            'departemen' => [],
-            'divisi' => [],
-            'cakupan' => [],
-        ];
+        $suggestions = $suggestions ?? [];
+        $kfMasterOptions = $kfMasterOptions ?? [];
     @endphp
 
     <link rel="stylesheet"
         href="{{ asset('css/pages/kib/konstruksi.css') }}?v={{ file_exists(public_path('css/pages/kib/konstruksi.css')) ? filemtime(public_path('css/pages/kib/konstruksi.css')) : '1' }}">
 
     <section id="kfApp" class="kf-page" data-base="{{ url('/kib/konstruksi') }}"
-        data-group-url="{{ route('kib.konstruksi.kelompok') }}" data-token="{{ csrf_token() }}">
+        data-group-url="{{ url('/kib/konstruksi/kelompok') }}" data-token="{{ csrf_token() }}">
 
         {{-- =====================================================
-         HEADER
+         HEADER HALAMAN
     ====================================================== --}}
 
         <header class="kf-hero">
 
             <nav class="kf-breadcrumb" aria-label="Breadcrumb">
 
-                <a href="{{ route('dashboard') }}" aria-label="Dashboard">
+                <a href="{{ route('dashboard') }}">
                     <i data-lucide="house"></i>
                 </a>
 
@@ -52,8 +48,6 @@
 
             </nav>
 
-
-            {{-- TANGGAL DAN JAM --}}
 
             <div class="kf-date-card">
 
@@ -99,6 +93,7 @@
                     </span>
 
                     <div>
+
                         <small>Total Inventaris</small>
 
                         <strong>
@@ -106,6 +101,7 @@
                         </strong>
 
                         <span>Data konstruksi manual</span>
+
                     </div>
 
                 </article>
@@ -118,6 +114,7 @@
                     </span>
 
                     <div>
+
                         <small>Jumlah Lokasi</small>
 
                         <strong>
@@ -125,6 +122,7 @@
                         </strong>
 
                         <span>Lokasi terinventarisasi</span>
+
                     </div>
 
                 </article>
@@ -137,6 +135,7 @@
                     </span>
 
                     <div>
+
                         <small>Nilai Konstruksi</small>
 
                         <strong class="kf-stat-value">
@@ -144,6 +143,7 @@
                         </strong>
 
                         <span>Nilai pencatatan manual</span>
+
                     </div>
 
                 </article>
@@ -183,31 +183,31 @@
                         data
                     </span>
 
-                    <button type="button" id="kfTambah" class="kf-btn kf-primary">
-
-                        <i data-lucide="plus"></i>
-
-                        Tambah Konstruksi
-
-                    </button>
+                    @if ($view === 'manual')
+                        <button type="button" id="kfTambah" class="kf-btn kf-primary">
+                            <i data-lucide="plus"></i>
+                            Tambah Konstruksi
+                        </button>
+                    @endif
 
                 </div>
 
             </div>
 
 
-            {{-- TAB MANUAL / ARSIP --}}
+            {{-- TAB --}}
 
-            <nav class="kf-tabs" aria-label="Jenis data Konstruksi">
+            <nav class="kf-tabs">
 
-                <a class="{{ $view === 'manual' ? 'active' : '' }}" href="{{ route('kib.konstruksi') }}">
+                <a href="{{ route('kib.konstruksi') }}" class="{{ $view === 'manual' ? 'active' : '' }}">
                     <i data-lucide="clipboard-list"></i>
 
                     Data Manual Baru ({{ $total ?? 0 }})
                 </a>
 
-                <a class="{{ $view === 'arsip' ? 'active' : '' }}"
-                    href="{{ route('kib.konstruksi', ['view' => 'arsip']) }}">
+
+                <a href="{{ route('kib.konstruksi', ['view' => 'arsip']) }}"
+                    class="{{ $view === 'arsip' ? 'active' : '' }}">
                     <i data-lucide="archive"></i>
 
                     Arsip Data Lama ({{ $archiveCount ?? 0 }})
@@ -216,7 +216,7 @@
             </nav>
 
 
-            {{-- FILTER --}}
+            {{-- PENCARIAN / FILTER --}}
 
             <form class="kf-toolbar" method="GET" action="{{ route('kib.konstruksi') }}">
 
@@ -235,6 +235,7 @@
                 @if ($view === 'manual')
 
                     <select class="kf-filter" name="kategori" aria-label="Filter kategori">
+
                         <option value="">
                             Semua Kategori
                         </option>
@@ -269,7 +270,9 @@
 
 
             {{-- =================================================
-             TABEL MANUAL — 9 KOLOM
+             TABEL UTAMA
+             PERUBAHAN:
+             LOKASI DIPINDAHKAN SEBELUM CAKUPAN
         ================================================== --}}
 
             @if ($view === 'manual')
@@ -284,15 +287,19 @@
 
                                 <th>No.</th>
 
-                                <th>Nama Barang / Pekerjaan</th>
+                                <th>
+                                    Nama Barang / Pekerjaan
+                                </th>
 
                                 <th>Kategori</th>
 
+                                {{-- KOLOM 4: LOKASI --}}
+                                <th>Lokasi</th>
+
+                                {{-- KOLOM 5: CAKUPAN --}}
                                 <th>Cakupan</th>
 
                                 <th>Tahun</th>
-
-                                <th>Lokasi</th>
 
                                 <th>Status</th>
 
@@ -312,9 +319,14 @@
                             @forelse ($items as $item)
                                 <tr>
 
+                                    {{-- 1. NOMOR --}}
+
                                     <td class="kf-center">
                                         {{ $items->firstItem() + $loop->index }}
                                     </td>
+
+
+                                    {{-- 2. NAMA PEKERJAAN --}}
 
                                     <td class="kf-main-name">
 
@@ -328,6 +340,9 @@
 
                                     </td>
 
+
+                                    {{-- 3. KATEGORI --}}
+
                                     <td>
 
                                         <span class="kf-badge">
@@ -336,13 +351,8 @@
 
                                     </td>
 
-                                    <td>
-                                        {{ $item->cakupan ?: '—' }}
-                                    </td>
 
-                                    <td class="kf-center">
-                                        {{ $item->tahun ?: '—' }}
-                                    </td>
+                                    {{-- 4. LOKASI --}}
 
                                     <td>
 
@@ -350,11 +360,32 @@
                                             {{ $item->nama_lokasi ?: '—' }}
                                         </strong>
 
-                                        <small>
-                                            {{ $item->alamat_lokasi ?: '' }}
-                                        </small>
+                                        @if (!empty($item->alamat_lokasi))
+                                            <small>
+                                                {{ $item->alamat_lokasi }}
+                                            </small>
+                                        @endif
 
                                     </td>
+
+
+                                    {{-- 5. CAKUPAN --}}
+
+                                    <td class="kf-cakupan-cell">
+
+                                        {{ $item->cakupan ?: '—' }}
+
+                                    </td>
+
+
+                                    {{-- 6. TAHUN --}}
+
+                                    <td class="kf-center">
+                                        {{ $item->tahun ?: '—' }}
+                                    </td>
+
+
+                                    {{-- 7. STATUS ASET --}}
 
                                     <td>
 
@@ -364,12 +395,15 @@
 
                                     </td>
 
+
+                                    {{-- 8. NILAI --}}
+
                                     <td class="kf-money">
                                         {{ $rupiah($item->nilai) }}
                                     </td>
 
 
-                                    {{-- AKSI --}}
+                                    {{-- 9. AKSI --}}
 
                                     <td class="kf-actions-cell">
 
@@ -380,7 +414,7 @@
                                                 data-kf-category="{{ $item->kategori }}"
                                                 data-kf-location="{{ $item->nama_lokasi }}"
                                                 data-kf-division="{{ $item->nama_divisi }}" title="Detail Kelompok"
-                                                aria-label="Buka Detail Kelompok">
+                                                aria-label="Detail Kelompok">
                                                 <i data-lucide="folder-open"></i>
                                             </button>
 
@@ -422,9 +456,9 @@
 
                 </div>
             @else
-                {{-- =============================================
-                 ARSIP LAMA — READ ONLY
-            ============================================== --}}
+                {{-- =================================================
+                 ARSIP KIB F — READ ONLY
+            ================================================== --}}
 
                 <div class="kf-archive-notice">
 
@@ -456,7 +490,6 @@
 
                         </thead>
 
-
                         <tbody>
 
                             @forelse ($items as $item)
@@ -467,7 +500,9 @@
                                     </td>
 
                                     <td>
-                                        <strong>{{ $item->nama_barang ?: '—' }}</strong>
+                                        <strong>
+                                            {{ $item->nama_barang ?: '—' }}
+                                        </strong>
                                     </td>
 
                                     <td>
@@ -524,7 +559,7 @@
 
 
         {{-- =====================================================
-         POPUP DETAIL KELOMPOK
+         MODAL DETAIL KELOMPOK
     ====================================================== --}}
 
         @if ($view === 'manual')
@@ -534,7 +569,9 @@
 
                     <div>
 
-                        <small>K.I.B F — KELOMPOK KONSTRUKSI</small>
+                        <small>
+                            K.I.B F — KELOMPOK KONSTRUKSI
+                        </small>
 
                         <h2 id="kfGroupDialogTitle">
                             Detail Kelompok Konstruksi
@@ -542,12 +579,13 @@
 
                         <p>
                             Pilih kategori, lokasi, dan divisi untuk
-                            melihat daftar pekerjaan.
+                            melihat daftar pekerjaan konstruksi.
                         </p>
 
                     </div>
 
-                    <button type="button" class="kf-x" data-kf-close="kfGroupDialog" aria-label="Tutup Kelompok">
+                    <button type="button" class="kf-x" data-kf-close="kfGroupDialog"
+                        aria-label="Tutup Detail Kelompok">
                         <i data-lucide="x"></i>
                     </button>
 
@@ -569,7 +607,7 @@
 
                             <i data-lucide="search"></i>
 
-                            <input id="kfGroupSearch" type="search" placeholder="Cari kategori, lokasi, divisi..."
+                            <input type="search" id="kfGroupSearch" placeholder="Cari kategori, lokasi, divisi..."
                                 autocomplete="off">
 
                         </label>
@@ -595,9 +633,12 @@
                                     Pilih Kelompok
                                 </h3>
 
-                                <p id="kfGroupCaption">—</p>
+                                <p id="kfGroupCaption">
+                                    —
+                                </p>
 
                             </div>
+
 
                             <span id="kfGroupCount" class="kf-group-count">
                                 0 pekerjaan
@@ -612,7 +653,7 @@
 
                                 <i data-lucide="search"></i>
 
-                                <input id="kfGroupItemSearch" type="search" placeholder="Cari nama, cakupan, uraian..."
+                                <input id="kfGroupItemSearch" type="search" placeholder="Cari nama pekerjaan..."
                                     autocomplete="off">
 
                             </label>
@@ -650,11 +691,9 @@
                                 <tbody id="kfGroupRows">
 
                                     <tr>
-
                                         <td colspan="6" class="kf-empty">
                                             Pilih kelompok Konstruksi.
                                         </td>
-
                                     </tr>
 
                                 </tbody>
@@ -706,7 +745,7 @@
 
 
         {{-- =====================================================
-         POPUP TAMBAH / EDIT
+         FORM TAMBAH DAN EDIT
     ====================================================== --}}
 
         <dialog id="kfModalForm" class="kf-dialog" aria-labelledby="kfFormTitle">
@@ -719,18 +758,21 @@
 
                     <div>
 
-                        <small>FORM PENCATATAN MANUAL K.I.B F</small>
+                        <small>
+                            FORM PENCATATAN MANUAL K.I.B F
+                        </small>
 
                         <h2 id="kfFormTitle">
                             Tambah Data Konstruksi
                         </h2>
 
                         <p>
-                            Catat pekerjaan langsung tanpa
-                            voucher Nilai Aset.
+                            Catat pekerjaan secara manual tanpa
+                            mengambil data Nilai Aset.
                         </p>
 
                     </div>
+
 
                     <button type="button" class="kf-x" data-kf-close="kfModalForm" aria-label="Tutup Form">
                         <i data-lucide="x"></i>
@@ -744,7 +786,7 @@
                     <div id="kfError" class="kf-error" role="alert" hidden></div>
 
 
-                    {{-- BAGIAN 1 --}}
+                    {{-- IDENTITAS --}}
 
                     <fieldset class="kf-fieldset">
 
@@ -771,7 +813,7 @@
                                 Kategori <em>*</em>
 
                                 <input name="kategori" id="kfKategori" data-kf-combo="kategori" required
-                                    autocomplete="off" placeholder="Cari IPA, Booster, Perpipaan">
+                                    autocomplete="off" placeholder="IPA / Booster / Perpipaan">
 
                             </label>
 
@@ -810,7 +852,7 @@
                                 Departemen
 
                                 <input name="departemen_manual" id="kfDepartemen" data-kf-combo="departemen"
-                                    maxlength="255" autocomplete="off" placeholder="Cari atau ketik departemen">
+                                    maxlength="255" autocomplete="off" placeholder="Departemen">
 
                             </label>
 
@@ -820,7 +862,7 @@
                                 Divisi
 
                                 <input name="divisi_manual" id="kfDivisi" data-kf-combo="divisi" maxlength="255"
-                                    autocomplete="off" placeholder="Cari atau ketik divisi">
+                                    autocomplete="off" placeholder="Divisi">
 
                             </label>
 
@@ -829,7 +871,7 @@
                     </fieldset>
 
 
-                    {{-- BAGIAN 2 --}}
+                    {{-- SPESIFIKASI --}}
 
                     <fieldset class="kf-fieldset">
 
@@ -865,7 +907,7 @@
                                 Konstruksi Bertingkat / Tidak
 
                                 <input name="struktur" id="kfStruktur" data-kf-combo="struktur" autocomplete="off"
-                                    placeholder="Pilih jenis struktur">
+                                    placeholder="Bertingkat / Tidak">
 
                             </label>
 
@@ -875,7 +917,7 @@
                                 Konstruksi Beton / Tidak
 
                                 <input name="materi" id="kfMateri" data-kf-combo="materi" autocomplete="off"
-                                    placeholder="Pilih material">
+                                    placeholder="Beton / Tidak">
 
                             </label>
 
@@ -884,7 +926,7 @@
 
                                 Letak / Lokasi Alamat
 
-                                <input name="letak" maxlength="500" placeholder="Contoh: Jl. Sultan Alimudin">
+                                <input name="letak" maxlength="500" placeholder="Alamat atau letak konstruksi">
 
                             </label>
 
@@ -894,7 +936,7 @@
                                 Status Tanah
 
                                 <input name="status_tanah" data-kf-combo="status_tanah" maxlength="255"
-                                    autocomplete="off" placeholder="Cari atau ketik status">
+                                    autocomplete="off" placeholder="Status tanah">
 
                             </label>
 
@@ -904,7 +946,7 @@
                                 Asal Usul Pembiayaan
 
                                 <input name="asal" data-kf-combo="asal" maxlength="255" autocomplete="off"
-                                    placeholder="Cari atau ketik asal">
+                                    placeholder="Asal pembiayaan">
 
                             </label>
 
@@ -914,7 +956,7 @@
                                 Status Aset
 
                                 <input name="status_aset" data-kf-combo="status_aset" maxlength="255" autocomplete="off"
-                                    placeholder="Cari atau ketik status">
+                                    placeholder="Status aset">
 
                             </label>
 
@@ -924,7 +966,7 @@
                                 Nilai Konstruksi (Rp) <em>*</em>
 
                                 <input name="nilai" id="kfNilai" type="number" min="0" step="0.01"
-                                    required placeholder="Masukkan nilai rupiah">
+                                    required placeholder="Nominal konstruksi">
 
                             </label>
 
@@ -933,13 +975,13 @@
                     </fieldset>
 
 
-                    {{-- BAGIAN 3 --}}
+                    {{-- URAIAN --}}
 
                     <fieldset class="kf-fieldset">
 
                         <legend>
                             <span>3</span>
-                            Uraian Pekerjaan dan Keterangan
+                            Uraian dan Keterangan
                         </legend>
 
                         <div class="kf-fields">
@@ -948,11 +990,7 @@
 
                                 Uraian Pekerjaan <em>*</em>
 
-                                <textarea name="urai" id="kfUrai" rows="6" required
-                                    placeholder="1. Pekerjaan persiapan
-2. Pengadaan material
-3. Pelaksanaan konstruksi
-4. Pengujian dan serah terima"></textarea>
+                                <textarea name="urai" id="kfUrai" rows="6" required placeholder="Tuliskan uraian pekerjaan..."></textarea>
 
                             </label>
 
@@ -962,7 +1000,7 @@
                                 Dokumen Pendukung / Keterangan
 
                                 <textarea name="ket" id="kfKet" rows="4"
-                                    placeholder="Nomor berita acara, kontraktor, nomor kontrak, tanggal, dan catatan lainnya"></textarea>
+                                    placeholder="Nomor berita acara, kontraktor, nomor kontrak, dan catatan lainnya"></textarea>
 
                             </label>
 
@@ -971,7 +1009,7 @@
                     </fieldset>
 
 
-                    {{-- BAGIAN 4 --}}
+                    {{-- FOTO DAN LAMPIRAN --}}
 
                     <fieldset class="kf-fieldset">
 
@@ -990,7 +1028,7 @@
                                     accept="image/jpeg,image/png,image/webp">
 
                                 <small>
-                                    JPG, PNG, WEBP. Maksimal 5 MB.
+                                    JPG, PNG, atau WEBP.
                                 </small>
 
                             </label>
@@ -1004,7 +1042,7 @@
                                     accept=".pdf,.jpg,.jpeg,.png,.webp" multiple>
 
                                 <small>
-                                    Dapat memilih beberapa file berulang kali.
+                                    Bisa memilih beberapa file.
                                 </small>
 
                             </label>
@@ -1042,7 +1080,7 @@
 
 
         {{-- =====================================================
-         POPUP VIEW KIB F BERBENTUK TABEL EXCEL
+         VIEW DETAIL EXCEL KIB F
     ====================================================== --}}
 
         <dialog id="kfModalDetail" class="kf-dialog kf-excel-dialog" aria-labelledby="kfDetailTitle">
@@ -1051,7 +1089,9 @@
 
                 <div>
 
-                    <small>DETAIL INVENTARIS K.I.B F</small>
+                    <small>
+                        DETAIL INVENTARIS K.I.B F
+                    </small>
 
                     <h2 id="kfDetailTitle">
                         Detail Konstruksi
@@ -1098,7 +1138,7 @@
 
 
         {{-- =====================================================
-         KONFIRMASI DELETE
+         KONFIRMASI HAPUS
     ====================================================== --}}
 
         <dialog id="kfModalDelete" class="kf-dialog kf-confirm-dialog" aria-labelledby="kfDeleteTitle">
@@ -1107,7 +1147,9 @@
 
                 <div>
 
-                    <small>KONFIRMASI PENGHAPUSAN</small>
+                    <small>
+                        KONFIRMASI PENGHAPUSAN
+                    </small>
 
                     <h2 id="kfDeleteTitle">
                         Hapus Konstruksi?
@@ -1135,7 +1177,7 @@
                 <strong id="kfDeleteName"></strong>
 
                 <small>
-                    Data arsip Konstruksi lama tidak dihapus.
+                    Arsip lama tidak akan dihapus.
                 </small>
 
             </div>
@@ -1146,6 +1188,7 @@
                 <button type="button" class="kf-btn kf-outline" data-kf-close="kfModalDelete">
                     Batal
                 </button>
+
 
                 <button type="button" id="kfDeleteConfirm" class="kf-btn kf-danger">
                     Ya, Hapus Data
@@ -1161,18 +1204,14 @@
     </section>
 
 
-    {{-- PILIHAN DARI DATABASE --}}
-
     <script id="kfSuggestions" type="application/json">
 @json($suggestions)
 </script>
 
     <script id="kfMasterOptions" type="application/json">
-@json($kfMasterOptions ?? [])
+@json($kfMasterOptions)
 </script>
 
-
-    {{-- JAVASCRIPT K.I.B F --}}
 
     <script
         src="{{ asset('js/pages/kib/konstruksi.js') }}?v={{ file_exists(public_path('js/pages/kib/konstruksi.js')) ? filemtime(public_path('js/pages/kib/konstruksi.js')) : '1' }}">

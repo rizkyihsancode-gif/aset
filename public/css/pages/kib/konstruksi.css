@@ -1,12 +1,12 @@
 
 /* ==========================================================
-   K.I.B F — KONSTRUKSI MANUAL
+   K.I.B F — KONSTRUKSI
    PERUMDA TIRTA KENCANA KOTA SAMARINDA
    ========================================================== */
 
 .kf-page {
     --kf-primary: #0869e7;
-    --kf-primary-dark: #0758bb;
+    --kf-dark: #0758bb;
     --kf-navy: #0b326b;
     --kf-line: #dce7f4;
     --kf-muted: #7690ad;
@@ -27,13 +27,12 @@
     display: none !important;
 }
 
-.kf-page input,
 .kf-page button,
-.kf-page textarea,
-.kf-page select {
+.kf-page input,
+.kf-page select,
+.kf-page textarea {
     font: inherit;
 }
-
 
 /* ==========================================================
    HEADER
@@ -95,7 +94,6 @@
     line-height: 1.7;
 }
 
-
 /* ==========================================================
    TANGGAL WITA
    ========================================================== */
@@ -127,6 +125,7 @@
 
     background: #e9f3ff;
     color: var(--kf-primary);
+
     border-radius: 8px;
 }
 
@@ -151,15 +150,15 @@
     font-size: 10px;
 }
 
-
 /* ==========================================================
-   KARTU STATISTIK
+   STATISTIK
    ========================================================== */
 
 .kf-stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0,1fr));
     gap: 12px;
+
     margin-top: 24px;
 }
 
@@ -199,8 +198,8 @@
 
 .kf-stats small {
     display: block;
-
     color: #31598b;
+
     font-size: 11px;
     font-weight: 800;
 }
@@ -226,9 +225,8 @@
     font-size: 10px;
 }
 
-
 /* ==========================================================
-   PANEL UTAMA
+   PANEL
    ========================================================== */
 
 .kf-panel {
@@ -260,7 +258,6 @@
 
 .kf-section-head p {
     margin: 0;
-
     color: var(--kf-muted);
     font-size: 11px;
 }
@@ -273,19 +270,16 @@
 
 .kf-chip {
     display: inline-flex;
-
     padding: 7px 10px;
 
     background: #eaf3ff;
     color: #1764ba;
 
     border-radius: 7px;
-
     font-size: 10px;
     font-weight: 800;
     white-space: nowrap;
 }
-
 
 /* ==========================================================
    TOMBOL
@@ -300,10 +294,10 @@
     min-height: 37px;
     padding: 9px 13px;
 
+    background: #fff;
     border: 1px solid transparent;
     border-radius: 8px;
 
-    background: #fff;
     text-decoration: none;
     white-space: nowrap;
 
@@ -324,7 +318,7 @@
 }
 
 .kf-primary:hover {
-    background: var(--kf-primary-dark);
+    background: var(--kf-dark);
 }
 
 .kf-outline {
@@ -351,7 +345,6 @@
     opacity: .55;
     cursor: not-allowed;
 }
-
 
 /* ==========================================================
    TAB
@@ -394,7 +387,6 @@
     height: 15px;
 }
 
-
 /* ==========================================================
    FILTER
    ========================================================== */
@@ -415,7 +407,7 @@
     min-width: 200px;
 }
 
-.kf-search svg {
+.kf-search > svg {
     position: absolute;
     top: 11px;
     left: 12px;
@@ -459,7 +451,6 @@
     box-shadow: 0 0 0 3px rgba(8,105,231,.11);
 }
 
-
 /* ==========================================================
    TABEL UTAMA
    ========================================================== */
@@ -467,7 +458,6 @@
 .kf-table-wrap {
     width: 100%;
     max-width: 100%;
-
     overflow-x: auto;
 
     border: 1px solid #dbe7f2;
@@ -476,7 +466,7 @@
 
 .kf-table {
     width: 100%;
-    min-width: 1100px;
+    min-width: 1130px;
 
     border-spacing: 0;
     border-collapse: separate;
@@ -518,28 +508,59 @@
     background: #edf6ff;
 }
 
+/* ==========================================================
+   URUTAN TABEL UTAMA — SESUAI BLADE BARU
+
+   1. No.
+   2. Nama Barang
+   3. Kategori
+   4. Lokasi
+   5. Cakupan
+   6. Tahun
+   7. Status
+   8. Nilai
+   9. Aksi
+   ========================================================== */
+
 .kf-table-summary th:nth-child(1) {
     width: 55px;
 }
 
 .kf-table-summary th:nth-child(2) {
-    min-width: 220px;
+    min-width: 235px;
 }
 
-.kf-table-summary th:nth-child(3),
-.kf-table-summary th:nth-child(4) {
-    min-width: 130px;
+.kf-table-summary th:nth-child(3) {
+    min-width: 170px;
 }
+
+/* LOKASI */
+
+.kf-table-summary th:nth-child(4) {
+    min-width: 190px;
+}
+
+/* CAKUPAN */
 
 .kf-table-summary th:nth-child(5) {
-    width: 70px;
-}
-
-.kf-table-summary th:nth-child(6) {
     min-width: 155px;
 }
 
+/* TAHUN */
+
+.kf-table-summary th:nth-child(6) {
+    width: 80px;
+}
+
+.kf-table-summary th:nth-child(7) {
+    min-width: 125px;
+}
+
 .kf-table-summary th:nth-child(8) {
+    min-width: 145px;
+}
+
+.kf-table-summary th:nth-child(9) {
     min-width: 140px;
 }
 
@@ -569,10 +590,14 @@
     font-weight: 750;
 }
 
+.kf-cakupan-cell {
+    color: #285785;
+    font-weight: 600;
+}
+
 .kf-badge,
 .kf-status {
     display: inline-flex;
-
     padding: 6px 9px;
 
     background: #eaf3ff;
@@ -602,7 +627,7 @@
 }
 
 .kf-empty {
-    padding: 32px !important;
+    padding: 30px !important;
 
     color: #8198b0;
     text-align: center !important;
@@ -612,9 +637,8 @@
     margin-top: 15px;
 }
 
-
 /* ==========================================================
-   TOMBOL AKSI
+   AKSI TABEL
    ========================================================== */
 
 .kf-actions-head,
@@ -627,8 +651,8 @@
     min-width: 145px;
 
     text-align: center;
-
     background: #fff;
+
     box-shadow: -5px 0 12px rgba(24,63,100,.05);
 }
 
@@ -692,7 +716,6 @@
     background: #ffe1e6;
 }
 
-
 /* ==========================================================
    ARSIP
    ========================================================== */
@@ -722,7 +745,6 @@
     min-width: 1150px;
 }
 
-
 /* ==========================================================
    POPUP DETAIL KELOMPOK
    ========================================================== */
@@ -748,7 +770,7 @@
 }
 
 .kf-group-dialog:not([open]) {
-    display: none;
+    display: none !important;
 }
 
 .kf-group-dialog[open] {
@@ -783,12 +805,14 @@
 
 .kf-group-header h2 {
     margin: 6px 0;
+
     font-size: 19px;
     font-weight: 800;
 }
 
 .kf-group-header p {
     margin: 0;
+
     color: #8195ad;
     font-size: 11px;
     line-height: 1.6;
@@ -836,6 +860,7 @@
 
 .kf-group-search {
     position: relative;
+
     display: block;
     flex: 1;
     min-width: 0;
@@ -856,6 +881,7 @@
 .kf-group-search input {
     width: 100%;
     height: 38px;
+
     padding: 8px 10px 8px 34px;
 
     background: #fff;
@@ -872,9 +898,6 @@
     border-color: var(--kf-primary);
     box-shadow: 0 0 0 3px rgba(8,105,231,.11);
 }
-
-
-/* PANEL KIRI */
 
 .kf-group-list {
     display: flex;
@@ -942,9 +965,6 @@
     color: #7894b1;
     font-size: 10px;
 }
-
-
-/* PANEL KANAN */
 
 .kf-group-title {
     display: flex;
@@ -1018,7 +1038,6 @@
     padding: 12px 9px;
 
     color: #244d7c;
-
     border: 1px solid #e0eaf4;
 
     vertical-align: middle;
@@ -1063,9 +1082,15 @@
     border-top: 1px solid #dce8f5;
 }
 
+.kf-group-empty {
+    padding: 22px 10px;
+
+    color: #8197af;
+    text-align: center;
+}
 
 /* ==========================================================
-   MODAL FORM / VIEW / DELETE
+   POPUP FORM, DETAIL, DAN DELETE
    ========================================================== */
 
 .kf-dialog {
@@ -1087,7 +1112,7 @@
 }
 
 .kf-dialog:not([open]) {
-    display: none;
+    display: none !important;
 }
 
 .kf-dialog[open] {
@@ -1103,6 +1128,7 @@
 .kf-dialog form {
     display: flex;
     flex-direction: column;
+
     min-height: 0;
     max-height: calc(100dvh - 32px);
 }
@@ -1171,8 +1197,8 @@
 
 .kf-dialog-body {
     flex: 1 1 auto;
-
     min-height: 0;
+
     padding: 19px;
 
     overflow-y: auto;
@@ -1191,7 +1217,6 @@
     background: #fafdff;
     border-top: 1px solid var(--kf-line);
 }
-
 
 /* ==========================================================
    FORM
@@ -1219,6 +1244,7 @@
 
     width: 23px;
     height: 23px;
+
     margin-right: 7px;
 
     background: #e9f3ff;
@@ -1312,13 +1338,13 @@
     font-size: 12px;
 }
 
-
 /* ==========================================================
    SEARCHABLE DROPDOWN
    ========================================================== */
 
 .kf-combo {
     position: relative;
+
     width: 100%;
     min-width: 0;
 }
@@ -1347,8 +1373,7 @@
     font-size: 20px;
 }
 
-.kf-combo-arrow:hover,
-.kf-combo.opened .kf-combo-arrow {
+.kf-combo-arrow:hover {
     color: var(--kf-primary);
     background: #eaf3ff;
 }
@@ -1395,6 +1420,12 @@
     cursor: pointer;
 }
 
+.kf-combo-option:hover,
+.kf-combo-option.active {
+    background: #eaf3ff;
+    color: #075ebd;
+}
+
 .kf-combo-option strong {
     font-size: 12px;
 }
@@ -1404,18 +1435,12 @@
     font-size: 10px;
 }
 
-.kf-combo-option:hover,
-.kf-combo-option.active {
-    background: #eaf3ff;
-    color: #075ebd;
-}
-
 .kf-combo-empty {
     padding: 12px;
+
     color: #7289a6;
     font-size: 11px;
 }
-
 
 /* ==========================================================
    LAMPIRAN FORM
@@ -1459,16 +1484,14 @@
 
     color: #d53b50;
     background: transparent;
-
     border: 0;
-    text-decoration: underline;
 
+    text-decoration: underline;
     cursor: pointer;
 }
 
-
 /* ==========================================================
-   VIEW EXCEL — POPUP LEBAR
+   POPUP VIEW DETAIL EXCEL KIB F
    ========================================================== */
 
 #kfModalDetail.kf-excel-dialog {
@@ -1487,8 +1510,7 @@
     padding: 18px;
 }
 
-
-/* KOP KIB F */
+/* KOP LAPORAN */
 
 .kf-excel-heading {
     padding: 14px 10px 20px;
@@ -1517,7 +1539,6 @@
     font-size: 12px;
     font-weight: 750;
 }
-
 
 /* IDENTITAS ORGANISASI */
 
@@ -1551,22 +1572,27 @@
     overflow-wrap: anywhere;
 }
 
-
-/* TABEL EXCEL */
+/* ==========================================================
+   TABEL DETAIL EXCEL KIB F — 13 KOLOM
+   ========================================================== */
 
 .kf-excel-scroll {
     width: 100%;
     max-width: 100%;
 
     overflow-x: auto;
+    overflow-y: hidden;
 
     border: 1px solid #9fb9d2;
     border-radius: 7px;
+
+    scrollbar-width: thin;
+    scrollbar-color: #8eaac5 #f0f5fb;
 }
 
 .kf-excel-table {
-    width: 100%;
-    min-width: 1650px;
+    width: 1895px;
+    min-width: 1895px;
 
     border-collapse: collapse;
     table-layout: fixed;
@@ -1577,6 +1603,80 @@
     font-size: 11px;
     line-height: 1.7;
 }
+
+/* ==========================================================
+   URUTAN LEBAR KOLOM DETAIL
+
+   1  No.
+   2  Nama Barang / Jenis Barang
+   3  Tahun
+   4  Bangunan
+   5  Bertingkat / Tidak
+   6  Beton / Tidak
+   7  Letak / Lokasi Alamat
+   8  Cakupan
+   9  Status Tanah
+   10 Asal Usul Pembiayaan
+   11 Status Aset
+   12 Nilai (Rp)
+   13 Dokumen Pendukung
+   ========================================================== */
+
+.kf-excel-table col:nth-child(1) {
+    width: 50px;
+}
+
+.kf-excel-table col:nth-child(2) {
+    width: 320px;
+}
+
+.kf-excel-table col:nth-child(3) {
+    width: 70px;
+}
+
+.kf-excel-table col:nth-child(4) {
+    width: 120px;
+}
+
+.kf-excel-table col:nth-child(5) {
+    width: 110px;
+}
+
+.kf-excel-table col:nth-child(6) {
+    width: 110px;
+}
+
+.kf-excel-table col:nth-child(7) {
+    width: 190px;
+}
+
+/* CAKUPAN: KOLOM BARU SETELAH LOKASI */
+
+.kf-excel-table col:nth-child(8) {
+    width: 160px;
+}
+
+.kf-excel-table col:nth-child(9) {
+    width: 120px;
+}
+
+.kf-excel-table col:nth-child(10) {
+    width: 135px;
+}
+
+.kf-excel-table col:nth-child(11) {
+    width: 120px;
+}
+
+.kf-excel-table col:nth-child(12) {
+    width: 140px;
+}
+
+.kf-excel-table col:nth-child(13) {
+    width: 250px;
+}
+
+/* HEADER TABEL */
 
 .kf-excel-table th {
     padding: 12px 9px;
@@ -1589,7 +1689,11 @@
     text-align: center;
     vertical-align: middle;
     font-weight: 800;
+
+    overflow-wrap: anywhere;
 }
+
+/* ISI TABEL */
 
 .kf-excel-table td {
     padding: 12px 10px;
@@ -1601,32 +1705,8 @@
     overflow-wrap: anywhere;
 }
 
-.kf-excel-table th:nth-child(1) {
-    width: 50px;
-}
-
-.kf-excel-table .kf-col-name {
-    width: 330px;
-}
-
-.kf-excel-table .kf-col-year {
-    width: 70px;
-}
-
-.kf-excel-table .kf-col-small {
-    width: 110px;
-}
-
-.kf-excel-table .kf-col-location {
-    width: 190px;
-}
-
-.kf-excel-table .kf-col-money {
-    width: 155px;
-}
-
-.kf-excel-table .kf-col-doc {
-    width: 255px;
+.kf-excel-table tbody tr:hover td {
+    background: #f8fbff;
 }
 
 .kf-excel-center {
@@ -1656,6 +1736,19 @@
     overflow-wrap: anywhere;
 }
 
+/* CAKUPAN DETAIL */
+
+.kf-excel-cakupan {
+    color: #174f8c;
+    font-weight: 750;
+
+    text-align: left;
+    white-space: pre-line;
+    line-height: 1.8;
+}
+
+/* NILAI */
+
 .kf-excel-money {
     color: #0c4e91;
     text-align: right;
@@ -1663,8 +1756,23 @@
     white-space: nowrap;
 }
 
+/* ==========================================================
+   LAMPIRAN PDF / GAMBAR
+   ========================================================== */
 
-/* DOKUMEN DALAM TABEL EXCEL */
+.kf-group-docs,
+.kf-excel-attachments {
+    vertical-align: top;
+}
+
+.kf-group-docs .kf-doc-link {
+    margin-bottom: 5px;
+}
+
+.kf-excel-document {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 
 .kf-excel-attachments {
     display: flex;
@@ -1705,6 +1813,7 @@
 
 .kf-doc-link svg {
     flex-shrink: 0;
+
     width: 15px;
     height: 15px;
 }
@@ -1721,10 +1830,7 @@
     color: #0869e7;
 }
 
-.kf-group-docs {
-    min-width: 160px;
-    vertical-align: top;
-}
+/* KETERANGAN SETELAH TABEL */
 
 .kf-excel-section {
     margin-top: 18px;
@@ -1750,13 +1856,6 @@
     font-size: 11px;
     line-height: 1.7;
 }
-
-.kf-excel-file-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 9px;
-}
-
 
 /* ==========================================================
    KONFIRMASI DELETE
@@ -1795,7 +1894,6 @@
     overflow-wrap: anywhere;
 }
 
-
 /* ==========================================================
    TOAST
    ========================================================== */
@@ -1818,16 +1916,18 @@
     font-size: 12px;
 }
 
-
 /* ==========================================================
    RESPONSIVE
    ========================================================== */
 
 @media (max-width: 1050px) {
+
     .kf-date-card {
         position: static;
+
         width: max-content;
         max-width: 100%;
+
         margin-bottom: 17px;
     }
 }
@@ -1911,7 +2011,7 @@
         padding: 13px;
     }
 
-    #kfModalDetail {
+    #kfModalDetail.kf-excel-dialog {
         width: calc(100vw - 16px);
         height: calc(100dvh - 20px);
         max-height: calc(100dvh - 20px);
