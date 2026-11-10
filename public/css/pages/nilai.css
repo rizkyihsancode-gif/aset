@@ -2146,3 +2146,201 @@
         flex: 1;
     }
 }
+
+/* ==========================================================
+   NILAI ASET — FULL NOMINAL KPI
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+   ========================================================== */
+
+
+/* ==========================================================
+   KARTU TOTAL NILAI ASET
+   ========================================================== */
+
+.nilai-page .nilai-kpi-card-total {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    min-width: 0;
+    min-height: 108px;
+
+    padding: 16px;
+
+    overflow: visible;
+}
+
+
+/* ==========================================================
+   KONTEN NOMINAL
+   ========================================================== */
+
+.nilai-page .nilai-kpi-content-total {
+    flex: 1 1 auto;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    min-width: 0;
+    max-width: 100%;
+}
+
+
+/* ==========================================================
+   JUDUL TOTAL NILAI ASET
+   ========================================================== */
+
+.nilai-page .nilai-kpi-content-total > span {
+    display: block;
+
+    color: #26466c;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    line-height: 1.4;
+
+    margin-bottom: 5px;
+}
+
+
+/* ==========================================================
+   NOMINAL RUPIAH LENGKAP
+   TANPA SINGKATAN DAN TANPA ELLIPSIS
+   ========================================================== */
+
+.nilai-page .nilai-kpi-content-total
+.nilai-kpi-full-amount {
+
+    display: block;
+
+    width: 100%;
+    max-width: 100%;
+
+    margin: 0;
+
+    color: #071c4e;
+
+    font-size: clamp(14px, 1.1vw, 19px);
+    font-weight: 800;
+
+    line-height: 1.35;
+    letter-spacing: -0.55px;
+
+    font-variant-numeric: tabular-nums;
+
+    /* Jangan potong nominal */
+
+    overflow: visible;
+
+    text-overflow: clip;
+
+    /* Nominal panjang boleh turun baris
+       apabila ruang kartu tidak mencukupi */
+
+    white-space: normal;
+
+    overflow-wrap: anywhere;
+
+    word-break: normal;
+}
+
+
+/* ==========================================================
+   DESKRIPSI KARTU
+   ========================================================== */
+
+.nilai-page .nilai-kpi-content-total > small {
+
+    display: block;
+
+    margin-top: 7px;
+
+    color: #778ba5;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   LAYAR DESKTOP BESAR
+   ========================================================== */
+
+@media (min-width: 1600px) {
+
+    .nilai-page .nilai-kpi-content-total
+    .nilai-kpi-full-amount {
+
+        font-size: 19px;
+        letter-spacing: -0.6px;
+    }
+
+}
+
+
+/* ==========================================================
+   LAPTOP
+   ========================================================== */
+
+@media (min-width: 1251px) and (max-width: 1599px) {
+
+    .nilai-page .nilai-kpi-content-total
+    .nilai-kpi-full-amount {
+
+        font-size: 15px;
+        letter-spacing: -0.6px;
+    }
+
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (min-width: 701px) and (max-width: 1250px) {
+
+    .nilai-page .nilai-kpi-card-total {
+        min-height: 115px;
+    }
+
+    .nilai-page .nilai-kpi-content-total
+    .nilai-kpi-full-amount {
+
+        font-size: clamp(17px, 2vw, 22px);
+    }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 700px) {
+
+    .nilai-page .nilai-kpi-card-total {
+
+        min-height: 112px;
+        padding: 14px;
+
+        gap: 12px;
+    }
+
+    .nilai-page .nilai-kpi-content-total
+    .nilai-kpi-full-amount {
+
+        font-size: clamp(15px, 4vw, 19px);
+
+        letter-spacing: -0.3px;
+
+        line-height: 1.45;
+
+        overflow-wrap: anywhere;
+    }
+
+}

@@ -194,22 +194,41 @@
          KPI
     ====================================================== --}}
 
+
+        {{-- ==========================================================
+     KPI — NILAI ASET
+     PERUMDA TIRTA KENCANA KOTA SAMARINDA
+     
+     PERUBAHAN:
+     - Total Nilai Aset menampilkan nominal lengkap
+     - Tanpa T / M / Jt / Rb
+     - Tidak mengubah perhitungan controller
+     - Kartu lainnya tetap dipertahankan
+========================================================== --}}
+
         <section class="nilai-kpi-grid">
 
-            <article class="nilai-kpi-card">
+            {{-- ======================================================
+         1. TOTAL NILAI ASET — NOMINAL LENGKAP
+    ====================================================== --}}
+
+            <article class="nilai-kpi-card nilai-kpi-card-total">
 
                 <div class="nilai-kpi-icon blue">
+
                     <i data-lucide="database"></i>
+
                 </div>
 
-                <div class="nilai-kpi-content">
+                <div class="nilai-kpi-content nilai-kpi-content-total">
 
                     <span>
                         Total Nilai Aset
                     </span>
 
-                    <strong title="{{ $fullRupiah($stats['total_nilai']) }}">
-                        {{ $compactRupiah($stats['total_nilai']) }}
+                    <strong class="nilai-kpi-full-amount" title="{{ $fullRupiah($stats['total_nilai'] ?? 0) }}"
+                        aria-label="Total Nilai Aset {{ $fullRupiah($stats['total_nilai'] ?? 0) }}">
+                        {{ $fullRupiah($stats['total_nilai'] ?? 0) }}
                     </strong>
 
                     <small>
@@ -221,10 +240,17 @@
             </article>
 
 
+            {{-- ======================================================
+         2. PENAMBAHAN TAHUN INI
+         TETAP SEPERTI PROGRAM SEBELUMNYA
+    ====================================================== --}}
+
             <article class="nilai-kpi-card">
 
                 <div class="nilai-kpi-icon green">
+
                     <i data-lucide="chart-no-axes-column-increasing"></i>
+
                 </div>
 
                 <div class="nilai-kpi-content">
@@ -233,17 +259,19 @@
                         Penambahan Tahun Ini
                     </span>
 
-                    <strong title="{{ $fullRupiah($stats['penambahan_tahun_ini']) }}">
-                        {{ $compactRupiah($stats['penambahan_tahun_ini']) }}
+                    <strong title="{{ $fullRupiah($stats['penambahan_tahun_ini'] ?? 0) }}">
+                        {{ $compactRupiah($stats['penambahan_tahun_ini'] ?? 0) }}
                     </strong>
 
-                    @if (!is_null($stats['delta_tahun']))
+                    @if (!is_null($stats['delta_tahun'] ?? null))
                         <small class="{{ $stats['delta_tahun'] >= 0 ? 'positive' : 'negative' }}">
+
                             {{ $stats['delta_tahun'] >= 0 ? '↑' : '↓' }}
 
                             {{ number_format(abs($stats['delta_tahun']), 1, ',', '.') }}%
 
                             dari tahun lalu
+
                         </small>
                     @else
                         <small>
@@ -256,10 +284,16 @@
             </article>
 
 
+            {{-- ======================================================
+         3. TOTAL TRANSAKSI
+    ====================================================== --}}
+
             <article class="nilai-kpi-card">
 
                 <div class="nilai-kpi-icon purple">
+
                     <i data-lucide="file-text"></i>
+
                 </div>
 
                 <div class="nilai-kpi-content">
@@ -269,7 +303,7 @@
                     </span>
 
                     <strong>
-                        {{ number_format($stats['total_transaksi'], 0, ',', '.') }}
+                        {{ number_format($stats['total_transaksi'] ?? 0, 0, ',', '.') }}
                     </strong>
 
                     <small>
@@ -281,10 +315,16 @@
             </article>
 
 
+            {{-- ======================================================
+         4. TAHUN AKTIF
+    ====================================================== --}}
+
             <article class="nilai-kpi-card">
 
                 <div class="nilai-kpi-icon orange">
+
                     <i data-lucide="calendar-range"></i>
+
                 </div>
 
                 <div class="nilai-kpi-content">
@@ -294,7 +334,7 @@
                     </span>
 
                     <strong>
-                        {{ $stats['tahun_aktif'] }}
+                        {{ $stats['tahun_aktif'] ?? '—' }}
                     </strong>
 
                     <small>
@@ -306,6 +346,7 @@
             </article>
 
         </section>
+
 
 
         {{-- =====================================================
