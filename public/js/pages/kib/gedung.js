@@ -1,10 +1,29 @@
 
+/*
+|--------------------------------------------------------------------------
+| K.I.B C — GEDUNG DAN BANGUNAN
+| PERUMDA TIRTA KENCANA KOTA SAMARINDA
+|--------------------------------------------------------------------------
+|
+| TABEL UTAMA:
+| No. | Lokasi | Alamat | Aksi
+|
+| FITUR:
+| - Search dan Pagination
+| - Export CSV
+| - Data Nilai Aset Pending
+| - Tambah Gedung
+| - Detail Lokasi
+| - Edit Gedung
+| - Hapus Gedung
+| - Rincian Nilai per Lokasi
+| - Dokumen PDF
+|
+|--------------------------------------------------------------------------
+*/
+
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
-
-    // =====================================================
-    // 1. INITIALISASI HALAMAN
-    // =====================================================
 
     const root = document.getElementById('gedungPage');
 
@@ -18,19 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const $$ = (selector, node = root) =>
         [...node.querySelectorAll(selector)];
 
-    const format = new Intl.NumberFormat('id-ID');
+    const numberFormat = new Intl.NumberFormat('id-ID');
 
     const rupiah = value =>
-        'Rp ' + format.format(Number(value) || 0);
+        'Rp ' + numberFormat.format(Number(value) || 0);
 
     const esc = value =>
-        String(value ?? '').replace(/[&<>"']/g, c => ({
+        String(value ?? '').replace(/[&<>"']/g, char => ({
             '&': '&amp;',
             '<': '&lt;',
             '>': '&gt;',
             '"': '&quot;',
             "'": '&#39;'
-        })[c]);
+        })[char]);
 
     const icons = () =>
         window.lucide?.createIcons?.();
@@ -46,20 +65,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileUrl = (id, type) =>
         url(id) + '/file/' + type;
 
-    const fmtDate = date => {
-        if (!date) return '—';
+    const fmtDate = value => {
+        if (!value) return '—';
 
-        const s = String(date).slice(0, 10);
-        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+        const text = String(value).slice(0, 10);
 
-        return m
-            ? `${m[3]}/${m[2]}/${m[1]}`
-            : s;
+        const match =
+            /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+
+        return match
+            ? `${match[3]}/${match[2]}/${match[1]}`
+            : text;
     };
 
-    // =====================================================
-    // 2. FETCH JSON DARI LARAVEL
-    // =====================================================
+    /* ======================================================
+       API LARAVEL
+    ====================================================== */
 
     async function json(path) {
         const response = await fetch(path, {
@@ -87,9 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
 
-    // =====================================================
-    // 3. MODAL
-    // =====================================================
+    /* ======================================================
+       MODAL
+    ====================================================== */
 
     function open(id) {
         const dialog = $('#' + id);
@@ -123,9 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // =====================================================
-    // 4. TABEL UTAMA DAN PAGINATION
-    // =====================================================
+    /* ======================================================
+       TABEL UTAMA GEDUNG — EMPAT KOLOM
+    ====================================================== */
 
     const rows = $$('.gedung-row');
 
@@ -133,11 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function filteredRows() {
         const keyword = $('#gedungSearch')
-            .value.trim()
-            .toLowerCase();
+            .value.trim().toLowerCase();
 
         return rows.filter(row =>
-            row.dataset.search.includes(keyword)
+            (row.dataset.search || '').includes(keyword)
         );
     }
 
@@ -147,14 +167,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageSize =
             Number($('#gedungPageSize').value) || 20;
 
-        const count = Math.max(
+        const pageCount = Math.max(
             1,
             Math.ceil(selected.length / pageSize)
         );
 
         page = Math.min(
             Math.max(1, page),
-            count
+            pageCount
         );
 
         const start = (page - 1) * pageSize;
@@ -173,87 +193,100 @@ document.addEventListener('DOMContentLoaded', () => {
                 ).textContent = start + index + 1;
             });
 
-        const shown = selected.length
+        const first = selected.length
             ? start + 1
             : 0;
 
+        const last = Math.min(
+            start + pageSize,
+            selected.length
+        );
+
         $('#gedungTableInfo').textContent =
-            `Menampilkan ${shown}–` +
-            `${Math.min(start + pageSize, selected.length)}` +
+            `Menampilkan ${first}–${last}` +
             ` dari ${selected.length} lokasi`;
 
-        const parent = $('#gedungPagination');
+        const pagination = $('#gedungPagination');
 
-        parent.replaceChildren();
+        pagination.replaceChildren();
 
-        if (count <= 1) return;
+        if (pageCount <= 1) return;
 
-        function add(text, target, disabled = false) {
-            const element = document.createElement('button');
+        function addButton(
+            title,
+            target,
+            disabled = false
+        ) {
+            const button = document.createElement('button');
 
-            element.type = 'button';
-            element.textContent = text;
-            element.disabled = disabled;
+            button.type = 'button';
+            button.textContent = title;
+            button.disabled = disabled;
 
             if (
                 target === page &&
-                /^\d+$/.test(text)
+                /^\d+$/.test(title)
             ) {
-                element.classList.add('active');
+                button.classList.add('active');
 
-                element.setAttribute(
+                button.setAttribute(
                     'aria-current',
                     'page'
                 );
             }
 
-            element.addEventListener('click', () => {
+            button.addEventListener('click', () => {
                 page = target;
                 renderTable();
             });
 
-            parent.appendChild(element);
+            pagination.appendChild(button);
         }
 
-        function dot() {
+        function dots() {
             const span = document.createElement('span');
-
             span.textContent = '…';
-
-            parent.appendChild(span);
+            pagination.appendChild(span);
         }
 
-        add('‹', page - 1, page === 1);
+        addButton('‹', page - 1, page === 1);
 
-        const pages = new Set([1, count]);
+        const pageNumbers = new Set([
+            1,
+            pageCount
+        ]);
 
         for (
-            let p = Math.max(1, page - 2);
-            p <= Math.min(count, page + 2);
-            p++
+            let value = Math.max(1, page - 2);
+            value <= Math.min(pageCount, page + 2);
+            value++
         ) {
-            pages.add(p);
+            pageNumbers.add(value);
         }
 
-        let last = 0;
+        let previous = 0;
 
-        [...pages]
+        [...pageNumbers]
             .sort((a, b) => a - b)
-            .forEach(p => {
-                if (last && p - last > 1) {
-                    dot();
+            .forEach(value => {
+                if (previous && value - previous > 1) {
+                    dots();
                 }
 
-                add(String(p), p);
-                last = p;
+                addButton(String(value), value);
+                previous = value;
             });
 
-        add('›', page + 1, page === count);
+        addButton(
+            '›',
+            page + 1,
+            page === pageCount
+        );
     }
 
-    // =====================================================
-    // 5. PENCARIAN DAN RESET
-    // =====================================================
+    /* ======================================================
+       PENCARIAN DAN RESET
+    ====================================================== */
 
     $('#gedungSearch').addEventListener('input', () => {
         page = 1;
@@ -273,52 +306,50 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTable();
     });
 
-    // =====================================================
-    // 6. EXPORT CSV
-    // =====================================================
+    /* ======================================================
+       EXPORT CSV
+       NO | LOKASI | ALAMAT
+    ====================================================== */
 
     $('#gedungExport').addEventListener('click', () => {
-        const out = [[
+        const data = [[
             'No',
             'Lokasi',
-            'Alamat',
-            'Nilai',
-            'Jumlah PDF'
+            'Alamat'
         ]];
 
         filteredRows().forEach((row, index) => {
-            out.push([
+            data.push([
                 index + 1,
-                row.dataset.exportLokasi,
-                row.dataset.exportAlamat,
-                row.dataset.exportNilai,
-                row.dataset.exportPdf
+                row.dataset.exportLokasi || '',
+                row.dataset.exportAlamat || ''
             ]);
         });
 
-        const csv = '\uFEFF' + out.map(row =>
-            row.map(value => {
-                let text = String(value ?? '');
+        const csv = '\uFEFF' + data
+            .map(row =>
+                row.map(value => {
+                    let text = String(value ?? '');
 
-                if (/^\s*[=+@-]/.test(text)) {
-                    text = "'" + text;
-                }
+                    // Hindari formula Excel dari isi CSV.
+                    if (/^\s*[=+@-]/.test(text)) {
+                        text = "'" + text;
+                    }
 
-                return '"' +
-                    text.replaceAll('"', '""') +
-                    '"';
-
-            }).join(';')
-
-        ).join('\r\n');
-
-        const link = document.createElement('a');
+                    return '"' +
+                        text.replaceAll('"', '""') +
+                        '"';
+                }).join(';')
+            )
+            .join('\r\n');
 
         const blobUrl = URL.createObjectURL(
             new Blob([csv], {
                 type: 'text/csv;charset=utf-8'
             })
         );
+
+        const link = document.createElement('a');
 
         link.href = blobUrl;
         link.download = 'kib-gedung-bangunan.csv';
@@ -333,9 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
     });
 
-    // =====================================================
-    // 7. STATE NILAI ASET DAN GEDUNG
-    // =====================================================
+    /* ======================================================
+       STATE DATA
+    ====================================================== */
 
     let pending = [];
     let selectedId = null;
@@ -343,13 +374,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let detailItems = [];
     let detailMode = 'view';
 
+    // Lokasi yang saat ini dibuka dalam popup detail.
+    let activeLocation = null;
+
     let nilaiItems = [];
 
     const form = $('#gedungForm');
 
-    // =====================================================
-    // 8. STATUS DATA NILAI ASET TERPILIH
-    // =====================================================
+    /* ======================================================
+       PILIH VOUCHER
+    ====================================================== */
 
     function selection(source) {
         selectedId = String(source.id);
@@ -383,19 +417,16 @@ document.addEventListener('DOMContentLoaded', () => {
             `${source.divisi || '—'} · ` +
             `${rupiah(source.nilai)}`;
 
-        // Tabel tetap tampil,
-        // baris voucher diberi status Terpilih.
         renderPending();
     }
 
-    // =====================================================
-    // 9. RENDER DATA PENDING
-    // =====================================================
+    /* ======================================================
+       TABEL TRANSAKSI PENDING
+    ====================================================== */
 
     function renderPending() {
         const keyword = $('#gedungPendingSearch')
-            .value.trim()
-            .toLowerCase();
+            .value.trim().toLowerCase();
 
         const matches = pending.filter(item =>
             [
@@ -414,7 +445,8 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         $('#gedungPendingCount').textContent =
-            format.format(matches.length) + ' data';
+            numberFormat.format(matches.length) +
+            ' data';
 
         $('#gedungPendingBody').innerHTML =
             matches.length
@@ -431,33 +463,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <b>
                                     ${esc(item.no_voucher || '—')}
                                 </b>
-
                                 <small>
                                     ${esc(fmtDate(item.tgl_voucher))}
                                 </small>
                             </td>
 
                             <td>
-                                <b>
-                                    ${esc(item.lokasi || '—')}
-                                </b>
-
-                                <small>
-                                    ${esc(item.alamat || '')}
-                                </small>
+                                <b>${esc(item.lokasi || '—')}</b>
+                                <small>${esc(item.alamat || '')}</small>
                             </td>
 
                             <td>
                                 ${esc(item.departemen || '—')}
                             </td>
 
-                            <td>
-                                ${esc(item.divisi || '—')}
-                            </td>
-
-                            <td>
-                                ${esc(item.tahun || '—')}
-                            </td>
+                            <td>${esc(item.divisi || '—')}</td>
+                            <td>${esc(item.tahun || '—')}</td>
 
                             <td>
                                 <b>${rupiah(item.nilai)}</b>
@@ -495,9 +516,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
     }
 
-    // =====================================================
-    // 10. LOAD DATA PENDING DARI KIBController
-    // =====================================================
+    /* ======================================================
+       LOAD DATA PENDING
+    ====================================================== */
 
     async function loadPending() {
         $('#gedungPendingBody').innerHTML = `
@@ -524,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 '#gedungPendingPill'
             ].forEach(selector => {
                 $(selector).textContent =
-                    format.format(
+                    numberFormat.format(
                         Number(data.count ?? pending.length)
                     );
             });
@@ -535,8 +556,8 @@ document.addEventListener('DOMContentLoaded', () => {
             $('#gedungPendingBody').innerHTML = `
                 <tr>
                     <td colspan="9" class="gedung-empty">
-                        ${esc(error.message)} —
-                        periksa server.
+                        ${esc(error.message)}
+                        — periksa server.
                     </td>
                 </tr>
             `;
@@ -547,10 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'input',
         renderPending
     );
-
-    // =====================================================
-    // 11. PILIH VOUCHER
-    // =====================================================
 
     $('#gedungPendingBody').addEventListener(
         'click',
@@ -577,7 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Voucher belum memiliki Lokasi, ' +
                     'Departemen, atau Divisi lengkap.'
                 );
-
                 return;
             }
 
@@ -585,13 +601,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     );
 
-    // =====================================================
-    // 12. GANTI VOUCHER
-    // =====================================================
+    /* ======================================================
+       GANTI VOUCHER
+    ====================================================== */
 
     $('#gedungChange').addEventListener('click', () => {
-        // Pada mode Edit, voucher sumber
-        // tidak boleh diubah.
+        // Voucher sumber tidak boleh diganti ketika Edit.
         if (!$('#gedungMethod').disabled) return;
 
         $('#gedungPendingSection').hidden = false;
@@ -602,9 +617,9 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#gedungPendingSearch').focus();
     });
 
-    // =====================================================
-    // 13. RESET FORM
-    // =====================================================
+    /* ======================================================
+       RESET FORM
+    ====================================================== */
 
     function resetForm() {
         form.reset();
@@ -637,9 +652,9 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#gedungPendingSearch').value = '';
     }
 
-    // =====================================================
-    // 14. TAMBAH GEDUNG
-    // =====================================================
+    /* ======================================================
+       TAMBAH GEDUNG
+    ====================================================== */
 
     async function create() {
         resetForm();
@@ -656,10 +671,6 @@ document.addEventListener('DOMContentLoaded', () => {
         create
     );
 
-    // =====================================================
-    // 15. VALIDASI SIMPAN
-    // =====================================================
-
     form.addEventListener('submit', event => {
         const creating = $('#gedungMethod').disabled;
 
@@ -675,9 +686,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // =====================================================
-    // 16. ATRIBUT DETAIL GEDUNG
-    // =====================================================
+    /* ======================================================
+       ATRIBUT DETAIL GEDUNG
+    ====================================================== */
 
     function detailAttributes(item) {
         return [
@@ -701,9 +712,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
     }
 
-    // =====================================================
-    // 17. DETAIL SATU GEDUNG
-    // =====================================================
+    /* ======================================================
+       RINCIAN SATU GEDUNG
+    ====================================================== */
 
     function displayFocus(item) {
         const pane = $('#gedungDetailFocus');
@@ -751,15 +762,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <dl class="gedung-attributes">
                 ${
                     detailAttributes(item)
-                        .map(([name, value]) => `
+                        .map(([label, value]) => `
                             <div>
-                                <dt>
-                                    ${esc(name)}
-                                </dt>
-
-                                <dd>
-                                    ${esc(value || '—')}
-                                </dd>
+                                <dt>${esc(label)}</dt>
+                                <dd>${esc(value || '—')}</dd>
                             </div>
                         `)
                         .join('')
@@ -791,9 +797,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =====================================================
-    // 18. DAFTAR GEDUNG BERDASARKAN LOKASI
-    // =====================================================
+    /* ======================================================
+       DAFTAR GEDUNG PER LOKASI
+    ====================================================== */
 
     function renderDetailList() {
         const dep = $('#gedungDetailDep').value;
@@ -807,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#gedungDetailItems').innerHTML =
             items.length
                 ? items.map(item => {
-                    const button =
+                    const action =
                         detailMode === 'delete'
                             ? `
                                 <button
@@ -857,24 +863,23 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </small>
                             </div>
 
-                            ${button}
+                            ${action}
 
                         </article>
                     `;
                 }).join('')
                 : `
                     <p class="gedung-empty">
-                        Tidak ada inventaris untuk
-                        filter tersebut.
+                        Tidak ada inventaris untuk filter tersebut.
                     </p>
                 `;
 
         icons();
     }
 
-    // =====================================================
-    // 19. FILTER DEPARTEMEN DAN DIVISI
-    // =====================================================
+    /* ======================================================
+       FILTER DEPARTEMEN DAN DIVISI
+    ====================================================== */
 
     function renderDetailFilters() {
         const dep = $('#gedungDetailDep');
@@ -890,9 +895,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         dep.innerHTML = `
-            <option value="">
-                Semua Departemen
-            </option>
+            <option value="">Semua Departemen</option>
         ` + [...departments]
             .map(([id, name]) => `
                 <option value="${esc(id)}">
@@ -917,9 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
             div.innerHTML = `
-                <option value="">
-                    Semua Divisi
-                </option>
+                <option value="">Semua Divisi</option>
             ` + [...divisions]
                 .map(([id, name]) => `
                     <option value="${esc(id)}">
@@ -937,12 +938,17 @@ document.addEventListener('DOMContentLoaded', () => {
         makeDiv();
     }
 
-    // =====================================================
-    // 20. MEMBUKA DETAIL LOKASI
-    // =====================================================
+    /* ======================================================
+       DETAIL LOKASI
+    ====================================================== */
 
     async function showLokasi(lokasiId, mode = 'view') {
         detailMode = mode;
+
+        activeLocation = {
+            id: lokasiId,
+            name: ''
+        };
 
         $('#gedungDetailTitle').textContent =
             mode === 'edit'
@@ -973,6 +979,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? data.data
                 : [];
 
+            activeLocation.name =
+                data.lokasi?.lokasi || '';
+
             $('#gedungDetailAddress').textContent =
                 `${data.lokasi.lokasi || '—'} · ` +
                 `${data.lokasi.alamat || '—'} · ` +
@@ -986,32 +995,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // =====================================================
-    // 21. EVENT MODAL DETAIL
-    // =====================================================
+    /* ======================================================
+       EVENT MODAL DETAIL
+    ====================================================== */
 
     $('#gedungDetailItems').addEventListener(
         'click',
         event => {
-            // LIHAT RINCIAN
             const focus = event.target.closest(
                 '[data-focus]'
             );
 
             if (focus) {
-                const item = detailItems.find(
-                    item =>
-                        String(item.id) === focus.dataset.focus
+                const item = detailItems.find(row =>
+                    String(row.id) === focus.dataset.focus
                 );
 
-                if (item) {
-                    displayFocus(item);
-                }
+                if (item) displayFocus(item);
 
                 return;
             }
 
-            // EDIT
             const edit = event.target.closest(
                 '[data-edit]'
             );
@@ -1021,16 +1025,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // HAPUS
             const del = event.target.closest(
                 '[data-delete]'
             );
 
             if (!del) return;
 
-            const item = detailItems.find(
-                item =>
-                    String(item.id) === del.dataset.delete
+            const item = detailItems.find(row =>
+                String(row.id) === del.dataset.delete
             );
 
             if (!item) return;
@@ -1044,11 +1046,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!confirmed) return;
 
-            const formDel = $('#gedungDeleteForm');
+            const deleteForm = $('#gedungDeleteForm');
 
-            formDel.action = url(item.id);
-
-            formDel.submit();
+            deleteForm.action = url(item.id);
+            deleteForm.submit();
         }
     );
 
@@ -1063,17 +1064,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     );
 
-    // =====================================================
-    // 22. EDIT DATA GEDUNG
-    // =====================================================
+    /* ======================================================
+       EDIT DATA GEDUNG
+    ====================================================== */
 
     async function editGedung(id) {
         try {
-            const result = await json(
+            const response = await json(
                 url(id)
             );
 
-            const item = result.data;
+            const item = response.data;
 
             resetForm();
 
@@ -1130,10 +1131,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 'guna',
                 'ket'
             ].forEach(name => {
-                const field = form.elements.namedItem(name);
+                const input = form.elements.namedItem(name);
 
-                if (field) {
-                    field.value = item[name] ?? '';
+                if (input) {
+                    input.value = item[name] ?? '';
                 }
             });
 
@@ -1141,7 +1142,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 String(item.tgl_imb || '').slice(0, 10);
 
             close('gedungDetailDialog');
-
             open('gedungFormDialog');
 
         } catch (error) {
@@ -1152,14 +1152,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // =====================================================
-    // 23. RENDER RINCIAN NILAI GEDUNG
-    // =====================================================
+    /* ======================================================
+       RINCIAN NILAI GEDUNG
+    ====================================================== */
 
     function renderNilai() {
         const keyword = $('#gedungNilaiSearch')
-            .value.trim()
-            .toLowerCase();
+            .value.trim().toLowerCase();
 
         const values = nilaiItems.filter(item =>
             [
@@ -1179,9 +1178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             values.length
                 ? values.map((item, index) => `
                     <tr>
-                        <td>
-                            ${index + 1}
-                        </td>
+                        <td>${index + 1}</td>
 
                         <td>
                             ${esc(item.kode_aktiva || '—')}
@@ -1223,10 +1220,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
     }
 
-    // =====================================================
-    // 24. DETAIL NILAI PER LOKASI
-    // =====================================================
-
     async function showNilai(id, name) {
         $('#gedungNilaiTitle').textContent =
             'Detail Nilai — ' + name;
@@ -1251,16 +1244,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 lokasiUrl(id) + '/nilai'
             );
 
-            nilaiItems = data.data || [];
+            nilaiItems = Array.isArray(data.data)
+                ? data.data
+                : [];
 
             $('#gedungNilaiAddress').textContent =
-                data.lokasi.alamat || '—';
+                data.lokasi?.alamat || '—';
 
             $('#gedungNilaiTotal').textContent =
                 rupiah(data.total);
 
             $('#gedungNilaiCount').textContent =
-                format.format(data.count) +
+                numberFormat.format(data.count || 0) +
                 ' transaksi';
 
             renderNilai();
@@ -1281,9 +1276,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderNilai
     );
 
-    // =====================================================
-    // 25. DAFTAR PDF GEDUNG
-    // =====================================================
+    /* ======================================================
+       DOKUMEN PDF PER LOKASI
+    ====================================================== */
 
     async function showPdf(id, name) {
         $('#gedungPdfTitle').textContent =
@@ -1292,7 +1287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#gedungPdfBody').innerHTML = `
             <tr>
                 <td colspan="4" class="gedung-empty">
-                    Memuat...
+                    Memuat dokumen...
                 </td>
             </tr>
         `;
@@ -1304,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 lokasiUrl(id)
             );
 
-            const docs = (response.data || [])
+            const documents = (response.data || [])
                 .filter(item =>
                     String(item.dok || '')
                         .toLowerCase()
@@ -1312,11 +1307,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
 
             $('#gedungPdfAddress').textContent =
-                `${docs.length} dokumen terdaftar`;
+                `${documents.length} dokumen terdaftar`;
 
             $('#gedungPdfBody').innerHTML =
-                docs.length
-                    ? docs.map((item, index) => `
+                documents.length
+                    ? documents.map((item, index) => `
                         <tr>
                             <td>${index + 1}</td>
 
@@ -1358,9 +1353,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // =====================================================
-    // 26. EVENT TOMBOL TABEL UTAMA
-    // =====================================================
+    /* ======================================================
+       NILAI DAN PDF SEKARANG DI POPUP DETAIL
+    ====================================================== */
+
+    $('#gedungDetailNilai').addEventListener(
+        'click',
+        () => {
+            if (!activeLocation) return;
+
+            showNilai(
+                activeLocation.id,
+                activeLocation.name
+            );
+        }
+    );
+
+    $('#gedungDetailPdf').addEventListener(
+        'click',
+        () => {
+            if (!activeLocation) return;
+
+            showPdf(
+                activeLocation.id,
+                activeLocation.name
+            );
+        }
+    );
+
+    /* ======================================================
+       AKSI TABEL UTAMA
+    ====================================================== */
 
     $('#gedungTable').addEventListener(
         'click',
@@ -1369,41 +1392,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!target) return;
 
-            // DETAIL NILAI
-            if (target.dataset.nilaiLokasi) {
-                return showNilai(
-                    target.dataset.nilaiLokasi,
-                    target.dataset.nama || ''
-                );
-            }
-
-            // DAFTAR PDF
-            if (target.dataset.pdfLokasi) {
-                return showPdf(
-                    target.dataset.pdfLokasi,
-                    target.dataset.nama || ''
-                );
-            }
-
-            // EDIT GEDUNG
+            // EDIT BERDASARKAN LOKASI
             if (target.dataset.pilihEdit) {
-                return showLokasi(
+                showLokasi(
                     target.dataset.pilihEdit,
                     'edit'
                 );
+                return;
             }
 
-            // HAPUS GEDUNG
+            // HAPUS BERDASARKAN LOKASI
             if (target.dataset.pilihHapus) {
-                return showLokasi(
+                showLokasi(
                     target.dataset.pilihHapus,
                     'delete'
                 );
+                return;
             }
 
-            // DETAIL GEDUNG
+            // DETAIL LOKASI
             if (target.dataset.lokasi) {
-                return showLokasi(
+                showLokasi(
                     target.dataset.lokasi,
                     'view'
                 );
@@ -1411,31 +1420,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     );
 
-    // =====================================================
-    // 27. INITIALISASI HALAMAN
-    // =====================================================
+    /* ======================================================
+       INITIALIZATION
+    ====================================================== */
 
     renderTable();
 
     icons();
 
-    // Apabila terjadi error validasi dari Laravel,
-    // buka kembali form dan pertahankan data lama.
     const hasErrors = !!$('.gedung-alert.danger');
 
     if (hasErrors) {
         const previous = new FormData(form);
 
-        const previousVoucher =
+        const voucherId =
             previous.get('id_nilai_aktiva');
 
         open('gedungFormDialog');
 
         loadPending().then(() => {
-            if (previousVoucher) {
+            if (voucherId) {
                 const source = pending.find(item =>
                     String(item.id) ===
-                    String(previousVoucher)
+                    String(voucherId)
                 );
 
                 if (source) {

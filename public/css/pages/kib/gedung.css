@@ -1372,3 +1372,199 @@
         flex-direction: column;
     }
 }
+
+/* ==========================================================
+   K.I.B C — GEDUNG DAN BANGUNAN
+   PERBAIKAN TABEL UTAMA MENJADI 4 KOLOM
+
+   No. | Lokasi | Alamat | Aksi
+
+   Tidak memengaruhi tabel voucher, nilai, dan PDF
+   dalam popup detail.
+   ========================================================== */
+
+
+/* TABEL UTAMA */
+
+#gedungTable {
+    width: 100%;
+    min-width: 700px;
+
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+
+/* KOLOM 1 — NOMOR */
+
+#gedungTable col.gc-no {
+    width: 64px;
+}
+
+
+/* KOLOM 2 — LOKASI */
+
+#gedungTable col.gc-lokasi {
+    width: 32%;
+}
+
+
+/* KOLOM 3 — ALAMAT */
+
+#gedungTable col.gc-alamat {
+    width: auto;
+}
+
+
+/* KOLOM 4 — AKSI */
+
+#gedungTable col.gc-aksi {
+    width: 158px;
+}
+
+
+/* HEADER */
+
+#gedungTable thead th {
+    padding: 13px 14px;
+
+    color: #16355d;
+    background: #eaf4ff;
+
+    border: 1px solid #dce7f3;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    vertical-align: middle;
+}
+
+
+/* BARIS TABEL */
+
+#gedungTable tbody td {
+    padding: 14px;
+
+    color: #2f4e6d;
+
+    border: 1px solid #e1eaf3;
+
+    font-size: 12px;
+    line-height: 1.6;
+
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+
+/* NOMOR DAN AKSI RATA TENGAH */
+
+#gedungTable th:first-child,
+#gedungTable td:first-child,
+#gedungTable th:last-child,
+#gedungTable td:last-child {
+    text-align: center;
+}
+
+
+/* NAMA LOKASI */
+
+#gedungTable .gedung-location-name {
+    display: block;
+
+    color: #173c6c;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    overflow-wrap: anywhere;
+}
+
+#gedungTable td:nth-child(2) small {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #7790ac;
+    font-size: 10px;
+}
+
+
+/* ALAMAT */
+
+#gedungTable .gedung-address-cell {
+    color: #42658b;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+/* TOMBOL AKSI */
+
+#gedungTable .gedung-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+
+/* HOVER BARIS */
+
+#gedungTable tbody tr:hover td {
+    background: #f2f8ff;
+}
+
+
+/* TOMBOL NILAI DAN PDF DALAM DETAIL LOKASI */
+
+.gedung-detail-tools {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 8px;
+    margin: 12px 0 16px;
+}
+
+.gedung-detail-tools .gedung-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.gedung-detail-tools svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+    #gedungTable {
+        min-width: 650px;
+    }
+
+    #gedungTable col.gc-no {
+        width: 54px;
+    }
+
+    #gedungTable col.gc-aksi {
+        width: 142px;
+    }
+
+    #gedungTable thead th,
+    #gedungTable tbody td {
+        padding: 11px 9px;
+    }
+
+    .gedung-detail-tools {
+        gap: 7px;
+    }
+}
