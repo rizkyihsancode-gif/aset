@@ -216,6 +216,18 @@
              AGAR CRUD DAN DETAIL TIDAK RUSAK
         ======================================================== --}}
 
+
+            {{-- ==========================================================
+     MASTER DATA — DEPARTEMEN
+     TABEL UTAMA COMPACT RESPONSIVE
+
+     No | Kode Departemen | Nama Departemen | Dibuat | Aksi
+
+     - Tanpa kolom Image dan Role
+     - Mendukung data lama yang sebagian terbalik
+     - Mempertahankan atribut untuk JavaScript CRUD
+========================================================== --}}
+
             <div class="table-responsive">
 
                 <table class="dept-table" id="deptTable">
@@ -229,79 +241,77 @@
                     </colgroup>
 
                     <thead>
-
                         <tr>
-
-                            <th class="dept-col-no">
-                                No
-                            </th>
-
-                            <th>
-                                Kode Departemen
-                            </th>
-
-                            <th>
-                                Nama Departemen
-                            </th>
-
-                            <th>
-                                Dibuat
-                            </th>
-
-                            <th class="dept-col-action">
-                                Aksi
-                            </th>
-
+                            <th class="dept-col-no">No.</th>
+                            <th>Kode Departemen</th>
+                            <th>Nama Departemen</th>
+                            <th>Dibuat</th>
+                            <th class="dept-col-action">Aksi</th>
                         </tr>
-
                     </thead>
 
                     <tbody>
 
                         @forelse ($departemens as $item)
-                            <tr data-record data-id="{{ $item->id }}" data-kode="{{ $item->nama_dep }}"
-                                data-nama="{{ $item->kode_dep }}" data-role="{{ $item->role ?? '' }}"
+                            @php
+                                /*
+                                 * Sejumlah data legacy mempunyai
+                                 * posisi kode dan nama yang berbeda.
+                                 *
+                                 * Normalisasi hanya untuk tampilan,
+                                 * bukan mengubah isi database.
+                                 */
+
+                                $rawNama = trim((string) ($item->nama_dep ?? ''));
+
+                                $rawKode = trim((string) ($item->kode_dep ?? ''));
+
+                                $patternKode = '/^[0-9]+(?:[.\/_-][0-9A-Za-z]+)*$/u';
+
+                                $namaBerupaKode = (bool) preg_match($patternKode, $rawNama);
+
+                                $kodeBerupaKode = (bool) preg_match($patternKode, $rawKode);
+
+                                if ($kodeBerupaKode && !$namaBerupaKode) {
+                                    $kodeTampil = $rawKode;
+                                    $namaTampil = $rawNama;
+                                } else {
+                                    $kodeTampil = $rawNama;
+                                    $namaTampil = $rawKode;
+                                }
+                            @endphp
+
+                            <tr data-record data-id="{{ $item->id }}" data-kode="{{ $kodeTampil }}"
+                                data-nama="{{ $namaTampil }}" data-role="{{ $item->role ?? '' }}"
                                 data-img="{{ $item->img ?? '' }}" data-img-url="{{ $item->image_url ?? '' }}"
                                 data-created-at="{{ $item->created_at ?? '' }}"
                                 data-updated-at="{{ $item->updated_at ?? '' }}">
 
-                                {{-- =============================
-                                 1. NOMOR
-                            ============================= --}}
+                                {{-- NOMOR --}}
 
                                 <td class="dept-number"></td>
 
-                                {{-- =============================
-                                 2. KODE DEPARTEMEN
-                            ============================= --}}
+                                {{-- KODE DEPARTEMEN --}}
 
                                 <td>
 
                                     <strong class="dept-code-text">
-
-                                        {{ $item->nama_dep ?: '—' }}
-
+                                        {{ $kodeTampil ?: '—' }}
                                     </strong>
 
                                 </td>
 
-                                {{-- =============================
-                                 3. NAMA DEPARTEMEN
-                            ============================= --}}
+                                {{-- NAMA DEPARTEMEN --}}
 
                                 <td>
 
                                     <strong class="dept-name">
-
-                                        {{ $item->kode_dep ?: '—' }}
-
+                                        {{ $namaTampil ?: '—' }}
                                     </strong>
 
                                 </td>
 
-                                {{-- =============================
-                                 4. TANGGAL DIBUAT
-                            ============================= --}}
+                                {{-- TANGGAL DIBUAT --}}
 
                                 <td class="dept-created-cell">
 
@@ -313,32 +323,24 @@
 
                                 </td>
 
-                                {{-- =============================
-                                 5. AKSI
-                            ============================= --}}
+                                {{-- AKSI --}}
 
                                 <td class="dept-action-cell">
 
                                     <div class="dept-actions">
 
-                                        {{-- VIEW --}}
-
                                         <button type="button" class="view" data-action="view" title="Lihat Departemen"
-                                            aria-label="Lihat Departemen {{ $item->kode_dep }}">
+                                            aria-label="Lihat {{ $namaTampil }}">
                                             <i data-lucide="eye"></i>
                                         </button>
 
-                                        {{-- EDIT --}}
-
                                         <button type="button" class="edit" data-action="edit" title="Edit Departemen"
-                                            aria-label="Edit Departemen {{ $item->kode_dep }}">
+                                            aria-label="Edit {{ $namaTampil }}">
                                             <i data-lucide="square-pen"></i>
                                         </button>
 
-                                        {{-- DELETE --}}
-
                                         <button type="button" class="delete" data-action="delete" title="Hapus Departemen"
-                                            aria-label="Hapus Departemen {{ $item->kode_dep }}">
+                                            aria-label="Hapus {{ $namaTampil }}">
                                             <i data-lucide="trash-2"></i>
                                         </button>
 
@@ -350,8 +352,6 @@
 
                         @empty
 
-                            {{-- EMPTY DATABASE --}}
-
                             <tr id="deptServerEmpty">
 
                                 <td colspan="5" class="dept-empty">
@@ -360,8 +360,6 @@
 
                             </tr>
                         @endforelse
-
-                        {{-- EMPTY SEARCH --}}
 
                         <tr id="deptEmptyRow" hidden>
 
@@ -376,6 +374,7 @@
                 </table>
 
             </div>
+
 
             {{-- ========================================================
              TABLE FOOTER

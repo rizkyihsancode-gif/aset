@@ -2331,3 +2331,652 @@ button:hover {
         flex-basis: 28px;
     }
 }
+
+/* ==========================================================
+   MASTER DATA - DEPARTEMEN
+   FINAL COMPACT TABLE FIX
+
+   NO | KODE | NAMA | DIBUAT | AKSI
+
+   TUJUAN:
+   - Hapus horizontal scroll desktop
+   - Ukuran kolom tidak terlalu panjang
+   - Lebar tabel maksimal 1060px
+   - Tidak mengubah CRUD / Modal / Riwayat
+   - Responsif pada tablet dan smartphone
+========================================================== */
+
+
+/* ==========================================================
+   1. CONTAINER TABEL
+========================================================== */
+
+.dept-page .dept-table-card > .table-responsive {
+
+    display: block;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    padding: 0 18px;
+    margin: 0;
+
+    overflow-x: hidden;
+    overflow-y: visible;
+
+    box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   2. TABEL UTAMA
+========================================================== */
+
+.dept-page #deptTable {
+
+    width: 100%;
+    max-width: 1060px;
+    min-width: 0;
+
+    margin: 0 auto;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    table-layout: fixed;
+
+    background: #ffffff;
+
+    color: #244669;
+
+    font-size: 12px;
+
+    box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   3. PENGATURAN LEBAR KOLOM
+
+   No.              58px
+   Kode Departemen  175px
+   Nama Departemen  Sisa ruang
+   Dibuat           140px
+   Aksi             145px
+========================================================== */
+
+
+/* NO */
+
+.dept-page #deptTable col.dept-width-no {
+    width: 58px;
+}
+
+
+/* KODE DEPARTEMEN */
+
+.dept-page #deptTable col.dept-width-code {
+    width: 175px;
+}
+
+
+/* NAMA DEPARTEMEN */
+
+.dept-page #deptTable col.dept-width-name {
+    width: auto;
+}
+
+
+/* DIBUAT */
+
+.dept-page #deptTable col.dept-width-created {
+    width: 140px;
+}
+
+
+/* AKSI */
+
+.dept-page #deptTable col.dept-width-action {
+    width: 145px;
+}
+
+
+/* ==========================================================
+   4. HEADER TABEL
+========================================================== */
+
+.dept-page #deptTable thead th {
+
+    padding: 13px 12px;
+
+    background: #eaf3ff;
+
+    color: #17355f;
+
+    border: 1px solid #dce7f3;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+
+    line-height: 1.4;
+
+    text-align: left;
+    vertical-align: middle;
+
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+
+/* ==========================================================
+   5. ISI TABEL
+========================================================== */
+
+.dept-page #deptTable tbody td {
+
+    padding: 12px;
+
+    background: #ffffff;
+
+    color: #345274;
+
+    border: 1px solid #e3ebf4;
+
+    font-size: 12px;
+    line-height: 1.55;
+
+    vertical-align: middle;
+
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+
+/* ==========================================================
+   6. WARNA BARIS
+========================================================== */
+
+.dept-page #deptTable tbody
+tr[data-record]:nth-child(even) td {
+
+    background: #f9fcff;
+}
+
+
+.dept-page #deptTable tbody
+tr[data-record]:hover td {
+
+    background: #eff7ff;
+}
+
+
+/* ==========================================================
+   7. KOLOM NO
+========================================================== */
+
+.dept-page #deptTable th:first-child,
+.dept-page #deptTable td:first-child {
+
+    text-align: center;
+}
+
+
+.dept-page #deptTable .dept-number {
+
+    color: #7890aa;
+
+    font-size: 11px;
+
+    font-weight: 500;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================
+   8. KODE DEPARTEMEN
+========================================================== */
+
+.dept-page #deptTable .dept-code-text {
+
+    display: block;
+
+    max-width: 100%;
+
+    color: #0d59ad;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    line-height: 1.5;
+
+    white-space: normal;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================
+   9. NAMA DEPARTEMEN
+========================================================== */
+
+.dept-page #deptTable .dept-name {
+
+    display: block;
+
+    max-width: 100%;
+
+    color: #123b6b;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    line-height: 1.5;
+
+    white-space: normal;
+
+    overflow-wrap: break-word;
+}
+
+
+/* ==========================================================
+   10. TANGGAL DIBUAT
+========================================================== */
+
+.dept-page #deptTable .dept-created-cell {
+
+    color: #5d7794;
+
+    font-size: 11px;
+
+    font-variant-numeric: tabular-nums;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   11. KOLOM AKSI
+========================================================== */
+
+.dept-page #deptTable th:last-child,
+.dept-page #deptTable td:last-child {
+
+    text-align: center;
+}
+
+
+/* ==========================================================
+   12. GROUP TOMBOL AKSI
+========================================================== */
+
+.dept-page #deptTable .dept-actions {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    flex-wrap: nowrap;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   13. TOMBOL AKSI
+========================================================== */
+
+.dept-page #deptTable .dept-actions button {
+
+    flex: 0 0 30px;
+
+    display: grid;
+    place-items: center;
+
+    width: 30px;
+    height: 30px;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    transition:
+        transform .15s ease,
+        background-color .15s ease;
+}
+
+
+.dept-page #deptTable .dept-actions button svg {
+
+    width: 14px;
+    height: 14px;
+}
+
+
+.dept-page #deptTable .dept-actions button:hover {
+
+    transform: translateY(-1px);
+}
+
+
+/* VIEW */
+
+.dept-page #deptTable .dept-actions .view {
+
+    background: #e8f3ff;
+
+    color: #0869d7;
+}
+
+
+/* EDIT */
+
+.dept-page #deptTable .dept-actions .edit {
+
+    background: #fff0d9;
+
+    color: #d58b15;
+}
+
+
+/* DELETE */
+
+.dept-page #deptTable .dept-actions .delete {
+
+    background: #ffe6e9;
+
+    color: #dc4359;
+}
+
+
+/* ==========================================================
+   14. EMPTY STATE
+========================================================== */
+
+.dept-page #deptTable .dept-empty {
+
+    padding: 30px 15px;
+
+    color: #8299b2;
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   15. FOOTER DAN PAGINATION
+========================================================== */
+
+.dept-page .dept-table-footer {
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    width: 100%;
+    max-width: 100%;
+
+    padding: 12px 20px;
+
+    box-sizing: border-box;
+}
+
+
+.dept-page .dept-pagination-area {
+
+    display: flex;
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+
+/* ==========================================================
+   16. RESPONSIVE TABLET
+========================================================== */
+
+@media (max-width: 900px) {
+
+    .dept-page .dept-table-card > .table-responsive {
+
+        padding: 0 12px;
+    }
+
+    .dept-page #deptTable {
+
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .dept-page #deptTable col.dept-width-no {
+
+        width: 50px;
+    }
+
+    .dept-page #deptTable col.dept-width-code {
+
+        width: 140px;
+    }
+
+    .dept-page #deptTable col.dept-width-created {
+
+        width: 120px;
+    }
+
+    .dept-page #deptTable col.dept-width-action {
+
+        width: 115px;
+    }
+
+    .dept-page #deptTable thead th,
+    .dept-page #deptTable tbody td {
+
+        padding: 10px 8px;
+    }
+
+    .dept-page #deptTable .dept-actions {
+
+        gap: 5px;
+    }
+
+    .dept-page #deptTable .dept-actions button {
+
+        width: 28px;
+        height: 28px;
+
+        flex-basis: 28px;
+    }
+}
+
+
+/* ==========================================================
+   17. RESPONSIVE MOBILE
+
+   Tampilan berubah menjadi kartu agar tidak
+   memerlukan horizontal scroll.
+========================================================== */
+
+@media (max-width: 620px) {
+
+    .dept-page .dept-table-card > .table-responsive {
+
+        padding: 10px;
+
+        overflow-x: hidden;
+    }
+
+    .dept-page #deptTable {
+
+        display: block;
+
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+
+        margin: 0;
+
+        border: 0;
+    }
+
+    .dept-page #deptTable colgroup,
+    .dept-page #deptTable thead {
+
+        display: none;
+    }
+
+    .dept-page #deptTable tbody {
+
+        display: block;
+        width: 100%;
+    }
+
+    .dept-page #deptTable tbody tr[data-record] {
+
+        display: grid;
+
+        grid-template-columns: repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+        gap: 0;
+
+        margin-bottom: 12px;
+
+        border: 1px solid #dce7f3;
+        border-radius: 9px;
+
+        overflow: hidden;
+
+        background: #ffffff;
+    }
+
+    .dept-page #deptTable tbody tr[data-record][hidden] {
+
+        display: none !important;
+    }
+
+    .dept-page #deptTable tbody tr[data-record] td {
+
+        display: block;
+
+        width: 100%;
+
+        padding: 11px;
+
+        border: 0;
+        border-bottom: 1px solid #e7eef7;
+
+        text-align: left;
+
+        white-space: normal;
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td::before {
+
+        display: block;
+
+        margin-bottom: 5px;
+
+        color: #8298b1;
+
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td:nth-child(1)::before {
+
+        content: 'No.';
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td:nth-child(2)::before {
+
+        content: 'Kode Departemen';
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td:nth-child(3)::before {
+
+        content: 'Nama Departemen';
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td:nth-child(4)::before {
+
+        content: 'Dibuat';
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td:nth-child(5)::before {
+
+        content: 'Aksi';
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td:nth-child(3) {
+
+        grid-column: 1 / -1;
+    }
+
+    .dept-page #deptTable tbody tr[data-record]
+    td:nth-child(5) {
+
+        grid-column: 1 / -1;
+
+        border-bottom: 0;
+    }
+
+    .dept-page #deptTable .dept-actions {
+
+        justify-content: flex-start;
+    }
+
+    .dept-page #deptTable .dept-created-cell {
+
+        white-space: normal;
+    }
+
+    .dept-page #deptTable tbody
+    tr#deptServerEmpty,
+    .dept-page #deptTable tbody
+    tr#deptEmptyRow {
+
+        display: block;
+
+        width: 100%;
+    }
+
+    .dept-page #deptTable tbody
+    tr#deptServerEmpty td,
+    .dept-page #deptTable tbody
+    tr#deptEmptyRow td {
+
+        display: block;
+
+        width: 100%;
+    }
+}
+
