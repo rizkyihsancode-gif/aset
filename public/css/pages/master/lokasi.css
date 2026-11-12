@@ -4771,3 +4771,965 @@ td small {
     }
 
 }
+
+/* ==========================================================
+   MASTER DATA — LOKASI
+   FINAL UI FIX
+
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+
+   PERBAIKAN:
+   - Search dan filter simetris
+   - Placeholder rata kiri
+   - Form Tambah/Edit lebih rapi
+   - Font tabel diperbesar
+   - Nama Lokasi tidak terpotong
+   - Koordinat lebih mudah dibaca
+   - Pagination diperjelas
+   - Modal dan grafik tetap responsif
+========================================================== */
+
+
+/* ==========================================================
+   1. FILTER CARD
+========================================================== */
+
+.lokasi-page .lokasi-filter-card {
+    width: 100%;
+    min-width: 0;
+}
+
+.lokasi-page .lokasi-filter-header h3 {
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.lokasi-page .lokasi-filter-header p {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* ==========================================================
+   2. FILTER GRID
+
+   Search fleksibel
+   Wilayah 300px
+   Reset dan Export sesuai konten
+========================================================== */
+
+.lokasi-page .lokasi-filter-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(230px, 300px)
+        auto
+        auto;
+
+    align-items: end;
+
+    gap: 12px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   3. SEARCH
+========================================================== */
+
+.lokasi-page .lokasi-search {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+
+    padding: 0 13px;
+
+    border: 1px solid #d6e3f1;
+    border-radius: 8px;
+
+    background: #ffffff;
+}
+
+.lokasi-page .lokasi-search svg {
+    flex: 0 0 18px;
+
+    width: 18px;
+    height: 18px;
+}
+
+.lokasi-page .lokasi-search input {
+    display: block;
+
+    flex: 1 1 auto;
+
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    outline: none;
+
+    background: transparent;
+
+    color: #25496f;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    text-align: left !important;
+    text-indent: 0;
+
+    white-space: nowrap;
+}
+
+.lokasi-page .lokasi-search input::placeholder {
+    color: #8ca0b8;
+
+    font-size: 13px;
+    font-weight: 400;
+
+    text-align: left;
+    opacity: 1;
+}
+
+
+/* ==========================================================
+   4. FILTER WILAYAH
+========================================================== */
+
+.lokasi-page .lokasi-select-group {
+    min-width: 0;
+}
+
+.lokasi-page .lokasi-select-group label {
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #456789;
+
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.lokasi-page .lokasi-select-group select {
+    width: 100%;
+    height: 44px;
+
+    padding: 0 34px 0 13px;
+
+    border: 1px solid #d6e3f1;
+    border-radius: 8px;
+
+    background-color: #ffffff;
+
+    color: #294c73;
+
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+/* ==========================================================
+   5. FILTER BUTTON
+========================================================== */
+
+.lokasi-page .lokasi-reset-button,
+.lokasi-page .lokasi-export-button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-height: 44px;
+
+    padding: 0 16px;
+
+    border: 1px solid #d6e3f1;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #375d84;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.lokasi-page .lokasi-reset-button svg,
+.lokasi-page .lokasi-export-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.lokasi-page .lokasi-add-button {
+    min-height: 42px;
+
+    padding: 0 18px;
+
+    font-size: 13px;
+    font-weight: 750;
+}
+
+
+/* ==========================================================
+   6. TABLE WIDTH
+========================================================== */
+
+.lokasi-page .lokasi-table-card {
+    width: 100%;
+    min-width: 0;
+}
+
+.lokasi-page .lokasi-table-card > .table-responsive {
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+.lokasi-page #lokasiTable {
+    width: 100%;
+    max-width: none;
+    min-width: 1080px;
+
+    border-collapse: collapse;
+
+    font-size: 14px;
+}
+
+
+/* ==========================================================
+   7. TABLE HEADER
+========================================================== */
+
+.lokasi-page #lokasiTable thead th {
+    height: 49px;
+
+    padding: 13px 12px;
+
+    background: #e9f3ff;
+
+    color: #153763;
+
+    border: 1px solid #dbe6f2;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    line-height: 1.45;
+
+    vertical-align: middle;
+}
+
+
+/* ==========================================================
+   8. TABLE BODY
+========================================================== */
+
+.lokasi-page #lokasiTable tbody td {
+    padding: 13px 12px;
+
+    border: 1px solid #e2eaf4;
+
+    color: #345574;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    line-height: 1.6;
+
+    vertical-align: middle;
+}
+
+
+/* ==========================================================
+   9. NAMA LOKASI
+========================================================== */
+
+.lokasi-page #lokasiTable .lokasi-name-cell {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    min-width: 0;
+}
+
+.lokasi-page #lokasiTable .lokasi-name-cell > div {
+    min-width: 0;
+}
+
+.lokasi-page #lokasiTable .lokasi-name-cell strong {
+    display: block;
+
+    max-width: none;
+
+    color: #113864;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    line-height: 1.55;
+
+    white-space: normal;
+
+    overflow: visible;
+    text-overflow: clip;
+
+    overflow-wrap: break-word;
+}
+
+.lokasi-page #lokasiTable .lokasi-name-cell small {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #7991aa;
+
+    font-size: 11px;
+}
+
+
+/* ==========================================================
+   10. ALAMAT
+========================================================== */
+
+.lokasi-page #lokasiTable .lokasi-description {
+    max-width: none;
+
+    color: #3c5c7b;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    white-space: normal;
+
+    overflow-wrap: break-word;
+    text-overflow: clip;
+}
+
+
+/* ==========================================================
+   11. BADGE WILAYAH
+========================================================== */
+
+.lokasi-page #lokasiTable .lokasi-wilayah-badge {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 29px;
+
+    padding: 5px 11px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    line-height: 1.4;
+
+    white-space: normal;
+}
+
+
+/* ==========================================================
+   12. KOORDINAT
+========================================================== */
+
+.lokasi-page #lokasiTable .lokasi-coordinate {
+    max-width: none;
+
+    color: #355779 !important;
+
+    font-size: 12px !important;
+    font-weight: 500;
+
+    line-height: 1.55;
+
+    white-space: normal;
+
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+}
+
+
+/* ==========================================================
+   13. TANGGAL
+========================================================== */
+
+.lokasi-page #lokasiTable .lokasi-date-value {
+    color: #587795;
+
+    font-size: 12px;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   14. TOMBOL AKSI
+========================================================== */
+
+.lokasi-page #lokasiTable .lokasi-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+}
+
+.lokasi-page #lokasiTable .lokasi-actions button {
+    width: 34px;
+    height: 34px;
+
+    flex: 0 0 34px;
+
+    border-radius: 8px;
+}
+
+.lokasi-page #lokasiTable .lokasi-actions svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* ==========================================================
+   15. PAGINATION
+========================================================== */
+
+.lokasi-page .lokasi-table-info {
+    color: #607d9b;
+
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-pagination-area {
+    gap: 9px;
+
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-pagination-area select {
+    min-width: 65px;
+    height: 38px;
+
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-pagination button {
+    min-width: 36px;
+    height: 36px;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   16. MODAL — TEKS JUDUL
+========================================================== */
+
+.lokasi-page .lokasi-modal-header h3 {
+    color: #123861;
+
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.lokasi-page .lokasi-modal-header p {
+    color: #7086a1;
+
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.lokasi-page .lokasi-modal-kicker {
+    font-size: 11px;
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   17. MODAL BODY
+========================================================== */
+
+.lokasi-page .lokasi-modal-body {
+    padding: 20px;
+}
+
+
+/* ==========================================================
+   18. MODAL IMAGE PREVIEW
+========================================================== */
+
+.lokasi-page .lokasi-modal-preview {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 14px;
+
+    border-radius: 10px;
+}
+
+.lokasi-page .lokasi-preview-copy {
+    flex: 1 1 auto;
+
+    min-width: 0;
+}
+
+.lokasi-page .lokasi-preview-copy strong {
+    color: #284c74;
+
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.lokasi-page .lokasi-preview-copy > span {
+    color: #758da8;
+
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.lokasi-page .lokasi-preview-placeholder span {
+    font-size: 11px;
+}
+
+.lokasi-page .lokasi-file-button {
+    min-height: 36px;
+
+    padding: 0 12px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   19. FORM GRID
+========================================================== */
+
+.lokasi-page .lokasi-form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    column-gap: 14px;
+    row-gap: 17px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+.lokasi-page .lokasi-form-wide {
+    grid-column: 1 / -1;
+}
+
+.lokasi-page .lokasi-form-group {
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   20. FORM LABEL
+========================================================== */
+
+.lokasi-page .lokasi-form-group label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #365675;
+
+    font-size: 13px;
+    font-weight: 750;
+}
+
+
+/* ==========================================================
+   21. INPUT / SELECT / TEXTAREA
+========================================================== */
+
+.lokasi-page .lokasi-form-group input,
+.lokasi-page .lokasi-form-group select,
+.lokasi-page .lokasi-form-group textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    margin: 0;
+
+    background: #ffffff;
+    color: #294e77;
+
+    border: 1px solid #d5e2ef;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+
+    line-height: 1.5;
+
+    text-align: left !important;
+    text-indent: 0;
+
+    box-sizing: border-box;
+}
+
+.lokasi-page .lokasi-form-group input,
+.lokasi-page .lokasi-form-group select {
+    height: 44px;
+
+    padding: 0 13px;
+}
+
+.lokasi-page .lokasi-form-group textarea {
+    min-height: 94px;
+
+    padding: 12px 13px;
+
+    resize: vertical;
+}
+
+.lokasi-page .lokasi-form-group input::placeholder,
+.lokasi-page .lokasi-form-group textarea::placeholder {
+    color: #94a6bb;
+
+    font-size: 13px;
+    font-weight: 400;
+
+    text-align: left;
+    opacity: 1;
+}
+
+
+/* ==========================================================
+   22. KOORDINAT INPUT DENGAN IKON
+========================================================== */
+
+.lokasi-page .lokasi-input-icon {
+    position: relative;
+
+    width: 100%;
+}
+
+.lokasi-page .lokasi-input-icon svg {
+    position: absolute;
+
+    top: 50%;
+    left: 13px;
+
+    transform: translateY(-50%);
+
+    width: 16px;
+    height: 16px;
+
+    pointer-events: none;
+}
+
+.lokasi-page .lokasi-input-icon input {
+    padding-left: 39px;
+}
+
+
+/* ==========================================================
+   23. VALIDATION ERROR
+========================================================== */
+
+.lokasi-page .lokasi-field-error {
+    display: block;
+
+    min-height: 0;
+    margin-top: 5px;
+
+    color: #d9384e;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.lokasi-page .lokasi-field-error:empty {
+    display: none;
+}
+
+.lokasi-page .lokasi-form-alert {
+    padding: 12px 14px;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+
+/* ==========================================================
+   24. NOTE DAN MAP LINK
+========================================================== */
+
+.lokasi-page .lokasi-modal-note {
+    margin-top: 15px;
+
+    padding: 11px 13px;
+
+    color: #35638e;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+.lokasi-page .lokasi-map-link {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   25. FOOTER MODAL
+========================================================== */
+
+.lokasi-page .lokasi-cancel-button,
+.lokasi-page .lokasi-save-button {
+    min-height: 42px;
+
+    padding: 0 17px;
+
+    font-size: 13px;
+
+    font-weight: 750;
+}
+
+
+/* ==========================================================
+   26. KARTU STATISTIK
+========================================================== */
+
+.lokasi-page .lokasi-kpi-content > span {
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-kpi-content > strong,
+.lokasi-page .lokasi-kpi-value > strong {
+    font-size: 26px;
+}
+
+.lokasi-page .lokasi-kpi-content p {
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   27. PANEL GRAFIK DAN LOKASI TERBARU
+========================================================== */
+
+.lokasi-page .lokasi-bottom-header h3 {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.lokasi-page .lokasi-bottom-header p {
+    font-size: 12px;
+}
+
+.lokasi-page .lokasi-legend p,
+.lokasi-page .lokasi-legend strong {
+    font-size: 12px;
+}
+
+.lokasi-page .lokasi-legend small {
+    font-size: 11px;
+}
+
+.lokasi-page .lokasi-chart-center strong {
+    font-size: 26px;
+}
+
+.lokasi-page .lokasi-chart-center span {
+    font-size: 12px;
+}
+
+.lokasi-page .lokasi-latest-table th {
+    padding: 11px 12px;
+
+    font-size: 12px;
+}
+
+.lokasi-page .lokasi-latest-table td {
+    padding: 11px 12px;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   28. RIWAYAT AKTIVITAS
+========================================================== */
+
+.lokasi-page .lokasi-history-header h3 {
+    font-size: 19px;
+}
+
+.lokasi-page .lokasi-history-header p {
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-history-table th {
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-history-table td {
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-history-badge {
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   29. TOAST
+========================================================== */
+
+.lokasi-page .lokasi-toast strong {
+    font-size: 13px;
+}
+
+.lokasi-page .lokasi-toast span {
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   30. RESPONSIVE LAPTOP
+========================================================== */
+
+@media (min-width: 761px) and (max-width: 1200px) {
+
+    .lokasi-page .lokasi-filter-grid {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(180px, 250px)
+            auto
+            auto;
+    }
+
+    .lokasi-page #lokasiTable {
+        min-width: 1080px;
+    }
+
+    .lokasi-page #lokasiTable thead th {
+        font-size: 12px;
+        padding: 11px 10px;
+    }
+
+    .lokasi-page #lokasiTable tbody td {
+        font-size: 12px;
+        padding: 11px 10px;
+    }
+
+}
+
+
+/* ==========================================================
+   31. RESPONSIVE TABLET / MOBILE
+========================================================== */
+
+@media (max-width: 760px) {
+
+    .lokasi-page .lokasi-filter-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+    }
+
+    .lokasi-page .lokasi-search {
+        grid-column: 1 / -1;
+    }
+
+    .lokasi-page .lokasi-select-group {
+        grid-column: 1 / -1;
+    }
+
+    .lokasi-page .lokasi-reset-button,
+    .lokasi-page .lokasi-export-button {
+        width: 100%;
+    }
+
+    .lokasi-page .lokasi-modal-body {
+        padding: 15px;
+    }
+
+    .lokasi-page .lokasi-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lokasi-page .lokasi-form-wide {
+        grid-column: auto;
+    }
+
+    .lokasi-page .lokasi-modal-preview {
+        gap: 11px;
+    }
+
+    .lokasi-page .lokasi-preview-copy strong {
+        font-size: 13px;
+    }
+
+    .lokasi-page .lokasi-preview-copy > span {
+        font-size: 11px;
+    }
+
+    .lokasi-page .lokasi-table-card > .table-responsive {
+        overflow-x: auto;
+    }
+
+    .lokasi-page #lokasiTable {
+        min-width: 1040px;
+    }
+
+    .lokasi-page .lokasi-pagination-area {
+        flex-wrap: wrap;
+    }
+}
+
+
+/* ==========================================================
+   32. HIDDEN STATE
+   PENTING UNTUK MODAL, PAGINATION, DAN FILTER
+========================================================== */
+
+.lokasi-page [hidden] {
+    display: none !important;
+}
+
+.lokasi-page #lokasiTable tr[hidden] {
+    display: none !important;
+}

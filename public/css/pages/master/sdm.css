@@ -1049,3 +1049,1090 @@
     .sdm-cancel-button,
     .sdm-save-button { width: 100%; }
 }
+
+
+/* ==========================================================
+   MASTER DATA - SDM PENDUKUNG
+   TYPOGRAPHY & TABLE READABILITY FIX
+
+   SISTEM ASET
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+
+   FITUR YANG DIPERTAHANKAN:
+   - CRUD Tambah, Detail, Edit, Hapus
+   - Filter Departemen dan Divisi
+   - Pencarian
+   - Pagination
+   - Export CSV
+   - Grafik Distribusi
+   - Data Terbaru
+   - Riwayat Aktivitas
+   - Responsive Layout
+
+   Fokus: Memperbesar teks tanpa merusak desain lama.
+========================================================== */
+
+
+/* ==========================================================
+   1. PENGATURAN DASAR
+========================================================== */
+
+.sdm-page {
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.sdm-page,
+.sdm-page * {
+    text-rendering: optimizeLegibility;
+}
+
+
+/* ==========================================================
+   2. HEADER DAN BREADCRUMB
+========================================================== */
+
+.sdm-page .sdm-breadcrumb {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.sdm-page .sdm-heading h1 {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.sdm-page .sdm-heading p {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+/* ==========================================================
+   3. KARTU TANGGAL
+========================================================== */
+
+.sdm-page .sdm-date-card strong {
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.sdm-page .sdm-date-card span {
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   4. STATISTIK SDM
+========================================================== */
+
+.sdm-page .sdm-kpi-content > span {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.sdm-page .sdm-kpi-content > strong {
+    font-size: 27px;
+    font-weight: 800;
+}
+
+.sdm-page .sdm-kpi-value > strong {
+    font-size: 27px;
+    font-weight: 800;
+}
+
+.sdm-page .sdm-kpi-content > strong.sdm-kpi-text {
+    font-size: 20px;
+}
+
+.sdm-page .sdm-kpi-content p {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.sdm-page .sdm-delta {
+    font-size: 12px;
+}
+
+
+/* ==========================================================
+   5. JUDUL FILTER DATA
+========================================================== */
+
+.sdm-page .sdm-filter-header h3 {
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+
+/* ==========================================================
+   6. TOMBOL TAMBAH SDM
+========================================================== */
+
+.sdm-page .sdm-add-button {
+    min-height: 42px;
+    padding: 0 17px;
+
+    font-size: 13px;
+    font-weight: 750;
+
+    border-radius: 8px;
+}
+
+.sdm-page .sdm-add-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* ==========================================================
+   7. INPUT PENCARIAN
+========================================================== */
+
+.sdm-page .sdm-search input {
+    height: 44px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #244b75;
+}
+
+.sdm-page .sdm-search input::placeholder {
+    font-size: 13px;
+    color: #8095ae;
+}
+
+
+/* ==========================================================
+   8. FILTER DEPARTEMEN DAN DIVISI
+========================================================== */
+
+.sdm-page #sdmDepartemen,
+.sdm-page #sdmDivisi {
+    height: 44px;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    color: #284d76;
+}
+
+
+/* ==========================================================
+   9. TOMBOL RESET DAN EXPORT
+========================================================== */
+
+.sdm-page .sdm-reset-button,
+.sdm-page .sdm-export-button {
+    height: 44px;
+    padding: 0 15px;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.sdm-page .sdm-reset-button svg,
+.sdm-page .sdm-export-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* ==========================================================
+   10. TABEL UTAMA SDM PENDUKUNG
+
+   Tetap full width seperti desain sebelumnya.
+   Horizontal scroll hanya diperlukan saat layar sempit.
+========================================================== */
+
+.sdm-page .sdm-table-card > .table-responsive {
+    display: block;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+
+/* ==========================================================
+   11. STRUKTUR TABEL
+========================================================== */
+
+.sdm-page #sdmTable {
+    width: 100%;
+    min-width: 1180px;
+    max-width: none;
+
+    margin: 0;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    table-layout: auto;
+
+    color: #17375e;
+    font-size: 14px;
+}
+
+
+/* ==========================================================
+   12. HEADER TABEL
+========================================================== */
+
+.sdm-page #sdmTable thead th {
+    height: 49px;
+
+    padding: 13px 14px;
+
+    border: 1px solid #dce6f1;
+
+    background: #e8f2fd;
+    color: #17355e;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+
+    line-height: 1.45;
+
+    text-align: left;
+    vertical-align: middle;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   13. SEMUA ISI TABEL
+========================================================== */
+
+.sdm-page #sdmTable tbody td {
+    height: 54px;
+
+    padding: 11px 14px;
+
+    border: 1px solid #e2eaf4;
+
+    color: #315173;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+
+    line-height: 1.6;
+
+    vertical-align: middle;
+
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+
+/* ==========================================================
+   14. NOMOR URUT
+========================================================== */
+
+.sdm-page #sdmTable th:first-child,
+.sdm-page #sdmTable td:first-child {
+    text-align: center;
+}
+
+.sdm-page #sdmTable .sdm-number {
+    font-size: 14px;
+    font-weight: 600;
+    color: #607b9a;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================
+   15. CONTAINER NAMA PEGAWAI
+========================================================== */
+
+.sdm-page #sdmTable .sdm-name-cell {
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   16. AVATAR INISIAL PEGAWAI
+========================================================== */
+
+.sdm-page #sdmTable .sdm-avatar {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 35px;
+
+    width: 35px;
+    height: 35px;
+
+    border-radius: 8px;
+
+    background: #e6f2ff;
+    color: #0769d5;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   17. NAMA LENGKAP PEGAWAI
+
+   Perbaikan penting:
+   Hilangkan ellipsis agar nama panjang dapat dibaca.
+========================================================== */
+
+.sdm-page #sdmTable .sdm-name-cell strong {
+    display: block;
+
+    flex: 1 1 auto;
+
+    width: auto;
+    max-width: none;
+    min-width: 0;
+
+    color: #102f58;
+
+    font-size: 15px;
+    font-weight: 750;
+
+    line-height: 1.55;
+
+    white-space: normal;
+
+    overflow: visible;
+    text-overflow: clip;
+
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+
+/* ==========================================================
+   18. NIP / NIPP
+========================================================== */
+
+.sdm-page #sdmTable .sdm-nip {
+    color: #164a84;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    font-variant-numeric: tabular-nums;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   19. KOLOM JABATAN
+========================================================== */
+
+.sdm-page #sdmTable tbody td:nth-child(4) {
+    color: #305473;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    line-height: 1.55;
+}
+
+
+/* ==========================================================
+   20. KOLOM DEPARTEMEN
+========================================================== */
+
+.sdm-page #sdmTable tbody td:nth-child(5) {
+    color: #305473;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    line-height: 1.55;
+}
+
+
+/* ==========================================================
+   21. KOLOM DIVISI
+========================================================== */
+
+.sdm-page #sdmTable tbody td:nth-child(6) {
+    color: #305473;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    line-height: 1.55;
+}
+
+
+/* ==========================================================
+   22. TANGGAL DIBUAT
+========================================================== */
+
+.sdm-page #sdmTable tbody td:nth-child(7) {
+    color: #617c99;
+
+    font-size: 13px;
+
+    font-weight: 500;
+
+    white-space: nowrap;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================
+   23. KOLOM AKSI
+========================================================== */
+
+.sdm-page #sdmTable th:last-child,
+.sdm-page #sdmTable td:last-child {
+    text-align: center;
+}
+
+
+/* ==========================================================
+   24. TOMBOL AKSI
+========================================================== */
+
+.sdm-page #sdmTable .sdm-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    flex-wrap: nowrap;
+}
+
+.sdm-page #sdmTable .sdm-actions button {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 34px;
+
+    width: 34px;
+    height: 34px;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition:
+        transform .15s ease,
+        box-shadow .15s ease,
+        background-color .15s ease;
+}
+
+.sdm-page #sdmTable .sdm-actions button svg {
+    width: 16px;
+    height: 16px;
+
+    stroke-width: 2;
+}
+
+.sdm-page #sdmTable .sdm-actions button:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 3px 9px rgba(20, 56, 94, .09);
+}
+
+
+/* ==========================================================
+   25. WARNA TOMBOL AKSI
+========================================================== */
+
+.sdm-page #sdmTable .sdm-actions .view {
+    background: #e6f2ff;
+    color: #0869d7;
+}
+
+.sdm-page #sdmTable .sdm-actions .edit {
+    background: #fff0d9;
+    color: #d48714;
+}
+
+.sdm-page #sdmTable .sdm-actions .delete {
+    background: #ffe6e9;
+    color: #dd4055;
+}
+
+
+/* ==========================================================
+   26. BARIS TABEL
+========================================================== */
+
+.sdm-page #sdmTable tbody tr[data-record]:nth-child(even) {
+    background: #f9fcff;
+}
+
+.sdm-page #sdmTable tbody tr[data-record]:hover {
+    background: #eff7ff;
+}
+
+
+/* ==========================================================
+   27. FOOTER TABEL
+========================================================== */
+
+.sdm-page .sdm-table-footer {
+    min-height: 64px;
+
+    padding: 12px 16px;
+
+    gap: 14px;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    color: #607c9c;
+}
+
+.sdm-page #sdmTableInfo {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   28. PAGINATION AREA
+========================================================== */
+
+.sdm-page .sdm-pagination-area {
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 9px;
+
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   29. SELECT PAGE SIZE
+========================================================== */
+
+.sdm-page .sdm-pagination-area select {
+    height: 38px;
+    min-width: 65px;
+
+    padding: 6px 10px;
+
+    color: #284d79;
+    background: #ffffff;
+
+    border: 1px solid #d8e4f1;
+    border-radius: 7px;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* ==========================================================
+   30. TOMBOL PAGINATION
+========================================================== */
+
+.sdm-page .sdm-pagination {
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+}
+
+.sdm-page .sdm-pagination button {
+    min-width: 36px;
+    height: 36px;
+
+    padding: 0 10px;
+
+    border: 1px solid #d8e4f0;
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: #365d88;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.sdm-page .sdm-pagination button.active {
+    background: #0869d7;
+
+    color: #ffffff;
+
+    border-color: #0869d7;
+}
+
+
+/* ==========================================================
+   31. JUDUL PANEL BAWAH
+========================================================== */
+
+.sdm-page .sdm-bottom-header h3 {
+    color: #12355f;
+
+    font-size: 18px;
+    font-weight: 800;
+
+    line-height: 1.45;
+}
+
+.sdm-page .sdm-see-all {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   32. DISTRIBUSI SDM PER DIVISI
+========================================================== */
+
+.sdm-page .sdm-distribution-content {
+    min-height: 250px;
+
+    padding: 16px;
+}
+
+.sdm-page .sdm-chart-center strong {
+    color: #102e56;
+
+    font-size: 25px;
+    font-weight: 800;
+}
+
+.sdm-page .sdm-chart-center span {
+    color: #6e86a1;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* ==========================================================
+   33. LEGENDA GRAFIK
+========================================================== */
+
+.sdm-page .sdm-legend {
+    max-height: 215px;
+
+    gap: 9px;
+
+    padding-right: 8px;
+}
+
+.sdm-page .sdm-legend > div {
+    grid-template-columns:
+        10px
+        minmax(0, 1fr)
+        40px
+        50px;
+
+    min-height: 26px;
+
+    gap: 7px;
+}
+
+.sdm-page .sdm-legend-name {
+    min-width: 0;
+
+    color: #365878;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    line-height: 1.45;
+}
+
+.sdm-page .sdm-legend strong {
+    color: #193e68;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.sdm-page .sdm-legend small {
+    color: #6a829e;
+
+    font-size: 11px;
+}
+
+
+/* ==========================================================
+   34. TABEL SDM TERBARU
+========================================================== */
+
+.sdm-page .sdm-latest-table th {
+    height: 42px;
+
+    padding: 10px 12px;
+
+    background: #eaf3ff;
+
+    color: #183b65;
+
+    border: 1px solid #dce7f3;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    line-height: 1.45;
+}
+
+.sdm-page .sdm-latest-table td {
+    height: 43px;
+
+    padding: 10px 12px;
+
+    border: 1px solid #e2eaf4;
+
+    color: #365879;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    line-height: 1.55;
+}
+
+
+/* ==========================================================
+   35. MODAL TAMBAH / DETAIL / EDIT
+========================================================== */
+
+.sdm-page .sdm-modal-header h3 {
+    color: #123860;
+
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.sdm-page .sdm-modal-header p {
+    color: #6d829e;
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.sdm-page .sdm-modal-body {
+    gap: 16px;
+}
+
+
+/* ==========================================================
+   36. FORM LABEL
+========================================================== */
+
+.sdm-page .sdm-form-group label {
+    color: #2b4b70;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   37. FORM INPUT DAN SELECT
+========================================================== */
+
+.sdm-page .sdm-form-group input,
+.sdm-page .sdm-form-group select,
+.sdm-page #sdmFormDepartemen,
+.sdm-page #sdmFormDivisi,
+.sdm-page #sdmJabatan {
+    height: 44px;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    line-height: 1.5;
+
+    color: #264b72;
+}
+
+
+/* ==========================================================
+   38. PESAN VALIDASI FORM
+========================================================== */
+
+.sdm-page .sdm-form-alert {
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+
+/* ==========================================================
+   39. CATATAN MODAL
+========================================================== */
+
+.sdm-page .sdm-modal-note {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* ==========================================================
+   40. TOMBOL SIMPAN DAN BATAL
+========================================================== */
+
+.sdm-page .sdm-cancel-button,
+.sdm-page .sdm-save-button {
+    min-height: 42px;
+
+    padding: 0 17px;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   41. RIWAYAT PERUBAHAN
+========================================================== */
+
+.sdm-page .sdm-history-summary span {
+    font-size: 13px;
+}
+
+.sdm-page .sdm-history-summary strong {
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.sdm-page .sdm-history-toolbar button {
+    min-height: 39px;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   42. TABEL RIWAYAT
+========================================================== */
+
+.sdm-page .sdm-history-table th {
+    padding: 13px 12px;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    line-height: 1.5;
+}
+
+.sdm-page .sdm-history-table td {
+    padding: 12px;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+.sdm-page .sdm-history-status {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   43. TOAST NOTIFICATION
+========================================================== */
+
+.sdm-page .sdm-toast {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   44. EMPTY STATE
+========================================================== */
+
+.sdm-page .sdm-empty {
+    font-size: 14px !important;
+
+    line-height: 1.6;
+
+    text-align: center;
+}
+
+
+/* ==========================================================
+   45. RESPONSIVE LAPTOP
+========================================================== */
+
+@media (min-width: 761px) and (max-width: 1200px) {
+
+    .sdm-page #sdmTable {
+        min-width: 1120px;
+    }
+
+    .sdm-page #sdmTable thead th {
+        padding: 12px 10px;
+        font-size: 13px;
+    }
+
+    .sdm-page #sdmTable tbody td {
+        padding: 11px 10px;
+        font-size: 13px;
+    }
+
+    .sdm-page #sdmTable .sdm-name-cell strong {
+        font-size: 14px;
+    }
+
+    .sdm-page #sdmTable .sdm-actions {
+        gap: 5px;
+    }
+
+    .sdm-page #sdmTable .sdm-actions button {
+        width: 30px;
+        height: 30px;
+
+        flex-basis: 30px;
+    }
+
+    .sdm-page #sdmTable .sdm-actions button svg {
+        width: 15px;
+        height: 15px;
+    }
+
+}
+
+
+/* ==========================================================
+   46. RESPONSIVE MOBILE
+========================================================== */
+
+@media (max-width: 760px) {
+
+    .sdm-page .sdm-filter-header h3 {
+        font-size: 18px;
+    }
+
+    .sdm-page .sdm-heading h1 {
+        font-size: 28px;
+    }
+
+    .sdm-page .sdm-heading p {
+        font-size: 14px;
+    }
+
+    /* Tetap horizontal pada mobile agar
+       delapan kolom tidak saling bertumpuk. */
+
+    .sdm-page .sdm-table-card > .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sdm-page #sdmTable {
+        min-width: 1080px;
+    }
+
+    .sdm-page #sdmTable thead th {
+        font-size: 13px;
+
+        padding: 11px 9px;
+    }
+
+    .sdm-page #sdmTable tbody td {
+        font-size: 13px;
+
+        padding: 10px 9px;
+    }
+
+    .sdm-page #sdmTable .sdm-name-cell strong {
+        font-size: 14px;
+    }
+
+    .sdm-page #sdmTable .sdm-avatar {
+        width: 30px;
+        height: 30px;
+
+        flex-basis: 30px;
+
+        font-size: 12px;
+    }
+
+    .sdm-page #sdmTable .sdm-actions {
+        gap: 5px;
+    }
+
+    .sdm-page #sdmTable .sdm-actions button {
+        width: 30px;
+        height: 30px;
+
+        flex-basis: 30px;
+    }
+
+    .sdm-page .sdm-bottom-header h3 {
+        font-size: 16px;
+    }
+
+    .sdm-page .sdm-latest-table th,
+    .sdm-page .sdm-latest-table td {
+        font-size: 12px;
+    }
+
+    .sdm-page .sdm-pagination-area {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .sdm-page .sdm-modal-header h3 {
+        font-size: 18px;
+    }
+
+}
+
+
+/* ==========================================================
+   47. HIDDEN STATE
+   PENTING UNTUK PAGINATION DAN FILTER
+========================================================== */
+
+.sdm-page #sdmTable tr[hidden],
+.sdm-page .sdm-latest-table tr[hidden],
+.sdm-page .sdm-history-table tr[hidden] {
+    display: none !important;
+}
+

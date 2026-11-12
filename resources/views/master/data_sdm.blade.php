@@ -4,7 +4,12 @@
 
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/master/sdm.css') }}">
+
+    @push('styles')
+        <link rel="stylesheet"
+            href="{{ asset('css/pages/master/sdm.css') }}?v={{ file_exists(public_path('css/pages/master/sdm.css')) ? filemtime(public_path('css/pages/master/sdm.css')) : '1' }}">
+    @endpush
+
 @endpush
 
 
