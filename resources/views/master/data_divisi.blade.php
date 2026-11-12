@@ -4,7 +4,8 @@
 
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/master/divisi.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/master/divisi.css') }}?v={{ file_exists(public_path('css/pages/master/divisi.css')) ? filemtime(public_path('css/pages/master/divisi.css')) : '1' }}">
 @endpush
 
 

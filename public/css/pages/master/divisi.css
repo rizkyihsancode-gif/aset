@@ -4335,3 +4335,1204 @@
 
 
 }
+
+/* ==========================================================
+   MASTER DATA — DIVISI
+   PERBAIKAN UKURAN FONT DAN KETERBACAAN
+
+   SISTEM ASET
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+
+   PERBAIKAN:
+   1. Font tabel utama diperbesar
+   2. Nama Divisi mudah dibaca
+   3. Kode Divisi diperbesar
+   4. Informasi Departemen diperjelas
+   5. Tombol aksi diperbesar
+   6. Pagination lebih mudah dibaca
+   7. Grafik distribusi lebih jelas
+   8. Tabel Divisi Terbaru diperbesar
+   9. Form Tambah/Edit/Detail lebih jelas
+   10. Responsive laptop dan mobile
+
+   TIDAK MENGUBAH:
+   - CRUD
+   - Database
+   - JavaScript
+   - Grafik Chart.js
+   - Filter dan pencarian
+   - Export CSV
+   - Riwayat aktivitas
+   ========================================================== */
+
+
+/* ==========================================================
+   1. TABEL UTAMA — FULL WIDTH
+   ========================================================== */
+
+.divisi-page .divisi-table-card
+.table-responsive {
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   2. UKURAN TABEL UTAMA
+   ========================================================== */
+
+.divisi-page #divisiTable {
+
+    width: calc(100% - 34px);
+    max-width: none;
+    min-width: 0;
+
+    margin: 0 17px;
+
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    table-layout: fixed;
+
+    background: #ffffff;
+
+    color: #173960;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   3. DISTRIBUSI LEBAR KOLOM
+
+   No.          5%
+   Nama Divisi  43%
+   Kode Divisi  15%
+   Departemen   27%
+   Aksi         10%
+
+   Total: 100%
+   ========================================================== */
+
+.divisi-page #divisiTable th:nth-child(1) {
+    width: 5%;
+}
+
+.divisi-page #divisiTable th:nth-child(2) {
+    width: 43%;
+}
+
+.divisi-page #divisiTable th:nth-child(3) {
+    width: 15%;
+}
+
+.divisi-page #divisiTable th:nth-child(4) {
+    width: 27%;
+}
+
+.divisi-page #divisiTable th:nth-child(5) {
+    width: 10%;
+}
+
+
+/* ==========================================================
+   4. HEADER TABEL
+   ========================================================== */
+
+.divisi-page #divisiTable thead th {
+
+    padding: 14px 15px;
+
+    background: #e8f2fd;
+
+    color: #173660;
+
+    border: 1px solid #d9e6f3;
+
+    font-family: inherit;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    line-height: 1.45;
+
+    text-align: left;
+    vertical-align: middle;
+
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+
+/* ==========================================================
+   5. ISI TABEL
+   ========================================================== */
+
+.divisi-page #divisiTable tbody td {
+
+    padding: 14px 15px;
+
+    border: 1px solid #e2eaf3;
+
+    color: #345474;
+
+    font-family: inherit;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    line-height: 1.55;
+
+    vertical-align: middle;
+
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+
+/* ==========================================================
+   6. WARNA BARIS
+   ========================================================== */
+
+.divisi-page #divisiTable
+tbody tr[data-record]:nth-child(even) {
+
+    background: #f8fbff;
+}
+
+
+.divisi-page #divisiTable
+tbody tr[data-record]:hover {
+
+    background: #eff7ff;
+}
+
+
+/* ==========================================================
+   7. NOMOR
+   ========================================================== */
+
+.divisi-page #divisiTable
+th:first-child,
+
+.divisi-page #divisiTable
+td:first-child {
+
+    text-align: center;
+}
+
+
+.divisi-page #divisiTable
+.divisi-number {
+
+    color: #627f9d !important;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================
+   8. NAMA DIVISI
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-name {
+
+    display: block;
+
+    max-width: 100%;
+
+    color: #103765;
+
+    font-size: 15px;
+    font-weight: 750;
+
+    line-height: 1.55;
+
+    letter-spacing: 0;
+
+    white-space: normal;
+
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+
+/* ==========================================================
+   9. KODE DIVISI
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-code {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 30px;
+    max-width: 100%;
+
+    padding: 5px 11px;
+
+    background: #edf6ff;
+
+    color: #075db9;
+
+    border: 1px solid #cfe3fa;
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 800;
+
+    line-height: 1.4;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================
+   10. DEPARTEMEN — CONTAINER
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-department-cell {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    min-width: 0;
+    max-width: 100%;
+}
+
+
+/* ==========================================================
+   11. IKON DEPARTEMEN
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-department-icon {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 36px;
+
+    width: 36px;
+    height: 36px;
+
+    border-radius: 8px;
+}
+
+
+/* UKURAN IKON */
+
+.divisi-page #divisiTable
+.divisi-department-icon svg {
+
+    width: 18px;
+    height: 18px;
+}
+
+
+/* ==========================================================
+   12. KODE DEPARTEMEN
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-department-cell strong {
+
+    display: block;
+
+    color: #15487d;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    line-height: 1.5;
+
+    white-space: normal;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================
+   13. NAMA DEPARTEMEN
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-department-cell span {
+
+    display: block;
+
+    margin-top: 3px;
+
+    color: #637f9d;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    line-height: 1.5;
+
+    white-space: normal;
+
+    overflow-wrap: break-word;
+}
+
+
+/* ==========================================================
+   14. KOLOM AKSI
+   ========================================================== */
+
+.divisi-page #divisiTable
+th:last-child,
+
+.divisi-page #divisiTable
+td:last-child {
+
+    text-align: center;
+}
+
+
+/* ==========================================================
+   15. GROUP TOMBOL AKSI
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-actions {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    flex-wrap: nowrap;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   16. TOMBOL AKSI
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-actions button {
+
+    flex: 0 0 34px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+    margin: 0;
+
+    border: none;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    transition:
+        transform .15s ease,
+        box-shadow .15s ease,
+        background-color .15s ease;
+}
+
+
+/* ==========================================================
+   17. IKON TOMBOL AKSI
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-actions button svg {
+
+    width: 17px;
+    height: 17px;
+
+    stroke-width: 2;
+}
+
+
+/* ==========================================================
+   18. HOVER AKSI
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-actions button:hover {
+
+    transform: translateY(-1px);
+
+    box-shadow: 0 3px 9px rgba(
+        20,
+        56,
+        94,
+        .09
+    );
+}
+
+
+/* ==========================================================
+   19. WARNA VIEW
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-actions .view {
+
+    background: #e6f2ff;
+
+    color: #0869d7;
+}
+
+
+/* ==========================================================
+   20. WARNA EDIT
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-actions .edit {
+
+    background: #fff0d9;
+
+    color: #d48714;
+}
+
+
+/* ==========================================================
+   21. WARNA DELETE
+   ========================================================== */
+
+.divisi-page #divisiTable
+.divisi-actions .delete {
+
+    background: #ffe6e9;
+
+    color: #dd4055;
+}
+
+
+/* ==========================================================
+   22. HEADER DAFTAR DIVISI
+   ========================================================== */
+
+.divisi-page .divisi-table-header h3 {
+
+    color: #102f59;
+
+    font-size: 20px;
+    font-weight: 800;
+
+    line-height: 1.4;
+}
+
+
+.divisi-page .divisi-table-header span {
+
+    color: #7e91aa;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   23. INFORMASI PAGINATION
+   ========================================================== */
+
+.divisi-page .divisi-table-info {
+
+    color: #5d7796;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   24. AREA PAGINATION
+   ========================================================== */
+
+.divisi-page .divisi-pagination-area {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    color: #587697;
+
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   25. SELECT JUMLAH DATA
+   ========================================================== */
+
+.divisi-page .divisi-pagination-area select {
+
+    height: 37px;
+    min-width: 65px;
+
+    padding: 6px 10px;
+
+    background: #ffffff;
+
+    color: #244e7f;
+
+    border: 1px solid #d9e5f2;
+
+    border-radius: 7px;
+
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   26. TOMBOL PAGINATION
+   ========================================================== */
+
+.divisi-page .divisi-pagination button {
+
+    min-width: 36px;
+    height: 36px;
+
+    padding: 0 9px;
+
+    border: 1px solid #dae6f3;
+
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #345d88;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+/* ==========================================================
+   27. HALAMAN AKTIF
+   ========================================================== */
+
+.divisi-page .divisi-pagination button.active {
+
+    background: #0869d7;
+
+    color: #ffffff;
+
+    border-color: #0869d7;
+}
+
+
+/* ==========================================================
+   28. JUDUL PANEL BAWAH
+   ========================================================== */
+
+.divisi-page .divisi-bottom-header h3 {
+
+    color: #10325c;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    line-height: 1.45;
+}
+
+
+/* ==========================================================
+   29. TOMBOL LIHAT SEMUA
+   ========================================================== */
+
+.divisi-page .divisi-see-all {
+
+    color: #0869d7;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   30. GRAFIK DISTRIBUSI
+   ========================================================== */
+
+.divisi-page .divisi-distribution-content {
+
+    min-height: 260px;
+
+    height: auto;
+
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+
+/* ==========================================================
+   31. JUMLAH TOTAL PADA GRAFIK
+   ========================================================== */
+
+.divisi-page .divisi-chart-center strong {
+
+    color: #102c55;
+
+    font-size: 26px;
+    font-weight: 800;
+}
+
+
+.divisi-page .divisi-chart-center span {
+
+    color: #6a819e;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* ==========================================================
+   32. LEGEND GRAFIK
+   ========================================================== */
+
+.divisi-page .divisi-legend {
+
+    max-height: 215px;
+
+    gap: 9px;
+
+    padding-right: 9px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+/* ==========================================================
+   33. GRID LEGEND
+   ========================================================== */
+
+.divisi-page .divisi-legend > div {
+
+    grid-template-columns:
+        11px
+        minmax(0, 1fr)
+        45px
+        52px;
+
+    gap: 7px;
+
+    min-height: 26px;
+}
+
+
+/* ==========================================================
+   34. NAMA DEPARTEMEN PADA LEGEND
+   ========================================================== */
+
+.divisi-page .divisi-legend p {
+
+    color: #365a7c;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    line-height: 1.4;
+}
+
+
+/* ==========================================================
+   35. JUMLAH DIVISI PER DEPARTEMEN
+   ========================================================== */
+
+.divisi-page .divisi-legend strong {
+
+    color: #183d67;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================
+   36. PERSENTASE DISTRIBUSI
+   ========================================================== */
+
+.divisi-page .divisi-legend small {
+
+    color: #6d859f;
+
+    font-size: 11px;
+
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ==========================================================
+   37. TABEL DIVISI TERBARU
+   ========================================================== */
+
+.divisi-page .divisi-latest-table {
+
+    width: calc(100% - 28px);
+
+    margin: 0 14px 14px;
+
+    border-collapse: collapse;
+
+    table-layout: auto;
+}
+
+
+/* ==========================================================
+   38. HEADER TABEL DIVISI TERBARU
+   ========================================================== */
+
+.divisi-page .divisi-latest-table th {
+
+    padding: 11px 12px;
+
+    border: 1px solid #dce7f3;
+
+    background: #eaf3ff;
+
+    color: #183b64;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    line-height: 1.45;
+
+    text-align: left;
+
+    white-space: normal;
+}
+
+
+/* ==========================================================
+   39. ISI TABEL DIVISI TERBARU
+   ========================================================== */
+
+.divisi-page .divisi-latest-table td {
+
+    padding: 11px 12px;
+
+    border: 1px solid #e0eaf4;
+
+    color: #355779;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    line-height: 1.55;
+
+    vertical-align: middle;
+
+    overflow-wrap: break-word;
+}
+
+
+/* ==========================================================
+   40. NAMA DIVISI TERBARU
+   ========================================================== */
+
+.divisi-page .divisi-latest-table
+td:nth-child(2) {
+
+    color: #103c6d;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   41. FILTER DATA — JUDUL
+   ========================================================== */
+
+.divisi-page .divisi-filter-header h3 {
+
+    color: #102f59;
+
+    font-size: 19px;
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   42. PENCARIAN
+   ========================================================== */
+
+.divisi-page .divisi-search input {
+
+    font-size: 14px;
+
+    color: #254b76;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   43. FILTER DEPARTEMEN
+   ========================================================== */
+
+.divisi-page .divisi-select-group select {
+
+    font-size: 14px;
+
+    color: #254b76;
+}
+
+
+/* ==========================================================
+   44. TOMBOL FILTER / RESET / EXPORT
+   ========================================================== */
+
+.divisi-page .divisi-filter-button,
+.divisi-page .divisi-reset-button,
+.divisi-page .divisi-export-button {
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   45. FORM — JUDUL MODAL
+   ========================================================== */
+
+.divisi-page .divisi-modal-heading h3 {
+
+    color: #123766;
+
+    font-size: 19px;
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   46. FORM — DESKRIPSI MODAL
+   ========================================================== */
+
+.divisi-page .divisi-modal-heading p {
+
+    color: #687f9c;
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   47. FORM — LABEL
+   ========================================================== */
+
+.divisi-page .divisi-form-group label {
+
+    color: #28486d;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   48. FORM — INPUT DAN SELECT
+   ========================================================== */
+
+.divisi-page .divisi-form-group input,
+.divisi-page .divisi-form-group select {
+
+    min-height: 43px;
+
+    color: #1d466f;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   49. CATATAN MODAL
+   ========================================================== */
+
+.divisi-page .divisi-modal-note strong {
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+
+.divisi-page .divisi-modal-note span {
+
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   50. KEADAAN DATA KOSONG
+   ========================================================== */
+
+.divisi-page .divisi-empty {
+
+    color: #7c94ad;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    text-align: center;
+}
+
+
+/* ==========================================================
+   51. RESPONSIVE LAPTOP / TABLET
+   ========================================================== */
+
+@media (min-width: 721px) and (max-width: 1100px) {
+
+    .divisi-page #divisiTable {
+
+        min-width: 900px;
+
+        table-layout: fixed;
+    }
+
+    .divisi-page #divisiTable thead th {
+
+        padding: 12px 10px;
+
+        font-size: 13px;
+    }
+
+    .divisi-page #divisiTable tbody td {
+
+        padding: 12px 10px;
+
+        font-size: 13px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-name {
+
+        font-size: 14px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-code {
+
+        font-size: 12px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-department-cell strong {
+
+        font-size: 13px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-department-cell span {
+
+        font-size: 11px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-actions {
+
+        gap: 5px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-actions button {
+
+        flex: 0 0 30px;
+
+        width: 30px;
+        height: 30px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-actions button svg {
+
+        width: 15px;
+        height: 15px;
+    }
+
+}
+
+
+/* ==========================================================
+   52. RESPONSIVE MOBILE
+   ========================================================== */
+
+@media (max-width: 720px) {
+
+    .divisi-page .divisi-table-card
+    .table-responsive {
+
+        overflow-x: auto;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .divisi-page #divisiTable {
+
+        min-width: 860px;
+
+        width: 860px;
+
+        margin: 0 12px;
+    }
+
+    .divisi-page #divisiTable thead th {
+
+        padding: 11px 9px;
+
+        font-size: 12px;
+    }
+
+    .divisi-page #divisiTable tbody td {
+
+        padding: 12px 9px;
+
+        font-size: 13px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-name {
+
+        font-size: 14px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-code {
+
+        font-size: 12px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-department-cell strong {
+
+        font-size: 12px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-department-cell span {
+
+        font-size: 11px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-actions {
+
+        gap: 4px;
+    }
+
+    .divisi-page #divisiTable
+    .divisi-actions button {
+
+        flex: 0 0 29px;
+
+        width: 29px;
+        height: 29px;
+    }
+
+    .divisi-page .divisi-bottom-header h3 {
+
+        font-size: 16px;
+    }
+
+    .divisi-page .divisi-latest-table th {
+
+        font-size: 11px;
+    }
+
+    .divisi-page .divisi-latest-table td {
+
+        font-size: 11px;
+    }
+
+    .divisi-page .divisi-legend p {
+
+        font-size: 12px;
+    }
+
+    .divisi-page .divisi-table-footer {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 12px;
+    }
+
+    .divisi-page .divisi-pagination-area {
+
+        flex-wrap: wrap;
+
+        width: 100%;
+    }
+
+}
+
+
+/* ==========================================================
+   53. HIDDEN ELEMENTS
+   JANGAN SAMPAI CSS MENAMPILKAN BARIS YANG
+   DISEMBUNYIKAN JAVASCRIPT PAGINATION.
+   ========================================================== */
+
+.divisi-page #divisiTable
+tbody tr[hidden] {
+
+    display: none !important;
+}
+
+.divisi-page .divisi-latest-table
+tr[hidden] {
+
+    display: none !important;
+}
