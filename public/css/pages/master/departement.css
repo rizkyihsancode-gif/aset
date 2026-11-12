@@ -2024,3 +2024,310 @@
     }
 
 }   
+
+/* ==========================================================
+   MASTER DATA — DEPARTEMEN
+   FINAL TABLE LAYOUT
+
+   1. No.
+   2. Kode Departemen
+   3. Nama Departemen
+   4. Dibuat
+   5. Aksi
+
+   Image dan Role tidak tampil di tabel utama.
+   ========================================================== */
+
+/* CONTAINER TABEL */
+
+.dept-page .table-responsive {
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+/* TABEL UTAMA */
+
+.dept-page #deptTable {
+    width: 100%;
+    min-width: 720px;
+
+    table-layout: fixed;
+    border-collapse: collapse;
+
+    color: #18375f;
+    font-size: 12px;
+}
+
+/* LEBAR KOLOM */
+
+.dept-page #deptTable col.dept-width-no {
+    width: 60px;
+}
+
+.dept-page #deptTable col.dept-width-code {
+    width: 19%;
+}
+
+.dept-page #deptTable col.dept-width-name {
+    width: auto;
+}
+
+.dept-page #deptTable col.dept-width-created {
+    width: 150px;
+}
+
+.dept-page #deptTable col.dept-width-action {
+    width: 155px;
+}
+
+/* HEADER */
+
+.dept-page #deptTable thead th {
+    padding: 13px 14px;
+
+    background: #eaf3ff;
+    color: #18365e;
+
+    border: 1px solid #dbe6f2;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* ISI TABEL */
+
+.dept-page #deptTable tbody td {
+    padding: 13px 14px;
+
+    background: #fff;
+    color: #345274;
+
+    border: 1px solid #e1eaf4;
+
+    font-size: 12px;
+    line-height: 1.6;
+
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+/* WARNA BARIS GENAP */
+
+.dept-page #deptTable tbody
+tr[data-record]:nth-child(even) td {
+    background: #f9fcff;
+}
+
+/* HOVER */
+
+.dept-page #deptTable tbody
+tr[data-record]:hover td {
+    background: #f0f7ff;
+}
+
+/* NOMOR */
+
+.dept-page #deptTable th:first-child,
+.dept-page #deptTable td:first-child {
+    text-align: center;
+}
+
+.dept-page #deptTable .dept-number {
+    color: #7189a6;
+
+    font-variant-numeric: tabular-nums;
+}
+
+/* KODE DEPARTEMEN */
+
+.dept-page #deptTable .dept-code-text {
+    display: block;
+
+    color: #1555a0;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+/* NAMA DEPARTEMEN */
+
+.dept-page #deptTable .dept-name {
+    display: block;
+
+    color: #153765;
+
+    font-size: 12px;
+    font-weight: 750;
+
+    overflow-wrap: anywhere;
+}
+
+/* TANGGAL DIBUAT */
+
+.dept-page #deptTable .dept-created-cell {
+    color: #597595;
+
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+/* KOLOM AKSI */
+
+.dept-page #deptTable th:last-child,
+.dept-page #deptTable td:last-child {
+    text-align: center;
+}
+
+.dept-page #deptTable .dept-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    flex-wrap: nowrap;
+}
+
+/* TOMBOL AKSI */
+
+.dept-page #deptTable .dept-actions button {
+    flex: 0 0 31px;
+
+    display: grid;
+    place-items: center;
+
+    width: 31px;
+    height: 31px;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    transition:
+        transform .15s ease,
+        background .15s ease;
+}
+
+.dept-page #deptTable .dept-actions button svg {
+    width: 15px;
+    height: 15px;
+}
+
+.dept-page #deptTable .dept-actions
+button:hover {
+    transform: translateY(-1px);
+}
+
+/* VIEW */
+
+.dept-page #deptTable .dept-actions .view {
+    background: #e5f2ff;
+    color: #0869d7;
+}
+
+/* EDIT */
+
+.dept-page #deptTable .dept-actions .edit {
+    background: #fff0d9;
+    color: #d48918;
+}
+
+/* DELETE */
+
+.dept-page #deptTable .dept-actions .delete {
+    background: #ffe5e8;
+    color: #db4659;
+}
+
+/* EMPTY */
+
+.dept-page #deptTable .dept-empty {
+    padding: 25px;
+
+    color: #8196af;
+    text-align: center;
+}
+
+/* PAGINATION */
+
+.dept-page .dept-table-footer {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+
+    .dept-page #deptTable {
+        min-width: 680px;
+    }
+
+    .dept-page #deptTable
+    col.dept-width-created {
+        width: 125px;
+    }
+
+    .dept-page #deptTable
+    col.dept-width-action {
+        width: 135px;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .dept-page #deptTable {
+        min-width: 620px;
+    }
+
+    .dept-page #deptTable
+    col.dept-width-no {
+        width: 48px;
+    }
+
+    .dept-page #deptTable
+    col.dept-width-created {
+        width: 110px;
+    }
+
+    .dept-page #deptTable
+    col.dept-width-action {
+        width: 125px;
+    }
+
+    .dept-page #deptTable thead th,
+    .dept-page #deptTable tbody td {
+        padding: 10px 9px;
+        font-size: 11px;
+    }
+
+    .dept-page #deptTable
+    .dept-actions {
+        gap: 5px;
+    }
+
+    .dept-page #deptTable
+    .dept-actions button {
+        width: 28px;
+        height: 28px;
+        flex-basis: 28px;
+    }
+}

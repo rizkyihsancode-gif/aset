@@ -2,65 +2,48 @@
 
 @section('title', 'Departemen')
 
-
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/master/departement.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/master/departement.css') }}?v={{ file_exists(public_path('css/pages/master/departement.css')) ? filemtime(public_path('css/pages/master/departement.css')) : '1' }}">
 @endpush
-
-
 
 @section('content')
 
     <section class="content dept-page">
 
-
         {{-- ============================================================
-         HERO
-    ============================================================= --}}
+         HERO DEPARTEMEN
+    ============================================================ --}}
 
         <section class="dept-hero">
 
             <div class="dept-hero-overlay"></div>
 
-
             <div class="dept-hero-content">
 
-
                 {{-- BREADCRUMB --}}
+
                 <nav class="dept-breadcrumb">
 
                     <a href="{{ route('dashboard') }}" aria-label="Dashboard">
-
                         <i data-lucide="house"></i>
-
                     </a>
 
+                    <i data-lucide="chevron-right"></i>
+
+                    <span>Master Data</span>
 
                     <i data-lucide="chevron-right"></i>
 
-
-                    <span>
-                        Master Data
-                    </span>
-
-
-                    <i data-lucide="chevron-right"></i>
-
-
-                    <strong>
-                        Departemen
-                    </strong>
+                    <strong>Departemen</strong>
 
                 </nav>
 
-
-
                 {{-- TITLE --}}
+
                 <div class="dept-heading">
 
-                    <h1>
-                        Departemen
-                    </h1>
+                    <h1>Departemen</h1>
 
                     <p>
                         Kelola data departemen pada Perumda Tirta Kencana Kota Samarinda
@@ -68,123 +51,79 @@
 
                 </div>
 
-
-
                 {{-- ========================================================
-                 KPI
-            ========================================================= --}}
+                 KPI DEPARTEMEN
+            ======================================================== --}}
 
                 <div class="dept-kpi-grid">
 
-
                     {{-- TOTAL DEPARTEMEN --}}
+
                     <div class="dept-kpi-card dept-kpi-clickable" id="departemenTotalActivityCard" role="button"
                         tabindex="0" title="Klik untuk melihat riwayat perubahan Departemen">
 
-
                         <div class="dept-kpi-icon">
-
                             <i data-lucide="building-2"></i>
-
                         </div>
-
 
                         <div class="dept-kpi-content">
 
-                            <span>
-                                Total Departemen
-                            </span>
-
+                            <span>Total Departemen</span>
 
                             <div class="dept-kpi-value">
 
-
                                 <strong>
-
                                     {{ number_format($totalDepartemen, 0, ',', '.') }}
-
                                 </strong>
-
-
 
                                 @if ($departemenDelta > 0)
                                     <small class="dept-delta dept-delta-up">
-
                                         <i data-lucide="arrow-up"></i>
-
                                         +{{ $departemenDelta }}
-
                                     </small>
                                 @elseif ($departemenDelta < 0)
                                     <small class="dept-delta dept-delta-down">
-
                                         <i data-lucide="arrow-down"></i>
-
                                         {{ $departemenDelta }}
-
                                     </small>
                                 @else
                                     <small class="dept-delta dept-delta-neutral">
-
                                         <i data-lucide="minus"></i>
-
                                         0
-
                                     </small>
                                 @endif
 
-
                             </div>
 
-
-                            <p>
-                                perubahan tercatat
-                            </p>
+                            <p>perubahan tercatat</p>
 
                         </div>
 
-
                         <div class="dept-kpi-watermark">
-
                             <i data-lucide="chart-no-axes-column-increasing"></i>
-
                         </div>
 
                     </div>
 
-
-
                     {{-- TOTAL DIVISI --}}
+
                     <div class="dept-kpi-card">
 
-
                         <div class="dept-kpi-icon">
-
                             <i data-lucide="layers-3"></i>
-
                         </div>
-
 
                         <div class="dept-kpi-content">
 
-                            <span>
-                                Total Divisi
-                            </span>
-
+                            <span>Total Divisi</span>
 
                             <strong>
-
                                 {{ number_format($totalDivisi, 0, ',', '.') }}
-
                             </strong>
 
-
-                            <p>
-                                divisi dalam sistem
-                            </p>
+                            <p>divisi dalam sistem</p>
 
                         </div>
-
 
                         <div class="dept-sparkline">
 
@@ -198,91 +137,96 @@
 
                     </div>
 
-
                 </div>
 
             </div>
 
         </section>
 
-
-
         {{-- ============================================================
-         DAFTAR
-    ============================================================= --}}
+         DAFTAR DEPARTEMEN
+    ============================================================ --}}
 
         <section class="dept-card dept-table-card">
 
+            {{-- HEADER DAFTAR --}}
 
-            {{-- HEADER --}}
             <div class="dept-table-header">
 
-                <h3>
-                    Daftar Departemen
-                </h3>
-
+                <h3>Daftar Departemen</h3>
 
                 <button type="button" class="dept-add-button" onclick="openDeptModal()">
-
                     <i data-lucide="plus"></i>
-
                     Tambah Departemen
-
                 </button>
 
             </div>
 
+            {{-- ========================================================
+             TOOLBAR
+        ======================================================== --}}
 
-
-            {{-- TOOLBAR --}}
             <div class="dept-toolbar">
 
+                {{-- SEARCH --}}
 
                 <div class="dept-search">
 
                     <i data-lucide="search"></i>
 
-                    <input type="search" id="deptSearch" placeholder="Cari kode, nama, role, atau image..."
+                    <input type="search" id="deptSearch" placeholder="Cari kode atau nama departemen..."
                         autocomplete="off">
 
                 </div>
 
+                {{-- RESET --}}
 
                 <button type="button" class="dept-reset-button" onclick="resetDeptFilter()">
-
                     <i data-lucide="refresh-cw"></i>
-
                     Reset
-
                 </button>
-
 
                 <div class="dept-toolbar-spacer"></div>
 
+                {{-- EXPORT --}}
 
                 <button type="button" class="dept-export-button" onclick="exportDeptCSV()">
-
                     <i data-lucide="download"></i>
-
                     Export
-
                     <i data-lucide="chevron-down"></i>
-
                 </button>
-
 
             </div>
 
-
-
             {{-- ========================================================
-             TABLE
-        ========================================================= --}}
+             TABEL UTAMA DEPARTEMEN
+
+             URUTAN:
+             1. NO
+             2. KODE DEPARTEMEN
+             3. NAMA DEPARTEMEN
+             4. DIBUAT
+             5. AKSI
+
+             DATABASE LEGACY:
+             nama_dep = Kode Departemen
+             kode_dep = Nama Departemen
+
+             ROLE DAN IMAGE TETAP DI DATA ATTRIBUTE
+             AGAR CRUD DAN DETAIL TIDAK RUSAK
+        ======================================================== --}}
 
             <div class="table-responsive">
 
                 <table class="dept-table" id="deptTable">
 
+                    <colgroup>
+                        <col class="dept-width-no">
+                        <col class="dept-width-code">
+                        <col class="dept-width-name">
+                        <col class="dept-width-created">
+                        <col class="dept-width-action">
+                    </colgroup>
 
                     <thead>
 
@@ -292,20 +236,12 @@
                                 No
                             </th>
 
-                            <th class="dept-col-image">
-                                Image
-                            </th>
-
-                            <th>
-                                Nama Departemen
-                            </th>
-
                             <th>
                                 Kode Departemen
                             </th>
 
-                            <th class="dept-col-role">
-                                Role
+                            <th>
+                                Nama Departemen
                             </th>
 
                             <th>
@@ -320,10 +256,7 @@
 
                     </thead>
 
-
-
                     <tbody>
-
 
                         @forelse ($departemens as $item)
                             <tr data-record data-id="{{ $item->id }}" data-kode="{{ $item->nama_dep }}"
@@ -332,35 +265,16 @@
                                 data-created-at="{{ $item->created_at ?? '' }}"
                                 data-updated-at="{{ $item->updated_at ?? '' }}">
 
+                                {{-- =============================
+                                 1. NOMOR
+                            ============================= --}}
 
-                                {{-- NO --}}
                                 <td class="dept-number"></td>
 
+                                {{-- =============================
+                                 2. KODE DEPARTEMEN
+                            ============================= --}}
 
-
-                                {{-- IMAGE --}}
-                                <td>
-
-                                    @if (!empty($item->image_url))
-                                        <div class="dept-table-image">
-
-                                            <img src="{{ $item->image_url }}" alt="{{ $item->kode_dep }}" loading="lazy">
-
-                                        </div>
-                                    @else
-                                        <div class="dept-table-image dept-image-empty"
-                                            title="{{ $item->img ?: 'Tidak ada image' }}">
-
-                                            <i data-lucide="image"></i>
-
-                                        </div>
-                                    @endif
-
-                                </td>
-
-
-
-                                {{-- KODE --}}
                                 <td>
 
                                     <strong class="dept-code-text">
@@ -371,9 +285,10 @@
 
                                 </td>
 
+                                {{-- =============================
+                                 3. NAMA DEPARTEMEN
+                            ============================= --}}
 
-
-                                {{-- NAMA --}}
                                 <td>
 
                                     <strong class="dept-name">
@@ -384,31 +299,11 @@
 
                                 </td>
 
+                                {{-- =============================
+                                 4. TANGGAL DIBUAT
+                            ============================= --}}
 
-
-                                {{-- ROLE --}}
-                                <td>
-
-                                    @if ($item->role !== null)
-                                        <span class="dept-role-badge">
-
-                                            {{ $item->role }}
-
-                                        </span>
-                                    @else
-                                        <span class="dept-role-empty">
-
-                                            —
-
-                                        </span>
-                                    @endif
-
-                                </td>
-
-
-
-                                {{-- CREATED AT --}}
-                                <td>
+                                <td class="dept-created-cell">
 
                                     @if (!empty($item->created_at))
                                         {{ \Carbon\Carbon::parse($item->created_at)->locale('id')->translatedFormat('d M Y') }}
@@ -418,70 +313,63 @@
 
                                 </td>
 
+                                {{-- =============================
+                                 5. AKSI
+                            ============================= --}}
 
-
-                                {{-- ACTION --}}
-                                <td>
+                                <td class="dept-action-cell">
 
                                     <div class="dept-actions">
 
+                                        {{-- VIEW --}}
 
-                                        <button type="button" class="view" data-action="view" title="Lihat Departemen">
-
+                                        <button type="button" class="view" data-action="view" title="Lihat Departemen"
+                                            aria-label="Lihat Departemen {{ $item->kode_dep }}">
                                             <i data-lucide="eye"></i>
-
                                         </button>
 
+                                        {{-- EDIT --}}
 
-                                        <button type="button" class="edit" data-action="edit" title="Edit Departemen">
-
+                                        <button type="button" class="edit" data-action="edit" title="Edit Departemen"
+                                            aria-label="Edit Departemen {{ $item->kode_dep }}">
                                             <i data-lucide="square-pen"></i>
-
                                         </button>
 
+                                        {{-- DELETE --}}
 
-                                        <button type="button" class="delete" data-action="delete"
-                                            title="Hapus Departemen">
-
+                                        <button type="button" class="delete" data-action="delete" title="Hapus Departemen"
+                                            aria-label="Hapus Departemen {{ $item->kode_dep }}">
                                             <i data-lucide="trash-2"></i>
-
                                         </button>
-
 
                                     </div>
 
                                 </td>
 
-
                             </tr>
-
 
                         @empty
 
+                            {{-- EMPTY DATABASE --}}
 
                             <tr id="deptServerEmpty">
 
-                                <td colspan="7" class="dept-empty">
-
+                                <td colspan="5" class="dept-empty">
                                     Belum ada data Departemen.
-
                                 </td>
 
                             </tr>
                         @endforelse
 
-
+                        {{-- EMPTY SEARCH --}}
 
                         <tr id="deptEmptyRow" hidden>
 
-                            <td colspan="7" class="dept-empty">
-
+                            <td colspan="5" class="dept-empty">
                                 Data Departemen tidak ditemukan.
-
                             </td>
 
                         </tr>
-
 
                     </tbody>
 
@@ -489,24 +377,23 @@
 
             </div>
 
-
-
             {{-- ========================================================
-             FOOTER
-        ========================================================= --}}
+             TABLE FOOTER
+        ======================================================== --}}
 
             <div class="dept-table-footer">
 
+                {{-- DATA INFORMATION --}}
 
                 <div class="dept-table-info" id="deptTableInfo">
-                    -
+                    —
                 </div>
 
+                {{-- PAGINATION --}}
 
                 <div class="dept-pagination-area">
 
-
-                    <select id="deptPageSize">
+                    <select id="deptPageSize" aria-label="Jumlah data per halaman">
 
                         <option value="10">
                             10
@@ -522,46 +409,37 @@
 
                     </select>
 
-
                     <span>
                         data per halaman
                     </span>
 
-
-                    <nav class="dept-pagination" id="deptPagination"></nav>
-
+                    <nav class="dept-pagination" id="deptPagination" aria-label="Navigasi Halaman Departemen"></nav>
 
                 </div>
 
             </div>
 
-
         </section>
 
-
-
         {{-- ============================================================
-         CRUD MODAL
-    ============================================================= --}}
+         MODAL CRUD DEPARTEMEN
+    ============================================================ --}}
 
         <dialog class="dept-dialog" id="deptModal">
 
             <div class="dept-modal">
 
+                {{-- ========================================================
+                 MODAL HEADER
+            ======================================================== --}}
 
-                {{-- HEADER --}}
                 <div class="dept-modal-header">
-
 
                     <div class="dept-modal-heading">
 
-
                         <div class="dept-modal-icon">
-
                             <i data-lucide="building-2"></i>
-
                         </div>
-
 
                         <div>
 
@@ -577,35 +455,34 @@
 
                     </div>
 
-
-                    <button type="button" class="dept-modal-close" onclick="closeDeptModal()">
-
+                    <button type="button" class="dept-modal-close" onclick="closeDeptModal()" aria-label="Tutup Modal">
                         <i data-lucide="x"></i>
-
                     </button>
-
 
                 </div>
 
+                {{-- ========================================================
+                 FORM CRUD
+            ======================================================== --}}
 
-
-                {{-- FORM --}}
                 <form id="deptForm" enctype="multipart/form-data">
 
                     @csrf
 
-
                     <input type="hidden" id="deptId">
 
+                    {{-- ALERT VALIDASI --}}
 
-                    <div class="dept-form-alert" id="deptFormAlert" hidden></div>
-
-
+                    <div class="dept-form-alert" id="deptFormAlert" role="alert" hidden></div>
 
                     <div class="dept-modal-body">
 
+                        {{-- ====================================================
+                         KODE DEPARTEMEN
 
-                        {{-- KODE --}}
+                         Field legacy: nama_dep
+                    ==================================================== --}}
+
                         <div class="dept-form-group">
 
                             <label for="deptCode">
@@ -616,15 +493,17 @@
 
                             </label>
 
-
                             <input type="text" id="deptCode" name="nama_dep" maxlength="255"
-                                placeholder="Contoh: 04.03" required>
+                                placeholder="Contoh: 04.03" autocomplete="off" required>
 
                         </div>
 
+                        {{-- ====================================================
+                         NAMA DEPARTEMEN
 
+                         Field legacy: kode_dep
+                    ==================================================== --}}
 
-                        {{-- NAMA --}}
                         <div class="dept-form-group">
 
                             <label for="deptName">
@@ -635,26 +514,23 @@
 
                             </label>
 
-
                             <input type="text" id="deptName" name="kode_dep" maxlength="255"
-                                placeholder="Contoh: KERJASAMA DAN USAHA BISNIS" required>
+                                placeholder="Contoh: KERJASAMA DAN USAHA BISNIS" autocomplete="off" required>
 
                         </div>
 
+                        {{-- ====================================================
+                         ROLE TETAP DI FORM
+                         TIDAK MUNCUL DI TABEL
+                    ==================================================== --}}
 
-
-                        {{-- ROLE --}}
                         <div class="dept-form-group">
 
                             <label for="deptRole">
-
                                 Role
-
                             </label>
 
-
                             <input type="number" id="deptRole" name="role" step="1" placeholder="Contoh: 2">
-
 
                             <small>
                                 Role mengikuti nilai integer pada database legacy.
@@ -662,26 +538,24 @@
 
                         </div>
 
+                        {{-- ====================================================
+                         IMAGE TETAP DI FORM
+                         TIDAK MUNCUL DI TABEL
+                    ==================================================== --}}
 
-
-                        {{-- IMAGE --}}
                         <div class="dept-form-group">
 
                             <label for="deptImage">
-
                                 Image
-
                             </label>
-
 
                             <div class="dept-image-upload">
 
+                                {{-- IMAGE PREVIEW --}}
 
                                 <div class="dept-image-preview">
 
-
                                     <img id="deptImagePreviewImg" src="" alt="Preview image Departemen" hidden>
-
 
                                     <div class="dept-image-preview-empty" id="deptImagePreviewEmpty">
 
@@ -693,34 +567,30 @@
 
                                     </div>
 
-
                                 </div>
 
-
+                                {{-- IMAGE INPUT --}}
 
                                 <div class="dept-image-upload-input">
 
-
                                     <input type="file" id="deptImage" name="img"
                                         accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
-
 
                                     <small>
                                         JPG, JPEG, PNG atau WEBP. Maksimal 2 MB.
                                     </small>
 
-
                                     <span class="dept-current-image" id="deptCurrentImage"></span>
 
-
                                 </div>
-
 
                             </div>
 
                         </div>
 
-
+                        {{-- ====================================================
+                         DATABASE NOTE
+                    ==================================================== --}}
 
                         <div class="dept-modal-note">
 
@@ -740,69 +610,55 @@
 
                         </div>
 
-
                     </div>
 
+                    {{-- ========================================================
+                     FOOTER FORM
+                ======================================================== --}}
 
-
-                    {{-- FOOTER --}}
                     <div class="dept-modal-footer">
 
-
                         <button type="button" class="dept-cancel-button" onclick="closeDeptModal()">
-
                             Batal
-
                         </button>
-
 
                         <button type="submit" class="dept-save-button" id="deptSaveButton">
 
                             <i data-lucide="save"></i>
 
                             <span id="deptSaveText">
-
                                 Simpan Departemen
-
                             </span>
 
                         </button>
 
-
                     </div>
 
-
                 </form>
-
 
             </div>
 
         </dialog>
 
-
-
         {{-- ============================================================
-         ACTIVITY MODAL
-    ============================================================= --}}
+         MODAL RIWAYAT PERUBAHAN DEPARTEMEN
+    ============================================================ --}}
 
         <dialog class="dept-dialog dept-history-dialog" id="departemenActivityModal">
 
             <div class="dept-modal">
 
+                {{-- ========================================================
+                 HEADER RIWAYAT
+            ======================================================== --}}
 
-                {{-- HEADER --}}
                 <div class="dept-modal-header">
-
 
                     <div class="dept-modal-heading">
 
-
                         <div class="dept-modal-icon">
-
                             <i data-lucide="history"></i>
-
                         </div>
-
 
                         <div>
 
@@ -818,28 +674,24 @@
 
                     </div>
 
-
-                    <button type="button" class="dept-modal-close" onclick="closeDepartemenActivityModal()">
-
+                    <button type="button" class="dept-modal-close" onclick="closeDepartemenActivityModal()"
+                        aria-label="Tutup Riwayat">
                         <i data-lucide="x"></i>
-
                     </button>
-
 
                 </div>
 
+                {{-- ========================================================
+                 SUMMARY RIWAYAT
+            ======================================================== --}}
 
-
-                {{-- SUMMARY --}}
                 <div class="dept-history-summary">
-
 
                     <div class="dept-history-stat">
 
                         <span>
                             Ditambahkan
                         </span>
-
 
                         <strong class="created">
 
@@ -851,14 +703,11 @@
 
                     </div>
 
-
-
                     <div class="dept-history-stat">
 
                         <span>
                             Dihapus
                         </span>
-
 
                         <strong class="deleted">
 
@@ -870,14 +719,11 @@
 
                     </div>
 
-
-
                     <div class="dept-history-stat">
 
                         <span>
                             Perubahan Bersih
                         </span>
-
 
                         <strong>
 
@@ -891,118 +737,79 @@
 
                     </div>
 
-
                 </div>
 
+                {{-- ========================================================
+                 FILTER RIWAYAT
+            ======================================================== --}}
 
-
-                {{-- FILTER --}}
                 <div class="dept-history-toolbar">
 
-
                     <button type="button" class="active" data-dept-history-filter="all">
-
                         Semua
-
                     </button>
-
 
                     <button type="button" data-dept-history-filter="created">
-
                         <i data-lucide="plus"></i>
-
                         Ditambahkan
-
                     </button>
-
 
                     <button type="button" data-dept-history-filter="deleted">
-
                         <i data-lucide="trash-2"></i>
-
                         Dihapus
-
                     </button>
-
 
                 </div>
 
+                {{-- ========================================================
+                 TABEL RIWAYAT
+            ======================================================== --}}
 
-
-                {{-- TABLE --}}
                 <div class="dept-history-body">
-
 
                     <div class="table-responsive">
 
                         <table class="dept-history-table">
 
-
                             <thead>
 
                                 <tr>
-
-                                    <th>
-                                        No
-                                    </th>
-
-                                    <th>
-                                        Nama Departemen
-                                    </th>
-
-                                    <th>
-                                        Kode Departemen
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                    <th>
-                                        Tanggal Data
-                                    </th>
-
-                                    <th>
-                                        Waktu Aktivitas
-                                    </th>
-
+                                    <th>No</th>
+                                    <th>Nama Departemen</th>
+                                    <th>Kode Departemen</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Data</th>
+                                    <th>Waktu Aktivitas</th>
                                 </tr>
 
                             </thead>
 
-
-
                             <tbody>
 
-
-                                @forelse ($departemenActivityLogs
-                                    as $log)
+                                @forelse ($departemenActivityLogs as $log)
                                     <tr data-dept-history-row data-action="{{ $log->action }}">
 
+                                        {{-- NO --}}
 
                                         <td class="dept-history-number">
-
                                             {{ $loop->iteration }}
-
                                         </td>
 
+                                        {{-- NAMA --}}
 
                                         <td>
-
                                             {{ $log->record_name ?: '—' }}
-
                                         </td>
 
+                                        {{-- KODE --}}
 
                                         <td>
-
                                             {{ $log->record_code ?: '—' }}
-
                                         </td>
 
+                                        {{-- STATUS --}}
 
                                         <td>
-
 
                                             @if ($log->action === 'created')
                                                 <span class="dept-history-status created">
@@ -1022,12 +829,11 @@
                                                 </span>
                                             @endif
 
-
                                         </td>
 
+                                        {{-- TANGGAL DATA --}}
 
                                         <td>
-
 
                                             @if (!empty($log->record_created_at))
                                                 {{ \Carbon\Carbon::parse($log->record_created_at)->locale('id')->translatedFormat('d M Y') }}
@@ -1035,12 +841,11 @@
                                                 —
                                             @endif
 
-
                                         </td>
 
+                                        {{-- WAKTU AKTIVITAS --}}
 
                                         <td>
-
 
                                             @if (!empty($log->created_at))
                                                 {{ \Carbon\Carbon::parse($log->created_at)->locale('id')->translatedFormat('d M Y, H:i') }}
@@ -1048,27 +853,20 @@
                                                 —
                                             @endif
 
-
                                         </td>
-
 
                                     </tr>
 
-
                                 @empty
-
 
                                     <tr>
 
                                         <td colspan="6" class="dept-empty">
-
                                             Belum ada riwayat perubahan Departemen.
-
                                         </td>
 
                                     </tr>
                                 @endforelse
-
 
                             </tbody>
 
@@ -1076,36 +874,25 @@
 
                     </div>
 
-
-
                     <div id="deptHistoryFilteredEmpty" class="dept-empty" hidden>
-
                         Tidak ada riwayat pada kategori ini.
-
                     </div>
 
-
                 </div>
-
 
             </div>
 
         </dialog>
 
-
-
         {{-- ============================================================
-         TOAST
-    ============================================================= --}}
+         TOAST NOTIFICATION
+    ============================================================ --}}
 
-        <div class="dept-toast-container" id="deptToastContainer"></div>
-
+        <div class="dept-toast-container" id="deptToastContainer" role="status"></div>
 
     </section>
 
 @endsection
-
-
 
 @push('scripts')
     <script>
@@ -1120,6 +907,7 @@
         };
     </script>
 
-
-    <script src="{{ asset('js/pages/master/departement.js') }}"></script>
+    <script
+        src="{{ asset('js/pages/master/departement.js') }}?v={{ file_exists(public_path('js/pages/master/departement.js')) ? filemtime(public_path('js/pages/master/departement.js')) : '1' }}">
+    </script>
 @endpush

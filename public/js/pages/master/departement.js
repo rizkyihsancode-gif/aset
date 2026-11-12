@@ -1,7 +1,52 @@
+
+/*
+|--------------------------------------------------------------------------
+| MASTER DATA — DEPARTEMEN
+| SISTEM ASET PERUMDA TIRTA KENCANA KOTA SAMARINDA
+|--------------------------------------------------------------------------
+|
+| Kontrak database legacy:
+|
+| nama_dep = Kode Departemen
+| kode_dep = Nama Departemen
+|
+| Tabel utama:
+|
+| No. | Kode Departemen | Nama Departemen | Dibuat | Aksi
+|
+| Fitur yang dipertahankan:
+|
+| - Search data
+| - Pagination 10 / 25 / 50
+| - Reset filter
+| - View Departemen
+| - Tambah Departemen
+| - Edit Departemen
+| - Hapus Departemen
+| - Validasi form
+| - AJAX Laravel
+| - CSRF Token
+| - Upload image
+| - Preview image
+| - Image yang sudah tersimpan
+| - Role Departemen
+| - Export CSV
+| - Riwayat perubahan
+| - Filter riwayat
+| - Toast notification
+| - Modal dialog
+| - Backdrop dan Escape
+|
+|--------------------------------------------------------------------------
+*/
+
 (function () {
 
     'use strict';
 
+    /* =========================================================
+       GLOBAL STATE
+    ========================================================= */
 
     let currentPage = 1;
 
@@ -13,7 +58,9 @@
 
     let previewObjectUrl = null;
 
+    let isSubmitting = false;
 
+    let toastTimer = null;
 
     /* =========================================================
        HELPERS
@@ -24,13 +71,9 @@
         parent = document
     ) {
 
-        return parent
-            .querySelector(
-                selector
-            );
+        return parent.querySelector(selector);
 
     }
-
 
     function qsa(
         selector,
@@ -38,27 +81,18 @@
     ) {
 
         return Array.from(
-            parent.querySelectorAll(
-                selector
-            )
+            parent.querySelectorAll(selector)
         );
 
     }
 
-
     function csrfToken() {
 
         return (
-            qs(
-                'meta[name="csrf-token"]'
-            )
-                ?.getAttribute(
-                    'content'
-                )
+            qs('meta[name="csrf-token"]')
+                ?.getAttribute('content')
             ||
-            qs(
-                '#deptForm input[name="_token"]'
-            )
+            qs('#deptForm input[name="_token"]')
                 ?.value
             ||
             ''
@@ -66,23 +100,45 @@
 
     }
 
-
     function refreshIcons() {
 
         if (
             window.lucide &&
-            typeof window.lucide.createIcons ===
-            'function'
+            typeof window.lucide.createIcons === 'function'
         ) {
 
-            window.lucide
-                .createIcons();
+            window.lucide.createIcons();
 
         }
 
     }
 
+    function normalize(value) {
 
+        return String(value ?? '')
+            .trim()
+            .toLocaleLowerCase('id-ID');
+
+    }
+
+    function getRoutes() {
+
+        return window.DEPARTEMEN_CRUD || {};
+
+    }
+
+    function routeWithId(template, id) {
+
+        if (!template || !id) {
+            return null;
+        }
+
+        return String(template).replace(
+            '__ID__',
+            encodeURIComponent(String(id))
+        );
+
+    }
 
     /* =========================================================
        TABLE ROWS
@@ -96,61 +152,39 @@
 
     }
 
-
-
     /* =========================================================
        FILTER
     ========================================================= */
 
     function filteredRows() {
 
-        const keyword =
-            String(
-                qs('#deptSearch')
-                    ?.value
-                ||
-                ''
-            )
-                .trim()
-                .toLocaleLowerCase(
-                    'id-ID'
-                );
+        const keyword = normalize(
+            qs('#deptSearch')?.value
+        );
 
+        return rows().filter(function (row) {
 
-        return rows()
-            .filter(
-                function (row) {
+            /*
+             * Hanya Kode dan Nama yang dicari.
+             * Role dan Image tidak tampil di tabel.
+             */
 
-                    const haystack = [
+            const haystack = [
 
-                        row.dataset.kode,
+                row.dataset.kode,
 
-                        row.dataset.nama,
+                row.dataset.nama
 
-                        row.dataset.role,
+            ].join(' ');
 
-                        row.dataset.img
-
-                    ]
-                        .join(' ')
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
-
-
-                    return (
-                        !keyword ||
-                        haystack.includes(
-                            keyword
-                        )
-                    );
-
-                }
+            return (
+                !keyword ||
+                normalize(haystack).includes(keyword)
             );
 
+        });
+
     }
-
-
 
     /* =========================================================
        RENDER TABLE
@@ -158,125 +192,77 @@
 
     function renderTable() {
 
-        const allRows =
-            rows();
+        const allRows = rows();
 
+        const filtered = filteredRows();
 
-        const filtered =
-            filteredRows();
-
-
-        const pageSize =
-            Number(
-                qs('#deptPageSize')
-                    ?.value
-            )
-            ||
-            10;
-
-
-        const totalPages =
-            Math.max(
-                1,
-                Math.ceil(
-                    filtered.length /
-                    pageSize
-                )
-            );
-
-
-        currentPage =
-            Math.min(
-                Math.max(
-                    currentPage,
-                    1
-                ),
-                totalPages
-            );
-
-
-        const start =
-            (
-                currentPage -
-                1
-            )
-            *
-            pageSize;
-
-
-        const end =
-            start +
-            pageSize;
-
-
-        /*
-         * Hide semua record.
-         */
-
-        allRows.forEach(
-            function (row) {
-
-                row.hidden =
-                    true;
-
-            }
+        const pageSize = Math.max(
+            1,
+            Number(qs('#deptPageSize')?.value) || 10
         );
 
+        const totalPages = Math.max(
+            1,
+            Math.ceil(filtered.length / pageSize)
+        );
+
+        currentPage = Math.min(
+            Math.max(currentPage, 1),
+            totalPages
+        );
+
+        const start =
+            (currentPage - 1) * pageSize;
+
+        const end =
+            start + pageSize;
 
         /*
-         * Tampilkan page aktif.
+         * Sembunyikan semua baris record.
+         */
+
+        allRows.forEach(function (row) {
+
+            row.hidden = true;
+
+        });
+
+        /*
+         * Tampilkan data halaman aktif.
          */
 
         filtered
-            .slice(
-                start,
-                end
-            )
-            .forEach(
-                function (
-                    row,
-                    index
-                ) {
+            .slice(start, end)
+            .forEach(function (row, index) {
 
-                    row.hidden =
-                        false;
+                row.hidden = false;
 
+                const no = row.querySelector(
+                    '.dept-number'
+                );
 
-                    const no =
-                        row.querySelector(
-                            '.dept-number'
-                        );
+                if (no) {
 
-
-                    if (no) {
-
-                        no.textContent =
-                            start +
-                            index +
-                            1;
-
-                    }
+                    no.textContent =
+                        start + index + 1;
 
                 }
-            );
 
+            });
 
         /*
-         * Empty search.
+         * Empty state pencarian.
          */
 
-        const empty =
-            qs('#deptEmptyRow');
-
+        const empty = qs('#deptEmptyRow');
 
         if (empty) {
 
             empty.hidden =
-                filtered.length !==
-                0;
+                filtered.length !== 0 ||
+                allRows.length === 0;
 
         }
-
 
         /*
          * Empty database.
@@ -285,18 +271,15 @@
         const serverEmpty =
             qs('#deptServerEmpty');
 
-
         if (serverEmpty) {
 
             serverEmpty.hidden =
-                allRows.length !==
-                0;
+                allRows.length !== 0;
 
         }
 
-
         /*
-         * Info.
+         * Jumlah data.
          */
 
         updateTableInfo(
@@ -305,9 +288,8 @@
             pageSize
         );
 
-
         /*
-         * Pagination.
+         * Render pagination.
          */
 
         renderPagination(
@@ -316,10 +298,8 @@
 
     }
 
-
-
     /* =========================================================
-       TABLE INFO
+       TABLE INFORMATION
     ========================================================= */
 
     function updateTableInfo(
@@ -328,15 +308,11 @@
         size
     ) {
 
-        const element =
-            qs('#deptTableInfo');
-
+        const element = qs('#deptTableInfo');
 
         if (!element) {
-
             return;
         }
-
 
         if (!total) {
 
@@ -346,48 +322,31 @@
             return;
         }
 
+        const from = start + 1;
 
-        const from =
-            start +
-            1;
-
-
-        const to =
-            Math.min(
-                start +
-                size,
-                total
-            );
-
+        const to = Math.min(
+            start + size,
+            total
+        );
 
         element.textContent =
             `Menampilkan ${from}–${to} dari ${total} data`;
 
     }
 
-
-
     /* =========================================================
        PAGINATION
     ========================================================= */
 
-    function renderPagination(
-        totalPages
-    ) {
+    function renderPagination(totalPages) {
 
-        const container =
-            qs('#deptPagination');
-
+        const container = qs('#deptPagination');
 
         if (!container) {
-
             return;
         }
 
-
-        container.innerHTML =
-            '';
-
+        container.replaceChildren();
 
         /*
          * Previous.
@@ -396,47 +355,37 @@
         container.appendChild(
             createPageButton(
                 '‹',
-                currentPage -
-                    1,
-                currentPage ===
-                    1
+                currentPage - 1,
+                currentPage === 1
             )
         );
 
-
         /*
-         * Tentukan range.
+         * Tentukan range nomor halaman.
          */
 
-        let startPage =
-            Math.max(
-                1,
-                currentPage -
-                    2
-            );
+        let startPage = Math.max(
+            1,
+            currentPage - 2
+        );
 
+        let endPage = Math.min(
+            totalPages,
+            startPage + 4
+        );
 
-        let endPage =
-            Math.min(
-                totalPages,
-                startPage +
-                    4
-            );
+        startPage = Math.max(
+            1,
+            endPage - 4
+        );
 
-
-        startPage =
-            Math.max(
-                1,
-                endPage -
-                    4
-            );
-
+        /*
+         * Tombol nomor halaman.
+         */
 
         for (
-            let page =
-                startPage;
-            page <=
-                endPage;
+            let page = startPage;
+            page <= endPage;
             page++
         ) {
 
@@ -445,13 +394,11 @@
                     String(page),
                     page,
                     false,
-                    page ===
-                        currentPage
+                    page === currentPage
                 )
             );
 
         }
-
 
         /*
          * Next.
@@ -460,54 +407,43 @@
         container.appendChild(
             createPageButton(
                 '›',
-                currentPage +
-                    1,
-                currentPage >=
-                    totalPages
+                currentPage + 1,
+                currentPage >= totalPages
             )
         );
 
-
-        refreshIcons();
-
     }
 
-
+    /* =========================================================
+       CREATE PAGE BUTTON
+    ========================================================= */
 
     function createPageButton(
         label,
         page,
         disabled,
-        active =
-            false
+        active = false
     ) {
 
         const button =
-            document.createElement(
-                'button'
-            );
+            document.createElement('button');
 
+        button.type = 'button';
 
-        button.type =
-            'button';
+        button.textContent = label;
 
-
-        button.textContent =
-            label;
-
-
-        button.disabled =
-            disabled;
-
+        button.disabled = disabled;
 
         if (active) {
 
-            button.classList.add(
-                'active'
+            button.classList.add('active');
+
+            button.setAttribute(
+                'aria-current',
+                'page'
             );
 
         }
-
 
         if (!disabled) {
 
@@ -515,9 +451,7 @@
                 'click',
                 function () {
 
-                    currentPage =
-                        page;
-
+                    currentPage = page;
 
                     renderTable();
 
@@ -526,113 +460,151 @@
 
         }
 
-
         return button;
 
     }
 
-
-
     /* =========================================================
-       RESET
+       RESET FILTER
     ========================================================= */
 
     function resetFilter() {
 
-        const search =
-            qs('#deptSearch');
+        const search = qs('#deptSearch');
 
+        const size = qs('#deptPageSize');
 
         if (search) {
 
-            search.value =
-                '';
+            search.value = '';
 
         }
 
+        if (size) {
 
-        currentPage =
-            1;
+            size.value = '10';
 
+        }
+
+        currentPage = 1;
 
         renderTable();
 
     }
 
-
-
     /* =========================================================
        IMAGE PREVIEW
     ========================================================= */
 
-    function setImagePreview(
-        url
-    ) {
+    function setImagePreview(url) {
 
-        const image =
-            qs(
-                '#deptImagePreviewImg'
-            );
+        const image = qs(
+            '#deptImagePreviewImg'
+        );
 
+        const empty = qs(
+            '#deptImagePreviewEmpty'
+        );
 
-        const empty =
-            qs(
-                '#deptImagePreviewEmpty'
-            );
-
-
-        if (
-            !image ||
-            !empty
-        ) {
-
+        if (!image || !empty) {
             return;
         }
 
-
         if (url) {
 
-            image.src =
-                url;
+            image.src = url;
 
+            image.hidden = false;
 
-            image.hidden =
-                false;
-
-
-            empty.hidden =
-                true;
+            empty.hidden = true;
 
         } else {
 
-            image.src =
-                '';
+            image.removeAttribute('src');
 
+            image.hidden = true;
 
-            image.hidden =
-                true;
-
-
-            empty.hidden =
-                false;
+            empty.hidden = false;
 
         }
 
     }
 
+    /* =========================================================
+       REVOKE IMAGE PREVIEW
+    ========================================================= */
 
+    function clearPreviewObjectURL() {
+
+        if (previewObjectUrl) {
+
+            URL.revokeObjectURL(
+                previewObjectUrl
+            );
+
+            previewObjectUrl = null;
+
+        }
+
+    }
+
+    /* =========================================================
+       VALIDATE IMAGE
+    ========================================================= */
+
+    function validateImage(file) {
+
+        if (!file) {
+
+            return true;
+
+        }
+
+        const validTypes = [
+
+            'image/jpeg',
+
+            'image/png',
+
+            'image/webp'
+
+        ];
+
+        if (!validTypes.includes(file.type)) {
+
+            showFormError(
+                'Format image harus JPG, JPEG, PNG, atau WEBP.'
+            );
+
+            return false;
+
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+
+            showFormError(
+                'Ukuran image maksimal 2 MB.'
+            );
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /* =========================================================
+       BIND IMAGE INPUT
+    ========================================================= */
 
     function bindImageInput() {
 
-        const input =
-            qs('#deptImage');
-
+        const input = qs('#deptImage');
 
         if (!input) {
-
             return;
         }
-
 
         input.addEventListener(
             'change',
@@ -640,72 +612,30 @@
 
                 hideFormError();
 
-
-                const file =
-                    input.files?.[0];
-
+                const file = input.files?.[0];
 
                 if (!file) {
 
-                    return;
-                }
+                    clearPreviewObjectURL();
 
-
-                if (
-                    !file.type.startsWith(
-                        'image/'
-                    )
-                ) {
-
-                    showFormError(
-                        'File harus berupa image.'
+                    setImagePreview(
+                        currentRow?.dataset.imgUrl || ''
                     );
-
-
-                    input.value =
-                        '';
-
 
                     return;
                 }
 
+                if (!validateImage(file)) {
 
-                if (
-                    file.size >
-                    2 *
-                    1024 *
-                    1024
-                ) {
-
-                    showFormError(
-                        'Ukuran image maksimal 2 MB.'
-                    );
-
-
-                    input.value =
-                        '';
-
+                    input.value = '';
 
                     return;
                 }
 
-
-                if (
-                    previewObjectUrl
-                ) {
-
-                    URL.revokeObjectURL(
-                        previewObjectUrl
-                    );
-
-                }
-
+                clearPreviewObjectURL();
 
                 previewObjectUrl =
-                    URL.createObjectURL(
-                        file
-                    );
-
+                    URL.createObjectURL(file);
 
                 setImagePreview(
                     previewObjectUrl
@@ -716,10 +646,8 @@
 
     }
 
-
-
     /* =========================================================
-       CRUD MODAL
+       OPEN CRUD MODAL
     ========================================================= */
 
     function openModal(
@@ -727,88 +655,58 @@
         row = null
     ) {
 
-        const dialog =
-            qs('#deptModal');
-
+        const dialog = qs('#deptModal');
 
         if (!dialog) {
-
             return;
         }
 
+        modalMode = mode;
 
-        modalMode =
-            mode;
+        currentRow = row;
 
+        currentId = row
+            ? row.dataset.id
+            : null;
 
-        currentRow =
-            row;
-
-
-        currentId =
-            row
-                ? row.dataset.id
-                : null;
-
-
-        const form =
-            qs('#deptForm');
-
+        const form = qs('#deptForm');
 
         if (form) {
 
             form.reset();
 
-        }
+            form.querySelectorAll('input')
+                .forEach(function (input) {
 
+                    input.setCustomValidity('');
+
+                });
+
+        }
 
         hideFormError();
 
-
-        /*
-         * Reset preview object URL.
-         */
-
-        if (
-            previewObjectUrl
-        ) {
-
-            URL.revokeObjectURL(
-                previewObjectUrl
-            );
-
-
-            previewObjectUrl =
-                null;
-        }
-
+        clearPreviewObjectURL();
 
         /*
          * Elements.
          */
 
-        const code =
-            qs('#deptCode');
+        const code = qs('#deptCode');
 
-        const name =
-            qs('#deptName');
+        const name = qs('#deptName');
 
-        const role =
-            qs('#deptRole');
+        const role = qs('#deptRole');
 
-        const image =
-            qs('#deptImage');
+        const image = qs('#deptImage');
 
         const currentImage =
             qs('#deptCurrentImage');
 
-        const title =
-            qs('#deptModalTitle');
+        const title = qs('#deptModalTitle');
 
         const description =
-            qs(
-                '#deptModalDescription'
-            );
+            qs('#deptModalDescription');
 
         const saveButton =
             qs('#deptSaveButton');
@@ -816,66 +714,61 @@
         const saveText =
             qs('#deptSaveText');
 
+        const hiddenId = qs('#deptId');
 
         /*
-         * Database legacy:
+         * Legacy Database:
          *
-         * nama_dep = Kode
-         * kode_dep = Nama
+         * nama_dep = Kode Departemen
+         * kode_dep = Nama Departemen
+         *
+         * Data attribute disusun oleh Blade.
          */
 
         if (code) {
 
             code.value =
-                row?.dataset.kode
-                ||
-                '';
+                row?.dataset.kode || '';
 
         }
-
 
         if (name) {
 
             name.value =
-                row?.dataset.nama
-                ||
-                '';
+                row?.dataset.nama || '';
 
         }
-
 
         if (role) {
 
             role.value =
-                row?.dataset.role
-                ||
-                '';
+                row?.dataset.role || '';
 
         }
 
+        if (hiddenId) {
+
+            hiddenId.value =
+                row?.dataset.id || '';
+
+        }
 
         if (image) {
 
-            image.value =
-                '';
+            image.value = '';
 
         }
-
 
         /*
          * Existing image.
          */
 
         const existingImageUrl =
-            row?.dataset.imgUrl
-            ||
-            '';
-
+            row?.dataset.imgUrl || '';
 
         setImagePreview(
             existingImageUrl
         );
-
 
         if (currentImage) {
 
@@ -883,166 +776,111 @@
                 row?.dataset.img
                     ? `Image saat ini: ${row.dataset.img}`
                     : '';
+
         }
 
-
         /*
-         * View / delete readonly.
+         * View dan Delete readonly.
          */
 
         const readonly =
-            mode ===
-                'view'
-            ||
-            mode ===
-                'delete';
-
+            mode === 'view' ||
+            mode === 'delete';
 
         if (code) {
 
-            code.readOnly =
-                readonly;
+            code.readOnly = readonly;
 
         }
-
 
         if (name) {
 
-            name.readOnly =
-                readonly;
+            name.readOnly = readonly;
 
         }
-
 
         if (role) {
 
-            role.readOnly =
-                readonly;
+            role.readOnly = readonly;
 
         }
-
 
         if (image) {
 
-            image.disabled =
-                readonly;
+            image.disabled = readonly;
 
         }
 
-
         /*
-         * Reset button.
+         * Reset save button.
          */
 
         if (saveButton) {
 
             saveButton.hidden =
-                mode ===
-                    'view';
+                mode === 'view';
 
+            saveButton.disabled = false;
 
-            saveButton.disabled =
-                false;
-
-
-            saveButton
-                .classList
-                .toggle(
-                    'dept-delete-button',
-                    mode ===
-                        'delete'
-                );
+            saveButton.classList.toggle(
+                'dept-delete-button',
+                mode === 'delete'
+            );
 
         }
 
-
         /*
-         * ADD
+         * Title berdasarkan mode.
          */
 
-        if (
-            mode ===
-            'add'
-        ) {
+        if (mode === 'add') {
 
             title.textContent =
                 'Tambah Departemen';
 
-
             description.textContent =
                 'Tambahkan data Departemen baru.';
-
 
             saveText.textContent =
                 'Simpan Departemen';
 
         }
 
-
-        /*
-         * VIEW
-         */
-
-        if (
-            mode ===
-            'view'
-        ) {
+        if (mode === 'view') {
 
             title.textContent =
                 'Detail Departemen';
-
 
             description.textContent =
                 'Informasi lengkap Departemen.';
 
         }
 
-
-        /*
-         * EDIT
-         */
-
-        if (
-            mode ===
-            'edit'
-        ) {
+        if (mode === 'edit') {
 
             title.textContent =
                 'Edit Departemen';
 
-
             description.textContent =
                 'Perbarui data Departemen.';
-
 
             saveText.textContent =
                 'Simpan Perubahan';
 
         }
 
-
-        /*
-         * DELETE
-         */
-
-        if (
-            mode ===
-            'delete'
-        ) {
+        if (mode === 'delete') {
 
             title.textContent =
                 'Hapus Departemen';
 
-
             description.textContent =
                 'Konfirmasi penghapusan Departemen.';
-
 
             saveText.textContent =
                 'Hapus Departemen';
 
         }
-
 
         /*
          * Open dialog.
@@ -1054,135 +892,69 @@
 
         }
 
-
-        document.body
-            .classList
-            .add(
-                'dept-modal-open'
-            );
-
+        document.body.classList.add(
+            'dept-modal-open'
+        );
 
         refreshIcons();
 
     }
 
-
+    /* =========================================================
+       CLOSE CRUD MODAL
+    ========================================================= */
 
     function closeModal() {
 
-        const dialog =
-            qs('#deptModal');
+        const dialog = qs('#deptModal');
 
-
-        if (
-            dialog &&
-            dialog.open
-        ) {
+        if (dialog?.open) {
 
             dialog.close();
 
         }
 
+        document.body.classList.remove(
+            'dept-modal-open'
+        );
 
-        document.body
-            .classList
-            .remove(
-                'dept-modal-open'
-            );
+        clearPreviewObjectURL();
 
+        modalMode = 'add';
 
-        modalMode =
-            'add';
+        currentId = null;
 
+        currentRow = null;
 
-        currentId =
-            null;
-
-
-        currentRow =
-            null;
-
+        isSubmitting = false;
 
         hideFormError();
 
     }
 
-
-
     /* =========================================================
-       FORM SUBMIT
+       VALIDASI FORM
     ========================================================= */
 
-    async function submitForm(
-        event
-    ) {
+    function validateFormData() {
 
-        event.preventDefault();
+        const codeInput = qs('#deptCode');
 
+        const nameInput = qs('#deptName');
 
-        hideFormError();
+        const roleInput = qs('#deptRole');
 
+        const code = String(
+            codeInput?.value ?? ''
+        ).trim();
 
-        /*
-         * VIEW tidak submit.
-         */
+        const name = String(
+            nameInput?.value ?? ''
+        ).trim();
 
-        if (
-            modalMode ===
-            'view'
-        ) {
-
-            closeModal();
-
-            return;
-        }
-
-
-        /*
-         * DELETE.
-         */
-
-        if (
-            modalMode ===
-            'delete'
-        ) {
-
-            await deleteRecord();
-
-            return;
-        }
-
-
-        /*
-         * Fields.
-         */
-
-        const code =
-            String(
-                qs('#deptCode')
-                    ?.value
-                ||
-                ''
-            ).trim();
-
-
-        const name =
-            String(
-                qs('#deptName')
-                    ?.value
-                ||
-                ''
-            ).trim();
-
-
-        const role =
-            String(
-                qs('#deptRole')
-                    ?.value
-                ||
-                ''
-            ).trim();
-
+        const role = String(
+            roleInput?.value ?? ''
+        ).trim();
 
         if (!code) {
 
@@ -1190,14 +962,11 @@
                 'Kode Departemen wajib diisi.'
             );
 
+            codeInput?.focus();
 
-            qs('#deptCode')
-                ?.focus();
+            return null;
 
-
-            return;
         }
-
 
         if (!name) {
 
@@ -1205,89 +974,174 @@
                 'Nama Departemen wajib diisi.'
             );
 
+            nameInput?.focus();
 
-            qs('#deptName')
-                ?.focus();
+            return null;
 
+        }
 
+        if (
+            code.length > 255 ||
+            name.length > 255
+        ) {
+
+            showFormError(
+                'Kode dan Nama Departemen maksimal 255 karakter.'
+            );
+
+            return null;
+
+        }
+
+        if (
+            role &&
+            !/^-?\d+$/.test(role)
+        ) {
+
+            showFormError(
+                'Role harus berupa bilangan bulat.'
+            );
+
+            roleInput?.focus();
+
+            return null;
+
+        }
+
+        const image = qs('#deptImage')?.files?.[0];
+
+        if (!validateImage(image)) {
+
+            return null;
+
+        }
+
+        return {
+
+            code,
+
+            name,
+
+            role,
+
+            image
+
+        };
+
+    }
+
+    /* =========================================================
+       FORM SUBMIT
+    ========================================================= */
+
+    async function submitForm(event) {
+
+        event.preventDefault();
+
+        if (isSubmitting) {
             return;
         }
 
+        hideFormError();
+
+        /*
+         * VIEW tidak melakukan submit.
+         */
+
+        if (modalMode === 'view') {
+
+            closeModal();
+
+            return;
+
+        }
+
+        /*
+         * DELETE.
+         */
+
+        if (modalMode === 'delete') {
+
+            await deleteRecord();
+
+            return;
+
+        }
+
+        /*
+         * Validasi.
+         */
+
+        const validated = validateFormData();
+
+        if (!validated) {
+            return;
+        }
 
         /*
          * FormData diperlukan karena image.
          */
 
-        const formData =
-            new FormData();
-
+        const formData = new FormData();
 
         /*
-         * Mapping database legacy:
+         * MAPPING DATABASE LEGACY
          *
-         * nama_dep = kode
-         * kode_dep = nama
+         * nama_dep = Kode Departemen
+         * kode_dep = Nama Departemen
+         *
+         * Jangan ditukar dengan field standar.
          */
 
         formData.append(
             'nama_dep',
-            code
+            validated.code
         );
-
 
         formData.append(
             'kode_dep',
-            name
+            validated.name
         );
-
 
         formData.append(
             'role',
-            role
+            validated.role
         );
 
-
-        const image =
-            qs('#deptImage')
-                ?.files?.[0];
-
-
-        if (image) {
+        if (validated.image) {
 
             formData.append(
                 'img',
-                image
+                validated.image,
+                validated.image.name
             );
 
         }
-
 
         /*
          * Endpoint.
          */
 
-        let url =
-            window
-                .DEPARTEMEN_CRUD
-                .store;
+        const routes = getRoutes();
 
+        let url = routes.store;
 
-        if (
-            modalMode ===
-            'edit'
-        ) {
+        if (modalMode === 'edit') {
 
-            url =
-                window
-                    .DEPARTEMEN_CRUD
-                    .update
-                    .replace(
-                        '__ID__',
-                        encodeURIComponent(
-                            currentId
-                        )
-                    );
+            if (!currentId) {
 
+                showFormError(
+                    'ID Departemen tidak ditemukan.'
+                );
+
+                return;
+
+            }
+
+            url = routeWithId(
+                routes.update,
+                currentId
+            );
 
             /*
              * Multipart PUT Laravel:
@@ -1301,6 +1155,15 @@
 
         }
 
+        if (!url) {
+
+            showFormError(
+                'Endpoint penyimpanan Departemen tidak tersedia.'
+            );
+
+            return;
+
+        }
 
         /*
          * Button loading.
@@ -1309,83 +1172,81 @@
         const saveButton =
             qs('#deptSaveButton');
 
-
         const saveText =
             qs('#deptSaveText');
 
-
         const originalText =
-            saveText
-                ?.textContent
-            ||
+            saveText?.textContent ||
             'Simpan';
 
+        isSubmitting = true;
 
-        saveButton.disabled =
-            true;
+        if (saveButton) {
 
+            saveButton.disabled = true;
 
-        saveText.textContent =
-            'Menyimpan...';
+        }
 
+        if (saveText) {
+
+            saveText.textContent =
+                'Menyimpan...';
+
+        }
 
         try {
 
-            const response =
-                await requestForm(
-                    url,
-                    formData
-                );
-
+            const response = await requestForm(
+                url,
+                formData
+            );
 
             showToast(
-                response.message
-                ||
+                response.message ||
                 'Data Departemen berhasil disimpan.',
                 'success'
             );
 
-
             closeModal();
 
-
             /*
-             * Reload supaya database menjadi source of truth.
+             * Reload agar database tetap
+             * menjadi sumber data utama.
              */
 
-            setTimeout(
-                function () {
+            setTimeout(function () {
 
-                    window.location.reload();
+                window.location.reload();
 
-                },
-                400
-            );
-
+            }, 400);
 
         } catch (error) {
 
             showFormError(
-                error.message
-                ||
+                error.message ||
                 'Departemen gagal disimpan.'
             );
 
-
         } finally {
 
-            saveButton.disabled =
-                false;
+            isSubmitting = false;
 
+            if (saveButton) {
 
-            saveText.textContent =
-                originalText;
+                saveButton.disabled = false;
+
+            }
+
+            if (saveText) {
+
+                saveText.textContent =
+                    originalText;
+
+            }
 
         }
 
     }
-
-
 
     /* =========================================================
        REQUEST FORM DATA
@@ -1396,13 +1257,190 @@
         formData
     ) {
 
-        const response =
-            await fetch(
-                url,
+        const response = await fetch(
+            url,
+            {
+
+                method: 'POST',
+
+                credentials: 'same-origin',
+
+                headers: {
+
+                    'Accept':
+                        'application/json',
+
+                    'X-Requested-With':
+                        'XMLHttpRequest',
+
+                    'X-CSRF-TOKEN':
+                        csrfToken()
+
+                },
+
+                body: formData
+
+            }
+        );
+
+        /*
+         * Server bisa saja mengembalikan
+         * JSON error validasi Laravel.
+         */
+
+        const data = await response
+            .json()
+            .catch(function () {
+
+                return {};
+
+            });
+
+        if (
+            !response.ok ||
+            data.success === false
+        ) {
+
+            let message =
+                data.message ||
+                `Request gagal (${response.status}).`;
+
+            /*
+             * Laravel validation.
+             */
+
+            if (
+                response.status === 422 &&
+                data.errors
+            ) {
+
+                const firstError =
+                    Object.values(
+                        data.errors
+                    )
+                        .flat()[0];
+
+                if (firstError) {
+
+                    message = firstError;
+
+                }
+
+            }
+
+            /*
+             * Expired CSRF.
+             */
+
+            if (response.status === 419) {
+
+                message =
+                    'Sesi login berakhir. Muat ulang halaman dan login kembali.';
+
+            }
+
+            /*
+             * Upload size.
+             */
+
+            if (response.status === 413) {
+
+                message =
+                    'Ukuran file melebihi batas server.';
+
+            }
+
+            throw new Error(message);
+
+        }
+
+        return data;
+
+    }
+
+    /* =========================================================
+       DELETE DEPARTEMEN
+    ========================================================= */
+
+    async function deleteRecord() {
+
+        if (!currentId) {
+
+            showFormError(
+                'ID Departemen tidak ditemukan.'
+            );
+
+            return;
+
+        }
+
+        if (isSubmitting) {
+            return;
+        }
+
+        const departmentName =
+            currentRow?.dataset.nama ||
+            'Departemen';
+
+        /*
+         * Konfirmasi hanya menghapus
+         * data yang dipilih berdasarkan ID.
+         */
+
+        const confirmed =
+            window.confirm(
+                `Hapus Departemen "${departmentName}"?`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const route = routeWithId(
+            getRoutes().destroy,
+            currentId
+        );
+
+        if (!route) {
+
+            showFormError(
+                'Endpoint hapus Departemen tidak tersedia.'
+            );
+
+            return;
+
+        }
+
+        const button =
+            qs('#deptSaveButton');
+
+        const buttonText =
+            qs('#deptSaveText');
+
+        isSubmitting = true;
+
+        if (button) {
+
+            button.disabled = true;
+
+        }
+
+        if (buttonText) {
+
+            buttonText.textContent =
+                'Menghapus...';
+
+        }
+
+        try {
+
+            const response = await fetch(
+                route,
                 {
 
-                    method:
-                        'POST',
+                    method: 'DELETE',
+
+                    credentials: 'same-origin',
 
                     headers: {
 
@@ -1415,262 +1453,95 @@
                         'X-CSRF-TOKEN':
                             csrfToken()
 
-                    },
-
-                    credentials:
-                        'same-origin',
-
-                    body:
-                        formData
+                    }
 
                 }
             );
 
-
-        const data =
-            await response
+            const data = await response
                 .json()
-                .catch(
-                    function () {
+                .catch(function () {
 
-                        return {};
+                    return {};
 
-                    }
-                );
-
-
-        if (!response.ok) {
-
-            let message =
-                data.message
-                ||
-                `Request gagal (${response.status}).`;
-
-
-            /*
-             * Laravel validation.
-             */
+                });
 
             if (
-                response.status ===
-                    422
-                &&
-                data.errors
+                !response.ok ||
+                data.success === false
             ) {
 
-                const firstError =
-                    Object.values(
-                        data.errors
-                    )
-                        .flat()[0];
+                let message =
+                    data.message ||
+                    `Delete gagal (${response.status}).`;
 
-
-                if (firstError) {
+                if (response.status === 419) {
 
                     message =
-                        firstError;
+                        'Sesi login berakhir. Muat ulang halaman.';
 
                 }
 
-            }
-
-
-            throw new Error(
-                message
-            );
-
-        }
-
-
-        return data;
-
-    }
-
-
-
-    /* =========================================================
-       DELETE
-    ========================================================= */
-
-    async function deleteRecord() {
-
-        if (!currentId) {
-
-            showFormError(
-                'ID Departemen tidak ditemukan.'
-            );
-
-
-            return;
-        }
-
-
-        const departmentName =
-            currentRow?.dataset.nama
-            ||
-            'Departemen';
-
-
-        const confirmed =
-            window.confirm(
-                `Hapus Departemen "${departmentName}"?`
-            );
-
-
-        if (!confirmed) {
-
-            return;
-        }
-
-
-        const button =
-            qs('#deptSaveButton');
-
-
-        const text =
-            qs('#deptSaveText');
-
-
-        button.disabled =
-            true;
-
-
-        text.textContent =
-            'Menghapus...';
-
-
-        try {
-
-            const url =
-                window
-                    .DEPARTEMEN_CRUD
-                    .destroy
-                    .replace(
-                        '__ID__',
-                        encodeURIComponent(
-                            currentId
-                        )
-                    );
-
-
-            const response =
-                await fetch(
-                    url,
-                    {
-
-                        method:
-                            'DELETE',
-
-                        headers: {
-
-                            'Accept':
-                                'application/json',
-
-                            'X-Requested-With':
-                                'XMLHttpRequest',
-
-                            'X-CSRF-TOKEN':
-                                csrfToken()
-
-                        },
-
-                        credentials:
-                            'same-origin'
-
-                    }
-                );
-
-
-            const data =
-                await response
-                    .json()
-                    .catch(
-                        function () {
-
-                            return {};
-
-                        }
-                    );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.message
-                    ||
-                    `Delete gagal (${response.status}).`
-                );
+                throw new Error(message);
 
             }
-
 
             showToast(
-                data.message
-                ||
+                data.message ||
                 'Departemen berhasil dihapus.',
                 'success'
             );
 
-
             closeModal();
 
+            setTimeout(function () {
 
-            setTimeout(
-                function () {
+                window.location.reload();
 
-                    window.location.reload();
-
-                },
-                400
-            );
-
+            }, 400);
 
         } catch (error) {
 
             showFormError(
-                error.message
-                ||
+                error.message ||
                 'Departemen gagal dihapus.'
             );
 
-
         } finally {
 
-            button.disabled =
-                false;
+            isSubmitting = false;
 
+            if (button) {
 
-            text.textContent =
-                'Hapus Departemen';
+                button.disabled = false;
+
+            }
+
+            if (buttonText) {
+
+                buttonText.textContent =
+                    'Hapus Departemen';
+
+            }
 
         }
 
     }
 
-
-
     /* =========================================================
-       ACTIVITY MODAL
+       OPEN ACTIVITY MODAL
     ========================================================= */
 
     function openActivityModal() {
 
         const dialog =
-            qs(
-                '#departemenActivityModal'
-            );
-
+            qs('#departemenActivityModal');
 
         if (!dialog) {
-
             return;
         }
 
-
-        filterHistory(
-            'all'
-        );
-
+        filterHistory('all');
 
         if (!dialog.open) {
 
@@ -1678,160 +1549,116 @@
 
         }
 
-
-        document.body
-            .classList
-            .add(
-                'dept-modal-open'
-            );
-
+        document.body.classList.add(
+            'dept-modal-open'
+        );
 
         refreshIcons();
 
     }
 
-
+    /* =========================================================
+       CLOSE ACTIVITY MODAL
+    ========================================================= */
 
     function closeActivityModal() {
 
         const dialog =
-            qs(
-                '#departemenActivityModal'
-            );
+            qs('#departemenActivityModal');
 
-
-        if (
-            dialog &&
-            dialog.open
-        ) {
+        if (dialog?.open) {
 
             dialog.close();
 
         }
 
-
-        document.body
-            .classList
-            .remove(
-                'dept-modal-open'
-            );
+        document.body.classList.remove(
+            'dept-modal-open'
+        );
 
     }
 
-
-
     /* =========================================================
-       HISTORY FILTER
+       FILTER HISTORY
     ========================================================= */
 
-    function filterHistory(
-        filter
-    ) {
+    function filterHistory(filter) {
 
         /*
-         * Buttons.
+         * Active filter button.
          */
 
-        qsa(
-            '[data-dept-history-filter]'
-        )
-            .forEach(
-                function (button) {
+        qsa('[data-dept-history-filter]')
+            .forEach(function (button) {
 
-                    button
-                        .classList
-                        .toggle(
-                            'active',
+                const active =
+                    button.dataset.deptHistoryFilter ===
+                    filter;
 
-                            button
-                                .dataset
-                                .deptHistoryFilter
-                                ===
-                                filter
-                        );
+                button.classList.toggle(
+                    'active',
+                    active
+                );
 
-                }
-            );
+                button.setAttribute(
+                    'aria-pressed',
+                    String(active)
+                );
 
+            });
 
         /*
-         * Rows.
+         * Filter history rows.
          */
 
         const historyRows =
-            qsa(
-                '[data-dept-history-row]'
-            );
+            qsa('[data-dept-history-row]');
 
+        let visible = 0;
 
-        let visible =
-            0;
+        historyRows.forEach(function (row) {
 
+            const show =
+                filter === 'all' ||
+                row.dataset.action === filter;
 
-        historyRows
-            .forEach(
-                function (row) {
+            row.hidden = !show;
 
-                    const show =
-                        filter ===
-                            'all'
-                        ||
-                        row.dataset.action ===
-                            filter;
+            if (show) {
 
+                visible++;
 
-                    row.hidden =
-                        !show;
+                const number = row.querySelector(
+                    '.dept-history-number'
+                );
 
+                if (number) {
 
-                    if (show) {
-
-                        visible++;
-
-
-                        const number =
-                            row.querySelector(
-                                '.dept-history-number'
-                            );
-
-
-                        if (number) {
-
-                            number.textContent =
-                                visible;
-
-                        }
-
-                    }
+                    number.textContent =
+                        String(visible);
 
                 }
-            );
 
+            }
+
+        });
 
         /*
-         * Empty filtered state.
+         * Empty filter.
          */
 
         const empty =
-            qs(
-                '#deptHistoryFilteredEmpty'
-            );
-
+            qs('#deptHistoryFilteredEmpty');
 
         if (empty) {
 
             empty.hidden =
-                visible !==
-                0;
+                visible !== 0 ||
+                historyRows.length === 0;
 
         }
 
-
-        refreshIcons();
-
     }
-
-
 
     /* =========================================================
        BIND ACTIVITY
@@ -1840,13 +1667,10 @@
     function bindActivity() {
 
         const card =
-            qs(
-                '#departemenTotalActivityCard'
-            );
-
+            qs('#departemenTotalActivityCard');
 
         /*
-         * Mouse.
+         * Click KPI to open history.
          */
 
         card?.addEventListener(
@@ -1854,9 +1678,8 @@
             openActivityModal
         );
 
-
         /*
-         * Keyboard accessibility.
+         * Keyboard access.
          */
 
         card?.addEventListener(
@@ -1864,15 +1687,11 @@
             function (event) {
 
                 if (
-                    event.key ===
-                        'Enter'
-                    ||
-                    event.key ===
-                        ' '
+                    event.key === 'Enter' ||
+                    event.key === ' '
                 ) {
 
                     event.preventDefault();
-
 
                     openActivityModal();
 
@@ -1881,37 +1700,27 @@
             }
         );
 
-
         /*
-         * Filter buttons.
+         * Bind filter.
          */
 
-        qsa(
-            '[data-dept-history-filter]'
-        )
-            .forEach(
-                function (button) {
+        qsa('[data-dept-history-filter]')
+            .forEach(function (button) {
 
-                    button
-                        .addEventListener(
-                            'click',
-                            function () {
+                button.addEventListener(
+                    'click',
+                    function () {
 
-                                filterHistory(
-                                    button
-                                        .dataset
-                                        .deptHistoryFilter
-                                );
-
-                            }
+                        filterHistory(
+                            button.dataset.deptHistoryFilter
                         );
 
-                }
-            );
+                    }
+                );
+
+            });
 
     }
-
-
 
     /* =========================================================
        EXPORT CSV
@@ -1919,9 +1728,7 @@
 
     function exportCSV() {
 
-        const data =
-            filteredRows();
-
+        const data = filteredRows();
 
         if (!data.length) {
 
@@ -1930,24 +1737,31 @@
                 'error'
             );
 
-
             return;
+
         }
 
+        /*
+         * Kolom CSV mengikuti tabel baru.
+         *
+         * Tidak ada kolom Role dan Image.
+         */
 
         const csvRows = [
 
             [
+
                 'No',
+
                 'Kode Departemen',
+
                 'Nama Departemen',
-                'Role',
-                'Image',
-                'Created At'
+
+                'Dibuat'
+
             ]
 
         ];
-
 
         data.forEach(
             function (
@@ -1955,198 +1769,147 @@
                 index
             ) {
 
+                const createdCell =
+                    row.querySelector(
+                        '.dept-created-cell'
+                    );
+
                 csvRows.push(
+
                     [
 
                         index + 1,
 
-                        row.dataset.kode
-                        ||
-                        '',
+                        row.dataset.kode || '',
 
-                        row.dataset.nama
-                        ||
-                        '',
+                        row.dataset.nama || '',
 
-                        row.dataset.role
-                        ||
-                        '',
-
-                        row.dataset.img
-                        ||
-                        '',
-
-                        row.dataset.createdAt
-                        ||
-                        ''
+                        createdCell
+                            ?.textContent
+                            ?.trim() || ''
 
                     ]
+
                 );
 
             }
         );
 
+        /*
+         * Generate CSV UTF-8.
+         * Delimiter titik koma untuk Excel Indonesia.
+         */
 
-        const csv =
-            csvRows
-                .map(
-                    function (row) {
+        const csv = '\uFEFF' +
 
-                        return row
-                            .map(
-                                function (value) {
+            csvRows.map(function (row) {
 
-                                    /*
-                                     * Proteksi CSV injection.
-                                     */
+                return row.map(function (value) {
 
-                                    let text =
-                                        String(
-                                            value ??
-                                            ''
-                                        );
+                    /*
+                     * Proteksi CSV injection.
+                     */
 
+                    let cellText =
+                        String(value ?? '');
 
-                                    if (
-                                        /^[\s]*[=+@-]/
-                                            .test(
-                                                text
-                                            )
-                                    ) {
+                    if (
+                        /^\s*[=+@-]/.test(cellText)
+                    ) {
 
-                                        text =
-                                            "'" +
-                                            text;
-
-                                    }
-
-
-                                    return (
-                                        '"' +
-                                        text.replace(
-                                            /"/g,
-                                            '""'
-                                        ) +
-                                        '"'
-                                    );
-
-                                }
-                            )
-                            .join(',');
+                        cellText = "'" + cellText;
 
                     }
-                )
-                .join(
-                    '\r\n'
-                );
 
+                    return (
 
-        const blob =
-            new Blob(
-                [
-                    '\uFEFF' +
-                    csv
-                ],
-                {
+                        '"' +
 
-                    type:
-                        'text/csv;charset=utf-8;'
+                        cellText.replace(
+                            /"/g,
+                            '""'
+                        ) +
 
-                }
-            );
+                        '"'
 
+                    );
 
-        const url =
-            URL.createObjectURL(
-                blob
-            );
+                }).join(';');
 
+            }).join('\r\n');
+
+        const blob = new Blob(
+            [csv],
+            {
+                type: 'text/csv;charset=utf-8'
+            }
+        );
+
+        const objectUrl =
+            URL.createObjectURL(blob);
 
         const link =
-            document.createElement(
-                'a'
-            );
+            document.createElement('a');
 
-
-        link.href =
-            url;
-
+        link.href = objectUrl;
 
         link.download =
-            `data-departemen-${new Date().toISOString().slice(0, 10)}.csv`;
+            'data-departemen-' +
+            new Date()
+                .toISOString()
+                .slice(0, 10) +
+            '.csv';
 
-
-        document.body
-            .appendChild(
-                link
-            );
-
+        document.body.appendChild(link);
 
         link.click();
 
-
         link.remove();
 
+        setTimeout(function () {
 
-        URL.revokeObjectURL(
-            url
-        );
+            URL.revokeObjectURL(
+                objectUrl
+            );
+
+        }, 1000);
 
     }
-
-
 
     /* =========================================================
        FORM ERROR
     ========================================================= */
 
-    function showFormError(
-        message
-    ) {
+    function showFormError(message) {
 
         const element =
             qs('#deptFormAlert');
 
-
         if (!element) {
-
             return;
         }
 
-
         element.textContent =
-            message;
+            message || 'Terjadi kesalahan.';
 
-
-        element.hidden =
-            false;
+        element.hidden = false;
 
     }
-
-
 
     function hideFormError() {
 
         const element =
             qs('#deptFormAlert');
 
-
         if (!element) {
-
             return;
         }
 
+        element.textContent = '';
 
-        element.textContent =
-            '';
-
-
-        element.hidden =
-            true;
+        element.hidden = true;
 
     }
-
-
 
     /* =========================================================
        TOAST
@@ -2160,109 +1923,79 @@
         const container =
             qs('#deptToastContainer');
 
-
         if (!container) {
-
-            window.alert(
-                message
-            );
-
-
             return;
         }
 
-
         const toast =
-            document.createElement(
-                'div'
-            );
-
+            document.createElement('div');
 
         toast.className =
-            `dept-toast ${type}`;
+            'dept-toast ' + type;
 
+        /*
+         * Icon.
+         */
 
         const icon =
-            document.createElement(
-                'div'
-            );
+            document.createElement('i');
 
-
-        icon.className =
-            'dept-toast-icon';
-
-
-        icon.innerHTML =
-            `<i data-lucide="${
-                type === 'error'
-                    ? 'circle-alert'
-                    : 'circle-check'
-            }"></i>`;
-
-
-        const text =
-            document.createElement(
-                'span'
-            );
-
-
-        text.textContent =
-            message;
-
-
-        toast.appendChild(
-            icon
+        icon.setAttribute(
+            'data-lucide',
+            type === 'success'
+                ? 'circle-check'
+                : 'triangle-alert'
         );
 
+        /*
+         * Text.
+         */
 
-        toast.appendChild(
-            text
-        );
+        const label =
+            document.createElement('span');
 
+        label.textContent = message;
 
-        container.appendChild(
-            toast
-        );
+        toast.appendChild(icon);
 
+        toast.appendChild(label);
+
+        container.appendChild(toast);
 
         refreshIcons();
 
+        /*
+         * Animate in.
+         */
 
-        requestAnimationFrame(
+        requestAnimationFrame(function () {
+
+            toast.classList.add('show');
+
+        });
+
+        /*
+         * Animate out.
+         */
+
+        clearTimeout(toastTimer);
+
+        toastTimer = setTimeout(
             function () {
 
-                toast.classList.add(
-                    'show'
-                );
+                toast.classList.remove('show');
 
-            }
-        );
+                setTimeout(function () {
 
+                    toast.remove();
 
-        setTimeout(
-            function () {
-
-                toast.classList.remove(
-                    'show'
-                );
-
-
-                setTimeout(
-                    function () {
-
-                        toast.remove();
-
-                    },
-                    250
-                );
+                }, 250);
 
             },
-            3000
+            3700
         );
 
     }
-
-
 
     /* =========================================================
        TABLE ACTIONS
@@ -2273,43 +2006,50 @@
         const table =
             qs('#deptTable');
 
-
         if (!table) {
-
             return;
         }
-
 
         table.addEventListener(
             'click',
             function (event) {
 
-                const button =
-                    event
-                        .target
-                        .closest(
-                            'button[data-action]'
-                        );
+                /*
+                 * Aman untuk klik langsung
+                 * pada ikon SVG atau tombol.
+                 */
 
+                if (
+                    !(event.target instanceof Element)
+                ) {
+                    return;
+                }
+
+                const button =
+                    event.target.closest(
+                        'button[data-action]'
+                    );
 
                 if (!button) {
-
                     return;
                 }
 
+                if (button.disabled) {
+                    return;
+                }
 
                 const row =
-                    button
-                        .closest(
-                            'tr[data-record]'
-                        );
-
+                    button.closest(
+                        'tr[data-record]'
+                    );
 
                 if (!row) {
-
                     return;
                 }
 
+                /*
+                 * view / edit / delete
+                 */
 
                 openModal(
                     button.dataset.action,
@@ -2321,8 +2061,6 @@
 
     }
 
-
-
     /* =========================================================
        DIALOG BACKDROP
     ========================================================= */
@@ -2333,68 +2071,50 @@
 
             qs('#deptModal'),
 
-            qs(
-                '#departemenActivityModal'
-            )
+            qs('#departemenActivityModal')
 
         ];
-
 
         dialogs.forEach(
             function (dialog) {
 
                 if (!dialog) {
-
                     return;
                 }
-
 
                 dialog.addEventListener(
                     'click',
                     function (event) {
 
-                        if (
-                            event.target !==
-                            dialog
-                        ) {
-
+                        if (event.target !== dialog) {
                             return;
                         }
 
+                        /*
+                         * Deteksi klik di luar box modal.
+                         */
 
                         const box =
-                            dialog
-                                .querySelector(
-                                    '.dept-modal'
-                                )
-                                ?.getBoundingClientRect();
-
+                            dialog.querySelector(
+                                '.dept-modal'
+                            )?.getBoundingClientRect();
 
                         if (!box) {
-
                             return;
                         }
 
-
                         const inside =
-                            event.clientX >=
-                                box.left
-                            &&
-                            event.clientX <=
-                                box.right
-                            &&
-                            event.clientY >=
-                                box.top
-                            &&
-                            event.clientY <=
-                                box.bottom;
 
+                            event.clientX >= box.left &&
+                            event.clientX <= box.right &&
+
+                            event.clientY >= box.top &&
+                            event.clientY <= box.bottom;
 
                         if (!inside) {
 
                             if (
-                                dialog.id ===
-                                'deptModal'
+                                dialog.id === 'deptModal'
                             ) {
 
                                 closeModal();
@@ -2410,18 +2130,56 @@
                     }
                 );
 
+                /*
+                 * Esc: browser menutup dialog,
+                 * state CSS ikut dibersihkan.
+                 */
+
+                dialog.addEventListener(
+                    'close',
+                    function () {
+
+                        document.body.classList.remove(
+                            'dept-modal-open'
+                        );
+
+                        if (dialog.id === 'deptModal') {
+
+                            clearPreviewObjectURL();
+
+                        }
+
+                    }
+                );
+
             }
         );
 
     }
 
-
-
     /* =========================================================
-       INIT
+       INITIALIZATION
     ========================================================= */
 
     function init() {
+
+        /*
+         * Hindari inisialisasi dua kali
+         * jika script termuat berulang.
+         */
+
+        const page =
+            qs('.dept-page');
+
+        if (!page) {
+            return;
+        }
+
+        if (page.dataset.deptInitialized === '1') {
+            return;
+        }
+
+        page.dataset.deptInitialized = '1';
 
         /*
          * Search.
@@ -2432,15 +2190,12 @@
                 'input',
                 function () {
 
-                    currentPage =
-                        1;
-
+                    currentPage = 1;
 
                     renderTable();
 
                 }
             );
-
 
         /*
          * Page size.
@@ -2451,25 +2206,21 @@
                 'change',
                 function () {
 
-                    currentPage =
-                        1;
-
+                    currentPage = 1;
 
                     renderTable();
 
                 }
             );
 
-
         /*
-         * CRUD table buttons.
+         * CRUD Table buttons.
          */
 
         bindTableActions();
 
-
         /*
-         * Form.
+         * Form submit.
          */
 
         qs('#deptForm')
@@ -2478,27 +2229,23 @@
                 submitForm
             );
 
-
         /*
          * Image preview.
          */
 
         bindImageInput();
 
-
         /*
-         * KPI Activity.
+         * Activity history.
          */
 
         bindActivity();
 
-
         /*
-         * Backdrop.
+         * Dialog backdrop.
          */
 
         bindDialogBackdrop();
-
 
         /*
          * First render.
@@ -2506,51 +2253,40 @@
 
         renderTable();
 
-
         refreshIcons();
 
     }
 
-
-
     /* =========================================================
        GLOBAL FUNCTIONS
+       DIPANGGIL OLEH BLADE
     ========================================================= */
 
     window.openDeptModal =
         function () {
 
-            openModal(
-                'add'
-            );
+            openModal('add');
 
         };
-
 
     window.closeDeptModal =
         closeModal;
 
-
     window.resetDeptFilter =
         resetFilter;
-
 
     window.exportDeptCSV =
         exportCSV;
 
-
     window.closeDepartemenActivityModal =
         closeActivityModal;
-
-
 
     /* =========================================================
        START
     ========================================================= */
 
     if (
-        document.readyState ===
-        'loading'
+        document.readyState === 'loading'
     ) {
 
         document.addEventListener(
