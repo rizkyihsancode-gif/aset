@@ -551,9 +551,123 @@
             @endif
 
 
+
+            {{-- =====================================================
+     PAGINATION KONSTRUKSI
+     DATA MANUAL DAN ARSIP LAMA
+===================================================== --}}
+
+            @php
+                $kfPager = $items->appends(request()->except('page'));
+
+                $kfCurrent = $kfPager->currentPage();
+                $kfLast = max(1, $kfPager->lastPage());
+
+                $kfPages = [];
+
+                for ($i = max(1, $kfCurrent - 2); $i <= min($kfLast, $kfCurrent + 2); $i++) {
+                    $kfPages[] = $i;
+                }
+            @endphp
+
             <div class="kf-pagination">
-                {{ $items->links() }}
+
+                <div class="kib-custom-pagination">
+
+                    <div class="kib-pagination-info">
+
+                        Menampilkan
+
+                        <strong>
+                            {{ $kfPager->firstItem() ?? 0 }}
+                            –
+                            {{ $kfPager->lastItem() ?? 0 }}
+                        </strong>
+
+                        dari
+
+                        <strong>
+                            {{ number_format($kfPager->total(), 0, ',', '.') }}
+                        </strong>
+
+                        data
+
+                    </div>
+
+                    @if ($kfLast > 1)
+
+                        <nav class="kib-pagination-nav" aria-label="Pagination Konstruksi">
+
+                            {{-- PREVIOUS --}}
+
+                            @if ($kfPager->onFirstPage())
+                                <span class="kib-page-btn disabled">
+                                    ‹ Sebelumnya
+                                </span>
+                            @else
+                                <a href="{{ $kfPager->previousPageUrl() }}" class="kib-page-btn" rel="prev">
+                                    ‹ Sebelumnya
+                                </a>
+                            @endif
+
+                            {{-- NOMOR HALAMAN --}}
+
+                            @if (min($kfPages) > 1)
+
+                                <a href="{{ $kfPager->url(1) }}" class="kib-page-btn number">
+                                    1
+                                </a>
+
+                                @if (min($kfPages) > 2)
+                                    <span class="kib-page-dots">…</span>
+                                @endif
+
+                            @endif
+
+                            @foreach ($kfPages as $pageNumber)
+                                @if ($pageNumber == $kfCurrent)
+                                    <span class="kib-page-btn number active" aria-current="page">
+                                        {{ $pageNumber }}
+                                    </span>
+                                @else
+                                    <a href="{{ $kfPager->url($pageNumber) }}" class="kib-page-btn number">
+                                        {{ $pageNumber }}
+                                    </a>
+                                @endif
+                            @endforeach
+
+                            @if (max($kfPages) < $kfLast)
+
+                                @if (max($kfPages) < $kfLast - 1)
+                                    <span class="kib-page-dots">…</span>
+                                @endif
+
+                                <a href="{{ $kfPager->url($kfLast) }}" class="kib-page-btn number">
+                                    {{ $kfLast }}
+                                </a>
+
+                            @endif
+
+                            {{-- NEXT --}}
+
+                            @if ($kfPager->hasMorePages())
+                                <a href="{{ $kfPager->nextPageUrl() }}" class="kib-page-btn" rel="next">
+                                    Berikutnya ›
+                                </a>
+                            @else
+                                <span class="kib-page-btn disabled">
+                                    Berikutnya ›
+                                </span>
+                            @endif
+
+                        </nav>
+
+                    @endif
+
+                </div>
+
             </div>
+
 
         </section>
 

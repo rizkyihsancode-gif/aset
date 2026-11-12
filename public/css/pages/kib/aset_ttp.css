@@ -1817,3 +1817,180 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* =====================================================
+   PAGINATION K.I.B — MODERN
+   KONSTRUKSI & ASET TETAP LAINNYA
+===================================================== */
+
+.kf-pagination,
+.aem-pagination {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 16px;
+}
+
+/* CONTAINER */
+
+.kib-custom-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+
+    width: 100%;
+    gap: 14px;
+
+    padding: 16px 0 4px;
+
+    border-top: 1px solid #e2ebf5;
+
+    font-family: inherit;
+}
+
+/* INFORMASI DATA */
+
+.kib-pagination-info {
+    color: #7189a6;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.kib-pagination-info strong {
+    color: #17467c;
+    font-weight: 800;
+}
+
+/* NAVIGASI */
+
+.kib-pagination-nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+    gap: 6px;
+}
+
+/* TOMBOL PAGINATION */
+
+.kib-custom-pagination .kib-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 37px;
+    min-height: 36px;
+
+    padding: 8px 12px;
+
+    background: #ffffff;
+    color: #315d8b;
+
+    border: 1px solid #d8e5f2;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    text-align: center;
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    transition: all .2s ease;
+}
+
+/* NOMOR HALAMAN */
+
+.kib-custom-pagination .kib-page-btn.number {
+    width: 37px;
+    min-width: 37px;
+    padding: 8px 5px;
+}
+
+/* HOVER */
+
+.kib-custom-pagination a.kib-page-btn:hover {
+    background: #eaf3ff;
+    border-color: #a9cef8;
+    color: #0869e7;
+    text-decoration: none;
+}
+
+/* HALAMAN AKTIF */
+
+.kib-custom-pagination .kib-page-btn.active {
+    background: #0869e7;
+    border-color: #0869e7;
+    color: #ffffff;
+
+    box-shadow: 0 4px 12px rgba(8,105,231,.18);
+}
+
+/* DISABLED */
+
+.kib-custom-pagination .kib-page-btn.disabled {
+    background: #f7f9fc;
+    border-color: #e6edf5;
+    color: #a0b3c8;
+
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ELLIPSIS */
+
+.kib-page-dots {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 20px;
+    min-height: 36px;
+
+    color: #91a5bb;
+    font-size: 17px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1050px) {
+
+    .kib-custom-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .kib-pagination-nav {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .kib-custom-pagination {
+        gap: 12px;
+    }
+
+    .kib-pagination-nav {
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+    }
+
+    .kib-custom-pagination .kib-page-btn {
+        min-height: 34px;
+        min-width: 32px;
+        padding: 7px 9px;
+        font-size: 10px;
+    }
+
+    .kib-custom-pagination .kib-page-btn.number {
+        width: 32px;
+        min-width: 32px;
+        padding: 7px 4px;
+    }
+}

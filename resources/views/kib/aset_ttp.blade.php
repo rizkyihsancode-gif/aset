@@ -327,9 +327,123 @@
 
             </div>
 
+
+            {{-- =====================================================
+     PAGINATION ASET TETAP LAINNYA
+     DATA MANUAL DAN ARSIP LAMA
+===================================================== --}}
+
+            @php
+                $aemPager = $items->appends(request()->except('page'));
+
+                $aemCurrent = $aemPager->currentPage();
+                $aemLast = max(1, $aemPager->lastPage());
+
+                $aemPages = [];
+
+                for ($i = max(1, $aemCurrent - 2); $i <= min($aemLast, $aemCurrent + 2); $i++) {
+                    $aemPages[] = $i;
+                }
+            @endphp
+
             <div class="aem-pagination">
-                {{ $items->links() }}
+
+                <div class="kib-custom-pagination">
+
+                    <div class="kib-pagination-info">
+
+                        Menampilkan
+
+                        <strong>
+                            {{ $aemPager->firstItem() ?? 0 }}
+                            –
+                            {{ $aemPager->lastItem() ?? 0 }}
+                        </strong>
+
+                        dari
+
+                        <strong>
+                            {{ number_format($aemPager->total(), 0, ',', '.') }}
+                        </strong>
+
+                        data
+
+                    </div>
+
+                    @if ($aemLast > 1)
+
+                        <nav class="kib-pagination-nav" aria-label="Pagination Aset Tetap Lainnya">
+
+                            {{-- PREVIOUS --}}
+
+                            @if ($aemPager->onFirstPage())
+                                <span class="kib-page-btn disabled">
+                                    ‹ Sebelumnya
+                                </span>
+                            @else
+                                <a href="{{ $aemPager->previousPageUrl() }}" class="kib-page-btn" rel="prev">
+                                    ‹ Sebelumnya
+                                </a>
+                            @endif
+
+                            {{-- NOMOR HALAMAN --}}
+
+                            @if (min($aemPages) > 1)
+
+                                <a href="{{ $aemPager->url(1) }}" class="kib-page-btn number">
+                                    1
+                                </a>
+
+                                @if (min($aemPages) > 2)
+                                    <span class="kib-page-dots">…</span>
+                                @endif
+
+                            @endif
+
+                            @foreach ($aemPages as $pageNumber)
+                                @if ($pageNumber == $aemCurrent)
+                                    <span class="kib-page-btn number active" aria-current="page">
+                                        {{ $pageNumber }}
+                                    </span>
+                                @else
+                                    <a href="{{ $aemPager->url($pageNumber) }}" class="kib-page-btn number">
+                                        {{ $pageNumber }}
+                                    </a>
+                                @endif
+                            @endforeach
+
+                            @if (max($aemPages) < $aemLast)
+
+                                @if (max($aemPages) < $aemLast - 1)
+                                    <span class="kib-page-dots">…</span>
+                                @endif
+
+                                <a href="{{ $aemPager->url($aemLast) }}" class="kib-page-btn number">
+                                    {{ $aemLast }}
+                                </a>
+
+                            @endif
+
+                            {{-- NEXT --}}
+
+                            @if ($aemPager->hasMorePages())
+                                <a href="{{ $aemPager->nextPageUrl() }}" class="kib-page-btn" rel="next">
+                                    Berikutnya ›
+                                </a>
+                            @else
+                                <span class="kib-page-btn disabled">
+                                    Berikutnya ›
+                                </span>
+                            @endif
+
+                        </nav>
+
+                    @endif
+
+                </div>
+
             </div>
+
 
         </section>
 
