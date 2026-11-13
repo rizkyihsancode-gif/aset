@@ -1,1555 +1,1082 @@
-/* =========================================================
-   MASTER DATA - KODE AKTIVA
-========================================================= */
 
-let aktivaPage = 1;
+/*
+|--------------------------------------------------------------------------
+| MASTER DATA — KODE AKTIVA
+| PERUMDA TIRTA KENCANA KOTA SAMARINDA
+|--------------------------------------------------------------------------
+| FITUR:
+| - Search, filter Golongan dan KIB
+| - Pagination
+| - Tambah, Detail, Edit, Hapus
+| - Validasi data
+| - AJAX Laravel + CSRF
+| - Export CSV
+| - Riwayat perubahan
+| - Toast notifikasi
+|--------------------------------------------------------------------------
+*/
 
-let aktivaMode = 'add';
+(() => {
+    'use strict';
 
-let aktivaId = null;
+    /* ======================================================
+       INITIAL STATE DAN HELPERS
+    ====================================================== */
 
-let aktivaRow = null;
+    const $ = (selector, root = document) =>
+        root.querySelector(selector);
 
-let aktivaToastTimer = null;
+    const $$ = (selector, root = document) =>
+        Array.from(root.querySelectorAll(selector));
 
+    const page = $('.aktiva-page');
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+    if (!page || page.dataset.initialized === '1') {
+        return;
+    }
+
+    page.dataset.initialized = '1';
+
+    const routes = window.AKTIVA_CRUD || {};
+
+    const modal = $('#aktivaModal');
+    const historyModal = $('#aktivaHistoryModal');
+    const form = $('#aktivaForm');
+    const table = $('#aktivaTable');
+
+    let currentPage = 1;
+    let currentMode = 'add';
+    let currentRow = null;
+    let busy = false;
+    let toastTimer = null;
+
+    const value = id =>
+        String($('#' + id)?.value ?? '').trim();
+
+    const normalize = text =>
+        String(text ?? '')
+            .trim()
+            .toLocaleLowerCase('id-ID');
+
+    const rows = () =>
+        $$('tbody tr[data-row]', table);
+
+    const icons = () =>
+        window.lucide?.createIcons?.();
+
+    const token = () =>
+        $('meta[name="csrf-token"]')?.content ||
+        $('#aktivaForm input[name="_token"]')?.value ||
+        '';
+
+    const replaceId = (url, id) =>
+        String(url || '').replace(
+            '__ID__',
+            encodeURIComponent(String(id || ''))
+        );
+
+    /* ======================================================
+       TANGGAL DAN JAM WITA
+    ====================================================== */
+
+    function clock() {
+
+        const now = new Date();
+
+        if ($('#aktivaDate')) {
+
+            $('#aktivaDate').textContent =
+                new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Makassar',
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                }).format(now);
+
+        }
+
+        if ($('#aktivaTime')) {
+
+            $('#aktivaTime').textContent =
+                new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Makassar',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hourCycle: 'h23'
+                }).format(now) + ' WITA';
+
+        }
+    }
+
+    /* ======================================================
+       FILTER DATA
+    ====================================================== */
+
+    function filteredRows() {
+
+        const term = normalize(value('aktivaSearch'));
+        const gol = value('aktivaGolFilter');
+        const kib = value('aktivaKibFilter');
+
+        return rows().filter(row => {
+
+            const text = normalize([
+                row.dataset.kode,
+                row.dataset.aktiva,
+                row.dataset.gol,
+                row.dataset.kib
+            ].join(' '));
+
+            return (
+                (!term || text.includes(term)) &&
+                (!gol || row.dataset.gol === gol) &&
+                (!kib || row.dataset.kib === kib)
+            );
+
+        });
+    }
+
+    /* ======================================================
+       TOMBOL PAGINATION
+    ====================================================== */
+
+    function pageButton(
+        label,
+        target,
+        disabled = false,
+        active = false
+    ) {
+
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.textContent = label;
+        button.disabled = disabled;
+
+        if (active) {
+
+            button.classList.add('active');
+
+            button.setAttribute(
+                'aria-current',
+                'page'
+            );
+        }
+
+        button.addEventListener('click', () => {
+
+            currentPage = target;
+
+            renderTable();
+
+        });
+
+        return button;
+    }
+
+    /* ======================================================
+       RENDER PAGINATION
+    ====================================================== */
+
+    function renderPagination(lastPage) {
+
+        const nav = $('#aktivaPagination');
+
+        if (!nav) return;
+
+        nav.replaceChildren();
+
+        if (lastPage <= 1) return;
+
+        nav.append(
+            pageButton(
+                '‹',
+                currentPage - 1,
+                currentPage === 1
+            )
+        );
+
+        let first = Math.max(1, currentPage - 2);
+
+        let last = Math.min(
+            lastPage,
+            first + 4
+        );
+
+        first = Math.max(1, last - 4);
+
+        if (first > 1) {
+
+            nav.append(
+                pageButton('1', 1)
+            );
+
+            if (first > 2) {
+
+                const dots = document.createElement('span');
+
+                dots.className = 'aktiva-page-dots';
+                dots.textContent = '…';
+
+                nav.append(dots);
+            }
+        }
+
+        for (let i = first; i <= last; i++) {
+
+            nav.append(
+                pageButton(
+                    String(i),
+                    i,
+                    false,
+                    i === currentPage
+                )
+            );
+        }
+
+        if (last < lastPage) {
+
+            if (last < lastPage - 1) {
+
+                const dots = document.createElement('span');
+
+                dots.className = 'aktiva-page-dots';
+                dots.textContent = '…';
+
+                nav.append(dots);
+            }
+
+            nav.append(
+                pageButton(
+                    String(lastPage),
+                    lastPage
+                )
+            );
+        }
+
+        nav.append(
+            pageButton(
+                '›',
+                currentPage + 1,
+                currentPage === lastPage
+            )
+        );
+    }
+
+    /* ======================================================
+       RENDER TABEL
+    ====================================================== */
+
+    function renderTable() {
+
+        const all = rows();
+        const filtered = filteredRows();
+
+        const size = Math.max(
+            1,
+            Number(value('aktivaPageSize')) || 10
+        );
+
+        const lastPage = Math.max(
+            1,
+            Math.ceil(filtered.length / size)
+        );
+
+        currentPage = Math.min(
+            Math.max(currentPage, 1),
+            lastPage
+        );
+
+        const start = (currentPage - 1) * size;
+
+        all.forEach(row => {
+            row.hidden = true;
+        });
+
+        filtered
+            .slice(start, start + size)
+            .forEach((row, index) => {
+
+                row.hidden = false;
+
+                const no = $('.aktiva-number', row);
+
+                if (no) {
+                    no.textContent =
+                        String(start + index + 1);
+                }
+
+            });
+
+        const empty = $('#aktivaEmptyRow');
+
+        if (empty) {
+            empty.hidden = filtered.length > 0;
+        }
+
+        const info = $('#aktivaTableInfo');
+
+        if (info) {
+
+            info.textContent =
+                `Menampilkan ${filtered.length ? start + 1 : 0}–` +
+                `${Math.min(start + size, filtered.length)} ` +
+                `dari ${filtered.length} data`;
+
+        }
+
+        renderPagination(lastPage);
+    }
+
+    /* ======================================================
+       RESET FILTER
+    ====================================================== */
+
+    function resetFilter() {
+
+        [
+            'aktivaSearch',
+            'aktivaGolFilter',
+            'aktivaKibFilter'
+        ].forEach(id => {
+
+            if ($('#' + id)) {
+                $('#' + id).value = '';
+            }
+
+        });
+
+        if ($('#aktivaPageSize')) {
+            $('#aktivaPageSize').value = '10';
+        }
+
+        currentPage = 1;
+
+        renderTable();
+    }
+
+    /* ======================================================
+       HAPUS PESAN ERROR FORM
+    ====================================================== */
+
+    function clearErrors() {
+
+        $$('[data-error]', form).forEach(node => {
+            node.textContent = '';
+        });
+
+        const alert = $('#aktivaFormAlert');
+
+        if (alert) {
+            alert.hidden = true;
+            alert.textContent = '';
+        }
+
+        $$('input', form).forEach(input =>
+            input.setCustomValidity('')
+        );
+    }
+
+    /* ======================================================
+       TAMPILKAN PESAN ERROR FORM
+    ====================================================== */
+
+    function showError(message, errors = {}) {
+
+        for (
+            const [name, messages]
+            of Object.entries(errors || {})
+        ) {
+
+            const target = $$(
+                '[data-error]',
+                form
+            ).find(el =>
+                el.dataset.error === name
+            );
+
+            if (target) {
+
+                target.textContent =
+                    Array.isArray(messages)
+                        ? messages[0]
+                        : String(messages);
+
+            }
+        }
+
+        const alert = $('#aktivaFormAlert');
+
+        if (alert) {
+
+            alert.textContent =
+                message ||
+                'Periksa kembali input Kode Aktiva.';
+
+            alert.hidden = false;
+        }
+    }
+
+    /* ======================================================
+       TOAST NOTIFIKASI
+    ====================================================== */
+
+    function toast(
+        title,
+        message,
+        error = false
+    ) {
+
+        const box = $('#aktivaToast');
+
+        if (!box) return;
+
+        clearTimeout(toastTimer);
+
+        box.classList.toggle(
+            'error',
+            error
+        );
+
+        $('#aktivaToastTitle').textContent = title;
+
+        $('#aktivaToastMessage').textContent =
+            message || '';
+
+        box.hidden = false;
+
+        toastTimer = setTimeout(() => {
+            box.hidden = true;
+        }, 4500);
+    }
+
+    /* ======================================================
+       OPEN MODAL
+    ====================================================== */
+
+    function openModal(
+        mode,
+        row = null
+    ) {
+
+        if (!modal || !form) return;
+
+        form.reset();
+
+        clearErrors();
+
+        currentMode = mode;
+        currentRow = row;
+
+        const data = row?.dataset || {};
+
+        $('#aktivaKode').value =
+            data.kode || '';
+
+        $('#aktivaName').value =
+            data.aktiva || '';
+
+        $('#aktivaGol').value =
+            data.gol || '';
+
+        $('#aktivaKib').value =
+            data.kib || '';
+
+        const readonly =
+            mode === 'view' ||
+            mode === 'delete';
+
+        [
+            'aktivaKode',
+            'aktivaName',
+            'aktivaGol',
+            'aktivaKib'
+        ].forEach(id => {
+
+            $('#' + id).readOnly = readonly;
+
+        });
+
+        const titles = {
+            add: 'Tambah Kode Aktiva',
+            view: 'Detail Kode Aktiva',
+            edit: 'Edit Kode Aktiva',
+            delete: 'Hapus Kode Aktiva'
+        };
+
+        const descriptions = {
+            add: 'Tambahkan klasifikasi aktiva baru ke database.',
+            view: 'Informasi kode dan klasifikasi aktiva (hanya baca).',
+            edit: 'Perbarui data kode dan klasifikasi aktiva.',
+            delete: 'Pastikan data yang dipilih benar sebelum dihapus.'
+        };
+
+        $('#aktivaModalTitle').textContent =
+            titles[mode] || titles.add;
+
+        $('#aktivaModalDescription').textContent =
+            descriptions[mode] || descriptions.add;
+
+        const button = $('#saveAktivaButton');
+
+        button.hidden = mode === 'view';
+
+        button.disabled = false;
+
+        button.classList.toggle(
+            'delete-mode',
+            mode === 'delete'
+        );
+
+        $('span', button).textContent =
+            mode === 'delete'
+                ? 'Hapus Kode Aktiva'
+                : mode === 'edit'
+                    ? 'Simpan Perubahan'
+                    : 'Simpan Kode Aktiva';
+
+        if (!modal.open) {
+            modal.showModal();
+        }
+
+        icons();
+
+        if (!readonly) {
+            $('#aktivaKode').focus();
+        }
+    }
+
+    /* ======================================================
+       CLOSE MODAL
+    ====================================================== */
+
+    function closeModal() {
+
+        if (modal?.open) {
+            modal.close();
+        }
+    }
+
+    /* ======================================================
+       VALIDASI DATA
+    ====================================================== */
+
+    function validate() {
+
+        const data = {
+            kode: value('aktivaKode'),
+            aktiva: value('aktivaName'),
+            gol: value('aktivaGol'),
+            kib: value('aktivaKib')
+        };
+
+        const errors = {};
+
+        if (!data.kode) {
+            errors.kode = ['Kode Aktiva wajib diisi.'];
+        }
+
+        if (!data.aktiva) {
+            errors.aktiva = ['Nama Aktiva wajib diisi.'];
+        }
+
+        for (
+            const [key, text]
+            of Object.entries(data)
+        ) {
+
+            if (text.length > 255) {
+                errors[key] = ['Maksimal 255 karakter.'];
+            }
+        }
+
+        if (Object.keys(errors).length) {
+
+            showError(
+                'Ada isian yang belum sesuai.',
+                errors
+            );
+
+            return null;
+        }
+
+        return data;
+    }
+
+    /* ======================================================
+       AJAX REQUEST LARAVEL
+    ====================================================== */
+
+    async function apiRequest(url, options) {
+
+        const response = await fetch(url, {
+            credentials: 'same-origin',
+
+            ...options,
+
+            headers: {
+                Accept: 'application/json',
+
+                'X-Requested-With':
+                    'XMLHttpRequest',
+
+                'X-CSRF-TOKEN':
+                    token(),
+
+                ...(options.headers || {})
+            }
+        });
+
+        const raw = await response.text();
+
+        let body = {};
+
+        try {
+
+            body = raw
+                ? JSON.parse(raw)
+                : {};
+
+        } catch {
+
+            body = {};
+        }
 
         if (
-            !document.querySelector(
-                '.aktiva-page'
+            !response.ok ||
+            body.success === false
+        ) {
+
+            let message =
+                body.message ||
+                `Permintaan gagal (HTTP ${response.status}).`;
+
+            if (response.status === 419) {
+
+                message =
+                    'Sesi berakhir (419). Refresh halaman dan login kembali.';
+
+            }
+
+            if (response.status === 500) {
+
+                message =
+                    'Server Error (500). Periksa storage/logs/laravel.log pada server.';
+
+            }
+
+            if (
+                response.status === 422 &&
+                body.errors
+            ) {
+
+                message =
+                    Object.values(body.errors).flat()[0] ||
+                    message;
+
+            }
+
+            const error = new Error(message);
+
+            error.validation = body.errors || {};
+            error.status = response.status;
+
+            throw error;
+        }
+
+        return body;
+    }
+
+    /* ======================================================
+       SUBMIT CREATE / UPDATE / DELETE
+    ====================================================== */
+
+    async function submit(event) {
+
+        event.preventDefault();
+
+        if (
+            busy ||
+            currentMode === 'view'
+        ) {
+            return;
+        }
+
+        clearErrors();
+
+        const isDelete =
+            currentMode === 'delete';
+
+        const data = isDelete
+            ? null
+            : validate();
+
+        if (!isDelete && !data) {
+            return;
+        }
+
+        if (
+            isDelete &&
+            !window.confirm(
+                `Hapus Kode Aktiva "${currentRow?.dataset.aktiva || ''}"?`
             )
         ) {
             return;
         }
 
+        const isEdit =
+            currentMode === 'edit';
 
-        bindAktivaEvents();
+        const id =
+            currentRow?.dataset.id;
 
-        updateAktivaClock();
+        if (
+            (isEdit || isDelete) &&
+            !id
+        ) {
 
-        setInterval(
-            updateAktivaClock,
-            1000
-        );
+            showError(
+                'ID Kode Aktiva tidak ditemukan.'
+            );
 
-        renderAktivaTable();
-
-
-        if (window.lucide) {
-            window.lucide.createIcons();
+            return;
         }
 
-    }
-);
+        const target = isDelete
+            ? replaceId(routes.destroy, id)
+            : isEdit
+                ? replaceId(routes.update, id)
+                : routes.store;
 
+        if (!target) {
 
-/* =========================================================
-   EVENTS
-========================================================= */
+            showError(
+                'Endpoint CRUD Kode Aktiva tidak tersedia.'
+            );
 
-function bindAktivaEvents() {
+            return;
+        }
 
-    document
-        .getElementById(
-            'aktivaSearch'
-        )
-        ?.addEventListener(
-            'input',
-            aktivaFilterChanged
-        );
+        const button = $('#saveAktivaButton');
+        const span = $('span', button);
 
+        const previous =
+            span.textContent;
 
-    document
-        .getElementById(
-            'aktivaGolFilter'
-        )
-        ?.addEventListener(
-            'change',
-            aktivaFilterChanged
-        );
+        busy = true;
+        button.disabled = true;
 
+        span.textContent = isDelete
+            ? 'Menghapus...'
+            : 'Menyimpan...';
 
-    document
-        .getElementById(
-            'aktivaKibFilter'
-        )
-        ?.addEventListener(
-            'change',
-            aktivaFilterChanged
-        );
+        try {
 
+            const body = await apiRequest(
+                target,
+                isDelete
+                    ? {
+                        method: 'DELETE'
+                    }
+                    : {
+                        method: isEdit ? 'PUT' : 'POST',
 
-    document
-        .getElementById(
-            'aktivaPageSize'
-        )
-        ?.addEventListener(
-            'change',
-            aktivaFilterChanged
-        );
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
 
+                        body: JSON.stringify(data)
+                    }
+            );
 
-    document
-        .getElementById(
-            'resetAktivaButton'
-        )
-        ?.addEventListener(
-            'click',
-            resetAktivaFilter
-        );
+            toast(
+                'Berhasil',
+                body.message ||
+                    (
+                        isDelete
+                            ? 'Data berhasil dihapus.'
+                            : 'Data berhasil disimpan.'
+                    )
+            );
 
+            closeModal();
 
-    document
-        .getElementById(
-            'addAktivaButton'
-        )
-        ?.addEventListener(
-            'click',
-            () =>
-                openAktivaModal(
-                    'add'
-                )
-        );
+            window.setTimeout(
+                () => window.location.reload(),
+                450
+            );
 
+        } catch (error) {
 
-    document
-        .getElementById(
-            'exportAktivaButton'
-        )
-        ?.addEventListener(
-            'click',
-            exportAktivaCsv
-        );
+            console.error(
+                'Kode Aktiva:',
+                error
+            );
 
+            showError(
+                error.message,
+                error.validation
+            );
 
-    document
-        .getElementById(
-            'aktivaHistoryButton'
-        )
-        ?.addEventListener(
-            'click',
-            openAktivaHistory
-        );
+            toast(
+                'Gagal',
+                error.message,
+                true
+            );
 
+        } finally {
 
-    document
-        .getElementById(
-            'closeAktivaHistory'
-        )
-        ?.addEventListener(
-            'click',
-            closeAktivaHistory
-        );
-
-
-    document
-        .getElementById(
-            'closeAktivaModal'
-        )
-        ?.addEventListener(
-            'click',
-            closeAktivaModal
-        );
-
-
-    document
-        .getElementById(
-            'cancelAktivaButton'
-        )
-        ?.addEventListener(
-            'click',
-            closeAktivaModal
-        );
-
-
-    document
-        .getElementById(
-            'aktivaForm'
-        )
-        ?.addEventListener(
-            'submit',
-            submitAktiva
-        );
-
-
-    document
-        .getElementById(
-            'aktivaTable'
-        )
-        ?.addEventListener(
-            'click',
-            function (event) {
-
-                const button =
-                    event.target.closest(
-                        '[data-action]'
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                const row =
-                    button.closest(
-                        'tr[data-row]'
-                    );
-
-
-                if (!row) {
-                    return;
-                }
-
-
-                openAktivaModal(
-                    button.dataset.action,
-                    row
-                );
-
-            }
-        );
-
-
-    const modal =
-        document.getElementById(
-            'aktivaModal'
-        );
-
-
-    modal?.addEventListener(
-        'click',
-        event => {
-
-            if (
-                event.target
-                ===
-                modal
-            ) {
-                closeAktivaModal();
-            }
+            busy = false;
+            button.disabled = false;
+            span.textContent = previous;
 
         }
-    );
-
-
-    const history =
-        document.getElementById(
-            'aktivaHistoryModal'
-        );
-
-
-    history?.addEventListener(
-        'click',
-        event => {
-
-            if (
-                event.target
-                ===
-                history
-            ) {
-                closeAktivaHistory();
-            }
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   CLOCK
-========================================================= */
-
-function updateAktivaClock() {
-
-    const date =
-        document.getElementById(
-            'aktivaDate'
-        );
-
-
-    const time =
-        document.getElementById(
-            'aktivaTime'
-        );
-
-
-    if (!date || !time) {
-        return;
     }
 
+    /* ======================================================
+       RIWAYAT PERUBAHAN
+    ====================================================== */
 
-    const now =
-        new Date();
+    function historyOpen() {
 
+        if (
+            historyModal &&
+            !historyModal.open
+        ) {
+            historyModal.showModal();
+        }
 
-    date.textContent =
-        new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone:
-                    'Asia/Makassar',
+        icons();
+    }
 
-                weekday:
-                    'long',
+    function historyClose() {
 
-                day:
-                    'numeric',
+        if (historyModal?.open) {
+            historyModal.close();
+        }
+    }
 
-                month:
-                    'long',
+    /* ======================================================
+       CSV ESCAPING
+    ====================================================== */
 
-                year:
-                    'numeric'
-            }
-        ).format(now);
+    function csvCell(value) {
 
+        let text = String(value ?? '');
 
-    time.textContent =
-        new Intl.DateTimeFormat(
-            'id-ID',
-            {
-                timeZone:
-                    'Asia/Makassar',
+        if (/^\s*[=+@-]/.test(text)) {
+            text = "'" + text;
+        }
 
-                hour:
-                    '2-digit',
+        return '"' +
+            text.replace(/"/g, '""') +
+            '"';
+    }
 
-                minute:
-                    '2-digit',
+    /* ======================================================
+       EXPORT CSV
+    ====================================================== */
 
-                second:
-                    '2-digit',
+    function exportCsv() {
 
-                hourCycle:
-                    'h23'
-            }
-        )
-        .format(now)
-        .replace(/\./g, ':')
+        const data = [[
+            'No',
+            'Kode Aktiva',
+            'Nama Aktiva',
+            'Golongan',
+            'Kategori / KIB',
+            'Dibuat'
+        ]];
 
-        + ' WITA';
-
-}
-
-
-/* =========================================================
-   TABLE
-========================================================= */
-
-function getAktivaRows() {
-
-    return Array.from(
-        document.querySelectorAll(
-            '#aktivaTable tbody tr[data-row]'
-        )
-    );
-
-}
-
-
-function normalizeAktiva(value) {
-
-    return String(
-        value ?? ''
-    )
-    .trim()
-    .toLocaleLowerCase(
-        'id-ID'
-    );
-
-}
-
-
-function getFilteredAktivaRows() {
-
-    const search =
-        normalizeAktiva(
-            document
-                .getElementById(
-                    'aktivaSearch'
-                )
-                ?.value
-        );
-
-
-    const gol =
-        document
-            .getElementById(
-                'aktivaGolFilter'
-            )
-            ?.value
-        ?? '';
-
-
-    const kib =
-        document
-            .getElementById(
-                'aktivaKibFilter'
-            )
-            ?.value
-        ?? '';
-
-
-    return getAktivaRows()
-        .filter(
-            row => {
-
-                const content =
-                    normalizeAktiva(
-                        [
-                            row.dataset.kode,
-                            row.dataset.aktiva,
-                            row.dataset.gol,
-                            row.dataset.kib
-                        ].join(' ')
-                    );
-
-
-                const searchMatch =
-                    !search
-                    ||
-                    content.includes(
-                        search
-                    );
-
-
-                const golMatch =
-                    !gol
-                    ||
-                    row.dataset.gol
-                    ===
-                    gol;
-
-
-                const kibMatch =
-                    !kib
-                    ||
-                    row.dataset.kib
-                    ===
-                    kib;
-
-
-                return (
-                    searchMatch
-                    &&
-                    golMatch
-                    &&
-                    kibMatch
-                );
-
-            }
-        );
-
-}
-
-
-function aktivaFilterChanged() {
-
-    aktivaPage = 1;
-
-    renderAktivaTable();
-
-}
-
-
-function resetAktivaFilter() {
-
-    document.getElementById(
-        'aktivaSearch'
-    ).value = '';
-
-
-    document.getElementById(
-        'aktivaGolFilter'
-    ).value = '';
-
-
-    document.getElementById(
-        'aktivaKibFilter'
-    ).value = '';
-
-
-    document.getElementById(
-        'aktivaPageSize'
-    ).value = '10';
-
-
-    aktivaPage = 1;
-
-
-    renderAktivaTable();
-
-}
-
-
-function renderAktivaTable() {
-
-    const rows =
-        getAktivaRows();
-
-
-    const filtered =
-        getFilteredAktivaRows();
-
-
-    const size =
-        Number(
-            document
-                .getElementById(
-                    'aktivaPageSize'
-                )
-                ?.value
-        )
-        || 10;
-
-
-    const pages =
-        Math.max(
-            1,
-            Math.ceil(
-                filtered.length
-                /
-                size
-            )
-        );
-
-
-    aktivaPage =
-        Math.min(
-            Math.max(
-                aktivaPage,
-                1
-            ),
-            pages
-        );
-
-
-    const start =
-        (
-            aktivaPage - 1
-        )
-        *
-        size;
-
-
-    rows.forEach(
-        row =>
-            row.hidden = true
-    );
-
-
-    filtered
-        .slice(
-            start,
-            start + size
-        )
-        .forEach(
+        filteredRows().forEach(
             (row, index) => {
 
-                row.hidden = false;
+                data.push([
+                    index + 1,
+                    row.dataset.kode || '',
+                    row.dataset.aktiva || '',
+                    row.dataset.gol || '',
+                    row.dataset.kib || '',
+                    String(
+                        row.dataset.createdAt || ''
+                    ).slice(0, 10)
+                ]);
 
+            }
+        );
 
-                const number =
-                    row.querySelector(
-                        '.aktiva-number'
+        if (data.length === 1) {
+
+            toast(
+                'Informasi',
+                'Tidak ada data untuk diekspor.',
+                true
+            );
+
+            return;
+        }
+
+        const content = '\uFEFF' +
+            data.map(row =>
+                row.map(csvCell).join(';')
+            ).join('\r\n');
+
+        const url = URL.createObjectURL(
+            new Blob([content], {
+                type: 'text/csv;charset=utf-8;'
+            })
+        );
+
+        const link = document.createElement('a');
+
+        link.href = url;
+
+        link.download =
+            'kode-aktiva-' +
+            new Date().toISOString().slice(0, 10) +
+            '.csv';
+
+        document.body.append(link);
+
+        link.click();
+        link.remove();
+
+        window.setTimeout(
+            () => URL.revokeObjectURL(url),
+            1000
+        );
+    }
+
+    /* ======================================================
+       EVENT BINDINGS
+    ====================================================== */
+
+    function bind() {
+
+        [
+            'aktivaSearch',
+            'aktivaGolFilter',
+            'aktivaKibFilter',
+            'aktivaPageSize'
+        ].forEach(id => {
+
+            $('#' + id)?.addEventListener(
+                id === 'aktivaSearch'
+                    ? 'input'
+                    : 'change',
+                () => {
+
+                    currentPage = 1;
+
+                    renderTable();
+                }
+            );
+
+        });
+
+        $('#resetAktivaButton')?.addEventListener(
+            'click',
+            resetFilter
+        );
+
+        $('#exportAktivaButton')?.addEventListener(
+            'click',
+            exportCsv
+        );
+
+        $('#addAktivaButton')?.addEventListener(
+            'click',
+            () => openModal('add')
+        );
+
+        $('#aktivaHistoryButton')?.addEventListener(
+            'click',
+            historyOpen
+        );
+
+        $('#closeAktivaHistory')?.addEventListener(
+            'click',
+            historyClose
+        );
+
+        $('#closeAktivaModal')?.addEventListener(
+            'click',
+            closeModal
+        );
+
+        $('#cancelAktivaButton')?.addEventListener(
+            'click',
+            closeModal
+        );
+
+        form?.addEventListener(
+            'submit',
+            submit
+        );
+
+        table?.addEventListener(
+            'click',
+            event => {
+
+                if (!(event.target instanceof Element)) {
+                    return;
+                }
+
+                const button = event.target.closest(
+                    'button[data-action]'
+                );
+
+                const row = button?.closest(
+                    'tr[data-row]'
+                );
+
+                if (button && row) {
+
+                    openModal(
+                        button.dataset.action,
+                        row
                     );
-
-
-                if (number) {
-
-                    number.textContent =
-                        start
-                        +
-                        index
-                        +
-                        1;
-
                 }
 
             }
         );
 
-
-    const empty =
-        document.getElementById(
-            'aktivaEmptyRow'
-        );
-
-
-    if (empty) {
-
-        empty.hidden =
-            filtered.length !== 0;
-
-    }
-
-
-    const from =
-        filtered.length
-        ?
-        start + 1
-        :
-        0;
-
-
-    const to =
-        Math.min(
-            start + size,
-            filtered.length
-        );
-
-
-    document.getElementById(
-        'aktivaTableInfo'
-    ).textContent =
-
-        `Menampilkan ${from}–${to} dari ${filtered.length} data`;
-
-
-    renderAktivaPagination(
-        pages
-    );
-
-}
-
-
-function renderAktivaPagination(
-    pages
-) {
-
-    const container =
-        document.getElementById(
-            'aktivaPagination'
-        );
-
-
-    container.innerHTML = '';
-
-
-    function createButton(
-        label,
-        page,
-        disabled = false,
-        active = false
-    ) {
-
-        const button =
-            document.createElement(
-                'button'
-            );
-
-
-        button.type =
-            'button';
-
-
-        button.textContent =
-            label;
-
-
-        button.disabled =
-            disabled;
-
-
-        if (active) {
-
-            button.classList.add(
-                'active'
-            );
-
-        }
-
-
-        button.addEventListener(
+        modal?.addEventListener(
             'click',
-            () => {
+            event => {
 
-                aktivaPage = page;
-
-                renderAktivaTable();
-
+                if (event.target === modal) {
+                    closeModal();
+                }
             }
         );
 
-
-        container.appendChild(
-            button
-        );
-
-    }
-
-
-    createButton(
-        '‹',
-        aktivaPage - 1,
-        aktivaPage === 1
-    );
-
-
-    let first =
-        Math.max(
-            1,
-            aktivaPage - 2
-        );
-
-
-    let last =
-        Math.min(
-            pages,
-            first + 4
-        );
-
-
-    first =
-        Math.max(
-            1,
-            last - 4
-        );
-
-
-    for (
-        let i = first;
-        i <= last;
-        i++
-    ) {
-
-        createButton(
-            String(i),
-            i,
-            false,
-            i === aktivaPage
-        );
-
-    }
-
-
-    createButton(
-        '›',
-        aktivaPage + 1,
-        aktivaPage === pages
-    );
-
-}
-
-
-/* =========================================================
-   MODAL
-========================================================= */
-
-function openAktivaModal(
-    mode,
-    row = null
-) {
-
-    const modal =
-        document.getElementById(
-            'aktivaModal'
-        );
-
-
-    resetAktivaForm();
-
-
-    aktivaMode =
-        mode;
-
-
-    aktivaRow =
-        row;
-
-
-    aktivaId =
-        row?.dataset.id
-        ?? null;
-
-
-    if (row) {
-
-        document.getElementById(
-            'aktivaKode'
-        ).value =
-            row.dataset.kode || '';
-
-
-        document.getElementById(
-            'aktivaName'
-        ).value =
-            row.dataset.aktiva || '';
-
-
-        document.getElementById(
-            'aktivaGol'
-        ).value =
-            row.dataset.gol || '';
-
-
-        document.getElementById(
-            'aktivaKib'
-        ).value =
-            row.dataset.kib || '';
-
-    }
-
-
-    const titles = {
-
-        add:
-            'Tambah Kode Aktiva',
-
-        view:
-            'Detail Kode Aktiva',
-
-        edit:
-            'Edit Kode Aktiva',
-
-        delete:
-            'Hapus Kode Aktiva'
-
-    };
-
-
-    document.getElementById(
-        'aktivaModalTitle'
-    ).textContent =
-        titles[mode];
-
-
-    const readonly =
-        mode === 'view'
-        ||
-        mode === 'delete';
-
-
-    [
-        'aktivaKode',
-        'aktivaName',
-        'aktivaGol',
-        'aktivaKib'
-    ]
-    .forEach(
-        id => {
-
-            document.getElementById(
-                id
-            ).readOnly =
-                readonly;
-
-        }
-    );
-
-
-    const save =
-        document.getElementById(
-            'saveAktivaButton'
-        );
-
-
-    save.hidden =
-        mode === 'view';
-
-
-    save.classList.toggle(
-        'delete-mode',
-        mode === 'delete'
-    );
-
-
-    save.querySelector(
-        'span'
-    ).textContent =
-
-        mode === 'delete'
-        ?
-        'Hapus Kode Aktiva'
-        :
-        mode === 'edit'
-        ?
-        'Simpan Perubahan'
-        :
-        'Simpan Kode Aktiva';
-
-
-    if (!modal.open) {
-
-        modal.showModal();
-
-    }
-
-
-    if (window.lucide) {
-
-        window.lucide.createIcons();
-
-    }
-
-}
-
-
-function closeAktivaModal() {
-
-    const modal =
-        document.getElementById(
-            'aktivaModal'
-        );
-
-
-    if (modal?.open) {
-
-        modal.close();
-
-    }
-
-}
-
-
-function resetAktivaForm() {
-
-    document
-        .getElementById(
-            'aktivaForm'
-        )
-        ?.reset();
-
-
-    clearAktivaErrors();
-
-}
-
-
-/* =========================================================
-   CRUD
-========================================================= */
-
-async function submitAktiva(
-    event
-) {
-
-    event.preventDefault();
-
-
-    if (
-        aktivaMode === 'view'
-    ) {
-
-        closeAktivaModal();
-
-        return;
-
-    }
-
-
-    clearAktivaErrors();
-
-
-    try {
-
-        if (
-            aktivaMode === 'delete'
-        ) {
-
-            await deleteAktiva();
-
-        } else {
-
-            await saveAktiva();
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        if (
-            error.errors
-        ) {
-
-            showAktivaErrors(
-                error.errors
-            );
-
-        }
-
-
-        showAktivaToast(
-            'Gagal',
-            error.message
-            ||
-            'Terjadi kesalahan.',
-            true
-        );
-
-    }
-
-}
-
-
-async function saveAktiva() {
-
-    const form =
-        document.getElementById(
-            'aktivaForm'
-        );
-
-
-    if (
-        !form.checkValidity()
-    ) {
-
-        form.reportValidity();
-
-        return;
-
-    }
-
-
-    const data = {
-
-        kode:
-            document.getElementById(
-                'aktivaKode'
-            ).value.trim(),
-
-        aktiva:
-            document.getElementById(
-                'aktivaName'
-            ).value.trim(),
-
-        gol:
-            document.getElementById(
-                'aktivaGol'
-            ).value.trim(),
-
-        kib:
-            document.getElementById(
-                'aktivaKib'
-            ).value.trim()
-
-    };
-
-
-    const editing =
-        aktivaMode === 'edit';
-
-
-    const url =
-        editing
-
-        ?
-
-        window.AKTIVA_CRUD.update.replace(
-            '__ID__',
-            aktivaId
-        )
-
-        :
-
-        window.AKTIVA_CRUD.store;
-
-
-    const response =
-        await fetch(
-            url,
-            {
-                method:
-                    editing
-                    ?
-                    'PUT'
-                    :
-                    'POST',
-
-                headers: {
-
-                    'Accept':
-                        'application/json',
-
-                    'Content-Type':
-                        'application/json',
-
-                    'X-Requested-With':
-                        'XMLHttpRequest',
-
-                    'X-CSRF-TOKEN':
-                        getAktivaToken()
-
-                },
-
-                body:
-                    JSON.stringify(
-                        data
-                    )
+        historyModal?.addEventListener(
+            'click',
+            event => {
+
+                if (event.target === historyModal) {
+                    historyClose();
+                }
             }
         );
-
-
-    const result =
-        await readAktivaResponse(
-            response
-        );
-
-
-    if (!response.ok) {
-
-        const error =
-            new Error(
-                result.message
-                ||
-                'Data gagal disimpan.'
-            );
-
-
-        error.errors =
-            result.errors;
-
-
-        throw error;
-
     }
 
+    /* ======================================================
+       INITIALIZATION
+    ====================================================== */
 
-    showAktivaToast(
-        'Berhasil',
-        result.message
-    );
+    bind();
 
+    clock();
 
-    closeAktivaModal();
+    window.setInterval(clock, 1000);
 
+    renderTable();
 
-    setTimeout(
-        () =>
-            window.location.reload(),
-        400
-    );
+    icons();
 
-}
-
-
-async function deleteAktiva() {
-
-    const url =
-        window.AKTIVA_CRUD.destroy
-            .replace(
-                '__ID__',
-                aktivaId
-            );
-
-
-    const response =
-        await fetch(
-            url,
-            {
-                method:
-                    'DELETE',
-
-                headers: {
-
-                    'Accept':
-                        'application/json',
-
-                    'Content-Type':
-                        'application/json',
-
-                    'X-Requested-With':
-                        'XMLHttpRequest',
-
-                    'X-CSRF-TOKEN':
-                        getAktivaToken()
-
-                },
-
-                body:
-                    JSON.stringify({})
-            }
-        );
-
-
-    const result =
-        await readAktivaResponse(
-            response
-        );
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            result.message
-            ||
-            'Data gagal dihapus.'
-        );
-
-    }
-
-
-    showAktivaToast(
-        'Berhasil',
-        result.message
-    );
-
-
-    closeAktivaModal();
-
-
-    setTimeout(
-        () =>
-            window.location.reload(),
-        400
-    );
-
-}
-
-
-/* =========================================================
-   TOKEN / RESPONSE
-========================================================= */
-
-function getAktivaToken() {
-
-    return document
-        .querySelector(
-            'meta[name="csrf-token"]'
-        )
-        ?.content
-        || '';
-
-}
-
-
-async function readAktivaResponse(
-    response
-) {
-
-    const text =
-        await response.text();
-
-
-    try {
-
-        return text
-            ?
-            JSON.parse(text)
-            :
-            {};
-
-    } catch {
-
-        throw new Error(
-            `Respons server tidak valid (${response.status}).`
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   ERROR
-========================================================= */
-
-function clearAktivaErrors() {
-
-    document
-        .querySelectorAll(
-            '[data-error]'
-        )
-        .forEach(
-            item =>
-                item.textContent = ''
-        );
-
-
-    const alert =
-        document.getElementById(
-            'aktivaFormAlert'
-        );
-
-
-    alert.hidden =
-        true;
-
-}
-
-
-function showAktivaErrors(
-    errors
-) {
-
-    Object.entries(
-        errors
-    )
-    .forEach(
-        ([field, messages]) => {
-
-            const element =
-                document.querySelector(
-                    `[data-error="${field}"]`
-                );
-
-
-            if (element) {
-
-                element.textContent =
-                    Array.isArray(
-                        messages
-                    )
-                    ?
-                    messages[0]
-                    :
-                    messages;
-
-            }
-
-        }
-    );
-
-
-    const alert =
-        document.getElementById(
-            'aktivaFormAlert'
-        );
-
-
-    alert.textContent =
-        'Masih ada data yang perlu diperbaiki.';
-
-
-    alert.hidden =
-        false;
-
-}
-
-
-/* =========================================================
-   HISTORY
-========================================================= */
-
-function openAktivaHistory() {
-
-    const modal =
-        document.getElementById(
-            'aktivaHistoryModal'
-        );
-
-
-    if (!modal.open) {
-
-        modal.showModal();
-
-    }
-
-
-    if (window.lucide) {
-
-        window.lucide.createIcons();
-
-    }
-
-}
-
-
-function closeAktivaHistory() {
-
-    const modal =
-        document.getElementById(
-            'aktivaHistoryModal'
-        );
-
-
-    if (modal?.open) {
-
-        modal.close();
-
-    }
-
-}
-
-
-/* =========================================================
-   EXPORT
-========================================================= */
-
-function exportAktivaCsv() {
-
-    const rows =
-        getFilteredAktivaRows();
-
-
-    const data = [[
-        'No',
-        'Kode Aktiva',
-        'Nama Aktiva',
-        'Golongan',
-        'Kategori / KIB'
-    ]];
-
-
-    rows.forEach(
-        (row, index) => {
-
-            data.push([
-                index + 1,
-                row.dataset.kode || '',
-                row.dataset.aktiva || '',
-                row.dataset.gol || '',
-                row.dataset.kib || ''
-            ]);
-
-        }
-    );
-
-
-    const csv =
-        data
-        .map(
-            row =>
-                row
-                .map(csvAktivaCell)
-                .join(',')
-        )
-        .join('\r\n');
-
-
-    const blob =
-        new Blob(
-            [
-                '\uFEFF'
-                +
-                csv
-            ],
-            {
-                type:
-                    'text/csv;charset=utf-8;'
-            }
-        );
-
-
-    const url =
-        URL.createObjectURL(
-            blob
-        );
-
-
-    const link =
-        document.createElement(
-            'a'
-        );
-
-
-    link.href =
-        url;
-
-
-    link.download =
-        'kode-aktiva.csv';
-
-
-    link.click();
-
-
-    URL.revokeObjectURL(
-        url
-    );
-
-}
-
-
-function csvAktivaCell(
-    value
-) {
-
-    let text =
-        String(
-            value ?? ''
-        );
-
-
-    if (
-        /^[\s]*[=+@-]/.test(
-            text
-        )
-    ) {
-
-        text =
-            "'"
-            +
-            text;
-
-    }
-
-
-    return (
-        '"'
-        +
-        text.replace(
-            /"/g,
-            '""'
-        )
-        +
-        '"'
-    );
-
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function showAktivaToast(
-    title,
-    message,
-    error = false
-) {
-
-    const toast =
-        document.getElementById(
-            'aktivaToast'
-        );
-
-
-    clearTimeout(
-        aktivaToastTimer
-    );
-
-
-    toast.classList.toggle(
-        'error',
-        error
-    );
-
-
-    document.getElementById(
-        'aktivaToastTitle'
-    ).textContent =
-        title;
-
-
-    document.getElementById(
-        'aktivaToastMessage'
-    ).textContent =
-        message || '';
-
-
-    toast.hidden =
-        false;
-
-
-    aktivaToastTimer =
-        setTimeout(
-            () => {
-
-                toast.hidden =
-                    true;
-
-            },
-            3500
-        );
-
-}
+})();

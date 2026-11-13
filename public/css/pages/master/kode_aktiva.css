@@ -1,21 +1,25 @@
-/* =========================================================
-   MASTER DATA - KODE AKTIVA
-========================================================= */
+
+/* ==========================================================
+   MASTER DATA — KODE AKTIVA
+   FULL CSS
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+========================================================== */
 
 .aktiva-page {
-    --primary: #0868d8;
-    --primary-dark: #0757b5;
-    --text: #10294f;
-    --muted: #71839c;
-    --border: #dce6f0;
-    --surface: #ffffff;
-    --background: #f5f8fc;
-    --success: #19944b;
-    --danger: #df3d48;
+    --a-blue: #0868d8;
+    --a-blue-dark: #0757b5;
+    --a-text: #10294f;
+    --a-muted: #71839c;
+    --a-border: #dce6f0;
+    --a-danger: #df3d48;
 
     min-height: calc(100vh - 60px);
-    background: var(--background);
-    color: var(--text);
+
+    background: #f5f8fc;
+    color: var(--a-text);
+
+    font-size: 14px;
+    line-height: 1.55;
 }
 
 .aktiva-page *,
@@ -34,56 +38,74 @@
     font: inherit;
 }
 
+.aktiva-page button {
+    cursor: pointer;
+}
 
-/* =========================================================
+.aktiva-page button:disabled {
+    cursor: not-allowed;
+}
+
+.aktiva-page button:focus-visible,
+.aktiva-page input:focus-visible,
+.aktiva-page select:focus-visible {
+    outline: 3px solid rgba(8, 104, 216, .23);
+    outline-offset: 2px;
+}
+
+/* ==========================================================
    HERO
-========================================================= */
+========================================================== */
 
 .aktiva-hero {
     position: relative;
     overflow: hidden;
+
     margin: -21px -24px 16px;
-    padding: 20px 24px 17px;
+    padding: 20px 24px;
 
     background:
         url('/images/master/pdam4.png')
-        right center / cover
-        no-repeat;
+        right center / cover no-repeat;
 }
 
 .aktiva-hero-overlay {
     position: absolute;
     inset: 0;
 
+    pointer-events: none;
+
     background: linear-gradient(
         90deg,
-        rgba(245, 250, 255, .96) 0%,
-        rgba(239, 248, 255, .88) 30%,
-        rgba(225, 241, 255, .60) 55%,
-        rgba(207, 232, 252, .10) 100%
+        rgba(245, 250, 255, .97),
+        rgba(239, 248, 255, .88) 33%,
+        rgba(223, 241, 255, .58) 63%,
+        rgba(208, 232, 252, .10)
     );
-
-    pointer-events: none;
 }
 
 .aktiva-hero-top,
 .aktiva-kpi-grid {
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 
 .aktiva-hero-top {
     display: flex;
+
+    align-items: flex-start;
     justify-content: space-between;
+
     gap: 20px;
 }
 
 .aktiva-breadcrumb {
     display: flex;
     align-items: center;
-    gap: 7px;
 
-    margin-bottom: 12px;
+    gap: 8px;
+
+    margin-bottom: 11px;
 
     color: #657d9b;
     font-size: 13px;
@@ -95,8 +117,8 @@
 }
 
 .aktiva-breadcrumb svg {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
 }
 
 .aktiva-hero h1 {
@@ -104,48 +126,47 @@
 
     color: #0b224b;
 
-    font-size: 34px;
+    font-size: 32px;
     font-weight: 800;
 
-    letter-spacing: -.03em;
+    letter-spacing: -.025em;
 }
 
 .aktiva-hero-top p {
     margin: 7px 0 0;
 
     color: #526f94;
-
     font-size: 14px;
-    line-height: 1.5;
 }
 
 .aktiva-date-card {
-    min-width: 225px;
-
     display: flex;
     align-items: center;
+
+    flex: 0 0 auto;
+
     gap: 10px;
 
-    align-self: flex-start;
+    min-width: 226px;
 
-    padding: 11px 14px;
+    padding: 11px 13px;
 
     border: 1px solid #dae6f2;
     border-radius: 10px;
 
-    background: rgba(255,255,255,.92);
+    background: rgba(255, 255, 255, .94);
 }
 
 .aktiva-date-card > svg {
-    width: 32px;
-    height: 32px;
+    width: 35px;
+    height: 35px;
 
-    padding: 7px;
+    padding: 8px;
 
-    border-radius: 7px;
+    border-radius: 8px;
 
     background: #eaf4ff;
-    color: var(--primary);
+    color: var(--a-blue);
 }
 
 .aktiva-date-card strong,
@@ -154,29 +175,26 @@
 }
 
 .aktiva-date-card strong {
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 800;
 }
 
 .aktiva-date-card span {
     margin-top: 2px;
 
-    color: var(--muted);
-    font-size: 11px;
+    color: var(--a-muted);
+    font-size: 12px;
 }
 
-
-/* =========================================================
+/* ==========================================================
    KPI
-========================================================= */
+========================================================== */
 
 .aktiva-kpi-grid {
     display: grid;
 
     grid-template-columns:
-        repeat(
-            3,
-            minmax(0, 310px)
-        );
+        repeat(3, minmax(0, 310px));
 
     gap: 14px;
 
@@ -184,60 +202,54 @@
 }
 
 .aktiva-kpi-card {
-    min-height: 100px;
-
     display: flex;
     align-items: center;
 
     gap: 16px;
+
+    width: 100%;
+    min-height: 100px;
 
     padding: 17px;
 
     border: 1px solid #dae5f0;
     border-radius: 10px;
 
-    background: rgba(255,255,255,.95);
+    background: rgba(255, 255, 255, .96);
 
     text-align: left;
-}
-
-button.aktiva-kpi-card {
-    width: 100%;
     color: inherit;
-    cursor: pointer;
 }
 
 .aktiva-kpi-card.clickable {
     transition:
-        transform .18s ease,
-        box-shadow .18s ease;
+        transform .17s ease,
+        box-shadow .17s ease;
 }
 
 .aktiva-kpi-card.clickable:hover {
     transform: translateY(-2px);
 
     box-shadow:
-        0 12px 25px
-        rgba(29,75,120,.10);
+        0 12px 25px rgba(29, 75, 120, .10);
 }
 
 .aktiva-kpi-icon {
-    width: 54px;
-    height: 54px;
-
-    flex: 0 0 54px;
-
     display: grid;
     place-items: center;
 
+    flex: 0 0 54px;
+
+    width: 54px;
+    height: 54px;
+
     border-radius: 10px;
 
-    background:
-        linear-gradient(
-            145deg,
-            #0d74ed,
-            #075ec8
-        );
+    background: linear-gradient(
+        145deg,
+        #0d74ed,
+        #075ec8
+    );
 
     color: #fff;
 }
@@ -266,76 +278,67 @@ button.aktiva-kpi-card {
 
     font-size: 29px;
     font-weight: 800;
+    line-height: 1.2;
 }
 
 .aktiva-kpi-card p {
     margin: 5px 0 0;
 
     color: #8192a8;
-
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .aktiva-total-line {
     display: flex;
     align-items: center;
-    gap: 14px;
+
+    gap: 12px;
 }
 
 .aktiva-total-line span {
     margin-top: 6px;
 
     font-size: 12px;
-    font-weight: 750;
+    font-weight: 800;
 }
 
 .aktiva-total-line .positive {
-    color: var(--success);
+    color: #19944b;
 }
 
 .aktiva-total-line .negative {
-    color: var(--danger);
+    color: var(--a-danger);
 }
 
-
-/* =========================================================
-   CARD
-========================================================= */
+/* ==========================================================
+   CARD DAN FILTER
+========================================================== */
 
 .aktiva-card {
-    border: 1px solid var(--border);
+    min-width: 0;
 
+    border: 1px solid var(--a-border);
     border-radius: 11px;
 
-    background: var(--surface);
+    background: #fff;
 
     box-shadow:
-        0 8px 26px
-        rgba(26,64,105,.05);
+        0 8px 26px rgba(26, 64, 105, .05);
 }
 
-
-/* =========================================================
-   FILTER
-========================================================= */
-
 .aktiva-filter-card {
+    padding: 16px;
     margin-bottom: 14px;
-
-    padding:
-        15px
-        16px;
 }
 
 .aktiva-filter-header {
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
     gap: 15px;
 
-    margin-bottom: 14px;
+    margin-bottom: 15px;
 }
 
 .aktiva-filter-header h2 {
@@ -351,253 +354,351 @@ button.aktiva-kpi-card {
     margin: 4px 0 0;
 
     color: #7b8da4;
-
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .aktiva-primary-button,
 .aktiva-outline-button {
-    height: 40px;
-
     display: inline-flex;
-    align-items: center;
+
     justify-content: center;
+    align-items: center;
 
-    gap: 7px;
+    flex: 0 0 auto;
 
-    padding: 0 14px;
+    gap: 8px;
 
-    border-radius: 7px;
+    height: 44px;
 
-    cursor: pointer;
+    padding: 0 15px;
 
-    font-size: 12px;
-    font-weight: 700;
+    border-radius: 8px;
+
+    font-size: 13px;
+    font-weight: 750;
+
+    white-space: nowrap;
 }
 
 .aktiva-primary-button {
-    border: 1px solid var(--primary);
+    border: 1px solid var(--a-blue);
 
-    background: var(--primary);
-
-    color: #fff;
+    background: var(--a-blue);
+    color: white;
 }
 
 .aktiva-primary-button:hover {
-    background: var(--primary-dark);
+    background: var(--a-blue-dark);
 }
 
 .aktiva-outline-button {
     border: 1px solid #d6e1ec;
 
     background: #fff;
-
     color: #405f80;
+}
+
+.aktiva-outline-button:hover {
+    background: #eff6ff;
 }
 
 .aktiva-primary-button svg,
 .aktiva-outline-button svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
+
+/* ==========================================================
+   SEARCH DAN FILTER GRID
+========================================================== */
 
 .aktiva-filter-grid {
     display: grid;
 
     grid-template-columns:
-        minmax(260px, 1.8fr)
-        minmax(180px, .8fr)
-        minmax(180px, .8fr)
+        minmax(0, 1fr)
+        minmax(160px, .25fr)
+        minmax(205px, .32fr)
         auto
         auto;
 
-    gap: 9px;
+    align-items: center;
+
+    gap: 10px;
+    min-width: 0;
 }
 
 .aktiva-search {
-    height: 40px;
-
     display: flex;
     align-items: center;
 
-    gap: 9px;
+    width: 100%;
+    min-width: 0;
+    height: 44px;
 
-    padding: 0 12px;
+    gap: 10px;
+
+    padding: 0 13px;
 
     border: 1px solid #d6e2ee;
-    border-radius: 7px;
+    border-radius: 8px;
 
+    background: #fff;
     color: #7790ab;
 }
 
 .aktiva-search svg {
+    flex: 0 0 17px;
+
     width: 17px;
     height: 17px;
 }
 
 .aktiva-search input {
+    display: block;
+
+    flex: 1;
+
     width: 100%;
+    min-width: 0;
     height: 100%;
 
-    border: 0;
-    outline: 0;
+    margin: 0;
+    padding: 0;
 
+    border: 0;
+    outline: none;
+
+    background: transparent;
     color: #304e70;
+
+    font-size: 14px;
+
+    text-align: left !important;
+    text-indent: 0;
+}
+
+.aktiva-search input::placeholder {
+    color: #8297af;
+    font-size: 13px;
+
+    opacity: 1;
+    text-align: left;
+}
+
+.aktiva-filter-grid select {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+
+    padding: 0 12px;
+
+    border: 1px solid #d6e2ee;
+    border-radius: 8px;
+
+    background: #fff;
+    color: #3c5a7a;
 
     font-size: 13px;
 }
 
-.aktiva-filter-grid select {
-    height: 40px;
-
-    padding: 0 11px;
-
-    border: 1px solid #d6e2ee;
-    border-radius: 7px;
-
-    background: #fff;
-
-    color: #3c5a7a;
-
-    font-size: 12px;
-}
-
-
-/* =========================================================
-   TABLE
-========================================================= */
+/* ==========================================================
+   TABEL UTAMA FULL WIDTH
+========================================================== */
 
 .aktiva-table-card {
     overflow: hidden;
 }
 
-.aktiva-page .table-responsive {
+.aktiva-table-card > .table-responsive {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
     overflow-x: auto;
 }
 
-.aktiva-table {
-    width: calc(100% - 32px);
+.aktiva-page #aktivaTable {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
 
-    min-width: 1080px;
-
-    margin: 0 16px;
+    margin: 0;
 
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
-.aktiva-table th {
-    height: 44px;
+/* LEBAR KOLOM */
 
-    padding: 10px 12px;
+#aktivaTable .col-no {
+    width: 5%;
+}
+
+#aktivaTable .col-kode {
+    width: 13%;
+}
+
+#aktivaTable .col-nama {
+    width: 27%;
+}
+
+#aktivaTable .col-golongan {
+    width: 17%;
+}
+
+#aktivaTable .col-kib {
+    width: 18%;
+}
+
+#aktivaTable .col-dibuat {
+    width: 10%;
+}
+
+#aktivaTable .col-action {
+    width: 10%;
+}
+
+/* HEADER TABEL */
+
+.aktiva-page #aktivaTable th {
+    padding: 14px 12px;
 
     border: 1px solid #dae5f0;
 
-    background: #edf5ff;
-
+    background: #eaf3ff;
     color: #173961;
 
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
 
     text-align: left;
+    vertical-align: middle;
+
+    white-space: normal;
 }
 
-.aktiva-table td {
-    min-height: 55px;
+/* ISI TABEL */
 
-    padding: 11px 12px;
+.aktiva-page #aktivaTable td {
+    padding: 13px 12px;
 
     border: 1px solid #e1e9f2;
 
     color: #405c7a;
 
-    font-size: 12.5px;
-    line-height: 1.45;
+    font-size: 14px;
+    line-height: 1.55;
 
     vertical-align: middle;
+    overflow-wrap: anywhere;
 }
 
-.aktiva-table tbody tr:nth-child(even) {
+.aktiva-page #aktivaTable th:first-child,
+.aktiva-page #aktivaTable td:first-child,
+.aktiva-page #aktivaTable th:last-child,
+.aktiva-page #aktivaTable td:last-child {
+    text-align: center;
+}
+
+.aktiva-page #aktivaTable tbody tr:nth-child(even) {
     background: #fbfdff;
 }
 
-.aktiva-table tbody tr:hover {
+.aktiva-page #aktivaTable tbody tr:hover {
     background: #f4f9ff;
 }
 
-.col-no {
-    width: 55px;
-}
-
-.col-action {
-    width: 125px;
-
-    text-align: center !important;
-}
+/* KODE AKTIVA */
 
 .aktiva-code {
     color: #0e4f96;
 
-    font-size: 12.5px;
-    font-weight: 750;
+    font-size: 14px;
+    font-weight: 800;
+
+    overflow-wrap: anywhere;
 }
+
+/* NAMA AKTIVA */
 
 .aktiva-name {
     color: #183b63;
 
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 750;
+
+    white-space: normal;
+    overflow-wrap: break-word;
 }
+
+/* BADGE GOLONGAN */
 
 .aktiva-badge {
     display: inline-block;
 
-    max-width: 330px;
+    max-width: 100%;
 
-    padding: 5px 9px;
-
-    overflow: hidden;
+    padding: 6px 10px;
 
     border: 1px solid #cee2f8;
-    border-radius: 999px;
+    border-radius: 20px;
 
     background: #eef7ff;
-
     color: #28649f;
 
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 700;
 
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.45;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .aktiva-muted {
     color: #9ba8b7;
 }
 
+/* ==========================================================
+   TOMBOL AKSI
+========================================================== */
+
 .aktiva-actions {
     display: flex;
+
+    align-items: center;
     justify-content: center;
 
-    gap: 6px;
+    flex-wrap: nowrap;
+
+    gap: 7px;
 }
 
 .aktiva-actions button {
-    width: 31px;
-    height: 31px;
-
     display: grid;
     place-items: center;
 
-    border: 0;
-    border-radius: 6px;
+    flex: 0 0 33px;
 
-    cursor: pointer;
+    width: 33px;
+    height: 33px;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 7px;
+
+    transition: transform .15s ease;
+}
+
+.aktiva-actions button:hover {
+    transform: translateY(-1px);
 }
 
 .aktiva-actions svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
 
 .aktiva-actions .view {
@@ -607,7 +708,7 @@ button.aktiva-kpi-card {
 
 .aktiva-actions .edit {
     background: #fff0d7;
-    color: #e28a00;
+    color: #d98708;
 }
 
 .aktiva-actions .delete {
@@ -615,80 +716,96 @@ button.aktiva-kpi-card {
     color: #df3c49;
 }
 
+/* EMPTY STATE */
+
 .aktiva-empty {
-    height: 180px !important;
+    height: 110px;
+
+    padding: 22px !important;
 
     color: #8091a4 !important;
+
+    font-size: 14px !important;
 
     text-align: center;
 }
 
+.aktiva-page #aktivaTable tr[hidden] {
+    display: none !important;
+}
 
-/* =========================================================
-   TABLE FOOTER
-========================================================= */
+/* ==========================================================
+   FOOTER TABEL
+========================================================== */
 
 .aktiva-table-footer {
-    min-height: 62px;
-
     display: flex;
+
     align-items: center;
     justify-content: space-between;
 
-    gap: 15px;
+    flex-wrap: wrap;
 
-    padding: 10px 16px;
+    gap: 12px;
+
+    padding: 14px 16px;
 
     color: #657d99;
-
-    font-size: 11.5px;
+    font-size: 13px;
 }
 
 .aktiva-pagination-wrap {
     display: flex;
     align-items: center;
 
-    gap: 8px;
+    flex-wrap: wrap;
+
+    gap: 9px;
 }
 
 .aktiva-pagination-wrap select {
-    height: 34px;
+    height: 36px;
 
-    padding: 0 8px;
+    padding: 0 9px;
 
     border: 1px solid #d6e1ec;
-    border-radius: 6px;
+    border-radius: 7px;
 
     background: #fff;
+    color: #345b82;
+
+    font-size: 13px;
 }
 
 .aktiva-pagination {
     display: flex;
+    align-items: center;
+
+    flex-wrap: wrap;
 
     gap: 5px;
-
-    margin-left: 5px;
 }
 
 .aktiva-pagination button {
-    min-width: 32px;
-    height: 32px;
+    min-width: 36px;
+    height: 36px;
+
+    padding: 0 9px;
 
     border: 1px solid #d9e3ec;
-    border-radius: 6px;
+    border-radius: 7px;
 
     background: #fff;
-
     color: #45627f;
 
-    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .aktiva-pagination button.active {
-    border-color: var(--primary);
+    border-color: var(--a-blue);
 
-    background: var(--primary);
-
+    background: var(--a-blue);
     color: #fff;
 }
 
@@ -696,44 +813,45 @@ button.aktiva-kpi-card {
     opacity: .4;
 }
 
+.aktiva-page-dots {
+    padding: 0 2px;
+    color: #8697ab;
+}
 
-/* =========================================================
-   MODAL
-========================================================= */
+/* ==========================================================
+   MODAL CRUD / HISTORY
+========================================================== */
 
 .aktiva-modal {
-    width:
-        min(
-            720px,
-            calc(100% - 28px)
-        );
+    width: min(760px, calc(100% - 28px));
+
+    max-width: none;
+    max-height: calc(100dvh - 32px);
 
     margin: auto;
-
     padding: 0;
 
     border: 0;
     border-radius: 14px;
 
     background: transparent;
+
+    overflow-y: auto;
 }
 
 .aktiva-modal::backdrop {
-    background: rgba(8,28,52,.48);
-
-    backdrop-filter: blur(2px);
+    background: rgba(8, 28, 52, .52);
+    backdrop-filter: blur(3px);
 }
 
 .aktiva-modal-box {
     overflow: hidden;
 
     border-radius: 14px;
-
-    background: #fff;
+    background: white;
 
     box-shadow:
-        0 30px 80px
-        rgba(7,34,64,.25);
+        0 30px 80px rgba(7, 34, 64, .25);
 }
 
 .aktiva-modal-box.history {
@@ -748,18 +866,18 @@ button.aktiva-kpi-card {
 
     gap: 20px;
 
-    padding: 18px 20px;
+    padding: 19px 20px;
 
     border-bottom: 1px solid #e6edf4;
 }
 
 .aktiva-modal-box header > div > span {
-    color: var(--primary);
+    color: var(--a-blue);
 
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
 
-    letter-spacing: .08em;
+    letter-spacing: .07em;
 }
 
 .aktiva-modal-box header h3 {
@@ -767,103 +885,131 @@ button.aktiva-kpi-card {
 
     color: #102d56;
 
-    font-size: 18px;
+    font-size: 21px;
+    font-weight: 800;
 }
 
 .aktiva-modal-box header p {
-    margin: 4px 0 0;
+    margin: 5px 0 0;
 
     color: #788ba2;
-
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .aktiva-modal-box header button {
-    width: 32px;
-    height: 32px;
-
     display: grid;
     place-items: center;
 
+    flex: 0 0 34px;
+
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+
     border: 1px solid #dce5ee;
-    border-radius: 7px;
+    border-radius: 8px;
 
     background: #fff;
-
     color: #607791;
-
-    cursor: pointer;
 }
 
 .aktiva-modal-box header button svg {
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
 }
 
 .aktiva-modal-body {
-    padding: 19px 20px;
+    padding: 20px;
 }
 
 .aktiva-form-alert {
     margin-bottom: 15px;
 
-    padding: 10px 12px;
+    padding: 12px 13px;
 
     border: 1px solid #efc5cb;
-    border-radius: 7px;
+    border-radius: 8px;
 
     background: #fff1f3;
-
     color: #ad3743;
 
-    font-size: 11px;
+    font-size: 13px;
+    line-height: 1.5;
 }
+
+/* ==========================================================
+   FORM GRID
+========================================================== */
 
 .aktiva-form-grid {
     display: grid;
 
     grid-template-columns:
-        repeat(
-            2,
-            minmax(0, 1fr)
-        );
+        repeat(2, minmax(0, 1fr));
 
-    gap: 15px;
+    gap: 17px 14px;
+}
+
+.aktiva-field {
+    min-width: 0;
 }
 
 .aktiva-field label {
     display: block;
 
-    margin-bottom: 6px;
+    margin-bottom: 7px;
 
     color: #365573;
 
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 750;
 }
 
-.aktiva-field input {
-    width: 100%;
-    height: 42px;
+.aktiva-field label em {
+    color: #dd4055;
+    font-style: normal;
+}
 
-    padding: 0 11px;
+.aktiva-field input {
+    display: block;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 44px;
+
+    margin: 0;
+    padding: 0 13px;
 
     border: 1px solid #d5e1ec;
-    border-radius: 7px;
+    border-radius: 8px;
 
-    outline: 0;
+    outline: none;
 
+    background: #fff;
     color: #345270;
 
+    font-size: 14px;
+
+    text-align: left !important;
+    text-indent: 0;
+}
+
+.aktiva-field input::placeholder {
+    color: #91a5ba;
+
     font-size: 13px;
+
+    opacity: 1;
+    text-align: left;
 }
 
 .aktiva-field input:focus {
     border-color: #70abe7;
 
     box-shadow:
-        0 0 0 3px
-        rgba(8,104,216,.07);
+        0 0 0 3px rgba(8, 104, 216, .08);
 }
 
 .aktiva-field input[readonly] {
@@ -871,24 +1017,46 @@ button.aktiva-kpi-card {
 }
 
 .aktiva-field small {
-    min-height: 13px;
-
     display: block;
 
-    margin-top: 4px;
+    min-height: 0;
 
-    color: var(--danger);
+    margin-top: 5px;
 
-    font-size: 10px;
+    color: var(--a-danger);
+
+    font-size: 12px;
+    line-height: 1.5;
 }
+
+.aktiva-field small:empty {
+    display: none;
+}
+
+.aktiva-modal-note {
+    margin: 16px 0 0;
+
+    padding: 10px 12px;
+
+    border-radius: 8px;
+
+    background: #eef6ff;
+    color: #426a95;
+
+    font-size: 12px;
+}
+
+/* ==========================================================
+   FOOTER MODAL
+========================================================== */
 
 .aktiva-modal-box footer {
     display: flex;
     justify-content: flex-end;
 
-    gap: 8px;
+    gap: 9px;
 
-    padding: 12px 20px;
+    padding: 13px 20px;
 
     border-top: 1px solid #e6edf4;
 
@@ -897,74 +1065,67 @@ button.aktiva-kpi-card {
 
 .aktiva-cancel-button,
 .aktiva-save-button {
-    min-height: 40px;
+    display: inline-flex;
 
-    padding: 0 15px;
+    align-items: center;
+    justify-content: center;
 
-    border-radius: 7px;
+    gap: 8px;
 
-    font-size: 12px;
+    min-height: 42px;
+
+    padding: 0 16px;
+
+    border-radius: 8px;
+
+    font-size: 13px;
     font-weight: 750;
-
-    cursor: pointer;
 }
 
 .aktiva-cancel-button {
     border: 1px solid #d5e0ea;
 
     background: #fff;
-
     color: #546e89;
 }
 
 .aktiva-save-button {
-    display: flex;
-    align-items: center;
+    border: 1px solid var(--a-blue);
 
-    gap: 7px;
-
-    border: 1px solid var(--primary);
-
-    background: var(--primary);
-
-    color: #fff;
+    background: var(--a-blue);
+    color: white;
 }
 
 .aktiva-save-button.delete-mode {
-    border-color: var(--danger);
-
-    background: var(--danger);
+    border-color: var(--a-danger);
+    background: var(--a-danger);
 }
 
 .aktiva-save-button svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
 
-
-/* =========================================================
-   HISTORY
-========================================================= */
+/* ==========================================================
+   RIWAYAT PERUBAHAN
+========================================================== */
 
 .aktiva-history-summary {
     display: grid;
 
     grid-template-columns:
-        repeat(
-            3,
-            minmax(0, 1fr)
-        );
+        repeat(3, minmax(0, 1fr));
 
     gap: 10px;
 
-    margin-bottom: 15px;
+    margin-bottom: 16px;
 }
 
 .aktiva-history-summary article {
-    padding: 13px;
+    padding: 14px;
 
     border: 1px solid #dfe8f1;
-    border-radius: 8px;
+    border-radius: 9px;
 
     background: #f8fbfe;
 }
@@ -973,8 +1134,7 @@ button.aktiva-kpi-card {
     display: block;
 
     color: #71869e;
-
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .aktiva-history-summary strong {
@@ -984,48 +1144,49 @@ button.aktiva-kpi-card {
 
     color: #173b61;
 
-    font-size: 20px;
+    font-size: 23px;
 }
 
 .aktiva-history-summary .green {
-    color: var(--success);
+    color: #19944b;
 }
 
 .aktiva-history-summary .red {
-    color: var(--danger);
+    color: var(--a-danger);
 }
 
 .aktiva-history-table {
     width: 100%;
-
     border-collapse: collapse;
 }
 
 .aktiva-history-table th,
 .aktiva-history-table td {
-    padding: 10px;
+    padding: 12px;
 
     border: 1px solid #e0e8f0;
 
-    font-size: 11.5px;
+    color: #375472;
 
+    font-size: 13px;
     text-align: left;
 }
 
 .aktiva-history-table th {
     background: #edf5ff;
-
     color: #27496d;
+
+    font-weight: 800;
 }
 
 .history-badge {
     display: inline-flex;
 
-    padding: 5px 8px;
+    padding: 5px 9px;
 
     border-radius: 999px;
 
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 750;
 }
 
@@ -1039,36 +1200,35 @@ button.aktiva-kpi-card {
     color: #c43d49;
 }
 
-
-/* =========================================================
-   TOAST
-========================================================= */
+/* ==========================================================
+   TOAST NOTIFIKASI
+========================================================== */
 
 .aktiva-toast {
-    min-width: 290px;
-
     position: fixed;
+
+    z-index: 9999;
 
     right: 22px;
     bottom: 22px;
 
-    z-index: 9999;
+    min-width: 290px;
+    max-width: min(420px, calc(100vw - 30px));
 
     display: flex;
     align-items: flex-start;
 
     gap: 10px;
 
-    padding: 13px 14px;
+    padding: 14px;
 
     border: 1px solid #cce6d6;
-    border-radius: 9px;
+    border-radius: 10px;
 
     background: #fff;
 
     box-shadow:
-        0 16px 40px
-        rgba(22,55,90,.16);
+        0 16px 40px rgba(22, 55, 90, .16);
 }
 
 .aktiva-toast.error {
@@ -1079,11 +1239,13 @@ button.aktiva-kpi-card {
     width: 20px;
     height: 20px;
 
-    color: var(--success);
+    color: #19944b;
+
+    flex: 0 0 auto;
 }
 
 .aktiva-toast.error > svg {
-    color: var(--danger);
+    color: var(--a-danger);
 }
 
 .aktiva-toast strong,
@@ -1093,48 +1255,51 @@ button.aktiva-kpi-card {
 
 .aktiva-toast strong {
     color: #284968;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .aktiva-toast span {
     margin-top: 3px;
 
     color: #708499;
-
-    font-size: 11px;
+    font-size: 13px;
 }
 
+/* ==========================================================
+   RESPONSIVE LAPTOP
+========================================================== */
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 1100px) {
-
-    .aktiva-kpi-grid {
-        grid-template-columns:
-            repeat(
-                3,
-                1fr
-            );
-    }
+@media (max-width: 1180px) {
 
     .aktiva-filter-grid {
         grid-template-columns:
-            1fr
-            1fr;
+            minmax(0, 1.5fr)
+            minmax(145px, .6fr)
+            minmax(170px, .7fr);
     }
+
+    .aktiva-filter-grid .aktiva-outline-button {
+        width: 100%;
+    }
+
+    .aktiva-table-card > .table-responsive {
+        overflow-x: auto;
+    }
+
+    .aktiva-page #aktivaTable {
+        min-width: 950px;
+    }
+
 }
 
+/* ==========================================================
+   RESPONSIVE MOBILE
+========================================================== */
 
 @media (max-width: 760px) {
 
     .aktiva-hero {
-        margin:
-            -18px
-            -16px
-            14px;
-
+        margin: -18px -16px 14px;
         padding: 18px 16px;
     }
 
@@ -1143,18 +1308,19 @@ button.aktiva-kpi-card {
     }
 
     .aktiva-date-card {
+        min-width: 0;
         width: 100%;
     }
 
-    .aktiva-kpi-grid,
-    .aktiva-filter-grid,
-    .aktiva-form-grid,
-    .aktiva-history-summary {
+    .aktiva-hero h1 {
+        font-size: 28px;
+    }
+
+    .aktiva-kpi-grid {
         grid-template-columns: 1fr;
     }
 
-    .aktiva-filter-header,
-    .aktiva-table-footer {
+    .aktiva-filter-header {
         align-items: stretch;
         flex-direction: column;
     }
@@ -1162,4 +1328,34 @@ button.aktiva-kpi-card {
     .aktiva-primary-button {
         width: 100%;
     }
+
+    .aktiva-filter-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .aktiva-search {
+        grid-column: 1 / -1;
+    }
+
+    .aktiva-filter-grid select {
+        grid-column: 1 / -1;
+    }
+
+    .aktiva-table-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .aktiva-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .aktiva-history-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .aktiva-modal-body {
+        padding: 16px;
+    }
+
 }
