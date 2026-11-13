@@ -1,922 +1,899 @@
-
 @extends('layouts.main')
 
 @section('title', 'Kode Aktiva')
 
 @push('styles')
-<link
-    rel="stylesheet"
-    href="{{ asset('css/pages/master/kode_aktiva.css') }}?v={{ file_exists(public_path('css/pages/master/kode_aktiva.css')) ? filemtime(public_path('css/pages/master/kode_aktiva.css')) : '1' }}"
->
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/master/kode_aktiva.css') }}?v={{ file_exists(public_path('css/pages/master/kode_aktiva.css')) ? filemtime(public_path('css/pages/master/kode_aktiva.css')) : '1' }}">
 @endpush
 
 @section('content')
 
-@php
-    $aktivaRows = collect($aktivas ?? []);
-    $activityRows = collect($aktivaActivityLogs ?? []);
+    @php
+        $aktivaRows = collect($aktivas ?? []);
+        $activityRows = collect($aktivaActivityLogs ?? []);
 
-    $totalAktivaValue = (int) (
-        $totalAktiva ?? $aktivaRows->count()
-    );
+        $totalAktivaValue = (int) ($totalAktiva ?? $aktivaRows->count());
 
-    $deltaValue = (int) ($aktivaDelta ?? 0);
-@endphp
+        $deltaValue = (int) ($aktivaDelta ?? 0);
+    @endphp
 
-<section class="content aktiva-page">
+    <section class="content aktiva-page">
 
-    {{-- ===========================================
+        {{-- ===========================================
          HEADER / HERO
     =========================================== --}}
 
-    <section class="aktiva-hero">
+        <section class="aktiva-hero">
 
-        <div class="aktiva-hero-overlay"></div>
+            <div class="aktiva-hero-overlay"></div>
 
-        <div class="aktiva-hero-top">
-
-            <div>
-
-                <nav class="aktiva-breadcrumb" aria-label="Breadcrumb">
-
-                    <a
-                        href="{{ route('dashboard') }}"
-                        aria-label="Dashboard"
-                    >
-                        <i data-lucide="house"></i>
-                    </a>
-
-                    <i data-lucide="chevron-right"></i>
-
-                    <span>Master Data</span>
-
-                    <i data-lucide="chevron-right"></i>
-
-                    <strong>Kode Aktiva</strong>
-
-                </nav>
-
-                <h1>Kode Aktiva</h1>
-
-                <p>
-                    Kelola klasifikasi dan kode aktiva
-                    Perumda Tirta Kencana Kota Samarinda.
-                </p>
-
-            </div>
-
-            <div class="aktiva-date-card">
-
-                <i data-lucide="calendar-days"></i>
+            <div class="aktiva-hero-top">
 
                 <div>
 
-                    <strong id="aktivaDate">—</strong>
+                    <nav class="aktiva-breadcrumb" aria-label="Breadcrumb">
 
-                    <span id="aktivaTime">—</span>
+                        <a href="{{ route('dashboard') }}" aria-label="Dashboard">
+                            <i data-lucide="house"></i>
+                        </a>
+
+                        <i data-lucide="chevron-right"></i>
+
+                        <span>Master Data</span>
+
+                        <i data-lucide="chevron-right"></i>
+
+                        <strong>Kode Aktiva</strong>
+
+                    </nav>
+
+                    <h1>Kode Aktiva</h1>
+
+                    <p>
+                        Kelola klasifikasi dan kode aktiva
+                        Perumda Tirta Kencana Kota Samarinda.
+                    </p>
 
                 </div>
 
-            </div>
+                <div class="aktiva-date-card">
 
-        </div>
+                    <i data-lucide="calendar-days"></i>
 
-        {{-- =======================================
-             KPI
-        ======================================= --}}
+                    <div>
 
-        <div class="aktiva-kpi-grid">
+                        <strong id="aktivaDate">—</strong>
 
-            <button
-                type="button"
-                class="aktiva-kpi-card clickable"
-                id="aktivaHistoryButton"
-                title="Lihat riwayat Kode Aktiva"
-            >
-
-                <span class="aktiva-kpi-icon">
-                    <i data-lucide="barcode"></i>
-                </span>
-
-                <div>
-
-                    <small>Total Kode Aktiva</small>
-
-                    <div class="aktiva-total-line">
-
-                        <strong>
-                            {{ number_format($totalAktivaValue, 0, ',', '.') }}
-                        </strong>
-
-                        <span class="{{ $deltaValue < 0 ? 'negative' : 'positive' }}">
-
-                            {{ $deltaValue > 0
-                                ? '↑ +' . $deltaValue
-                                : (
-                                    $deltaValue < 0
-                                        ? '↓ ' . $deltaValue
-                                        : '— 0'
-                                )
-                            }}
-
-                        </span>
+                        <span id="aktivaTime">—</span>
 
                     </div>
 
-                    <p>perubahan tercatat</p>
-
                 </div>
-
-            </button>
-
-            <article class="aktiva-kpi-card">
-
-                <span class="aktiva-kpi-icon">
-                    <i data-lucide="layers-3"></i>
-                </span>
-
-                <div>
-
-                    <small>Golongan Aktiva</small>
-
-                    <strong>
-                        {{ number_format($totalGolongan ?? 0, 0, ',', '.') }}
-                    </strong>
-
-                    <p>golongan terdaftar</p>
-
-                </div>
-
-            </article>
-
-            <article class="aktiva-kpi-card">
-
-                <span class="aktiva-kpi-icon">
-                    <i data-lucide="boxes"></i>
-                </span>
-
-                <div>
-
-                    <small>Kategori / KIB</small>
-
-                    <strong>
-                        {{ number_format($totalKib ?? 0, 0, ',', '.') }}
-                    </strong>
-
-                    <p>kategori aktiva</p>
-
-                </div>
-
-            </article>
-
-        </div>
-
-    </section>
-
-    {{-- ===========================================
-         SEARCH DAN FILTER
-    =========================================== --}}
-
-    <section class="aktiva-card aktiva-filter-card">
-
-        <header class="aktiva-filter-header">
-
-            <div>
-
-                <h2>Daftar Kode Aktiva</h2>
-
-                <p>
-                    Data langsung dari tabel
-                    <strong>aktivas</strong>.
-                </p>
 
             </div>
 
-            <button
-                type="button"
-                class="aktiva-primary-button"
-                id="addAktivaButton"
-            >
+            {{-- =======================================
+             KPI
+        ======================================= --}}
 
-                <i data-lucide="plus"></i>
+            <div class="aktiva-kpi-grid">
 
-                Tambah Kode Aktiva
+                <button type="button" class="aktiva-kpi-card clickable" id="aktivaHistoryButton"
+                    title="Lihat riwayat Kode Aktiva">
 
-            </button>
+                    <span class="aktiva-kpi-icon">
+                        <i data-lucide="barcode"></i>
+                    </span>
 
-        </header>
+                    <div>
 
-        <div class="aktiva-filter-grid">
+                        <small>Total Kode Aktiva</small>
 
-            {{-- SEARCH --}}
+                        <div class="aktiva-total-line">
 
-            <label class="aktiva-search" for="aktivaSearch">
+                            <strong>
+                                {{ number_format($totalAktivaValue, 0, ',', '.') }}
+                            </strong>
 
-                <i data-lucide="search"></i>
+                            <span class="{{ $deltaValue < 0 ? 'negative' : 'positive' }}">
 
-                <input
-                    type="search"
-                    id="aktivaSearch"
-                    autocomplete="off"
-                    placeholder="Cari kode, nama, golongan, atau KIB..."
-                >
+                                {{ $deltaValue > 0 ? '↑ +' . $deltaValue : ($deltaValue < 0 ? '↓ ' . $deltaValue : '— 0') }}
 
-            </label>
+                            </span>
 
-            {{-- FILTER GOLONGAN --}}
+                        </div>
 
-            <select
-                id="aktivaGolFilter"
-                aria-label="Filter Golongan Aktiva"
-            >
+                        <p>perubahan tercatat</p>
 
-                <option value="">Semua Golongan</option>
+                    </div>
 
-                @foreach ($golonganAktiva ?? [] as $gol)
+                </button>
 
-                    <option value="{{ $gol }}">
-                        {{ $gol }}
-                    </option>
+                <article class="aktiva-kpi-card">
 
-                @endforeach
+                    <span class="aktiva-kpi-icon">
+                        <i data-lucide="layers-3"></i>
+                    </span>
 
-            </select>
+                    <div>
 
-            {{-- FILTER KATEGORI / KIB --}}
+                        <small>Golongan Aktiva</small>
 
-            <select
-                id="aktivaKibFilter"
-                aria-label="Filter Kategori atau KIB"
-            >
+                        <strong>
+                            {{ number_format($totalGolongan ?? 0, 0, ',', '.') }}
+                        </strong>
 
-                <option value="">Semua Kategori / KIB</option>
+                        <p>golongan terdaftar</p>
 
-                @foreach ($kibAktiva ?? [] as $kib)
+                    </div>
 
-                    <option value="{{ $kib }}">
-                        {{ $kib }}
-                    </option>
+                </article>
 
-                @endforeach
+                <article class="aktiva-kpi-card">
 
-            </select>
+                    <span class="aktiva-kpi-icon">
+                        <i data-lucide="boxes"></i>
+                    </span>
 
-            {{-- RESET --}}
+                    <div>
 
-            <button
-                type="button"
-                class="aktiva-outline-button"
-                id="resetAktivaButton"
-            >
+                        <small>Kategori / KIB</small>
 
-                <i data-lucide="refresh-cw"></i>
-                Reset
+                        <strong>
+                            {{ number_format($totalKib ?? 0, 0, ',', '.') }}
+                        </strong>
 
-            </button>
+                        <p>kategori aktiva</p>
 
-            {{-- EXPORT --}}
+                    </div>
 
-            <button
-                type="button"
-                class="aktiva-outline-button"
-                id="exportAktivaButton"
-            >
+                </article>
 
-                <i data-lucide="download"></i>
-                Export
+            </div>
 
-            </button>
+        </section>
 
-        </div>
+        {{-- ===========================================
+         SEARCH DAN FILTER
+    =========================================== --}}
 
-    </section>
+        <section class="aktiva-card aktiva-filter-card">
 
-    {{-- ===========================================
+            <header class="aktiva-filter-header">
+
+                <div>
+
+                    <h2>Daftar Kode Aktiva</h2>
+
+                    <p>
+                        Data langsung dari tabel
+                        <strong>aktivas</strong>.
+                    </p>
+
+                </div>
+
+                <button type="button" class="aktiva-primary-button" id="addAktivaButton">
+
+                    <i data-lucide="plus"></i>
+
+                    Tambah Kode Aktiva
+
+                </button>
+
+            </header>
+
+            <div class="aktiva-filter-grid">
+
+                {{-- SEARCH --}}
+
+                <label class="aktiva-search" for="aktivaSearch">
+
+                    <i data-lucide="search"></i>
+
+                    <input type="search" id="aktivaSearch" autocomplete="off"
+                        placeholder="Cari kode, nama, golongan, atau KIB...">
+
+                </label>
+
+                {{-- FILTER GOLONGAN --}}
+
+                <select id="aktivaGolFilter" aria-label="Filter Golongan Aktiva">
+
+                    <option value="">Semua Golongan</option>
+
+                    @foreach ($golonganAktiva ?? [] as $gol)
+                        <option value="{{ $gol }}">
+                            {{ $gol }}
+                        </option>
+                    @endforeach
+
+                </select>
+
+                {{-- FILTER KATEGORI / KIB --}}
+
+                <select id="aktivaKibFilter" aria-label="Filter Kategori atau KIB">
+
+                    <option value="">Semua Kategori / KIB</option>
+
+                    @foreach ($kibAktiva ?? [] as $kib)
+                        <option value="{{ $kib }}">
+                            {{ $kib }}
+                        </option>
+                    @endforeach
+
+                </select>
+
+                {{-- RESET --}}
+
+                <button type="button" class="aktiva-outline-button" id="resetAktivaButton">
+
+                    <i data-lucide="refresh-cw"></i>
+                    Reset
+
+                </button>
+
+                {{-- EXPORT --}}
+
+                <button type="button" class="aktiva-outline-button" id="exportAktivaButton">
+
+                    <i data-lucide="download"></i>
+                    Export
+
+                </button>
+
+            </div>
+
+        </section>
+
+        {{-- ===========================================
          TABEL KODE AKTIVA
     =========================================== --}}
 
-    <section class="aktiva-card aktiva-table-card">
+        <section class="aktiva-card aktiva-table-card">
 
-        <div class="table-responsive">
+            <div class="table-responsive">
 
-            <table class="aktiva-table" id="aktivaTable">
+                <table class="aktiva-table" id="aktivaTable">
 
-                <colgroup>
-                    <col class="col-no">
-                    <col class="col-kode">
-                    <col class="col-nama">
-                    <col class="col-golongan">
-                    <col class="col-kib">
-                    <col class="col-dibuat">
-                    <col class="col-action">
-                </colgroup>
+                    <colgroup>
+                        <col class="col-no">
+                        <col class="col-kode">
+                        <col class="col-nama">
+                        <col class="col-golongan">
+                        <col class="col-kib">
+                        <col class="col-dibuat">
+                        <col class="col-action">
+                    </colgroup>
 
-                <thead>
+                    <thead>
 
-                    <tr>
-                        <th>No.</th>
-                        <th>Kode Aktiva</th>
-                        <th>Nama Aktiva</th>
-                        <th>Golongan Aktiva</th>
-                        <th>Kategori / KIB</th>
-                        <th>Dibuat</th>
-                        <th>Aksi</th>
-                    </tr>
+                        <tr>
+                            <th>No.</th>
+                            <th>Kode Aktiva</th>
+                            <th>Nama Aktiva</th>
+                            <th>Golongan Aktiva</th>
+                            <th>Kategori / KIB</th>
+                            <th>Dibuat</th>
+                            <th>Aksi</th>
+                        </tr>
 
-                </thead>
+                    </thead>
 
-                <tbody>
+                    <tbody>
 
-                    @foreach ($aktivaRows as $item)
+                        @foreach ($aktivaRows as $item)
+                            <tr data-row data-id="{{ $item->id }}" data-kode="{{ $item->kode ?? '' }}"
+                                data-aktiva="{{ $item->aktiva ?? '' }}" data-gol="{{ $item->gol ?? '' }}"
+                                data-kib="{{ $item->kib ?? '' }}" data-created-at="{{ $item->created_at ?? '' }}">
 
-                        <tr
-                            data-row
-                            data-id="{{ $item->id }}"
-                            data-kode="{{ $item->kode ?? '' }}"
-                            data-aktiva="{{ $item->aktiva ?? '' }}"
-                            data-gol="{{ $item->gol ?? '' }}"
-                            data-kib="{{ $item->kib ?? '' }}"
-                            data-created-at="{{ $item->created_at ?? '' }}"
-                        >
+                                {{-- NOMOR --}}
 
-                            {{-- NOMOR --}}
+                                <td class="aktiva-number">
+                                    —
+                                </td>
 
-                            <td class="aktiva-number">
-                                —
-                            </td>
+                                {{-- KODE --}}
 
-                            {{-- KODE --}}
+                                <td>
 
-                            <td>
-
-                                <span class="aktiva-code">
-                                    {{ $item->kode ?: '—' }}
-                                </span>
-
-                            </td>
-
-                            {{-- NAMA --}}
-
-                            <td>
-
-                                <strong class="aktiva-name">
-                                    {{ $item->aktiva ?: '—' }}
-                                </strong>
-
-                            </td>
-
-                            {{-- GOLONGAN --}}
-
-                            <td>
-
-                                <span class="aktiva-badge">
-                                    {{ $item->gol ?: '—' }}
-                                </span>
-
-                            </td>
-
-                            {{-- KATEGORI --}}
-
-                            <td>
-                                {{ $item->kib ?: '—' }}
-                            </td>
-
-                            {{-- TANGGAL --}}
-
-                            <td>
-
-                                @if (!empty($item->created_at))
-
-                                    {{ \Carbon\Carbon::parse(
-                                        $item->created_at
-                                    )->locale('id')->translatedFormat('d M Y') }}
-
-                                @else
-
-                                    <span class="aktiva-muted">
-                                        —
+                                    <span class="aktiva-code">
+                                        {{ $item->kode ?: '—' }}
                                     </span>
 
-                                @endif
+                                </td>
 
-                            </td>
+                                {{-- NAMA --}}
 
-                            {{-- AKSI --}}
+                                <td>
 
-                            <td>
+                                    <strong class="aktiva-name">
+                                        {{ $item->aktiva ?: '—' }}
+                                    </strong>
 
-                                <div class="aktiva-actions">
+                                </td>
 
-                                    <button
-                                        type="button"
-                                        class="view"
-                                        data-action="view"
-                                        aria-label="Detail {{ $item->aktiva }}"
-                                        title="Lihat"
-                                    >
-                                        <i data-lucide="eye"></i>
-                                    </button>
+                                {{-- GOLONGAN --}}
 
-                                    <button
-                                        type="button"
-                                        class="edit"
-                                        data-action="edit"
-                                        aria-label="Edit {{ $item->aktiva }}"
-                                        title="Edit"
-                                    >
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
+                                <td>
 
-                                    <button
-                                        type="button"
-                                        class="delete"
-                                        data-action="delete"
-                                        aria-label="Hapus {{ $item->aktiva }}"
-                                        title="Hapus"
-                                    >
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
+                                    <span class="aktiva-badge">
+                                        {{ $item->gol ?: '—' }}
+                                    </span>
 
-                                </div>
+                                </td>
 
+                                {{-- KATEGORI --}}
+
+                                <td>
+                                    {{ $item->kib ?: '—' }}
+                                </td>
+
+                                {{-- TANGGAL --}}
+
+                                <td>
+
+                                    @if (!empty($item->created_at))
+                                        {{ \Carbon\Carbon::parse($item->created_at)->locale('id')->translatedFormat('d M Y') }}
+                                    @else
+                                        <span class="aktiva-muted">
+                                            —
+                                        </span>
+                                    @endif
+
+                                </td>
+
+                                {{-- AKSI --}}
+
+                                <td>
+
+                                    <div class="aktiva-actions">
+
+                                        <button type="button" class="view" data-action="view"
+                                            aria-label="Detail {{ $item->aktiva }}" title="Lihat">
+                                            <i data-lucide="eye"></i>
+                                        </button>
+
+                                        <button type="button" class="edit" data-action="edit"
+                                            aria-label="Edit {{ $item->aktiva }}" title="Edit">
+                                            <i data-lucide="square-pen"></i>
+                                        </button>
+
+                                        <button type="button" class="delete" data-action="delete"
+                                            aria-label="Hapus {{ $item->aktiva }}" title="Hapus">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        @endforeach
+
+                        {{-- EMPTY STATE --}}
+
+                        <tr id="aktivaEmptyRow" hidden>
+
+                            <td colspan="7" class="aktiva-empty">
+                                Data Kode Aktiva tidak ditemukan.
                             </td>
 
                         </tr>
 
-                    @endforeach
+                    </tbody>
 
-                    {{-- EMPTY STATE --}}
-
-                    <tr id="aktivaEmptyRow" hidden>
-
-                        <td colspan="7" class="aktiva-empty">
-                            Data Kode Aktiva tidak ditemukan.
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        {{-- =======================================
-             PAGINATION
-        ======================================= --}}
-
-        <footer class="aktiva-table-footer">
-
-            <span id="aktivaTableInfo">
-                Menampilkan data...
-            </span>
-
-            <div class="aktiva-pagination-wrap">
-
-                <select
-                    id="aktivaPageSize"
-                    aria-label="Jumlah data per halaman"
-                >
-
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-
-                </select>
-
-                <span>data per halaman</span>
-
-                <nav
-                    id="aktivaPagination"
-                    class="aktiva-pagination"
-                    aria-label="Navigasi halaman Kode Aktiva"
-                ></nav>
+                </table>
 
             </div>
 
-        </footer>
+            {{-- =======================================
+             PAGINATION
+        ======================================= --}}
 
-    </section>
+            <footer class="aktiva-table-footer">
 
-    {{-- ===========================================
+                <span id="aktivaTableInfo">
+                    Menampilkan data...
+                </span>
+
+                <div class="aktiva-pagination-wrap">
+
+                    <select id="aktivaPageSize" aria-label="Jumlah data per halaman">
+
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+
+                    </select>
+
+                    <span>data per halaman</span>
+
+                    <nav id="aktivaPagination" class="aktiva-pagination" aria-label="Navigasi halaman Kode Aktiva"></nav>
+
+                </div>
+
+            </footer>
+
+        </section>
+
+        {{-- ===========================================
          MODAL TAMBAH / DETAIL / EDIT / HAPUS
     =========================================== --}}
 
-    <dialog
-        class="aktiva-modal"
-        id="aktivaModal"
-        aria-labelledby="aktivaModalTitle"
-    >
+        <dialog class="aktiva-modal" id="aktivaModal" aria-labelledby="aktivaModalTitle">
 
-        <div class="aktiva-modal-box">
+            <div class="aktiva-modal-box">
 
-            <header>
+                <header>
 
-                <div>
+                    <div>
 
-                    <span>MASTER DATA</span>
+                        <span>MASTER DATA</span>
 
-                    <h3 id="aktivaModalTitle">
-                        Tambah Kode Aktiva
-                    </h3>
+                        <h3 id="aktivaModalTitle">
+                            Tambah Kode Aktiva
+                        </h3>
 
-                    <p id="aktivaModalDescription">
-                        Tambahkan klasifikasi aktiva baru.
-                    </p>
-
-                </div>
-
-                <button
-                    type="button"
-                    id="closeAktivaModal"
-                    aria-label="Tutup modal"
-                >
-                    <i data-lucide="x"></i>
-                </button>
-
-            </header>
-
-            <form
-                id="aktivaForm"
-                method="POST"
-                novalidate
-            >
-
-                @csrf
-
-                <div class="aktiva-modal-body">
-
-                    <div
-                        id="aktivaFormAlert"
-                        class="aktiva-form-alert"
-                        role="alert"
-                        hidden
-                    ></div>
-
-                    <div class="aktiva-form-grid">
-
-                        {{-- KODE --}}
-
-                        <div class="aktiva-field">
-
-                            <label for="aktivaKode">
-                                Kode Aktiva <em>*</em>
-                            </label>
-
-                            <input
-                                type="text"
-                                id="aktivaKode"
-                                name="kode"
-                                maxlength="255"
-                                required
-                                autocomplete="off"
-                                placeholder="Contoh: 31.03.20"
-                            >
-
-                            <small data-error="kode"></small>
-
-                        </div>
-
-                        {{-- NAMA --}}
-
-                        <div class="aktiva-field">
-
-                            <label for="aktivaName">
-                                Nama Aktiva <em>*</em>
-                            </label>
-
-                            <input
-                                type="text"
-                                id="aktivaName"
-                                name="aktiva"
-                                maxlength="255"
-                                required
-                                autocomplete="off"
-                                placeholder="Contoh: Pembangkit Tenaga Listrik"
-                            >
-
-                            <small data-error="aktiva"></small>
-
-                        </div>
-
-                        {{-- GOLONGAN --}}
-
-                        <div class="aktiva-field">
-
-                            <label for="aktivaGol">
-                                Golongan Aktiva
-                            </label>
-
-                            <input
-                                type="text"
-                                id="aktivaGol"
-                                name="gol"
-                                maxlength="255"
-                                list="golonganAktivaList"
-                                autocomplete="off"
-                                placeholder="Contoh: INSTALASI POMPA"
-                            >
-
-                            <datalist id="golonganAktivaList">
-
-                                @foreach ($golonganAktiva ?? [] as $gol)
-
-                                    <option value="{{ $gol }}"></option>
-
-                                @endforeach
-
-                            </datalist>
-
-                            <small data-error="gol"></small>
-
-                        </div>
-
-                        {{-- KATEGORI --}}
-
-                        <div class="aktiva-field">
-
-                            <label for="aktivaKib">
-                                Kategori / KIB
-                            </label>
-
-                            <input
-                                type="text"
-                                id="aktivaKib"
-                                name="kib"
-                                maxlength="255"
-                                list="kibAktivaList"
-                                autocomplete="off"
-                                placeholder="Contoh: KIB B - PERALATAN DAN MESIN"
-                            >
-
-                            <datalist id="kibAktivaList">
-
-                                @foreach ($kibAktiva ?? [] as $kib)
-
-                                    <option value="{{ $kib }}"></option>
-
-                                @endforeach
-
-                            </datalist>
-
-                            <small data-error="kib"></small>
-
-                        </div>
+                        <p id="aktivaModalDescription">
+                            Tambahkan klasifikasi aktiva baru.
+                        </p>
 
                     </div>
 
-                    <p class="aktiva-modal-note">
-                        Kolom bertanda * wajib diisi.
-                        Kode dan nama aktiva dicatat sesuai klasifikasi aset perusahaan.
-                    </p>
+                    <button type="button" id="closeAktivaModal" aria-label="Tutup modal">
+                        <i data-lucide="x"></i>
+                    </button>
+
+                </header>
+
+
+                {{-- ==========================================================
+     FORM KODE AKTIVA
+     SEARCHABLE DROPDOWN GOLONGAN DAN KIB
+========================================================== --}}
+
+                @php
+                    /*
+                     * Gabungkan pilihan dari controller dan data
+                     * yang sudah ada pada tabel aktivas.
+                     *
+                     * Hasilnya:
+                     * - Pilihan lama tetap tersedia
+                     * - Nilai baru dari database otomatis muncul
+                     * - Tidak ada pilihan duplikat
+                     */
+
+                    $aktivaSource = collect($aktivas ?? []);
+
+                    $golonganOptions = collect($golonganAktiva ?? [])
+                        ->concat($aktivaSource->pluck('gol'))
+                        ->filter(fn($value) => is_scalar($value))
+                        ->map(fn($value) => trim((string) $value))
+                        ->filter(fn($value) => $value !== '')
+                        ->unique(fn($value) => mb_strtolower($value, 'UTF-8'))
+                        ->sort(fn($a, $b) => strnatcasecmp($a, $b))
+                        ->values();
+
+                    $kibOptions = collect($kibAktiva ?? [])
+                        ->concat($aktivaSource->pluck('kib'))
+                        ->filter(fn($value) => is_scalar($value))
+                        ->map(fn($value) => trim((string) $value))
+                        ->filter(fn($value) => $value !== '')
+                        ->unique(fn($value) => mb_strtolower($value, 'UTF-8'))
+                        ->sort(fn($a, $b) => strnatcasecmp($a, $b))
+                        ->values();
+                @endphp
+
+                <form id="aktivaForm" method="POST" autocomplete="off" novalidate>
+
+                    @csrf
+
+                    <div class="aktiva-modal-body">
+
+                        {{-- ALERT ERROR --}}
+
+                        <div id="aktivaFormAlert" class="aktiva-form-alert" role="alert" hidden></div>
+
+                        <div class="aktiva-form-grid">
+
+                            {{-- ==============================================
+                 1. KODE AKTIVA
+            ============================================== --}}
+
+                            <div class="aktiva-field">
+
+                                <label for="aktivaKode">
+                                    Kode Aktiva <em>*</em>
+                                </label>
+
+                                <input type="text" id="aktivaKode" name="kode" maxlength="255"
+                                    placeholder="Contoh: 09.93.21" autocomplete="off" required>
+
+                                <small data-error="kode"></small>
+
+                            </div>
+
+                            {{-- ==============================================
+                 2. NAMA AKTIVA
+            ============================================== --}}
+
+                            <div class="aktiva-field">
+
+                                <label for="aktivaName">
+                                    Nama Aktiva <em>*</em>
+                                </label>
+
+                                <input type="text" id="aktivaName" name="aktiva" maxlength="255"
+                                    placeholder="Contoh: KABEL PVC" autocomplete="off" required>
+
+                                <small data-error="aktiva"></small>
+
+                            </div>
+
+                            {{-- ==============================================
+                 3. GOLONGAN AKTIVA
+                 SEARCHABLE COMBOBOX
+            ============================================== --}}
+
+                            <div class="aktiva-field">
+
+                                <label for="aktivaGol">
+                                    Golongan Aktiva
+                                </label>
+
+                                <div class="aktiva-combobox" data-aktiva-combo>
+
+                                    <div class="aktiva-combo-control">
+
+                                        <input type="text" id="aktivaGol" name="gol" maxlength="255"
+                                            placeholder="Cari atau pilih golongan aktiva..." autocomplete="off"
+                                            spellcheck="false" role="combobox" aria-autocomplete="list"
+                                            aria-haspopup="listbox" aria-expanded="false"
+                                            aria-controls="aktivaGolOptions" data-aktiva-combo-input>
+
+                                        <button type="button" class="aktiva-combo-toggle"
+                                            aria-label="Tampilkan pilihan Golongan Aktiva" data-aktiva-combo-toggle>
+                                            <i data-lucide="chevron-down"></i>
+                                        </button>
+
+                                    </div>
+
+                                    {{-- DAFTAR PILIHAN GOLONGAN --}}
+
+                                    <div class="aktiva-combo-dropdown" id="aktivaGolOptions" role="listbox"
+                                        aria-label="Pilihan Golongan Aktiva" data-aktiva-combo-list hidden>
+
+                                        <div class="aktiva-combo-list-header">
+                                            Pilih Golongan Aktiva
+                                        </div>
+
+                                        <div class="aktiva-combo-options">
+
+                                            @foreach ($golonganOptions as $index => $gol)
+                                                <button type="button" id="aktivaGolOption{{ $index }}"
+                                                    class="aktiva-combo-option" role="option" aria-selected="false"
+                                                    data-aktiva-combo-option data-value="{{ $gol }}">
+
+                                                    <i data-lucide="layers-3"></i>
+
+                                                    <span>{{ $gol }}</span>
+
+                                                </button>
+                                            @endforeach
+
+                                        </div>
+
+                                        <div class="aktiva-combo-no-result" data-aktiva-combo-empty hidden></div>
+
+                                        <div class="aktiva-combo-list-footer">
+                                            Ketik untuk mencari. Nilai baru juga
+                                            dapat dimasukkan.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <small data-error="gol"></small>
+
+                            </div>
+
+                            {{-- ==============================================
+                 4. KATEGORI / KIB
+                 SEARCHABLE COMBOBOX
+            ============================================== --}}
+
+                            <div class="aktiva-field">
+
+                                <label for="aktivaKib">
+                                    Kategori / KIB
+                                </label>
+
+                                <div class="aktiva-combobox" data-aktiva-combo>
+
+                                    <div class="aktiva-combo-control">
+
+                                        <input type="text" id="aktivaKib" name="kib" maxlength="255"
+                                            placeholder="Cari atau pilih kategori/KIB..." autocomplete="off"
+                                            spellcheck="false" role="combobox" aria-autocomplete="list"
+                                            aria-haspopup="listbox" aria-expanded="false"
+                                            aria-controls="aktivaKibOptions" data-aktiva-combo-input>
+
+                                        <button type="button" class="aktiva-combo-toggle"
+                                            aria-label="Tampilkan pilihan Kategori atau KIB" data-aktiva-combo-toggle>
+                                            <i data-lucide="chevron-down"></i>
+                                        </button>
+
+                                    </div>
+
+                                    {{-- DAFTAR PILIHAN KATEGORI/KIB --}}
+
+                                    <div class="aktiva-combo-dropdown" id="aktivaKibOptions" role="listbox"
+                                        aria-label="Pilihan Kategori KIB" data-aktiva-combo-list hidden>
+
+                                        <div class="aktiva-combo-list-header">
+                                            Pilih Kategori / KIB
+                                        </div>
+
+                                        <div class="aktiva-combo-options">
+
+                                            @foreach ($kibOptions as $index => $kib)
+                                                <button type="button" id="aktivaKibOption{{ $index }}"
+                                                    class="aktiva-combo-option" role="option" aria-selected="false"
+                                                    data-aktiva-combo-option data-value="{{ $kib }}">
+
+                                                    <i data-lucide="list-tree"></i>
+
+                                                    <span>{{ $kib }}</span>
+
+                                                </button>
+                                            @endforeach
+
+                                        </div>
+
+                                        <div class="aktiva-combo-no-result" data-aktiva-combo-empty hidden></div>
+
+                                        <div class="aktiva-combo-list-footer">
+                                            Gunakan pencarian untuk menemukan
+                                            kategori yang sesuai.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <small data-error="kib"></small>
+
+                            </div>
+
+                        </div>
+
+                        {{-- KETERANGAN --}}
+
+                        <p class="aktiva-modal-note">
+
+                            Kolom bertanda * wajib diisi.
+                            Golongan Aktiva dan Kategori/KIB dapat
+                            dipilih dari daftar atau diketik secara manual.
+
+                        </p>
+
+                    </div>
+
+                    {{-- ==============================================
+         FOOTER MODAL
+    ============================================== --}}
+
+                    <footer>
+
+                        <button type="button" class="aktiva-cancel-button" id="cancelAktivaButton">
+                            Tutup
+                        </button>
+
+                        <button type="submit" class="aktiva-save-button" id="saveAktivaButton">
+
+                            <i data-lucide="save"></i>
+
+                            <span>
+                                Simpan Kode Aktiva
+                            </span>
+
+                        </button>
+
+                    </footer>
+
+                </form>
+
+
+            </div>
+
+        </dialog>
+
+        {{-- ===========================================
+         MODAL RIWAYAT AKTIVITAS
+    =========================================== --}}
+
+        <dialog class="aktiva-modal" id="aktivaHistoryModal" aria-labelledby="aktivaHistoryTitle">
+
+            <div class="aktiva-modal-box history">
+
+                <header>
+
+                    <div>
+
+                        <span>AKTIVITAS MASTER DATA</span>
+
+                        <h3 id="aktivaHistoryTitle">
+                            Riwayat Perubahan Kode Aktiva
+                        </h3>
+
+                        <p>
+                            Penambahan dan penghapusan data Kode Aktiva.
+                        </p>
+
+                    </div>
+
+                    <button type="button" id="closeAktivaHistory" aria-label="Tutup riwayat">
+                        <i data-lucide="x"></i>
+                    </button>
+
+                </header>
+
+                <div class="aktiva-modal-body">
+
+                    <div class="aktiva-history-summary">
+
+                        <article>
+
+                            <span>Ditambahkan</span>
+
+                            <strong class="green">
+                                ↑ {{ $aktivaTambah ?? 0 }}
+                            </strong>
+
+                        </article>
+
+                        <article>
+
+                            <span>Dihapus</span>
+
+                            <strong class="red">
+                                ↓ {{ $aktivaHapus ?? 0 }}
+                            </strong>
+
+                        </article>
+
+                        <article>
+
+                            <span>Perubahan Bersih</span>
+
+                            <strong>
+                                {{ $deltaValue > 0 ? '+' : '' }}{{ $deltaValue }}
+                            </strong>
+
+                        </article>
+
+                    </div>
+
+                    <div class="table-responsive">
+
+                        <table class="aktiva-history-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Nama Aktiva</th>
+                                    <th>Status</th>
+                                    <th>Waktu</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @forelse ($activityRows as $index => $log)
+                                    <tr>
+
+                                        <td>{{ $index + 1 }}</td>
+
+                                        <td>
+                                            {{ $log->record_name ?? '—' }}
+                                        </td>
+
+                                        <td>
+
+                                            @if (($log->action ?? '') === 'created')
+                                                <span class="history-badge created">
+                                                    Ditambahkan
+                                                </span>
+                                            @else
+                                                <span class="history-badge deleted">
+                                                    Dihapus
+                                                </span>
+                                            @endif
+
+                                        </td>
+
+                                        <td>
+
+                                            @if (!empty($log->created_at))
+                                                {{ \Carbon\Carbon::parse($log->created_at)->locale('id')->translatedFormat('d M Y, H:i') }}
+                                            @else
+                                                —
+                                            @endif
+
+                                        </td>
+
+                                    </tr>
+
+                                @empty
+
+                                    <tr>
+
+                                        <td colspan="4" class="aktiva-empty">
+                                            Belum ada riwayat perubahan.
+                                        </td>
+
+                                    </tr>
+                                @endforelse
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
 
                 </div>
 
-                <footer>
+                <footer class="aktiva-history-footer">
 
-                    <button
-                        type="button"
-                        class="aktiva-cancel-button"
-                        id="cancelAktivaButton"
-                    >
+                    <button type="button" class="aktiva-cancel-button"
+                        onclick="document.getElementById('aktivaHistoryModal').close()">
                         Tutup
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="aktiva-save-button"
-                        id="saveAktivaButton"
-                    >
-
-                        <i data-lucide="save"></i>
-
-                        <span>Simpan Kode Aktiva</span>
-
                     </button>
 
                 </footer>
 
-            </form>
-
-        </div>
-
-    </dialog>
-
-    {{-- ===========================================
-         MODAL RIWAYAT AKTIVITAS
-    =========================================== --}}
-
-    <dialog
-        class="aktiva-modal"
-        id="aktivaHistoryModal"
-        aria-labelledby="aktivaHistoryTitle"
-    >
-
-        <div class="aktiva-modal-box history">
-
-            <header>
-
-                <div>
-
-                    <span>AKTIVITAS MASTER DATA</span>
-
-                    <h3 id="aktivaHistoryTitle">
-                        Riwayat Perubahan Kode Aktiva
-                    </h3>
-
-                    <p>
-                        Penambahan dan penghapusan data Kode Aktiva.
-                    </p>
-
-                </div>
-
-                <button
-                    type="button"
-                    id="closeAktivaHistory"
-                    aria-label="Tutup riwayat"
-                >
-                    <i data-lucide="x"></i>
-                </button>
-
-            </header>
-
-            <div class="aktiva-modal-body">
-
-                <div class="aktiva-history-summary">
-
-                    <article>
-
-                        <span>Ditambahkan</span>
-
-                        <strong class="green">
-                            ↑ {{ $aktivaTambah ?? 0 }}
-                        </strong>
-
-                    </article>
-
-                    <article>
-
-                        <span>Dihapus</span>
-
-                        <strong class="red">
-                            ↓ {{ $aktivaHapus ?? 0 }}
-                        </strong>
-
-                    </article>
-
-                    <article>
-
-                        <span>Perubahan Bersih</span>
-
-                        <strong>
-                            {{ $deltaValue > 0 ? '+' : '' }}{{ $deltaValue }}
-                        </strong>
-
-                    </article>
-
-                </div>
-
-                <div class="table-responsive">
-
-                    <table class="aktiva-history-table">
-
-                        <thead>
-
-                            <tr>
-                                <th>No.</th>
-                                <th>Nama Aktiva</th>
-                                <th>Status</th>
-                                <th>Waktu</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            @forelse ($activityRows as $index => $log)
-
-                                <tr>
-
-                                    <td>{{ $index + 1 }}</td>
-
-                                    <td>
-                                        {{ $log->record_name ?? '—' }}
-                                    </td>
-
-                                    <td>
-
-                                        @if (($log->action ?? '') === 'created')
-
-                                            <span class="history-badge created">
-                                                Ditambahkan
-                                            </span>
-
-                                        @else
-
-                                            <span class="history-badge deleted">
-                                                Dihapus
-                                            </span>
-
-                                        @endif
-
-                                    </td>
-
-                                    <td>
-
-                                        @if (!empty($log->created_at))
-
-                                            {{ \Carbon\Carbon::parse(
-                                                $log->created_at
-                                            )->locale('id')->translatedFormat('d M Y, H:i') }}
-
-                                        @else
-
-                                            —
-
-                                        @endif
-
-                                    </td>
-
-                                </tr>
-
-                            @empty
-
-                                <tr>
-
-                                    <td colspan="4" class="aktiva-empty">
-                                        Belum ada riwayat perubahan.
-                                    </td>
-
-                                </tr>
-
-                            @endforelse
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
             </div>
 
-            <footer class="aktiva-history-footer">
+        </dialog>
 
-                <button
-                    type="button"
-                    class="aktiva-cancel-button"
-                    onclick="document.getElementById('aktivaHistoryModal').close()"
-                >
-                    Tutup
-                </button>
-
-            </footer>
-
-        </div>
-
-    </dialog>
-
-    {{-- ===========================================
+        {{-- ===========================================
          TOAST NOTIFIKASI
     =========================================== --}}
 
-    <div
-        class="aktiva-toast"
-        id="aktivaToast"
-        role="status"
-        aria-live="polite"
-        hidden
-    >
+        <div class="aktiva-toast" id="aktivaToast" role="status" aria-live="polite" hidden>
 
-        <i data-lucide="circle-check"></i>
+            <i data-lucide="circle-check"></i>
 
-        <div>
+            <div>
 
-            <strong id="aktivaToastTitle">
-                Berhasil
-            </strong>
+                <strong id="aktivaToastTitle">
+                    Berhasil
+                </strong>
 
-            <span id="aktivaToastMessage"></span>
+                <span id="aktivaToastMessage"></span>
+
+            </div>
 
         </div>
 
-    </div>
-
-</section>
+    </section>
 
 @endsection
 
 @push('scripts')
+    <script>
+        window.AKTIVA_CRUD = {
+            store: @json(route('master.data_aktiva.store')),
+            update: @json(url('/master-data/kode-aktiva/__ID__')),
+            destroy: @json(url('/master-data/kode-aktiva/__ID__'))
+        };
+    </script>
 
-<script>
-    window.AKTIVA_CRUD = {
-        store: @json(route('master.data_aktiva.store')),
-        update: @json(url('/master-data/kode-aktiva/__ID__')),
-        destroy: @json(url('/master-data/kode-aktiva/__ID__'))
-    };
-</script>
-
-<script
-    src="{{ asset('js/pages/master/kode_aktiva.js') }}?v={{ file_exists(public_path('js/pages/master/kode_aktiva.js')) ? filemtime(public_path('js/pages/master/kode_aktiva.js')) : '1' }}"
-></script>
-
+    <script
+        src="{{ asset('js/pages/master/kode_aktiva.js') }}?v={{ file_exists(public_path('js/pages/master/kode_aktiva.js')) ? filemtime(public_path('js/pages/master/kode_aktiva.js')) : '1' }}">
+    </script>
 @endpush

@@ -1080,3 +1080,799 @@
     icons();
 
 })();
+
+/* ============================================================
+   SEARCHABLE DROPDOWN — KODE AKTIVA
+
+   UNTUK:
+   1. Golongan Aktiva (#aktivaGol)
+   2. Kategori / KIB (#aktivaKib)
+
+   FITUR:
+   - Dropdown saat input diklik
+   - Filter realtime saat mengetik
+   - Pencarian sebagian kata
+   - Prioritas hasil yang diawali kata pencarian
+   - Navigasi keyboard
+   - Klik untuk memilih
+   - Bisa memasukkan nilai baru
+   - Mendukung mode Tambah/Edit/View/Delete
+   - Tidak mengubah request CRUD lama
+============================================================ */
+
+(function () {
+
+    'use strict';
+
+    const COMBO_SELECTOR =
+        '[data-aktiva-combo]';
+
+    let comboStates = [];
+
+    /* ========================================================
+       NORMALISASI TEKS
+       Supaya huruf besar/kecil tidak memengaruhi pencarian.
+    ======================================================== */
+
+    function normalizeComboText(value) {
+
+        return String(value ?? '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('id-ID')
+            .trim();
+
+    }
+
+    /* ========================================================
+       AMBIL OPSI YANG SEDANG TAMPIL
+    ======================================================== */
+
+    function visibleOptions(state) {
+
+        return state.options.filter(
+            option => !option.hidden
+        );
+
+    }
+
+    /* ========================================================
+       TUTUP SATU DROPDOWN
+    ======================================================== */
+
+    function closeCombo(state) {
+
+        if (!state) {
+            return;
+        }
+
+        state.dropdown.hidden = true;
+
+        state.root.classList.remove(
+            'is-open',
+            'is-up'
+        );
+
+        state.input.setAttribute(
+            'aria-expanded',
+            'false'
+        );
+
+        state.input.removeAttribute(
+            'aria-activedescendant'
+        );
+
+        state.activeIndex = -1;
+
+        state.options.forEach(option => {
+
+            option.classList.remove(
+                'is-active'
+            );
+
+            option.setAttribute(
+                'aria-selected',
+                'false'
+            );
+
+        });
+
+    }
+
+    /* ========================================================
+       TUTUP SEMUA DROPDOWN
+    ======================================================== */
+
+    function closeAllCombos(except = null) {
+
+        comboStates.forEach(state => {
+
+            if (state !== except) {
+                closeCombo(state);
+            }
+
+        });
+
+    }
+
+    /* ========================================================
+       PERBARUI PILIHAN YANG AKTIF
+    ======================================================== */
+
+    function setActiveOption(
+        state,
+        index
+    ) {
+
+        const visible = visibleOptions(state);
+
+        state.options.forEach(option => {
+
+            option.classList.remove(
+                'is-active'
+            );
+
+            option.setAttribute(
+                'aria-selected',
+                'false'
+            );
+
+        });
+
+        if (
+            index < 0 ||
+            index >= visible.length
+        ) {
+
+            state.activeIndex = -1;
+
+            state.input.removeAttribute(
+                'aria-activedescendant'
+            );
+
+            return;
+        }
+
+        state.activeIndex = index;
+
+        const selected = visible[index];
+
+        selected.classList.add(
+            'is-active'
+        );
+
+        selected.setAttribute(
+            'aria-selected',
+            'true'
+        );
+
+        state.input.setAttribute(
+            'aria-activedescendant',
+            selected.id
+        );
+
+        selected.scrollIntoView({
+            block: 'nearest',
+            behavior: 'auto'
+        });
+
+    }
+
+    /* ========================================================
+       TENTUKAN POSISI DROPDOWN
+       Jika ruang bawah sempit, daftar muncul ke atas.
+    ======================================================== */
+
+    function updateComboPosition(state) {
+
+        const rect =
+            state.root.getBoundingClientRect();
+
+        const below =
+            window.innerHeight - rect.bottom;
+
+        const above = rect.top;
+
+        const needUp =
+            below < 280 &&
+            above > below &&
+            above >= 250;
+
+        state.root.classList.toggle(
+            'is-up',
+            needUp
+        );
+
+    }
+
+    /* ========================================================
+       TAMPILKAN / FILTER PILIHAN
+    ======================================================== */
+
+    function renderCombo(state) {
+
+        if (
+            state.input.readOnly ||
+            state.input.disabled
+        ) {
+
+            closeCombo(state);
+
+            return;
+        }
+
+        closeAllCombos(state);
+
+        const keyword = normalizeComboText(
+            state.input.value
+        );
+
+        /*
+         * Urutan:
+         * 1. Teks yang diawali keyword
+         * 2. Teks yang mengandung keyword
+         * 3. Alfabetis
+         */
+
+        const sorted = [...state.options]
+            .sort((a, b) => {
+
+                const textA = normalizeComboText(
+                    a.dataset.value
+                );
+
+                const textB = normalizeComboText(
+                    b.dataset.value
+                );
+
+                const rankA = (
+                    !keyword ||
+                    textA.startsWith(keyword)
+                ) ? 0 : 1;
+
+                const rankB = (
+                    !keyword ||
+                    textB.startsWith(keyword)
+                ) ? 0 : 1;
+
+                return (
+                    rankA - rankB ||
+                    textA.localeCompare(
+                        textB,
+                        'id',
+                        {
+                            numeric: true,
+                            sensitivity: 'base'
+                        }
+                    )
+                );
+
+            });
+
+        let matched = 0;
+
+        sorted.forEach(option => {
+
+            const optionText = normalizeComboText(
+                option.dataset.value
+            );
+
+            const matches =
+                !keyword ||
+                optionText.includes(keyword);
+
+            option.hidden = !matches;
+
+            if (matches) {
+                matched++;
+            }
+
+            state.items.appendChild(option);
+
+        });
+
+        /* EMPTY STATE */
+
+        if (matched === 0) {
+
+            state.empty.hidden = false;
+
+            state.empty.textContent =
+                keyword
+                    ? 'Tidak ada pilihan yang cocok. ' +
+                      'Kamu tetap bisa menggunakan teks baru.'
+                    : 'Belum ada pilihan tersedia. ' +
+                      'Kamu bisa mengetik nilai baru.';
+
+        } else {
+
+            state.empty.hidden = true;
+
+            state.empty.textContent = '';
+
+        }
+
+        /* OPEN */
+
+        state.dropdown.hidden = false;
+
+        state.root.classList.add(
+            'is-open'
+        );
+
+        state.input.setAttribute(
+            'aria-expanded',
+            'true'
+        );
+
+        updateComboPosition(state);
+
+        setActiveOption(state, -1);
+
+        state.items.scrollTop = 0;
+
+    }
+
+    /* ========================================================
+       PILIH OPSI
+    ======================================================== */
+
+    function selectComboOption(
+        state,
+        option
+    ) {
+
+        if (!option) {
+            return;
+        }
+
+        const selectedValue = String(
+            option.dataset.value ?? ''
+        ).trim();
+
+        /*
+         * Tetap menggunakan input asli:
+         * name="gol" atau name="kib"
+         *
+         * Jadi CRUD lama masih mengirim
+         * field yang sama.
+         */
+
+        state.input.value = selectedValue;
+
+        state.input.focus({
+            preventScroll: true
+        });
+
+        closeCombo(state);
+
+        state.input.dispatchEvent(
+            new Event('change', {
+                bubbles: true
+            })
+        );
+
+    }
+
+    /* ========================================================
+       KEYBOARD NAVIGATION
+    ======================================================== */
+
+    function handleComboKeyboard(
+        event,
+        state
+    ) {
+
+        const key = event.key;
+
+        /* ARROW DOWN */
+
+        if (key === 'ArrowDown') {
+
+            event.preventDefault();
+
+            if (state.dropdown.hidden) {
+
+                renderCombo(state);
+
+            }
+
+            const visible = visibleOptions(state);
+
+            if (visible.length) {
+
+                setActiveOption(
+                    state,
+                    Math.min(
+                        state.activeIndex + 1,
+                        visible.length - 1
+                    )
+                );
+
+            }
+
+            return;
+        }
+
+        /* ARROW UP */
+
+        if (key === 'ArrowUp') {
+
+            event.preventDefault();
+
+            if (state.dropdown.hidden) {
+
+                renderCombo(state);
+
+            }
+
+            const visible = visibleOptions(state);
+
+            if (visible.length) {
+
+                setActiveOption(
+                    state,
+                    state.activeIndex <= 0
+                        ? visible.length - 1
+                        : state.activeIndex - 1
+                );
+
+            }
+
+            return;
+        }
+
+        /* ENTER */
+
+        if (
+            key === 'Enter' &&
+            !state.dropdown.hidden
+        ) {
+
+            event.preventDefault();
+
+            const visible = visibleOptions(state);
+
+            if (visible.length) {
+
+                const index =
+                    state.activeIndex >= 0
+                        ? state.activeIndex
+                        : 0;
+
+                selectComboOption(
+                    state,
+                    visible[index]
+                );
+
+            } else {
+
+                /*
+                 * Tidak ada hasil:
+                 * teks yang diketik tetap disimpan.
+                 */
+
+                closeCombo(state);
+
+            }
+
+            return;
+        }
+
+        /* ESCAPE */
+
+        if (
+            key === 'Escape' &&
+            !state.dropdown.hidden
+        ) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            closeCombo(state);
+
+            return;
+        }
+
+        /* TAB */
+
+        if (key === 'Tab') {
+
+            closeCombo(state);
+
+        }
+
+    }
+
+    /* ========================================================
+       INISIALISASI SATU COMBOBOX
+    ======================================================== */
+
+    function initializeCombo(root) {
+
+        const input = root.querySelector(
+            '[data-aktiva-combo-input]'
+        );
+
+        const toggle = root.querySelector(
+            '[data-aktiva-combo-toggle]'
+        );
+
+        const dropdown = root.querySelector(
+            '[data-aktiva-combo-list]'
+        );
+
+        const items = root.querySelector(
+            '.aktiva-combo-options'
+        );
+
+        const empty = root.querySelector(
+            '[data-aktiva-combo-empty]'
+        );
+
+        if (
+            !input ||
+            !toggle ||
+            !dropdown ||
+            !items ||
+            !empty
+        ) {
+            return null;
+        }
+
+        const options = [
+            ...root.querySelectorAll(
+                '[data-aktiva-combo-option]'
+            )
+        ];
+
+        const state = {
+            root,
+            input,
+            toggle,
+            dropdown,
+            items,
+            empty,
+            options,
+            activeIndex: -1
+        };
+
+        /* INPUT FOCUS */
+
+        input.addEventListener(
+            'focus',
+            () => {
+
+                renderCombo(state);
+
+            }
+        );
+
+        /* REALTIME SEARCH */
+
+        input.addEventListener(
+            'input',
+            () => {
+
+                renderCombo(state);
+
+            }
+        );
+
+        /* KEYBOARD */
+
+        input.addEventListener(
+            'keydown',
+            event => {
+
+                handleComboKeyboard(
+                    event,
+                    state
+                );
+
+            }
+        );
+
+        /* TOMBOL PANAH */
+
+        toggle.addEventListener(
+            'click',
+            () => {
+
+                if (
+                    input.readOnly ||
+                    input.disabled
+                ) {
+                    closeCombo(state);
+                    return;
+                }
+
+                if (!dropdown.hidden) {
+
+                    closeCombo(state);
+
+                } else {
+
+                    input.focus({
+                        preventScroll: true
+                    });
+
+                    renderCombo(state);
+
+                }
+
+            }
+        );
+
+        /* PILIH DENGAN MOUSE */
+
+        options.forEach(option => {
+
+            /*
+             * Cegah input kehilangan fokus
+             * sebelum tombol pilihan diklik.
+             */
+
+            option.addEventListener(
+                'pointerdown',
+                event => {
+
+                    event.preventDefault();
+
+                }
+            );
+
+            option.addEventListener(
+                'click',
+                () => {
+
+                    selectComboOption(
+                        state,
+                        option
+                    );
+
+                }
+            );
+
+        });
+
+        return state;
+
+    }
+
+    /* ========================================================
+       INITIALIZATION
+    ======================================================== */
+
+    function initializeAktivaCombos() {
+
+        const roots = [
+            ...document.querySelectorAll(
+                COMBO_SELECTOR
+            )
+        ];
+
+        if (!roots.length) {
+            return;
+        }
+
+        comboStates = roots
+            .filter(root => {
+
+                if (
+                    root.dataset.comboInitialized === '1'
+                ) {
+                    return false;
+                }
+
+                root.dataset.comboInitialized = '1';
+
+                return true;
+
+            })
+            .map(initializeCombo)
+            .filter(Boolean);
+
+        /* KLIK DI LUAR COMBOBOX */
+
+        document.addEventListener(
+            'pointerdown',
+            event => {
+
+                const inside = comboStates.some(
+                    state =>
+                        state.root.contains(event.target)
+                );
+
+                if (!inside) {
+
+                    closeAllCombos();
+
+                }
+
+            }
+        );
+
+        /* MODAL DITUTUP */
+
+        const modal = document.getElementById(
+            'aktivaModal'
+        );
+
+        modal?.addEventListener(
+            'close',
+            () => {
+
+                closeAllCombos();
+
+            }
+        );
+
+        /* FORM RESET */
+
+        const form = document.getElementById(
+            'aktivaForm'
+        );
+
+        form?.addEventListener(
+            'reset',
+            () => {
+
+                closeAllCombos();
+
+            }
+        );
+
+        /* SUBMIT FORM */
+
+        form?.addEventListener(
+            'submit',
+            () => {
+
+                closeAllCombos();
+
+            }
+        );
+
+        /* RESIZE / SCROLL */
+
+        window.addEventListener(
+            'resize',
+            () => {
+
+                comboStates.forEach(state => {
+
+                    if (!state.dropdown.hidden) {
+
+                        updateComboPosition(state);
+
+                    }
+
+                });
+
+            }
+        );
+
+    }
+
+    /* ========================================================
+       START
+    ======================================================== */
+
+    if (
+        document.readyState === 'loading'
+    ) {
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            initializeAktivaCombos
+        );
+
+    } else {
+
+        initializeAktivaCombos();
+
+    }
+
+})();

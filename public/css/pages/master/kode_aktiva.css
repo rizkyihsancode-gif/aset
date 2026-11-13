@@ -1359,3 +1359,585 @@
     }
 
 }
+
+/* ==========================================================
+   MASTER DATA — KODE AKTIVA
+   SEARCHABLE DROPDOWN DESIGN
+
+   GOLONGAN AKTIVA + KATEGORI/KIB
+
+   - Dropdown putih dan biru profesional
+   - Live search
+   - Scroll otomatis untuk banyak pilihan
+   - Font lebih besar
+   - Mendukung dropdown muncul ke atas
+   - Responsif
+========================================================== */
+
+
+/* ==========================================================
+   1. COMBOBOX CONTAINER
+========================================================== */
+
+.aktiva-page .aktiva-combobox {
+    position: relative;
+
+    width: 100%;
+    min-width: 0;
+
+    font-family: inherit;
+}
+
+
+/* ==========================================================
+   2. INPUT CONTROL
+========================================================== */
+
+.aktiva-page .aktiva-combo-control {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   3. TEXT INPUT
+========================================================== */
+
+.aktiva-page
+.aktiva-combo-control
+input[data-aktiva-combo-input] {
+
+    display: block;
+
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+
+    padding: 0 45px 0 13px;
+
+    border: 1px solid #d5e2ef;
+    border-radius: 8px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: #244b76;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    line-height: 1.5;
+
+    text-align: left;
+    text-indent: 0;
+
+    transition:
+        border-color .15s ease,
+        box-shadow .15s ease;
+}
+
+
+/* ==========================================================
+   4. INPUT PLACEHOLDER
+========================================================== */
+
+.aktiva-page
+.aktiva-combo-control
+input::placeholder {
+
+    color: #8ca0b8;
+
+    font-size: 13px;
+    font-weight: 400;
+
+    opacity: 1;
+}
+
+
+/* ==========================================================
+   5. INPUT FOCUS
+========================================================== */
+
+.aktiva-page
+.aktiva-combobox.is-open
+.aktiva-combo-control input,
+
+.aktiva-page
+.aktiva-combo-control input:focus {
+
+    border-color: #5d9eea;
+
+    box-shadow:
+        0 0 0 3px rgba(8, 104, 216, .09);
+}
+
+
+/* ==========================================================
+   6. TOMBOL DROPDOWN
+========================================================== */
+
+.aktiva-page .aktiva-combo-toggle {
+    position: absolute;
+
+    top: 50%;
+    right: 7px;
+
+    transform: translateY(-50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+    color: #637f9e;
+
+    cursor: pointer;
+
+    z-index: 2;
+
+    transition:
+        background-color .15s ease,
+        color .15s ease;
+}
+
+
+/* ==========================================================
+   7. HOVER TOMBOL
+========================================================== */
+
+.aktiva-page .aktiva-combo-toggle:hover {
+    background: #edf5ff;
+    color: #0868d8;
+}
+
+
+/* ==========================================================
+   8. IKON PANAH
+========================================================== */
+
+.aktiva-page .aktiva-combo-toggle svg {
+    width: 18px;
+    height: 18px;
+
+    transition: transform .18s ease;
+}
+
+
+/* ==========================================================
+   9. PANAH SAAT DROPDOWN TERBUKA
+========================================================== */
+
+.aktiva-page
+.aktiva-combobox.is-open
+.aktiva-combo-toggle svg {
+
+    transform: rotate(180deg);
+}
+
+
+/* ==========================================================
+   10. READONLY / DETAIL
+========================================================== */
+
+.aktiva-page
+.aktiva-combo-control
+input[readonly] {
+
+    background: #f3f6fa;
+
+    color: #526b87;
+
+    cursor: default;
+}
+
+.aktiva-page
+.aktiva-combo-control
+input[readonly] + .aktiva-combo-toggle {
+
+    opacity: .45;
+
+    pointer-events: none;
+}
+
+
+/* ==========================================================
+   11. MODAL
+   Agar daftar pilihan tidak terpotong footer modal.
+========================================================== */
+
+.aktiva-page .aktiva-modal {
+    overflow: visible;
+}
+
+.aktiva-page .aktiva-modal-box {
+    overflow: visible;
+}
+
+
+/* ==========================================================
+   12. DROPDOWN CONTAINER
+========================================================== */
+
+.aktiva-page .aktiva-combo-dropdown {
+    position: absolute;
+
+    top: calc(100% + 7px);
+    left: 0;
+    right: 0;
+
+    width: 100%;
+    min-width: 100%;
+
+    z-index: 9999;
+
+    overflow: hidden;
+
+    border: 1px solid #d6e5f5;
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 16px 35px rgba(16, 51, 91, .16),
+        0 2px 8px rgba(16, 51, 91, .06);
+
+    animation:
+        aktivaDropdownShow .12s ease-out;
+}
+
+
+/* ==========================================================
+   13. ANIMASI
+========================================================== */
+
+@keyframes aktivaDropdownShow {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+/* ==========================================================
+   14. DROPDOWN KE ATAS
+========================================================== */
+
+.aktiva-page
+.aktiva-combobox.is-up
+.aktiva-combo-dropdown {
+
+    top: auto;
+    bottom: calc(100% + 7px);
+}
+
+
+/* ==========================================================
+   15. HEADER PILIHAN
+========================================================== */
+
+.aktiva-page .aktiva-combo-list-header {
+    padding: 11px 13px;
+
+    border-bottom: 1px solid #e6eef7;
+
+    background: #f3f8ff;
+
+    color: #1d4f83;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    line-height: 1.4;
+}
+
+
+/* ==========================================================
+   16. SCROLLABLE OPTIONS
+========================================================== */
+
+.aktiva-page .aktiva-combo-options {
+    width: 100%;
+
+    max-height: 230px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+
+    scrollbar-width: thin;
+    scrollbar-color: #c5d8ed transparent;
+
+    background: #ffffff;
+}
+
+
+/* ==========================================================
+   17. OPTION ITEM
+========================================================== */
+
+.aktiva-page .aktiva-combo-option {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    width: 100%;
+    min-height: 42px;
+
+    margin: 0;
+    padding: 11px 13px;
+
+    border: 0;
+    border-bottom: 1px solid #f0f4f9;
+
+    border-radius: 0;
+
+    background: #ffffff;
+    color: #284d76;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1.45;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background-color .12s ease,
+        color .12s ease;
+}
+
+
+/* ==========================================================
+   18. OPTION ICON
+========================================================== */
+
+.aktiva-page .aktiva-combo-option svg {
+    flex: 0 0 16px;
+
+    width: 16px;
+    height: 16px;
+
+    color: #5b8fc9;
+}
+
+
+/* ==========================================================
+   19. OPTION TEXT
+========================================================== */
+
+.aktiva-page .aktiva-combo-option span {
+    flex: 1 1 auto;
+
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+
+/* ==========================================================
+   20. HOVER DAN KEYBOARD ACTIVE
+========================================================== */
+
+.aktiva-page .aktiva-combo-option:hover,
+
+.aktiva-page
+.aktiva-combo-option.is-active {
+
+    background: #eaf4ff;
+    color: #0756ae;
+}
+
+
+/* ==========================================================
+   21. HIDDEN FILTER
+========================================================== */
+
+.aktiva-page
+.aktiva-combo-option[hidden] {
+
+    display: none !important;
+}
+
+
+/* ==========================================================
+   22. NO RESULT
+========================================================== */
+
+.aktiva-page .aktiva-combo-no-result {
+    padding: 17px 13px;
+
+    color: #6b829d;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+
+    text-align: center;
+}
+
+
+/* ==========================================================
+   23. FOOTER DROPDOWN
+========================================================== */
+
+.aktiva-page .aktiva-combo-list-footer {
+    padding: 10px 13px;
+
+    border-top: 1px solid #e8eff8;
+
+    background: #f8fbff;
+
+    color: #7790aa;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    line-height: 1.5;
+}
+
+
+/* ==========================================================
+   24. PERBESAR TEKS FORM
+========================================================== */
+
+.aktiva-page .aktiva-field label {
+    margin-bottom: 8px;
+
+    color: #284a70;
+
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.aktiva-page .aktiva-field > input {
+    height: 44px;
+
+    font-size: 14px;
+}
+
+.aktiva-page .aktiva-field > input::placeholder {
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   25. SPACING FORM
+========================================================== */
+
+.aktiva-page .aktiva-form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    column-gap: 14px;
+    row-gap: 18px;
+}
+
+.aktiva-page .aktiva-field {
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   26. MODAL NOTE
+========================================================== */
+
+.aktiva-page .aktiva-modal-note {
+    margin-top: 17px;
+
+    padding: 11px 13px;
+
+    font-size: 12px;
+
+    line-height: 1.65;
+}
+
+
+/* ==========================================================
+   27. RESPONSIVE MOBILE
+========================================================== */
+
+@media (max-width: 760px) {
+
+    .aktiva-page .aktiva-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .aktiva-page .aktiva-field label {
+        font-size: 13px;
+    }
+
+    .aktiva-page
+    .aktiva-combo-control input {
+
+        height: 44px;
+
+        font-size: 13px;
+    }
+
+    .aktiva-page .aktiva-combo-options {
+        max-height: min(210px, 32dvh);
+    }
+
+    .aktiva-page .aktiva-combo-option {
+        min-height: 44px;
+
+        padding: 12px;
+
+        font-size: 12px;
+    }
+
+    .aktiva-page .aktiva-combo-list-header {
+        font-size: 11px;
+    }
+
+    .aktiva-page .aktiva-combo-list-footer {
+        font-size: 10px;
+    }
+
+}
+
+
+/* ==========================================================
+   28. PREFERS REDUCED MOTION
+========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .aktiva-page .aktiva-combo-dropdown {
+        animation: none;
+    }
+
+    .aktiva-page .aktiva-combo-toggle svg {
+        transition: none;
+    }
+
+}
