@@ -119,6 +119,7 @@ class NilaiAsetController extends Controller
 
         // MASTER AKTIVA
         $aktivaOptions = DB::table('aktivas')
+            ->where('status', 'aktif')
             ->select(['id', 'kode', 'aktiva', 'kib'])
             ->orderBy('kode')
             ->orderBy('aktiva')
@@ -126,12 +127,14 @@ class NilaiAsetController extends Controller
 
         // MASTER LOKASI
         $lokasiOptions = DB::table('lokasis')
+            ->where('status', 'aktif')
             ->select(['id', 'lokasi'])
             ->orderBy('lokasi')
             ->get();
 
         // MASTER DEPARTEMEN
         $departemenOptions = DB::table('departemens')
+            ->where('status', 'aktif')
             ->select('id')
             ->selectRaw('TRIM(nama_dep) as nama_dep')
             ->selectRaw('TRIM(kode_dep) as kode_dep')
@@ -140,6 +143,7 @@ class NilaiAsetController extends Controller
 
         // MASTER DIVISI
         $divisiOptions = DB::table('divisis')
+            ->where('status', 'aktif')
             ->select(['id', 'id_dep'])
             ->selectRaw('TRIM(nama_div) as nama_div')
             ->orderByRaw('TRIM(nama_div) ASC')
@@ -607,7 +611,7 @@ class NilaiAsetController extends Controller
      */
     public function update(Request $request, int $nilai)
     {
-        $validated = $this->validateData($request);
+        $validated = $this->validateData($request, $nilai);
 
         $this->checkGolonganAktiva($validated);
 
@@ -953,8 +957,34 @@ class NilaiAsetController extends Controller
      * ==========================================
      */
     private function validateData(
-        Request $request
+        Request $request,
+        ?int $existingNilaiId = null
     ): array {
+
+        // Pada Edit, nilai master historis yang sama boleh dipertahankan,
+        // tetapi mengganti pilihan wajib menggunakan master aktif.
+        $existing = $existingNilaiId === null
+            ? null
+            : DB::table('nilai_aktivas')
+            ->where('id', $existingNilaiId)
+            ->first(['id_aktiva', 'id_lokasi', 'dep', 'div']);
+
+        if ($existingNilaiId !== null && !$existing) {
+            abort(404);
+        }
+
+        $masterRule = static function (
+            string $table,
+            string $field
+        ) use ($request, $existing) {
+            $unchanged = $existing !== null
+                && $request->filled($field)
+                && (string) $request->input($field) === (string) $existing->{$field};
+
+            return $unchanged
+                ? Rule::exists($table, 'id')
+                : Rule::exists($table, 'id')->where('status', 'aktif');
+        };
 
         return $request->validate(
             [
@@ -972,43 +1002,28 @@ class NilaiAsetController extends Controller
                 'id_aktiva' => [
                     'required',
                     'integer',
-                    Rule::exists(
-                        'aktivas',
-                        'id'
-                    ),
+                    $masterRule('aktivas', 'id_aktiva'),
                 ],
 
                 'id_lokasi' => [
                     'required',
                     'integer',
-                    Rule::exists(
-                        'lokasis',
-                        'id'
-                    ),
+                    $masterRule('lokasis', 'id_lokasi'),
                 ],
 
                 'dep' => [
                     'required',
                     'integer',
-                    Rule::exists(
-                        'departemens',
-                        'id'
-                    ),
+                    $masterRule('departemens', 'dep'),
                 ],
 
                 'div' => [
                     'required',
                     'integer',
 
-                    Rule::exists(
-                        'divisis',
-                        'id'
-                    )->where(
+                    $masterRule('divisis', 'div')->where(
                         function ($query) use ($request) {
-                            $query->where(
-                                'id_dep',
-                                $request->dep
-                            );
+                            $query->where('id_dep', $request->dep);
                         }
                     ),
                 ],
@@ -1067,6 +1082,13 @@ class NilaiAsetController extends Controller
                 'id_aktiva.required' =>
                 'Aktiva wajib dipilih.',
 
+                'id_aktiva.exists' =>
+                'Kode Aktiva tidak aktif atau tidak valid.',
+
+                'id_lokasi.exists' =>
+                'Lokasi tidak aktif atau tidak valid.',
+
+
                 'id_lokasi.required' =>
                 'Lokasi wajib dipilih.',
 
@@ -1074,13 +1096,13 @@ class NilaiAsetController extends Controller
                 'Departemen wajib dipilih.',
 
                 'dep.exists' =>
-                'Departemen tidak valid.',
+                'Departemen tidak aktif atau tidak valid.',
 
                 'div.required' =>
                 'Divisi wajib dipilih.',
 
                 'div.exists' =>
-                'Divisi tidak sesuai dengan Departemen.',
+                'Divisi tidak aktif atau tidak sesuai dengan Departemen.',
 
                 'cat.required' =>
                 'Golongan wajib dipilih.',

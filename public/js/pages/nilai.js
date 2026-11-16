@@ -1,15 +1,44 @@
 
 /* ============================================================
    NILAI ASET — PERUMDA TIRTA KENCANA
-   Full JavaScript: CRUD, form, filter, PDF, chart, modal.
-   Tambah = POST; Edit = PUT; Gedung = K.I.B C.
+
+   FULL JAVASCRIPT
+   ------------------------------------------------------------
+   Fitur:
+   01. Format angka dan tanggal
+   02. Searchable dropdown
+   03. Filter Master Data Aktif
+   04. Referensi historis pada form Edit
+   05. Filter Departemen dan Divisi
+   06. Filter Kode Aktiva Gedung / K.I.B C
+   07. CRUD Nilai Aset
+   08. Modal Detail dan Hapus
+   09. Multi PDF dan Preview
+   10. Validasi Form
+   11. Grafik Tren Nilai Aset
+   12. Grafik Donut Kategori
+   13. Responsive Chart
+
+   Ketentuan:
+   - Tambah menggunakan POST.
+   - Edit menggunakan POST + _method PUT.
+   - Master Nonaktif tidak tersedia untuk data baru.
+   - Data historis tidak dihapus.
+   - Filtering utama wajib dilakukan Controller.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    const $ = (selector, root = document) => root.querySelector(selector);
-    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+    // ========================================================
+    // 1. HELPER DAN FORMAT DATA
+    // ========================================================
+
+    const $ = (selector, root = document) =>
+        root.querySelector(selector);
+
+    const $$ = (selector, root = document) =>
+        Array.from(root.querySelectorAll(selector));
 
     const numberFormat = new Intl.NumberFormat('id-ID', {
         maximumFractionDigits: 0
@@ -18,7 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatRupiah = value =>
         'Rp ' + numberFormat.format(Number(value) || 0);
 
-    const refreshIcons = () => window.lucide?.createIcons?.();
+    const refreshIcons = () =>
+        window.lucide?.createIcons?.();
 
     function formatCompact(value) {
         const n = Number(value) || 0;
@@ -54,24 +84,230 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!value) return '-';
 
         const s = String(value).slice(0, 10);
+
         const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
 
-        return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
+        return m
+            ? `${m[3]}/${m[2]}/${m[1]}`
+            : s;
+    }
+
+    function normalizeStatus(value) {
+        return String(value ?? '')
+            .trim()
+            .toLocaleLowerCase('id-ID');
+    }
+
+    function normalizeId(value) {
+        return value == null
+            ? ''
+            : String(value).trim();
+    }
+
+    // ========================================================
+    // 2. KONFIGURASI MASTER DATA
+    // ========================================================
+
+    /*
+     * Dropdown Master yang digunakan pada Nilai Aset:
+     *
+     * #nilaiAktiva       -> aktivas
+     * #nilaiLokasi       -> lokasis
+     * #nilaiDepartemen   -> departemens
+     * #nilaiDivisi       -> divisis
+     *
+     * Controller seharusnya hanya mengirim data:
+     *
+     * WHERE status = 'aktif'
+     *
+     * JavaScript ini juga memeriksa data-status apabila
+     * atribut tersebut tersedia pada <option>.
+     *
+     * Option tanpa data-status dianggap sebagai data yang
+     * sudah difilter oleh Controller.
+     */
+
+    const MASTER_SELECTORS = [
+        '#nilaiAktiva',
+        '#nilaiLokasi',
+        '#nilaiDepartemen',
+        '#nilaiDivisi'
+    ];
+
+    let nilaiFormMode = 'create';
+
+    const historicalSelections = new Map();
+
+    function isMasterSelect(select) {
+        return !!select && MASTER_SELECTORS.some(
+            selector => $(selector) === select
+        );
+    }
+
+    function isHistoricalOption(option) {
+        return option?.dataset.historical === '1';
+    }
+
+    function isOptionActive(option) {
+        if (!option || !option.value) return false;
+
+        const status = normalizeStatus(
+            option.dataset.status
+        );
+
+        // Jika Controller telah memfilter, data-status
+        // tidak harus tersedia pada setiap option.
+        if (!status) {
+            return true;
+        }
+
+        return status === 'aktif';
+    }
+
+    function removeHistoricalOptions() {
+        for (const selector of MASTER_SELECTORS) {
+            const select = $(selector);
+
+            if (!select) continue;
+
+            Array.from(select.options).forEach(option => {
+                if (isHistoricalOption(option)) {
+                    option.remove();
+                }
+            });
+        }
+
+        historicalSelections.clear();
+    }
+
+    function applyMasterStatusFilter() {
+        for (const selector of MASTER_SELECTORS) {
+            const select = $(selector);
+
+            if (!select) continue;
+
+            const historicalId = historicalSelections.get(
+                select.id
+            );
+
+            for (const option of select.options) {
+                if (!option.value) {
+                    option.disabled = false;
+                    option.hidden = false;
+                    continue;
+                }
+
+                const historical =
+                    nilaiFormMode === 'edit' &&
+                    isHistoricalOption(option) &&
+                    normalizeId(option.value) === historicalId;
+
+                const allowed =
+                    isOptionActive(option) ||
+                    historical;
+
+                option.disabled = !allowed;
+                option.hidden = !allowed;
+            }
+
+            if (
+                select.value &&
+                select.selectedOptions[0]?.disabled
+            ) {
+                select.value = '';
+            }
+        }
     }
 
     function setSelectValue(selector, value) {
         const element = $(selector);
 
-        if (element) {
-            element.value = value == null ? '' : String(value);
-        }
+        if (!element) return;
+
+        element.value = normalizeId(value);
     }
 
+    /*
+     * Membuat option sementara untuk data historis.
+     *
+     * Digunakan hanya ketika Edit dan referensi lama
+     * tidak lagi tersedia dalam dropdown aktif.
+     *
+     * Option historis dihapus saat membuka form Tambah.
+     */
+
+    function setHistoricalMasterValue(
+        selector,
+        value,
+        label = '',
+        extraData = {}
+    ) {
+        const select = $(selector);
+
+        if (!select) return;
+
+        const id = normalizeId(value);
+
+        if (!id) {
+            select.value = '';
+            return;
+        }
+
+        let option = Array.from(select.options).find(
+            item => item.value === id
+        );
+
+        if (!option) {
+            option = document.createElement('option');
+
+            option.value = id;
+
+            option.textContent = label
+                ? `${label} (Data Historis)`
+                : `ID ${id} (Data Historis)`;
+
+            option.dataset.historical = '1';
+            option.dataset.status = 'nonaktif';
+
+            if (extraData.departemen != null) {
+                option.dataset.departemen =
+                    normalizeId(extraData.departemen);
+            }
+
+            if (extraData.kib != null) {
+                option.dataset.kib = String(extraData.kib);
+            }
+
+            select.appendChild(option);
+        }
+
+        if (
+            option.dataset.status &&
+            normalizeStatus(option.dataset.status) !== 'aktif'
+        ) {
+            option.dataset.historical = '1';
+        }
+
+        if (isHistoricalOption(option)) {
+            historicalSelections.set(select.id, id);
+
+            option.disabled = false;
+            option.hidden = false;
+        }
+
+        select.value = id;
+    }
 
     // ========================================================
-    // SEARCHABLE DROPDOWN NILAI ASET (VANILLA JS)
-    // Select asli tetap menyimpan ID yang dipakai Controller.
+    // 3. SEARCHABLE DROPDOWN NILAI ASET
     // ========================================================
+
+    /*
+     * Select asli tetap menyimpan ID.
+     *
+     * Searchable dropdown hanya mempercantik interaksi.
+     * Data yang dikirim tetap melalui select asli.
+     */
 
     const nilaiCombos = new Map();
 
@@ -82,20 +318,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function enhanceSearchableSelect(select) {
-        if (!select || select.dataset.combobox === 'yes') return;
+        if (
+            !select ||
+            select.dataset.combobox === 'yes'
+        ) {
+            return;
+        }
 
         select.dataset.combobox = 'yes';
 
         const originallyRequired = select.required;
+
         select.required = false;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'nilai-combo';
 
         const input = document.createElement('input');
+
         input.type = 'text';
         input.className = 'nilai-combo-search';
         input.autocomplete = 'off';
+
         input.setAttribute('role', 'combobox');
         input.setAttribute('aria-autocomplete', 'list');
         input.setAttribute('aria-expanded', 'false');
@@ -110,14 +354,17 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         input.placeholder = 'Ketik untuk mencari...';
+
         input.required = originallyRequired;
 
         const menu = document.createElement('div');
+
         menu.className = 'nilai-combo-options';
         menu.setAttribute('role', 'listbox');
         menu.hidden = true;
 
         const parent = select.parentNode;
+
         parent.insertBefore(wrapper, select);
 
         wrapper.append(input, menu, select);
@@ -128,26 +375,47 @@ document.addEventListener('DOMContentLoaded', () => {
         let visibleOptions = [];
         let activeIndex = -1;
 
-        const selectedLabel = () => {
+        function selectedLabel() {
             const option = select.selectedOptions?.[0];
 
-            return option?.value
-                ? option.textContent.trim().replace(/\s+/g, ' ')
-                : '';
-        };
+            if (!option?.value) return '';
 
-        const selectable = () =>
-            Array.from(select.options).filter(option =>
-                option.value &&
-                !option.disabled &&
-                !option.hidden
-            );
+            return option.textContent
+                .trim()
+                .replace(/\s+/g, ' ');
+        }
+
+        function selectable() {
+            return Array.from(select.options).filter(option => {
+                if (!option.value) return false;
+                if (option.disabled || option.hidden) return false;
+
+                if (!isMasterSelect(select)) {
+                    return true;
+                }
+
+                if (isOptionActive(option)) {
+                    return true;
+                }
+
+                // Data lama yang sedang diedit boleh
+                // ditampilkan sebagai referensi historis.
+                return (
+                    nilaiFormMode === 'edit' &&
+                    isHistoricalOption(option) &&
+                    historicalSelections.get(select.id) ===
+                        normalizeId(option.value)
+                );
+            });
+        }
 
         function positionMenu() {
             if (menu.hidden) return;
 
             const rect = input.getBoundingClientRect();
-            const availableBelow = window.innerHeight - rect.bottom;
+
+            const availableBelow =
+                window.innerHeight - rect.bottom;
 
             const height = Math.min(
                 260,
@@ -158,8 +426,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 availableBelow < Math.min(190, height) &&
                 rect.top > availableBelow;
 
-            menu.style.left = Math.round(rect.left) + 'px';
-            menu.style.width = Math.round(rect.width) + 'px';
+            menu.style.left =
+                Math.round(rect.left) + 'px';
+
+            menu.style.width =
+                Math.round(rect.width) + 'px';
 
             menu.style.top = Math.round(
                 above
@@ -169,13 +440,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             menu.style.maxHeight = Math.max(
                 80,
-                above ? rect.top - 12 : availableBelow - 12
+                above
+                    ? rect.top - 12
+                    : availableBelow - 12
             ) + 'px';
         }
 
         function close() {
             menu.hidden = true;
-            input.setAttribute('aria-expanded', 'false');
+
+            input.setAttribute(
+                'aria-expanded',
+                'false'
+            );
+
             activeIndex = -1;
         }
 
@@ -189,18 +467,28 @@ document.addEventListener('DOMContentLoaded', () => {
             );
 
             if (!menu.hidden) {
-                render(input.value, true);
+                render('', true);
             }
         }
 
         function choose(option) {
-            select.value = option.value;
-            input.value = selectedLabel();
+            if (
+                !option ||
+                option.disabled ||
+                option.hidden
+            ) {
+                return;
+            }
 
+            select.value = option.value;
+
+            input.value = selectedLabel();
             input.setCustomValidity('');
 
             select.dispatchEvent(
-                new Event('change', { bubbles: true })
+                new Event('change', {
+                    bubbles: true
+                })
             );
 
             close();
@@ -212,25 +500,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 .trim()
                 .toLocaleLowerCase('id-ID');
 
-            const options = selectable().filter(option =>
-                showAll ||
-                option.textContent
-                    .toLocaleLowerCase('id-ID')
-                    .includes(text)
-            );
+            const options = selectable().filter(option => {
+                return (
+                    showAll ||
+                    option.textContent
+                        .toLocaleLowerCase('id-ID')
+                        .includes(text)
+                );
+            });
 
             visibleOptions = options.slice(0, 100);
+
             menu.replaceChildren();
 
             if (visibleOptions.length === 0) {
                 const info = document.createElement('div');
+
                 info.className = 'nilai-combo-empty';
                 info.textContent = 'Tidak ada data yang cocok.';
+
                 menu.appendChild(info);
             }
 
             for (const option of visibleOptions) {
                 const row = document.createElement('button');
+
                 row.type = 'button';
                 row.className = 'nilai-combo-option';
                 row.setAttribute('role', 'option');
@@ -254,7 +548,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (options.length > 100) {
                 const info = document.createElement('div');
+
                 info.className = 'nilai-combo-empty';
+
                 info.textContent =
                     'Masih ada pilihan lain; ketik lebih spesifik.';
 
@@ -264,16 +560,31 @@ document.addEventListener('DOMContentLoaded', () => {
             activeIndex = -1;
             menu.hidden = false;
 
-            input.setAttribute('aria-expanded', 'true');
+            input.setAttribute(
+                'aria-expanded',
+                'true'
+            );
+
             positionMenu();
         }
 
-        input.addEventListener('focus', () => render('', true));
-        input.addEventListener('click', () => render('', true));
+        input.addEventListener('focus', () => {
+            render('', true);
+        });
+
+        input.addEventListener('click', () => {
+            render('', true);
+        });
 
         input.addEventListener('input', () => {
-            // Jangan mengirim ID lama saat pengguna mengetik ulang.
+            // ID lama dibersihkan ketika pengguna mengetik.
             select.value = '';
+
+            select.dispatchEvent(
+                new Event('change', {
+                    bubbles: true
+                })
+            );
 
             input.setCustomValidity(
                 'Pilih salah satu data yang tersedia.'
@@ -285,8 +596,11 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('keydown', event => {
             if (event.key === 'Escape') {
                 close();
+
                 input.value = selectedLabel();
+
                 event.stopPropagation();
+                return;
             }
 
             if (
@@ -295,25 +609,33 @@ document.addEventListener('DOMContentLoaded', () => {
             ) {
                 event.preventDefault();
 
-                if (menu.hidden) render('', true);
+                if (menu.hidden) {
+                    render('', true);
+                }
+
+                if (!visibleOptions.length) {
+                    return;
+                }
+
+                const direction =
+                    event.key === 'ArrowDown' ? 1 : -1;
 
                 activeIndex = Math.max(
                     0,
                     Math.min(
                         visibleOptions.length - 1,
-                        activeIndex + (
-                            event.key === 'ArrowDown' ? 1 : -1
-                        )
+                        activeIndex + direction
                     )
                 );
 
-                menu.querySelectorAll('.nilai-combo-option')
-                    .forEach((row, i) => {
-                        row.classList.toggle(
-                            'highlighted',
-                            i === activeIndex
-                        );
-                    });
+                menu.querySelectorAll(
+                    '.nilai-combo-option'
+                ).forEach((row, index) => {
+                    row.classList.toggle(
+                        'highlighted',
+                        index === activeIndex
+                    );
+                });
             }
 
             if (
@@ -322,28 +644,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 visibleOptions[activeIndex]
             ) {
                 event.preventDefault();
+
                 choose(visibleOptions[activeIndex]);
             }
 
-            if (event.key === 'Tab') close();
+            if (event.key === 'Tab') {
+                close();
+            }
         });
 
         select.addEventListener('change', () => {
-            if (select.value) {
-                sync();
-            } else if (
-                !document.activeElement?.isSameNode(input)
+            if (
+                select.value ||
+                document.activeElement !== input
             ) {
                 sync();
             }
         });
 
         document.addEventListener('pointerdown', event => {
-            if (!wrapper.contains(event.target)) close();
+            if (!wrapper.contains(event.target)) {
+                close();
+            }
         });
 
-        window.addEventListener('resize', positionMenu);
-        document.addEventListener('scroll', positionMenu, true);
+        window.addEventListener(
+            'resize',
+            positionMenu
+        );
+
+        document.addEventListener(
+            'scroll',
+            positionMenu,
+            true
+        );
 
         nilaiCombos.set(select.id, {
             sync,
@@ -358,9 +692,8 @@ document.addEventListener('DOMContentLoaded', () => {
         '#nilaiForm select[name]'
     ).forEach(enhanceSearchableSelect);
 
-
     // ========================================================
-    // FUNGSI MODAL
+    // 4. MODAL
     // ========================================================
 
     function openDialog(dialog) {
@@ -383,11 +716,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    // ========================================================
-    // 1. MENUTUP MODAL
-    // ========================================================
-
     $$('[data-close-dialog]').forEach(button => {
         button.addEventListener('click', () => {
             closeDialog(
@@ -404,22 +732,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-
     // ========================================================
-    // 2. FILTER DEPARTEMEN DAN DIVISI
+    // 5. FILTER DEPARTEMEN DAN DIVISI
     // ========================================================
 
     const departemenSelect = $('#nilaiDepartemen');
     const divisiSelect = $('#nilaiDivisi');
 
-    function filterDivisiByDepartemen(preserveCurrent = false) {
-        if (!departemenSelect || !divisiSelect) return;
+    function filterDivisiByDepartemen(
+        preserveCurrent = false
+    ) {
+        if (
+            !departemenSelect ||
+            !divisiSelect
+        ) {
+            return;
+        }
 
-        const departemen = String(
-            departemenSelect.value || ''
+        const departemen = normalizeId(
+            departemenSelect.value
         );
 
         const previous = divisiSelect.value;
+
+        const historicalId = historicalSelections.get(
+            divisiSelect.id
+        );
 
         Array.from(divisiSelect.options).forEach(option => {
             if (!option.value) {
@@ -428,9 +766,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const allowed =
+            const statusAllowed =
+                isOptionActive(option) ||
+                (
+                    nilaiFormMode === 'edit' &&
+                    isHistoricalOption(option) &&
+                    normalizeId(option.value) === historicalId
+                );
+
+            const relationAllowed =
                 !departemen ||
-                String(option.dataset.departemen || '') === departemen;
+                normalizeId(option.dataset.departemen) ===
+                    departemen;
+
+            const allowed =
+                statusAllowed && relationAllowed;
 
             option.hidden = !allowed;
             option.disabled = !allowed;
@@ -458,11 +808,8 @@ document.addEventListener('DOMContentLoaded', () => {
         filterDivisiByDepartemen(false);
     });
 
-    filterDivisiByDepartemen(true);
-
-
     // ========================================================
-    // 3. FILTER KODE AKTIVA — GEDUNG DAN BANGUNAN
+    // 6. FILTER KODE AKTIVA BERDASARKAN GOLONGAN
     // ========================================================
 
     const golonganForm = $('#nilaiGolongan');
@@ -477,7 +824,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function filterAktivaGedung() {
-        if (!golonganForm || !aktivaForm) return;
+        if (
+            !golonganForm ||
+            !aktivaForm
+        ) {
+            return;
+        }
 
         const golongan = normalizeKib(
             golonganForm.selectedOptions[0]?.textContent
@@ -487,8 +839,25 @@ document.addEventListener('DOMContentLoaded', () => {
             golongan.includes('GEDUNG') &&
             golongan.includes('BANGUNAN');
 
+        const historicalId = historicalSelections.get(
+            aktivaForm.id
+        );
+
         for (const option of aktivaForm.options) {
-            if (!option.value) continue;
+            if (!option.value) {
+                option.hidden = false;
+                option.disabled = false;
+                continue;
+            }
+
+            const historical =
+                nilaiFormMode === 'edit' &&
+                isHistoricalOption(option) &&
+                normalizeId(option.value) === historicalId;
+
+            const statusAllowed =
+                isOptionActive(option) ||
+                historical;
 
             const kib = normalizeKib(
                 option.dataset.kib
@@ -501,13 +870,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     kib.includes('BANGUNAN')
                 );
 
-            const allowed = !isGedung || match;
+            const golonganAllowed =
+                !isGedung ||
+                match ||
+                historical;
+
+            const allowed =
+                statusAllowed &&
+                golonganAllowed;
 
             option.disabled = !allowed;
             option.hidden = !allowed;
         }
 
-        if (aktivaForm.selectedOptions[0]?.disabled) {
+        if (
+            aktivaForm.selectedOptions[0]?.disabled
+        ) {
             aktivaForm.value = '';
         }
 
@@ -519,11 +897,8 @@ document.addEventListener('DOMContentLoaded', () => {
         filterAktivaGedung
     );
 
-    filterAktivaGedung();
-
-
     // ========================================================
-    // 4. FORM TAMBAH DAN EDIT NILAI ASET
+    // 7. FORM TAMBAH DAN EDIT
     // ========================================================
 
     const formModal = $('#nilaiFormModal');
@@ -543,6 +918,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetNilaiForm() {
         if (!form) return;
 
+        nilaiFormMode = 'create';
+
+        removeHistoricalOptions();
+
         form.reset();
         form.action = storeUrl;
 
@@ -557,6 +936,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const tahun = $('#nilaiTahun');
+
         const currentYear = String(
             new Date().getFullYear()
         );
@@ -581,25 +961,27 @@ document.addEventListener('DOMContentLoaded', () => {
         clearLocalPdfPreview();
         resetSelectedPdfFiles();
 
+        applyMasterStatusFilter();
         filterDivisiByDepartemen(false);
         filterAktivaGedung();
+
         syncCombos();
     }
 
-
     // ========================================================
-    // 5. TOMBOL TAMBAH NILAI ASET
+    // 8. TOMBOL TAMBAH NILAI ASET
     // ========================================================
 
     $('#nilaiAddButton')?.addEventListener('click', () => {
         resetNilaiForm();
+
         openDialog(formModal);
+
         refreshIcons();
     });
 
-
     // ========================================================
-    // 6. MENGAMBIL DETAIL DATA DARI CONTROLLER
+    // 9. FETCH DETAIL DARI CONTROLLER
     // ========================================================
 
     async function fetchDetail(path) {
@@ -628,9 +1010,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return body.data;
     }
 
-
     // ========================================================
-    // DAFTAR PDF — LEGACY DAN BANYAK LAMPIRAN
+    // 10. DAFTAR DOKUMEN PDF
     // ========================================================
 
     const documentsModal = $('#nilaiDocumentsModal');
@@ -645,7 +1026,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const units = [
-            'B', 'KB', 'MB', 'GB', 'TB'
+            'B',
+            'KB',
+            'MB',
+            'GB',
+            'TB'
         ];
 
         let size = n;
@@ -682,6 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
         actions.className = 'nilai-document-actions';
 
         const preview = document.createElement('button');
+
         preview.type = 'button';
         preview.className = 'nilai-outline-button';
         preview.textContent = 'Preview';
@@ -695,8 +1081,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const download = document.createElement('a');
+
         download.className = 'nilai-outline-button';
-        download.href = doc.download_url;
+        download.href = doc.download_url || '#';
         download.textContent = 'Download';
 
         actions.append(preview, download);
@@ -709,7 +1096,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!savedDocuments) return;
 
         savedDocuments.replaceChildren();
-        savedDocuments.hidden = !documents.length;
+
+        savedDocuments.hidden =
+            !documents.length;
 
         if (documents.length) {
             const heading = document.createElement('strong');
@@ -729,7 +1118,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openDocuments(documents) {
-        if (!documentsModal || !documentsList) return;
+        if (
+            !documentsModal ||
+            !documentsList
+        ) {
+            return;
+        }
 
         documentsList.replaceChildren();
 
@@ -751,62 +1145,91 @@ document.addEventListener('DOMContentLoaded', () => {
         openDialog(documentsModal);
     }
 
-
     // ========================================================
-    // 7. EDIT NILAI ASET
+    // 11. EDIT NILAI ASET
     // ========================================================
 
     $$('.js-edit').forEach(button => {
         button.addEventListener('click', async () => {
             try {
+                if (!form) return;
+
                 const data = await fetchDetail(
                     button.dataset.url
                 );
 
                 resetNilaiForm();
 
+                nilaiFormMode = 'edit';
+
                 form.action = button.dataset.updateUrl;
 
                 // Edit: POST dengan _method=PUT.
-                method.value = 'PUT';
-                method.disabled = false;
+                if (method) {
+                    method.value = 'PUT';
+                    method.disabled = false;
+                }
 
-                formTitle.textContent = 'Edit Nilai Aset';
+                if (formTitle) {
+                    formTitle.textContent = 'Edit Nilai Aset';
+                }
 
-                $('#nilaiNoVoucher').value =
-                    data.no_voucher || '';
+                const voucher = $('#nilaiNoVoucher');
+                const tanggal = $('#nilaiTanggal');
+                const nominal = $('#nilaiNominal');
+                const uraian = $('#nilaiUraian');
 
-                $('#nilaiTanggal').value =
-                    String(data.tgl_voucher || '').slice(0, 10);
+                if (voucher) {
+                    voucher.value = data.no_voucher || '';
+                }
 
-                // Pilih golongan terlebih dahulu.
+                if (tanggal) {
+                    tanggal.value = String(
+                        data.tgl_voucher || ''
+                    ).slice(0, 10);
+                }
+
+                // Golongan dipilih terlebih dahulu.
                 setSelectValue(
                     '#nilaiGolongan',
                     data.cat
                 );
 
-                filterAktivaGedung();
-
-                setSelectValue(
+                // Pilih Master Kode Aktiva.
+                setHistoricalMasterValue(
                     '#nilaiAktiva',
-                    data.id_aktiva
+                    data.id_aktiva,
+                    [
+                        data.aktiva_kode,
+                        data.aktiva_nama
+                    ].filter(Boolean).join(' | '),
+                    {
+                        kib: data.aktiva_kib || ''
+                    }
                 );
 
-                setSelectValue(
+                // Pilih Master Lokasi.
+                setHistoricalMasterValue(
                     '#nilaiLokasi',
-                    data.id_lokasi
+                    data.id_lokasi,
+                    data.lokasi_nama || ''
                 );
 
-                setSelectValue(
+                // Pilih Master Departemen.
+                setHistoricalMasterValue(
                     '#nilaiDepartemen',
-                    data.dep
+                    data.dep,
+                    data.departemen_nama || ''
                 );
 
-                filterDivisiByDepartemen(false);
-
-                setSelectValue(
+                // Pilih Master Divisi.
+                setHistoricalMasterValue(
                     '#nilaiDivisi',
-                    data.div
+                    data.div,
+                    data.divisi_nama || '',
+                    {
+                        departemen: data.dep
+                    }
                 );
 
                 setSelectValue(
@@ -819,11 +1242,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     data.jenisn
                 );
 
-                $('#nilaiNominal').value =
-                    data.nilai ?? 0;
+                if (nominal) {
+                    nominal.value = data.nilai ?? 0;
+                }
 
-                $('#nilaiUraian').value =
-                    data.urai || '';
+                if (uraian) {
+                    uraian.value = data.urai || '';
+                }
 
                 existingPdfPreviewUrl =
                     data.pdf_preview_url || null;
@@ -845,7 +1270,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     data.documents || []
                 );
 
+                applyMasterStatusFilter();
+
+                filterDivisiByDepartemen(true);
+                filterAktivaGedung();
+
                 syncCombos();
+
                 openDialog(formModal);
                 refreshIcons();
 
@@ -862,7 +1293,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // PDF lama tetap tersedia dalam daftar dokumen.
+    // ========================================================
+    // 12. PDF LAMA
+    // ========================================================
+
     existingPdfButton?.addEventListener('click', () => {
         if (existingPdfPreviewUrl) {
             openPdfModal(
@@ -873,9 +1307,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
     // ========================================================
-    // 8. MODAL DETAIL NILAI ASET
+    // 13. MODAL DETAIL NILAI ASET
     // ========================================================
 
     const detailModal = $('#nilaiDetailModal');
@@ -951,7 +1384,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 detailPdfDownloadUrl =
                     data.pdf_download_url || null;
 
-                detailDocuments = Array.isArray(data.documents)
+                detailDocuments = Array.isArray(
+                    data.documents
+                )
                     ? data.documents
                     : [];
 
@@ -983,9 +1418,8 @@ document.addEventListener('DOMContentLoaded', () => {
         openDocuments(detailDocuments);
     });
 
-
     // ========================================================
-    // 9. HAPUS NILAI ASET
+    // 14. HAPUS NILAI ASET
     // ========================================================
 
     const deleteModal = $('#nilaiDeleteModal');
@@ -994,7 +1428,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     $$('.js-delete').forEach(button => {
         button.addEventListener('click', () => {
-            if (!deleteModal || !deleteForm) return;
+            if (
+                !deleteModal ||
+                !deleteForm
+            ) {
+                return;
+            }
 
             deleteForm.action =
                 button.dataset.deleteUrl;
@@ -1009,9 +1448,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-
     // ========================================================
-    // 10. PREVIEW DAN DOWNLOAD PDF SERVER
+    // 15. PREVIEW DAN DOWNLOAD PDF
     // ========================================================
 
     const pdfModal = $('#nilaiPdfModal');
@@ -1019,8 +1457,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const pdfTitle = $('#nilaiPdfTitle');
     const pdfDownload = $('#nilaiPdfDownload');
 
-    function openPdfModal(previewUrl, downloadUrl, title) {
-        if (!previewUrl || !pdfModal) return;
+    function openPdfModal(
+        previewUrl,
+        downloadUrl,
+        title
+    ) {
+        if (
+            !previewUrl ||
+            !pdfModal
+        ) {
+            return;
+        }
 
         if (pdfFrame) {
             pdfFrame.src = previewUrl;
@@ -1070,13 +1517,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
     // ========================================================
-    // 11. MULTI PDF — TANPA LIMIT UKURAN DI JAVASCRIPT
-    // Jumlah/ukuran aktual tetap dibatasi kapasitas server.
+    // 16. MULTI PDF
     // ========================================================
 
     const pdfInput = $('#nilaiPdfInput');
+
     const localPdfPreview = $('#nilaiLocalPdfPreview');
     const localPdfFrame = $('#nilaiLocalPdfFrame');
     const localPdfName = $('#nilaiLocalPdfName');
@@ -1120,6 +1566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearLocalPdfPreview();
 
         const file = selectedPdfFiles[index];
+
         if (!file) return;
 
         localPdfUrl = URL.createObjectURL(file);
@@ -1175,6 +1622,7 @@ document.addEventListener('DOMContentLoaded', () => {
             buttons.className = 'nilai-document-actions';
 
             const preview = document.createElement('button');
+
             preview.type = 'button';
             preview.textContent = 'Preview';
 
@@ -1183,6 +1631,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const remove = document.createElement('button');
+
             remove.type = 'button';
             remove.textContent = 'Hapus';
 
@@ -1215,7 +1664,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     pdfInput?.addEventListener('change', () => {
-        // Pilihan berikutnya ditambahkan ke daftar sebelumnya.
         const incoming = Array.from(
             pdfInput.files || []
         );
@@ -1233,11 +1681,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            const duplicate = selectedPdfFiles.some(old =>
-                old.name === file.name &&
-                old.size === file.size &&
-                old.lastModified === file.lastModified
-            );
+            const duplicate = selectedPdfFiles.some(old => {
+                return (
+                    old.name === file.name &&
+                    old.size === file.size &&
+                    old.lastModified === file.lastModified
+                );
+            });
 
             if (!duplicate) {
                 selectedPdfFiles.push(file);
@@ -1252,9 +1702,78 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ========================================================
+    // 17. VALIDASI MASTER DATA SEBELUM SUBMIT
+    // ========================================================
+
+    /*
+     * Validasi JS membantu pengguna.
+     *
+     * Backend tetap wajib memastikan bahwa:
+     * - ID Master Data valid.
+     * - Master Aktif boleh digunakan.
+     * - Master Nonaktif tidak boleh dipilih untuk input baru.
+     * - Referensi historis yang tidak berubah tetap aman
+     *   sesuai aturan validasi update di Controller.
+     */
+
+    form?.addEventListener('submit', event => {
+        for (const selector of MASTER_SELECTORS) {
+            const select = $(selector);
+
+            if (
+                !select ||
+                !select.value
+            ) {
+                continue;
+            }
+
+            const option = select.selectedOptions?.[0];
+
+            if (!option) continue;
+
+            if (
+                option.disabled ||
+                option.hidden
+            ) {
+                event.preventDefault();
+
+                alert(
+                    'Terdapat pilihan Master Data yang tidak tersedia. ' +
+                    'Silakan pilih data aktif.'
+                );
+
+                select.closest('.nilai-combo')
+                    ?.querySelector('.nilai-combo-search')
+                    ?.focus();
+
+                return;
+            }
+
+            const historical =
+                nilaiFormMode === 'edit' &&
+                isHistoricalOption(option) &&
+                historicalSelections.get(select.id) ===
+                    normalizeId(option.value);
+
+            if (
+                !isOptionActive(option) &&
+                !historical
+            ) {
+                event.preventDefault();
+
+                alert(
+                    'Data Master berstatus Nonaktif tidak boleh ' +
+                    'digunakan untuk transaksi baru.'
+                );
+
+                return;
+            }
+        }
+    });
 
     // ========================================================
-    // 12. VALIDASI ERROR LARAVEL
+    // 18. VALIDASI ERROR LARAVEL
     // ========================================================
 
     const pageRoot = $('#nilaiPage');
@@ -1262,16 +1781,37 @@ document.addEventListener('DOMContentLoaded', () => {
     if (
         pageRoot?.dataset.validationErrors === '1'
     ) {
-        // Pertahankan data old() dari Blade.
+        /*
+         * Pertahankan old() dari Blade.
+         *
+         * Jika validasi gagal saat Edit, Controller/Blade
+         * harus mengirim kembali referensi historis yang
+         * benar agar data tidak kehilangan pilihan.
+         */
+
+        const oldMethod = normalizeStatus(
+            method?.value
+        );
+
+        nilaiFormMode =
+            method &&
+            !method.disabled &&
+            oldMethod === 'put'
+                ? 'edit'
+                : 'create';
+
+        applyMasterStatusFilter();
+
         filterDivisiByDepartemen(true);
         filterAktivaGedung();
+
+        syncCombos();
 
         openDialog(formModal);
     }
 
-
     // ========================================================
-    // 13. MEMBACA DATA GRAFIK DARI BLADE
+    // 19. MEMBACA DATA GRAFIK DARI BLADE
     // ========================================================
 
     let chartData = {
@@ -1296,9 +1836,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     // ========================================================
-    // 14. GRAFIK TREN NILAI ASET (CANVAS)
+    // 20. GRAFIK TREN NILAI ASET
     // ========================================================
 
     const trendCanvas = $('#nilaiTrendCanvas');
@@ -1381,14 +1920,22 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.font = '11px Arial, sans-serif';
         ctx.lineWidth = 1;
 
-        // Garis grid dan label angka.
+        // Grid dan label.
         for (let i = 0; i <= 4; i++) {
             const y =
                 padding.top + gh * i / 4;
 
             ctx.beginPath();
-            ctx.moveTo(padding.left, y);
-            ctx.lineTo(width - padding.right, y);
+
+            ctx.moveTo(
+                padding.left,
+                y
+            );
+
+            ctx.lineTo(
+                width - padding.right,
+                y
+            );
 
             ctx.strokeStyle = '#e1ebf4';
             ctx.stroke();
@@ -1405,12 +1952,12 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
 
-        const points = values.map((value, i) => ({
+        const points = values.map((value, index) => ({
             x:
                 labels.length === 1
                     ? padding.left
                     : padding.left +
-                      gw * i / (labels.length - 1),
+                      gw * index / (labels.length - 1),
 
             y:
                 padding.top +
@@ -1420,7 +1967,6 @@ document.addEventListener('DOMContentLoaded', () => {
             value
         }));
 
-        // Gradasi area di bawah garis.
         const gradient = ctx.createLinearGradient(
             0,
             padding.top,
@@ -1438,6 +1984,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'rgba(8,106,216,.015)'
         );
 
+        // Area di bawah garis.
         ctx.beginPath();
 
         ctx.moveTo(
@@ -1458,14 +2005,15 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         ctx.closePath();
+
         ctx.fillStyle = gradient;
         ctx.fill();
 
         // Garis tren.
         ctx.beginPath();
 
-        points.forEach((point, i) => {
-            if (i === 0) {
+        points.forEach((point, index) => {
+            if (index === 0) {
                 ctx.moveTo(
                     point.x,
                     point.y
@@ -1483,7 +2031,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.stroke();
 
         // Titik dan tahun.
-        points.forEach((point, i) => {
+        points.forEach((point, index) => {
             ctx.beginPath();
 
             ctx.arc(
@@ -1501,13 +2049,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.textAlign = 'center';
 
             ctx.fillText(
-                labels[i],
+                labels[index],
                 point.x,
                 height - 8
             );
         });
 
-        // Tooltip berdasarkan angka asli dari database.
         trendCanvas.onpointermove = event => {
             const rect =
                 trendCanvas.getBoundingClientRect();
@@ -1515,11 +2062,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const x = event.clientX - rect.left;
 
             const nearest = points.reduce(
-                (winner, point, index) =>
-                    Math.abs(point.x - x) <
-                    Math.abs(points[winner].x - x)
+                (winner, point, index) => {
+                    return Math.abs(point.x - x) <
+                        Math.abs(points[winner].x - x)
                         ? index
-                        : winner,
+                        : winner;
+                },
                 0
             );
 
@@ -1531,9 +2079,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-
     // ========================================================
-    // 15. GRAFIK DONUT DAN LEGENDA
+    // 21. GRAFIK DONUT NILAI ASET
     // ========================================================
 
     const donutCanvas = $('#nilaiDonutCanvas');
@@ -1597,7 +2144,7 @@ document.addEventListener('DOMContentLoaded', () => {
             (chartData.categoryValues || []).map(Number);
 
         const total = values.reduce(
-            (sum, n) => sum + n,
+            (sum, value) => sum + value,
             0
         );
 
@@ -1605,7 +2152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const radius = size * 0.39;
         const thickness = size * 0.18;
 
-        // Kondisi tanpa data.
+        // Kondisi tidak ada data.
         if (total <= 0) {
             ctx.beginPath();
 
@@ -1630,8 +2177,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let start = -Math.PI / 2;
 
-        // Segmen grafik berdasarkan nilai kategori.
-        values.forEach((value, i) => {
+        // Segmen donut.
+        values.forEach((value, index) => {
             const angle =
                 value / total * Math.PI * 2;
 
@@ -1647,7 +2194,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ctx.strokeStyle =
                 donutColors[
-                    i % donutColors.length
+                    index % donutColors.length
                 ];
 
             ctx.lineWidth = thickness;
@@ -1656,13 +2203,16 @@ document.addEventListener('DOMContentLoaded', () => {
             start += angle;
         });
 
-        // Tooltip saat kursor berada di grafik.
+        // Tooltip.
         donutCanvas.onpointermove = event => {
             const rect =
                 donutCanvas.getBoundingClientRect();
 
-            const x = event.clientX - rect.left - center;
-            const y = event.clientY - rect.top - center;
+            const x =
+                event.clientX - rect.left - center;
+
+            const y =
+                event.clientY - rect.top - center;
 
             const distance = Math.hypot(x, y);
 
@@ -1700,11 +2250,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // Legenda dan persentase.
+        // Legenda.
         if (donutLegend) {
             donutLegend.replaceChildren();
 
-            labels.forEach((label, i) => {
+            labels.forEach((label, index) => {
                 const row = document.createElement('div');
                 row.className = 'nilai-legend-item';
 
@@ -1713,7 +2263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 dot.style.background =
                     donutColors[
-                        i % donutColors.length
+                        index % donutColors.length
                     ];
 
                 const name = document.createElement('span');
@@ -1724,7 +2274,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 percentage.textContent = (
                     100 *
-                    (values[i] || 0) /
+                    (values[index] || 0) /
                     total
                 ).toLocaleString('id-ID', {
                     maximumFractionDigits: 1
@@ -1741,9 +2291,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     // ========================================================
-    // 16. RESPONSIVE GRAFIK
+    // 22. RESPONSIVE GRAFIK
     // ========================================================
 
     let resizeTimer = null;
@@ -1762,11 +2311,20 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     });
 
-
     // ========================================================
-    // 17. INITIALISASI
+    // 23. INITIALISASI
     // ========================================================
 
+    applyMasterStatusFilter();
+
+    filterDivisiByDepartemen(true);
+    filterAktivaGedung();
+
+    syncCombos();
     redrawCharts();
     refreshIcons();
+
+    // ========================================================
+    // END NILAI ASET JAVASCRIPT
+    // ========================================================
 });
