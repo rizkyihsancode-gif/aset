@@ -134,6 +134,12 @@
         ).trim();
 
         return rows().filter(row => {
+                const statusChoice = String(document.getElementById('lokasiStatusFilter')?.value || '');
+                const currentStatus = String(row.dataset.status || '').trim().toLowerCase();
+                if (statusChoice && (statusChoice === '__kosong__' ? Boolean(currentStatus) : currentStatus !== statusChoice)) {
+                    return false;
+                }
+
             const text = norm([
                 row.dataset.id,
                 row.dataset.lokasi,
@@ -337,6 +343,9 @@
     }
 
     function resetFilter() {
+        const statusFilter = document.getElementById('lokasiStatusFilter');
+        if (statusFilter) statusFilter.value = '';
+
         if (field('lokasiSearch')) {
             field('lokasiSearch').value = '';
         }
@@ -612,6 +621,13 @@
 
         mode = nextMode;
         currentRow = row;
+          const statusField = document.getElementById('lokasiFormStatus');
+          if (statusField) {
+              queueMicrotask(() => {
+                  statusField.value = String(row?.dataset.status || '');
+              });
+          }
+
 
         currentId = String(
             row?.dataset.id ?? ''
@@ -1009,6 +1025,7 @@
                 }
 
                 const formData = new FormData(form);
+                formData.set('status', String(document.getElementById('lokasiFormStatus')?.value || ''));
 
                 // Nilai bersih, tanpa spasi berlebih.
                 formData.set('lokasi', validated.name);
@@ -1523,6 +1540,14 @@
     ====================================================== */
 
     function init() {
+        const masterStatusFilter = document.getElementById('lokasiStatusFilter');
+        if (masterStatusFilter) {
+            masterStatusFilter.addEventListener('change', function () {
+                currentPage = 1;
+                renderTable();
+            });
+        }
+
         if (
             app.dataset.lokasiInitialized === '1'
         ) {

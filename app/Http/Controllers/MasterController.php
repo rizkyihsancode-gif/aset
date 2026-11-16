@@ -1170,13 +1170,17 @@ class MasterController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $departemenQuery =
-            DB::table('departemens')
+
+        $departemenQuery = DB::table('departemens')
             ->select(
                 'departemens.id',
                 'departemens.nama_dep',
-                'departemens.kode_dep'
+                'departemens.kode_dep',
+                Schema::hasColumn('departemens', 'status')
+                    ? 'departemens.status'
+                    : DB::raw('NULL AS status')
             );
+
 
 
         if ($hasCreatedAt) {
@@ -1576,6 +1580,14 @@ class MasterController extends Controller
                         'max:2048',
                     ],
 
+
+                    'status' => [
+                        'sometimes',
+                        'required',
+                        Rule::in(['aktif', 'nonaktif']),
+                    ],
+
+
                 ],
                 [
 
@@ -1663,6 +1675,18 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('departemens', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel departemens belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         /*
@@ -1980,6 +2004,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                     'nama_dep' => [
                         'required',
@@ -2092,6 +2118,18 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('departemens', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel departemens belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         /*
@@ -2928,6 +2966,7 @@ class MasterController extends Controller
                 'nama_dep',
                 'kode_dep'
             )
+            ->when(Schema::hasColumn('departemens', 'status'), fn($q) => $q->where('departemens.status', 'aktif'))
             ->orderBy('kode_dep')
             ->get()
             ->map(
@@ -2982,7 +3021,10 @@ class MasterController extends Controller
                  * Kode Departemen legacy.
                  */
 
-                'departemens.nama_dep as kode_departemen'
+                'departemens.nama_dep as kode_departemen',
+                Schema::hasColumn('divisis', 'status')
+                    ? 'divisis.status'
+                    : DB::raw('NULL AS status'),
             );
 
 
@@ -3391,6 +3433,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                     'id_dep' => [
                         'required',
@@ -3468,6 +3512,18 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('divisis', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel divisis belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         if (
@@ -3663,6 +3719,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                     'id_dep' => [
                         'required',
@@ -3721,6 +3779,18 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('divisis', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel divisis belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         /*
@@ -4227,7 +4297,10 @@ class MasterController extends Controller
             ->select(
                 'ruangans.id',
                 'ruangans.kode',
-                'ruangans.nama_ruang'
+                'ruangans.nama_ruang',
+                Schema::hasColumn('ruangans', 'status')
+                    ? 'ruangans.status'
+                    : DB::raw('NULL AS status'),
             );
 
 
@@ -4622,6 +4695,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                     'nama_ruang' => [
                         'required',
@@ -4681,6 +4756,18 @@ class MasterController extends Controller
                 : '-',
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('ruangans', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel ruangans belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         if (
@@ -4890,6 +4977,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                     'nama_ruang' => [
                         'required',
@@ -4937,6 +5026,18 @@ class MasterController extends Controller
                 : '-',
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('ruangans', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel ruangans belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         /*
@@ -5326,6 +5427,7 @@ class MasterController extends Controller
                     'nama_dep',
                     'kode_dep'
                 )
+                ->when(Schema::hasColumn('departemens', 'status'), fn($q) => $q->where('departemens.status', 'aktif'))
                 ->orderBy('kode_dep')
                 ->get()
                 ->map(function ($item) {
@@ -5371,6 +5473,7 @@ class MasterController extends Controller
                 'departemens.kode_dep as nama_departemen'
             )
 
+            ->when(Schema::hasColumn('divisis', 'status'), fn($q) => $q->where('divisis.status', 'aktif'))
             ->orderBy('divisis.nama_div')
 
             ->get()
@@ -5438,7 +5541,10 @@ class MasterController extends Controller
                 'divisis.nama_div',
                 'divisis.id_dep',
 
-                'departemens.kode_dep as nama_departemen'
+                'departemens.kode_dep as nama_departemen',
+                Schema::hasColumn('sdms', 'status')
+                    ? 'sdms.status'
+                    : DB::raw('NULL AS status'),
             );
 
 
@@ -5778,6 +5884,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                     'nama_sdm' => [
                         'required',
@@ -5849,6 +5957,18 @@ class MasterController extends Controller
             $validated['id_div'],
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('sdms', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel sdms belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         if (
@@ -6026,6 +6146,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                     'nama_sdm' => [
                         'required',
@@ -6076,6 +6198,18 @@ class MasterController extends Controller
             $validated['id_div'],
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('sdms', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel sdms belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         /*
@@ -6387,7 +6521,10 @@ class MasterController extends Controller
             DB::table('bahans')
             ->select(
                 'bahans.id',
-                'bahans.nama'
+                'bahans.nama',
+                Schema::hasColumn('bahans', 'status')
+                    ? 'bahans.status'
+                    : DB::raw('NULL AS status'),
             );
 
 
@@ -6722,6 +6859,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
                     'nama' => [
                         'required',
                         'string',
@@ -6746,6 +6885,18 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('bahans', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel bahans belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         if (
@@ -6926,6 +7077,8 @@ class MasterController extends Controller
         $validated =
             $request->validate(
                 [
+                    'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
                     'nama' => [
                         'required',
                         'string',
@@ -6947,6 +7100,18 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('bahans', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel bahans belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
         /*
@@ -7255,7 +7420,10 @@ class MasterController extends Controller
                 'lokasis.img',
                 'lokasis.cat',
                 'lokasis.wilayah as wilayah_id',
-                'aset_wilayah.wilayah as nama_wilayah'
+                'aset_wilayah.wilayah as nama_wilayah',
+                Schema::hasColumn('lokasis', 'status')
+                    ? 'lokasis.status'
+                    : DB::raw('NULL AS status'),
             );
 
         if ($hasCreatedAt) {
@@ -7432,6 +7600,8 @@ class MasterController extends Controller
     public function storeLokasi(Request $request)
     {
         $validated = $request->validate([
+            'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
             'lokasi' => [
                 'required',
                 'string',
@@ -7555,6 +7725,18 @@ class MasterController extends Controller
             'img' =>
             $imageName,
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('lokasis', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel lokasis belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
         /*
     |--------------------------------------------------------------------------
@@ -7685,6 +7867,8 @@ class MasterController extends Controller
         }
 
         $validated = $request->validate([
+            'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
             'lokasi' => [
                 'required',
                 'string',
@@ -7761,6 +7945,18 @@ class MasterController extends Controller
                 ? trim($validated['long'])
                 : null,
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('lokasis', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel lokasis belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
         $newImageName = null;
 
@@ -8006,7 +8202,10 @@ class MasterController extends Controller
                 'kode',
                 'aktiva',
                 'gol',
-                'kib'
+                'kib',
+                Schema::hasColumn('aktivas', 'status')
+                    ? 'aktivas.status'
+                    : DB::raw('NULL AS status'),
             );
 
 
@@ -8374,6 +8573,8 @@ class MasterController extends Controller
     ) {
         $validated =
             $request->validate([
+                'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                 'kode' => [
 
@@ -8462,6 +8663,18 @@ class MasterController extends Controller
                 : null,
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('aktivas', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel aktivas belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
 
@@ -8581,6 +8794,8 @@ class MasterController extends Controller
 
         $validated =
             $request->validate([
+                'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
+
 
                 'kode' => [
 
@@ -8672,6 +8887,18 @@ class MasterController extends Controller
                 : null,
 
         ];
+
+        // Status opsional sementara form Blade/JS belum diperbarui.
+        // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
+        if (array_key_exists('status', $validated)) {
+            if (!Schema::hasColumn('aktivas', 'status')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Kolom status tabel aktivas belum tersedia. Jalankan migrasi status.',
+                ]);
+            }
+            $data['status'] = $validated['status'];
+        }
+
 
 
 

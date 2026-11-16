@@ -5281,6 +5281,7 @@ class KIBController extends Controller
                 ? DB::table('lokasis')
                 ->select('id', 'lokasi', 'alamat')
                 ->orderBy('lokasi')
+                ->when(Schema::hasColumn('lokasis', 'status'), fn($query) => $query->where('status', 'aktif'))
                 ->get()
                 : [],
 
@@ -5288,6 +5289,7 @@ class KIBController extends Controller
                 ? DB::table('departemens')
                 ->select('id', 'nama_dep')
                 ->orderBy('nama_dep')
+                ->when(Schema::hasColumn('departemens', 'status'), fn($query) => $query->where('status', 'aktif'))
                 ->get()
                 : [],
 
@@ -5295,6 +5297,7 @@ class KIBController extends Controller
                 ? DB::table('divisis')
                 ->select('id', 'id_dep', 'nama_div')
                 ->orderBy('nama_div')
+                ->when(Schema::hasColumn('divisis', 'status'), fn($query) => $query->where('status', 'aktif'))
                 ->get()
                 : [],
 
@@ -5302,6 +5305,7 @@ class KIBController extends Controller
                 ? DB::table('bahans')
                 ->select('id', 'nama')
                 ->orderBy('nama')
+                ->when(Schema::hasColumn('bahans', 'status'), fn($query) => $query->where('status', 'aktif'))
                 ->get()
                 : [],
         ];
@@ -6875,6 +6879,7 @@ class KIBController extends Controller
                 ->select('id', 'lokasi', 'alamat')
                 ->whereNotNull('lokasi')
                 ->orderBy('lokasi')
+                ->when(Schema::hasColumn('lokasis', 'status'), fn($query) => $query->where('status', 'aktif'))
                 ->get(),
 
             // MASTER DEPARTEMEN
@@ -6882,6 +6887,7 @@ class KIBController extends Controller
                 ->select('id', 'nama_dep')
                 ->whereNotNull('nama_dep')
                 ->orderBy('nama_dep')
+                ->when(Schema::hasColumn('departemens', 'status'), fn($query) => $query->where('status', 'aktif'))
                 ->get(),
 
             // MASTER DIVISI
@@ -6889,6 +6895,7 @@ class KIBController extends Controller
                 ->select('id', 'id_dep', 'nama_div')
                 ->whereNotNull('nama_div')
                 ->orderBy('nama_div')
+                ->when(Schema::hasColumn('divisis', 'status'), fn($query) => $query->where('status', 'aktif'))
                 ->get(),
 
         ];
@@ -7826,6 +7833,7 @@ class KIBController extends Controller
     private function kirMaterials(): array
     {
         return DB::table('bahans')
+            ->when(Schema::hasColumn('bahans', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->pluck('nama', 'id')
             ->all();
     }
@@ -8140,6 +8148,7 @@ class KIBController extends Controller
 
             ->orderBy('lokasi')
 
+            ->when(Schema::hasColumn('lokasis', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->get();
 
         $barangs = DB::table('barangs')
@@ -8152,6 +8161,7 @@ class KIBController extends Controller
 
             ->orderBy('nama_barang')
 
+            ->when(Schema::hasColumn('barangs', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->get();
 
         $bahans = DB::table('bahans')
@@ -8163,6 +8173,7 @@ class KIBController extends Controller
 
             ->orderBy('nama')
 
+            ->when(Schema::hasColumn('bahans', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->get();
 
         $departemens = DB::table('departemens')
@@ -8174,6 +8185,7 @@ class KIBController extends Controller
 
             ->orderBy('nama_dep')
 
+            ->when(Schema::hasColumn('departemens', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->get();
 
         $divisis = DB::table('divisis')
@@ -8186,6 +8198,7 @@ class KIBController extends Controller
 
             ->orderBy('nama_div')
 
+            ->when(Schema::hasColumn('divisis', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->get();
 
         $ruangans = DB::table('ruangans')
@@ -8194,6 +8207,7 @@ class KIBController extends Controller
 
             ->orderBy('nama_ruang')
 
+            ->when(Schema::hasColumn('ruangans', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->get();
 
         $gedungs = DB::table('kirs')

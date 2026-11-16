@@ -215,6 +215,12 @@
         return rows()
             .filter(
                 function (row) {
+                const statusChoice = String(document.getElementById('bahanStatusFilter')?.value || '');
+                const currentStatus = String(row.dataset.status || '').trim().toLowerCase();
+                if (statusChoice && (statusChoice === '__kosong__' ? Boolean(currentStatus) : currentStatus !== statusChoice)) {
+                    return false;
+                }
+
 
 
                     const nama =
@@ -595,6 +601,13 @@
 
         currentRow =
             row;
+          const statusField = document.getElementById('bahanFormStatus');
+          if (statusField) {
+              queueMicrotask(() => {
+                  statusField.value = String(row?.dataset.status || '');
+              });
+          }
+
 
 
         currentId =
@@ -962,6 +975,7 @@
 
 
         const payload = {
+              status: String(document.getElementById('bahanFormStatus')?.value || ''),
             nama
         };
 
@@ -1664,6 +1678,14 @@
     ========================================================= */
 
     function init() {
+        const masterStatusFilter = document.getElementById('bahanStatusFilter');
+        if (masterStatusFilter) {
+            masterStatusFilter.addEventListener('change', function () {
+                currentPage = 1;
+                renderTable();
+            });
+        }
+
 
 
         updateDateTime();
@@ -1878,6 +1900,9 @@
 
     window.resetBahanFilter =
         function () {
+          const masterStatusReset = document.getElementById('bahanStatusFilter');
+          if (masterStatusReset) masterStatusReset.value = '';
+
 
 
             const input =

@@ -407,6 +407,15 @@
             <div class="table-responsive">
 
 
+                <div class="master-status-filter">
+                    <label for="bahanStatusFilter">Status Bahan</label>
+                    <select id="bahanStatusFilter" aria-label="Filter status Bahan">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
                 <table class="bahan-table" id="bahanTable">
 
 
@@ -431,6 +440,7 @@
                             </th>
 
 
+                            <th class="master-status-heading">Status</th>
                             <th class="bahan-col-action">
                                 Aksi
                             </th>
@@ -447,7 +457,8 @@
 
 
                         @forelse ($bahans as $item)
-                            <tr data-record data-id="{{ $item->id }}" data-nama="{{ $item->nama }}"
+                            <tr data-record data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}"
+                                data-id="{{ $item->id }}" data-nama="{{ $item->nama }}"
                                 data-created-at="{{ $item->created_at ?? '' }}"
                                 data-updated-at="{{ $item->updated_at ?? '' }}">
 
@@ -503,6 +514,18 @@
 
 
 
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td>
 
 
@@ -562,7 +585,7 @@
                         <tr id="bahanEmptyRow" hidden>
 
 
-                            <td colspan="4" class="bahan-empty">
+                            <td colspan="5" class="bahan-empty">
 
                                 Data Bahan tidak ditemukan.
 
@@ -930,6 +953,18 @@
 
 
                     <div class="bahan-modal-body">
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="bahanFormStatus">Status Bahan <span aria-hidden="true">*</span></label>
+                            <select id="bahanFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain
+                                setelah filter backend diterapkan.</small>
+                        </div>
+
 
 
                         <div class="bahan-form-group">

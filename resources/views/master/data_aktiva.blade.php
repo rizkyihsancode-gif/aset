@@ -254,7 +254,25 @@
 
             <div class="table-responsive">
 
-                <table class="aktiva-table" id="aktivaTable">
+                <div class="master-status-filter">
+                            <label for="aktivaStatusFilter">Status Kode Aktiva</label>
+                            <select id="aktivaStatusFilter" aria-label="Filter status Kode Aktiva">
+                                <option value="">Semua Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                                <option value="__kosong__">Belum Diatur</option>
+                            </select>
+                        </div>
+                        <div class="master-status-filter">
+                            <label for="aktivaStatusFilter">Status Kode Aktiva</label>
+                            <select id="aktivaStatusFilter" aria-label="Filter status Kode Aktiva">
+                                <option value="">Semua Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                                <option value="__kosong__">Belum Diatur</option>
+                            </select>
+                        </div>
+                        <table class="aktiva-table" id="aktivaTable">
 
                     <colgroup>
                         <col class="col-no">
@@ -275,6 +293,8 @@
                             <th>Golongan Aktiva</th>
                             <th>Kategori / KIB</th>
                             <th>Dibuat</th>
+                                                        <th class="master-status-heading">Status</th>
+                                                        <th class="master-status-heading">Status</th>
                             <th>Aksi</th>
                         </tr>
 
@@ -283,7 +303,7 @@
                     <tbody>
 
                         @foreach ($aktivaRows as $item)
-                            <tr data-row data-id="{{ $item->id }}" data-kode="{{ $item->kode ?? '' }}"
+                            <tr data-row data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}" data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}" data-id="{{ $item->id }}" data-kode="{{ $item->kode ?? '' }}"
                                 data-aktiva="{{ $item->aktiva ?? '' }}" data-gol="{{ $item->gol ?? '' }}"
                                 data-kib="{{ $item->kib ?? '' }}" data-created-at="{{ $item->created_at ?? '' }}">
 
@@ -345,6 +365,30 @@
 
                                 {{-- AKSI --}}
 
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td>
 
                                     <div class="aktiva-actions">
@@ -375,7 +419,7 @@
 
                         <tr id="aktivaEmptyRow" hidden>
 
-                            <td colspan="7" class="aktiva-empty">
+                            <td colspan="9" class="aktiva-empty">
                                 Data Kode Aktiva tidak ditemukan.
                             </td>
 
@@ -490,6 +534,28 @@
                     @csrf
 
                     <div class="aktiva-modal-body">
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="aktivaFormStatus">Status Kode Aktiva <span aria-hidden="true">*</span></label>
+                            <select id="aktivaFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain setelah filter backend diterapkan.</small>
+                        </div>
+
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="aktivaFormStatus">Status Kode Aktiva <span aria-hidden="true">*</span></label>
+                            <select id="aktivaFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain setelah filter backend diterapkan.</small>
+                        </div>
+
 
                         {{-- ALERT ERROR --}}
 

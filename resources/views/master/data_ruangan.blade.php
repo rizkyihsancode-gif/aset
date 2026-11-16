@@ -402,6 +402,15 @@
             <div class="table-responsive">
 
 
+                <div class="master-status-filter">
+                    <label for="ruanganStatusFilter">Status Ruangan</label>
+                    <select id="ruanganStatusFilter" aria-label="Filter status Ruangan">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
                 <table class="ruangan-table" id="ruanganTable">
 
 
@@ -425,6 +434,7 @@
                                 Dibuat
                             </th>
 
+                            <th class="master-status-heading">Status</th>
                             <th class="ruangan-col-action">
                                 Aksi
                             </th>
@@ -439,7 +449,8 @@
 
 
                         @forelse ($ruangans as $item)
-                            <tr data-record data-id="{{ $item->id }}" data-kode="{{ $item->kode }}"
+                            <tr data-record data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}"
+                                data-id="{{ $item->id }}" data-kode="{{ $item->kode }}"
                                 data-nama="{{ $item->nama_ruang }}" data-created-at="{{ $item->created_at ?? '' }}"
                                 data-updated-at="{{ $item->updated_at ?? '' }}">
 
@@ -510,6 +521,18 @@
 
 
                                 {{-- ACTION --}}
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td>
 
                                     <div class="ruangan-actions">
@@ -564,7 +587,7 @@
 
                         <tr id="ruanganEmptyRow" hidden>
 
-                            <td colspan="5" class="ruangan-empty">
+                            <td colspan="6" class="ruangan-empty">
 
                                 Data Ruangan tidak ditemukan.
 
@@ -943,6 +966,18 @@
 
 
                     <div class="ruangan-modal-body">
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="ruanganFormStatus">Status Ruangan <span aria-hidden="true">*</span></label>
+                            <select id="ruanganFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain
+                                setelah filter backend diterapkan.</small>
+                        </div>
+
 
 
                         {{-- NAMA --}}
@@ -1390,3 +1425,4 @@
 
     <script src="{{ asset('js/pages/master/ruangan.js') }}"></script>
 @endpush
+    

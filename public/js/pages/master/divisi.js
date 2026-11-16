@@ -223,6 +223,12 @@
         return getDivisiRows()
             .filter(
                 function (row) {
+                const statusChoice = String(document.getElementById('divisiStatusFilter')?.value || '');
+                const currentStatus = String(row.dataset.status || '').trim().toLowerCase();
+                if (statusChoice && (statusChoice === '__kosong__' ? Boolean(currentStatus) : currentStatus !== statusChoice)) {
+                    return false;
+                }
+
 
                     const nama =
                         row.dataset.nama
@@ -709,6 +715,9 @@
 
 
     function resetDivisiFilter() {
+        const statusFilter = document.getElementById('divisiStatusFilter');
+        if (statusFilter) statusFilter.value = '';
+
 
         const search =
             qs('#divisiSearch');
@@ -1065,6 +1074,13 @@
 
         divisiCurrentRow =
             row;
+          const statusField = document.getElementById('divisiFormStatus');
+          if (statusField) {
+              queueMicrotask(() => {
+                  statusField.value = String(row?.dataset.status || '');
+              });
+          }
+
 
 
         divisiCurrentId =
@@ -1497,6 +1513,7 @@
 
 
         const payload = {
+              status: String(document.getElementById('divisiFormStatus')?.value || ''),
 
             nama_div:
                 nama,
@@ -2732,6 +2749,14 @@
     ========================================================= */
 
     function initDivisiPage() {
+        const masterStatusFilter = document.getElementById('divisiStatusFilter');
+        if (masterStatusFilter) {
+            masterStatusFilter.addEventListener('change', function () {
+                divisiCurrentPage = 1;
+                renderDivisiTable();
+            });
+        }
+
 
         /*
          * Date.

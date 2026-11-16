@@ -420,6 +420,15 @@
 
             <div class="table-responsive">
 
+                <div class="master-status-filter">
+                    <label for="divisiStatusFilter">Status Divisi</label>
+                    <select id="divisiStatusFilter" aria-label="Filter status Divisi">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
                 <table class="divisi-table" id="divisiTable">
 
 
@@ -443,6 +452,7 @@
                                 Departemen
                             </th>
 
+                            <th class="master-status-heading">Status</th>
                             <th class="divisi-col-action">
                                 Aksi
                             </th>
@@ -457,7 +467,8 @@
 
 
                         @forelse ($divisis as $item)
-                            <tr data-record data-id="{{ $item->id }}" data-id-dep="{{ $item->id_dep }}"
+                            <tr data-record data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}"
+                                data-id="{{ $item->id }}" data-id-dep="{{ $item->id_dep }}"
                                 data-nama="{{ $item->nama_div }}" data-kode="{{ $item->kode_div }}"
                                 data-departemen="{{ $item->nama_departemen }}"
                                 data-created-at="{{ $item->created_at ?? '' }}"
@@ -533,6 +544,18 @@
 
 
                                 {{-- ACTION --}}
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td>
 
                                     <div class="divisi-actions">
@@ -589,7 +612,7 @@
 
                         <tr id="divisiEmptyRow" hidden>
 
-                            <td colspan="5" class="divisi-empty">
+                            <td colspan="6" class="divisi-empty">
 
                                 Data Divisi tidak ditemukan.
 
@@ -964,6 +987,18 @@
 
 
                     <div class="divisi-modal-body">
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="divisiFormStatus">Status Divisi <span aria-hidden="true">*</span></label>
+                            <select id="divisiFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain
+                                setelah filter backend diterapkan.</small>
+                        </div>
+
 
 
                         {{-- NAMA DIVISI --}}

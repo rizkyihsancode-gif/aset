@@ -230,6 +230,15 @@
 
             <div class="table-responsive">
 
+                <div class="master-status-filter">
+                    <label for="deptStatusFilter">Status Departemen</label>
+                    <select id="deptStatusFilter" aria-label="Filter status Departemen">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
                 <table class="dept-table" id="deptTable">
 
                     <colgroup>
@@ -246,6 +255,7 @@
                             <th>Kode Departemen</th>
                             <th>Nama Departemen</th>
                             <th>Dibuat</th>
+                            <th class="master-status-heading">Status</th>
                             <th class="dept-col-action">Aksi</th>
                         </tr>
                     </thead>
@@ -281,7 +291,8 @@
                                 }
                             @endphp
 
-                            <tr data-record data-id="{{ $item->id }}" data-kode="{{ $kodeTampil }}"
+                            <tr data-record data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}"
+                                data-id="{{ $item->id }}" data-kode="{{ $kodeTampil }}"
                                 data-nama="{{ $namaTampil }}" data-role="{{ $item->role ?? '' }}"
                                 data-img="{{ $item->img ?? '' }}" data-img-url="{{ $item->image_url ?? '' }}"
                                 data-created-at="{{ $item->created_at ?? '' }}"
@@ -325,6 +336,18 @@
 
                                 {{-- AKSI --}}
 
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td class="dept-action-cell">
 
                                     <div class="dept-actions">
@@ -339,8 +362,8 @@
                                             <i data-lucide="square-pen"></i>
                                         </button>
 
-                                        <button type="button" class="delete" data-action="delete" title="Hapus Departemen"
-                                            aria-label="Hapus {{ $namaTampil }}">
+                                        <button type="button" class="delete" data-action="delete"
+                                            title="Hapus Departemen" aria-label="Hapus {{ $namaTampil }}">
                                             <i data-lucide="trash-2"></i>
                                         </button>
 
@@ -363,7 +386,7 @@
 
                         <tr id="deptEmptyRow" hidden>
 
-                            <td colspan="5" class="dept-empty">
+                            <td colspan="6" class="dept-empty">
                                 Data Departemen tidak ditemukan.
                             </td>
 
@@ -475,6 +498,18 @@
                     <div class="dept-form-alert" id="deptFormAlert" role="alert" hidden></div>
 
                     <div class="dept-modal-body">
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="deptFormStatus">Status Departemen <span aria-hidden="true">*</span></label>
+                            <select id="deptFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain
+                                setelah filter backend diterapkan.</small>
+                        </div>
+
 
                         {{-- ====================================================
                          KODE DEPARTEMEN

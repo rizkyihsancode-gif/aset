@@ -279,6 +279,15 @@
             </div>
 
             <div class="table-responsive" tabindex="0" aria-label="Tabel data Lokasi">
+                <div class="master-status-filter">
+                    <label for="lokasiStatusFilter">Status Lokasi</label>
+                    <select id="lokasiStatusFilter" aria-label="Filter status Lokasi">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
                 <table class="lokasi-table" id="lokasiTable">
 
                     <thead>
@@ -291,6 +300,7 @@
                             <th>Latitude</th>
                             <th>Longitude</th>
                             <th>Dibuat</th>
+                            <th class="master-status-heading">Status</th>
                             <th class="lokasi-col-action">Aksi</th>
                         </tr>
                     </thead>
@@ -307,7 +317,8 @@
                                 $wilayahLabel = trim((string) ($item->nama_wilayah ?? '')) ?: 'Belum terhubung';
                             @endphp
 
-                            <tr data-record data-id="{{ $item->id }}" data-lokasi="{{ $item->lokasi ?? '' }}"
+                            <tr data-record data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}"
+                                data-id="{{ $item->id }}" data-lokasi="{{ $item->lokasi ?? '' }}"
                                 data-alamat="{{ $item->alamat ?? '' }}" data-wilayah-id="{{ $wilayahId ?? '' }}"
                                 data-wilayah="{{ $wilayahLabel }}" data-lat="{{ $item->lat ?? '' }}"
                                 data-long="{{ $item->long ?? '' }}" data-img="{{ $item->img ?? '' }}"
@@ -371,6 +382,18 @@
                                     @endif
                                 </td>
 
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <div class="lokasi-actions">
                                         <button type="button" class="view" data-action="view" title="Lihat">
@@ -391,7 +414,7 @@
                         @endforeach
 
                         <tr id="lokasiEmptyRow" hidden>
-                            <td colspan="9" class="lokasi-empty">
+                            <td colspan="11" class="lokasi-empty">
                                 <i data-lucide="search-x"></i>
                                 <strong>Data tidak ditemukan</strong>
                                 <span>Ubah kata kunci atau filter wilayah.</span>
@@ -564,6 +587,18 @@
                     @csrf
 
                     <div class="lokasi-modal-body">
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="lokasiFormStatus">Status Lokasi <span aria-hidden="true">*</span></label>
+                            <select id="lokasiFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain
+                                setelah filter backend diterapkan.</small>
+                        </div>
+
 
                         <div class="lokasi-form-alert" id="lokasiFormAlert" role="alert" hidden></div>
 

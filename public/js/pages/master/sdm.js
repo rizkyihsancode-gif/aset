@@ -140,6 +140,12 @@
 
 
         return rows().filter(function (row) {
+                const statusChoice = String(document.getElementById('sdmStatusFilter')?.value || '');
+                const currentStatus = String(row.dataset.status || '').trim().toLowerCase();
+                if (statusChoice && (statusChoice === '__kosong__' ? Boolean(currentStatus) : currentStatus !== statusChoice)) {
+                    return false;
+                }
+
 
             const haystack =
                 [
@@ -478,6 +484,13 @@
 
         currentRow =
             row;
+          const statusField = document.getElementById('sdmFormStatus');
+          if (statusField) {
+              queueMicrotask(() => {
+                  statusField.value = String(row?.dataset.status || '');
+              });
+          }
+
 
 
         currentId =
@@ -788,6 +801,7 @@
 
 
         const payload = {
+              status: String(document.getElementById('sdmFormStatus')?.value || ''),
 
             nama_sdm:
                 String(
@@ -1416,6 +1430,14 @@
     ========================================================= */
 
     function init() {
+        const masterStatusFilter = document.getElementById('sdmStatusFilter');
+        if (masterStatusFilter) {
+            masterStatusFilter.addEventListener('change', function () {
+                currentPage = 1;
+                renderTable();
+            });
+        }
+
 
         updateDateTime();
 
@@ -1582,6 +1604,9 @@
 
     window.resetSdmFilter =
         function () {
+          const masterStatusReset = document.getElementById('sdmStatusFilter');
+          if (masterStatusReset) masterStatusReset.value = '';
+
 
             qs('#sdmSearch').value =
                 '';

@@ -407,6 +407,15 @@
             <div class="table-responsive">
 
 
+                <div class="master-status-filter">
+                    <label for="sdmStatusFilter">Status SDM Pendukung</label>
+                    <select id="sdmStatusFilter" aria-label="Filter status SDM Pendukung">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
                 <table class="sdm-table" id="sdmTable">
 
 
@@ -428,6 +437,7 @@
 
                             <th>Dibuat</th>
 
+                            <th class="master-status-heading">Status</th>
                             <th>Aksi</th>
 
                         </tr>
@@ -440,7 +450,8 @@
 
 
                         @forelse ($sdms as $item)
-                            <tr data-record data-id="{{ $item->id }}" data-nama="{{ $item->nama_sdm }}"
+                            <tr data-record data-status="{{ strtolower(trim((string) ($item->status ?? ''))) }}"
+                                data-id="{{ $item->id }}" data-nama="{{ $item->nama_sdm }}"
                                 data-nip="{{ $item->nip }}" data-id-jabat="{{ $item->id_jabat }}"
                                 data-jabatan="{{ $item->jabat }}" data-id-div="{{ $item->id_div }}"
                                 data-id-dep="{{ $item->id_dep ?? '' }}" data-divisi="{{ $item->nama_div }}"
@@ -513,6 +524,18 @@
                                 </td>
 
 
+                                <td class="master-status-cell">
+                                    @php
+                                        $statusMaster = strtolower(trim((string) ($item->status ?? '')));
+                                    @endphp
+                                    @if ($statusMaster === 'aktif')
+                                        <span class="master-status-badge is-active">Aktif</span>
+                                    @elseif ($statusMaster === 'nonaktif')
+                                        <span class="master-status-badge is-inactive">Nonaktif</span>
+                                    @else
+                                        <span class="master-status-badge is-unset">Belum Diatur</span>
+                                    @endif
+                                </td>
                                 <td>
 
                                     <div class="sdm-actions">
@@ -564,7 +587,7 @@
 
                         <tr id="sdmEmptyRow" hidden>
 
-                            <td colspan="8" class="sdm-empty">
+                            <td colspan="9" class="sdm-empty">
 
                                 Data SDM Pendukung tidak ditemukan.
 
@@ -892,6 +915,18 @@
 
 
                     <div class="sdm-modal-body">
+                        {-- Status Aktif / Nonaktif Master Data --}
+                        <div class="master-status-form-group">
+                            <label for="sdmFormStatus">Status SDM Pendukung <span aria-hidden="true">*</span></label>
+                            <select id="sdmFormStatus" name="status" required>
+                                <option value="">Pilih Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                            <small>Data Nonaktif tetap tersimpan, tetapi tidak tersedia sebagai pilihan baru pada modul lain
+                                setelah filter backend diterapkan.</small>
+                        </div>
+
 
 
                         <div class="sdm-form-group">

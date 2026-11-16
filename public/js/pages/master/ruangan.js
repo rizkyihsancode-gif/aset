@@ -206,6 +206,12 @@
         return rows()
             .filter(
                 function (row) {
+                const statusChoice = String(document.getElementById('ruanganStatusFilter')?.value || '');
+                const currentStatus = String(row.dataset.status || '').trim().toLowerCase();
+                if (statusChoice && (statusChoice === '__kosong__' ? Boolean(currentStatus) : currentStatus !== statusChoice)) {
+                    return false;
+                }
+
 
                     const text =
                         [
@@ -572,6 +578,9 @@
 
 
     function resetFilter() {
+        const statusFilter = document.getElementById('ruanganStatusFilter');
+        if (statusFilter) statusFilter.value = '';
+
 
         const input =
             qs('#ruanganSearch');
@@ -621,6 +630,13 @@
 
         currentRow =
             row;
+          const statusField = document.getElementById('ruanganFormStatus');
+          if (statusField) {
+              queueMicrotask(() => {
+                  statusField.value = String(row?.dataset.status || '');
+              });
+          }
+
 
 
         currentId =
@@ -925,6 +941,7 @@
 
 
         const payload = {
+              status: String(document.getElementById('ruanganFormStatus')?.value || ''),
 
             nama_ruang:
                 nama,
@@ -1885,6 +1902,14 @@
     ========================================================= */
 
     function init() {
+        const masterStatusFilter = document.getElementById('ruanganStatusFilter');
+        if (masterStatusFilter) {
+            masterStatusFilter.addEventListener('change', function () {
+                currentPage = 1;
+                renderTable();
+            });
+        }
+
 
         /*
          * Date.

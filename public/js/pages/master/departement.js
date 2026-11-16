@@ -163,6 +163,12 @@
         );
 
         return rows().filter(function (row) {
+                const statusChoice = String(document.getElementById('deptStatusFilter')?.value || '');
+                const currentStatus = String(row.dataset.status || '').trim().toLowerCase();
+                if (statusChoice && (statusChoice === '__kosong__' ? Boolean(currentStatus) : currentStatus !== statusChoice)) {
+                    return false;
+                }
+
 
             /*
              * Hanya Kode dan Nama yang dicari.
@@ -469,6 +475,9 @@
     ========================================================= */
 
     function resetFilter() {
+        const statusFilter = document.getElementById('deptStatusFilter');
+        if (statusFilter) statusFilter.value = '';
+
 
         const search = qs('#deptSearch');
 
@@ -664,6 +673,13 @@
         modalMode = mode;
 
         currentRow = row;
+          const statusField = document.getElementById('deptFormStatus');
+          if (statusField) {
+              queueMicrotask(() => {
+                  statusField.value = String(row?.dataset.status || '');
+              });
+          }
+
 
         currentId = row
             ? row.dataset.id
@@ -1083,6 +1099,7 @@
          */
 
         const formData = new FormData();
+          formData.append('status', String(document.getElementById('deptFormStatus')?.value || ''));
 
         /*
          * MAPPING DATABASE LEGACY
@@ -2162,6 +2179,14 @@
     ========================================================= */
 
     function init() {
+        const masterStatusFilter = document.getElementById('deptStatusFilter');
+        if (masterStatusFilter) {
+            masterStatusFilter.addEventListener('change', function () {
+                currentPage = 1;
+                renderTable();
+            });
+        }
+
 
         /*
          * Hindari inisialisasi dua kali

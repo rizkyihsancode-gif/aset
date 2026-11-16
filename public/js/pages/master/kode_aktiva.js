@@ -121,6 +121,12 @@
         const kib = value('aktivaKibFilter');
 
         return rows().filter(row => {
+                const statusChoice = String(document.getElementById('aktivaStatusFilter')?.value || '');
+                const currentStatus = String(row.dataset.status || '').trim().toLowerCase();
+                if (statusChoice && (statusChoice === '__kosong__' ? Boolean(currentStatus) : currentStatus !== statusChoice)) {
+                    return false;
+                }
+
 
             const text = normalize([
                 row.dataset.kode,
@@ -335,6 +341,9 @@
     ====================================================== */
 
     function resetFilter() {
+        const statusFilter = document.getElementById('aktivaStatusFilter');
+        if (statusFilter) statusFilter.value = '';
+
 
         [
             'aktivaSearch',
@@ -469,6 +478,13 @@
 
         currentMode = mode;
         currentRow = row;
+          const statusField = document.getElementById('aktivaFormStatus');
+          if (statusField) {
+              queueMicrotask(() => {
+                  statusField.value = String(row?.dataset.status || '');
+              });
+          }
+
 
         const data = row?.dataset || {};
 
@@ -566,6 +582,7 @@
     function validate() {
 
         const data = {
+              status: String(document.getElementById('aktivaFormStatus')?.value || ''),
             kode: value('aktivaKode'),
             aktiva: value('aktivaName'),
             gol: value('aktivaGol'),
@@ -955,6 +972,14 @@
     ====================================================== */
 
     function bind() {
+        const masterStatusFilter = document.getElementById('aktivaStatusFilter');
+        if (masterStatusFilter) {
+            masterStatusFilter.addEventListener('change', function () {
+                currentPage = 1;
+                renderTable();
+            });
+        }
+
 
         [
             'aktivaSearch',
