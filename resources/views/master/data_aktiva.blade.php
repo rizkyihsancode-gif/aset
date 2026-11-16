@@ -937,8 +937,8 @@
     <script>
         window.AKTIVA_CRUD = {
             store: @json(route('master.data_aktiva.store')),
-            update: @json(url('/master-data/kode-aktiva/__ID__')),
-            destroy: @json(url('/master-data/kode-aktiva/__ID__'))
+            update: @json(route('master.data_aktiva.update', ['id' => '__ID__'])),
+            destroy: @json(route('master.data_aktiva.delete', ['id' => '__ID__']))
         };
     </script>
 
