@@ -501,44 +501,51 @@
             </div>
 
 
+
+            {{-- ========================================================
+     FILTER DATA BARANG
+     Search + Golongan + Status + Filter + Reset + Ekspor
+======================================================== --}}
+
             <div class="barang-filter-grid">
 
                 {{-- SEARCH --}}
 
                 <div class="barang-search">
-
                     <i data-lucide="search"></i>
 
-                    <input type="text" id="barangSearch" placeholder="Cari kode atau nama barang..."
-                        aria-label="Cari kode atau nama barang">
-
+                    <input type="text" id="barangSearch" placeholder="Cari kode, nama barang, atau golongan..."
+                        aria-label="Cari Barang" autocomplete="off">
                 </div>
 
-
-                {{-- FILTER GOLONGAN --}}
+                {{-- GOLONGAN --}}
 
                 <div class="barang-select-group">
-
-                    <label for="barangGolongan">
-                        Golongan
-                    </label>
+                    <label for="barangGolongan">Golongan</label>
 
                     <select id="barangGolongan">
-
-                        <option value="">
-                            Semua Golongan
-                        </option>
+                        <option value="">Semua Golongan</option>
 
                         @foreach ($golongans as $golongan)
                             <option value="{{ $golongan->id }}">
                                 {{ $golongan->nama }}
                             </option>
                         @endforeach
-
                     </select>
-
                 </div>
 
+                {{-- STATUS --}}
+
+                <div class="barang-select-group barang-status-filter-group">
+                    <label for="barangStatusFilter">Status Barang</label>
+
+                    <select id="barangStatusFilter">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
 
                 {{-- FILTER --}}
 
@@ -547,7 +554,6 @@
                     Filter
                 </button>
 
-
                 {{-- RESET --}}
 
                 <button type="button" class="barang-reset-button" onclick="resetBarangFilter()">
@@ -555,8 +561,7 @@
                     Reset
                 </button>
 
-
-                {{-- EXPORT --}}
+                {{-- EKSPOR --}}
 
                 <button type="button" class="barang-export-button" onclick="exportBarangCSV()">
                     <i data-lucide="download"></i>
@@ -564,6 +569,7 @@
                 </button>
 
             </div>
+
 
         </section>
 
@@ -589,82 +595,98 @@
 
             <div class="table-responsive" tabindex="0" aria-label="Tabel barang">
 
+
+                {{-- ========================================================
+     TABEL MASTER BARANG
+     No | Nama | Kode | Golongan | Status | Aksi
+======================================================== --}}
+
                 <table class="barang-table" id="barangTable">
 
                     <thead>
-
                         <tr>
-
-                            <th class="barang-col-no">
-                                No
-                            </th>
-
-                            <th>
-                                Nama Barang
-                            </th>
-
-                            <th>
-                                Kode Barang
-                            </th>
-
-                            <th>
-                                Golongan
-                            </th>
-
-                            <th class="barang-col-action">
-                                Aksi
-                            </th>
-
+                            <th class="barang-col-no">No.</th>
+                            <th>Nama Barang</th>
+                            <th>Kode Barang</th>
+                            <th>Golongan</th>
+                            <th class="barang-col-status">Status</th>
+                            <th class="barang-col-action">Aksi</th>
                         </tr>
-
                     </thead>
-
 
                     <tbody>
 
                         @forelse ($barangs as $index => $item)
-                            <tr data-id="{{ $item->id }}" data-golongan="{{ $item->golongan }}"
-                                data-golongan-name="{{ $item->nama_golongan }}"
+                            @php
+                                $statusBarang = strtolower(trim((string) ($item->status ?? '')));
+                            @endphp
+
+                            <tr data-id="{{ $item->id }}" data-nama-barang="{{ $item->nama_barang }}"
+                                data-kode-barang="{{ $item->kode_barang }}" data-golongan="{{ $item->golongan }}"
+                                data-golongan-name="{{ $item->nama_golongan ?? '' }}" data-status="{{ $statusBarang }}"
                                 data-created-at="{{ $item->created_at ?? '' }}"
                                 data-updated-at="{{ $item->updated_at ?? '' }}">
 
-                                <td>
-                                    {{ $index + 1 }}
-                                </td>
+                                {{-- NOMOR --}}
+
+                                <td>{{ $index + 1 }}</td>
+
+                                {{-- NAMA BARANG --}}
 
                                 <td>
-                                    {{ $item->nama_barang }}
+                                    <strong class="barang-name-text">
+                                        {{ $item->nama_barang }}
+                                    </strong>
                                 </td>
 
+                                {{-- KODE BARANG --}}
+
                                 <td>
-                                    {{ $item->kode_barang }}
+                                    <span class="barang-code-text">
+                                        {{ $item->kode_barang }}
+                                    </span>
                                 </td>
+
+                                {{-- GOLONGAN --}}
 
                                 <td>
                                     {{ $item->nama_golongan ?? 'Tanpa Golongan' }}
                                 </td>
 
+                                {{-- STATUS --}}
+
+                                <td class="barang-status-cell">
+
+                                    @if ($statusBarang === 'aktif')
+                                        <span class="barang-status-badge is-active">
+                                            Aktif
+                                        </span>
+                                    @elseif ($statusBarang === 'nonaktif')
+                                        <span class="barang-status-badge is-inactive">
+                                            Nonaktif
+                                        </span>
+                                    @else
+                                        <span class="barang-status-badge is-unset">
+                                            Belum Diatur
+                                        </span>
+                                    @endif
+
+                                </td>
+
+                                {{-- AKSI --}}
+
                                 <td>
-
                                     <div class="barang-actions">
-
-                                        {{-- VIEW --}}
 
                                         <button type="button" class="view" data-action="view" title="Lihat barang"
                                             aria-label="Lihat {{ $item->nama_barang }}">
                                             <i data-lucide="eye"></i>
                                         </button>
 
-
-                                        {{-- EDIT --}}
-
                                         <button type="button" class="edit" data-action="edit" title="Edit barang"
                                             aria-label="Edit {{ $item->nama_barang }}">
                                             <i data-lucide="square-pen"></i>
                                         </button>
-
-
-                                        {{-- DELETE --}}
 
                                         <button type="button" class="delete" data-action="delete" title="Hapus barang"
                                             aria-label="Hapus {{ $item->nama_barang }}">
@@ -672,29 +694,25 @@
                                         </button>
 
                                     </div>
-
                                 </td>
 
                             </tr>
 
                         @empty
-
-                            {{-- Tidak ada data --}}
+                            {{-- Empty state ditangani JavaScript. --}}
                         @endforelse
 
-
                         <tr id="barangEmptyRow" hidden>
-
-                            <td colspan="5" class="barang-empty">
+                            <td colspan="6" class="barang-empty">
                                 Tidak ada barang yang sesuai.
-                                Coba kata kunci atau golongan lain.
+                                Coba ubah pencarian, golongan, atau status.
                             </td>
-
                         </tr>
 
                     </tbody>
 
                 </table>
+
 
             </div>
 
@@ -793,7 +811,7 @@
 
 
                         @forelse ($distribusiGolongan
-                                                                                                                                        as $index => $group)
+                                                                                                                                                                as $index => $group)
                             @php
 
                                 $count = (int) $group->total;
@@ -900,7 +918,7 @@
                         <tbody>
 
                             @forelse ($barangTerbaru
-                                                                                                                                            as $index => $item)
+                                                                                                                                                                    as $index => $item)
                                 <tr>
 
                                     <td>
@@ -984,7 +1002,12 @@
 
                 {{-- FORM --}}
 
-                <form id="barangForm">
+
+                {{-- ========================================================
+     FORM TAMBAH / DETAIL / EDIT / HAPUS BARANG
+======================================================== --}}
+
+                <form id="barangForm" autocomplete="off">
 
                     @csrf
 
@@ -994,8 +1017,7 @@
                             Data baru akan disimpan ke database.
                         </p>
 
-
-                        {{-- NAMA --}}
+                        {{-- NAMA BARANG --}}
 
                         <div class="barang-form-group">
 
@@ -1008,8 +1030,7 @@
 
                         </div>
 
-
-                        {{-- KODE --}}
+                        {{-- KODE BARANG --}}
 
                         <div class="barang-form-group">
 
@@ -1022,7 +1043,6 @@
 
                         </div>
 
-
                         {{-- GOLONGAN --}}
 
                         <div class="barang-form-group">
@@ -1033,9 +1053,7 @@
 
                             <select id="barangFormGolongan" name="golongan" required>
 
-                                <option value="">
-                                    Pilih Golongan
-                                </option>
+                                <option value="">Pilih Golongan</option>
 
                                 @foreach ($golongans as $golongan)
                                     <option value="{{ $golongan->id }}">
@@ -1047,8 +1065,34 @@
 
                         </div>
 
-                    </div>
+                        {{-- STATUS BARANG --}}
 
+                        <div class="barang-form-group">
+
+                            <label for="barangFormStatus">
+                                Status Barang
+                                <span class="barang-form-required">*</span>
+                            </label>
+
+                            <select id="barangFormStatus" name="status" required>
+                                <option value="">Pilih Status Barang</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+
+                            <p class="barang-status-help">
+
+                                <strong>Aktif:</strong>
+                                barang dapat dipilih untuk pencatatan KIB baru.
+
+                                <strong>Nonaktif:</strong>
+                                barang tidak ditawarkan pada dropdown KIB.
+
+                            </p>
+
+                        </div>
+
+                    </div>
 
                     {{-- FOOTER --}}
 
@@ -1058,7 +1102,6 @@
                             Tutup
                         </button>
 
-
                         <button type="submit" class="barang-save-button" id="barangSaveButton">
                             Simpan Barang
                         </button>
@@ -1066,6 +1109,7 @@
                     </div>
 
                 </form>
+
 
             </div>
 

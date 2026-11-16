@@ -58,13 +58,16 @@ class MasterController extends Controller
                 '=',
                 'golongans.id'
             )
+
             ->select(
                 'barangs.id',
                 'barangs.nama_barang',
                 'barangs.kode_barang',
                 'barangs.golongan',
+                'barangs.status',
                 'golongans.nama as nama_golongan'
             );
+
 
 
         /*
@@ -494,27 +497,59 @@ class MasterController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $validated =
-            $request->validate([
-                'nama_barang' => [
-                    'required',
-                    'string',
-                    'max:255',
-                ],
 
-                'kode_barang' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    'unique:barangs,kode_barang',
-                ],
+        $validated = $request->validate([
 
-                'golongan' => [
-                    'required',
-                    'integer',
-                    'exists:golongans,id',
-                ],
-            ]);
+            'nama_barang' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'kode_barang' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:barangs,kode_barang',
+            ],
+
+            'golongan' => [
+                'required',
+                'integer',
+                'exists:golongans,id',
+            ],
+
+            'status' => [
+                'required',
+                Rule::in([
+                    'aktif',
+                    'nonaktif',
+                ]),
+            ],
+
+        ]);
+
+
+
+
+        /*
+|--------------------------------------------------------------------------
+| VALIDASI STATUS — TAMBAH BARANG
+|--------------------------------------------------------------------------
+| Barang baru harus memiliki status Aktif atau Nonaktif.
+*/
+
+        $statusData = $request->validate([
+            'status' => [
+                'required',
+                \Illuminate\Validation\Rule::in([
+                    'aktif',
+                    'nonaktif',
+                ]),
+            ],
+        ]);
+
+        $statusBarang = $statusData['status'];
 
 
         /*
@@ -523,22 +558,23 @@ class MasterController extends Controller
         |--------------------------------------------------------------------------
         */
 
+
         $insertData = [
 
-            'nama_barang' =>
-            trim(
+            'nama_barang' => trim(
                 $validated['nama_barang']
             ),
 
-            'kode_barang' =>
-            trim(
+            'kode_barang' => trim(
                 $validated['kode_barang']
             ),
 
-            'golongan' =>
-            $validated['golongan'],
+            'golongan' => $validated['golongan'],
+
+            'status' => $validated['status'],
 
         ];
+
 
 
         /*
@@ -741,33 +777,42 @@ class MasterController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $validated =
-            $request->validate([
-                'nama_barang' => [
-                    'required',
-                    'string',
-                    'max:255',
-                ],
 
-                'kode_barang' => [
-                    'required',
-                    'string',
-                    'max:255',
+        $validated = $request->validate([
 
-                    Rule::unique(
-                        'barangs',
-                        'kode_barang'
-                    )->ignore(
-                        $id
-                    ),
-                ],
+            'nama_barang' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-                'golongan' => [
-                    'required',
-                    'integer',
-                    'exists:golongans,id',
-                ],
-            ]);
+            'kode_barang' => [
+                'required',
+                'string',
+                'max:255',
+
+                Rule::unique(
+                    'barangs',
+                    'kode_barang'
+                )->ignore($id),
+            ],
+
+            'golongan' => [
+                'required',
+                'integer',
+                'exists:golongans,id',
+            ],
+
+            'status' => [
+                'required',
+                Rule::in([
+                    'aktif',
+                    'nonaktif',
+                ]),
+            ],
+
+        ]);
+
 
 
         /*
@@ -778,20 +823,20 @@ class MasterController extends Controller
 
         $updateData = [
 
-            'nama_barang' =>
-            trim(
+            'nama_barang' => trim(
                 $validated['nama_barang']
             ),
 
-            'kode_barang' =>
-            trim(
+            'kode_barang' => trim(
                 $validated['kode_barang']
             ),
 
-            'golongan' =>
-            $validated['golongan'],
+            'golongan' => $validated['golongan'],
+
+            'status' => $validated['status'],
 
         ];
+
 
 
         /*

@@ -98,11 +98,13 @@
          * Event.
          */
 
-        bindSearch();
+       bindSearch();
 
-        bindFilter();
+bindFilter();
 
-        bindPageSize();
+bindStatusFilter();
+
+bindPageSize();
 
         bindTableActions();
 
@@ -174,128 +176,52 @@
        READ DATA FROM BLADE
        ============================================================ */
 
-    function readBarangFromBlade() {
+    
+function readBarangFromBlade() {
 
-        const rows =
-            Array.from(
-                document.querySelectorAll(
-                    '#barangTable tbody tr'
-                )
-            );
+    const rows = Array.from(
+        document.querySelectorAll(
+            '#barangTable tbody tr[data-id]'
+        )
+    );
 
+    return rows.map(function (row) {
 
-        const records = [];
+        return {
 
+            id: row.dataset.id || '',
 
-        rows.forEach(
-            function (row, index) {
+            nama_barang:
+                row.dataset.namaBarang ||
+                row.cells[1]?.textContent?.trim() ||
+                '',
 
-                /*
-                 * Abaikan empty row.
-                 */
+            kode_barang:
+                row.dataset.kodeBarang ||
+                row.cells[2]?.textContent?.trim() ||
+                '',
 
-                if (
-                    row.id ===
-                    'barangEmptyRow'
-                ) {
-                    return;
-                }
+            golongan:
+                row.dataset.golongan || '',
 
+            nama_golongan:
+                row.dataset.golonganName || '',
 
-                if (
-                    row.cells.length < 4
-                ) {
-                    return;
-                }
+            status:
+                row.dataset.status || '',
 
+            created_at:
+                row.dataset.createdAt || '',
 
-                const name =
-                    row.dataset.namaBarang ||
-                    row.cells[1]
-                        ?.textContent
-                        ?.trim() ||
-                    '';
+            updated_at:
+                row.dataset.updatedAt || '',
 
+        };
 
-                const code =
-                    row.dataset.kodeBarang ||
-                    row.cells[2]
-                        ?.textContent
-                        ?.trim() ||
-                    '';
+    });
 
+}
 
-                const groupId =
-                    row.dataset.golongan ||
-                    row.dataset.golonganId ||
-                    '';
-
-
-                const groupName =
-                    row.dataset.golonganName ||
-                    row.dataset.golonganNama ||
-                    getCellGolonganName(
-                        row.cells[3]
-                    );
-
-
-                const id =
-                    row.dataset.id ||
-                    row.dataset.barangId ||
-                    '';
-
-
-                const createdAt =
-                    row.dataset.createdAt ||
-                    '';
-
-
-                const updatedAt =
-                    row.dataset.updatedAt ||
-                    '';
-
-
-                if (
-                    !name &&
-                    !code
-                ) {
-                    return;
-                }
-
-
-                records.push({
-
-                    id:
-                        id ||
-                        `blade-${index}`,
-
-                    nama_barang:
-                        name,
-
-                    kode_barang:
-                        code,
-
-                    golongan:
-                        groupId,
-
-                    nama_golongan:
-                        groupName,
-
-                    created_at:
-                        createdAt,
-
-                    updated_at:
-                        updatedAt
-
-                });
-
-            }
-        );
-
-
-        return records;
-
-    }
 
 
     function getCellGolonganName(cell) {
@@ -332,86 +258,78 @@
        NORMALIZE DATA
        ============================================================ */
 
-    function normalizeBarang(item) {
+    
+function normalizeBarang(item) {
 
-        if (!item) {
-
-            return {
-
-                id:
-                    '',
-
-                nama_barang:
-                    '',
-
-                kode_barang:
-                    '',
-
-                golongan:
-                    '',
-
-                nama_golongan:
-                    '',
-
-                created_at:
-                    '',
-
-                updated_at:
-                    ''
-
-            };
-
-        }
-
-
-        const groupId =
-            resolveGolonganId(item);
-
-
-        const groupName =
-            resolveGolonganName(item);
-
+    if (!item) {
 
         return {
-
-            id:
-                item.id ?? '',
-
-            nama_barang:
-                String(
-                    item.nama_barang ??
-                    item.nama ??
-                    ''
-                ).trim(),
-
-            kode_barang:
-                String(
-                    item.kode_barang ??
-                    item.kode ??
-                    ''
-                ).trim(),
-
-            golongan:
-                groupId,
-
-            nama_golongan:
-                groupName !== '-'
-                    ? groupName
-                    : '',
-
-            created_at:
-                item.created_at ||
-                item.createdAt ||
-                '',
-
-            updated_at:
-                item.updated_at ||
-                item.updatedAt ||
-                ''
-
+            id: '',
+            nama_barang: '',
+            kode_barang: '',
+            golongan: '',
+            nama_golongan: '',
+            status: '',
+            created_at: '',
+            updated_at: ''
         };
 
     }
+
+    const groupId = resolveGolonganId(item);
+
+    const groupName = resolveGolonganName(item);
+
+    const rawStatus = String(
+        item.status ?? ''
+    ).trim().toLowerCase();
+
+    const status = [
+        'aktif',
+        'nonaktif'
+    ].includes(rawStatus)
+        ? rawStatus
+        : '';
+
+    return {
+
+        id: item.id ?? '',
+
+        nama_barang: String(
+            item.nama_barang ??
+            item.nama ??
+            ''
+        ).trim(),
+
+        kode_barang: String(
+            item.kode_barang ??
+            item.kode ??
+            ''
+        ).trim(),
+
+        golongan: groupId,
+
+        nama_golongan:
+            groupName !== '-'
+                ? groupName
+                : '',
+
+        status: status,
+
+        created_at:
+            item.created_at ||
+            item.createdAt ||
+            '',
+
+        updated_at:
+            item.updated_at ||
+            item.updatedAt ||
+            ''
+
+    };
+
+}
+
 
 
     function getBarangData() {
@@ -790,101 +708,79 @@
        FILTERED DATA
        ============================================================ */
 
-    function getFilteredData() {
+    
+function getFilteredData() {
 
-        const records =
-            getBarangData();
+    const records = getBarangData();
 
+    const search = String(
+        document.getElementById(
+            'barangSearch'
+        )?.value || ''
+    )
+        .trim()
+        .toLocaleLowerCase('id-ID');
 
-        const searchElement =
-            document.getElementById(
-                'barangSearch'
+    const selectedGroup = String(
+        document.getElementById(
+            'barangGolongan'
+        )?.value || ''
+    ).trim();
+
+    const selectedStatus = String(
+        document.getElementById(
+            'barangStatusFilter'
+        )?.value || ''
+    ).trim();
+
+    return records.filter(function (item) {
+
+        const name = String(
+            item.nama_barang || ''
+        ).toLocaleLowerCase('id-ID');
+
+        const code = String(
+            item.kode_barang || ''
+        ).toLocaleLowerCase('id-ID');
+
+        const groupName = resolveGolonganName(
+            item
+        ).toLocaleLowerCase('id-ID');
+
+        const groupId = resolveGolonganId(item);
+
+        const status = String(
+            item.status || ''
+        ).trim().toLowerCase();
+
+        const searchMatch =
+            !search ||
+            name.includes(search) ||
+            code.includes(search) ||
+            groupName.includes(search);
+
+        const groupMatch =
+            !selectedGroup ||
+            groupId === selectedGroup;
+
+        const statusMatch =
+            !selectedStatus ||
+            (
+                selectedStatus === '__kosong__'
+                    ? status === ''
+                    : status === selectedStatus
             );
 
-
-        const groupElement =
-            document.getElementById(
-                'barangGolongan'
-            );
-
-
-        const search =
-            searchElement
-                ? String(
-                    searchElement.value || ''
-                )
-                    .trim()
-                    .toLocaleLowerCase(
-                        'id-ID'
-                    )
-                : '';
-
-
-        const selectedGroup =
-            groupElement
-                ? String(
-                    groupElement.value || ''
-                ).trim()
-                : '';
-
-
-        return records.filter(
-            function (item) {
-
-                const name =
-                    String(
-                        item.nama_barang || ''
-                    )
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
-
-
-                const code =
-                    String(
-                        item.kode_barang || ''
-                    )
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
-
-
-                const groupName =
-                    resolveGolonganName(
-                        item
-                    )
-                        .toLocaleLowerCase(
-                            'id-ID'
-                        );
-
-
-                const groupId =
-                    resolveGolonganId(
-                        item
-                    );
-
-
-                const searchMatch =
-                    !search ||
-                    name.includes(search) ||
-                    code.includes(search) ||
-                    groupName.includes(search);
-
-
-                const groupMatch =
-                    !selectedGroup ||
-                    groupId === selectedGroup;
-
-
-                return (
-                    searchMatch &&
-                    groupMatch
-                );
-
-            }
+        return (
+            searchMatch &&
+            groupMatch &&
+            statusMatch
         );
 
-    }
+    });
+
+}
+
 
 
     /* ============================================================
@@ -908,328 +804,262 @@
        TABLE
        ============================================================ */
 
-    function renderTable() {
+    
+function renderTable() {
 
-        const table =
-            document.getElementById(
-                'barangTable'
-            );
+    const table = document.getElementById(
+        'barangTable'
+    );
 
+    if (!table) {
+        return;
+    }
 
-        if (!table) {
-            return;
-        }
+    const tbody = table.querySelector('tbody');
 
+    if (!tbody) {
+        return;
+    }
 
-        const tbody =
-            table.querySelector(
-                'tbody'
-            );
+    const records = getFilteredData();
 
-
-        if (!tbody) {
-            return;
-        }
-
-
-        const records =
-            getFilteredData();
-
-
-        const pageSizeElement =
+    const pageSize = Math.max(
+        1,
+        Number(
             document.getElementById(
                 'barangPageSize'
+            )?.value
+        ) || DEFAULT_PAGE_SIZE
+    );
+
+    const total = records.length;
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(total / pageSize)
+    );
+
+    currentPage = Math.min(
+        Math.max(currentPage, 1),
+        totalPages
+    );
+
+    const start = (
+        currentPage - 1
+    ) * pageSize;
+
+    const visible = records.slice(
+        start,
+        start + pageSize
+    );
+
+    tbody.replaceChildren();
+
+    /* ==========================================
+       DATA KOSONG
+    ========================================== */
+
+    if (visible.length === 0) {
+
+        const row = document.createElement('tr');
+
+        row.id = 'barangEmptyRow';
+
+        const cell = document.createElement('td');
+
+        cell.colSpan = 6;
+        cell.className = 'barang-empty';
+
+        cell.textContent =
+            total === 0
+                ? 'Tidak ada data barang yang sesuai.'
+                : 'Data barang tidak ditemukan.';
+
+        row.appendChild(cell);
+        tbody.appendChild(row);
+
+    }
+
+    /* ==========================================
+       RENDER DATA
+    ========================================== */
+
+    visible.forEach(function (item, index) {
+
+        const row = document.createElement('tr');
+
+        row.dataset.id = String(item.id);
+
+        row.dataset.namaBarang =
+            item.nama_barang || '';
+
+        row.dataset.kodeBarang =
+            item.kode_barang || '';
+
+        row.dataset.golongan =
+            resolveGolonganId(item);
+
+        row.dataset.golonganName =
+            resolveGolonganName(item);
+
+        row.dataset.status =
+            item.status || '';
+
+        row.dataset.createdAt =
+            item.created_at || '';
+
+        row.dataset.updatedAt =
+            item.updated_at || '';
+
+        /* NOMOR */
+
+        const no = document.createElement('td');
+
+        no.textContent = String(
+            start + index + 1
+        );
+
+        /* NAMA BARANG */
+
+        const name = document.createElement('td');
+
+        const nameText = document.createElement(
+            'strong'
+        );
+
+        nameText.className = 'barang-name-text';
+
+        nameText.textContent =
+            item.nama_barang || '—';
+
+        name.appendChild(nameText);
+
+        /* KODE BARANG */
+
+        const code = document.createElement('td');
+
+        const codeText = document.createElement(
+            'span'
+        );
+
+        codeText.className = 'barang-code-text';
+
+        codeText.textContent =
+            item.kode_barang || '—';
+
+        code.appendChild(codeText);
+
+        /* GOLONGAN */
+
+        const group = document.createElement('td');
+
+        group.textContent =
+            resolveGolonganName(item);
+
+        /* STATUS */
+
+        const statusCell = document.createElement(
+            'td'
+        );
+
+        statusCell.className =
+            'barang-status-cell';
+
+        const statusBadge = document.createElement(
+            'span'
+        );
+
+        statusBadge.className =
+            'barang-status-badge';
+
+        if (item.status === 'aktif') {
+
+            statusBadge.classList.add(
+                'is-active'
             );
 
+            statusBadge.textContent = 'Aktif';
 
-        const pageSize =
-            Number(
-                pageSizeElement?.value
-            ) ||
-            DEFAULT_PAGE_SIZE;
+        } else if (item.status === 'nonaktif') {
 
-
-        const total =
-            records.length;
-
-
-        const totalPages =
-            Math.max(
-                1,
-                Math.ceil(
-                    total /
-                    pageSize
-                )
+            statusBadge.classList.add(
+                'is-inactive'
             );
 
+            statusBadge.textContent = 'Nonaktif';
 
-        currentPage =
-            Math.min(
-                Math.max(
-                    currentPage,
-                    1
-                ),
-                totalPages
+        } else {
+
+            statusBadge.classList.add(
+                'is-unset'
             );
 
-
-        const start =
-            (
-                currentPage - 1
-            ) *
-            pageSize;
-
-
-        const visible =
-            records.slice(
-                start,
-                start + pageSize
-            );
-
-
-        tbody.replaceChildren();
-
-
-        /*
-         * Tidak ada data.
-         */
-
-        if (
-            visible.length === 0
-        ) {
-
-            const row =
-                document.createElement(
-                    'tr'
-                );
-
-
-            row.id =
-                'barangEmptyRow';
-
-
-            const cell =
-                document.createElement(
-                    'td'
-                );
-
-
-            cell.colSpan =
-                5;
-
-
-            cell.className =
-                'barang-empty';
-
-
-            cell.textContent =
-                total === 0
-                    ? 'Belum ada data barang.'
-                    : 'Data barang tidak ditemukan.';
-
-
-            row.appendChild(
-                cell
-            );
-
-
-            tbody.appendChild(
-                row
-            );
+            statusBadge.textContent =
+                'Belum Diatur';
 
         }
 
+        statusCell.appendChild(statusBadge);
 
-        /*
-         * Render row.
-         */
+        /* AKSI */
 
-        visible.forEach(
-            function (item, index) {
-
-                const row =
-                    document.createElement(
-                        'tr'
-                    );
-
-
-                row.dataset.id =
-                    String(
-                        item.id
-                    );
-
-
-                row.dataset.golongan =
-                    resolveGolonganId(
-                        item
-                    );
-
-
-                row.dataset.golonganName =
-                    resolveGolonganName(
-                        item
-                    );
-
-
-                /*
-                 * NO
-                 */
-
-                const no =
-                    document.createElement(
-                        'td'
-                    );
-
-
-                no.textContent =
-                    start +
-                    index +
-                    1;
-
-
-                /*
-                 * NAMA
-                 */
-
-                const name =
-                    document.createElement(
-                        'td'
-                    );
-
-
-                name.textContent =
-                    item.nama_barang ||
-                    '-';
-
-
-                /*
-                 * KODE
-                 */
-
-                const code =
-                    document.createElement(
-                        'td'
-                    );
-
-
-                code.textContent =
-                    item.kode_barang ||
-                    '-';
-
-
-                /*
-                 * GOLONGAN
-                 */
-
-                const group =
-                    document.createElement(
-                        'td'
-                    );
-
-
-                group.textContent =
-                    resolveGolonganName(
-                        item
-                    );
-
-
-                /*
-                 * ACTION
-                 */
-
-                const actionCell =
-                    document.createElement(
-                        'td'
-                    );
-
-
-                const actionWrap =
-                    document.createElement(
-                        'div'
-                    );
-
-
-                actionWrap.className =
-                    'barang-actions';
-
-
-                actionWrap.appendChild(
-                    createActionButton(
-                        'view',
-                        'eye',
-                        'Lihat barang'
-                    )
-                );
-
-
-                actionWrap.appendChild(
-                    createActionButton(
-                        'edit',
-                        'square-pen',
-                        'Edit barang'
-                    )
-                );
-
-
-                actionWrap.appendChild(
-                    createActionButton(
-                        'delete',
-                        'trash-2',
-                        'Hapus barang'
-                    )
-                );
-
-
-                actionCell.appendChild(
-                    actionWrap
-                );
-
-
-                row.appendChild(
-                    no
-                );
-
-
-                row.appendChild(
-                    name
-                );
-
-
-                row.appendChild(
-                    code
-                );
-
-
-                row.appendChild(
-                    group
-                );
-
-
-                row.appendChild(
-                    actionCell
-                );
-
-
-                tbody.appendChild(
-                    row
-                );
-
-            }
+        const actionCell = document.createElement(
+            'td'
         );
 
-
-        updateTableInfo(
-            total,
-            start,
-            pageSize
+        const actionWrap = document.createElement(
+            'div'
         );
 
+        actionWrap.className = 'barang-actions';
 
-        renderPagination(
-            totalPages
+        actionWrap.appendChild(
+            createActionButton(
+                'view',
+                'eye',
+                'Lihat barang'
+            )
         );
 
-    }
+        actionWrap.appendChild(
+            createActionButton(
+                'edit',
+                'square-pen',
+                'Edit barang'
+            )
+        );
+
+        actionWrap.appendChild(
+            createActionButton(
+                'delete',
+                'trash-2',
+                'Hapus barang'
+            )
+        );
+
+        actionCell.appendChild(actionWrap);
+
+        row.appendChild(no);
+        row.appendChild(name);
+        row.appendChild(code);
+        row.appendChild(group);
+        row.appendChild(statusCell);
+        row.appendChild(actionCell);
+
+        tbody.appendChild(row);
+
+    });
+
+    updateTableInfo(
+        total,
+        start,
+        pageSize
+    );
+
+    renderPagination(totalPages);
+
+}
+
 
 
     function createActionButton(
@@ -2375,6 +2205,37 @@
     }
 
 
+/* ==========================================================
+   FILTER STATUS BARANG
+========================================================== */
+
+function bindStatusFilter() {
+
+    const filter = document.getElementById(
+        'barangStatusFilter'
+    );
+
+    if (!filter) {
+        return;
+    }
+
+    filter.addEventListener(
+        'change',
+        function () {
+
+            currentPage = 1;
+
+            renderTable();
+
+            refreshIcons();
+
+        }
+    );
+
+}
+
+
+
     /* ============================================================
        PAGE SIZE
        ============================================================ */
@@ -2766,6 +2627,31 @@
         }
 
 
+/* ==========================================================
+   ISI STATUS BARANG PADA FORM
+========================================================== */
+
+const barangStatusField = document.getElementById(
+    'barangFormStatus'
+);
+
+if (barangStatusField) {
+
+    const savedStatus = String(
+        record?.status || ''
+    ).trim().toLowerCase();
+
+    barangStatusField.value = [
+        'aktif',
+        'nonaktif'
+    ].includes(savedStatus)
+        ? savedStatus
+        : '';
+
+}
+
+
+
         /*
          * ADD
          */
@@ -3026,52 +2912,47 @@
     }
 
 
-    function setFormDisabled(
-        disabled
-    ) {
+    
+/* ==========================================================
+   MODE FORM: TAMBAH / EDIT / VIEW / DELETE
+========================================================== */
 
-        const name =
-            document.getElementById(
-                'barangName'
-            );
+function setFormDisabled(disabled) {
 
+    const name = document.getElementById(
+        'barangName'
+    );
 
-        const code =
-            document.getElementById(
-                'barangCode'
-            );
+    const code = document.getElementById(
+        'barangCode'
+    );
 
+    const group = document.getElementById(
+        'barangFormGolongan'
+    );
 
-        const group =
-            document.getElementById(
-                'barangFormGolongan'
-            );
+    const status = document.getElementById(
+        'barangFormStatus'
+    );
 
-
-        if (name) {
-
-            name.readOnly =
-                disabled;
-
-        }
-
-
-        if (code) {
-
-            code.readOnly =
-                disabled;
-
-        }
-
-
-        if (group) {
-
-            group.disabled =
-                disabled;
-
-        }
-
+    if (name) {
+        name.readOnly = disabled;
     }
+
+    if (code) {
+        code.readOnly = disabled;
+    }
+
+    if (group) {
+        group.disabled = disabled;
+    }
+
+    if (status) {
+        status.disabled = disabled;
+    }
+
+}
+
 
 
     function closeModal() {
@@ -3615,161 +3496,181 @@
        SUBMIT FORM
        ============================================================ */
 
-    async function submitForm() {
+   
+/* ==========================================================
+   SUBMIT FORM BARANG
+   CREATE / UPDATE / DELETE
+========================================================== */
 
-        const saveButton =
-            document.getElementById(
-                'barangSaveButton'
-            );
+async function submitForm() {
 
+    const saveButton = document.getElementById(
+        'barangSaveButton'
+    );
 
-        /*
-         * ========================================================
-         * DELETE
-         * ========================================================
-         */
+    /* ==========================================
+       DELETE MENGGUNAKAN FUNGSI LAMA
+    ========================================== */
 
-        if (
-            modalMode ===
-            'delete'
-        ) {
+    if (modalMode === 'delete') {
 
-            await deleteBarang(
-                saveButton
-            );
+        await deleteBarang(saveButton);
 
-            return;
+        return;
+    }
 
-        }
+    if (modalMode === 'view') {
+        return;
+    }
 
+    /* ==========================================
+       AMBIL DATA FORM
+    ========================================== */
 
-        /*
-         * ========================================================
-         * AMBIL FORM
-         * ========================================================
-         */
+    const name = String(
+        document.getElementById(
+            'barangName'
+        )?.value || ''
+    ).trim();
 
-        const name =
-            document.getElementById(
-                'barangName'
-            )?.value
-                ?.trim() ||
-            '';
+    const code = String(
+        document.getElementById(
+            'barangCode'
+        )?.value || ''
+    ).trim();
 
+    const group = String(
+        document.getElementById(
+            'barangFormGolongan'
+        )?.value || ''
+    ).trim();
 
-        const code =
-            document.getElementById(
-                'barangCode'
-            )?.value
-                ?.trim() ||
-            '';
+    const status = String(
+        document.getElementById(
+            'barangFormStatus'
+        )?.value || ''
+    ).trim().toLowerCase();
 
+    /* ==========================================
+       VALIDASI NAMA
+    ========================================== */
 
-        const group =
-            document.getElementById(
-                'barangFormGolongan'
-            )?.value ||
-            '';
+    if (!name) {
 
+        showMessage(
+            'Nama Barang wajib diisi.',
+            'error'
+        );
 
-        /*
-         * VALIDASI FRONTEND
-         */
+        document.getElementById(
+            'barangName'
+        )?.focus();
 
-        if (!name) {
+        return;
+    }
 
-            showMessage(
-                'Nama barang wajib diisi.',
-                'error'
-            );
+    /* ==========================================
+       VALIDASI KODE
+    ========================================== */
 
-            return;
+    if (!code) {
 
-        }
+        showMessage(
+            'Kode Barang wajib diisi.',
+            'error'
+        );
 
+        document.getElementById(
+            'barangCode'
+        )?.focus();
 
-        if (!code) {
+        return;
+    }
 
-            showMessage(
-                'Kode barang wajib diisi.',
-                'error'
-            );
+    /* ==========================================
+       VALIDASI GOLONGAN
+    ========================================== */
 
-            return;
+    if (!group) {
 
-        }
+        showMessage(
+            'Golongan wajib dipilih.',
+            'error'
+        );
 
+        document.getElementById(
+            'barangFormGolongan'
+        )?.focus();
 
-        if (!group) {
+        return;
+    }
 
-            showMessage(
-                'Golongan wajib dipilih.',
-                'error'
-            );
+    /* ==========================================
+       VALIDASI STATUS
+    ========================================== */
 
-            return;
+    if (
+        status !== 'aktif' &&
+        status !== 'nonaktif'
+    ) {
 
-        }
+        showMessage(
+            'Pilih Status Barang: Aktif atau Nonaktif.',
+            'error'
+        );
 
+        document.getElementById(
+            'barangFormStatus'
+        )?.focus();
 
-        /*
-         * Payload sesuai field Blade/database existing.
-         */
+        return;
+    }
 
-        const payload = {
+    /* ==========================================
+       PAYLOAD AJAX
+    ========================================== */
 
-            nama_barang:
-                name,
+    const payload = {
 
-            kode_barang:
-                code,
+        nama_barang: name,
 
-            golongan:
-                group
+        kode_barang: code,
 
-        };
+        golongan: group,
 
+        status: status,
 
-        /*
-         * ========================================================
-         * CREATE
-         * ========================================================
-         */
+    };
 
-        if (
-            modalMode ===
-            'add'
-        ) {
+    /* ==========================================
+       CREATE
+    ========================================== */
 
-            await createBarang(
-                payload,
-                saveButton
-            );
+    if (modalMode === 'add') {
 
-            return;
+        await createBarang(
+            payload,
+            saveButton
+        );
 
-        }
+        return;
+    }
 
+    /* ==========================================
+       UPDATE
+    ========================================== */
 
-        /*
-         * ========================================================
-         * UPDATE
-         * ========================================================
-         */
+    if (modalMode === 'edit') {
 
-        if (
-            modalMode ===
-            'edit'
-        ) {
-
-            await updateBarang(
-                payload,
-                saveButton
-            );
-
-        }
+        await updateBarang(
+            payload,
+            saveButton
+        );
 
     }
+
+}
+
 
 
     /* ============================================================
@@ -4101,227 +4002,164 @@
        RESET FILTER
        ============================================================ */
 
-    function resetFilter() {
+    
+/* ==========================================================
+   RESET SELURUH FILTER
+========================================================== */
 
-        const search =
-            document.getElementById(
-                'barangSearch'
-            );
+function resetFilter() {
 
+    const ids = [
+        'barangSearch',
+        'barangGolongan',
+        'barangStatusFilter'
+    ];
 
-        const group =
-            document.getElementById(
-                'barangGolongan'
-            );
+    ids.forEach(function (id) {
 
+        const element = document.getElementById(id);
 
-        if (search) {
-
-            search.value =
-                '';
-
+        if (element) {
+            element.value = '';
         }
 
+    });
 
-        if (group) {
+    currentPage = 1;
 
-            group.value =
-                '';
+    renderPage();
 
-        }
+}
 
-
-        currentPage =
-            1;
-
-
-        renderPage();
-
-    }
 
 
     /* ============================================================
        EXPORT CSV
        ============================================================ */
 
-    function exportCSV() {
+    
+/* ==========================================================
+   EXPORT MASTER BARANG + STATUS
+========================================================== */
 
-        const records =
-            getFilteredData();
+function exportCSV() {
 
+    const records = getFilteredData();
 
-        if (
-            records.length === 0
-        ) {
-
-            showMessage(
-                'Tidak ada data Barang untuk diekspor.',
-                'error'
-            );
-
-            return;
-
-        }
-
-
-        const rows = [
-
-            [
-                'No',
-                'Nama Barang',
-                'Kode Barang',
-                'Golongan'
-            ]
-
-        ];
-
-
-        records.forEach(
-            function (
-                item,
-                index
-            ) {
-
-                rows.push([
-
-                    index + 1,
-
-                    item.nama_barang ||
-                    '',
-
-                    item.kode_barang ||
-                    '',
-
-                    resolveGolonganName(
-                        item
-                    ) || ''
-
-                ]);
-
-            }
-        );
-
-
-        const escapeCSV =
-            function (value) {
-
-                let text =
-                    String(
-                        value ??
-                        ''
-                    );
-
-
-                /*
-                 * Proteksi formula injection spreadsheet.
-                 */
-
-                if (
-                    /^[\s]*[=+@-]/
-                        .test(text)
-                ) {
-
-                    text =
-                        "'" +
-                        text;
-
-                }
-
-
-                return (
-                    '"' +
-                    text.replace(
-                        /"/g,
-                        '""'
-                    ) +
-                    '"'
-                );
-
-            };
-
-
-        const csv =
-            rows
-                .map(
-                    function (row) {
-
-                        return row
-                            .map(
-                                escapeCSV
-                            )
-                            .join(',');
-
-                    }
-                )
-                .join(
-                    '\r\n'
-                );
-
-
-        const blob =
-            new Blob(
-                [
-                    '\uFEFF' +
-                    csv
-                ],
-                {
-
-                    type:
-                        'text/csv;charset=utf-8;'
-
-                }
-            );
-
-
-        const url =
-            URL.createObjectURL(
-                blob
-            );
-
-
-        const link =
-            document.createElement(
-                'a'
-            );
-
-
-        link.href =
-            url;
-
-
-        link.download =
-            `data-barang-${new Date().toISOString().slice(0, 10)}.csv`;
-
-
-        document.body.appendChild(
-            link
-        );
-
-
-        link.click();
-
-
-        link.remove();
-
-
-        window.setTimeout(
-            function () {
-
-                URL.revokeObjectURL(
-                    url
-                );
-
-            },
-            1000
-        );
-
+    if (records.length === 0) {
 
         showMessage(
-            'Data Barang berhasil diekspor.',
-            'success'
+            'Tidak ada data Barang untuk diekspor.',
+            'error'
         );
 
+        return;
     }
+
+    const rows = [
+
+        [
+            'No',
+            'Nama Barang',
+            'Kode Barang',
+            'Golongan',
+            'Status'
+        ]
+
+    ];
+
+    records.forEach(function (item, index) {
+
+        let statusLabel = 'Belum Diatur';
+
+        if (item.status === 'aktif') {
+            statusLabel = 'Aktif';
+        }
+
+        if (item.status === 'nonaktif') {
+            statusLabel = 'Nonaktif';
+        }
+
+        rows.push([
+
+            index + 1,
+
+            item.nama_barang || '',
+
+            item.kode_barang || '',
+
+            resolveGolonganName(item) || '',
+
+            statusLabel
+
+        ]);
+
+    });
+
+    /* ==========================================
+       CSV ESCAPE
+    ========================================== */
+
+    function escapeCSV(value) {
+
+        let text = String(value ?? '');
+
+        if (/^\s*[=+@-]/.test(text)) {
+            text = "'" + text;
+        }
+
+        return '"' +
+            text.replace(/"/g, '""') +
+            '"';
+
+    }
+
+    const csv = '\uFEFF' +
+
+        rows.map(function (row) {
+
+            return row
+                .map(escapeCSV)
+                .join(';');
+
+        }).join('\r\n');
+
+    /* ==========================================
+       DOWNLOAD
+    ========================================== */
+
+    const blob = new Blob(
+        [csv],
+        {
+            type: 'text/csv;charset=utf-8'
+        }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+
+    link.href = url;
+
+    link.download =
+        'data-barang-' +
+        new Date().toISOString().slice(0, 10) +
+        '.csv';
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    window.setTimeout(function () {
+
+        URL.revokeObjectURL(url);
+
+    }, 1000);
+
+}
+
 
 
     /* ============================================================

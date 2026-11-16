@@ -1125,3 +1125,445 @@
     }
 
 }
+
+
+/* ==========================================================
+   MASTER DATA BARANG
+   STATUS AKTIF / NONAKTIF / BELUM DIATUR
+
+   PERUMDA TIRTA KENCANA KOTA SAMARINDA
+
+   - Full-width table
+   - Filter status
+   - Status badge
+   - Form status
+   - Responsive
+========================================================== */
+
+
+/* ==========================================================
+   1. FILTER GRID
+========================================================== */
+
+.barang-page .barang-filter-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(220px, 1fr)
+        minmax(160px, .42fr)
+        minmax(160px, .42fr)
+        auto
+        auto
+        auto;
+
+    align-items: end;
+
+    gap: 10px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* ==========================================================
+   2. STATUS FILTER
+========================================================== */
+
+.barang-page .barang-status-filter-group {
+
+    min-width: 0;
+}
+
+.barang-page .barang-status-filter-group label {
+
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #344d70;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.barang-page #barangStatusFilter {
+
+    width: 100%;
+    height: 42px;
+
+    padding: 0 12px;
+
+    border: 1px solid #d7e2ed;
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    color: #294d74;
+
+    font-size: 14px;
+}
+
+
+/* ==========================================================
+   3. TABLE FULL WIDTH
+========================================================== */
+
+.barang-page .barang-table-card {
+
+    width: 100%;
+    min-width: 0;
+}
+
+.barang-page .barang-table-card .table-responsive {
+
+    width: 100%;
+    max-width: 100%;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.barang-page #barangTable {
+
+    width: calc(100% - 32px);
+
+    max-width: none;
+    min-width: 760px;
+
+    margin: 0 16px;
+
+    border-collapse: collapse;
+
+    table-layout: auto;
+
+    white-space: normal;
+}
+
+
+/* ==========================================================
+   4. TABLE TYPOGRAPHY
+========================================================== */
+
+.barang-page #barangTable thead th {
+
+    padding: 14px 13px;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    line-height: 1.45;
+}
+
+.barang-page #barangTable tbody td {
+
+    padding: 14px 13px;
+
+    font-size: 14px;
+
+    line-height: 1.55;
+
+    vertical-align: middle;
+}
+
+
+/* ==========================================================
+   5. NAMA DAN KODE BARANG
+========================================================== */
+
+.barang-page .barang-name-text {
+
+    color: #12365f;
+
+    font-size: 14px;
+    font-weight: 750;
+
+    overflow-wrap: break-word;
+}
+
+.barang-page .barang-code-text {
+
+    color: #1459a4;
+
+    font-size: 14px;
+    font-weight: 750;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================
+   6. STATUS COLUMN
+========================================================== */
+
+.barang-page #barangTable .barang-col-status {
+
+    width: 155px;
+
+    text-align: center;
+}
+
+.barang-page #barangTable .barang-status-cell {
+
+    min-width: 140px;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   7. STATUS BADGE
+========================================================== */
+
+.barang-page .barang-status-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 31px;
+
+    padding: 6px 12px;
+
+    border: 1px solid transparent;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    line-height: 1.35;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   8. AKTIF
+========================================================== */
+
+.barang-page .barang-status-badge.is-active {
+
+    color: #168346;
+
+    background: #e7f8ed;
+
+    border-color: #c0e9d0;
+}
+
+
+/* ==========================================================
+   9. NONAKTIF
+========================================================== */
+
+.barang-page .barang-status-badge.is-inactive {
+
+    color: #c83d51;
+
+    background: #fff0f2;
+
+    border-color: #f5cbd3;
+}
+
+
+/* ==========================================================
+   10. BELUM DIATUR
+========================================================== */
+
+.barang-page .barang-status-badge.is-unset {
+
+    color: #6e8095;
+
+    background: #eef2f7;
+
+    border-color: #dbe3ec;
+}
+
+
+/* ==========================================================
+   11. FORM STATUS
+========================================================== */
+
+.barang-page #barangFormStatus {
+
+    width: 100%;
+    height: 44px;
+
+    padding: 0 13px;
+
+    border: 1px solid #d5e1ed;
+
+    border-radius: 8px;
+
+    color: #294c75;
+
+    background: #ffffff;
+
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.barang-page #barangFormStatus:focus {
+
+    outline: none;
+
+    border-color: #3284e5;
+
+    box-shadow:
+        0 0 0 3px rgba(50, 132, 229, .09);
+}
+
+.barang-page #barangFormStatus:disabled {
+
+    background: #f2f6fa;
+
+    color: #657e9b;
+}
+
+
+/* ==========================================================
+   12. LABEL WAJIB
+========================================================== */
+
+.barang-page .barang-form-required {
+
+    color: #dc4055;
+
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   13. STATUS HELP TEXT
+========================================================== */
+
+.barang-page .barang-status-help {
+
+    margin: 8px 0 0;
+
+    padding: 11px 12px;
+
+    border: 1px solid #dae9f9;
+    border-radius: 8px;
+
+    background: #f1f7ff;
+
+    color: #496b91;
+
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.barang-page .barang-status-help strong {
+
+    color: #185a9c;
+
+    font-weight: 800;
+}
+
+
+/* ==========================================================
+   14. FORM LABEL
+========================================================== */
+
+.barang-page .barang-form-group label {
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   15. TABLE ACTION
+========================================================== */
+
+.barang-page #barangTable .barang-actions {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+}
+
+.barang-page #barangTable .barang-actions button {
+
+    width: 34px;
+    height: 34px;
+}
+
+.barang-page #barangTable .barang-actions svg {
+
+    width: 16px;
+    height: 16px;
+}
+
+
+/* ==========================================================
+   16. RESPONSIVE LAPTOP
+========================================================== */
+
+@media (max-width: 1250px) {
+
+    .barang-page .barang-filter-grid {
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(150px, .5fr)
+            minmax(150px, .5fr);
+    }
+
+    .barang-page .barang-filter-button,
+    .barang-page .barang-reset-button,
+    .barang-page .barang-export-button {
+
+        width: 100%;
+    }
+
+}
+
+
+/* ==========================================================
+   17. RESPONSIVE MOBILE
+========================================================== */
+
+@media (max-width: 760px) {
+
+    .barang-page .barang-filter-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .barang-page .barang-search,
+    .barang-page .barang-select-group {
+
+        width: 100%;
+        min-width: 0;
+    }
+
+    .barang-page #barangTable {
+
+        min-width: 760px;
+    }
+
+    .barang-page .barang-table-footer {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .barang-page .barang-pagination-area {
+
+        flex-wrap: wrap;
+    }
+
+}
+    
