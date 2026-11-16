@@ -357,8 +357,14 @@ class KIBController extends Controller
 
         // Master barang asli untuk dropdown Create/Edit.
         $barangRows = DB::table('barangs')
-            ->select('id', 'kode_barang', 'nama_barang')
-            ->orderBy('nama_barang')->get();
+            ->select(
+                'id',
+                'nama_barang',
+                'kode_barang'
+            )
+            ->where('status', 'aktif')
+            ->orderBy('nama_barang')
+            ->get();
 
         // PDF per lokasi; satu lokasi dapat memiliki beberapa sertifikat.
         $pdfLokasi = DB::table('pdfs as p')
@@ -2248,6 +2254,7 @@ class KIBController extends Controller
                 'nama_barang',
                 'kode_barang'
             )
+            ->where('status', 'aktif')
             ->orderBy('nama_barang')
             ->get();
 
@@ -4070,6 +4077,7 @@ class KIBController extends Controller
                 'nama_barang',
                 'kode_barang'
             )
+            ->where('status', 'aktif')
             ->orderBy('nama_barang')
             ->get();
 
