@@ -2012,74 +2012,6 @@ input[readonly] + .aktiva-combo-toggle {
 }
 
 
-/* =============================================================
-   STATUS MASTER DATA — KODE AKTIVA
-   Hanya menambahkan indikator dan pilihan status.
-   ============================================================= */
-.master-status-heading,
-.master-status-cell {
-    text-align: center;
-    white-space: nowrap;
-}
-.master-status-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 92px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 650;
-    line-height: 1.4;
-}
-.master-status-badge.is-active { background: #dcfce7; color: #166534; }
-.master-status-badge.is-inactive { background: #fee2e2; color: #991b1b; }
-.master-status-badge.is-unset { background: #f1f5f9; color: #64748b; }
-.master-status-filter {
-    display: flex;
-    gap: 6px;
-    align-items: flex-start;
-    flex-direction: column;
-    margin: 12px 0;
-    width: min(230px, 100%);
-}
-.master-status-filter label,
-.master-status-form-group label {
-    font-size: 13px;
-    font-weight: 650;
-    color: #334155;
-}
-.master-status-filter select,
-.master-status-form-group select {
-    width: 100%;
-    min-height: 42px;
-    padding: 9px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    background: #fff;
-    color: #0f172a;
-    font: inherit;
-}
-.master-status-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    margin: 12px 0 18px;
-}
-.master-status-form-group small {
-    color: #64748b;
-    line-height: 1.5;
-}
-.master-status-form-group label span { color: #dc2626; }
-.master-status-filter select:focus-visible,
-.master-status-form-group select:focus-visible {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
-}
-@media (max-width: 640px) {
-    .master-status-filter { width: 100%; }
-}
-
 /* ================================================
    LEBAR DELAPAN KOLOM — TOTAL 100%
 ================================================ */
@@ -2140,4 +2072,86 @@ input[readonly] + .aktiva-combo-toggle {
     .aktiva-page #aktivaTable {
         min-width: 1000px;
     }
+}
+
+
+/* ==========================================================
+   FINAL LAYOUT — KODE AKTIVA (8 KOLOM TANPA DUPLIKASI)
+   Desktop: semua kolom dan tiga tombol aksi terlihat utuh.
+   Tablet/mobile: scroll horizontal bila area terlalu sempit.
+========================================================== */
+.aktiva-page .aktiva-filter-grid {
+    grid-template-columns: minmax(220px, 1fr) minmax(145px, .24fr)
+                           minmax(175px, .30fr) minmax(140px, .18fr)
+                           auto auto;
+}
+
+.aktiva-page .aktiva-table-card > .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.aktiva-page #aktivaTable {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.aktiva-page #aktivaTable .col-no       { width: 4%; }
+.aktiva-page #aktivaTable .col-kode     { width: 10%; }
+.aktiva-page #aktivaTable .col-nama     { width: 22%; }
+.aktiva-page #aktivaTable .col-golongan { width: 16%; }
+.aktiva-page #aktivaTable .col-kib      { width: 20%; }
+.aktiva-page #aktivaTable .col-dibuat   { width: 9%; }
+.aktiva-page #aktivaTable .col-status   { width: 8%; }
+.aktiva-page #aktivaTable .col-action   { width: 11%; }
+
+.aktiva-page #aktivaTable th,
+.aktiva-page #aktivaTable td {
+    padding-left: 7px;
+    padding-right: 7px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.aktiva-page #aktivaTable .aktiva-name { font-size: 12px; }
+.aktiva-page #aktivaTable .aktiva-code { font-size: 12px; }
+.aktiva-page #aktivaTable .aktiva-badge { font-size: 11px; padding: 5px 7px; }
+.aktiva-page #aktivaTable .master-status-badge {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 10px;
+    padding: 5px 7px;
+    white-space: nowrap;
+}
+.aktiva-page #aktivaTable .aktiva-actions { gap: 3px; flex-wrap: nowrap; }
+.aktiva-page #aktivaTable .aktiva-actions button {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+}
+.aktiva-page #aktivaTable .aktiva-actions svg { width: 14px; height: 14px; }
+
+@media (min-width: 1181px) {
+    .aktiva-page .aktiva-table-card > .table-responsive { overflow-x: hidden; }
+    .aktiva-page #aktivaTable { min-width: 0; }
+}
+
+@media (max-width: 1400px) {
+    .aktiva-page .aktiva-filter-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(140px, .4fr)
+                               minmax(170px, .45fr);
+    }
+}
+
+@media (max-width: 1180px) {
+    .aktiva-page .aktiva-table-card > .table-responsive { overflow-x: auto; }
+    .aktiva-page #aktivaTable { min-width: 1000px; }
+}
+
+@media (max-width: 760px) {
+    .aktiva-page .aktiva-filter-grid { grid-template-columns: 1fr 1fr; }
+    .aktiva-page .aktiva-filter-grid .aktiva-search,
+    .aktiva-page .aktiva-filter-grid select { grid-column: 1 / -1; }
 }

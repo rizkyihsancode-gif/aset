@@ -478,12 +478,11 @@
 
         currentMode = mode;
         currentRow = row;
-          const statusField = document.getElementById('aktivaFormStatus');
-          if (statusField) {
-              queueMicrotask(() => {
-                  statusField.value = String(row?.dataset.status || '');
-              });
-          }
+        const statusField = $('#aktivaFormStatus');
+        if (statusField) {
+            statusField.value = String(row?.dataset.status || '').toLowerCase();
+            statusField.disabled = mode === 'view' || mode === 'delete';
+        }
 
 
         const data = row?.dataset || {};
@@ -597,6 +596,10 @@
 
         if (!data.aktiva) {
             errors.aktiva = ['Nama Aktiva wajib diisi.'];
+        }
+
+        if (!['aktif', 'nonaktif'].includes(data.status)) {
+            errors.status = ['Pilih status Aktif atau Nonaktif.'];
         }
 
         for (
@@ -905,7 +908,8 @@
             'Nama Aktiva',
             'Golongan',
             'Kategori / KIB',
-            'Dibuat'
+            'Dibuat',
+            'Status'
         ]];
 
         filteredRows().forEach(
@@ -919,7 +923,8 @@
                     row.dataset.kib || '',
                     String(
                         row.dataset.createdAt || ''
-                    ).slice(0, 10)
+                    ).slice(0, 10),
+                    row.dataset.status || 'Belum Diatur'
                 ]);
 
             }
