@@ -2079,3 +2079,65 @@ input[readonly] + .aktiva-combo-toggle {
 @media (max-width: 640px) {
     .master-status-filter { width: 100%; }
 }
+
+/* ================================================
+   LEBAR DELAPAN KOLOM — TOTAL 100%
+================================================ */
+
+#aktivaTable .col-no {
+    width: 4%;
+}
+
+#aktivaTable .col-kode {
+    width: 11%;
+}
+
+#aktivaTable .col-nama {
+    width: 23%;
+}
+
+#aktivaTable .col-golongan {
+    width: 15%;
+}
+
+#aktivaTable .col-kib {
+    width: 18%;
+}
+
+#aktivaTable .col-dibuat {
+    width: 9%;
+}
+
+#aktivaTable .col-status {
+    width: 10%;
+}
+
+#aktivaTable .col-action {
+    width: 10%;
+}
+
+/* Desktop */
+
+@media (min-width: 1181px) {
+    .aktiva-page .aktiva-table-card > .table-responsive {
+        overflow-x: visible;
+    }
+
+    .aktiva-page #aktivaTable {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+    }
+}
+
+/* Tablet dan layar lebih kecil */
+
+@media (max-width: 1180px) {
+    .aktiva-page .aktiva-table-card > .table-responsive {
+        overflow-x: auto;
+    }
+
+    .aktiva-page #aktivaTable {
+        min-width: 1000px;
+    }
+}
