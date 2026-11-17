@@ -367,7 +367,7 @@
 
 
 
-                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                {{-- FILTER STATUS AKTIF / NONAKTIF --}}
                 <div class="master-status-filter">
                     <label for="bahanStatusFilter">Status Bahan</label>
                     <select id="bahanStatusFilter" aria-label="Filter status Bahan">

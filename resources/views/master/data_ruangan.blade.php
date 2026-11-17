@@ -331,7 +331,7 @@
 
 
 
-                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                {{-- FILTER STATUS AKTIF / NONAKTIF --}}
                 <div class="master-status-filter">
                     <label for="ruanganStatusFilter">Status Ruangan</label>
                     <select id="ruanganStatusFilter" aria-label="Filter status Ruangan">

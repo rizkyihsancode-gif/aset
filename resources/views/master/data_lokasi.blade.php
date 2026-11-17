@@ -245,7 +245,7 @@
                     </select>
                 </div>
 
-                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                {{-- FILTER STATUS AKTIF / NONAKTIF --}}
                 <div class="master-status-filter">
                     <label for="lokasiStatusFilter">Status Lokasi</label>
                     <select id="lokasiStatusFilter" aria-label="Filter status Lokasi">

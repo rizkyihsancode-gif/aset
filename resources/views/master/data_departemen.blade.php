@@ -179,7 +179,7 @@
 
                 </div>
 
-                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                {{-- FILTER STATUS AKTIF / NONAKTIF --}}
                 <div class="master-status-filter">
                     <label for="deptStatusFilter">Status Departemen</label>
                     <select id="deptStatusFilter" aria-label="Filter status Departemen">
