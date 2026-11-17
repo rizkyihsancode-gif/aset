@@ -491,6 +491,15 @@ Route::prefix('kib')
         )
             ->whereNumber('pdf')->name('tanah.pdf.download');
 
+        Route::get(
+            '/tanah/lampiran/{lampiran}/{aksi}',
+            [KIBController::class, 'lampiranTanah']
+        )
+            ->whereNumber('lampiran')
+            ->where('aksi', 'view|download')
+            ->middleware('signed:relative')
+            ->name('tanah.lampiran');
+
         Route::post(
             '/tanah',
             [KIBController::class, 'store']

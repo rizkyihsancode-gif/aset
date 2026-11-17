@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use App\Services\KibNotificationService;
 use Illuminate\Support\Facades\Log;
@@ -152,6 +153,14 @@ class KIBController extends Controller
             ->selectRaw(
                 'MIN(t.guna) AS guna_ringkas'
             )
+
+            // Satu baris tabel = satu lokasi. Beri label Campuran bila sertifikat
+            // dalam satu lokasi memiliki kategori kepemilikan berbeda.
+            ->selectRaw("CASE
+                WHEN COUNT(DISTINCT COALESCE(NULLIF(BTRIM(t.status_kepemilikan), ''), '__belum__')) > 1
+                    THEN 'campuran'
+                ELSE COALESCE(MAX(NULLIF(BTRIM(t.status_kepemilikan), '')), '')
+                END AS status_kepemilikan_ringkas")
 
             ->selectRaw(
                 'MIN(t.tahun) AS tahun_awal'
@@ -389,9 +398,18 @@ class KIBController extends Controller
                 ->pluck('jumlah_pdf', 'id_lokasi');
         }
 
-        $tanahs->each(function ($row) use ($pdfLokasi, $pdfNilaiLokasi) {
+        $pdfLampiranLokasi = DB::table('tanah_lampirans as tl')
+            ->join('tanahs as t', 't.id', '=', 'tl.tanah_id')
+            ->where('tl.jenis', 'pdf')
+            ->select('t.id_lokasi')
+            ->selectRaw('COUNT(tl.id) AS jumlah_pdf')
+            ->groupBy('t.id_lokasi')
+            ->pluck('jumlah_pdf', 'id_lokasi');
+
+        $tanahs->each(function ($row) use ($pdfLokasi, $pdfNilaiLokasi, $pdfLampiranLokasi) {
             $row->pdf_count = (int) ($pdfLokasi[$row->id_lokasi] ?? 0)
-                + (int) ($pdfNilaiLokasi[$row->id_lokasi] ?? 0);
+                + (int) ($pdfNilaiLokasi[$row->id_lokasi] ?? 0)
+                + (int) ($pdfLampiranLokasi[$row->id_lokasi] ?? 0);
         });
 
         return view(
@@ -1469,7 +1487,7 @@ class KIBController extends Controller
 
     private function pdfData(int $tanahId): array
     {
-        return $this->pdfQuery()
+        $legacy = $this->pdfQuery()
             ->where('p.id_tanah', $tanahId)
             ->orderByDesc('p.id')
             ->get(['p.id', 'p.dok'])
@@ -1479,12 +1497,37 @@ class KIBController extends Controller
                 'view_url' => route('kib.tanah.pdf.view', $p->id),
                 'download_url' => route('kib.tanah.pdf.download', $p->id),
             ])->all();
+
+        $baru = DB::table('tanah_lampirans')
+            ->where('tanah_id', $tanahId)
+            ->where('jenis', 'pdf')
+            ->orderByDesc('id')
+            ->get(['id', 'nama_asli'])
+            ->map(fn($file) => [
+                'id' => 'lampiran-' . $file->id,
+                'nama' => $file->nama_asli,
+                'view_url' => URL::temporarySignedRoute('kib.tanah.lampiran', now()->addHours(24), ['lampiran' => $file->id, 'aksi' => 'view'], false),
+                'download_url' => URL::temporarySignedRoute('kib.tanah.lampiran', now()->addHours(24), ['lampiran' => $file->id, 'aksi' => 'download'], false),
+            ])->all();
+
+        return array_merge($legacy, $baru);
     }
 
     private function serialize(\stdClass $row): array
     {
         $result = (array) $row;
         $result['pdfs'] = $this->pdfData((int) $row->id);
+        $result['gambar'] = DB::table('tanah_lampirans')
+            ->where('tanah_id', (int) $row->id)
+            ->where('jenis', 'gambar')
+            ->orderByDesc('id')
+            ->get(['id', 'nama_asli'])
+            ->map(fn($file) => [
+                'id' => $file->id,
+                'nama' => $file->nama_asli,
+                'view_url' => URL::temporarySignedRoute('kib.tanah.lampiran', now()->addHours(24), ['lampiran' => $file->id, 'aksi' => 'view'], false),
+                'download_url' => URL::temporarySignedRoute('kib.tanah.lampiran', now()->addHours(24), ['lampiran' => $file->id, 'aksi' => 'download'], false),
+            ])->all();
 
         // PDF sumber Nilai Aset juga terlihat pada sertifikat yang terhubung.
         if (
@@ -1581,7 +1624,26 @@ class KIBController extends Controller
     {
         return $request->validate([
             'id_nilai_aktiva' => [$editing ? 'nullable' : 'required', 'integer', 'exists:nilai_aktivas,id'],
-            'id_barang' => ['required', 'integer', 'exists:barangs,id'],
+            'id_barang' => [
+                'required',
+                'integer',
+                'exists:barangs,id',
+                function ($attribute, $value, $fail) use ($request, $editing) {
+                    if (DB::table('barangs')->where('id', $value)->where('status', 'aktif')->exists()) {
+                        return;
+                    }
+                    // Pada Edit, hubungan lama boleh tetap meskipun Barang sudah nonaktif.
+                    $tanahId = (int) $request->route('tanah');
+                    if (
+                        $editing && $tanahId > 0 && DB::table('tanahs')
+                        ->where('id', $tanahId)->where('id_barang', $value)->exists()
+                    ) {
+                        return;
+                    }
+                    $fail('Barang harus berstatus Aktif untuk pilihan baru.');
+                },
+            ],
+            'status_kepemilikan' => ['required', Rule::in(['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta'])],
             'tahun' => ['required', 'digits:4'],
             'guna' => ['required', 'string', 'max:255'],
             'no_tunjuk' => ['nullable', 'string', 'max:255'],
@@ -1597,7 +1659,11 @@ class KIBController extends Controller
             'asal' => ['nullable', 'string', 'max:255'],
             'pemilik' => ['nullable', 'string', 'max:255'],
             'ket' => ['nullable', 'string'],
-            'dokumen_pdf' => ['nullable', 'file', 'mimetypes:application/pdf', 'max:15360'],
+            // Tidak ada batas ukuran/jumlah khusus aplikasi. Server PHP/Nginx tetap membatasi request.
+            'dokumen_pdf' => ['nullable', 'array'],
+            'dokumen_pdf.*' => ['required', 'file', 'mimes:pdf'],
+            'foto_tanah' => ['nullable', 'array'],
+            'foto_tanah.*' => ['required', 'file', 'mimes:jpg,jpeg,png,webp'],
         ]);
     }
 
@@ -1605,6 +1671,7 @@ class KIBController extends Controller
     {
         $data = [
             'id_barang' => (int) $input['id_barang'],
+            'status_kepemilikan' => $input['status_kepemilikan'],
             'tahun' => (string) $input['tahun'],
             'guna' => $input['guna'],
             'tgl_tunjuk' => $input['tgl_tunjuk'],
@@ -1632,23 +1699,75 @@ class KIBController extends Controller
         return $data;
     }
 
-    private function uploadPdf(Request $request, int $tanahId): ?string
+    /**
+     * Simpan dokumen dan gambar sebagai file privat. Tiap file memiliki metadata,
+     * sehingga lampiran lama tetap bisa dilihat, dan upload berikutnya tidak menimpa.
+     * Array $storedPaths dipakai untuk kompensasi ketika transaksi database gagal.
+     */
+    private function uploadTanahAttachments(Request $request, int $tanahId, array &$storedPaths): void
     {
-        if (!$request->hasFile('dokumen_pdf')) return null;
-        $path = $request->file('dokumen_pdf')->store('tanah/sertifikat', 'local');
-        try {
-            DB::table('pdfs')->insert([
-                'id_tanah' => $tanahId,
-                'dok' => $path,
-                'gol' => 'TANAH',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } catch (\Throwable $e) {
-            Storage::disk('local')->delete($path);
-            throw $e;
+        foreach (['dokumen_pdf' => 'pdf', 'foto_tanah' => 'gambar'] as $field => $jenis) {
+            foreach ((array) $request->file($field, []) as $file) {
+                if (!$file || !$file->isValid()) {
+                    throw ValidationException::withMessages([$field => 'Salah satu lampiran gagal diunggah.']);
+                }
+
+                $path = $file->store('tanah/lampiran/' . $jenis, 'local');
+                if (!$path) {
+                    throw ValidationException::withMessages([$field => 'File gagal disimpan di server.']);
+                }
+                // Catat path langsung, bahkan bila INSERT berikutnya gagal.
+                $storedPaths[] = $path;
+
+                DB::table('tanah_lampirans')->insert([
+                    'tanah_id' => $tanahId,
+                    'jenis' => $jenis,
+                    'path' => $path,
+                    'nama_asli' => mb_substr(basename(str_replace('\\', '/', $file->getClientOriginalName())), 0, 240),
+                    'mime' => $file->getMimeType(),
+                    'ukuran' => $file->getSize(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
-        return $path;
+    }
+
+    /** Membaca lampiran privat tanpa membuka path lokal ke publik. */
+    public function lampiranTanah(int $lampiran, string $aksi = 'view')
+    {
+        abort_unless(in_array($aksi, ['view', 'download'], true), 404);
+
+        $row = DB::table('tanah_lampirans')->where('id', $lampiran)->first();
+        abort_unless($row, 404);
+
+        $path = (string) $row->path;
+        abort_unless(str_starts_with($path, 'tanah/lampiran/')
+            && !str_contains($path, '..')
+            && Storage::disk('local')->exists($path), 404);
+
+        $mime = (string) $row->mime;
+        $allowed = $row->jenis === 'pdf'
+            ? ['application/pdf']
+            : ['image/jpeg', 'image/png', 'image/webp'];
+        abort_unless(in_array($mime, $allowed, true), 404);
+
+        $absolute = Storage::disk('local')->path($path);
+        $name = preg_replace('/[^a-zA-Z0-9._-]+/', '_', (string) $row->nama_asli) ?: 'lampiran';
+
+        if ($aksi === 'download') {
+            return response()->download($absolute, $name, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, no-store',
+            ]);
+        }
+
+        return response()->file($absolute, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . $name . '"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
 
@@ -1695,14 +1814,14 @@ class KIBController extends Controller
             ]);
         }
 
-        $newFile = null;
+        $newFiles = [];
 
         try {
             DB::transaction(function () use (
                 $input,
                 $request,
                 $categoryId,
-                &$newFile
+                &$newFiles
             ): void {
 
                 /*
@@ -1814,10 +1933,7 @@ class KIBController extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                $newFile = $this->uploadPdf(
-                    $request,
-                    (int) $tanahId
-                );
+                $this->uploadTanahAttachments($request, (int) $tanahId, $newFiles);
 
                 /*
                 |--------------------------------------------------------------------------
@@ -1848,8 +1964,8 @@ class KIBController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            if ($newFile) {
-                Storage::disk('local')->delete($newFile);
+            foreach ($newFiles as $path) {
+                Storage::disk('local')->delete($path);
             }
 
             throw $exception;
@@ -1883,17 +1999,17 @@ class KIBController extends Controller
         $row = DB::table('tanahs')->where('id', $tanah)->first();
         abort_unless($row, 404);
         $input = $this->validateInput($request, true);
-        $newFile = null;
+        $newFiles = [];
         try {
-            DB::transaction(function () use ($input, $request, $tanah, &$newFile) {
+            DB::transaction(function () use ($input, $request, $tanah, &$newFiles) {
                 $data = $this->tanahFields($input);
                 $data['updated_at'] = now();
                 // Original id_lokasi, nilai_aktiva_id and nilai are never overwritten by form.
                 DB::table('tanahs')->where('id', $tanah)->update($data);
-                $newFile = $this->uploadPdf($request, $tanah);
+                $this->uploadTanahAttachments($request, $tanah, $newFiles);
             });
         } catch (\Throwable $e) {
-            if ($newFile) Storage::disk('local')->delete($newFile);
+            foreach ($newFiles as $path) Storage::disk('local')->delete($path);
             throw $e;
         }
         return redirect()->route('kib.tanah')->with('success', 'Sertifikat Tanah berhasil diperbarui.');
@@ -1966,6 +2082,12 @@ class KIBController extends Controller
                 ->pluck('p.dok')
                 ->all();
 
+            $newPaths = DB::table('tanah_lampirans')
+                ->where('tanah_id', $tanah)
+                ->pluck('path')->all();
+            $paths = array_merge($paths, $newPaths);
+            DB::table('tanah_lampirans')->where('tanah_id', $tanah)->delete();
+
             /*
             |--------------------------------------------------------------------------
             | 03. HAPUS REFERENSI PDF
@@ -2014,9 +2136,9 @@ class KIBController extends Controller
             if (
                 is_string($path)
                 &&
-                str_starts_with(
-                    $path,
-                    'tanah/sertifikat/'
+                (
+                    str_starts_with($path, 'tanah/sertifikat/') ||
+                    str_starts_with($path, 'tanah/lampiran/')
                 )
             ) {
                 Storage::disk('local')->delete($path);

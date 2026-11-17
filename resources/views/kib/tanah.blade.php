@@ -562,6 +562,20 @@
                 </div>
 
 
+                <div class="tanah-select-group">
+                    <label for="tanahKepemilikanFilter">Status Kepemilikan</label>
+                    <select id="tanahKepemilikanFilter">
+                        <option value="">Semua Kepemilikan</option>
+                        <option value="perumdam">Perumdam</option>
+                        <option value="pusat">Pemerintah Pusat</option>
+                        <option value="pemprov">Pemerintah Provinsi</option>
+                        <option value="pemkot">Pemerintah Kota</option>
+                        <option value="swasta">Swasta</option>
+                        <option value="campuran">Campuran</option>
+                        <option value="belum">Belum Diatur</option>
+                    </select>
+                </div>
+
                 <button type="button" class="tanah-reset-button" id="tanahResetButton">
 
                     <i data-lucide="refresh-cw"></i>
@@ -633,6 +647,10 @@
                                 Penggunaan
                             </th>
 
+                            <th class="tanah-col-kepemilikan">
+                                Status Kepemilikan
+                            </th>
+
                             <th class="tanah-col-data">
                                 Data Tanah
                             </th>
@@ -673,6 +691,18 @@
                                     $alamat = data_get($row, 'alamat', '-');
 
                                     $penggunaan = data_get($row, 'guna_ringkas', data_get($row, 'guna', '-'));
+                                    $statusKepemilikan = trim(
+                                        (string) data_get($row, 'status_kepemilikan_ringkas', ''),
+                                    );
+                                    $statusLabel =
+                                        [
+                                            'perumdam' => 'Perumdam',
+                                            'pusat' => 'Pemerintah Pusat',
+                                            'pemprov' => 'Pemerintah Provinsi',
+                                            'pemkot' => 'Pemerintah Kota',
+                                            'swasta' => 'Swasta',
+                                            'campuran' => 'Campuran',
+                                        ][$statusKepemilikan] ?? 'Belum Diatur';
 
                                     $nilai = (float) data_get($row, 'nilai_tanah', 0);
                                     $pdfCount = (int) data_get($row, 'pdf_count', 0);
@@ -687,7 +717,14 @@
                                             : $tahunAwal . ' – ' . $tahunAkhir;
 
                                     $searchText = mb_strtolower(
-                                        implode(' ', [$lokasi, $alamat, $penggunaan, $tahunLabel, $nilai]),
+                                        implode(' ', [
+                                            $lokasi,
+                                            $alamat,
+                                            $penggunaan,
+                                            $statusLabel,
+                                            $tahunLabel,
+                                            $nilai,
+                                        ]),
                                     );
                                 @endphp
 
@@ -695,7 +732,8 @@
                                 <tr class="tanah-data-row" data-search="{{ $searchText }}"
                                     data-nilai="{{ $nilai }}" data-tahun="{{ $tahunLabel }}"
                                     data-jumlah="{{ $jumlahData }}" data-pdf="{{ $pdfCount }}"
-                                    data-record-id="{{ $rowId }}" data-location-id="{{ $locationId }}">
+                                    data-record-id="{{ $rowId }}" data-location-id="{{ $locationId }}"
+                                    data-status-kepemilikan="{{ $statusKepemilikan ?: 'belum' }}">
 
                                     {{-- NO --}}
 
@@ -756,6 +794,13 @@
 
                                     </td>
 
+
+                                    {{-- STATUS KEPEMILIKAN: ringkasan per lokasi --}}
+                                    <td class="tanah-ownership-cell">
+                                        <span class="tanah-ownership-badge {{ $statusKepemilikan ?: 'belum' }}">
+                                            {{ $statusLabel }}
+                                        </span>
+                                    </td>
 
                                     {{-- DATA TANAH: sertifikat dikelompokkan berdasarkan lokasi --}}
                                     <td class="tanah-data-cell">
@@ -847,7 +892,7 @@
                         @else
                             <tr>
 
-                                <td colspan="9" class="tanah-empty">
+                                <td colspan="10" class="tanah-empty">
 
                                     <i data-lucide="database-zap"></i>
 
@@ -1444,6 +1489,17 @@
 
                         <div class="tanah-form-grid">
 
+                            <div class="tanah-field tanah-field-full">
+                                <label for="tanahStatusKepemilikan">Status Kepemilikan <b>*</b></label>
+                                <select name="status_kepemilikan" id="tanahStatusKepemilikan" required>
+                                    <option value="">Pilih Status Kepemilikan</option>
+                                    <option value="perumdam">Perumdam Tirta Kencana</option>
+                                    <option value="pusat">Pemerintah Pusat</option>
+                                    <option value="pemprov">Pemerintah Provinsi</option>
+                                    <option value="pemkot">Pemerintah Kota</option>
+                                    <option value="swasta">Swasta</option>
+                                </select>
+                            </div>
 
                             <div class="tanah-field">
 
@@ -1545,82 +1601,57 @@
                     </section>
 
 
-                    {{-- PDF --}}
-
+                    {{-- LAMPIRAN PDF DAN GAMBAR --}}
                     <section class="tanah-form-section">
-
                         <div class="tanah-section-title">
-
-                            <span>
-                                7
-                            </span>
-
+                            <span>7</span>
                             <div>
-
-                                <h4>
-                                    Dokumen PDF
-                                </h4>
-
-                                <p>
-
-                                    Upload hasil scan sertifikat
-                                    atau dokumen pendukung tanah.
-
-                                </p>
-
+                                <h4>Lampiran Dokumen dan Gambar</h4>
+                                <p>Unggah beberapa PDF dan foto untuk sertifikat yang sama.</p>
                             </div>
-
                         </div>
 
-
-                        <div class="tanah-upload-box">
-
-                            <div class="tanah-upload-icon">
-
-                                <i data-lucide="file-up"></i>
-
+                        <div class="tanah-upload-grid">
+                            <div class="tanah-upload-box">
+                                <div class="tanah-upload-icon"><i data-lucide="file-up"></i></div>
+                                <div class="tanah-upload-content">
+                                    <strong>Dokumen PDF</strong>
+                                    <span>PDF; boleh memilih beberapa file. Ukuran dibatasi kapasitas server.</span>
+                                </div>
+                                <label class="tanah-upload-button" for="tanahPdfInput">
+                                    <i data-lucide="upload"></i> Pilih PDF
+                                </label>
+                                <input type="file" name="dokumen_pdf[]" id="tanahPdfInput"
+                                    accept=".pdf,application/pdf" multiple class="tanah-file-native">
                             </div>
-
-
-                            <div class="tanah-upload-content">
-
-                                <strong>
-                                    Upload Dokumen PDF
-                                </strong>
-
-                                <span>
-                                    Format PDF, maksimal 15 MB.
-                                </span>
-
+                            <div class="tanah-upload-box">
+                                <div class="tanah-upload-icon"><i data-lucide="images"></i></div>
+                                <div class="tanah-upload-content">
+                                    <strong>Gambar / Foto Tanah</strong>
+                                    <span>JPG, PNG, WEBP; boleh memilih beberapa gambar.</span>
+                                </div>
+                                <label class="tanah-upload-button" for="tanahFotoInput">
+                                    <i data-lucide="upload"></i> Pilih Gambar
+                                </label>
+                                <input type="file" name="foto_tanah[]" id="tanahFotoInput"
+                                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple
+                                    class="tanah-file-native">
                             </div>
-
-
-                            <label class="tanah-upload-button">
-
-                                <i data-lucide="upload"></i>
-
-                                Pilih File
-
-                                <input type="file" name="dokumen_pdf" id="tanahPdfInput" accept="application/pdf"
-                                    hidden>
-
-                            </label>
-
                         </div>
 
-
+                        <div class="tanah-attachment-list" id="tanahPdfSelectedList" hidden></div>
+                        <div class="tanah-attachment-list" id="tanahFotoSelectedList" hidden></div>
                         <div class="tanah-file-selected" id="tanahFileSelected" hidden>
-
                             <i data-lucide="file-check-2"></i>
-
                             <span id="tanahFileName"></span>
-
                         </div>
                         <button type="button" id="tanahPreviewSelectedPdf" class="tanah-button-secondary" hidden>
-                            <i data-lucide="eye"></i> Preview PDF sebelum simpan
+                            <i data-lucide="eye"></i> Preview PDF pertama
                         </button>
-
-
+                        <small class="tanah-upload-note">
+                            Tidak ada pembatas jumlah atau ukuran tambahan di aplikasi.
+                            Batas unggahan tetap mengikuti PHP, Nginx, dan kapasitas penyimpanan server.
+                        </small>
                     </section>
 
                 </div>
@@ -1717,6 +1748,7 @@
                             <div id="tanahLegacyPhotoEmpty" class="tanah-legacy-photo-empty"><i
                                     data-lucide="image-off"></i><span>Foto lokasi belum tersedia</span></div>
                         </div>
+                        <div class="tanah-photo-gallery" id="tanahLegacyPhotoGallery" hidden></div>
 
                         <div class="tanah-legacy-info-grid">
                             <section class="tanah-legacy-info-panel">
@@ -1784,6 +1816,10 @@
                             <section class="tanah-legacy-info-panel">
                                 <h5>Kepemilikan</h5>
                                 <dl>
+                                    <div>
+                                        <dt>Status Kepemilikan</dt>
+                                        <dd id="tanahLegacyStatusKepemilikan">-</dd>
+                                    </div>
                                     <div>
                                         <dt>Hak</dt>
                                         <dd id="tanahLegacyHak">-</dd>
@@ -2003,6 +2039,11 @@
                     <div>
                         <span>Asal</span>
                         <strong id="detailTanahAsal">-</strong>
+                    </div>
+
+                    <div>
+                        <span>Status Kepemilikan</span>
+                        <strong id="detailTanahStatusKepemilikan">-</strong>
                     </div>
 
                     <div>

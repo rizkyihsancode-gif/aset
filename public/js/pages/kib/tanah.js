@@ -457,6 +457,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const perPageSelect =
         $('#tanahPerPage');
 
+    const ownershipFilter = $('#tanahKepemilikanFilter');
+
+    const ownershipLabels = {
+        perumdam: 'Perumdam Tirta Kencana',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemerintah Provinsi',
+        pemkot: 'Pemerintah Kota',
+        swasta: 'Swasta',
+        campuran: 'Campuran',
+    };
+
+    function ownershipLabel(value) {
+        return ownershipLabels[String(value || '').toLowerCase()] || 'Belum Diatur';
+    }
+
 
     const tableInfo =
         $('#tanahTableInfo');
@@ -495,8 +510,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         );
 
 
-                return searchValue
-                    .includes(keyword);
+                const status = ownershipFilter?.value || '';
+                return searchValue.includes(keyword) &&
+                    (!status || row.dataset.statusKepemilikan === status);
             }
         );
     }
@@ -790,6 +806,11 @@ document.addEventListener('DOMContentLoaded', function () {
         );
 
 
+    ownershipFilter?.addEventListener('change', () => {
+        currentPage = 1;
+        renderPagination();
+    });
+
     perPageSelect
         ?.addEventListener(
             'change',
@@ -815,8 +836,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                 if (perPageSelect) {
-                    perPageSelect.value =
-                        '20';
+                    perPageSelect.value = '20';
+                }
+                if (ownershipFilter) {
+                    ownershipFilter.value = '';
                 }
 
 
@@ -865,6 +888,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         'Lokasi',
                         'Alamat',
                         'Penggunaan',
+                        'Status Kepemilikan',
                         'Data Tanah',
                         'Tahun',
                         'Nilai',
@@ -903,6 +927,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 ?.innerText
                                 ?.trim()
                             || '',
+
+                            ownershipLabel(row.dataset.statusKepemilikan),
 
                             `${
                                 row.dataset.jumlah
@@ -1101,6 +1127,167 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
+    // ========================================================================
+    // DROPDOWN SEARCHABLE: Barang, Status Kepemilikan, Asal, Hak
+    // Select asli tetap digunakan untuk pengiriman ID/nilai ke controller.
+    // Menu dipasang di body agar tidak terpotong scroll modal.
+    // ========================================================================
+
+    const tanahCombos = [];
+
+    function syncTanahCombos() {
+        tanahCombos.forEach(combo => combo.sync());
+    }
+
+    function setupTanahCombo(select) {
+        if (!select || select.dataset.searchable === '1') return;
+        select.dataset.searchable = '1';
+        const required = select.required;
+        select.required = false;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'tanah-combo';
+        select.parentNode.insertBefore(wrap, select);
+        wrap.appendChild(select);
+
+        const input = document.createElement('input');
+        input.type = 'search';
+        input.id = `${select.id}_search`;
+        const associatedLabel = select.closest('.tanah-field')?.querySelector(`label[for="${select.id}"]`);
+        if (associatedLabel) associatedLabel.htmlFor = input.id;
+        input.className = 'tanah-combo-input';
+        input.autocomplete = 'off';
+        input.placeholder = 'Ketik untuk mencari pilihan...';
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-expanded', 'false');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.required = required;
+        wrap.insertBefore(input, select);
+        select.classList.add('tanah-select-native');
+        select.tabIndex = -1;
+
+        const menu = document.createElement('div');
+        menu.className = 'tanah-combo-menu';
+        menu.hidden = true;
+        menu.setAttribute('role', 'listbox');
+        document.body.appendChild(menu);
+        let available = [];
+        let focusIndex = -1;
+
+        function options() {
+            return Array.from(select.options).filter(opt =>
+                opt.value && !opt.disabled && !opt.hidden
+            );
+        }
+
+        function selectedText() {
+            return select.selectedOptions[0]?.value
+                ? select.selectedOptions[0].textContent.trim().replace(/\s+/g, ' ')
+                : '';
+        }
+
+        function position() {
+            if (menu.hidden) return;
+            const r = input.getBoundingClientRect();
+            const below = window.innerHeight - r.bottom;
+            const flip = below < 180 && r.top > below;
+            menu.style.left = `${Math.max(4, r.left)}px`;
+            menu.style.width = `${r.width}px`;
+            menu.style.maxHeight = `${Math.min(280, Math.max(100, flip ? r.top - 12 : below - 12))}px`;
+            menu.style.top = flip ? 'auto' : `${r.bottom + 4}px`;
+            menu.style.bottom = flip ? `${window.innerHeight - r.top + 4}px` : 'auto';
+        }
+
+        function close() {
+            menu.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            focusIndex = -1;
+        }
+
+        function sync() {
+            input.value = selectedText();
+            input.setCustomValidity(required && !select.value
+                ? 'Pilih salah satu opsi dari daftar.' : '');
+            if (!menu.hidden) render(input.value);
+        }
+
+        function choose(option) {
+            if (!option) return;
+            select.value = option.value;
+            input.value = selectedText();
+            input.setCustomValidity('');
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            close();
+        }
+
+        function render(text = '') {
+            const keyword = String(text).trim().toLocaleLowerCase('id-ID');
+            available = options().filter(option =>
+                option.textContent.toLocaleLowerCase('id-ID').includes(keyword)
+            ).slice(0, 100);
+            menu.replaceChildren();
+            available.forEach(option => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'tanah-combo-item';
+                item.textContent = option.textContent.trim().replace(/\s+/g, ' ');
+                item.addEventListener('pointerdown', event => event.preventDefault());
+                item.addEventListener('click', () => choose(option));
+                menu.appendChild(item);
+            });
+            if (!available.length) {
+                const empty = document.createElement('div');
+                empty.className = 'tanah-combo-empty';
+                empty.textContent = 'Tidak ada data yang sesuai.';
+                menu.appendChild(empty);
+            }
+            menu.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+            focusIndex = -1;
+            position();
+        }
+
+        input.addEventListener('focus', () => render(''));
+        input.addEventListener('click', () => render(''));
+        input.addEventListener('input', () => {
+            select.value = '';
+            input.setCustomValidity(required ? 'Pilih salah satu opsi dari daftar.' : '');
+            render(input.value);
+        });
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                close();
+                sync();
+                return;
+            }
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (menu.hidden) render('');
+                if (!available.length) return;
+                focusIndex = Math.max(0, Math.min(available.length - 1,
+                    focusIndex + (event.key === 'ArrowDown' ? 1 : -1)));
+                Array.from(menu.querySelectorAll('button')).forEach((item, index) => {
+                    item.classList.toggle('highlighted', index === focusIndex);
+                });
+            }
+            if (event.key === 'Enter' && !menu.hidden && available[focusIndex]) {
+                event.preventDefault();
+                choose(available[focusIndex]);
+            }
+            if (event.key === 'Tab') close();
+        });
+        select.addEventListener('change', sync);
+        document.addEventListener('pointerdown', event => {
+            if (!wrap.contains(event.target) && !menu.contains(event.target)) close();
+        });
+        document.addEventListener('scroll', position, true);
+        window.addEventListener('resize', position);
+        tanahCombos.push({ sync, close });
+        sync();
+    }
+
+    form?.querySelectorAll('select[name]').forEach(setupTanahCombo);
+
     /**
      * ========================================================================
      * 12. PILIH TRANSAKSI NILAI ASET
@@ -1281,7 +1468,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function resetForm()
     {
         form?.reset();
-
+        form?.querySelectorAll('option[data-tanah-historical="1"]').forEach(opt => opt.remove());
+        resetTanahAttachments();
+        syncTanahCombos();
 
         if (form) {
             form.action =
@@ -1925,6 +2114,9 @@ async function loadPending()
             tanahBarang:
                 data.id_barang,
 
+            tanahStatusKepemilikan:
+                data.status_kepemilikan,
+
             tanahTahun:
                 data.tahun,
 
@@ -1978,6 +2170,19 @@ async function loadPending()
         };
 
 
+        // Barang lama yang nonaktif tidak ada di dropdown Tambah, namun tetap
+        // boleh dipertahankan tanpa mengubah hubungan historis.
+        const barangOptionExists = Array.from($('#tanahBarang')?.options || [])
+            .some(opt => opt.value === String(data.id_barang));
+        if (data.id_barang && !barangOptionExists) {
+            const oldOption = new Option(
+                [data.kode_barang, data.nama_barang].filter(Boolean).join(' - ') + ' (Historis)',
+                String(data.id_barang)
+            );
+            oldOption.dataset.tanahHistorical = '1';
+            $('#tanahBarang')?.add(oldOption);
+        }
+
         Object.entries(
             fields
         )
@@ -1995,6 +2200,7 @@ async function loadPending()
 
                 }
             );
+        syncTanahCombos();
     }
 
 
@@ -2075,156 +2281,113 @@ async function loadPending()
     );
 
 
-    /**
-     * ========================================================================
-     * 19. UPLOAD PDF
-     * ========================================================================
-     */
+    // ========================================================================
+    // 19. MULTI UPLOAD PDF / FOTO (TANPA LIMIT UKURAN KHUSUS FRONTEND)
+    // ========================================================================
 
-    let temporaryPdfUrl =
-        null;
+    let temporaryPdfUrl = null;
+    const pdfInput = $('#tanahPdfInput');
+    const fotoInput = $('#tanahFotoInput');
+    const pdfPreview = $('#tanahPreviewSelectedPdf');
+    const attachmentTypes = [
+        { input: pdfInput, list: $('#tanahPdfSelectedList'), kind: 'pdf', files: [] },
+        { input: fotoInput, list: $('#tanahFotoSelectedList'), kind: 'gambar', files: [] },
+    ];
 
+    function syncNativeFiles(type) {
+        if (!type.input) return;
+        if (typeof DataTransfer === 'undefined') return;
+        const transfer = new DataTransfer();
+        type.files.forEach(file => transfer.items.add(file));
+        type.input.files = transfer.files;
+    }
 
-    const pdfInput =
-        $('#tanahPdfInput');
+    function renderAttachments(type) {
+        if (!type.list) return;
+        type.list.replaceChildren();
+        type.list.hidden = type.files.length === 0;
 
-
-    pdfInput
-        ?.addEventListener(
-            'change',
-            function (event) {
-
-                const file =
-                    event.target
-                        .files?.[0];
-
-
-                const selectedFile =
-                    $('#tanahFileSelected');
-
-
-                const previewButton =
-                    $('#tanahPreviewSelectedPdf');
-
-
-                if (!file) {
-
-                    if (selectedFile) {
-                        selectedFile.hidden =
-                            true;
-                    }
-
-
-                    if (previewButton) {
-                        previewButton.hidden =
-                            true;
-                    }
-
-
-                    return;
+        for (const [index, file] of type.files.entries()) {
+            const row = document.createElement('div');
+            row.className = 'tanah-attachment-row';
+            const name = document.createElement('span');
+            name.textContent = `${file.name} (${(file.size / 1024 / 1024).toLocaleString('id-ID', { maximumFractionDigits: 2 })} MB)`;
+            const actions = document.createElement('div');
+            actions.className = 'tanah-attachment-actions';
+            const view = document.createElement('button');
+            view.type = 'button';
+            view.textContent = 'Preview';
+            view.addEventListener('click', () => {
+                const url = URL.createObjectURL(file);
+                if (type.kind === 'pdf') {
+                    if (temporaryPdfUrl) URL.revokeObjectURL(temporaryPdfUrl);
+                    temporaryPdfUrl = url;
+                    showPdf({ view_url: url, download_url: url, nama: file.name }, true);
+                } else {
+                    window.open(url, '_blank', 'noopener');
+                    setTimeout(() => URL.revokeObjectURL(url), 60000);
                 }
+            });
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.textContent = 'Hapus';
+            remove.addEventListener('click', () => {
+                type.files.splice(index, 1);
+                syncNativeFiles(type);
+                renderAttachments(type);
+            });
+            actions.append(view, remove);
+            row.append(name, actions);
+            type.list.appendChild(row);
+        }
 
+        const selected = $('#tanahFileSelected');
+        const total = attachmentTypes.reduce((sum, item) => sum + item.files.length, 0);
+        if (selected) selected.hidden = total === 0;
+        if ($('#tanahFileName')) $('#tanahFileName').textContent = `${total} file dipilih`;
+        if (pdfPreview) pdfPreview.hidden = attachmentTypes[0].files.length === 0;
+    }
 
-                const validPdf =
-                    file.type
-                    === 'application/pdf'
-                    ||
-                    file.name
-                        .toLowerCase()
-                        .endsWith('.pdf');
+    function resetTanahAttachments() {
+        attachmentTypes.forEach(type => {
+            type.files = [];
+            if (type.input) type.input.value = '';
+            renderAttachments(type);
+        });
+        if (temporaryPdfUrl) {
+            URL.revokeObjectURL(temporaryPdfUrl);
+            temporaryPdfUrl = null;
+        }
+    }
 
-
-                const validSize =
-                    file.size
-                    <=
-                    15
-                    *
-                    1024
-                    *
-                    1024;
-
-
-                if (
-                    !validPdf
-                    ||
-                    !validSize
-                ) {
-                    event.target.value =
-                        '';
-
-
-                    notify(
-                        'Pilih file PDF maksimal 15 MB.',
-                        true
-                    );
-
-                    return;
+    attachmentTypes.forEach(type => {
+        type.input?.addEventListener('change', () => {
+            const incoming = Array.from(type.input.files || []);
+            for (const file of incoming) {
+                const valid = type.kind === 'pdf'
+                    ? (file.type === 'application/pdf' || /\.pdf$/i.test(file.name))
+                    : ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+                if (!valid) {
+                    notify(`${file.name}: format lampiran tidak didukung.`, true);
+                    continue;
                 }
-
-
-                $('#tanahFileName').textContent =
-                    file.name;
-
-
-                if (selectedFile) {
-                    selectedFile.hidden =
-                        false;
+                if (!type.files.some(old => old.name === file.name &&
+                    old.size === file.size && old.lastModified === file.lastModified)) {
+                    type.files.push(file);
                 }
-
-
-                if (previewButton) {
-                    previewButton.hidden =
-                        false;
-                }
-
             }
-        );
+            syncNativeFiles(type);
+            renderAttachments(type);
+        });
+    });
 
-
-    $('#tanahPreviewSelectedPdf')
-        ?.addEventListener(
-            'click',
-            function () {
-
-                const file =
-                    pdfInput?.files?.[0];
-
-
-                if (!file) {
-                    return;
-                }
-
-
-                if (temporaryPdfUrl) {
-                    URL.revokeObjectURL(
-                        temporaryPdfUrl
-                    );
-                }
-
-
-                temporaryPdfUrl =
-                    URL.createObjectURL(
-                        file
-                    );
-
-
-                showPdf(
-                    {
-                        view_url:
-                            temporaryPdfUrl,
-
-                        download_url:
-                            temporaryPdfUrl,
-
-                        nama:
-                            file.name,
-                    },
-                    true
-                );
-
-            }
-        );
-
+    pdfPreview?.addEventListener('click', () => {
+        const first = attachmentTypes[0].files[0];
+        if (!first) return;
+        if (temporaryPdfUrl) URL.revokeObjectURL(temporaryPdfUrl);
+        temporaryPdfUrl = URL.createObjectURL(first);
+        showPdf({ view_url: temporaryPdfUrl, download_url: temporaryPdfUrl, nama: first.name }, true);
+    });
 
     /**
      * ========================================================================
@@ -2248,6 +2411,8 @@ async function loadPending()
 
     let activeLocationId =
         null;
+
+    let fallbackLocationPhotoUrl = null;
 
 
     let activeLocationName =
@@ -2507,6 +2672,9 @@ async function loadPending()
                     record.luas_gambar
                 ),
 
+            tanahLegacyStatusKepemilikan:
+                ownershipLabel(record.status_kepemilikan),
+
             tanahLegacyHak:
                 record.hak,
 
@@ -2534,6 +2702,31 @@ async function loadPending()
                 }
             );
 
+
+        const gallery = $('#tanahLegacyPhotoGallery');
+        if (gallery) {
+            gallery.replaceChildren();
+            const photos = Array.isArray(record.gambar) ? record.gambar : [];
+            gallery.hidden = photos.length === 0;
+            photos.forEach(photo => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'tanah-photo-thumb';
+                item.title = photo.nama || 'Lihat foto';
+                const img = document.createElement('img');
+                img.src = photo.view_url;
+                img.alt = photo.nama || 'Foto tanah';
+                img.loading = 'lazy';
+                item.appendChild(img);
+                item.addEventListener('click', () => showLocationPhoto(photo.view_url));
+                gallery.appendChild(item);
+            });
+            if (photos[0]?.view_url) {
+                showLocationPhoto(photos[0].view_url);
+            } else {
+                showLocationPhoto(fallbackLocationPhotoUrl);
+            }
+        }
 
         /**
          * Dokumen PDF sertifikat.
@@ -2714,6 +2907,7 @@ async function loadPending()
     ) {
         activeLocationId =
             String(locationId);
+        fallbackLocationPhotoUrl = null;
 
 
         activeLocationName =
@@ -2995,11 +3189,10 @@ async function loadPending()
                         }
 
 
-                        showLocationPhoto(
-                            detail.lokasi
-                                ?.image_url
-                            || null
-                        );
+                        fallbackLocationPhotoUrl = detail.lokasi?.image_url || null;
+                        if (!activeCertificate?.gambar?.length) {
+                            showLocationPhoto(fallbackLocationPhotoUrl);
+                        }
 
                     }
                 )
@@ -4006,6 +4199,9 @@ async function loadPending()
                 tanahHak:
                     'hak',
 
+                tanahStatusKepemilikan:
+                    'status_kepemilikan',
+
                 tanahPemilik:
                     'pemilik',
 
@@ -4104,6 +4300,7 @@ async function loadPending()
         }
 
 
+        syncTanahCombos();
         openDialog(
             'tanahFormModal'
         );
