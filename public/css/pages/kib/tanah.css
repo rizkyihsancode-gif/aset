@@ -3925,3 +3925,66 @@ dl > div:last-child {
     .tanah-page .tanah-table td { overflow-wrap: anywhere; }
     .tanah-page .tanah-table .tanah-actions { gap:4px; }
 }
+
+/* =====================================================
+   K.I.B TANAH - SEARCHABLE DROPDOWN
+===================================================== */
+
+.tanah-page .tanah-combo {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+.tanah-page .tanah-combo::after {
+    content: "";
+    position: absolute;
+
+    right: 15px;
+    top: 16px;
+
+    width: 8px;
+    height: 8px;
+
+    border-right: 2px solid #64748b;
+    border-bottom: 2px solid #64748b;
+
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+
+.tanah-page .tanah-combo-input {
+    width: 100%;
+    padding-right: 38px;
+    cursor: text;
+}
+
+.tanah-combo-menu {
+    position: fixed;
+    z-index: 99999;
+
+    display: grid;
+    gap: 2px;
+
+    max-height: 280px;
+    overflow-y: auto;
+
+    padding: 5px;
+
+    background: #ffffff;
+    border: 1px solid #cdddeb;
+    border-radius: 9px;
+
+    box-shadow: 0 14px 45px
+        rgba(13, 36, 69, 0.19);
+}
+
+.tanah-combo-menu[hidden] {
+    display: none !important;
+}
+
+.tanah-combo-item:hover,
+.tanah-combo-item.highlighted {
+    background: #eaf4ff;
+    color: #0759bc;
+}

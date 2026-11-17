@@ -1166,11 +1166,23 @@ document.addEventListener('DOMContentLoaded', function () {
         select.classList.add('tanah-select-native');
         select.tabIndex = -1;
 
-        const menu = document.createElement('div');
-        menu.className = 'tanah-combo-menu';
-        menu.hidden = true;
-        menu.setAttribute('role', 'listbox');
-        document.body.appendChild(menu);
+        
+const menu = document.createElement('div');
+
+menu.className = 'tanah-combo-menu';
+menu.hidden = true;
+
+menu.setAttribute('role', 'listbox');
+
+// Pastikan daftar pilihan berada di dalam modal.
+// Elemen dialog.showModal() berada pada top layer,
+// sehingga daftar yang dipasang di body dapat tertutup.
+
+const menuHost =
+    select.closest('dialog') || document.body;
+
+menuHost.appendChild(menu);
+
         let available = [];
         let focusIndex = -1;
 

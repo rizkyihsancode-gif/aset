@@ -1489,17 +1489,42 @@
 
                         <div class="tanah-form-grid">
 
+
                             <div class="tanah-field tanah-field-full">
-                                <label for="tanahStatusKepemilikan">Status Kepemilikan <b>*</b></label>
+
+                                <label for="tanahStatusKepemilikan">
+                                    Status Kepemilikan
+                                    <b>*</b>
+                                </label>
+
                                 <select name="status_kepemilikan" id="tanahStatusKepemilikan" required>
-                                    <option value="">Pilih Status Kepemilikan</option>
-                                    <option value="perumdam">Perumdam Tirta Kencana</option>
-                                    <option value="pusat">Pemerintah Pusat</option>
-                                    <option value="pemprov">Pemerintah Provinsi</option>
-                                    <option value="pemkot">Pemerintah Kota</option>
-                                    <option value="swasta">Swasta</option>
+                                    <option value="">
+                                        Pilih Status Kepemilikan
+                                    </option>
+
+                                    <option value="perumdam">
+                                        Perumdam Tirta Kencana
+                                    </option>
+
+                                    <option value="pusat">
+                                        Pemerintah Pusat
+                                    </option>
+
+                                    <option value="pemprov">
+                                        Pemerintah Provinsi
+                                    </option>
+
+                                    <option value="pemkot">
+                                        Pemerintah Kota
+                                    </option>
+
+                                    <option value="swasta">
+                                        Swasta
+                                    </option>
                                 </select>
+
                             </div>
+
 
                             <div class="tanah-field">
 
