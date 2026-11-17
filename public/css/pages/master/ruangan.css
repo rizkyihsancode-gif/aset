@@ -1971,67 +1971,169 @@
 }
 
 
-/* =============================================================
-   PERBAIKAN UI MASTER RUANGAN
-   - Filter status sejajar toolbar utama, bukan di area tabel.
-   - Tabel memiliki jarak dari tepi card secara konsisten.
-   - Area aksi dan badge tidak terpotong.
-   - Event JavaScript lama dan atribut data tetap digunakan.
-   ============================================================= */
+/* ============================================================
+   RUANGAN — TOOLBAR FILTER RESPONSIF (FIX FINAL)
 
-.ruangan-page .master-status-filter {
-    display: flex;
-    flex-direction: column;
-    align-self: end;
-    justify-content: end;
-    gap: 0;
+   Desktop : Search | Status | Filter | Reset | Export
+   Tablet  : Search baris pertama, kontrol di bawah
+   Mobile  : Grid dua kolom, tombol tetap proporsional
+
+   Tidak mengubah tabel, modal, ID DOM, ataupun JS/CRUD.
+   ============================================================ */
+
+.ruangan-page .ruangan-filter-card {
+    min-width: 0;
+}
+
+.ruangan-page .ruangan-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 158px 92px 96px 112px;
+    align-items: end;
+    column-gap: 10px;
+    row-gap: 10px;
     width: 100%;
     min-width: 0;
     margin: 0;
-}
-
-/* Label tetap ada untuk aksesibilitas; pilihannya ringkas dalam toolbar. */
-.ruangan-page .master-status-filter > label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
     padding: 0;
-    margin: -1px;
-    border: 0;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    overflow: hidden;
 }
 
-.ruangan-page .master-status-filter > select {
+.ruangan-page .ruangan-filter-grid > * {
+    box-sizing: border-box;
+    grid-column: auto;
+    grid-row: auto;
+    flex: none;
+    min-width: 0;
     width: 100%;
+    max-width: none;
+    margin: 0;
+    align-self: end;
+}
+
+.ruangan-page .ruangan-filter-grid > .ruangan-search {
+    position: relative;
+    height: 40px;
+}
+
+.ruangan-page .ruangan-filter-grid > .ruangan-search input {
+    display: block;
+    width: 100%;
+    min-width: 0;
     height: 40px;
     min-height: 40px;
     margin: 0;
-    padding: 0 12px;
+    padding: 0 12px 0 40px;
+}
+
+.ruangan-page .ruangan-filter-grid > .master-status-filter {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    gap: 5px;
+    height: auto;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.ruangan-page .ruangan-filter-grid > .master-status-filter > label {
+    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 650;
+    color: #345272;
+}
+
+.ruangan-page .ruangan-filter-grid > .master-status-filter > select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 10px;
     border: 1px solid #d7e3f0;
     border-radius: 9px;
-    background: #fff;
+    background: #ffffff;
     color: #294568;
     font-size: 12px;
     line-height: normal;
 }
 
+.ruangan-page .ruangan-filter-grid > button,
+.ruangan-page .ruangan-filter-grid > .ruangan-filter-button,
+.ruangan-page .ruangan-filter-grid > .ruangan-reset-button,
+.ruangan-page .ruangan-filter-grid > .ruangan-export-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 9px;
+    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.ruangan-page .ruangan-filter-grid > button svg,
+.ruangan-page .ruangan-filter-grid > button i {
+    flex-shrink: 0;
+}
+
+@media (max-width: 1120px) {
+    .ruangan-page .ruangan-filter-grid {
+        grid-template-columns: minmax(0, 1fr) 92px 96px 112px;
+    }
+
+    .ruangan-page .ruangan-filter-grid > .ruangan-search {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 650px) {
+    .ruangan-page .ruangan-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .ruangan-page .ruangan-filter-grid > .ruangan-search,
+    .ruangan-page .ruangan-filter-grid > .master-status-filter {
+        grid-column: 1 / -1;
+    }
+
+    .ruangan-page .ruangan-filter-grid > .ruangan-export-button {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Spasi tabel tetap aman pada card untuk semua ukuran layar. */
 .ruangan-page .ruangan-table-card > .table-responsive {
     display: block;
+    box-sizing: border-box;
     width: calc(100% - 32px);
     max-width: calc(100% - 32px);
     min-width: 0;
     margin: 12px 16px 16px;
-    padding: 0;
     border: 1px solid #dde8f3;
     border-radius: 11px;
-    box-sizing: border-box;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
 }
-
 .ruangan-page #ruanganTable {
     width: 100%;
     max-width: none;
@@ -2039,27 +2141,21 @@
     border-collapse: collapse;
     background: #fff;
 }
-
-.ruangan-page #ruanganTable .master-status-badge {
-    min-width: 0;
-    max-width: 100%;
-    padding: 5px 10px;
-    font-size: 11px;
-    white-space: nowrap;
-}
-
 .ruangan-page #ruanganTable .master-status-cell,
 .ruangan-page #ruanganTable .master-status-heading {
     text-align: center;
     vertical-align: middle;
 }
-
-.ruangan-page #ruanganTable tbody td:last-child,
-.ruangan-page #ruanganTable thead th:last-child {
-    text-align: center;
+.ruangan-page #ruanganTable .master-status-badge {
+    max-width: 100%;
+    padding: 5px 10px;
     white-space: nowrap;
 }
-
+.ruangan-page #ruanganTable th:last-child,
+.ruangan-page #ruanganTable td:last-child {
+    white-space: nowrap;
+    text-align: center;
+}
 @media (max-width: 720px) {
     .ruangan-page .ruangan-table-card > .table-responsive {
         width: calc(100% - 24px);
@@ -2067,21 +2163,4 @@
         margin: 12px;
     }
 }
-
-
-.ruangan-page .ruangan-filter-grid {
-    grid-template-columns: minmax(210px, 1fr) minmax(154px, 204px) auto auto auto;
-    align-items: end;
-    gap: 10px;
-}
-.ruangan-page .ruangan-filter-spacer { display: none; }
-.ruangan-page #ruanganTable { min-width: 820px; table-layout: fixed; }
-@media (max-width: 1050px) {
-    .ruangan-page .ruangan-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .ruangan-page .ruangan-search { grid-column: span 2; }
-}
-@media (max-width: 580px) {
-    .ruangan-page .ruangan-filter-grid { grid-template-columns: 1fr 1fr; }
-    .ruangan-page .ruangan-search,
-    .ruangan-page .master-status-filter { grid-column: 1 / -1; }
-}
+.ruangan-page #ruanganTable { min-width: 820px; }

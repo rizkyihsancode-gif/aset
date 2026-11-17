@@ -4,7 +4,8 @@
 
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/master/ruangan.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/master/ruangan.css') }}?v={{ file_exists(public_path('css/pages/master/ruangan.css')) ? filemtime(public_path('css/pages/master/ruangan.css')) : '1' }}">
 @endpush
 
 
@@ -329,9 +330,6 @@
 
                 </div>
 
-
-
-                {{-- FILTER STATUS AKTIF / NONAKTIF --}}
                 <div class="master-status-filter">
                     <label for="ruanganStatusFilter">Status Ruangan</label>
                     <select id="ruanganStatusFilter" aria-label="Filter status Ruangan">
@@ -359,12 +357,6 @@
                     Reset
 
                 </button>
-
-
-
-                <div class="ruangan-filter-spacer"></div>
-
-
 
                 <button type="button" class="ruangan-export-button" onclick="exportRuanganCSV()">
 
@@ -969,7 +961,7 @@
 
 
                     <div class="ruangan-modal-body">
-                        {-- Status Aktif / Nonaktif Master Data --}
+                        {{-- Status Aktif / Nonaktif Master Data --}}
                         <div class="master-status-form-group">
                             <label for="ruanganFormStatus">Status Ruangan <span aria-hidden="true">*</span></label>
                             <select id="ruanganFormStatus" name="status" required>
