@@ -5804,67 +5804,191 @@ td small {
 }
 
 
-/* =============================================================
-   PERBAIKAN UI MASTER LOKASI
-   - Filter status sejajar toolbar utama, bukan di area tabel.
-   - Tabel memiliki jarak dari tepi card secara konsisten.
-   - Area aksi dan badge tidak terpotong.
-   - Event JavaScript lama dan atribut data tetap digunakan.
-   ============================================================= */
 
-.lokasi-page .master-status-filter {
-    display: flex;
-    flex-direction: column;
-    align-self: end;
-    justify-content: end;
-    gap: 0;
+/* ============================================================
+   REVISI FILTER LOKASI & BAHAN — GRID RESPONSIF
+   Hanya mengatur toolbar, tidak mengubah tabel/CRUD.
+   ============================================================ */
+
+.lokasi-page .lokasi-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(185px, 235px) 155px 90px 95px;
+    gap: 10px;
+    align-items: end;
     width: 100%;
     min-width: 0;
+}
+
+.lokasi-page .lokasi-filter-grid > * {
+    box-sizing: border-box;
+    grid-column: auto;
+    grid-row: auto;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    align-self: end;
+}
+
+.lokasi-page .lokasi-filter-grid > .lokasi-search {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    min-height: 40px;
     margin: 0;
 }
 
-/* Label tetap ada untuk aksesibilitas; pilihannya ringkas dalam toolbar. */
-.lokasi-page .master-status-filter > label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    border: 0;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    overflow: hidden;
+.lokasi-page .lokasi-filter-grid > .lokasi-search input {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
 }
 
-.lokasi-page .master-status-filter > select {
+.lokasi-page .lokasi-filter-grid > .master-status-filter {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.lokasi-page .lokasi-filter-grid > .master-status-filter > label {
+    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 650;
+    color: #345272;
+}
+
+.lokasi-page .lokasi-filter-grid > .master-status-filter > select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 11px;
+    border: 1px solid #d7e3f0;
+    border-radius: 9px;
+    background-color: #fff;
+    color: #294568;
+    font-size: 12px;
+}
+
+.lokasi-page .lokasi-filter-grid > button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 10px;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.lokasi-page .lokasi-filter-grid > button svg,
+.lokasi-page .lokasi-filter-grid > button i {
+    flex-shrink: 0;
+}
+
+.lokasi-page .lokasi-filter-grid > .lokasi-select-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+}
+.lokasi-page .lokasi-filter-grid > .lokasi-select-group > label {
+    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 650;
+    color: #345272;
+}
+.lokasi-page .lokasi-filter-grid > .lokasi-select-group > select {
+    display: block;
     width: 100%;
     height: 40px;
     min-height: 40px;
     margin: 0;
-    padding: 0 12px;
-    border: 1px solid #d7e3f0;
+    padding: 0 11px;
     border-radius: 9px;
-    background: #fff;
-    color: #294568;
-    font-size: 12px;
-    line-height: normal;
 }
 
+@media (max-width: 1180px) {
+    .lokasi-page .lokasi-filter-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 90px 95px;
+    }
+    .lokasi-page .lokasi-filter-grid > .lokasi-search {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 680px) {
+    .lokasi-page .lokasi-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .lokasi-page .lokasi-filter-grid > .lokasi-search {
+        grid-column: 1 / -1;
+    }
+    .lokasi-page .lokasi-filter-grid > .lokasi-select-group,
+    .lokasi-page .lokasi-filter-grid > .master-status-filter {
+        grid-column: span 1;
+    }
+    .lokasi-page .lokasi-filter-grid > .lokasi-reset-button,
+    .lokasi-page .lokasi-filter-grid > .lokasi-export-button {
+        grid-column: span 1;
+    }
+}
+
+/* Spasi tabel tetap aman pada card untuk semua ukuran layar. */
 .lokasi-page .lokasi-table-card > .table-responsive {
     display: block;
+    box-sizing: border-box;
     width: calc(100% - 32px);
     max-width: calc(100% - 32px);
     min-width: 0;
     margin: 12px 16px 16px;
-    padding: 0;
     border: 1px solid #dde8f3;
     border-radius: 11px;
-    box-sizing: border-box;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
 }
-
 .lokasi-page #lokasiTable {
     width: 100%;
     max-width: none;
@@ -5872,27 +5996,21 @@ td small {
     border-collapse: collapse;
     background: #fff;
 }
-
-.lokasi-page #lokasiTable .master-status-badge {
-    min-width: 0;
-    max-width: 100%;
-    padding: 5px 10px;
-    font-size: 11px;
-    white-space: nowrap;
-}
-
 .lokasi-page #lokasiTable .master-status-cell,
 .lokasi-page #lokasiTable .master-status-heading {
     text-align: center;
     vertical-align: middle;
 }
-
-.lokasi-page #lokasiTable tbody td:last-child,
-.lokasi-page #lokasiTable thead th:last-child {
-    text-align: center;
+.lokasi-page #lokasiTable .master-status-badge {
+    max-width: 100%;
+    padding: 5px 10px;
     white-space: nowrap;
 }
-
+.lokasi-page #lokasiTable th:last-child,
+.lokasi-page #lokasiTable td:last-child {
+    white-space: nowrap;
+    text-align: center;
+}
 @media (max-width: 720px) {
     .lokasi-page .lokasi-table-card > .table-responsive {
         width: calc(100% - 24px);
@@ -5900,23 +6018,4 @@ td small {
         margin: 12px;
     }
 }
-
-
-.lokasi-page .lokasi-filter-grid {
-    grid-template-columns: minmax(220px, 1.4fr) minmax(160px, .85fr)
-                           minmax(152px, .68fr) auto auto;
-    align-items: end;
-    gap: 10px;
-}
 .lokasi-page #lokasiTable { min-width: 1180px; }
-@media (max-width: 1170px) {
-    .lokasi-page .lokasi-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .lokasi-page .lokasi-search { grid-column: 1 / -1; }
-}
-@media (max-width: 640px) {
-    .lokasi-page .lokasi-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .lokasi-page .lokasi-search { grid-column: 1 / -1; }
-}
-@media (max-width: 440px) {
-    .lokasi-page .lokasi-filter-grid { grid-template-columns: 1fr; }
-}

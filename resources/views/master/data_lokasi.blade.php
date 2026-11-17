@@ -232,7 +232,7 @@
                 <div class="lokasi-select-group">
                     <label for="lokasiWilayahFilter">Wilayah</label>
 
-                    <select id="lokasiWilayahFilter">
+                    <select id="lokasiWilayahFilter" aria-label="Filter wilayah Lokasi">
                         <option value="">Semua Wilayah</option>
 
                         @foreach ($wilayahRows as $wilayah)
@@ -245,7 +245,6 @@
                     </select>
                 </div>
 
-                {{-- FILTER STATUS AKTIF / NONAKTIF --}}
                 <div class="master-status-filter">
                     <label for="lokasiStatusFilter">Status Lokasi</label>
                     <select id="lokasiStatusFilter" aria-label="Filter status Lokasi">
@@ -590,7 +589,7 @@
                     @csrf
 
                     <div class="lokasi-modal-body">
-                        {-- Status Aktif / Nonaktif Master Data --}
+                        {{-- Status Aktif / Nonaktif Master Data --}}
                         <div class="master-status-form-group">
                             <label for="lokasiFormStatus">Status Lokasi <span aria-hidden="true">*</span></label>
                             <select id="lokasiFormStatus" name="status" required>

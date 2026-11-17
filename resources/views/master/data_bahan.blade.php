@@ -4,7 +4,8 @@
 
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/pages/master/bahan.css') }}">
+    <link rel="stylesheet"
+        href="{{ asset('css/pages/master/bahan.css') }}?v={{ file_exists(public_path('css/pages/master/bahan.css')) ? filemtime(public_path('css/pages/master/bahan.css')) : '1' }}">
 @endpush
 
 
@@ -365,9 +366,6 @@
 
                 </div>
 
-
-
-                {{-- FILTER STATUS AKTIF / NONAKTIF --}}
                 <div class="master-status-filter">
                     <label for="bahanStatusFilter">Status Bahan</label>
                     <select id="bahanStatusFilter" aria-label="Filter status Bahan">
@@ -385,12 +383,6 @@
                     Reset
 
                 </button>
-
-
-
-                <div class="bahan-filter-spacer"></div>
-
-
 
                 <button type="button" class="bahan-export-button" onclick="exportBahanCSV()">
 
@@ -956,7 +948,7 @@
 
 
                     <div class="bahan-modal-body">
-                        {-- Status Aktif / Nonaktif Master Data --}
+                        {{-- Status Aktif / Nonaktif Master Data --}}
                         <div class="master-status-form-group">
                             <label for="bahanFormStatus">Status Bahan <span aria-hidden="true">*</span></label>
                             <select id="bahanFormStatus" name="status" required>

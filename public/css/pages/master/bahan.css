@@ -2199,67 +2199,151 @@ tr[data-record]:hover {
 }
 
 
-/* =============================================================
-   PERBAIKAN UI MASTER BAHAN
-   - Filter status sejajar toolbar utama, bukan di area tabel.
-   - Tabel memiliki jarak dari tepi card secara konsisten.
-   - Area aksi dan badge tidak terpotong.
-   - Event JavaScript lama dan atribut data tetap digunakan.
-   ============================================================= */
 
-.bahan-page .master-status-filter {
-    display: flex;
-    flex-direction: column;
-    align-self: end;
-    justify-content: end;
-    gap: 0;
+/* ============================================================
+   REVISI FILTER LOKASI & BAHAN — GRID RESPONSIF
+   Hanya mengatur toolbar, tidak mengubah tabel/CRUD.
+   ============================================================ */
+
+.bahan-page .bahan-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 165px 95px 100px;
+    gap: 10px;
+    align-items: end;
     width: 100%;
     min-width: 0;
-    margin: 0;
 }
 
-/* Label tetap ada untuk aksesibilitas; pilihannya ringkas dalam toolbar. */
-.bahan-page .master-status-filter > label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    border: 0;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-.bahan-page .master-status-filter > select {
+.bahan-page .bahan-filter-grid > * {
+    box-sizing: border-box;
+    grid-column: auto;
+    grid-row: auto;
+    min-width: 0;
+    max-width: none;
     width: 100%;
+    margin: 0;
+    align-self: end;
+}
+
+.bahan-page .bahan-filter-grid > .bahan-search {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
     height: 40px;
     min-height: 40px;
     margin: 0;
-    padding: 0 12px;
-    border: 1px solid #d7e3f0;
-    border-radius: 9px;
-    background: #fff;
-    color: #294568;
-    font-size: 12px;
-    line-height: normal;
 }
 
+.bahan-page .bahan-filter-grid > .bahan-search input {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+}
+
+.bahan-page .bahan-filter-grid > .master-status-filter {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.bahan-page .bahan-filter-grid > .master-status-filter > label {
+    display: block;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 15px;
+    font-weight: 650;
+    color: #345272;
+}
+
+.bahan-page .bahan-filter-grid > .master-status-filter > select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 11px;
+    border: 1px solid #d7e3f0;
+    border-radius: 9px;
+    background-color: #fff;
+    color: #294568;
+    font-size: 12px;
+}
+
+.bahan-page .bahan-filter-grid > button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 10px;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.bahan-page .bahan-filter-grid > button svg,
+.bahan-page .bahan-filter-grid > button i {
+    flex-shrink: 0;
+}
+
+@media (max-width: 1180px) {
+    .bahan-page .bahan-filter-grid {
+        grid-template-columns: minmax(0, 1fr) 165px 95px 100px;
+    }
+    .bahan-page .bahan-filter-grid > .bahan-search {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 680px) {
+    .bahan-page .bahan-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+    .bahan-page .bahan-filter-grid > .bahan-search {
+        grid-column: 1 / -1;
+    }
+    .bahan-page .bahan-filter-grid > .master-status-filter {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Spasi tabel tetap aman pada card untuk semua ukuran layar. */
 .bahan-page .bahan-table-card > .table-responsive {
     display: block;
+    box-sizing: border-box;
     width: calc(100% - 32px);
     max-width: calc(100% - 32px);
     min-width: 0;
     margin: 12px 16px 16px;
-    padding: 0;
     border: 1px solid #dde8f3;
     border-radius: 11px;
-    box-sizing: border-box;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
 }
-
 .bahan-page #bahanTable {
     width: 100%;
     max-width: none;
@@ -2267,27 +2351,21 @@ tr[data-record]:hover {
     border-collapse: collapse;
     background: #fff;
 }
-
-.bahan-page #bahanTable .master-status-badge {
-    min-width: 0;
-    max-width: 100%;
-    padding: 5px 10px;
-    font-size: 11px;
-    white-space: nowrap;
-}
-
 .bahan-page #bahanTable .master-status-cell,
 .bahan-page #bahanTable .master-status-heading {
     text-align: center;
     vertical-align: middle;
 }
-
-.bahan-page #bahanTable tbody td:last-child,
-.bahan-page #bahanTable thead th:last-child {
-    text-align: center;
+.bahan-page #bahanTable .master-status-badge {
+    max-width: 100%;
+    padding: 5px 10px;
     white-space: nowrap;
 }
-
+.bahan-page #bahanTable th:last-child,
+.bahan-page #bahanTable td:last-child {
+    white-space: nowrap;
+    text-align: center;
+}
 @media (max-width: 720px) {
     .bahan-page .bahan-table-card > .table-responsive {
         width: calc(100% - 24px);
@@ -2295,18 +2373,9 @@ tr[data-record]:hover {
         margin: 12px;
     }
 }
+.bahan-page #bahanTable { min-width: 620px; }
 
-
-.bahan-page .bahan-filter-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(155px, 195px) auto auto;
-    align-items: end;
-    gap: 10px;
-}
-.bahan-page .bahan-filter-spacer { display: none; }
-.bahan-page #bahanTable {
-    width: 100%; min-width: 620px; max-width: none;
-    margin: 0; table-layout: fixed; white-space: normal;
-}
+.bahan-page #bahanTable { table-layout: fixed; white-space: normal; }
 .bahan-page #bahanTable th:nth-child(1),
 .bahan-page #bahanTable td:nth-child(1) { width: 5%; }
 .bahan-page #bahanTable th:nth-child(2),
@@ -2317,11 +2386,3 @@ tr[data-record]:hover {
 .bahan-page #bahanTable td:nth-child(4) { width: 17%; }
 .bahan-page #bahanTable th:nth-child(5),
 .bahan-page #bahanTable td:nth-child(5) { width: 17%; }
-@media (max-width: 750px) {
-    .bahan-page .bahan-filter-grid { grid-template-columns: minmax(0, 1fr) minmax(155px, 195px); }
-    .bahan-page .bahan-search { grid-column: 1 / -1; }
-}
-@media (max-width: 450px) {
-    .bahan-page .bahan-filter-grid { grid-template-columns: 1fr; }
-    .bahan-page .bahan-search { grid-column: 1; }
-}
