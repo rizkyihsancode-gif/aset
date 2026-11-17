@@ -1130,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ========================================================================
     // DROPDOWN SEARCHABLE: Barang, Status Kepemilikan, Asal, Hak
     // Select asli tetap digunakan untuk pengiriman ID/nilai ke controller.
-    // Menu dipasang di body agar tidak terpotong scroll modal.
+    // Menu dipasang di dialog agar dapat dibuka di modal top-layer.
     // ========================================================================
 
     const tanahCombos = [];
@@ -1141,6 +1141,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setupTanahCombo(select) {
         if (!select || select.dataset.searchable === '1') return;
+
         select.dataset.searchable = '1';
         const required = select.required;
         select.required = false;
@@ -1166,23 +1167,13 @@ document.addEventListener('DOMContentLoaded', function () {
         select.classList.add('tanah-select-native');
         select.tabIndex = -1;
 
-        
-const menu = document.createElement('div');
-
-menu.className = 'tanah-combo-menu';
-menu.hidden = true;
-
-menu.setAttribute('role', 'listbox');
-
-// Pastikan daftar pilihan berada di dalam modal.
-// Elemen dialog.showModal() berada pada top layer,
-// sehingga daftar yang dipasang di body dapat tertutup.
-
-const menuHost =
-    select.closest('dialog') || document.body;
-
-menuHost.appendChild(menu);
-
+        const menu = document.createElement('div');
+        menu.className = 'tanah-combo-menu';
+        menu.hidden = true;
+        menu.setAttribute('role', 'listbox');
+        // Agar menu pencarian tampil di atas <dialog> modal (top layer).
+        const menuHost = select.closest('dialog') || document.body;
+        menuHost.appendChild(menu);
         let available = [];
         let focusIndex = -1;
 
@@ -2579,8 +2570,8 @@ async function loadPending()
          */
 
         $$(
-            '.tanah-legacy-list-row',
-            $('#tanahLegacyList')
+            '.tanah-excel-row',
+            $('#tanahExcelBody')
         )
             .forEach(
                 button => {
@@ -2602,7 +2593,7 @@ async function loadPending()
 
 
                     button.setAttribute(
-                        'aria-pressed',
+                        'aria-selected',
                         String(active)
                     );
 
@@ -2890,16 +2881,7 @@ async function loadPending()
          * pindah ke bagian detail.
          */
 
-        if (
-            window.innerWidth
-            <= 850
-        ) {
-            $('#tanahLegacyDetails')
-                ?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start',
-                });
-        }
+        // Tabel panjang tetap berada pada posisi awal, termasuk di layar kecil.
 
 
         refreshIcons();
@@ -2911,6 +2893,84 @@ async function loadPending()
      * 22. BUKA DATA TANAH PER LOKASI
      * ========================================================================
      */
+
+    /**
+     * Membuat satu baris K.I.B A bergaya Excel.
+     * Gunakan textContent agar data dari database tidak ditafsirkan sebagai HTML.
+     * Seluruh field mengikuti JSON endpoint lokasi/{id}/sertifikat yang sudah ada.
+     */
+    function createTanahExcelRow(record, index) {
+        const row = document.createElement('tr');
+        row.className = 'tanah-excel-row';
+        row.dataset.id = String(record.id);
+        row.tabIndex = 0;
+        row.setAttribute('aria-selected', 'false');
+        row.setAttribute('aria-label', `Sertifikat ${index + 1}: ${record.nama_barang || 'Tanah'}`);
+
+        const appendCell = (value, className = '', detail = null) => {
+            const cell = document.createElement('td');
+            if (className) cell.className = className;
+            const primary = document.createElement('span');
+            primary.className = 'tanah-excel-primary';
+            const normalized = value == null ? '' : String(value).trim();
+            primary.textContent = normalized || '-';
+            cell.appendChild(primary);
+            if (detail != null && String(detail).trim() && String(detail).trim() !== '-') {
+                const secondary = document.createElement('small');
+                secondary.className = 'tanah-excel-secondary';
+                secondary.textContent = String(detail);
+                cell.appendChild(secondary);
+            }
+            row.appendChild(cell);
+            return cell;
+        };
+
+        appendCell(index + 1, 'tanah-excel-no');
+        appendCell(record.alamat || activeLocationName, 'tanah-excel-alamat');
+        appendCell(record.nama_barang, 'tanah-excel-nama');
+        appendCell(record.kode_barang, 'tanah-excel-kode');
+        appendCell(record.no_tunjuk, '', formatDate(record.tgl_tunjuk));
+        appendCell(record.tahun, 'tanah-excel-center');
+        appendCell(record.luas_tunjuk, 'tanah-excel-number');
+        appendCell(record.hak);
+        appendCell(record.sertifikat, '', formatDate(record.tgl_sertifikat));
+        appendCell(record.luas_sertifikat, 'tanah-excel-number');
+        appendCell(record.guna);
+        appendCell(record.asal);
+        appendCell(record.ket);
+
+        const ownerCell = appendCell('', 'tanah-excel-owner-cell');
+        ownerCell.replaceChildren();
+        const badge = document.createElement('span');
+        const status = String(record.status_kepemilikan || '').toLowerCase();
+        badge.className = `tanah-ownership-badge ${['perumdam','pusat','pemprov','pemkot','swasta'].includes(status) ? status : 'belum'}`;
+        badge.textContent = ownershipLabel(status);
+        ownerCell.appendChild(badge);
+
+        const actionCell = document.createElement('td');
+        actionCell.className = 'tanah-excel-actions';
+        const detailButton = document.createElement('button');
+        detailButton.type = 'button';
+        detailButton.className = 'tanah-excel-detail-button';
+        detailButton.textContent = 'Detail';
+        detailButton.setAttribute('aria-label', `Detail sertifikat ${index + 1}`);
+        detailButton.addEventListener('click', event => {
+            event.stopPropagation();
+            selectCertificate(record);
+            $('#tanahLegacyDetails')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+        actionCell.appendChild(detailButton);
+        row.appendChild(actionCell);
+
+        row.addEventListener('click', () => selectCertificate(record));
+        row.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                selectCertificate(record);
+            }
+        });
+        return row;
+    }
 
     async function openLocation(
         locationId,
@@ -2955,198 +3015,44 @@ async function loadPending()
         );
 
 
-        const list =
-            $('#tanahLegacyList');
-
+        const list = $('#tanahExcelBody');
 
         if (list) {
-            list.innerHTML = `
-                <p class="tanah-legacy-loading">
-                    Memuat daftar sertifikat...
-                </p>
-            `;
+            list.innerHTML = '<tr><td colspan="15" class="tanah-excel-message">Memuat daftar sertifikat...</td></tr>';
         }
 
-
-        $('#tanahLegacyEmpty').hidden =
-            false;
-
-
-        $('#tanahLegacyDetails').hidden =
-            true;
-
-
+        $('#tanahLegacyEmpty').hidden = false;
+        $('#tanahLegacyDetails').hidden = true;
         showLocationPhoto(null);
-
-
-        openDialog(
-            'tanahLocationModal'
-        );
-
+        openDialog('tanahLocationModal');
 
         try {
+            const result = await getJson(
+                `${LOCATION_URL}/${encodeURIComponent(locationId)}/sertifikat`
+            );
 
-            /**
-             * Load daftar sertifikat.
-             */
+            if (requestId !== locationRequestSequence) return;
 
-            const result =
-                await getJson(
-                    `${LOCATION_URL}/${
-                        encodeURIComponent(
-                            locationId
-                        )
-                    }/sertifikat`
-                );
-
-
-            if (
-                requestId
-                !==
-                locationRequestSequence
-            ) {
-                return;
-            }
-
-
-            const rows =
-                Array.isArray(
-                    result.data
-                )
-                    ? result.data
-                    : [];
-
+            const rows = Array.isArray(result.data) ? result.data : [];
 
             setLegacyText(
                 'tanahLegacyLocationAddress',
-                result.lokasi?.alamat
-                ||
-                `Lokasi: ${
-                    activeLocationName
-                }`
+                result.lokasi?.alamat || `Lokasi: ${activeLocationName}`
             );
-
-
             setLegacyText(
                 'tanahLegacyRecordCount',
-                `${
-                    integerFormatter.format(
-                        rows.length
-                    )
-                } data`
+                `${integerFormatter.format(rows.length)} data`
             );
-
 
             list?.replaceChildren();
 
-
-            if (
-                rows.length === 0
-            ) {
-
-                if (list) {
-                    list.innerHTML = `
-                        <p class="tanah-legacy-loading">
-                            Belum ada sertifikat pada lokasi ini.
-                        </p>
-                    `;
-                }
-
+            if (rows.length === 0 && list) {
+                list.innerHTML = '<tr><td colspan="15" class="tanah-excel-message">Belum ada sertifikat pada lokasi ini.</td></tr>';
             }
 
-
-            rows.forEach(
-                (
-                    record,
-                    index
-                ) => {
-
-                    const button =
-                        document.createElement(
-                            'button'
-                        );
-
-
-                    button.type =
-                        'button';
-
-
-                    button.className =
-                        'tanah-legacy-list-row';
-
-
-                    button.dataset.id =
-                        record.id;
-
-
-                    button.setAttribute(
-                        'aria-pressed',
-                        'false'
-                    );
-
-
-                    button.innerHTML = `
-                        <span class="tanah-legacy-list-no">
-                            ${index + 1}
-                        </span>
-
-                        <span class="tanah-legacy-list-owner">
-
-                            <strong>
-                                ${escapeHtml(
-                                    (
-                                        record.pemilik
-                                        &&
-                                        record.pemilik !== '-'
-                                    )
-                                        ? record.pemilik
-                                        : (
-                                            record.nama_barang
-                                            || 'Tanah'
-                                        )
-                                )}
-                            </strong>
-
-                            <small>
-                                Tahun ${
-                                    escapeHtml(
-                                        record.tahun
-                                        || '-'
-                                    )
-                                }
-                            </small>
-
-                        </span>
-
-                        <span class="tanah-legacy-list-area">
-                            ${escapeHtml(
-                                formatArea(
-                                    record.luas_sertifikat
-                                )
-                            )}
-                        </span>
-                    `;
-
-
-                    button.addEventListener(
-                        'click',
-                        function () {
-
-                            selectCertificate(
-                                record
-                            );
-
-                        }
-                    );
-
-
-                    list?.appendChild(
-                        button
-                    );
-
-                }
-            );
-
+            rows.forEach((record, index) => {
+                list?.appendChild(createTanahExcelRow(record, index));
+            });
 
             /**
              * Pilih sertifikat yang diminta.
@@ -3227,11 +3133,7 @@ async function loadPending()
 
 
             if (list) {
-                list.innerHTML = `
-                    <p class="tanah-legacy-loading">
-                        Gagal memuat daftar sertifikat.
-                    </p>
-                `;
+                list.innerHTML = '<tr><td colspan="15" class="tanah-excel-message">Gagal memuat daftar sertifikat.</td></tr>';
             }
 
 
