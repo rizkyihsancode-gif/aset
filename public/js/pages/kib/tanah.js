@@ -14,7 +14,7 @@
  * 07. Pilih Nilai Aset → isi Lokasi dan Alamat otomatis
  * 08. Form Tambah / Edit Tanah
  * 09. Upload dan preview PDF
- * 10. View Data Tanah seperti web aset lama
+ * 10. View Data Tanah dengan tabel K.I.B A horizontal
  * 11. Detail Nilai Aset per lokasi
  * 12. Daftar PDF per lokasi
  * 13. Delete sertifikat
@@ -2554,7 +2554,7 @@ async function loadPending()
      * ========================================================================
      */
 
-    function selectCertificate(record)
+    function selectCertificate(record, revealAttachments = false)
     {
         if (!record) {
             return;
@@ -2566,7 +2566,7 @@ async function loadPending()
 
 
         /**
-         * Aktifkan baris sertifikat di panel kiri.
+         * Aktifkan baris sertifikat pada tabel K.I.B A.
          */
 
         $$(
@@ -2868,12 +2868,16 @@ async function loadPending()
         }
 
 
-        $('#tanahLegacyEmpty').hidden =
-            true;
+        const attachmentsPanel = $('#tanahLegacyDetails');
+        const emptyPanel = $('#tanahLegacyEmpty');
 
+        if (emptyPanel) {
+            emptyPanel.hidden = true;
+        }
 
-        $('#tanahLegacyDetails').hidden =
-            false;
+        if (attachmentsPanel && revealAttachments) {
+            attachmentsPanel.hidden = false;
+        }
 
 
         /**
@@ -2887,6 +2891,13 @@ async function loadPending()
         refreshIcons();
     }
 
+
+    // Tutup panel lampiran tanpa menutup tabel inventaris.
+    $('#tanahCloseAttachments')?.addEventListener('click', () => {
+        const panel = $('#tanahLegacyDetails');
+        if (panel) panel.hidden = true;
+        $('#tanahExcelScroll')?.focus({ preventScroll: true });
+    });
 
     /**
      * ========================================================================
@@ -2952,25 +2963,104 @@ async function loadPending()
         const detailButton = document.createElement('button');
         detailButton.type = 'button';
         detailButton.className = 'tanah-excel-detail-button';
-        detailButton.textContent = 'Detail';
-        detailButton.setAttribute('aria-label', `Detail sertifikat ${index + 1}`);
+        detailButton.textContent = 'Berkas';
+        detailButton.setAttribute('aria-label', `Lihat berkas dan tindakan sertifikat ${index + 1}`);
+
+        const revealSelected = () => {
+            selectCertificate(record, true);
+            requestAnimationFrame(() => {
+                $('#tanahLegacyDetails')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            });
+        };
+
         detailButton.addEventListener('click', event => {
             event.stopPropagation();
-            selectCertificate(record);
-            $('#tanahLegacyDetails')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+            revealSelected();
         });
         actionCell.appendChild(detailButton);
         row.appendChild(actionCell);
 
-        row.addEventListener('click', () => selectCertificate(record));
+        row.addEventListener('click', revealSelected);
         row.addEventListener('keydown', event => {
             if (event.key === 'Enter' || event.key === ' ') {
+                if (event.target !== row) return;
                 event.preventDefault();
-                selectCertificate(record);
+                revealSelected();
             }
         });
         return row;
     }
+
+    // Cari di seluruh kolom utama K.I.B A tanpa request tambahan.
+    let excelLocationRecords = [];
+
+    function renderExcelRows() {
+        const body = $('#tanahExcelBody');
+        if (!body) return;
+
+        const keyword = String($('#tanahExcelSearch')?.value || '')
+            .trim()
+            .toLocaleLowerCase('id-ID');
+
+        const filtered = excelLocationRecords.filter(record => {
+            if (!keyword) return true;
+
+            return [
+                record.alamat,
+                record.nama_barang,
+                record.kode_barang,
+                record.no_tunjuk,
+                record.sertifikat,
+                record.tahun,
+                record.hak,
+                record.guna,
+                record.asal,
+                record.ket,
+                ownershipLabel(record.status_kepemilikan)
+            ].some(value => String(value ?? '')
+                .toLocaleLowerCase('id-ID')
+                .includes(keyword));
+        });
+
+        body.replaceChildren();
+
+        if (!filtered.length) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 15;
+            cell.className = 'tanah-excel-message';
+            cell.textContent = excelLocationRecords.length
+                ? 'Tidak ada data tanah yang sesuai pencarian.'
+                : 'Belum ada sertifikat pada lokasi ini.';
+            row.appendChild(cell);
+            body.appendChild(row);
+        } else {
+            filtered.forEach((record, index) => {
+                body.appendChild(createTanahExcelRow(record, index));
+            });
+        }
+
+        setLegacyText(
+            'tanahLegacyRecordCount',
+            keyword
+                ? `${filtered.length} dari ${excelLocationRecords.length} data`
+                : `${excelLocationRecords.length} data`
+        );
+
+        const selected = activeCertificate?.id;
+        if (selected != null) {
+            $$('.tanah-excel-row', body).forEach(row => {
+                const active = row.dataset.id === String(selected);
+                row.classList.toggle('active', active);
+                row.setAttribute('aria-selected', String(active));
+            });
+        }
+    }
+
+    $('#tanahExcelSearch')?.addEventListener('input', renderExcelRows);
 
     async function openLocation(
         locationId,
@@ -2993,6 +3083,20 @@ async function loadPending()
 
         const requestId =
             ++locationRequestSequence;
+
+        // Modal selalu dimulai dari posisi awal, tidak mewarisi posisi scroll sebelumnya.
+        excelLocationRecords = [];
+        const searchInput = $('#tanahExcelSearch');
+        if (searchInput) searchInput.value = '';
+        const attachments = $('#tanahLegacyDetails');
+        if (attachments) attachments.hidden = true;
+        const workspace = $('.tanah-sheet-workspace');
+        const tableScroll = $('#tanahExcelScroll');
+        if (workspace) workspace.scrollTop = 0;
+        if (tableScroll) {
+            tableScroll.scrollLeft = 0;
+            tableScroll.scrollTop = 0;
+        }
 
 
         setLegacyText(
@@ -3025,6 +3129,15 @@ async function loadPending()
         $('#tanahLegacyDetails').hidden = true;
         showLocationPhoto(null);
         openDialog('tanahLocationModal');
+        requestAnimationFrame(() => {
+            const sheet = $('.tanah-sheet-workspace');
+            const table = $('#tanahExcelScroll');
+            if (sheet) sheet.scrollTop = 0;
+            if (table) {
+                table.scrollLeft = 0;
+                table.scrollTop = 0;
+            }
+        });
 
         try {
             const result = await getJson(
@@ -3044,15 +3157,9 @@ async function loadPending()
                 `${integerFormatter.format(rows.length)} data`
             );
 
-            list?.replaceChildren();
+            excelLocationRecords = rows;
+            renderExcelRows();
 
-            if (rows.length === 0 && list) {
-                list.innerHTML = '<tr><td colspan="15" class="tanah-excel-message">Belum ada sertifikat pada lokasi ini.</td></tr>';
-            }
-
-            rows.forEach((record, index) => {
-                list?.appendChild(createTanahExcelRow(record, index));
-            });
 
             /**
              * Pilih sertifikat yang diminta.

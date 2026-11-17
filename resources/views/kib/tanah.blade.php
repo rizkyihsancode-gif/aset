@@ -1682,72 +1682,83 @@
 
 
         {{-- =========================================================
-             DAFTAR SERTIFIKAT PER LOKASI
+             DETAIL K.I.B A — LAPORAN HORIZONTAL SEPERTI EXCEL
+             Semua kolom tanah ada di satu tabel, satu sertifikat per baris.
+             Lampiran tidak menduplikasi data tabel.
         ========================================================== --}}
-        <dialog class="tanah-modal tanah-location-modal" id="tanahLocationModal" aria-labelledby="tanahLocationTitle">
-            <div class="tanah-legacy-topbar">
-                <div class="tanah-legacy-topbar-title">
-                    <span class="tanah-modal-eyebrow">K.I.B A / DATA TANAH</span>
-                    <h3 id="tanahLocationTitle">Detail Lokasi Tanah</h3>
-                    <p id="tanahLegacyLocationAddress">Pilih baris pada tabel untuk melihat foto dan dokumen sertifikat.
-                    </p>
+        <dialog class="tanah-modal tanah-location-modal tanah-sheet-modal" id="tanahLocationModal"
+            aria-labelledby="tanahLocationTitle">
+            <header class="tanah-sheet-header">
+                <div class="tanah-sheet-header-copy">
+                    <span class="tanah-modal-eyebrow">K.I.B A / KARTU INVENTARIS TANAH</span>
+                    <h3 id="tanahLocationTitle">Data Inventaris Tanah</h3>
+                    <p id="tanahLegacyLocationAddress">Informasi lokasi tanah</p>
                 </div>
+
                 <button type="button" class="tanah-modal-close" data-close-dialog="tanahLocationModal"
                     aria-label="Tutup detail tanah">
                     <i data-lucide="x"></i>
                 </button>
-            </div>
+            </header>
 
-            <div class="tanah-legacy-workspace tanah-excel-workspace">
-                {{-- Tabel memanjang mengikuti susunan laporan K.I.B A pada Excel. --}}
-                <section class="tanah-excel-section" aria-label="Daftar lengkap data tanah">
-                    <div class="tanah-excel-toolbar">
-                        <div>
-                            <strong>Daftar Inventaris Tanah</strong>
-                            <p>Satu baris untuk setiap sertifikat. Geser tabel ke samping untuk melihat seluruh kolom.</p>
+            <div class="tanah-excel-workspace tanah-sheet-workspace">
+                <section class="tanah-excel-section" aria-label="Tabel data K.I.B A">
+                    <div class="tanah-sheet-toolbar">
+                        <div class="tanah-sheet-toolbar-heading">
+                            <h4>Daftar Tanah &amp; Sertifikat</h4>
+                            <p>Susunan kolom mengikuti K.I.B A perusahaan. Satu baris mewakili satu sertifikat.</p>
                         </div>
-                        <span id="tanahLegacyRecordCount" class="tanah-legacy-total">0 data</span>
+
+                        <div class="tanah-sheet-toolbar-controls">
+                            <label class="tanah-sheet-search">
+                                <i data-lucide="search"></i>
+                                <input type="search" id="tanahExcelSearch"
+                                    placeholder="Cari tanah, alamat, kode, atau sertifikat..."
+                                    aria-label="Cari dalam daftar sertifikat Tanah" autocomplete="off">
+                            </label>
+                            <span id="tanahLegacyRecordCount" class="tanah-sheet-total">0 data</span>
+                        </div>
                     </div>
-                    <div class="tanah-excel-scroll" role="region" tabindex="0"
-                        aria-label="Tabel K.I.B A Tanah, dapat digeser horizontal">
+
+                    <div class="tanah-excel-scroll" id="tanahExcelScroll" role="region" tabindex="0"
+                        aria-label="Tabel K.I.B A, geser horizontal untuk melihat kolom lainnya">
                         <table class="tanah-excel-table" id="tanahExcelTable">
+                            <caption class="tanah-sr-only">
+                                Kartu Inventaris Barang K.I.B A Tanah termasuk Status Kepemilikan.
+                            </caption>
                             <colgroup>
-                                <col style="width: 52px">
-                                <col style="width: 210px">
-                                <col style="width: 230px">
-                                <col style="width: 140px">
-                                <col style="width: 175px">
-                                <col style="width: 94px">
-                                <col style="width: 105px">
-                                <col style="width: 125px">
-                                <col style="width: 220px">
-                                <col style="width: 110px">
-                                <col style="width: 165px">
-                                <col style="width: 130px">
-                                <col style="width: 180px">
-                                <col style="width: 160px">
-                                <col style="width: 90px">
+                                <col style="width:48px">
+                                <col style="width:190px">
+                                <col style="width:210px">
+                                <col style="width:125px">
+                                <col style="width:170px">
+                                <col style="width:94px">
+                                <col style="width:88px">
+                                <col style="width:105px">
+                                <col style="width:185px">
+                                <col style="width:95px">
+                                <col style="width:165px">
+                                <col style="width:125px">
+                                <col style="width:170px">
+                                <col style="width:145px">
+                                <col style="width:95px">
                             </colgroup>
-                            <caption class="tanah-sr-only">Daftar sertifikat tanah dan status kepemilikannya</caption>
                             <thead>
-                                <tr class="tanah-excel-title-row">
-                                    <th colspan="15">K.I.B A — KARTU INVENTARIS TANAH • PERUMDA TIRTA KENCANA</th>
-                                </tr>
                                 <tr class="tanah-excel-group-head">
-                                    <th rowspan="2" scope="col">No.</th>
-                                    <th rowspan="2" scope="col">Alamat / Letak</th>
-                                    <th rowspan="2" scope="col">Nama Barang / Jenis Barang</th>
-                                    <th colspan="2" scope="colgroup">Nomor</th>
-                                    <th rowspan="2" scope="col">Tahun Pengadaan</th>
-                                    <th rowspan="2" scope="col">Luas (m²)</th>
-                                    <th rowspan="2" scope="col">Hak</th>
-                                    <th rowspan="2" scope="col">Nomor Surat / SPPT / Sertifikat</th>
-                                    <th rowspan="2" scope="col">Luas Tanah (m²)</th>
-                                    <th rowspan="2" scope="col">Keperluan</th>
-                                    <th rowspan="2" scope="col">Asal Usul</th>
-                                    <th rowspan="2" scope="col">Keterangan</th>
-                                    <th rowspan="2" scope="col">Status Kepemilikan</th>
-                                    <th rowspan="2" scope="col">Aksi</th>
+                                    <th scope="col" rowspan="2">No.</th>
+                                    <th scope="col" rowspan="2">Alamat / Letak</th>
+                                    <th scope="col" rowspan="2">Nama Barang / Jenis Barang</th>
+                                    <th scope="colgroup" colspan="2">Nomor</th>
+                                    <th scope="col" rowspan="2">Tahun Pengadaan</th>
+                                    <th scope="col" rowspan="2">Luas (m²)</th>
+                                    <th scope="col" rowspan="2">Hak</th>
+                                    <th scope="col" rowspan="2">Nomor Surat / SPPT / Sertifikat</th>
+                                    <th scope="col" rowspan="2">Luas Tanah (m²)</th>
+                                    <th scope="col" rowspan="2">Keperluan</th>
+                                    <th scope="col" rowspan="2">Asal Usul</th>
+                                    <th scope="col" rowspan="2">Keterangan</th>
+                                    <th scope="col" rowspan="2">Status Kepemilikan</th>
+                                    <th scope="col" rowspan="2">Lampiran</th>
                                 </tr>
                                 <tr class="tanah-excel-sub-head">
                                     <th scope="col">Kode Barang</th>
@@ -1756,150 +1767,68 @@
                             </thead>
                             <tbody id="tanahExcelBody">
                                 <tr>
-                                    <td colspan="15" class="tanah-excel-message">Memuat data sertifikat...</td>
+                                    <td colspan="15" class="tanah-excel-message">Memuat daftar sertifikat...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <div class="tanah-excel-bottom-bar">
-                        <span><i data-lucide="mouse-pointer-click"></i> Pilih salah satu baris untuk menampilkan foto,
-                            dokumen, dan opsi Edit/Hapus di bawah.</span>
-                        <span>Data lama yang belum memiliki status akan ditampilkan sebagai <b>Belum Diatur</b>.</span>
+
+                    <div class="tanah-sheet-footnote">
+                        <span><i data-lucide="move-horizontal"></i> Geser tabel ke kanan untuk kolom berikutnya</span>
+                        <span><i data-lucide="files"></i> Klik <b>Berkas</b> untuk foto, PDF, dan tindakan</span>
+                        <span>Status kosong ditampilkan sebagai <b>Belum Diatur</b></span>
                     </div>
                 </section>
 
-                {{-- Detail sertifikat di bawah tabel; semua fungsi lama tetap tersedia. --}}
-                <section class="tanah-legacy-detail-pane" aria-label="Detail sertifikat terpilih">
-                    <div class="tanah-excel-detail-intro">
-                        <span class="tanah-modal-eyebrow">RINCIAN SERTIFIKAT TERPILIH</span>
-                        <p>Rincian dokumen, informasi tanah, galeri gambar, dan tindakan pada sertifikat yang dipilih di
-                            tabel.</p>
+                {{-- Panel lampiran bersifat tambahan; data inventaris tidak diulang lagi. --}}
+                <section class="tanah-sheet-attachments" id="tanahLegacyDetails" aria-labelledby="tanahLegacyGuna"
+                    hidden>
+                    <div class="tanah-sheet-attachments-head">
+                        <div class="tanah-sheet-attachments-heading">
+                            <span class="tanah-modal-eyebrow">LAMPIRAN &amp; TINDAKAN</span>
+                            <h4 id="tanahLegacyGuna">-</h4>
+                            <div class="tanah-sheet-attachments-meta">
+                                <span id="tanahLegacyKode">-</span>
+                                <span class="tanah-sheet-ownership" id="tanahLegacyStatusKepemilikan">-</span>
+                            </div>
+                        </div>
+                        <div class="tanah-sheet-attachments-actions">
+                            <button type="button" class="tanah-legacy-mini-button view" id="tanahLegacyNilaiButton">
+                                <i data-lucide="banknote"></i> Nilai
+                            </button>
+                            <button type="button" class="tanah-legacy-mini-button edit" id="tanahLegacyEditButton">
+                                <i data-lucide="square-pen"></i> Edit
+                            </button>
+                            <button type="button" class="tanah-legacy-mini-button delete" id="tanahLegacyDeleteButton">
+                                <i data-lucide="trash-2"></i> Hapus
+                            </button>
+                            <button type="button" class="tanah-sheet-hide-attachments" id="tanahCloseAttachments">
+                                <i data-lucide="chevron-up"></i> Tutup Berkas
+                            </button>
+                        </div>
                     </div>
-                    <div id="tanahLegacyEmpty" class="tanah-legacy-empty">
-                        <i data-lucide="mouse-pointer-click"></i>
-                        <strong>Pilih data sertifikat</strong>
-                        <span>Informasi lengkap akan ditampilkan di bagian ini.</span>
-                    </div>
 
-                    <div id="tanahLegacyDetails" hidden>
-                        <div class="tanah-legacy-detail-heading">
-                            <div>
-                                <span class="tanah-modal-eyebrow">RINCIAN SERTIFIKAT</span>
-                                <h4 id="tanahLegacyGuna">-</h4>
-                                <small id="tanahLegacyKode">-</small>
+                    <div class="tanah-sheet-attachment-grid">
+                        <section class="tanah-sheet-attachment-card">
+                            <h5><i data-lucide="images"></i> Foto Tanah</h5>
+                            <div class="tanah-legacy-photo-wrap">
+                                <img id="tanahLegacyPhoto" alt="Foto aset tanah" hidden>
+                                <div id="tanahLegacyPhotoEmpty" class="tanah-legacy-photo-empty">
+                                    <i data-lucide="image-off"></i>
+                                    <span>Foto belum tersedia</span>
+                                </div>
                             </div>
-                            <div class="tanah-legacy-detail-actions">
-                                <button type="button" class="tanah-legacy-mini-button view" id="tanahLegacyNilaiButton"
-                                    title="Rincian Nilai Aset"><i data-lucide="banknote"></i> Nilai</button>
-                                <button type="button" class="tanah-legacy-mini-button edit" id="tanahLegacyEditButton"
-                                    title="Edit sertifikat"><i data-lucide="square-pen"></i> Edit</button>
-                                <button type="button" class="tanah-legacy-mini-button delete"
-                                    id="tanahLegacyDeleteButton" title="Hapus sertifikat"><i
-                                        data-lucide="trash-2"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="tanah-legacy-photo-wrap">
-                            <img id="tanahLegacyPhoto" alt="Foto lokasi aset tanah" hidden>
-                            <div id="tanahLegacyPhotoEmpty" class="tanah-legacy-photo-empty"><i
-                                    data-lucide="image-off"></i><span>Foto lokasi belum tersedia</span></div>
-                        </div>
-                        <div class="tanah-photo-gallery" id="tanahLegacyPhotoGallery" hidden></div>
-
-                        <div class="tanah-legacy-info-grid">
-                            <section class="tanah-legacy-info-panel">
-                                <h5>Informasi Tanah</h5>
-                                <dl>
-                                    <div>
-                                        <dt>Letak / Alamat</dt>
-                                        <dd id="tanahLegacyAlamat">-</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Nama Barang</dt>
-                                        <dd id="tanahLegacyBarang">-</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Kode Barang</dt>
-                                        <dd id="tanahLegacyKodeBarang">-</dd>
-                                    </div>
-                                </dl>
-                            </section>
-                            <section class="tanah-legacy-info-panel">
-                                <h5>Perolehan & Penggunaan</h5>
-                                <dl>
-                                    <div>
-                                        <dt>Asal Usul</dt>
-                                        <dd id="tanahLegacyAsal">-</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Tahun Pengadaan</dt>
-                                        <dd id="tanahLegacyTahun">-</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Penggunaan</dt>
-                                        <dd id="tanahLegacyPenggunaan">-</dd>
-                                    </div>
-                                </dl>
-                            </section>
-                        </div>
-
-                        <section class="tanah-legacy-document-section">
-                            <h5>Penunjukan</h5>
-                            <div class="tanah-legacy-document-grid">
-                                <div><span>Nomor Surat</span><strong id="tanahLegacyNoTunjuk">-</strong></div>
-                                <div><span>Tanggal</span><strong id="tanahLegacyTglTunjuk">-</strong></div>
-                                <div><span>Luas</span><strong id="tanahLegacyLuasTunjuk">-</strong></div>
-                            </div>
+                            <div id="tanahLegacyPhotoGallery" class="tanah-photo-gallery" hidden></div>
                         </section>
-                        <section class="tanah-legacy-document-section">
-                            <h5>SPPT / SPHAT / SPJBT / Sertifikat</h5>
-                            <div class="tanah-legacy-document-grid">
-                                <div><span>Nomor Surat</span><strong id="tanahLegacySertifikat">-</strong></div>
-                                <div><span>Tanggal</span><strong id="tanahLegacyTglSertifikat">-</strong></div>
-                                <div><span>Luas</span><strong id="tanahLegacyLuasSertifikat">-</strong></div>
-                            </div>
-                        </section>
-                        <section class="tanah-legacy-document-section">
-                            <h5>Gambar Situasi</h5>
-                            <div class="tanah-legacy-document-grid">
-                                <div><span>Nomor Gambar</span><strong id="tanahLegacyNoGambar">-</strong></div>
-                                <div><span>Tanggal</span><strong id="tanahLegacyTglGambar">-</strong></div>
-                                <div><span>Luas</span><strong id="tanahLegacyLuasGambar">-</strong></div>
-                            </div>
-                        </section>
-
-                        <div class="tanah-legacy-info-grid">
-                            <section class="tanah-legacy-info-panel">
-                                <h5>Kepemilikan</h5>
-                                <dl>
-                                    <div>
-                                        <dt>Status Kepemilikan</dt>
-                                        <dd id="tanahLegacyStatusKepemilikan">-</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Hak</dt>
-                                        <dd id="tanahLegacyHak">-</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Pemilik Asal</dt>
-                                        <dd id="tanahLegacyPemilik">-</dd>
-                                    </div>
-                                </dl>
-                            </section>
-                            <section class="tanah-legacy-info-panel">
-                                <h5>Keterangan</h5>
-                                <p class="tanah-legacy-note" id="tanahLegacyKeterangan">-</p>
-                            </section>
-                        </div>
-
-                        <section class="tanah-legacy-document-section tanah-legacy-pdf-section">
-                            <h5><i data-lucide="file-text"></i> Dokumen PDF & Hasil Scan</h5>
+                        <section class="tanah-sheet-attachment-card tanah-legacy-pdf-section">
+                            <h5><i data-lucide="file-text"></i> Dokumen PDF / Hasil Scan</h5>
                             <div id="tanahLegacyDocuments" class="tanah-legacy-documents">
                                 <span>Belum ada dokumen untuk sertifikat ini.</span>
                             </div>
                         </section>
                     </div>
                 </section>
+                <div id="tanahLegacyEmpty" hidden></div>
             </div>
         </dialog>
 
