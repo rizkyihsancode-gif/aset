@@ -331,6 +331,17 @@
 
 
 
+                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                <div class="master-status-filter">
+                    <label for="ruanganStatusFilter">Status Ruangan</label>
+                    <select id="ruanganStatusFilter" aria-label="Filter status Ruangan">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
+
                 <button type="button" class="ruangan-filter-button" onclick="filterRuanganTable()">
 
                     <i data-lucide="list-filter"></i>
@@ -402,15 +413,7 @@
             <div class="table-responsive">
 
 
-                <div class="master-status-filter">
-                    <label for="ruanganStatusFilter">Status Ruangan</label>
-                    <select id="ruanganStatusFilter" aria-label="Filter status Ruangan">
-                        <option value="">Semua Status</option>
-                        <option value="aktif">Aktif</option>
-                        <option value="nonaktif">Nonaktif</option>
-                        <option value="__kosong__">Belum Diatur</option>
-                    </select>
-                </div>
+
                 <table class="ruangan-table" id="ruanganTable">
 
 
@@ -574,7 +577,7 @@
 
                             <tr id="ruanganServerEmpty">
 
-                                <td colspan="5" class="ruangan-empty">
+                                <td colspan="6" class="ruangan-empty">
 
                                     Belum ada data Ruangan.
 
@@ -1425,4 +1428,3 @@
 
     <script src="{{ asset('js/pages/master/ruangan.js') }}"></script>
 @endpush
-    

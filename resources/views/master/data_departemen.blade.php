@@ -179,6 +179,17 @@
 
                 </div>
 
+                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                <div class="master-status-filter">
+                    <label for="deptStatusFilter">Status Departemen</label>
+                    <select id="deptStatusFilter" aria-label="Filter status Departemen">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
+
                 {{-- RESET --}}
 
                 <button type="button" class="dept-reset-button" onclick="resetDeptFilter()">
@@ -230,15 +241,7 @@
 
             <div class="table-responsive">
 
-                <div class="master-status-filter">
-                    <label for="deptStatusFilter">Status Departemen</label>
-                    <select id="deptStatusFilter" aria-label="Filter status Departemen">
-                        <option value="">Semua Status</option>
-                        <option value="aktif">Aktif</option>
-                        <option value="nonaktif">Nonaktif</option>
-                        <option value="__kosong__">Belum Diatur</option>
-                    </select>
-                </div>
+
                 <table class="dept-table" id="deptTable">
 
                     <colgroup>
@@ -246,6 +249,7 @@
                         <col class="dept-width-code">
                         <col class="dept-width-name">
                         <col class="dept-width-created">
+                        <col class="dept-width-status">
                         <col class="dept-width-action">
                     </colgroup>
 
@@ -352,8 +356,8 @@
 
                                     <div class="dept-actions">
 
-                                        <button type="button" class="view" data-action="view" title="Lihat Departemen"
-                                            aria-label="Lihat {{ $namaTampil }}">
+                                        <button type="button" class="view" data-action="view"
+                                            title="Lihat Departemen" aria-label="Lihat {{ $namaTampil }}">
                                             <i data-lucide="eye"></i>
                                         </button>
 
@@ -377,7 +381,7 @@
 
                             <tr id="deptServerEmpty">
 
-                                <td colspan="5" class="dept-empty">
+                                <td colspan="6" class="dept-empty">
                                     Belum ada data Departemen.
                                 </td>
 

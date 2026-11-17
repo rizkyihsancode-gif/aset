@@ -245,6 +245,17 @@
                     </select>
                 </div>
 
+                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                <div class="master-status-filter">
+                    <label for="lokasiStatusFilter">Status Lokasi</label>
+                    <select id="lokasiStatusFilter" aria-label="Filter status Lokasi">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
+
                 <button type="button" class="lokasi-reset-button" id="lokasiResetButton">
                     <i data-lucide="refresh-cw"></i>
                     Reset
@@ -279,15 +290,7 @@
             </div>
 
             <div class="table-responsive" tabindex="0" aria-label="Tabel data Lokasi">
-                <div class="master-status-filter">
-                    <label for="lokasiStatusFilter">Status Lokasi</label>
-                    <select id="lokasiStatusFilter" aria-label="Filter status Lokasi">
-                        <option value="">Semua Status</option>
-                        <option value="aktif">Aktif</option>
-                        <option value="nonaktif">Nonaktif</option>
-                        <option value="__kosong__">Belum Diatur</option>
-                    </select>
-                </div>
+
                 <table class="lokasi-table" id="lokasiTable">
 
                     <thead>
@@ -414,7 +417,7 @@
                         @endforeach
 
                         <tr id="lokasiEmptyRow" hidden>
-                            <td colspan="11" class="lokasi-empty">
+                            <td colspan="10" class="lokasi-empty">
                                 <i data-lucide="search-x"></i>
                                 <strong>Data tidak ditemukan</strong>
                                 <span>Ubah kata kunci atau filter wilayah.</span>

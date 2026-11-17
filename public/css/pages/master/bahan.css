@@ -2197,3 +2197,131 @@ tr[data-record]:hover {
 @media (max-width: 640px) {
     .master-status-filter { width: 100%; }
 }
+
+
+/* =============================================================
+   PERBAIKAN UI MASTER BAHAN
+   - Filter status sejajar toolbar utama, bukan di area tabel.
+   - Tabel memiliki jarak dari tepi card secara konsisten.
+   - Area aksi dan badge tidak terpotong.
+   - Event JavaScript lama dan atribut data tetap digunakan.
+   ============================================================= */
+
+.bahan-page .master-status-filter {
+    display: flex;
+    flex-direction: column;
+    align-self: end;
+    justify-content: end;
+    gap: 0;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+/* Label tetap ada untuk aksesibilitas; pilihannya ringkas dalam toolbar. */
+.bahan-page .master-status-filter > label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.bahan-page .master-status-filter > select {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 12px;
+    border: 1px solid #d7e3f0;
+    border-radius: 9px;
+    background: #fff;
+    color: #294568;
+    font-size: 12px;
+    line-height: normal;
+}
+
+.bahan-page .bahan-table-card > .table-responsive {
+    display: block;
+    width: calc(100% - 32px);
+    max-width: calc(100% - 32px);
+    min-width: 0;
+    margin: 12px 16px 16px;
+    padding: 0;
+    border: 1px solid #dde8f3;
+    border-radius: 11px;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.bahan-page #bahanTable {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.bahan-page #bahanTable .master-status-badge {
+    min-width: 0;
+    max-width: 100%;
+    padding: 5px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.bahan-page #bahanTable .master-status-cell,
+.bahan-page #bahanTable .master-status-heading {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.bahan-page #bahanTable tbody td:last-child,
+.bahan-page #bahanTable thead th:last-child {
+    text-align: center;
+    white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+    .bahan-page .bahan-table-card > .table-responsive {
+        width: calc(100% - 24px);
+        max-width: calc(100% - 24px);
+        margin: 12px;
+    }
+}
+
+
+.bahan-page .bahan-filter-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(155px, 195px) auto auto;
+    align-items: end;
+    gap: 10px;
+}
+.bahan-page .bahan-filter-spacer { display: none; }
+.bahan-page #bahanTable {
+    width: 100%; min-width: 620px; max-width: none;
+    margin: 0; table-layout: fixed; white-space: normal;
+}
+.bahan-page #bahanTable th:nth-child(1),
+.bahan-page #bahanTable td:nth-child(1) { width: 5%; }
+.bahan-page #bahanTable th:nth-child(2),
+.bahan-page #bahanTable td:nth-child(2) { width: 43%; }
+.bahan-page #bahanTable th:nth-child(3),
+.bahan-page #bahanTable td:nth-child(3) { width: 18%; }
+.bahan-page #bahanTable th:nth-child(4),
+.bahan-page #bahanTable td:nth-child(4) { width: 17%; }
+.bahan-page #bahanTable th:nth-child(5),
+.bahan-page #bahanTable td:nth-child(5) { width: 17%; }
+@media (max-width: 750px) {
+    .bahan-page .bahan-filter-grid { grid-template-columns: minmax(0, 1fr) minmax(155px, 195px); }
+    .bahan-page .bahan-search { grid-column: 1 / -1; }
+}
+@media (max-width: 450px) {
+    .bahan-page .bahan-filter-grid { grid-template-columns: 1fr; }
+    .bahan-page .bahan-search { grid-column: 1; }
+}

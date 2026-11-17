@@ -372,6 +372,17 @@
 
 
 
+                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                <div class="master-status-filter">
+                    <label for="sdmStatusFilter">Status SDM Pendukung</label>
+                    <select id="sdmStatusFilter" aria-label="Filter status SDM Pendukung">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
+
                 <button type="button" class="sdm-reset-button" onclick="resetSdmFilter()">
 
                     <i data-lucide="refresh-cw"></i>
@@ -407,15 +418,7 @@
             <div class="table-responsive">
 
 
-                <div class="master-status-filter">
-                    <label for="sdmStatusFilter">Status SDM Pendukung</label>
-                    <select id="sdmStatusFilter" aria-label="Filter status SDM Pendukung">
-                        <option value="">Semua Status</option>
-                        <option value="aktif">Aktif</option>
-                        <option value="nonaktif">Nonaktif</option>
-                        <option value="__kosong__">Belum Diatur</option>
-                    </select>
-                </div>
+
                 <table class="sdm-table" id="sdmTable">
 
 
@@ -574,7 +577,7 @@
 
                             <tr id="sdmServerEmpty">
 
-                                <td colspan="8" class="sdm-empty">
+                                <td colspan="9" class="sdm-empty">
 
                                     Belum ada data SDM Pendukung.
 

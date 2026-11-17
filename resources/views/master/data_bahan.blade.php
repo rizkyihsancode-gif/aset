@@ -367,6 +367,17 @@
 
 
 
+                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                <div class="master-status-filter">
+                    <label for="bahanStatusFilter">Status Bahan</label>
+                    <select id="bahanStatusFilter" aria-label="Filter status Bahan">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
+
                 <button type="button" class="bahan-reset-button" onclick="resetBahanFilter()">
 
                     <i data-lucide="refresh-cw"></i>
@@ -407,15 +418,7 @@
             <div class="table-responsive">
 
 
-                <div class="master-status-filter">
-                    <label for="bahanStatusFilter">Status Bahan</label>
-                    <select id="bahanStatusFilter" aria-label="Filter status Bahan">
-                        <option value="">Semua Status</option>
-                        <option value="aktif">Aktif</option>
-                        <option value="nonaktif">Nonaktif</option>
-                        <option value="__kosong__">Belum Diatur</option>
-                    </select>
-                </div>
+
                 <table class="bahan-table" id="bahanTable">
 
 
@@ -570,7 +573,7 @@
                             <tr id="bahanServerEmpty">
 
 
-                                <td colspan="4" class="bahan-empty">
+                                <td colspan="5" class="bahan-empty">
 
                                     Belum ada data Bahan.
 

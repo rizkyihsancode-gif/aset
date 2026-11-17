@@ -5605,3 +5605,122 @@ tr[hidden] {
 @media (max-width: 640px) {
     .master-status-filter { width: 100%; }
 }
+
+
+/* =============================================================
+   PERBAIKAN UI MASTER DIVISI
+   - Filter status sejajar toolbar utama, bukan di area tabel.
+   - Tabel memiliki jarak dari tepi card secara konsisten.
+   - Area aksi dan badge tidak terpotong.
+   - Event JavaScript lama dan atribut data tetap digunakan.
+   ============================================================= */
+
+.divisi-page .master-status-filter {
+    display: flex;
+    flex-direction: column;
+    align-self: end;
+    justify-content: end;
+    gap: 0;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+}
+
+/* Label tetap ada untuk aksesibilitas; pilihannya ringkas dalam toolbar. */
+.divisi-page .master-status-filter > label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.divisi-page .master-status-filter > select {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    margin: 0;
+    padding: 0 12px;
+    border: 1px solid #d7e3f0;
+    border-radius: 9px;
+    background: #fff;
+    color: #294568;
+    font-size: 12px;
+    line-height: normal;
+}
+
+.divisi-page .divisi-table-card > .table-responsive {
+    display: block;
+    width: calc(100% - 32px);
+    max-width: calc(100% - 32px);
+    min-width: 0;
+    margin: 12px 16px 16px;
+    padding: 0;
+    border: 1px solid #dde8f3;
+    border-radius: 11px;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.divisi-page #divisiTable {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.divisi-page #divisiTable .master-status-badge {
+    min-width: 0;
+    max-width: 100%;
+    padding: 5px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.divisi-page #divisiTable .master-status-cell,
+.divisi-page #divisiTable .master-status-heading {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.divisi-page #divisiTable tbody td:last-child,
+.divisi-page #divisiTable thead th:last-child {
+    text-align: center;
+    white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+    .divisi-page .divisi-table-card > .table-responsive {
+        width: calc(100% - 24px);
+        max-width: calc(100% - 24px);
+        margin: 12px;
+    }
+}
+
+
+.divisi-page .divisi-filter-grid {
+    grid-template-columns: minmax(220px, 1.5fr) minmax(160px, .9fr)
+                           minmax(150px, .7fr) auto auto auto;
+    align-items: end;
+    gap: 10px;
+}
+.divisi-page #divisiTable { min-width: 840px; table-layout: fixed; }
+@media (max-width: 1190px) {
+    .divisi-page .divisi-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .divisi-page .divisi-search { grid-column: span 2; }
+}
+@media (max-width: 670px) {
+    .divisi-page .divisi-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .divisi-page .divisi-search { grid-column: 1 / -1; }
+}
+@media (max-width: 440px) {
+    .divisi-page .divisi-filter-grid { grid-template-columns: 1fr; }
+    .divisi-page .divisi-search { grid-column: 1; }
+}

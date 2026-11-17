@@ -354,6 +354,17 @@
 
 
 
+                {-- FILTER STATUS AKTIF / NONAKTIF --}
+                <div class="master-status-filter">
+                    <label for="divisiStatusFilter">Status Divisi</label>
+                    <select id="divisiStatusFilter" aria-label="Filter status Divisi">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="__kosong__">Belum Diatur</option>
+                    </select>
+                </div>
+
                 {{-- FILTER BUTTON --}}
                 <button type="button" class="divisi-filter-button" onclick="filterDivisiTable()">
 
@@ -420,15 +431,7 @@
 
             <div class="table-responsive">
 
-                <div class="master-status-filter">
-                    <label for="divisiStatusFilter">Status Divisi</label>
-                    <select id="divisiStatusFilter" aria-label="Filter status Divisi">
-                        <option value="">Semua Status</option>
-                        <option value="aktif">Aktif</option>
-                        <option value="nonaktif">Nonaktif</option>
-                        <option value="__kosong__">Belum Diatur</option>
-                    </select>
-                </div>
+
                 <table class="divisi-table" id="divisiTable">
 
 
@@ -599,7 +602,7 @@
 
                             <tr id="divisiServerEmpty">
 
-                                <td colspan="5" class="divisi-empty">
+                                <td colspan="6" class="divisi-empty">
 
                                     Belum ada data Divisi.
 
