@@ -1869,14 +1869,14 @@
          11. MODAL DETAIL INVENTARIS MESIN
     ====================================================== --}}
 
-        <dialog id="mesinDetailDialog" class="mesin-dialog detail">
+        <dialog id="mesinDetailDialog" class="mesin-dialog detail mesin-sheet-modal">
 
             <div class="mesin-dialog-header">
 
                 <div>
 
                     <small>
-                        K.I.B B / PERALATAN, MESIN &amp; KENDARAAN
+                        K.I.B B / KARTU INVENTARIS PERALATAN, MESIN &amp; KENDARAAN
                     </small>
 
                     <h2 id="mesinDetailTitle">
@@ -1897,7 +1897,9 @@
 
             <div class="mesin-dialog-scroll">
 
-                <div id="mesinDetailBody" class="mesin-detail-list" aria-live="polite"></div>
+                {{-- Tabel Excel K.I.B B dan panel Berkas dihasilkan oleh mesin.js.
+                     ID dipertahankan untuk event CRUD lama. --}}
+                <div id="mesinDetailBody" class="mesin-detail-list mesin-sheet-workspace" aria-live="polite"></div>
 
             </div>
 

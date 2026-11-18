@@ -4135,3 +4135,399 @@ min-height: 39px;
     #mesinPage .mesin-sheet-toolbar { align-items: stretch; }
     #mesinPage .mesin-sheet-search { width: 100%; }
 }
+
+
+/* =============================================================
+   K.I.B B — TAMPILAN DETAIL MODEL K.I.B A TANAH
+   Hanya memengaruhi modal #mesinDetailDialog.
+   Tidak mengubah formulir, tabel utama, pajak, atau CRUD.
+   ============================================================= */
+#mesinPage #mesinDetailDialog.mesin-sheet-modal {
+    width: min(1700px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    min-height: min(520px, calc(100dvh - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    background: #f6f9fe;
+    border: 1px solid #d2e1f0;
+    border-radius: 16px;
+    overflow: hidden;
+}
+#mesinPage #mesinDetailDialog.mesin-sheet-modal[open] {
+    display: flex;
+    flex-direction: column;
+}
+#mesinPage #mesinDetailDialog.mesin-sheet-modal .mesin-dialog-header {
+    flex: 0 0 auto;
+    background: #fff;
+    padding: 17px 22px 15px;
+    border-bottom: 1px solid #d9e6f3;
+}
+#mesinPage #mesinDetailDialog.mesin-sheet-modal .mesin-dialog-header h2 {
+    font-size: clamp(17px, 1.5vw, 22px);
+}
+#mesinPage #mesinDetailDialog.mesin-sheet-modal .mesin-dialog-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    padding: 18px 20px 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #f6f9fe;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-workspace {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-section { min-width: 0; }
+#mesinPage #mesinDetailDialog .mesin-sheet-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    margin: 0 0 12px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-toolbar-heading h3 {
+    margin: 0;
+    color: #153b65;
+    font-size: 16px;
+    font-weight: 800;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-toolbar-heading p {
+    margin: 5px 0 0;
+    color: #7085a1;
+    font-size: 12px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-toolbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 1 440px;
+    min-width: min(100%, 260px);
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-search {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 39px;
+    border-radius: 9px;
+    background: #fff;
+    color: #758ba5;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-search:focus-within {
+    border-color: #2d8bef;
+    box-shadow: 0 0 0 3px rgba(45,139,239,.08);
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-count {
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border-radius: 99px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-tab {
+    border-radius: 9px;
+    padding: 9px 14px;
+    background: #fff;
+    color: #285785;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-tab.active {
+    color: #fff;
+    border-color: #116bd7;
+    background: #116bd7;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-scroll {
+    position: relative;
+    max-height: min(57dvh, 545px);
+    max-width: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    background: #fff;
+    border: 1px solid #2b3442;
+    border-radius: 10px;
+    box-shadow: 0 8px 26px rgba(12,47,88,.06);
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table {
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: #193d62;
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table th,
+#mesinPage #mesinDetailDialog .mesin-excel-table td {
+    min-width: 105px;
+    max-width: 280px;
+    padding: 12px 10px;
+    border-right: 1px solid #475569;
+    border-bottom: 1px solid #475569;
+    background-clip: padding-box;
+    word-break: normal;
+    overflow-wrap: break-word;
+    vertical-align: middle;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #e7f1fc;
+    color: #20486f;
+    height: 43px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table thead tr:nth-child(2) th {
+    top: 43px;
+    background: #d9eafb;
+    z-index: 4;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr { cursor: pointer; background: #fff; }
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr:nth-child(even) { background: #f7faff; }
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr:hover { background: #eaf5ff; }
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr.is-selected { background: #dfedff; }
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr:focus-visible {
+    outline: 2px solid #146ed7;
+    outline-offset: -2px;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr[hidden] { display: none !important; }
+#mesinPage #mesinDetailDialog .mesin-excel-table thead tr:first-child > th:first-child {
+    min-width: 50px;
+    max-width: 50px;
+    width: 50px;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table thead tr:first-child > th:nth-child(2) {
+    min-width: 200px;
+    max-width: 200px;
+    width: 200px;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-vehicle thead tr:first-child > th:nth-child(2) {
+    min-width: 140px;
+    max-width: 140px;
+    width: 140px;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table .mesin-sheet-no {
+    min-width: 50px;
+    max-width: 50px;
+    width: 50px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table .mesin-sheet-name {
+    min-width: 200px;
+    width: 200px;
+    max-width: 240px;
+    font-weight: 750;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table .mesin-sheet-code {
+    min-width: 130px;
+    font-weight: 750;
+    color: #145ea8;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-center,
+#mesinPage #mesinDetailDialog .mesin-sheet-owner,
+#mesinPage #mesinDetailDialog .mesin-sheet-actions-cell { text-align: center; }
+#mesinPage #mesinDetailDialog .mesin-sheet-money { text-align: right; font-variant-numeric: tabular-nums; }
+#mesinPage #mesinDetailDialog .mesin-sheet-check { color: #087b52; font-size: 14px; }
+#mesinPage #mesinDetailDialog .mesin-sheet-owner .mesin-owner-badge {
+    white-space: normal;
+    max-width: 100%;
+    text-align: center;
+    line-height: 1.35;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-actions-cell { min-width: 95px; max-width: 110px; }
+#mesinPage #mesinDetailDialog .mesin-sheet-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 6px 13px;
+    border: 1px solid #a9cff9;
+    border-radius: 8px;
+    background: #eff7ff;
+    color: #095fbb;
+    font: inherit;
+    font-weight: 800;
+    font-size: 11px;
+    cursor: pointer;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-open:hover { background: #dceeff; }
+/* Sticky seperti pane beku pada Excel K.I.B A. */
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody td:first-child,
+#mesinPage #mesinDetailDialog .mesin-excel-table thead tr:first-child th:first-child {
+    position: sticky; left: 0; z-index: 4; background: #eef6ff;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody td:nth-child(2),
+#mesinPage #mesinDetailDialog .mesin-excel-table thead tr:first-child th:nth-child(2) {
+    position: sticky; left: 50px; z-index: 4; background: #fff;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table thead tr:first-child th:nth-child(-n+2) {
+    z-index: 6; background: #dbeaf9;
+}
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr:nth-child(even) td:nth-child(2) { background: #f7faff; }
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr.is-selected td:nth-child(1),
+#mesinPage #mesinDetailDialog .mesin-excel-table tbody tr.is-selected td:nth-child(2) { background: #dfedff; }
+#mesinPage #mesinDetailDialog .mesin-sheet-footnote {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px 15px;
+    padding: 11px 2px 0;
+    color: #7286a1;
+    font-size: 11px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachments {
+    margin-top: 16px;
+    padding: 17px;
+    border-radius: 12px;
+    border: 1px solid #cbdff3;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(12,48,88,.035);
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachments[hidden] { display: none !important; }
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #dde8f4;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-head small {
+    display: block;
+    margin-bottom: 4px;
+    color: #0b69c9;
+    font-weight: 800;
+    font-size: 10px;
+    letter-spacing: .06em;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-head h4 {
+    margin: 0;
+    color: #153c69;
+    font-weight: 800;
+    font-size: 15px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-head p {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 5px 0 0;
+    font-size: 11px;
+    color: #6c829d;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-mini,
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    border: 1px solid #c9dbee;
+    border-radius: 7px;
+    padding: 7px 11px;
+    background: #f3f8ff;
+    color: #1d5f9d;
+    font-size: 11px;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-mini.edit { color: #a85e07; background: #fff8ea; border-color: #f6dcb5; }
+#mesinPage #mesinDetailDialog .mesin-sheet-mini.delete { color: #be123c; background: #fff0f2; border-color: #ffd1d9; }
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-link.secondary,
+#mesinPage #mesinDetailDialog .mesin-sheet-mini.close { background: #f8fafc; color: #475569; }
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-card {
+    min-width: 0;
+    padding: 13px;
+    border: 1px solid #deebf7;
+    border-radius: 9px;
+    background: #fbfdff;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-attachment-card h5 {
+    margin: 0 0 11px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #204a77;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-photo-link {
+    display: block;
+    width: 100%;
+    height: 190px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: #eef4fb;
+    border: 1px solid #dbe7f4;
+    border-radius: 8px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-photo-link img { width: 100%; height: 100%; object-fit: contain; }
+#mesinPage #mesinDetailDialog .mesin-sheet-no-photo,
+#mesinPage #mesinDetailDialog .mesin-sheet-no-document {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    color: #748ba6;
+    font-size: 12px;
+    border: 1px dashed #d7e5f3;
+    border-radius: 8px;
+    background: #f3f8fe;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-no-photo span { font-size: 27px; color: #8aa3bd; }
+#mesinPage #mesinDetailDialog .mesin-sheet-document-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 12px;
+    border: 1px solid #dae7f4;
+    border-radius: 8px;
+    color: #1a426c;
+    font-size: 12px;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-document-row > div { display: flex; gap: 7px; flex-wrap: wrap; }
+#mesinPage #mesinDetailDialog .mesin-sheet-visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap;
+}
+@media (max-width: 780px) {
+    #mesinPage #mesinDetailDialog.mesin-sheet-modal {
+        width: calc(100vw - 12px);
+        max-width: calc(100vw - 12px);
+        max-height: calc(100dvh - 12px);
+    }
+    #mesinPage #mesinDetailDialog.mesin-sheet-modal .mesin-dialog-scroll { padding: 12px 10px; }
+    #mesinPage #mesinDetailDialog .mesin-sheet-toolbar-controls { width: 100%; flex-basis: 100%; }
+    #mesinPage #mesinDetailDialog .mesin-sheet-attachment-grid { grid-template-columns: 1fr; }
+}
