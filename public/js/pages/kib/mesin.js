@@ -830,9 +830,13 @@ $('#mesinExport').addEventListener('click', () => {
         renderPending();
 
         // Form tetap bisa dilanjutkan.
-        form.querySelector(
+        // Fokus ke kolom pencarian, bukan select tersembunyi.
+        const cariBarang = form.querySelector(
             '[name="id_barang"]'
-        )?.focus();
+        )?.closest('.mesin-searchable-wrap')
+            ?.querySelector('.mesin-searchable-input');
+
+        (cariBarang || form.querySelector('[name="id_barang"]'))?.focus();
     });
 
     // ==========================================
@@ -4328,3 +4332,328 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ================================================================
    AKHIR MODUL DELETE MASA PAJAK KENDARAAN
    ================================================================ */
+
+
+/* ============================================================
+   K.I.B B — SEARCHABLE SELECT (FORM TAMBAH/EDIT & PAJAK)
+   ------------------------------------------------------------
+   - Dropdown hanya diubah jika memiliki data-kib-searchable.
+   - <select> asli tetap menyimpan nilai dan mengirim ke Laravel.
+   - Opsi yang disabled/hidden tidak ikut pencarian.
+   - Pilihan historis pada form Edit tetap terbaca.
+   - Modal dialog didukung tanpa menu tertutup backdrop.
+   ============================================================ */
+
+document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+
+    const root = document.getElementById('mesinPage');
+    if (!root) return;
+
+    const comboboxes = [];
+    let opened = null;
+    let counter = 0;
+
+    const normalize = text => String(text ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('id-ID')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    function closeAll(except = null) {
+        for (const combo of comboboxes) {
+            if (combo !== except) combo.close();
+        }
+    }
+
+    function buildCombo(select) {
+        if (!select || select.dataset.kibSearchReady === '1') return;
+        select.dataset.kibSearchReady = '1';
+
+        const originalRequired = select.required;
+        const originalTabIndex = select.tabIndex;
+        const originalAria = select.getAttribute('aria-label');
+        const id = `mesin-combo-${++counter}`;
+        const dialog = select.closest('dialog');
+        const host = dialog || document.body;
+        const label = select.closest('label');
+        const labelText = label?.childNodes?.[0]?.textContent?.trim()
+            || 'Pilihan';
+
+        const wrap = document.createElement('span');
+        wrap.className = 'mesin-searchable-wrap';
+        select.before(wrap);
+        wrap.appendChild(select);
+
+        const input = document.createElement('input');
+        input.type = 'search';
+        input.className = 'mesin-searchable-input';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+        input.placeholder = select.dataset.kibPlaceholder || 'Ketik untuk mencari pilihan...';
+        input.required = originalRequired;
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-haspopup', 'listbox');
+        input.setAttribute('aria-expanded', 'false');
+        input.setAttribute('aria-label', `Cari ${labelText.replace(/\*/g, '').trim()}`);
+
+        const arrow = document.createElement('span');
+        arrow.className = 'mesin-searchable-arrow';
+        arrow.setAttribute('aria-hidden', 'true');
+        arrow.textContent = '⌄';
+
+        wrap.prepend(input);
+        wrap.appendChild(arrow);
+
+        const menu = document.createElement('div');
+        menu.id = `${id}-listbox`;
+        menu.className = 'mesin-searchable-menu';
+        menu.setAttribute('role', 'listbox');
+        menu.hidden = true;
+        host.appendChild(menu);
+        input.setAttribute('aria-controls', menu.id);
+
+        // Required dipindahkan ke input yang terlihat agar pesan validasi
+        // browser tidak mencoba fokus ke select tersembunyi.
+        select.required = false;
+        select.tabIndex = -1;
+        select.setAttribute('aria-hidden', 'true');
+        select.classList.add('mesin-searchable-native');
+
+        let active = -1;
+        let results = [];
+        let lastSelection = '';
+
+        function selectedOption() {
+            return [...select.options].find(
+                option => option.value && option.value === select.value
+            );
+        }
+
+        function getOptions() {
+            return [...select.options].filter(option =>
+                option.value !== '' &&
+                !option.disabled &&
+                !option.hidden
+            );
+        }
+
+        function validSelection() {
+            return Boolean(select.value && selectedOption());
+        }
+
+        function sync() {
+            const option = selectedOption();
+            input.disabled = select.disabled;
+            input.required = originalRequired && !select.disabled;
+            input.value = option ? option.textContent.trim().replace(/\s+/g, ' ') : '';
+            lastSelection = select.value;
+            input.setCustomValidity(
+                originalRequired && !select.disabled && !validSelection()
+                    ? 'Pilih salah satu data dari daftar.'
+                    : ''
+            );
+            if (!menu.hidden) close();
+        }
+
+        function position() {
+            if (menu.hidden) return;
+            if (!input.isConnected || (dialog && !dialog.open)) {
+                close();
+                return;
+            }
+
+            const rect = input.getBoundingClientRect();
+            const limits = dialog?.getBoundingClientRect() || {
+                top: 0, bottom: window.innerHeight,
+                left: 0, right: window.innerWidth
+            };
+            const leftLimit = Math.max(8, limits.left + 9);
+            const rightLimit = Math.min(window.innerWidth - 8, limits.right - 9);
+            const bottomLimit = Math.min(window.innerHeight - 8, limits.bottom - 9);
+            const topLimit = Math.max(8, limits.top + 9);
+            const below = bottomLimit - rect.bottom - 5;
+            const above = rect.top - topLimit - 5;
+            const desired = Math.min(268, 38 * Math.min(results.length || 1, 7) + 12);
+            const useAbove = below < Math.min(desired, 145) && above > below;
+            const available = Math.max(72, useAbove ? above : below);
+            const height = Math.min(desired, available);
+
+            menu.style.width = `${Math.min(rect.width, rightLimit - leftLimit)}px`;
+            menu.style.left = `${Math.min(Math.max(rect.left, leftLimit), rightLimit - rect.width)}px`;
+            menu.style.maxHeight = `${height}px`;
+            menu.style.top = `${Math.round(useAbove ? rect.top - height - 4 : rect.bottom + 4)}px`;
+        }
+
+        function close() {
+            menu.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
+            active = -1;
+            if (opened === combo) opened = null;
+        }
+
+        function paintActive() {
+            const buttons = menu.querySelectorAll('.mesin-searchable-option');
+            buttons.forEach((button, index) => {
+                button.classList.toggle('is-active', index === active);
+                button.setAttribute('aria-selected', String(index === active));
+            });
+            if (buttons[active]) {
+                input.setAttribute('aria-activedescendant', buttons[active].id);
+                buttons[active].scrollIntoView({block: 'nearest'});
+            } else {
+                input.removeAttribute('aria-activedescendant');
+            }
+        }
+
+        function choose(option) {
+            if (!option || option.disabled || option.hidden) return;
+            select.value = option.value;
+            select.dispatchEvent(new Event('change', {bubbles: true}));
+            sync();
+            close();
+            input.focus({preventScroll: true});
+        }
+
+        function render(keyword = '') {
+            if (input.disabled) return;
+            closeAll(combo);
+            opened = combo;
+            const query = normalize(keyword);
+            const options = getOptions();
+            results = options.filter(option =>
+                !query || normalize(option.textContent).includes(query)
+                    || normalize(option.dataset.kodeBarang).includes(query)
+            ).slice(0, 150);
+            active = -1;
+            menu.replaceChildren();
+            if (!results.length) {
+                const empty = document.createElement('div');
+                empty.className = 'mesin-searchable-empty';
+                empty.textContent = 'Tidak ada data yang cocok.';
+                menu.appendChild(empty);
+            } else {
+                results.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'mesin-searchable-option';
+                    button.id = `${id}-option-${index}`;
+                    button.setAttribute('role', 'option');
+                    button.textContent = option.textContent.trim().replace(/\s+/g, ' ');
+                    button.addEventListener('pointerdown', event => event.preventDefault());
+                    button.addEventListener('click', () => choose(option));
+                    menu.appendChild(button);
+                });
+                if (options.length > 150 && !query) {
+                    const hint = document.createElement('div');
+                    hint.className = 'mesin-searchable-empty';
+                    hint.textContent = 'Ketik kata yang lebih spesifik untuk melihat pilihan lainnya.';
+                    menu.appendChild(hint);
+                }
+            }
+            menu.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+            position();
+        }
+
+        function onInput() {
+            if (select.value) {
+                select.value = '';
+                select.dispatchEvent(new Event('change', {bubbles: true}));
+            }
+            input.setCustomValidity(
+                originalRequired ? 'Pilih data dari daftar yang tersedia.' : ''
+            );
+            render(input.value);
+        }
+
+        input.addEventListener('focus', () => render(''));
+        input.addEventListener('click', () => render(''));
+        input.addEventListener('input', onInput);
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                close();
+                sync();
+                event.stopPropagation();
+            } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (menu.hidden) render(input.value);
+                if (!results.length) return;
+                const delta = event.key === 'ArrowDown' ? 1 : -1;
+                active = active < 0
+                    ? (delta > 0 ? 0 : results.length - 1)
+                    : (active + delta + results.length) % results.length;
+                paintActive();
+            } else if (event.key === 'Enter' && !menu.hidden) {
+                event.preventDefault();
+                if (results.length) choose(results[active >= 0 ? active : 0]);
+            } else if (event.key === 'Tab') {
+                close();
+                // Tidak mengganti teks yang belum benar dengan ID lama.
+                if (!select.value && !originalRequired) input.value = '';
+            }
+        });
+
+        select.addEventListener('change', () => {
+            // Event akibat mengetik membersihkan ID; input pencarian tetap utuh.
+            if (select.value || document.activeElement !== input) sync();
+        });
+
+        const observer = new MutationObserver(() => {
+            if (select.value !== lastSelection && !menu.hidden) close();
+            sync();
+        });
+        observer.observe(select, {childList: true, subtree: true, attributes: true,
+            attributeFilter: ['disabled', 'hidden']});
+
+        const combo = {input, select, menu, close, sync, position};
+        comboboxes.push(combo);
+        sync();
+
+        const containingForm = select.closest('form');
+        containingForm?.addEventListener('reset', () => {
+            queueMicrotask(() => sync());
+        });
+        dialog?.addEventListener('close', close);
+    }
+
+    root.querySelectorAll(
+        '#mesinForm select[data-kib-searchable], #pajakForm select[data-kib-searchable]'
+    ).forEach(buildCombo);
+
+    // Program Edit men-set .value secara langsung. Mutation pada atribut
+    // 'open' dialog memberi kesempatan untuk sinkronkan hasilnya.
+    root.querySelectorAll('#mesinFormDialog, #pajakFormDialog').forEach(dialog => {
+        const watcher = new MutationObserver(() => {
+            for (const combo of comboboxes) {
+                if (dialog.contains(combo.input)) {
+                    combo.sync();
+                }
+            }
+            if (!dialog.open) closeAll();
+        });
+        watcher.observe(dialog, {attributes: true, attributeFilter: ['open']});
+    });
+
+    document.addEventListener('pointerdown', event => {
+        if (!opened) return;
+        if (!opened.menu.contains(event.target) &&
+            !opened.input.contains(event.target)) {
+            opened.close();
+        }
+    }, true);
+
+    document.addEventListener('scroll', () => opened?.position(), true);
+    window.addEventListener('resize', () => opened?.position());
+
+    // Jika select dinonaktifkan saat Edit Pajak, kotak cari juga dinonaktifkan.
+    // Panggilan ini tidak mengubah data form atau request ke server.
+    root.addEventListener('click', event => {
+        if (event.target.closest('#pajakTambah, [data-pajak-edit]')) {
+            queueMicrotask(() => comboboxes.forEach(combo => combo.sync()));
+        }
+    });
+});

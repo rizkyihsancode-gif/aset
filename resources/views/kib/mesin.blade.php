@@ -1103,7 +1103,8 @@
 
                             Kendaraan Inventaris *
 
-                            <select id="pajakMesinId" name="mesin_id" required>
+                            <select id="pajakMesinId" name="mesin_id" required data-kib-searchable="1"
+                                data-kib-placeholder="Cari nomor polisi, merk, kode atau lokasi...">
 
                                 <option value="">
                                     Pilih kendaraan
@@ -1147,7 +1148,8 @@
 
                                 Masa Berlaku *
 
-                                <select id="pajakMasaBulan" name="masa_berlaku_bulan" required>
+                                <select id="pajakMasaBulan" name="masa_berlaku_bulan" required data-kib-searchable="1"
+                                    data-kib-placeholder="Ketik masa berlaku...">
 
                                     <option value="">
                                         Pilih masa berlaku
@@ -1558,7 +1560,8 @@
 
                                     Nama Barang *
 
-                                    <select name="id_barang" required>
+                                    <select name="id_barang" required data-kib-searchable="1"
+                                        data-kib-placeholder="Ketik nama atau kode barang...">
 
                                         <option value="">
                                             - PILIH BARANG -
@@ -1672,7 +1675,8 @@
 
                                 <label>
                                     Status Kepemilikan *
-                                    <select name="status_kepemilikan" id="mesinStatusKepemilikan" required>
+                                    <select name="status_kepemilikan" id="mesinStatusKepemilikan" required
+                                        data-kib-searchable="1" data-kib-placeholder="Ketik status kepemilikan...">
                                         <option value="">Pilih Status Kepemilikan</option>
                                         <option value="perumdam">Perumdam Tirta Kencana</option>
                                         <option value="pusat">Pemerintah Pusat</option>
@@ -1689,7 +1693,8 @@
 
                                     Kondisi
 
-                                    <select name="kondisi">
+                                    <select name="kondisi" data-kib-searchable="1"
+                                        data-kib-placeholder="Ketik kondisi barang...">
 
                                         <option value="">
                                             - PILIH KONDISI -
