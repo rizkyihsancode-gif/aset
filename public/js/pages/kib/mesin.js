@@ -130,7 +130,7 @@ function setJenisFormMesin(kodeAktiva, namaAktiva = '') {
                 ['A', 'Identitas Barang', ['id_barang', 'kode', 'reg', 'merk']],
                 ['B', 'Spesifikasi Kendaraan', ['ukuran', 'bahan', 'tahun', 'pabrik']],
                 ['C', 'Nomor Identitas Kendaraan', ['rangka', 'nomor_mesin', 'polisi', 'bpkb']],
-                ['D', 'Asal Usul dan Pengguna', ['asal', 'guna', 'ket']],
+                ['D', 'Asal Usul, Kepemilikan dan Pengguna', ['asal', 'status_kepemilikan', 'guna', 'ket']],
                 ['E', 'Administrasi Inventaris', ['fungsi', 'struktur', 'kondisi', 'harga', 'susut', 'foto', 'dokumen']]
             ];
             for (const [letter, title, names] of groups) {
@@ -483,6 +483,7 @@ $('#mesinExport').addEventListener('click', () => {
         'No',
         'Lokasi',
         'Alamat',
+        'Status Kepemilikan',
         'Nilai',
         'Jumlah PDF'
     ]];
@@ -495,6 +496,7 @@ $('#mesinExport').addEventListener('click', () => {
             index + 1,
             row.dataset.exportLokasi || '',
             row.dataset.exportAlamat || '',
+            row.dataset.exportKepemilikan || 'Belum Diatur',
             row.dataset.exportNilai || '0',
             row.dataset.exportPdf || '0'
         ]);
@@ -840,6 +842,10 @@ $('#mesinExport').addEventListener('click', () => {
     function resetForm() {
         form.reset();
 
+        // Opsi Barang historis hanya untuk Edit, jangan terbawa ke Tambah.
+        barangSelect?.querySelectorAll('option[data-historical="1"]')
+            .forEach(option => option.remove());
+
         sourceId.value = '';
         selectedSourceId = null;
 
@@ -973,8 +979,21 @@ $('#mesinExport').addEventListener('click', () => {
 
             $('#mesinChangeSourceButton').hidden = true;
 
+            // Inventaris lama boleh memiliki Barang yang kini Nonaktif.
+            // Tampilkan sebagai nilai historis hanya ketika Edit.
+            const historicalBarang = String(item.id_barang ?? '');
+            if (barangSelect && historicalBarang &&
+                !Array.from(barangSelect.options).some(option => option.value === historicalBarang)) {
+                const option = document.createElement('option');
+                option.value = historicalBarang;
+                option.textContent = `${item.nama_barang || 'Barang lama'} (historis)`;
+                option.dataset.historical = '1';
+                barangSelect.append(option);
+            }
+
             const fields = [
                 'id_barang',
+                'status_kepemilikan',
                 'kode',
                 'reg',
                 'tahun',
@@ -1172,161 +1191,230 @@ $('#mesinExport').addEventListener('click', () => {
     // DETAIL INVENTARIS MESIN
     // ==========================================
 
+    // ========================================================
+    // DETAIL K.I.B B MODEL EXCEL — MESIN DAN KENDARAAN
+    // Satu baris = satu inventaris fisik pada lokasi.
+    // ========================================================
+
+    const ownerLabels = Object.freeze({
+        perumdam: 'Perumdam',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemprov',
+        pemkot: 'Pemkot',
+        swasta: 'Swasta'
+    });
+
+    function ownerBadge(value) {
+        const key = String(value || '').trim().toLowerCase();
+        const name = ownerLabels[key] || 'Belum Diatur';
+        return `<span class="mesin-owner-badge ${ownerLabels[key] ? 'is-owned' : 'is-empty'}">${escapeHtml(name)}</span>`;
+    }
+
+    function cellValue(value) {
+        if (value === null || value === undefined) return '—';
+        const str = String(value).trim();
+        return str && str !== '-' ? escapeHtml(str) : '—';
+    }
+
+    function isVehicleItem(item) {
+        const code = String(item.kode_aktiva || '').trim();
+        if (/^(31\.08\.|02\.03\.)/.test(code)) return true;
+
+        const vehicleNo = ['polisi', 'rangka', 'bpkb'].some(field => {
+            const text = String(item[field] || '').trim();
+            return text !== '' && text !== '-';
+        });
+        if (vehicleNo) return true;
+
+        // Untuk data legacy tanpa klasifikasi Kode Aktiva.
+        return /\b(mobil|sepeda motor|motor roda|truk|truck|pick\s?up|bus)\b/i
+            .test(String(item.nama_barang || ''));
+    }
+
+    function conditionMark(item, kind) {
+        const value = String(item.kondisi || '').trim().toLowerCase();
+        let match = false;
+        if (kind === 'baik') match = value === 'baik';
+        if (kind === 'ringan') match = value.includes('rusak ringan');
+        if (kind === 'berat') match = value.includes('rusak berat');
+        return match ? '<strong class="mesin-check" aria-label="Ya">✓</strong>' : '—';
+    }
+
+    function attachmentLinks(item) {
+        const id = Number(item.id);
+        const links = [];
+        if (String(item.dok || '').startsWith('kib/mesin/dokumen/')) {
+            links.push(`<a class="mesin-sheet-link" href="${recordUrl(id)}/file/dokumen" target="_blank" rel="noopener noreferrer">PDF</a>`);
+        }
+        if (String(item.img || '').startsWith('kib/mesin/foto/')) {
+            links.push(`<a class="mesin-sheet-link" href="${recordUrl(id)}/file/foto" target="_blank" rel="noopener noreferrer">Foto</a>`);
+        }
+        return links.join(' ') || '—';
+    }
+
+    function itemActions(item) {
+        const id = Number(item.id);
+        return `<div class="mesin-sheet-actions">
+            <button type="button" data-edit="${id}" class="mesin-sheet-action edit" title="Edit inventaris #${id}">Edit</button>
+            <button type="button" data-delete="${id}" class="mesin-sheet-action delete" title="Hapus inventaris #${id}">Hapus</button>
+        </div>`;
+    }
+
+    function renderMachineRow(item, index) {
+        const document = String(item.dok || '').startsWith('kib/mesin/dokumen/')
+            ? attachmentLinks(item)
+            : '—';
+        return `<tr class="mesin-sheet-row" data-sheet-search="${escapeHtml([
+            item.nama_barang, item.kode, item.reg, item.merk, item.fungsi,
+            item.guna, item.asal, item.status_kepemilikan, item.ket
+        ].join(' ').toLowerCase())}">
+            <td>${index + 1}</td>
+            <td class="mesin-sheet-name">${cellValue(item.nama_barang)}</td>
+            <td>${cellValue(item.kode)}</td>
+            <td>${cellValue(item.reg)}</td>
+            <td>${cellValue(item.merk)}</td>
+            <td>${cellValue(item.ukuran)}</td>
+            <td>${cellValue(item.fungsi)}</td>
+            <td>${cellValue(item.guna)}</td>
+            <td>${cellValue(item.bahan)}</td>
+            <td class="mesin-sheet-center">${conditionMark(item, 'baik')}</td>
+            <td class="mesin-sheet-center">${conditionMark(item, 'ringan')}</td>
+            <td class="mesin-sheet-center">${conditionMark(item, 'berat')}</td>
+            <td>${cellValue(item.tahun)}</td>
+            <td>${cellValue(item.asal)}</td>
+            <td>${document}</td>
+            <td class="mesin-sheet-money">${money(item.harga)}</td>
+            <td>${cellValue(item.ket)}</td>
+            <td>${ownerBadge(item.status_kepemilikan)}</td>
+            <td>${attachmentLinks(item)} ${itemActions(item)}</td>
+        </tr>`;
+    }
+
+    function renderVehicleRow(item, index) {
+        return `<tr class="mesin-sheet-row" data-sheet-search="${escapeHtml([
+            item.nama_barang, item.kode_barang, item.kode, item.reg, item.merk, item.polisi,
+            item.rangka, item.mesin, item.bpkb, item.asal, item.status_kepemilikan
+        ].join(' ').toLowerCase())}">
+            <td>${index + 1}</td>
+            <td>${cellValue(item.kode_barang || item.kode)}</td>
+            <td class="mesin-sheet-name">${cellValue(item.nama_barang)}</td>
+            <td>${cellValue(item.reg)}</td>
+            <td>${cellValue(item.merk)}</td>
+            <td>${cellValue(item.ukuran)}</td>
+            <td>${cellValue(item.bahan)}</td>
+            <td>${cellValue(item.tahun)}</td>
+            <td>${cellValue(item.pabrik)}</td>
+            <td>${cellValue(item.rangka)}</td>
+            <td>${cellValue(item.mesin)}</td>
+            <td>${cellValue(item.polisi)}</td>
+            <td>${cellValue(item.bpkb)}</td>
+            <td>${cellValue(item.asal)}</td>
+            <td>${cellValue(item.ket)}</td>
+            <td>${ownerBadge(item.status_kepemilikan)}</td>
+            <td>${attachmentLinks(item)} ${itemActions(item)}</td>
+        </tr>`;
+    }
+
+    function renderMachineSheet(items) {
+        return `<div class="mesin-excel-scroll" role="region" tabindex="0" aria-label="Tabel K.I.B B Peralatan dan Mesin">
+            <table class="mesin-excel-table mesin-excel-machine">
+                <thead>
+                    <tr><th rowspan="2">No.</th><th rowspan="2">Nama Barang</th><th rowspan="2">Kode Inventaris</th>
+                        <th rowspan="2">No. Register</th><th rowspan="2">Merk / Tipe</th><th rowspan="2">Ukuran</th>
+                        <th rowspan="2">Fungsi</th><th rowspan="2">Penggunaan</th><th rowspan="2">Bahan</th>
+                        <th colspan="3">KONDISI</th><th rowspan="2">Tahun Pengadaan</th><th rowspan="2">Asal Usul</th>
+                        <th rowspan="2">No. Dokumen / PDF</th><th rowspan="2">Harga (Rp)</th>
+                        <th rowspan="2">Keterangan</th><th rowspan="2">Status Kepemilikan</th><th rowspan="2">Aksi / Berkas</th></tr>
+                    <tr><th>Baik</th><th>Rusak Ringan</th><th>Rusak Berat</th></tr>
+                </thead><tbody>${items.map(renderMachineRow).join('')}</tbody>
+            </table>
+        </div>`;
+    }
+
+    function renderVehicleSheet(items) {
+        return `<div class="mesin-excel-scroll" role="region" tabindex="0" aria-label="Tabel K.I.B B Kendaraan">
+            <table class="mesin-excel-table mesin-excel-vehicle">
+                <thead>
+                    <tr><th rowspan="2">No.</th><th rowspan="2">Kode Barang</th><th rowspan="2">Nama Barang / Jenis</th>
+                        <th rowspan="2">Nomor Register</th><th rowspan="2">Merk / Tipe</th><th rowspan="2">Ukuran / CC</th>
+                        <th rowspan="2">Bahan</th><th rowspan="2">Tahun Pembelian</th><th colspan="5">NOMOR</th>
+                        <th rowspan="2">Asal Usul / Cara Perolehan</th><th rowspan="2">Keterangan</th>
+                        <th rowspan="2">Status Kepemilikan</th><th rowspan="2">Aksi / Berkas</th></tr>
+                    <tr><th>Pabrik</th><th>Rangka</th><th>Mesin</th><th>Polisi</th><th>BPKB</th></tr>
+                </thead><tbody>${items.map(renderVehicleRow).join('')}</tbody>
+            </table>
+        </div>`;
+    }
+
     async function showDetail(lokasiId) {
         openDialog(detailDialog);
-
-        $('#mesinDetailBody').textContent =
-            'Memuat data inventaris...';
-
+        const body = $('#mesinDetailBody');
+        body.textContent = 'Memuat data inventaris lokasi...';
         try {
-            const result = await getJson(
-                locationUrl(lokasiId)
-            );
-
+            const result = await getJson(locationUrl(lokasiId));
+            if (!detailDialog.open) return;
             const location = result.lokasi || {};
-
-            const items = Array.isArray(result.data)
-                ? result.data
-                : [];
-
-            $('#mesinDetailTitle').textContent =
-                location.lokasi || 'Peralatan dan Mesin';
-
-            $('#mesinDetailAddress').textContent =
-                location.alamat || '—';
-
+            const items = Array.isArray(result.data) ? result.data : [];
+            $('#mesinDetailTitle').textContent = location.lokasi || 'Peralatan dan Mesin';
+            $('#mesinDetailAddress').textContent = location.alamat || '—';
             if (!items.length) {
-                $('#mesinDetailBody').textContent =
-                    'Belum ada data barang di lokasi ini.';
+                body.textContent = 'Belum ada data K.I.B B pada lokasi ini.';
                 return;
             }
-
-            $('#mesinDetailBody').innerHTML =
-                items.map(item => {
-                    const id = Number(item.id);
-
-                    const details = [
-                        ['Merk / Tipe', item.merk],
-                        ['Tahun', item.tahun],
-                        ['Departemen', item.departemen],
-                        ['Divisi', item.divisi],
-                        ['Penggunaan', item.guna],
-                        ['Fungsi', item.fungsi],
-                        ['Bahan', item.bahan],
-                        ['Asal', item.asal],
-                        ['Ukuran', item.ukuran],
-                        ['Kondisi', item.kondisi],
-                        ['No. Mesin', item.mesin],
-                        ['No. Rangka', item.rangka],
-                        ['No. Polisi', item.polisi],
-                        ['No. BPKB', item.bpkb],
-                        ['Keterangan', item.ket]
-                    ];
-
-                    const fields = details.map(
-                        ([name, value]) => `
-                            <div>
-                                <dt>${escapeHtml(name)}</dt>
-                                <dd>
-                                    ${escapeHtml(value || '—')}
-                                </dd>
-                            </div>
-                        `
-                    ).join('');
-
-                    const fileUrl = type =>
-                        `${recordUrl(id)}/file/${type}`;
-
-                    const dokumen = String(item.dok || '')
-                        .startsWith('kib/mesin/dokumen/')
-                        ? `
-                            <a
-                                class="mesin-button outline small"
-                                href="${fileUrl('dokumen')}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Lihat Dokumen
-                            </a>
-                        `
-                        : '';
-
-                    const foto = String(item.img || '')
-                        .startsWith('kib/mesin/foto/')
-                        ? `
-                            <a
-                                class="mesin-button outline small"
-                                href="${fileUrl('foto')}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Lihat Foto
-                            </a>
-                        `
-                        : '';
-
-                    return `
-                        <article class="mesin-detail-card">
-
-                            <div class="mesin-detail-head">
-                                <div>
-                                    <h3>
-                                        ${escapeHtml(
-                                            item.nama_barang || 'Barang'
-                                        )}
-                                    </h3>
-                                    <small>
-                                        Kode:
-                                        ${escapeHtml(item.kode || '—')}
-                                        · Register:
-                                        ${escapeHtml(item.reg || '—')}
-                                    </small>
-                                </div>
-
-                                <strong>
-                                    ${money(item.harga)}
-                                </strong>
-                            </div>
-
-                            <dl class="mesin-detail-grid">
-                                ${fields}
-                            </dl>
-
-                            <div class="mesin-detail-actions">
-                                ${dokumen}
-                                ${foto}
-
-                                <button
-                                    type="button"
-                                    class="mesin-button outline small"
-                                    data-edit="${id}"
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="mesin-button danger small"
-                                    data-delete="${id}"
-                                >
-                                    Hapus
-                                </button>
-                            </div>
-                        </article>
-                    `;
-                }).join('');
-
+            const machines = items.filter(item => !isVehicleItem(item));
+            const vehicles = items.filter(isVehicleItem);
+            body.innerHTML = `
+                <div class="mesin-sheet-overview">
+                    <div><strong>INVENTARIS K.I.B B</strong><span>Perumda Tirta Kencana Kota Samarinda · ${escapeHtml(location.lokasi || 'Lokasi')}</span></div>
+                    <span class="mesin-sheet-count">${items.length} data</span>
+                </div>
+                <div class="mesin-sheet-toolbar">
+                    <div class="mesin-sheet-tabs" role="tablist" aria-label="Jenis inventaris">
+                        <button class="mesin-sheet-tab active" type="button" data-sheet-tab="machine" role="tab" aria-selected="true">Peralatan & Mesin (${machines.length})</button>
+                        <button class="mesin-sheet-tab" type="button" data-sheet-tab="vehicle" role="tab" aria-selected="false">Kendaraan (${vehicles.length})</button>
+                    </div>
+                    <label class="mesin-sheet-search"><i data-lucide="search"></i><input id="mesinSheetSearch" type="search" placeholder="Cari nama, kode, register, nomor kendaraan..." aria-label="Cari dalam tabel inventaris"></label>
+                </div>
+                <section data-sheet-panel="machine" class="mesin-sheet-panel" role="tabpanel">
+                    ${machines.length ? renderMachineSheet(machines) : '<p class="mesin-sheet-empty">Belum ada peralatan/mesin dalam kategori ini.</p>'}
+                </section>
+                <section data-sheet-panel="vehicle" class="mesin-sheet-panel" role="tabpanel" hidden>
+                    ${vehicles.length ? renderVehicleSheet(vehicles) : '<p class="mesin-sheet-empty">Belum ada kendaraan dalam kategori ini.</p>'}
+                </section>
+                <p class="mesin-sheet-note">Format mengikuti K.I.B B. Geser tabel ke kanan untuk kolom lanjutan. Status kosong ditampilkan sebagai <b>Belum Diatur</b>. Kolom No. Dokumen ditampilkan sebagai tautan PDF jika tersedia karena sistem lama menyimpan berkas, bukan nomor dokumen terpisah.</p>
+            `;
             refreshIcons();
-
         } catch (error) {
-            $('#mesinDetailBody').textContent =
-                'Gagal mengambil detail: ' +
-                error.message;
+            body.textContent = 'Gagal memuat tabel K.I.B B: ' + error.message;
         }
     }
 
-    
-    
+    // Interaksi tabel Excel: filter hanya baris yang cocok, tab tidak mengubah data.
+    $('#mesinDetailBody').addEventListener('click', event => {
+        const tab = event.target.closest('[data-sheet-tab]');
+        if (!tab) return;
+        const name = tab.dataset.sheetTab;
+        $('#mesinDetailBody').querySelectorAll('[data-sheet-tab]').forEach(button => {
+            const active = button.dataset.sheetTab === name;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        $('#mesinDetailBody').querySelectorAll('[data-sheet-panel]').forEach(panel => {
+            panel.hidden = panel.dataset.sheetPanel !== name;
+        });
+        const search = $('#mesinSheetSearch');
+        if (search) search.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    $('#mesinDetailBody').addEventListener('input', event => {
+        if (event.target.id !== 'mesinSheetSearch') return;
+        const query = event.target.value.trim().toLowerCase();
+        $('#mesinDetailBody').querySelectorAll('.mesin-sheet-row').forEach(row => {
+            row.hidden = !row.dataset.sheetSearch.includes(query);
+        });
+    });
+
+
 /*
 |--------------------------------------------------------------------------
 | PILIH BARANG UNTUK EDIT ATAU HAPUS

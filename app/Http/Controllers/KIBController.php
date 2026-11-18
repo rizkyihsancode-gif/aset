@@ -2328,6 +2328,13 @@ class KIBController extends Controller
             ->selectRaw(
                 'COUNT(DISTINCT m.id) AS jumlah_barang'
             )
+            ->selectRaw("
+                CASE
+                    WHEN COUNT(DISTINCT COALESCE(NULLIF(BTRIM(m.status_kepemilikan), ''), '__kosong__')) > 1
+                        THEN 'campuran'
+                    ELSE COALESCE(MAX(NULLIF(BTRIM(m.status_kepemilikan), '')), '')
+                END AS status_kepemilikan_ringkas
+            ")
             ->selectRaw(
                 'COALESCE(MAX(v.nilai_total), 0) AS nilai_total'
             )
@@ -2624,6 +2631,18 @@ class KIBController extends Controller
                 '=',
                 'm.id_div'
             )
+            ->leftJoin(
+                'nilai_aktivas as n',
+                'n.id',
+                '=',
+                'm.id_voucher2'
+            )
+            ->leftJoin(
+                'aktivas as a',
+                'a.id',
+                '=',
+                DB::raw('COALESCE(n.id_aktiva, m.id_aktiva)')
+            )
             ->where('m.id_lokasi', $lokasi)
             ->select('m.*')
             ->selectRaw(
@@ -2638,7 +2657,13 @@ class KIBController extends Controller
             ->selectRaw(
                 "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
             )
-            ->orderByDesc('m.id')
+            ->selectRaw(
+                "BTRIM(COALESCE(a.kode, '')) AS kode_aktiva"
+            )
+            ->selectRaw(
+                "BTRIM(COALESCE(a.aktiva, '')) AS nama_aktiva"
+            )
+            ->orderBy('m.id')
             ->get();
 
         return response()->json([
@@ -2809,6 +2834,11 @@ class KIBController extends Controller
                 'exists:barangs,id'
             ],
 
+            'status_kepemilikan' => [
+                'required',
+                Rule::in(['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta']),
+            ],
+
             'kode' => ['required', 'string', 'max:255'],
             'reg' => ['nullable', 'string', 'max:255'],
             'tahun' => ['required', 'digits:4'],
@@ -2885,6 +2915,7 @@ class KIBController extends Controller
 
         return [
             'id_barang' => (int) $input['id_barang'],
+            'status_kepemilikan' => $input['status_kepemilikan'],
 
             'kode' => trim((string) $input['kode']),
             'reg' => $legacy('reg'),

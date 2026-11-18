@@ -570,6 +570,7 @@
                             <col class="mesin-col-no">
                             <col class="mesin-col-lokasi">
                             <col class="mesin-col-alamat">
+                            <col class="mesin-col-kepemilikan">
                             <col class="mesin-col-nilai">
                             <col class="mesin-col-pdf">
                             <col class="mesin-col-aksi">
@@ -580,6 +581,7 @@
                                 <th>No</th>
                                 <th>Lokasi</th>
                                 <th>Alamat</th>
+                                <th>Status Kepemilikan</th>
                                 <th>Nilai</th>
                                 <th>PDF</th>
                                 <th>Aksi</th>
@@ -593,6 +595,7 @@
                                     data-search="{{ mb_strtolower(trim((string) $row->lokasi) . ' ' . trim((string) $row->alamat)) }}"
                                     data-export-lokasi="{{ trim((string) $row->lokasi) }}"
                                     data-export-alamat="{{ trim((string) $row->alamat) }}"
+                                    data-export-kepemilikan="{{ $row->status_kepemilikan_ringkas }}"
                                     data-export-nilai="{{ (int) $row->nilai_total }}"
                                     data-export-pdf="{{ (int) $row->jumlah_dokumen }}">
 
@@ -620,6 +623,26 @@
 
                                         {{ trim((string) $row->alamat) ?: '—' }}
 
+                                    </td>
+
+                                    {{-- STATUS KEPEMILIKAN PER LOKASI --}}
+                                    <td class="mesin-kepemilikan-cell">
+                                        @php
+                                            $statusKepemilikan = (string) ($row->status_kepemilikan_ringkas ?? '');
+                                            $labelKepemilikan =
+                                                [
+                                                    'perumdam' => 'Perumdam',
+                                                    'pusat' => 'Pemerintah Pusat',
+                                                    'pemprov' => 'Pemprov',
+                                                    'pemkot' => 'Pemkot',
+                                                    'swasta' => 'Swasta',
+                                                    'campuran' => 'Campuran',
+                                                ][$statusKepemilikan] ?? 'Belum Diatur';
+                                        @endphp
+                                        <span
+                                            class="mesin-owner-badge {{ $statusKepemilikan === '' ? 'is-empty' : ($statusKepemilikan === 'campuran' ? 'is-mixed' : 'is-owned') }}">
+                                            {{ $labelKepemilikan }}
+                                        </span>
                                     </td>
 
                                     {{-- NILAI --}}
@@ -711,7 +734,7 @@
                             @empty
 
                                 <tr>
-                                    <td colspan="6" class="mesin-empty">
+                                    <td colspan="7" class="mesin-empty">
                                         Belum ada data Peralatan dan Mesin.
                                     </td>
                                 </tr>
@@ -1648,6 +1671,21 @@
 
                                 </label>
 
+                                {{-- STATUS KEPEMILIKAN (K.I.B B) --}}
+
+                                <label>
+                                    Status Kepemilikan *
+                                    <select name="status_kepemilikan" id="mesinStatusKepemilikan" required>
+                                        <option value="">Pilih Status Kepemilikan</option>
+                                        <option value="perumdam">Perumdam Tirta Kencana</option>
+                                        <option value="pusat">Pemerintah Pusat</option>
+                                        <option value="pemprov">Pemerintah Provinsi</option>
+                                        <option value="pemkot">Pemerintah Kota</option>
+                                        <option value="swasta">Swasta</option>
+                                    </select>
+                                    <small>Data lama tetap tersimpan; kosong ditampilkan sebagai Belum Diatur.</small>
+                                </label>
+
                                 {{-- KONDISI --}}
 
                                 <label>
@@ -1838,7 +1876,7 @@
                 <div>
 
                     <small>
-                        DETAIL INVENTARIS MESIN
+                        K.I.B B / PERALATAN, MESIN &amp; KENDARAAN
                     </small>
 
                     <h2 id="mesinDetailTitle">
@@ -1859,7 +1897,7 @@
 
             <div class="mesin-dialog-scroll">
 
-                <div id="mesinDetailBody" class="mesin-detail-list"></div>
+                <div id="mesinDetailBody" class="mesin-detail-list" aria-live="polite"></div>
 
             </div>
 
