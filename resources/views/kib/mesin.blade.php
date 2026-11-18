@@ -1258,38 +1258,35 @@
              09. MODAL DETAIL MASA PAJAK
         ================================================== --}}
 
-            <dialog id="pajakDetailDialog" class="pajak-dialog">
+            <dialog id="pajakDetailDialog" class="pajak-dialog pajak-excel-dialog" aria-labelledby="pajakDetailTitle">
 
-                <header>
-
+                <header class="pajak-excel-header">
                     <div>
-
-                        <small>
-                            DETAIL PAJAK KENDARAAN
-                        </small>
-
-                        <h2 id="pajakDetailTitle">
-                            Detail Kendaraan
-                        </h2>
-
+                        <small>K.I.B B / KARTU INVENTARIS KENDARAAN</small>
+                        <h2 id="pajakDetailTitle">Detail Inventaris Kendaraan</h2>
+                        <p>Format tabel Excel kendaraan · informasi pajak di bagian bawah</p>
                     </div>
 
-                    <button type="button" data-pajak-close="pajakDetailDialog" aria-label="Tutup">
-
+                    <button type="button" data-pajak-close="pajakDetailDialog" aria-label="Tutup detail kendaraan">
                         <i data-lucide="x"></i>
-
                     </button>
-
                 </header>
 
-                <div class="pajak-dialog-body">
+                <div class="pajak-dialog-body pajak-excel-body">
+                    <div class="pajak-excel-section-heading">
+                        <div>
+                            <strong>Daftar Identitas Kendaraan</strong>
+                            <p>Seluruh nomor kendaraan dan Status Kepemilikan mengikuti inventaris K.I.B B.</p>
+                        </div>
+                        <span class="pajak-excel-count">1 Kendaraan</span>
+                    </div>
 
-                    <dl id="pajakDetailData" class="pajak-detail-list"></dl>
+                    <div id="pajakDetailData" class="pajak-excel-workspace" aria-live="polite">
+                        <p class="pajak-excel-loading">Memuat informasi kendaraan...</p>
+                    </div>
 
-                    <p id="pajakDetailDocument"></p>
-
+                    <div class="pajak-excel-documents" id="pajakDetailDocument"></div>
                 </div>
-
             </dialog>
 
         </section>

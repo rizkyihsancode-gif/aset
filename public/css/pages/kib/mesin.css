@@ -4531,3 +4531,277 @@ min-height: 39px;
     #mesinPage #mesinDetailDialog .mesin-sheet-toolbar-controls { width: 100%; flex-basis: 100%; }
     #mesinPage #mesinDetailDialog .mesin-sheet-attachment-grid { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================
+   K.I.B B — DETAIL KENDARAAN MODEL EXCEL (MODAL MASA PAJAK)
+   Fokus hanya #pajakDetailDialog, tanpa mengubah modal form.
+   ========================================================== */
+
+#mesinPage #pajakDetailDialog {
+    width: min(1480px, calc(100vw - 42px));
+    max-width: none;
+    max-height: calc(100dvh - 38px);
+    border-radius: 14px;
+    border-color: #cbd9e8;
+}
+
+#mesinPage #pajakDetailDialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+#mesinPage #pajakDetailDialog .pajak-excel-header {
+    flex: 0 0 auto;
+    padding: 19px 24px;
+    background: linear-gradient(110deg, #f8fbff, #eaf4ff);
+}
+
+#mesinPage #pajakDetailDialog .pajak-excel-header h2 {
+    font-weight: 850;
+    font-size: 20px;
+}
+
+#mesinPage #pajakDetailDialog .pajak-excel-body {
+    display: block;
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 auto;
+    padding: 20px 22px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: #f7fafe;
+}
+
+#mesinPage .pajak-excel-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 12px;
+}
+
+#mesinPage .pajak-excel-section-heading strong {
+    font-size: 14px;
+    font-weight: 850;
+    color: #14355c;
+}
+
+#mesinPage .pajak-excel-section-heading p {
+    font-size: 11px;
+    color: #657f9d;
+    margin: 5px 0 0;
+}
+
+#mesinPage .pajak-excel-count {
+    padding: 7px 12px;
+    font-size: 11px;
+    font-weight: 750;
+    border-radius: 100px;
+    background: #e5f1ff;
+    color: #1359a9;
+    white-space: nowrap;
+}
+
+#mesinPage .pajak-excel-workspace {
+    display: block;
+}
+
+#mesinPage .pajak-excel-scroll {
+    position: relative;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 340px;
+    border: 1px solid #293746;
+    border-radius: 9px;
+    background: #fff;
+    scrollbar-width: thin;
+}
+
+#mesinPage .pajak-excel-table {
+    width: max-content;
+    min-width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    table-layout: auto;
+    color: #173b65;
+    font-size: 11px;
+}
+
+#mesinPage .pajak-excel-table th,
+#mesinPage .pajak-excel-table td {
+    min-width: 105px;
+    padding: 11px 10px;
+    border-right: 1px solid #293746;
+    border-bottom: 1px solid #293746;
+    text-align: left;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+}
+
+#mesinPage .pajak-excel-table tr > :last-child {
+    border-right: 0;
+}
+
+#mesinPage .pajak-excel-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+#mesinPage .pajak-excel-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #deebf8;
+    color: #0f335e;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.35;
+    text-align: center;
+}
+
+#mesinPage .pajak-excel-vehicle thead tr:first-child th {
+    height: 44px;
+}
+
+#mesinPage .pajak-excel-vehicle thead tr:nth-child(2) th {
+    top: 44px;
+    z-index: 4;
+    background: #cfe1f5;
+}
+
+#mesinPage .pajak-excel-vehicle th:first-child,
+#mesinPage .pajak-excel-vehicle td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 53px;
+    width: 53px;
+    text-align: center;
+    background: #f0f6fe;
+}
+
+#mesinPage .pajak-excel-vehicle th:nth-child(2),
+#mesinPage .pajak-excel-vehicle td:nth-child(2) {
+    position: sticky;
+    left: 53px;
+    z-index: 2;
+    min-width: 132px;
+    background: #f2f8ff;
+    box-shadow: 2px 0 0 #293746;
+}
+
+#mesinPage .pajak-excel-vehicle thead tr:first-child th:nth-child(-n+2) {
+    z-index: 6;
+    background: #deebf8;
+}
+
+#mesinPage .pajak-excel-table tbody tr:nth-child(even) {
+    background: #f7faff;
+}
+
+#mesinPage .pajak-excel-table tbody td {
+    font-weight: 600;
+}
+
+#mesinPage .pajak-excel-owner {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    padding: 5px 10px;
+    border-radius: 100px;
+    background: #e3f7eb;
+    color: #126c40;
+    font-weight: 750;
+}
+
+#mesinPage .pajak-excel-owner.is-unknown {
+    color: #61788e;
+    background: #eef2f7;
+}
+
+#mesinPage .pajak-excel-help {
+    margin: 8px 0 0;
+    font-size: 10px;
+    color: #6f89a4;
+}
+
+#mesinPage .pajak-excel-tax-section {
+    margin-top: 22px;
+}
+
+#mesinPage .pajak-excel-tax th {
+    min-width: 136px;
+}
+
+#mesinPage .pajak-excel-documents {
+    margin-top: 18px;
+    padding: 15px 17px;
+    border: 1px solid #cbdff2;
+    border-radius: 10px;
+    background: #fff;
+}
+
+#mesinPage .pajak-excel-documents strong {
+    display: block;
+    font-size: 12px;
+    color: #1b446f;
+    margin-bottom: 10px;
+}
+
+#mesinPage .pajak-excel-links {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+#mesinPage .pajak-excel-no-doc {
+    display: block;
+    color: #7289a1;
+    font-size: 11px;
+}
+
+#mesinPage .pajak-excel-loading,
+#mesinPage .pajak-excel-warning {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #edf5ff;
+    color: #355e8a;
+    font-size: 12px;
+}
+
+#mesinPage .pajak-excel-warning {
+    border: 1px solid #e9cc78;
+    background: #fff9e8;
+    color: #84631b;
+}
+
+#mesinPage .pajak-excel-sr-only {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    #mesinPage #pajakDetailDialog {
+        width: calc(100vw - 14px);
+        max-height: calc(100dvh - 14px);
+    }
+    #mesinPage #pajakDetailDialog .pajak-excel-header {
+        padding: 14px;
+    }
+    #mesinPage #pajakDetailDialog .pajak-excel-body {
+        padding: 14px 12px;
+    }
+    #mesinPage .pajak-excel-section-heading {
+        align-items: flex-start;
+    }
+    #mesinPage .pajak-excel-table th,
+    #mesinPage .pajak-excel-table td {
+        padding: 9px;
+        font-size: 10px;
+    }
+}

@@ -3366,107 +3366,251 @@ document.getElementById('pajakTerlambat').textContent =
     // 17. MODAL DETAIL PAJAK
     // ======================================================
 
-    function lihatDetail(k) {
-        $('#pajakDetailTitle').textContent =
-            `Pajak — ${
-                k.nomor_polisi ||
-                k.kode_aktiva ||
-                'Kendaraan'
-            }`;
+    // ======================================================
+    // 17. DETAIL KENDARAAN MODEL EXCEL K.I.B B
+    // ======================================================
 
-        const data = [
-            ['Pengguna', k.pengguna],
+    /*
+     * Tombol mata pada Masa Pajak sekarang membuka tabel
+     * inventaris kendaraan dengan format Excel K.I.B B.
+     * Data identitas lengkap dibaca dari route showMesin:
+     * GET /kib/mesin/{mesin}.
+     *
+     * Catatan pajak tetap ditampilkan sebagai tabel kedua
+     * agar informasi pajak lama tidak hilang.
+     */
 
-            ['Merk / Type', k.merk],
+    const statusKepemilikanLabels = {
+        perumdam: 'Perumdam Tirta Kencana',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemerintah Provinsi',
+        pemkot: 'Pemerintah Kota',
+        swasta: 'Swasta'
+    };
 
-            ['Jenis', k.jenis],
+    function pajakCell(value) {
+        const label = String(value ?? '').trim();
+        return escapeHTML(label && label !== '-' ? label : '—');
+    }
 
-            ['Kode Aktiva', k.kode_aktiva],
+    function pajakOwnerBadge(value) {
+        const key = String(value ?? '').trim().toLowerCase();
+        const label = statusKepemilikanLabels[key] ?? 'Belum Diatur';
+        const cls = statusKepemilikanLabels[key]
+            ? 'is-known'
+            : 'is-unknown';
 
-            ['Nomor Polisi', k.nomor_polisi],
+        return `<span class="pajak-excel-owner ${cls}">${escapeHTML(label)}</span>`;
+    }
 
-            ['Tahun', k.tahun],
+    async function getInventarisPajak(mesinId) {
+        const id = nomorId(mesinId);
+        if (!id) throw new Error('ID kendaraan tidak valid.');
 
-            ['Lokasi', k.lokasi],
+        const rootPage = document.getElementById('mesinPage');
+        const base = rootPage?.dataset.recordBase;
+        if (!base) throw new Error('Alamat detail inventaris tidak tersedia.');
 
-            [
-                'Pembaruan Pajak',
-                tanggalIndonesia(
-                    k.tanggal_bayar
-                )
-            ],
+        const response = await fetch(
+            `${base}/${encodeURIComponent(id)}`,
+            {
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }
+        );
 
-            [
-                'Masa Berlaku',
-                k.masa_berlaku_bulan
-                    ? `${k.masa_berlaku_bulan} Bulan`
-                    : 'Riwayat lama'
-            ],
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
 
-            [
-                'Berlaku s/d',
-                tanggalIndonesia(
-                    k.jatuh_tempo
-                )
-            ],
+        const json = await response.json();
+        if (!json?.data) {
+            throw new Error('Respons inventaris tidak berisi data.');
+        }
 
-            [
-                'Nominal',
-                formatUang(k.nominal)
-            ],
+        return json.data;
+    }
 
-            ['Nomor STNK', k.nomor_stnk],
+    function renderTabelExcelKendaraan(inventaris, pajak) {
+        const item = inventaris || {};
+        const jenis = item.nama_barang || pajak.nama_kendaraan || pajak.jenis;
 
-            ['Keterangan', k.keterangan],
-
-            [
-                'Status',
-                statusLabel[k.status] ||
-                    'Belum Dicatat'
-            ]
+        const columns = [
+            pajakCell(item.kode),
+            pajakCell(jenis),
+            pajakCell(item.reg),
+            pajakCell(item.merk || pajak.merk),
+            pajakCell(item.ukuran),
+            pajakCell(item.bahan),
+            pajakCell(item.tahun || pajak.tahun),
+            pajakCell(item.pabrik),
+            pajakCell(item.rangka),
+            pajakCell(item.mesin),
+            pajakCell(item.polisi || pajak.nomor_polisi),
+            pajakCell(item.bpkb),
+            pajakCell(item.asal),
+            pajakCell(item.ket),
+            pajakOwnerBadge(item.status_kepemilikan)
         ];
 
-        $('#pajakDetailData').innerHTML =
-            data.map(
-                ([label, value]) => `
+        return `
+            <div class="pajak-excel-scroll" role="region" tabindex="0"
+                aria-label="Tabel Kartu Inventaris Kendaraan, geser mendatar untuk kolom selanjutnya">
+                <table class="pajak-excel-table pajak-excel-vehicle">
+                    <caption class="pajak-excel-sr-only">Kartu Inventaris Barang B — Kendaraan</caption>
+                    <thead>
+                        <tr class="pajak-excel-group-head">
+                            <th scope="col" rowspan="2">No.</th>
+                            <th scope="col" rowspan="2">Kode Barang</th>
+                            <th scope="col" rowspan="2">Nama Barang / Jenis Barang</th>
+                            <th scope="col" rowspan="2">Nomor Register</th>
+                            <th scope="col" rowspan="2">Merk / Type</th>
+                            <th scope="col" rowspan="2">Ukuran / CC</th>
+                            <th scope="col" rowspan="2">Bahan</th>
+                            <th scope="col" rowspan="2">Tahun Pembelian</th>
+                            <th scope="colgroup" colspan="5">Nomor</th>
+                            <th scope="col" rowspan="2">Asal Usul / Cara Perolehan</th>
+                            <th scope="col" rowspan="2">Keterangan</th>
+                            <th scope="col" rowspan="2">Status Kepemilikan</th>
+                        </tr>
+                        <tr class="pajak-excel-sub-head">
+                            <th scope="col">Pabrik</th>
+                            <th scope="col">Rangka</th>
+                            <th scope="col">Mesin</th>
+                            <th scope="col">Polisi</th>
+                            <th scope="col">BPKB</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="pajak-excel-number">1</td>
+                            ${columns.map(value => `<td>${value}</td>`).join('')}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="pajak-excel-help">↔ Geser tabel ke kanan untuk melihat seluruh nomor dan Status Kepemilikan.</p>`;
+    }
+
+    function renderTabelExcelPajak(k) {
+        const status = Object.hasOwn(statusLabel, k.status)
+            ? k.status
+            : 'belum_didata';
+
+        const bulan = k.masa_berlaku_bulan
+            ? `${k.masa_berlaku_bulan} bulan`
+            : 'Riwayat lama';
+
+        const values = [
+            pajakCell(k.pengguna),
+            pajakCell(k.lokasi),
+            pajakCell(tanggalIndonesia(k.tanggal_bayar)),
+            pajakCell(bulan),
+            pajakCell(tanggalIndonesia(k.jatuh_tempo)),
+            escapeHTML(formatUang(k.nominal)),
+            pajakCell(k.nomor_stnk),
+            `<span class="pajak-status ${status}">${escapeHTML(statusLabel[status])}</span>`,
+            pajakCell(k.keterangan)
+        ];
+
+        return `
+            <section class="pajak-excel-tax-section">
+                <div class="pajak-excel-section-heading">
                     <div>
-                        <dt>
-                            ${escapeHTML(label)}
-                        </dt>
-
-                        <dd>
-                            ${escapeHTML(
-                                value || '—'
-                            )}
-                        </dd>
+                        <strong>Informasi Masa Pajak</strong>
+                        <p>Riwayat pajak tetap tersedia tanpa mengubah data inventaris kendaraan.</p>
                     </div>
-                `
-            ).join('');
+                </div>
+                <div class="pajak-excel-scroll" role="region" tabindex="0"
+                    aria-label="Tabel informasi masa pajak kendaraan">
+                    <table class="pajak-excel-table pajak-excel-tax">
+                        <thead><tr>
+                            <th>Pengguna</th><th>Lokasi</th><th>Pembaruan Pajak</th>
+                            <th>Masa Berlaku</th><th>Berlaku s/d</th>
+                            <th>Nominal</th><th>Nomor STNK</th>
+                            <th>Status Pajak</th><th>Keterangan Pajak</th>
+                        </tr></thead>
+                        <tbody><tr>
+                            ${values.map(value => `<td>${value}</td>`).join('')}
+                        </tr></tbody>
+                    </table>
+                </div>
+            </section>`;
+    }
 
-        const pdf = nomorId(
-            k.pajak_id
-        );
+    async function lihatDetail(k) {
+        const title = $('#pajakDetailTitle');
+        const detail = $('#pajakDetailData');
+        const documents = $('#pajakDetailDocument');
 
-        $('#pajakDetailDocument').innerHTML =
-            k.ada_dokumen && pdf
+        if (!detail || !documents) return;
 
-                ? `
-                    <a
-                        class="pajak-btn outline"
-                        href="${baseURL}/${pdf}/dokumen"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <i data-lucide="file-text"></i>
-                        Lihat PDF Pajak
-                    </a>
-                `
+        const nomor = k.nomor_polisi || k.kode_aktiva || 'Kendaraan';
+        if (title) title.textContent = `Detail Kendaraan — ${nomor}`;
 
-                : '';
+        detail.innerHTML = '<p class="pajak-excel-loading">Memuat identitas kendaraan...</p>';
+        documents.replaceChildren();
 
-        tampilkanDialog(
-            'pajakDetailDialog'
-        );
+        tampilkanDialog('pajakDetailDialog');
+
+        let inventaris = null;
+        let warning = '';
+
+        try {
+            inventaris = await getInventarisPajak(k.mesin_id);
+        } catch (error) {
+            console.error('DETAIL KENDARAAN K.I.B B:', error);
+            warning = 'Sebagian identitas inventaris belum dapat diambil. '
+                + 'Informasi pajak yang tersedia tetap ditampilkan.';
+        }
+
+        detail.innerHTML = `
+            ${warning ? `<p class="pajak-excel-warning">${escapeHTML(warning)}</p>` : ''}
+            ${renderTabelExcelKendaraan(inventaris, k)}
+            ${renderTabelExcelPajak(k)}
+        `;
+
+        const pajakId = nomorId(k.pajak_id);
+        const mesinId = nomorId(k.mesin_id);
+        const rootPage = document.getElementById('mesinPage');
+        const recordBase = rootPage?.dataset.recordBase || '';
+
+        const actions = [];
+
+        if (k.ada_dokumen && pajakId) {
+            actions.push(`<a class="pajak-btn outline"
+                href="${baseURL}/${pajakId}/dokumen"
+                target="_blank" rel="noopener noreferrer">
+                <i data-lucide="file-text"></i> PDF Pajak
+            </a>`);
+        }
+
+        if (inventaris && mesinId && recordBase) {
+            if (String(inventaris.dok || '').startsWith('kib/mesin/dokumen/')) {
+                actions.push(`<a class="pajak-btn outline"
+                    href="${recordBase}/${mesinId}/file/dokumen"
+                    target="_blank" rel="noopener noreferrer">
+                    <i data-lucide="file-text"></i> Dokumen Inventaris
+                </a>`);
+            }
+
+            if (String(inventaris.img || '').startsWith('kib/mesin/foto/')) {
+                actions.push(`<a class="pajak-btn outline"
+                    href="${recordBase}/${mesinId}/file/foto"
+                    target="_blank" rel="noopener noreferrer">
+                    <i data-lucide="image"></i> Foto Kendaraan
+                </a>`);
+            }
+        }
+
+        documents.innerHTML = actions.length
+            ? `<strong>Berkas Kendaraan</strong><div class="pajak-excel-links">${actions.join('')}</div>`
+            : '<span class="pajak-excel-no-doc">Belum ada dokumen atau foto yang tersedia.</span>';
+
+        refreshIcons();
     }
 
     // ======================================================
