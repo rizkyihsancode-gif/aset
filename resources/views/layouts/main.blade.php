@@ -63,6 +63,13 @@
 
     <link rel="stylesheet"
         href="{{ asset('css/aset.css') }}?v={{ file_exists(public_path('css/aset.css')) ? filemtime(public_path('css/aset.css')) : '1' }}">
+
+
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v=20261118">
+
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ asset('favicon-64.png') }}?v=20261118">
+
+
 </head>
 
 
