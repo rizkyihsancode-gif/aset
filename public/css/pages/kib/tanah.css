@@ -4345,3 +4345,58 @@ dl > div:last-child {
     white-space: nowrap !important;
     border: 0 !important;
 }
+
+
+/* ============================================================
+   K.I.B A - GRID TABEL DETAIL MODEL EXCEL
+   Revisi 2026-11-18: garis kolom/baris hitam lembut.
+   Target HANYA modal detail #tanahExcelTable; tabel lain aman.
+   Sticky header dan kolom No./Alamat tetap berfungsi.
+   ============================================================ */
+
+.tanah-page .tanah-sheet-modal .tanah-excel-scroll {
+    border: 1px solid #293241;
+    background: #ffffff;
+}
+
+.tanah-page .tanah-sheet-modal #tanahExcelTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top: 1px solid #2b3442;
+    border-left: 1px solid #2b3442;
+}
+
+.tanah-page .tanah-sheet-modal #tanahExcelTable th,
+.tanah-page .tanah-sheet-modal #tanahExcelTable td {
+    border-right: 1px solid #2b3442;
+    border-bottom: 1px solid #2b3442;
+}
+
+.tanah-page .tanah-sheet-modal #tanahExcelTable thead th {
+    color: #132a46;
+    background: #e4eef9;
+    font-weight: 800;
+}
+
+.tanah-page .tanah-sheet-modal #tanahExcelTable thead .tanah-excel-sub-head th {
+    background: #d6e6f8;
+    border-top: 0;
+}
+
+/* Pembatas area kolom beku lebih tegas saat digeser. */
+.tanah-page .tanah-sheet-modal #tanahExcelTable tbody tr > :first-child {
+    box-shadow: none;
+}
+
+.tanah-page .tanah-sheet-modal #tanahExcelTable tbody tr > :nth-child(2) {
+    box-shadow: 2px 0 0 #2b3442;
+}
+
+/* Biarkan sel berwarna terang; border sudah cukup menegaskan data. */
+.tanah-page .tanah-sheet-modal #tanahExcelTable tbody tr.active {
+    background: #deedff;
+}
+
+.tanah-page .tanah-sheet-modal #tanahExcelTable tbody tr:hover {
+    background: #edf5ff;
+}
