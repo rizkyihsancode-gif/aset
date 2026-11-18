@@ -4187,6 +4187,11 @@ class KIBController extends Controller
             ->selectRaw(
                 'COUNT(DISTINCT g.id) AS jumlah_gedung'
             )
+            ->selectRaw("CASE
+                WHEN COUNT(DISTINCT COALESCE(NULLIF(TRIM(g.status_kepemilikan), ''), 'belum_diatur')) > 1
+                    THEN 'campuran'
+                ELSE COALESCE(MAX(NULLIF(TRIM(g.status_kepemilikan), '')), 'belum_diatur')
+                END AS status_kepemilikan_ringkas")
             ->selectRaw(
                 'COALESCE(MAX(v.nilai_total), 0) AS nilai_total'
             )
@@ -4359,6 +4364,7 @@ class KIBController extends Controller
         abort_unless($location, 404);
 
         $rows = DB::table('gedungs as g')
+            ->leftJoin('lokasis as l', 'l.id', '=', 'g.id_lokasi')
             ->leftJoin(
                 'barangs as b',
                 'b.id',
@@ -4377,8 +4383,19 @@ class KIBController extends Controller
                 '=',
                 'g.id_div'
             )
+            ->leftJoin(
+                'nilai_aktivas as n',
+                'n.id',
+                '=',
+                'g.nilai_aktiva_id'
+            )
             ->where('g.id_lokasi', $lokasi)
             ->select('g.*')
+            ->addSelect([
+                'l.alamat as alamat_detail',
+                'n.nilai as nilai_transaksi',
+                'n.tahun as tahun_transaksi',
+            ])
             ->selectRaw(
                 "TRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
             )
@@ -4586,6 +4603,17 @@ class KIBController extends Controller
                 'max:255',
             ],
 
+            // Status Kepemilikan berbeda dengan status hukum tanah.
+            'status_kepemilikan' => [
+                $creating ? 'required' : 'nullable',
+                Rule::in(['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta']),
+            ],
+            'sumber_dana' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
             'luas' => [
                 'required',
                 'string',
@@ -4672,6 +4700,8 @@ class KIBController extends Controller
                 'konstruksi',
                 'materi',
                 'status',
+                'status_kepemilikan',
+                'sumber_dana',
                 'luas',
                 'luastanah',
                 'kode_tanah',

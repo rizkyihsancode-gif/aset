@@ -1568,3 +1568,202 @@
         gap: 7px;
     }
 }
+
+
+/* ==============================================================
+   GEDUNG K.I.B C — STATUS KEPEMILIKAN, DETAIL EXCEL & SEARCH
+   Ditambahkan tanpa mengganti stylesheet dan fungsi lama.
+   ============================================================== */
+
+#gedungTable col.gc-no { width: 5%; }
+#gedungTable col.gc-lokasi { width: 31%; }
+#gedungTable col.gc-alamat { width: 32%; }
+#gedungTable col.gc-status { width: 16%; }
+#gedungTable col.gc-aksi { width: 16%; }
+
+.gedung-page .gedung-owner-badge {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #e5f7ed;
+    color: #12643f;
+    font-size: 11px;
+    font-weight: 750;
+    white-space: normal;
+    text-align: center;
+}
+.gedung-page .gedung-owner-badge.is-unknown { background: #eef2f7; color: #52667e; }
+.gedung-page .gedung-owner-badge.is-mixed { background: #fff2d8; color: #865515; }
+
+/* Searchable select: select tetap aktif sebagai value sumber data. */
+.gedung-page .gedung-combo { position: relative; min-width: 0; width: 100%; }
+.gedung-page .gedung-combo-input { width: 100%; min-height: 39px; padding: 9px 32px 9px 10px; }
+.gedung-page .gedung-combo-original {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0;
+    pointer-events: none;
+    bottom: 0;
+    left: 0;
+}
+.gedung-page .gedung-combo::after {
+    content: '';
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    right: 16px;
+    top: 14px;
+    border-right: 2px solid #657c96;
+    border-bottom: 2px solid #657c96;
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+.gedung-combo-menu {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #b9d0e8;
+    border-radius: 8px;
+    box-shadow: 0 15px 36px rgba(17, 54, 100, .23);
+    padding: 5px;
+    z-index: 100000;
+}
+.gedung-combo-menu[hidden] { display: none !important; }
+.gedung-combo-option {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 6px;
+    padding: 9px 10px;
+    color: #1f4266;
+    font-size: 12px;
+}
+.gedung-combo-option:hover, .gedung-combo-option.is-focused { background: #e7f2ff; color: #074ca3; }
+.gedung-combo-empty { padding: 11px; color: #71849a; font-size: 12px; }
+
+/* Detail mengikuti pola K.I.B Tanah: tabel memanjang + berkas di bawah. */
+.gedung-page #gedungDetailDialog.gedung-excel-dialog {
+    width: min(1500px, calc(100vw - 32px));
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+}
+.gedung-page #gedungDetailDialog.gedung-excel-dialog[open] {
+    display: flex;
+    flex-direction: column;
+}
+.gedung-page #gedungDetailDialog .gedung-dialog-head { flex: 0 0 auto; }
+.gedung-page #gedungDetailDialog .gedung-dialog-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    background: #f5f9fe;
+}
+.gedung-page .gedung-excel-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+.gedung-page .gedung-excel-toolbar strong { display: block; color: #103564; font-size: 13px; }
+.gedung-page .gedung-excel-toolbar small { display: block; color: #748aa5; font-size: 11px; margin-top: 3px; }
+.gedung-page .gedung-excel-controls { display: flex; gap: 10px; align-items: center; }
+.gedung-page #gedungDetailSearch { min-width: 240px; width: min(340px, 42vw); padding: 9px 11px; border-radius: 8px; border: 1px solid #c8d9ed; outline: none; color: #234768; background: #fff; }
+.gedung-page .gedung-excel-count { flex-shrink: 0; padding: 7px 10px; border-radius: 999px; color: #13519e; background: #e3f0ff; font-size: 11px; font-weight: 800; }
+.gedung-page .gedung-detail-filters { max-width: 580px; margin-bottom: 13px; }
+.gedung-page .gedung-detail-items { display: block; }
+.gedung-page .gedung-excel-scroll {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: min(44vh, 440px);
+    border: 1px solid #293543;
+    border-radius: 9px;
+    background: #fff;
+    scrollbar-width: thin;
+}
+.gedung-page .gedung-excel-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+    font-size: 11px;
+    color: #173c62;
+}
+.gedung-page .gedung-excel-table th,
+.gedung-page .gedung-excel-table td {
+    min-width: 110px;
+    max-width: 250px;
+    padding: 10px;
+    border-right: 1px solid #344352;
+    border-bottom: 1px solid #344352;
+    text-align: left;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+}
+.gedung-page .gedung-excel-table tr > :last-child { border-right: 0; }
+.gedung-page .gedung-excel-table tbody tr:last-child td { border-bottom: 0; }
+.gedung-page .gedung-excel-table thead th {
+    background: #e1edfa;
+    color: #103961;
+    font-weight: 850;
+    font-size: 10px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+.gedung-page .gedung-excel-table thead .gedung-excel-head th { height: 45px; }
+.gedung-page .gedung-excel-table thead .gedung-excel-subhead th { background: #d5e6f8; top: 45px; z-index: 4; }
+.gedung-page .gedung-excel-table th:first-child,
+.gedung-page .gedung-excel-table td:first-child {
+    min-width: 50px;
+    width: 50px;
+    position: sticky;
+    left: 0;
+    background: #f1f7fe;
+    text-align: center;
+    z-index: 2;
+}
+.gedung-page .gedung-excel-table th:nth-child(2),
+.gedung-page .gedung-excel-table tbody td:nth-child(2) {
+    position: sticky;
+    left: 50px;
+    min-width: 185px;
+    width: 185px;
+    background: #f2f8ff;
+    box-shadow: 2px 0 0 #344352;
+    z-index: 2;
+}
+.gedung-page .gedung-excel-table thead tr:first-child th:first-child,
+.gedung-page .gedung-excel-table thead tr:first-child th:nth-child(2) { z-index: 6; background: #e1edfa; }
+.gedung-page .gedung-excel-table tbody tr:nth-child(even) { background: #f6faff; }
+.gedung-page .gedung-excel-table tbody tr.is-selected,
+.gedung-page .gedung-excel-table tbody tr:hover { background: #dcecff; }
+.gedung-page .gedung-excel-table .gedung-excel-name { min-width: 185px; font-weight: 750; }
+.gedung-page .gedung-excel-table .gedung-excel-money { white-space: nowrap; }
+.gedung-page .gedung-excel-table .gedung-excel-empty { text-align: center; color: #68829d; }
+.gedung-page .gedung-excel-hint { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #6e85a2; margin: 8px 0 12px; }
+.gedung-page #gedungDetailFocus.gedung-detail-focus { margin: 12px 0; padding: 16px; background: #fff; }
+.gedung-page #gedungDetailFocus .gedung-focus-heading small { color: #0870d7; font-size: 10px; font-weight: 800; }
+.gedung-page #gedungDetailFocus .gedung-focus-heading p { margin: 5px 0 0; color: #6b82a0; font-size: 11px; }
+.gedung-page #gedungDetailFocus .gedung-focus-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.gedung-page #gedungDetailFocus .gedung-focus-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.gedung-page #gedungDetailFocus .gedung-focus-card { border: 1px solid #d6e4f3; border-radius: 9px; padding: 12px; min-width: 0; background: #fafdff; }
+.gedung-page #gedungDetailFocus .gedung-focus-card > strong { display: flex; align-items: center; gap: 7px; color: #234c73; font-size: 12px; margin-bottom: 12px; }
+.gedung-page #gedungDetailFocus .gedung-focus-card img { display: block; width: auto; max-width: 100%; max-height: 185px; object-fit: contain; margin: 0 auto; border-radius: 8px; }
+.gedung-page #gedungDetailFocus .gedung-focus-card p { font-size: 11px; color: #687d95; }
+.gedung-page #gedungDetailFocus .gedung-focus-placeholder { min-height: 150px; display: grid; place-items: center; text-align: center; border-radius: 8px; background: #eef4fb; color: #718ca6; font-size: 12px; }
+.gedung-page #gedungDetailDialog .gedung-detail-tools { margin-top: 12px; }
+@media (max-width: 760px) {
+    .gedung-page .gedung-excel-toolbar { flex-direction: column; align-items: stretch; }
+    .gedung-page .gedung-excel-controls { width: 100%; }
+    .gedung-page #gedungDetailSearch { min-width: 0; width: 100%; }
+    .gedung-page #gedungDetailFocus .gedung-focus-grid { grid-template-columns: 1fr; }
+    .gedung-page #gedungDetailFocus .gedung-focus-heading { align-items: flex-start; flex-direction: column; }
+}

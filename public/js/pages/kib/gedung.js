@@ -315,14 +315,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = [[
             'No',
             'Lokasi',
-            'Alamat'
+            'Alamat',
+            'Status Kepemilikan'
         ]];
 
         filteredRows().forEach((row, index) => {
             data.push([
                 index + 1,
                 row.dataset.exportLokasi || '',
-                row.dataset.exportAlamat || ''
+                row.dataset.exportAlamat || '',
+                row.dataset.exportStatus || 'belum_diatur'
             ]);
         });
 
@@ -618,10 +620,181 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ======================================================
+       SEARCHABLE DROPDOWN FORM GEDUNG
+       Select asli tetap mengirimkan value/ID ke Laravel.
+       Menu dipasang di dalam dialog (top layer), bukan body.
+    ====================================================== */
+
+    const gedungCombos = new Map();
+
+    function syncGedungCombos() {
+        gedungCombos.forEach(combo => combo.sync());
+    }
+
+    function enhanceGedungSelect(select) {
+        if (!select || select.dataset.searchEnhanced === '1') return;
+        select.dataset.searchEnhanced = '1';
+
+        const required = select.required;
+        select.required = false;
+        select.classList.add('gedung-combo-original');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'gedung-combo';
+
+        const input = document.createElement('input');
+        input.type = 'search';
+        input.className = 'gedung-combo-input';
+        input.placeholder = 'Ketik untuk mencari pilihan...';
+        input.autocomplete = 'off';
+        input.required = required;
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-expanded', 'false');
+
+        const menu = document.createElement('div');
+        menu.className = 'gedung-combo-menu';
+        menu.setAttribute('role', 'listbox');
+        menu.hidden = true;
+
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.append(input, select);
+
+        // Ditempatkan di top-layer dialog supaya tidak tertutup overlay.
+        const dialog = select.closest('dialog');
+        (dialog || document.body).append(menu);
+
+        let visible = [];
+        let active = -1;
+
+        function selectable() {
+            return [...select.options].filter(option =>
+                option.value && !option.disabled && !option.hidden
+            );
+        }
+
+        function selectedText() {
+            const selected = select.selectedOptions[0];
+            return selected?.value
+                ? selected.textContent.trim().replace(/\s+/g, ' ')
+                : '';
+        }
+
+        function position() {
+            if (menu.hidden) return;
+            const r = input.getBoundingClientRect();
+            const below = window.innerHeight - r.bottom;
+            const h = Math.min(250, Math.max(58, visible.length * 38 + 8));
+            const above = below < Math.min(190, h) && r.top > below;
+            const maxHeight = above ? r.top - 16 : below - 16;
+            menu.style.left = `${Math.round(r.left)}px`;
+            menu.style.width = `${Math.round(r.width)}px`;
+            menu.style.top = `${Math.round(above ? r.top - Math.min(h, maxHeight) - 4 : r.bottom + 4)}px`;
+            menu.style.maxHeight = `${Math.max(80, maxHeight)}px`;
+        }
+
+        function closeMenu() {
+            menu.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            active = -1;
+        }
+
+        function sync() {
+            input.value = selectedText();
+            input.setCustomValidity(required && !select.value
+                ? 'Pilih data dari daftar yang tersedia.' : '');
+            if (!menu.hidden) render('', true);
+        }
+
+        function choose(option) {
+            if (!option || option.disabled || option.hidden) return;
+            select.value = option.value;
+            closeMenu();
+            input.value = selectedText();
+            input.setCustomValidity('');
+            select.dispatchEvent(new Event('change', {bubbles: true}));
+            input.focus();
+        }
+
+        function render(keyword = '', showAll = false) {
+            const q = String(keyword).trim().toLocaleLowerCase('id-ID');
+            visible = selectable().filter(option =>
+                showAll || option.textContent.toLocaleLowerCase('id-ID').includes(q)
+            ).slice(0, 100);
+            menu.replaceChildren();
+            if (!visible.length) {
+                const empty = document.createElement('div');
+                empty.className = 'gedung-combo-empty';
+                empty.textContent = 'Tidak ada pilihan yang sesuai.';
+                menu.append(empty);
+            }
+            visible.forEach((option, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'gedung-combo-option';
+                btn.textContent = option.textContent.trim().replace(/\s+/g, ' ');
+                btn.setAttribute('role', 'option');
+                btn.addEventListener('pointerdown', e => e.preventDefault());
+                btn.addEventListener('click', () => choose(option));
+                menu.append(btn);
+            });
+            active = -1;
+            menu.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+            position();
+        }
+
+        input.addEventListener('focus', () => render('', true));
+        input.addEventListener('click', () => render('', true));
+        input.addEventListener('input', () => {
+            select.value = '';
+            select.dispatchEvent(new Event('change', {bubbles: true}));
+            input.setCustomValidity(required ? 'Pilih data dari daftar.' : '');
+            render(input.value);
+        });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeMenu();
+                input.value = selectedText();
+                return;
+            }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (menu.hidden) render('', true);
+                if (!visible.length) return;
+                active = e.key === 'ArrowDown'
+                    ? Math.min(visible.length - 1, active + 1)
+                    : Math.max(0, active - 1);
+                menu.querySelectorAll('.gedung-combo-option')
+                    .forEach((row, i) => row.classList.toggle('is-focused', i === active));
+            }
+            if (e.key === 'Enter' && !menu.hidden && visible[active]) {
+                e.preventDefault();
+                choose(visible[active]);
+            }
+            if (e.key === 'Tab') closeMenu();
+        });
+        // Jangan timpa teks yang sedang diketik oleh event change kosong.
+        select.addEventListener('change', () => {
+            if (select.value || document.activeElement !== input) sync();
+        });
+        document.addEventListener('pointerdown', event => {
+            if (!wrapper.contains(event.target) && !menu.contains(event.target)) closeMenu();
+        });
+        document.addEventListener('scroll', position, true);
+        window.addEventListener('resize', position);
+        gedungCombos.set(select.name, {sync, closeMenu, select, input});
+        sync();
+    }
+
+    form.querySelectorAll('select[name]').forEach(enhanceGedungSelect);
+
+    /* ======================================================
        RESET FORM
     ====================================================== */
 
     function resetForm() {
+        form.querySelectorAll('option[data-gedung-history="1"]').forEach(option => option.remove());
         form.reset();
 
         form.action = root.dataset.storeUrl;
@@ -650,6 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         $('#gedungPendingSearch').value = '';
+        syncGedungCombos();
     }
 
     /* ======================================================
@@ -674,6 +848,17 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', event => {
         const creating = $('#gedungMethod').disabled;
 
+        // Input search yang belum dipilih tidak boleh menyimpan ID lama.
+        for (const combo of gedungCombos.values()) {
+            if (combo.input.required && !combo.select.value) {
+                event.preventDefault();
+                combo.input.setCustomValidity('Pilih pilihan dari daftar.');
+                combo.input.reportValidity();
+                combo.input.focus();
+                return;
+            }
+        }
+
         if (
             creating &&
             !$('#gedungVoucherId').value
@@ -687,193 +872,156 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ======================================================
-       ATRIBUT DETAIL GEDUNG
+       K.I.B C MODEL EXCEL — SESUAI FORMAT LAPORAN PERUSAHAAN
+       18 kolom Excel + Status Kepemilikan + kolom Berkas.
     ====================================================== */
 
-    function detailAttributes(item) {
-        return [
-            ['Kode Inventaris', item.kode],
-            ['Nama Gedung', item.nama_barang],
-            ['Penggunaan', item.guna],
-            ['No. Register', item.reg],
-            ['Departemen', item.departemen],
-            ['Divisi', item.divisi],
-            ['Kondisi', item.kondisi],
-            ['Konstruksi', item.konstruksi],
-            ['Material / Bahan', item.materi],
-            ['Luas Bangunan', item.luas],
-            ['Luas Lantai / Tanah', item.luastanah],
-            ['Status Tanah', item.status],
-            ['Kode Tanah', item.kode_tanah],
-            ['Tanggal Dokumen', fmtDate(item.tgl_imb)],
-            ['No. IMB / Dokumen', item.no_imb],
-            ['Asal Perolehan', item.asal],
-            ['Keterangan', item.ket]
-        ];
-    }
+    const OWNER_LABELS = {
+        perumdam: 'Perumdam Tirta Kencana',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemerintah Provinsi',
+        pemkot: 'Pemerintah Kota',
+        swasta: 'Swasta'
+    };
 
-    /* ======================================================
-       RINCIAN SATU GEDUNG
-    ====================================================== */
+    const ownerLabel = value => OWNER_LABELS[String(value || '').trim().toLowerCase()] || 'Belum Diatur';
+    const safe = value => esc(String(value ?? '').trim() || '—');
+    const dateYear = value => /^\d{4}/.test(String(value || '')) ? String(value).slice(0, 4) : '—';
+    const normalize = value => String(value ?? '').trim().toLocaleLowerCase('id-ID');
+    const currency = value => value === null || value === undefined || value === ''
+        ? '—' : rupiah(value);
 
     function displayFocus(item) {
         const pane = $('#gedungDetailFocus');
-
         pane.hidden = false;
+        const status = ownerLabel(item.status_kepemilikan);
 
         pane.innerHTML = `
             <div class="gedung-focus-heading">
-
-                <h3>
-                    Rincian:
-                    ${esc(item.nama_barang || 'Gedung')}
-                </h3>
-
-                <button
-                    type="button"
-                    class="gedung-btn outline"
-                    data-hide-focus
-                >
-                    Tutup rincian
-                </button>
-
+                <div>
+                    <small>LAMPIRAN & TINDAKAN</small>
+                    <h3>${safe(item.nama_barang || 'Gedung dan Bangunan')}</h3>
+                    <p>Kode ${safe(item.kode)} · Register ${safe(item.reg)} · ${esc(status)}</p>
+                </div>
+                <div class="gedung-focus-actions">
+                    <button type="button" class="gedung-btn outline" data-edit="${Number(item.id)}">
+                        <i data-lucide="square-pen"></i> Edit
+                    </button>
+                    <button type="button" class="gedung-btn danger" data-delete="${Number(item.id)}">
+                        <i data-lucide="trash-2"></i> Hapus
+                    </button>
+                    <button type="button" class="gedung-btn outline" data-hide-focus>
+                        <i data-lucide="chevron-up"></i> Tutup Berkas
+                    </button>
+                </div>
             </div>
-
-            ${
-                item.img
-                    ? `
-                        <div class="gedung-focus-media">
-                            <a
-                                href="${fileUrl(item.id, 'foto')}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <img
-                                    src="${fileUrl(item.id, 'foto')}"
-                                    alt="Foto ${esc(item.nama_barang)}"
-                                    loading="lazy"
-                                >
-                            </a>
-                        </div>
-                    `
-                    : ''
-            }
-
-            <dl class="gedung-attributes">
-                ${
-                    detailAttributes(item)
-                        .map(([label, value]) => `
-                            <div>
-                                <dt>${esc(label)}</dt>
-                                <dd>${esc(value || '—')}</dd>
-                            </div>
-                        `)
-                        .join('')
-                }
-            </dl>
-
-            ${
-                item.dok
-                    ? `
-                        <a
-                            class="gedung-btn outline"
-                            href="${fileUrl(item.id, 'dokumen')}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <i data-lucide="file-text"></i>
-                            Lihat Dokumen PDF
-                        </a>
-                    `
-                    : ''
-            }
+            <div class="gedung-focus-grid">
+                <div class="gedung-focus-card">
+                    <strong><i data-lucide="image"></i> Foto Gedung</strong>
+                    ${item.img ? `
+                        <a href="${fileUrl(item.id, 'foto')}" target="_blank" rel="noopener noreferrer">
+                            <img src="${fileUrl(item.id, 'foto')}" alt="Foto ${safe(item.nama_barang)}" loading="lazy">
+                        </a>` : '<div class="gedung-focus-placeholder">Foto belum tersedia.</div>'}
+                </div>
+                <div class="gedung-focus-card">
+                    <strong><i data-lucide="file-text"></i> Dokumen PDF / IMB</strong>
+                    ${item.dok ? `
+                        <a class="gedung-btn outline" href="${fileUrl(item.id, 'dokumen')}"
+                           target="_blank" rel="noopener noreferrer">
+                            <i data-lucide="eye"></i> Lihat Dokumen PDF
+                        </a>` : '<div class="gedung-focus-placeholder">Dokumen belum tersedia.</div>'}
+                    <p>Dokumen: ${safe(item.no_imb)} · ${esc(fmtDate(item.tgl_imb))}</p>
+                </div>
+            </div>
         `;
-
         icons();
-
-        pane.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest'
-        });
+        $('#gedungDetailItems').querySelectorAll('[data-gedung-row]')
+            .forEach(row => row.classList.toggle('is-selected', row.dataset.gedungRow === String(item.id)));
+        pane.scrollIntoView({behavior: 'smooth', block: 'nearest'});
     }
-
-    /* ======================================================
-       DAFTAR GEDUNG PER LOKASI
-    ====================================================== */
 
     function renderDetailList() {
         const dep = $('#gedungDetailDep').value;
         const div = $('#gedungDetailDiv').value;
+        const keyword = normalize($('#gedungDetailSearch').value);
+        const items = detailItems.filter(item => {
+            const relation = (!dep || String(item.id_departemen) === dep) &&
+                (!div || String(item.id_div) === div);
+            const searchable = [item.nama_barang, item.kode, item.reg,
+                item.alamat_detail, activeLocation?.name, item.no_imb,
+                item.ket, item.departemen, item.divisi, item.status_kepemilikan]
+                .join(' ').toLocaleLowerCase('id-ID');
+            return relation && (!keyword || searchable.includes(keyword));
+        });
 
-        const items = detailItems.filter(item =>
-            (!dep || String(item.id_departemen) === dep) &&
-            (!div || String(item.id_div) === div)
-        );
-
-        $('#gedungDetailItems').innerHTML =
-            items.length
-                ? items.map(item => {
-                    const action =
-                        detailMode === 'delete'
-                            ? `
-                                <button
-                                    type="button"
-                                    class="gedung-btn danger"
-                                    data-delete="${item.id}"
-                                >
-                                    <i data-lucide="trash-2"></i>
-                                    Hapus
-                                </button>
-                            `
-                            : detailMode === 'edit'
-                                ? `
-                                    <button
-                                        type="button"
-                                        class="gedung-btn outline"
-                                        data-edit="${item.id}"
-                                    >
-                                        <i data-lucide="square-pen"></i>
-                                        Edit
-                                    </button>
-                                `
-                                : `
-                                    <button
-                                        type="button"
-                                        class="gedung-btn outline"
-                                        data-focus="${item.id}"
-                                    >
-                                        <i data-lucide="eye"></i>
-                                        Lihat Rincian
-                                    </button>
-                                `;
-
-                    return `
-                        <article class="gedung-inventory">
-
-                            <div>
-                                <strong>
-                                    ${esc(item.nama_barang || 'Gedung')}
-                                </strong>
-
-                                <small>
-                                    ${esc(item.kode || '—')} ·
-                                    ${esc(item.departemen || '—')} /
-                                    ${esc(item.divisi || '—')} ·
-                                    ${esc(item.kondisi || '—')}
-                                </small>
-                            </div>
-
-                            ${action}
-
-                        </article>
-                    `;
-                }).join('')
-                : `
-                    <p class="gedung-empty">
-                        Tidak ada inventaris untuk filter tersebut.
-                    </p>
-                `;
-
+        $('#gedungDetailCount').textContent = `${items.length} data`;
+        $('#gedungDetailFocus').hidden = true;
+        const head = `
+          <div class="gedung-excel-scroll" role="region" tabindex="0"
+               aria-label="Tabel K.I.B C Gedung dan Bangunan">
+          <table class="gedung-excel-table">
+            <thead>
+              <tr class="gedung-excel-head">
+                <th rowspan="2">No.</th>
+                <th rowspan="2">Nama Barang / Jenis Barang</th>
+                <th colspan="2">Nomor</th>
+                <th rowspan="2">Kondisi Bangunan</th>
+                <th colspan="2">Konstruksi Bangunan</th>
+                <th rowspan="2">Luas Lantai (m²)</th>
+                <th rowspan="2">Letak / Alamat</th>
+                <th colspan="2">Dokumen Gedung</th>
+                <th rowspan="2">Luas Tanah (m²)</th>
+                <th rowspan="2">Status Tanah</th>
+                <th rowspan="2">Nomor Kode Tanah</th>
+                <th rowspan="2">Asal Usul</th>
+                <th rowspan="2">Harga (Rp.)</th>
+                <th rowspan="2">Sumber Dana</th>
+                <th rowspan="2">Keterangan</th>
+                <th rowspan="2">Status Kepemilikan</th>
+                <th rowspan="2">Berkas</th>
+              </tr>
+              <tr class="gedung-excel-subhead">
+                <th>Kode Barang</th><th>Register</th>
+                <th>Bertingkat / Tidak</th><th>Beton / Tidak</th>
+                <th>Tahun</th><th>Nomor</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.length ? items.map((item, i) => {
+                const status = ownerLabel(item.status_kepemilikan);
+                const actionText = detailMode === 'delete' ? 'Hapus'
+                    : detailMode === 'edit' ? 'Edit' : 'Berkas';
+                const actionAttr = detailMode === 'delete' ? 'data-delete'
+                    : detailMode === 'edit' ? 'data-edit' : 'data-focus';
+                const actionClass = detailMode === 'delete' ? ' danger' : ' outline';
+                const nilai = item.nilai_transaksi ?? item.nilai;
+                return `<tr data-gedung-row="${Number(item.id)}">
+                    <td class="gedung-excel-index">${i + 1}</td>
+                    <td class="gedung-excel-name">${safe(item.nama_barang)}</td>
+                    <td>${safe(item.kode)}</td>
+                    <td>${safe(item.reg)}</td>
+                    <td>${safe(item.kondisi)}</td>
+                    <td>${safe(item.konstruksi)}</td>
+                    <td>${safe(item.materi)}</td>
+                    <td>${safe(item.luas)}</td>
+                    <td>${safe(item.alamat_detail || activeLocation?.name)}</td>
+                    <td>${esc(dateYear(item.tgl_imb))}</td>
+                    <td>${safe(item.no_imb)}</td>
+                    <td>${safe(item.luastanah)}</td>
+                    <td>${safe(item.status)}</td>
+                    <td>${safe(item.kode_tanah)}</td>
+                    <td>${safe(item.asal)}</td>
+                    <td class="gedung-excel-money">${esc(currency(nilai))}</td>
+                    <td>${safe(item.sumber_dana)}</td>
+                    <td>${safe(item.ket)}</td>
+                    <td><span class="gedung-owner-badge ${status === 'Belum Diatur' ? 'is-unknown' : ''}">${esc(status)}</span></td>
+                    <td><button type="button" class="gedung-btn${actionClass}"
+                        ${actionAttr}="${Number(item.id)}">${esc(actionText)}</button></td>
+                </tr>`;
+              }).join('') : '<tr><td colspan="20" class="gedung-excel-empty">Tidak ada data sesuai filter.</td></tr>'}
+            </tbody>
+          </table></div>`;
+        $('#gedungDetailItems').innerHTML = head;
         icons();
     }
 
@@ -938,6 +1086,8 @@ document.addEventListener('DOMContentLoaded', () => {
         makeDiv();
     }
 
+    $('#gedungDetailSearch').addEventListener('input', renderDetailList);
+
     /* ======================================================
        DETAIL LOKASI
     ====================================================== */
@@ -960,6 +1110,8 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#gedungDetailAddress').textContent =
             'Memuat lokasi dan daftar bangunan...';
 
+        $('#gedungDetailSearch').value = '';
+        $('#gedungDetailCount').textContent = 'Memuat...';
         $('#gedungDetailItems').innerHTML = `
             <p class="gedung-empty">
                 Memuat data...
@@ -1029,7 +1181,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 '[data-delete]'
             );
 
-            if (!del) return;
+            if (!del) {
+                const selectedRow = event.target.closest('[data-gedung-row]');
+                if (selectedRow) {
+                    const selectedItem = detailItems.find(row =>
+                        String(row.id) === selectedRow.dataset.gedungRow);
+                    if (selectedItem) displayFocus(selectedItem);
+                }
+                return;
+            }
 
             const item = detailItems.find(row =>
                 String(row.id) === del.dataset.delete
@@ -1053,16 +1213,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     );
 
-    $('#gedungDetailFocus').addEventListener(
-        'click',
-        event => {
-            if (
-                event.target.closest('[data-hide-focus]')
-            ) {
-                $('#gedungDetailFocus').hidden = true;
-            }
+    $('#gedungDetailFocus').addEventListener('click', event => {
+        if (event.target.closest('[data-hide-focus]')) {
+            $('#gedungDetailFocus').hidden = true;
+            return;
         }
-    );
+        const edit = event.target.closest('[data-edit]');
+        if (edit) {
+            editGedung(edit.dataset.edit);
+            return;
+        }
+        const del = event.target.closest('[data-delete]');
+        if (!del) return;
+        const item = detailItems.find(row => String(row.id) === del.dataset.delete);
+        if (!item) return;
+        if (!confirm(`Hapus inventaris "${item.nama_barang || item.kode}"?\nData lokasi dan Nilai Aset tidak ikut dihapus.`)) return;
+        const deleteForm = $('#gedungDeleteForm');
+        deleteForm.action = url(item.id);
+        deleteForm.submit();
+    });
 
     /* ======================================================
        EDIT DATA GEDUNG
@@ -1115,6 +1284,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? `Nilai Aset #${item.nilai_aktiva_id}`
                     : 'Data lama';
 
+            // Referensi Barang nonaktif yang digunakan data lama
+            // tetap terlihat saat Edit, tanpa tersedia pada Tambah.
+            const barangSelect = form.elements.namedItem('id_barang');
+            if (barangSelect && item.id_barang &&
+                ![...barangSelect.options].some(option => option.value === String(item.id_barang))) {
+                const historical = document.createElement('option');
+                historical.value = String(item.id_barang);
+                historical.textContent = `${item.nama_barang || 'Barang lama'} (referensi historis)`;
+                historical.dataset.gedungHistory = '1';
+                barangSelect.append(historical);
+            }
+
             [
                 'id_barang',
                 'kode',
@@ -1124,6 +1305,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'konstruksi',
                 'materi',
                 'status',
+                'status_kepemilikan',
+                'sumber_dana',
                 'luas',
                 'luastanah',
                 'kode_tanah',
@@ -1140,6 +1323,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             form.elements.namedItem('tgl_imb').value =
                 String(item.tgl_imb || '').slice(0, 10);
+            // Sinkronisasi tampilan searchable setelah isi Edit.
+            syncGedungCombos();
 
             close('gedungDetailDialog');
             open('gedungFormDialog');

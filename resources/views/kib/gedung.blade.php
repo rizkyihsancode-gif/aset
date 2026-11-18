@@ -290,6 +290,7 @@
                         <col class="gc-no">
                         <col class="gc-lokasi">
                         <col class="gc-alamat">
+                        <col class="gc-status">
                         <col class="gc-aksi">
                     </colgroup>
 
@@ -299,6 +300,7 @@
                             <th>No.</th>
                             <th>Lokasi</th>
                             <th>Alamat</th>
+                            <th>Status Kepemilikan</th>
                             <th>Aksi</th>
                         </tr>
 
@@ -310,7 +312,8 @@
                             <tr class="gedung-row"
                                 data-search="{{ mb_strtolower(trim((string) $row->lokasi) . ' ' . trim((string) $row->alamat)) }}"
                                 data-export-lokasi="{{ trim((string) $row->lokasi) }}"
-                                data-export-alamat="{{ trim((string) $row->alamat) }}">
+                                data-export-alamat="{{ trim((string) $row->alamat) }}"
+                                data-export-status="{{ $row->status_kepemilikan_ringkas }}">
 
                                 {{-- 1. NOMOR --}}
 
@@ -337,7 +340,29 @@
                                     {{ trim((string) $row->alamat) ?: '—' }}
                                 </td>
 
-                                {{-- 4. AKSI --}}
+                                {{-- STATUS KEPEMILIKAN PER LOKASI --}}
+                                <td class="gedung-center">
+                                    @php
+                                        $statusRingkas = strtolower(
+                                            trim((string) ($row->status_kepemilikan_ringkas ?? '')),
+                                        );
+                                        $statusLabel =
+                                            [
+                                                'perumdam' => 'Perumdam',
+                                                'pusat' => 'Pemerintah Pusat',
+                                                'pemprov' => 'Pemprov',
+                                                'pemkot' => 'Pemkot',
+                                                'swasta' => 'Swasta',
+                                                'campuran' => 'Campuran',
+                                            ][$statusRingkas] ?? 'Belum Diatur';
+                                    @endphp
+                                    <span
+                                        class="gedung-owner-badge {{ $statusRingkas === 'campuran' ? 'is-mixed' : ($statusRingkas === 'belum_diatur' ? 'is-unknown' : '') }}">
+                                        {{ $statusLabel }}
+                                    </span>
+                                </td>
+
+                                {{-- 5. AKSI --}}
 
                                 <td class="gedung-center">
 
@@ -370,7 +395,7 @@
                         @empty
 
                             <tr>
-                                <td colspan="4" class="gedung-empty">
+                                <td colspan="5" class="gedung-empty">
                                     Belum ada inventaris Gedung pada database.
                                     Data Nilai Aset dapat diproses
                                     melalui Lihat Data Masuk.
@@ -758,6 +783,25 @@
                                 </label>
 
                                 <label>
+                                    Status Kepemilikan *
+                                    <select name="status_kepemilikan" required>
+                                        <option value="">— Pilih Kepemilikan —</option>
+                                        <option value="perumdam" @selected(old('status_kepemilikan') === 'perumdam')>Perumdam Tirta Kencana
+                                        </option>
+                                        <option value="pusat" @selected(old('status_kepemilikan') === 'pusat')>Pemerintah Pusat</option>
+                                        <option value="pemprov" @selected(old('status_kepemilikan') === 'pemprov')>Pemerintah Provinsi</option>
+                                        <option value="pemkot" @selected(old('status_kepemilikan') === 'pemkot')>Pemerintah Kota</option>
+                                        <option value="swasta" @selected(old('status_kepemilikan') === 'swasta')>Swasta</option>
+                                    </select>
+                                </label>
+
+                                <label>
+                                    Sumber Dana
+                                    <input name="sumber_dana" value="{{ old('sumber_dana') }}" maxlength="255"
+                                        placeholder="Contoh: APBD Kota / Penyertaan Modal">
+                                </label>
+
+                                <label>
                                     Kode Tanah *
                                     <input name="kode_tanah" value="{{ old('kode_tanah') }}" maxlength="255" required>
                                 </label>
@@ -824,71 +868,69 @@
         </dialog>
 
         {{-- =====================================================
-         MODAL DETAIL LOKASI
-    ===================================================== --}}
+         DETAIL K.I.B C MODEL EXCEL — SEPERTI K.I.B TANAH
+         ===================================================== --}}
 
-        <dialog id="gedungDetailDialog" class="gedung-dialog">
+        <dialog id="gedungDetailDialog" class="gedung-dialog gedung-excel-dialog">
 
             <div class="gedung-dialog-head">
-
                 <div>
-                    <small>DETAIL INVENTARIS</small>
-                    <h2 id="gedungDetailTitle">Detail Gedung</h2>
-                    <p id="gedungDetailAddress">
-                        Per lokasi, departemen dan divisi.
-                    </p>
+                    <small>K.I.B C / KARTU INVENTARIS GEDUNG DAN BANGUNAN</small>
+                    <h2 id="gedungDetailTitle">Data Gedung dan Bangunan</h2>
+                    <p id="gedungDetailAddress">Rincian per lokasi.</p>
                 </div>
 
-                <button type="button" class="gedung-x" data-close="gedungDetailDialog">
+                <button type="button" class="gedung-x" data-close="gedungDetailDialog" aria-label="Tutup detail">
                     <i data-lucide="x"></i>
                 </button>
-
             </div>
 
             <div class="gedung-dialog-body">
+                <div class="gedung-excel-toolbar">
+                    <div>
+                        <strong>Daftar Inventaris Gedung dan Bangunan</strong>
+                        <small>Kolom sesuai K.I.B C. Geser tabel untuk melihat kolom lainnya.</small>
+                    </div>
+
+                    <div class="gedung-excel-controls">
+                        <input type="search" id="gedungDetailSearch"
+                            placeholder="Cari gedung, kode, register, atau alamat..."
+                            aria-label="Cari dalam detail gedung">
+                        <span id="gedungDetailCount" class="gedung-excel-count">0 data</span>
+                    </div>
+                </div>
 
                 <div class="gedung-fields cols2 gedung-detail-filters">
-
-                    <label>
-                        Departemen
-
+                    <label>Departemen
                         <select id="gedungDetailDep">
                             <option value="">Semua Departemen</option>
                         </select>
                     </label>
-
-                    <label>
-                        Divisi
-
+                    <label>Divisi
                         <select id="gedungDetailDiv">
                             <option value="">Semua Divisi</option>
                         </select>
                     </label>
-
                 </div>
 
-                {{-- AKSES NILAI DAN PDF DIPINDAH KE DETAIL --}}
+                <div id="gedungDetailItems" class="gedung-detail-items" aria-live="polite"></div>
 
-                <div class="gedung-detail-tools">
-
-                    <button type="button" class="gedung-btn outline" id="gedungDetailNilai">
-                        <i data-lucide="wallet"></i>
-                        Rincian Nilai
-                    </button>
-
-                    <button type="button" class="gedung-btn outline" id="gedungDetailPdf">
-                        <i data-lucide="file-text"></i>
-                        Dokumen PDF
-                    </button>
-
+                <div class="gedung-excel-hint">
+                    <span>↔ Geser tabel ke kanan untuk melihat seluruh data.</span>
+                    <span>Klik <b>Berkas</b> untuk foto, PDF, dan tindakan.</span>
                 </div>
-
-                <div id="gedungDetailItems" class="gedung-detail-items"></div>
 
                 <section id="gedungDetailFocus" class="gedung-detail-focus" hidden></section>
 
+                <div class="gedung-detail-tools">
+                    <button type="button" class="gedung-btn outline" id="gedungDetailNilai">
+                        <i data-lucide="wallet"></i> Rincian Nilai Lokasi
+                    </button>
+                    <button type="button" class="gedung-btn outline" id="gedungDetailPdf">
+                        <i data-lucide="file-text"></i> Semua PDF Lokasi
+                    </button>
+                </div>
             </div>
-
         </dialog>
 
         {{-- =====================================================
