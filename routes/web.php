@@ -744,20 +744,20 @@ Route::delete(
 Route::get('/kib/jalan', [KIBController::class, 'jalanIndex'])
     ->name('kib.jalan');
 Route::get('/kib/jalan/{jenis}/lokasi/{lokasi}', [KIBController::class, 'jalanDetailLokasi'])
-    ->whereIn('jenis', ['gedung', 'jembatan'])->whereNumber('lokasi')
-    ->name('kib.jalan.detail');
-Route::post('/kib/jalan/manual', [KIBController::class, 'jalanSimpan'])
-    ->name('kib.jalan.manual.store');
-Route::get('/kib/jalan/manual/{item}', [KIBController::class, 'jalanEdit'])
-    ->whereNumber('item')->name('kib.jalan.manual.show');
-Route::put('/kib/jalan/manual/{item}', [KIBController::class, 'jalanPerbarui'])
-    ->whereNumber('item')->name('kib.jalan.manual.update');
-Route::delete('/kib/jalan/manual/{item}', [KIBController::class, 'jalanHapus'])
-    ->whereNumber('item')->name('kib.jalan.manual.destroy');
+    ->whereIn('jenis', ['gedung', 'jembatan'])->whereNumber('lokasi')->name('kib.jalan.detail');
+// CRUD Jembatan: langsung tabel kib_d_s, bukan kib_d_manual.
+Route::post('/kib/jalan/item', [KIBController::class, 'jalanSimpan'])
+    ->name('kib.jalan.item.store');
+Route::get('/kib/jalan/item/{item}', [KIBController::class, 'jalanEdit'])
+    ->whereNumber('item')->name('kib.jalan.item.show');
+Route::put('/kib/jalan/item/{item}', [KIBController::class, 'jalanPerbarui'])
+    ->whereNumber('item')->name('kib.jalan.item.update');
+Route::delete('/kib/jalan/item/{item}', [KIBController::class, 'jalanHapus'])
+    ->whereNumber('item')->name('kib.jalan.item.destroy');
 Route::put('/kib/jalan/arsip/{item}/kepemilikan', [KIBController::class, 'jalanPerbaruiPemilikArsip'])
     ->whereNumber('item')->name('kib.jalan.arsip.kepemilikan');
 Route::get('/kib/jalan/file/{source}/{item}/{jenis}', [KIBController::class, 'jalanFile'])
-    ->whereIn('source', ['manual', 'arsip'])->whereIn('jenis', ['foto', 'dokumen'])
+    ->whereIn('source', ['jembatan', 'arsip'])->whereIn('jenis', ['foto', 'dokumen'])
     ->whereNumber('item')->name('kib.jalan.file');
 
 

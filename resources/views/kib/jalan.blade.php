@@ -20,7 +20,7 @@
         ];
     @endphp
     <main id="jalanPage" class="content jalan-page kd-page" data-base="{{ url('/kib/jalan') }}"
-        data-manual-ready="{{ $manualReady ? '1' : '0' }}" data-gedung="{{ route('kib.gedung') }}"
+        data-pending="{{ route('kib.pending', ['module' => 'jalan']) }}" data-gedung="{{ route('kib.gedung') }}"
         data-token="{{ csrf_token() }}">
 
         <header class="kd-hero">
@@ -31,8 +31,8 @@
                         <i data-lucide="chevron-right"></i><span>K.I.B</span>
                         <i data-lucide="chevron-right"></i><strong>Jalan, Irigasi dan Jaringan</strong>
                     </nav>
-                    <h1>Jalan, Irigasi dan Jaringan</h1>
-                    <p>Inventaris K.I.B D dengan tampilan Detail sesuai kartu inventaris Excel.</p>
+                    <h1>K.I.B D — Jalan, Irigasi dan Jaringan</h1>
+                    <p>Kelola inventaris Gedung/Irigasi dan Jembatan, Data Pending Nilai Aset, dan Detail Excel.</p>
                 </div>
                 <span class="kd-hero-date"><i data-lucide="calendar-days"></i>
                     {{ now('Asia/Makassar')->locale('id')->translatedFormat('d F Y') }}
@@ -46,8 +46,8 @@
                 </article>
                 <article><i data-lucide="route"></i>
                     <div><small>Jembatan / Arsip K.I.B
-                            D</small><strong>{{ number_format($totalJembatan, 0, ',', '.') }}</strong><span>Arsip lama +
-                            data baru</span></div>
+                            D</small><strong>{{ number_format($totalJembatan, 0, ',', '.') }}</strong><span>Data asli web
+                            aset lama</span></div>
                 </article>
                 <article><i data-lucide="map-pin"></i>
                     <div><small>Lokasi Gedung</small><strong>{{ count($gedungLokasi) }}</strong><span>Lokasi
@@ -60,6 +60,20 @@
             </div>
         </header>
 
+        <section class="kd-pending-banner" aria-label="Pending Nilai Aset K.I.B D">
+            <div class="kd-pending-symbol"><i data-lucide="bell-ring"></i></div>
+            <div class="kd-pending-copy">
+                <small>NILAI ASET · DATA BELUM DIPROSES</small>
+                <h2>Data Jalan, Irigasi & Jaringan Menunggu Diproses
+                    <span class="kd-pending-badge">{{ number_format($totalPending, 0, ',', '.') }}</span>
+                </h2>
+                <p>Ada {{ number_format($totalPending, 0, ',', '.') }} transaksi penambahan aset yang belum diubah menjadi
+                    K.I.B D.</p>
+            </div>
+            <button type="button" class="kd-button outline" id="kdViewPending"><i data-lucide="inbox"></i> Lihat Data
+                Pending</button>
+        </section>
+
         <section class="kd-workspace" aria-label="Data KIB D">
             <div class="kd-section-top">
                 <div>
@@ -67,7 +81,7 @@
                     <h2>Data Jalan, Irigasi dan Jaringan</h2>
                     <p>Ringkasan lokasi · Detail Excel · Status Kepemilikan</p>
                 </div>
-                <button class="kd-button primary" id="kdNew" type="button" {{ $manualReady ? '' : 'disabled' }}>
+                <button class="kd-button primary" id="kdNew" type="button">
                     <i data-lucide="plus"></i> Tambah Jembatan
                 </button>
             </div>
@@ -116,8 +130,8 @@
                             <i data-lucide="info"></i> Menampilkan seluruh data Gedung dan Bangunan dari K.I.B C tanpa
                             menyalin atau mengganti data aslinya.
                         @else
-                            <i data-lucide="database"></i> Menampilkan data K.I.B D dari web lama dan inventaris Jembatan
-                            baru. Arsip lama tetap aman; Status Kepemilikan bisa diperbarui.
+                            <i data-lucide="database"></i> Semua data Jembatan berasal dari tabel asli kib_d_s; perubahan
+                            CRUD langsung memperbarui tabel yang sama.
                         @endif
                     </p>
                     <div class="kd-table-shell">
@@ -181,10 +195,6 @@
                 <p class="kd-help">Tabel arsip <code>kib_d_s</code> belum tersedia di database aplikasi ini. Data Jembatan lama
                     akan muncul setelah arsip tersedia.</p>
             @endunless
-            @unless ($manualReady)
-                <p class="kd-help">Untuk menambahkan Jembatan baru, jalankan migration khusus <code>kib_d_manual</code> dahulu.
-                </p>
-            @endunless
         </section>
 
         {{-- DETAIL MODEL EXCEL --}}
@@ -197,74 +207,81 @@
                 <button class="kd-icon-button" data-kd-close="kdDetailDialog" aria-label="Tutup"><i
                         data-lucide="x"></i></button>
             </div>
-            <div class="kd-dialog-body">
-                <div class="kd-detail-bar">
-                    <div><strong>Daftar Inventaris · Format Excel K.I.B D</strong>
-                        <p>Geser tabel ke kanan untuk melihat seluruh kolom.</p>
+            <div class="kd-dialog-body kd-detail-layout">
+                <aside class="kd-detail-sidebar" aria-label="Pilih kelompok lokasi">
+                    <h3><i data-lucide="list-tree"></i> Kelompok Lokasi</h3>
+                    <input type="search" id="kdGroupSearch" placeholder="Cari lokasi..." autocomplete="off">
+                    <div id="kdGroupList" class="kd-group-list"></div>
+                </aside>
+                <div class="kd-detail-main">
+                    <div class="kd-detail-bar">
+                        <div><strong>Daftar Inventaris · Format Excel K.I.B D</strong>
+                            <p>Geser tabel ke kanan untuk melihat seluruh kolom.</p>
+                        </div>
+                        <div class="kd-detail-controls">
+                            <input id="kdDetailSearch" type="search" placeholder="Cari barang, kode, register..."
+                                aria-label="Cari barang dalam detail">
+                            <span class="kd-count" id="kdDetailCount">0 data</span>
+                            <button type="button" class="kd-button primary" id="kdExportDetail"><i
+                                    data-lucide="file-spreadsheet"></i> Export Excel</button>
+                        </div>
                     </div>
-                    <div class="kd-detail-controls">
-                        <input id="kdDetailSearch" type="search" placeholder="Cari barang, kode, register..."
-                            aria-label="Cari barang dalam detail">
-                        <span class="kd-count" id="kdDetailCount">0 data</span>
-                        <button type="button" class="kd-button primary" id="kdExportDetail"><i
-                                data-lucide="file-spreadsheet"></i> Export Excel</button>
+                    <div class="kd-excel-scroll" role="region" tabindex="0" aria-label="Tabel Excel KIB D">
+                        <table class="kd-excel-table" id="kdExcelTable">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">No.</th>
+                                    <th rowspan="2">Nama Barang / Jenis Barang</th>
+                                    <th colspan="2">Nomor</th>
+                                    <th rowspan="2">Kondisi Bangunan (B, KB, RB)</th>
+                                    <th colspan="2">Konstruksi Bangunan</th>
+                                    <th rowspan="2">Luas Lantai (M²)</th>
+                                    <th rowspan="2">Letak / Lokasi Alamat</th>
+                                    <th colspan="2">Dokumen Gedung</th>
+                                    <th rowspan="2">Luas (M²)</th>
+                                    <th rowspan="2">Status Tanah</th>
+                                    <th rowspan="2">Nomor Kode Tanah</th>
+                                    <th rowspan="2">Asal Usul</th>
+                                    <th rowspan="2">Harga (Rp.)</th>
+                                    <th rowspan="2">Keterangan</th>
+                                    <th rowspan="2">Status Kepemilikan</th>
+                                    <th rowspan="2">Berkas</th>
+                                </tr>
+                                <tr>
+                                    <th>Kode Barang</th>
+                                    <th>Register</th>
+                                    <th>Bertingkat / Tidak</th>
+                                    <th>Beton / Tidak</th>
+                                    <th>Tanggal</th>
+                                    <th>Nomor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kdExcelBody">
+                                <tr>
+                                    <td colspan="19">Pilih lokasi untuk melihat inventaris.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
+                    <div class="kd-table-hint"><span><i data-lucide="move-horizontal"></i> Geser ke kanan untuk kolom
+                            selanjutnya</span><span>Data terbaru berada di urutan teratas</span></div>
+                    <section class="kd-berkas" id="kdBerkas" hidden aria-live="polite">
+                        <div class="kd-berkas-head">
+                            <div><small>LAMPIRAN & TINDAKAN</small>
+                                <h3 id="kdBerkasTitle">Detail Inventaris</h3><span id="kdBerkasSource"></span>
+                            </div>
+                            <div id="kdBerkasActions" class="kd-row-actions"></div>
+                        </div>
+                        <div class="kd-berkas-grid">
+                            <div class="kd-file-box"><strong>Foto Aset</strong>
+                                <div id="kdBerkasFoto" class="kd-image-placeholder">Foto belum tersedia</div>
+                            </div>
+                            <div class="kd-file-box"><strong>Dokumen PDF / Berkas</strong>
+                                <div id="kdBerkasDok" class="kd-document-placeholder">Dokumen belum tersedia</div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <div class="kd-excel-scroll" role="region" tabindex="0" aria-label="Tabel Excel KIB D">
-                    <table class="kd-excel-table" id="kdExcelTable">
-                        <thead>
-                            <tr>
-                                <th rowspan="2">No.</th>
-                                <th rowspan="2">Nama Barang / Jenis Barang</th>
-                                <th colspan="2">Nomor</th>
-                                <th rowspan="2">Kondisi Bangunan (B, KB, RB)</th>
-                                <th colspan="2">Konstruksi Bangunan</th>
-                                <th rowspan="2">Luas Lantai (M²)</th>
-                                <th rowspan="2">Letak / Lokasi Alamat</th>
-                                <th colspan="2">Dokumen Gedung</th>
-                                <th rowspan="2">Luas (M²)</th>
-                                <th rowspan="2">Status Tanah</th>
-                                <th rowspan="2">Nomor Kode Tanah</th>
-                                <th rowspan="2">Asal Usul</th>
-                                <th rowspan="2">Harga (Rp.)</th>
-                                <th rowspan="2">Keterangan</th>
-                                <th rowspan="2">Status Kepemilikan</th>
-                                <th rowspan="2">Berkas</th>
-                            </tr>
-                            <tr>
-                                <th>Kode Barang</th>
-                                <th>Register</th>
-                                <th>Bertingkat / Tidak</th>
-                                <th>Beton / Tidak</th>
-                                <th>Tanggal</th>
-                                <th>Nomor</th>
-                            </tr>
-                        </thead>
-                        <tbody id="kdExcelBody">
-                            <tr>
-                                <td colspan="19">Pilih lokasi untuk melihat inventaris.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="kd-table-hint"><span><i data-lucide="move-horizontal"></i> Geser ke kanan untuk kolom
-                        selanjutnya</span><span>Data arsip tidak diubah otomatis</span></div>
-                <section class="kd-berkas" id="kdBerkas" hidden aria-live="polite">
-                    <div class="kd-berkas-head">
-                        <div><small>LAMPIRAN & TINDAKAN</small>
-                            <h3 id="kdBerkasTitle">Detail Inventaris</h3><span id="kdBerkasSource"></span>
-                        </div>
-                        <div id="kdBerkasActions" class="kd-row-actions"></div>
-                    </div>
-                    <div class="kd-berkas-grid">
-                        <div class="kd-file-box"><strong>Foto Aset</strong>
-                            <div id="kdBerkasFoto" class="kd-image-placeholder">Foto belum tersedia</div>
-                        </div>
-                        <div class="kd-file-box"><strong>Dokumen PDF / Berkas</strong>
-                            <div id="kdBerkasDok" class="kd-document-placeholder">Dokumen belum tersedia</div>
-                        </div>
-                    </div>
-                </section>
             </div>
         </dialog>
 
@@ -273,7 +290,7 @@
             <div class="kd-dialog-head">
                 <div><small>ARSIP K.I.B D / STATUS KEPEMILIKAN</small>
                     <h2 id="kdOwnerTitle">Atur Kepemilikan Jembatan</h2>
-                    <p>Hanya kolom Status Kepemilikan yang diperbarui; identitas aset lama tetap aman.</p>
+                    <p>Ubah status kepemilikan dengan cepat tanpa mengganti data lain.</p>
                 </div><button type="button" class="kd-icon-button" data-kd-close="kdOwnerDialog" aria-label="Tutup"><i
                         data-lucide="x"></i></button>
             </div>
@@ -296,19 +313,64 @@
             </form>
         </dialog>
 
-        {{-- TAMBAH / EDIT HANYA UNTUK JEMBATAN BARU --}}
+        {{-- TAMBAH/EDIT JEMBATAN DI TABEL ASLI kib_d_s --}}
         <dialog class="kd-dialog form" id="kdFormDialog" aria-labelledby="kdFormTitle">
             <div class="kd-dialog-head">
                 <div><small>K.I.B D / DATA JEMBATAN</small>
                     <h2 id="kdFormTitle">Tambah Data Jembatan</h2>
-                    <p>Urutan form mengikuti tabel inventaris Excel K.I.B D.</p>
+                    <p>Pilih Data Pending atau input langsung; lanjutkan sesuai urutan kolom Excel.</p>
                 </div><button type="button" class="kd-icon-button" data-kd-close="kdFormDialog" aria-label="Tutup"><i
                         data-lucide="x"></i></button>
             </div>
             <form id="kdForm" class="kd-form" enctype="multipart/form-data" novalidate>
                 <input id="kdEditId" type="hidden" value="">
-                <section class="kd-form-section">
+                <input type="hidden" id="kdVoucherId" name="id_nilai_aktiva" value="">
+                <section class="kd-form-section" id="kdPendingSection">
                     <div class="kd-section-label"><b>01</b>
+                        <div><strong>Pilih Data Pending Nilai Aset</strong>
+                            <small>Voucher kategori K.I.B D yang belum diproses. Pilih salah satu atau lanjut input
+                                langsung.</small>
+                        </div>
+                    </div>
+                    <div class="kd-pending-selected" id="kdSelectedVoucher" hidden>
+                        <div><strong id="kdVoucherLabel">Voucher terpilih</strong><small id="kdVoucherMeta">—</small>
+                        </div>
+                        <button type="button" class="kd-button outline" id="kdChangeVoucher">Ganti Voucher</button>
+                    </div>
+                    <div id="kdPendingPicker">
+                        <label class="kd-search-field kd-pending-search"><i data-lucide="search"></i>
+                            <input type="search" id="kdPendingSearch"
+                                placeholder="Cari voucher, lokasi, divisi, atau uraian..." autocomplete="off">
+                        </label>
+                        <div class="kd-pending-table-wrap">
+                            <table class="kd-pending-table">
+                                <thead>
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>Voucher</th>
+                                        <th>Lokasi</th>
+                                        <th>Departemen</th>
+                                        <th>Divisi</th>
+                                        <th>Nilai</th>
+                                        <th>Uraian</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kdPendingBody">
+                                    <tr>
+                                        <td colspan="8">Memuat data pending...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="kd-pending-actions"><span id="kdPendingCount">0 data</span>
+                            <button type="button" id="kdDirectInput" class="kd-button outline"><i
+                                    data-lucide="plus"></i> Input langsung tanpa voucher</button>
+                        </div>
+                    </div>
+                </section>
+                <section class="kd-form-section">
+                    <div class="kd-section-label"><b>02</b>
                         <div><strong>Identitas Lokasi</strong><small>Data organisasi dan lokasi inventaris</small></div>
                     </div>
                     <div class="kd-form-grid">
@@ -345,7 +407,8 @@
                                     name="id_div">
                                     <option value="">Tidak ditentukan</option>
                                     @foreach ($divisiOptions as $opt)
-                                        <option value="{{ $opt->id }}">{{ $opt->nama_div }}</option>
+                                        <option value="{{ $opt->id }}" data-dep="{{ $opt->id_dep }}">
+                                            {{ $opt->nama_div }}</option>
                                     @endforeach
                                 </select>
                                 <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
@@ -354,20 +417,25 @@
                     </div>
                 </section>
                 <section class="kd-form-section">
-                    <div class="kd-section-label"><b>02</b>
+                    <div class="kd-section-label"><b>03</b>
                         <div><strong>Kartu Inventaris Barang D</strong><small>Urut sesuai kolom Excel</small></div>
                     </div>
                     <div class="kd-form-grid">
-                        <label class="kd-field"><span>Nama Barang / Jenis Barang <em>*</em></span><input type="text"
-                                name="nama_barang" id="kdNamaBarang" list="kdBarangOptions"
-                                placeholder="Ketik nama barang..." required maxlength="255"><datalist
-                                id="kdBarangOptions">
-                                @foreach ($barangOptions as $opt)
-                                    <option value="{{ $opt->nama_barang }}" data-id="{{ $opt->id }}"
-                                        data-code="{{ $opt->kode_barang }}"></option>
-                                @endforeach
-                            </datalist>
-                            <input type="hidden" name="id_barang" id="kdIdBarang"></label>
+                        <label class="kd-field"><span>Nama Barang / Jenis Barang <em>*</em></span>
+                            <div class="kd-combo" data-kd-combo>
+                                <input type="search" id="kdNamaBarang" data-kd-search
+                                    placeholder="Ketik nama atau kode barang..." autocomplete="off">
+                                <select name="id_barang" id="kdIdBarang" data-kd-native required>
+                                    <option value="">Pilih barang dari Master Data</option>
+                                    @foreach ($barangOptions as $opt)
+                                        <option value="{{ $opt->id }}" data-code="{{ $opt->kode_barang }}"
+                                            data-status="{{ $opt->status }}">{{ $opt->nama_barang }} —
+                                            {{ $opt->kode_barang }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
                         <label class="kd-field"><span>Kode Barang</span><input name="kode" id="kdKode"
                                 maxlength="100" placeholder="03.11.01.16.04"></label>
                         <label class="kd-field"><span>Nomor Register</span><input name="reg" maxlength="100"
@@ -408,8 +476,8 @@
                         </label>
                         <label class="kd-field"><span>Luas Lantai (M²)</span><input name="luas_lantai" maxlength="100"
                                 placeholder="Contoh 240"></label>
-                        <label class="kd-field"><span>Letak / Lokasi Alamat</span><input name="letak" maxlength="500"
-                                placeholder="Contoh Jl. Cipto Mangunkusumo"></label>
+                        <label class="kd-field"><span>Letak / Lokasi Alamat</span><input id="kdLetak" type="text"
+                                readonly placeholder="Otomatis dari alamat lokasi"></label>
                         <label class="kd-field"><span>Tanggal Dokumen</span><input type="date" name="tgl_dok"></label>
                         <label class="kd-field"><span>Nomor Dokumen</span><input name="no_dok" maxlength="255"
                                 placeholder="Nomor dokumen"></label>
@@ -421,8 +489,9 @@
                                 placeholder="Contoh 01.01.11.03.24"></label>
                         <label class="kd-field"><span>Asal Usul</span><input name="asal" maxlength="255"
                                 placeholder="Contoh SK Walikota"></label>
-                        <label class="kd-field"><span>Harga Perolehan (Rp.)</span><input type="number" name="harga"
-                                min="0" step="0.01" placeholder="0"></label>
+                        <label class="kd-field"><span>Harga Perolehan (Rp.)</span><input id="kdHarga" type="number"
+                                name="harga" min="0" step="1" placeholder="0"><small>Jika memakai
+                                voucher, nilai diambil dari transaksi asli.</small></label>
                         <label class="kd-field"><span>Status Kepemilikan <em>*</em></span>
                             <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
                                     placeholder="Ketik untuk mencari kepemilikan..." autocomplete="off" required><select
@@ -441,7 +510,7 @@
                     </div>
                 </section>
                 <section class="kd-form-section">
-                    <div class="kd-section-label"><b>03</b>
+                    <div class="kd-section-label"><b>04</b>
                         <div><strong>Lampiran dan Dokumen</strong><small>Kosongkan saat Edit jika tidak ingin mengganti
                                 berkas lama.</small></div>
                     </div>
@@ -454,8 +523,8 @@
                 </section>
                 <div class="kd-form-foot"><small id="kdFormMessage" role="status"></small><button type="button"
                         class="kd-button outline" data-kd-close="kdFormDialog">Batal</button><button
-                        class="kd-button primary" id="kdSave" type="submit"><i data-lucide="save"></i>
-                        Simpan</button></div>
+                        class="kd-button primary" id="kdSave" type="submit"><i data-lucide="save"></i> Simpan
+                        Jembatan</button></div>
             </form>
         </dialog>
     </main>

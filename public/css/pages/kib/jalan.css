@@ -179,3 +179,123 @@
     #jalanPage .kd-form-foot { flex-wrap:wrap; }
     #jalanPage .kd-table-hint { flex-wrap:wrap; }
 }
+
+/* ==============================================================
+   REVISI KIB D: header PDAM, pending, Detail kelompok, font mudah baca
+   =============================================================== */
+#jalanPage { --kd-muted:#546d89; --kd-line:#d4e3f2; font-size:14px; }
+#jalanPage .kd-hero {
+    background-image:linear-gradient(90deg,rgba(235,245,255,.98) 0%,rgba(239,248,255,.89) 47%,rgba(230,244,255,.32) 100%),url('/images/master/pdam4.png');
+    background-position:center,center 43%; background-size:cover;
+    padding:29px 24px 30px;color:#102f56;border-bottom:1px solid #d4e5f4;
+}
+#jalanPage .kd-hero::before { display:none; }
+#jalanPage .kd-hero h1 { color:#0c2d54;font-size:clamp(27px,2.35vw,34px);font-weight:850; }
+#jalanPage .kd-hero p { color:#41688e;font-size:14px; }
+#jalanPage .kd-breadcrumb { color:#3f6993;font-size:12px; }
+#jalanPage .kd-breadcrumb strong { color:#115797; }
+#jalanPage .kd-hero-date { background:#fff;color:#184571;border:1px solid #dceaf7;box-shadow:0 5px 15px #173e640e;font-size:13px; }
+#jalanPage .kd-stats { margin-top:26px; gap:14px; }
+#jalanPage .kd-stats article { background:rgba(255,255,255,.96);border-color:#d4e5f5;box-shadow:0 8px 22px #173e6412;align-items:center;color:#153b64;padding:18px; }
+#jalanPage .kd-stats article>svg { color:#0868e9;width:26px;height:26px;opacity:1; }
+#jalanPage .kd-stats article small { color:#4c6d90;font-size:12px; }
+#jalanPage .kd-stats article strong { color:#092f60;font-size:26px; }
+#jalanPage .kd-stats article span { color:#6783a0;font-size:12px; }
+#jalanPage .kd-pending-banner { margin:18px 24px 0;display:flex;gap:17px;align-items:center;padding:19px 20px;background:#fff;border:1px solid #bfd9f6;border-radius:13px;box-shadow:0 5px 20px #0c47720c; }
+#jalanPage .kd-pending-symbol { width:49px;height:49px;display:grid;place-items:center;background:#fff2db;border-radius:12px;color:#f19a18;flex:none; }
+#jalanPage .kd-pending-symbol svg {width:24px;height:24px;}
+#jalanPage .kd-pending-copy { flex:1;min-width:0; }
+#jalanPage .kd-pending-copy small { font-size:11px;font-weight:900;letter-spacing:.08em;color:#3671b3; }
+#jalanPage .kd-pending-copy h2 { font-size:18px;font-weight:850;color:#113765;margin:5px 0 6px;line-height:1.35; }
+#jalanPage .kd-pending-copy p { margin:0;font-size:13px;color:#6483a3; }
+#jalanPage .kd-pending-badge { font-size:12px;border-radius:99px;background:#e33445;color:#fff;padding:3px 9px;vertical-align:middle;white-space:nowrap; }
+#jalanPage .kd-workspace { margin-top:18px; }
+#jalanPage .kd-section-top h2 {font-size:20px;}
+#jalanPage .kd-section-top p,#jalanPage .kd-origin-note {font-size:13px;}
+#jalanPage .kd-section-top small {font-size:11px;}
+#jalanPage .kd-button,#jalanPage .kd-icon-button {font-size:13px;padding:10px 13px;min-height:36px;}
+#jalanPage .kd-tab {font-size:14px;}
+#jalanPage .kd-tab span {font-size:11px;}
+#jalanPage .kd-search-field input {font-size:14px;}
+#jalanPage .kd-filter-field,#jalanPage .kd-filter-field select {font-size:13px;}
+#jalanPage .kd-main-table {font-size:14px;}
+#jalanPage .kd-main-table th {font-size:13px;padding:14px 12px;}
+#jalanPage .kd-main-table td {padding:14px 12px;}
+#jalanPage .kd-primary-cell strong {font-size:14px;}
+#jalanPage .kd-primary-cell small {font-size:12px;}
+#jalanPage .kd-owner {font-size:12px;padding:7px 11px;}
+#jalanPage .kd-table-footer {font-size:13px;}
+#jalanPage .kd-dialog-head small {font-size:11px;}
+#jalanPage .kd-dialog-head h2 {font-size:23px;}
+#jalanPage .kd-dialog-head p {font-size:13px;}
+#jalanPage .kd-dialog.detail { width:min(1510px,calc(100vw - 28px)); }
+#jalanPage .kd-detail-layout { display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;align-items:stretch;min-height:460px; }
+#jalanPage .kd-detail-sidebar { background:#fff;border:1px solid #dbe8f5;border-radius:11px;padding:14px;min-height:410px; }
+#jalanPage .kd-detail-sidebar h3 {display:flex;align-items:center;gap:9px;color:#164978;font-size:15px;margin:2px 0 14px;}
+#jalanPage .kd-detail-sidebar input {width:100%;height:42px;padding:9px 12px;border:1px solid #cfdfef;border-radius:9px;font-size:13px;margin-bottom:12px;}
+#jalanPage .kd-group-list {display:flex;flex-direction:column;gap:7px;max-height:440px;overflow:auto;}
+#jalanPage .kd-group-item {text-align:left;border:1px solid #d6e5f4;background:#f7faff;border-radius:9px;padding:12px;white-space:normal;}
+#jalanPage .kd-group-item.active {background:#dfedff;border-color:#9ec8fb;}
+#jalanPage .kd-group-item strong {display:block;color:#144272;font-size:13px;}
+#jalanPage .kd-group-item small {display:block;color:#7088a1;font-size:11px;margin-top:5px;}
+#jalanPage .kd-group-empty {font-size:13px;color:#607c99;}
+#jalanPage .kd-detail-main {min-width:0;}
+#jalanPage .kd-detail-bar strong {font-size:15px;}
+#jalanPage .kd-detail-bar p {font-size:12px;}
+#jalanPage .kd-detail-controls input {font-size:13px;min-height:40px;}
+#jalanPage .kd-excel-table {font-size:12px;}
+#jalanPage .kd-excel-table th {font-size:11px;}
+#jalanPage .kd-excel-table td {font-size:12px;}
+#jalanPage .kd-count {font-size:12px;}
+#jalanPage .kd-form-section { background:#fff; }
+#jalanPage .kd-form-section .kd-section-label strong {font-size:16px;}
+#jalanPage .kd-form-section .kd-section-label small {font-size:12px;}
+#jalanPage .kd-field {font-size:13px;}
+#jalanPage .kd-field>span {font-size:13px;}
+#jalanPage .kd-field input,#jalanPage .kd-field select,#jalanPage .kd-field textarea {font-size:14px;}
+#jalanPage .kd-form-foot {font-size:13px;}
+#jalanPage .kd-pending-search {margin:12px 0;height:44px;}
+#jalanPage .kd-pending-table-wrap {width:100%;max-height:270px;overflow:auto;border:1px solid #d9e7f4;border-radius:9px;}
+#jalanPage .kd-pending-table {border-collapse:collapse;min-width:890px;width:100%;font-size:13px;}
+#jalanPage .kd-pending-table th {position:sticky;top:0;padding:11px;text-align:left;background:#eaf3fc;font-size:12px;color:#153f6e;border-bottom:1px solid #cfdfec;}
+#jalanPage .kd-pending-table td {padding:11px;vertical-align:middle;border-bottom:1px solid #e3edf7;}
+#jalanPage .kd-pending-table td strong {display:block;color:#124477;}
+#jalanPage .kd-pending-table td small {display:block;color:#6684a4;margin-top:3px;}
+#jalanPage .kd-empty-pending {text-align:center;padding:32px!important;color:#6a84a0;}
+#jalanPage .kd-pending-actions {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;}
+#jalanPage .kd-pending-actions>span {font-size:13px;color:#5d7795;}
+#jalanPage .kd-pending-selected {display:flex;gap:14px;align-items:center;justify-content:space-between;background:#e7f6ee;border:1px solid #b8dec5;border-radius:9px;padding:13px;margin-top:12px;}
+#jalanPage .kd-pending-selected strong {display:block;color:#126142;font-size:15px;}
+#jalanPage .kd-pending-selected small {display:block;margin-top:5px;font-size:12px;color:#4b8066;}
+@media(max-width:1080px){
+  #jalanPage .kd-detail-layout {grid-template-columns:240px minmax(0,1fr);}
+  #jalanPage .kd-stats {grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:700px){
+  #jalanPage .kd-hero {padding:20px 14px 22px;}
+  #jalanPage .kd-stats {gap:9px;}
+  #jalanPage .kd-stats article {padding:12px;}
+  #jalanPage .kd-stats article strong {font-size:20px;}
+  #jalanPage .kd-pending-banner {margin:14px 10px 0;flex-wrap:wrap;padding:15px;}
+  #jalanPage .kd-pending-banner button {width:100%;}
+  #jalanPage .kd-workspace {margin:13px 9px 0;}
+  #jalanPage .kd-detail-layout {display:flex;flex-direction:column;}
+  #jalanPage .kd-detail-sidebar {min-height:0;}
+  #jalanPage .kd-group-list {flex-direction:row;max-height:140px;}
+  #jalanPage .kd-group-item {min-width:170px;}
+  #jalanPage .kd-detail-bar {flex-wrap:wrap;}
+  #jalanPage .kd-main-table {min-width:720px;}
+}
+
+/* Form controls remain visible while scrolling long forms. */
+#jalanPage .kd-form-foot {
+    position:sticky;bottom:-15px;z-index:15;
+    margin:0 -19px -15px;padding:14px 19px;
+    background:#fff;border-top:1px solid #d8e5f2;
+    box-shadow:0 -5px 18px rgba(19,53,94,.06);
+}
+#jalanPage .kd-excel-table th {font-size:12px;}
+#jalanPage .kd-excel-table td {font-size:13px;}
+@media (max-width:700px) {
+    #jalanPage .kd-form-foot {margin:0 -13px -13px;padding:13px;}
+}

@@ -9678,12 +9678,11 @@ class KIBController extends Controller
         );
     }
 
-    /* ============================================================
-       K.I.B D — JALAN, IRIGASI, JARINGAN / JEMBATAN
-       Semua metode K.I.B D berada di KIBController ini.
-       K.I.B C (gedungs) tetap satu sumber data.
-       Arsip web lama tetap aman; status arsip dapat diperbarui.
-       ============================================================ */
+    /* ===============================================================
+       K.I.B D — GEDUNG / IRIGASI DAN JEMBATAN
+       Gedung = gedungs (read-only, ubah lewat K.I.B C)
+       Jembatan = kib_d_s (CRUD asli web lama)
+       =============================================================== */
     private const JALAN_PEMILIK = ['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta'];
 
     private function jalanTersedia(string $table): bool
@@ -9691,102 +9690,86 @@ class KIBController extends Controller
         return Schema::hasTable($table);
     }
 
-    private function jalanKelompok(string $table, string $asal): array
+    private function jalanKategori(): int
     {
-        if (!$this->jalanTersedia($table)) {
-            return [];
-        }
+        return (int) (app(KibNotificationService::class)->categoryId('jalan')
+            ?? config('kib.modules.jalan.cat_fallback', 4));
+    }
 
-        $hasOwner = Schema::hasColumn($table, 'status_kepemilikan');
-        $archiveOwners = $asal === 'arsip' && $this->jalanTersedia('kib_d_arsip_pemilik')
-            ? DB::table('kib_d_arsip_pemilik')->pluck('status_kepemilikan', 'legacy_id')
-            : collect();
+    /** Rekap per lokasi, diurutkan berdasarkan ID barang terakhir (terbaru nomor 1). */
+    private function jalanRekapLokasi(string $table): array
+    {
+        if (!$this->jalanTersedia($table)) return [];
+
+        $hasStatus = Schema::hasColumn($table, 'status_kepemilikan');
         $rows = DB::table("{$table} as t")
             ->leftJoin('lokasis as l', 'l.id', '=', 't.id_lokasi')
             ->select('t.id', 't.id_lokasi', 'l.lokasi', 'l.alamat')
-            ->addSelect($hasOwner
-                ? 't.status_kepemilikan'
+            ->addSelect($hasStatus ? 't.status_kepemilikan'
                 : DB::raw('NULL AS status_kepemilikan'))
-            ->get();
+            ->orderByDesc('t.id')->get();
 
-        return $rows->map(fn($r) => [
-            'id_lokasi' => (int) ($r->id_lokasi ?? 0),
-            'lokasi' => $r->lokasi ?: 'Belum Ada Lokasi',
-            'alamat' => $r->alamat ?: '—',
-            'status' => $asal === 'arsip'
-                ? ($r->status_kepemilikan ?: ($archiveOwners[$r->id] ?? null))
-                : $r->status_kepemilikan,
-        ])->all();
-    }
-
-    private function jalanRingkas(array $rows): array
-    {
-        $byLocation = [];
+        $locations = [];
         foreach ($rows as $row) {
-            $key = (int) $row['id_lokasi'];
-            if (!isset($byLocation[$key])) {
-                $byLocation[$key] = [
+            $key = (int) ($row->id_lokasi ?? 0);
+            if (!isset($locations[$key])) {
+                $locations[$key] = [
                     'id_lokasi' => $key,
-                    'lokasi' => $row['lokasi'],
-                    'alamat' => $row['alamat'],
+                    'lokasi' => trim((string) ($row->lokasi ?? '')) ?: 'Belum Ada Lokasi',
+                    'alamat' => trim((string) ($row->alamat ?? '')) ?: '—',
                     'jumlah' => 0,
+                    'terbaru' => (int) $row->id,
                     'statuses' => [],
                 ];
             }
-            ++$byLocation[$key]['jumlah'];
-            $owner = trim((string) ($row['status'] ?? ''));
-            $byLocation[$key]['statuses'][$owner ?: 'belum_diatur'] = true;
+            $locations[$key]['jumlah']++;
+            $value = trim((string) ($row->status_kepemilikan ?? ''));
+            $locations[$key]['statuses'][$value ?: 'belum_diatur'] = true;
         }
-        $result = [];
-        foreach ($byLocation as $group) {
-            $owners = array_keys($group['statuses']);
-            $group['status_kepemilikan'] = count($owners) > 1
+        foreach ($locations as &$location) {
+            $owners = array_keys($location['statuses']);
+            $location['status_kepemilikan'] = count($owners) > 1
                 ? 'campuran' : ($owners[0] ?? 'belum_diatur');
-            unset($group['statuses']);
-            $result[] = $group;
+            unset($location['statuses']);
         }
-        usort($result, fn($a, $b) => strnatcasecmp($a['lokasi'], $b['lokasi']));
-        return $result;
+        unset($location);
+        usort($locations, static fn(array $a, array $b): int => $b['terbaru'] <=> $a['terbaru']);
+        return $locations;
     }
 
     public function jalanIndex()
     {
-        $gedung = $this->jalanRingkas($this->jalanKelompok('gedungs', 'gedung'));
-        $jembatan = $this->jalanRingkas(array_merge(
-            $this->jalanKelompok('kib_d_s', 'arsip'),
-            $this->jalanKelompok('kib_d_manual', 'manual')
-        ));
+        $gedungLokasi = $this->jalanRekapLokasi('gedungs');
+        $jembatanLokasi = $this->jalanRekapLokasi('kib_d_s');
 
-        $lokasi = $this->jalanTersedia('lokasis')
-            ? DB::table('lokasis')->select('id', 'lokasi', 'alamat')
-            ->orderBy('lokasi')->get() : collect();
+        $lokasiOptions = DB::table('lokasis')
+            ->select('id', 'lokasi', 'alamat')->orderBy('lokasi')->get();
+        // Semua data Master dipertahankan untuk Edit arsip; UI hanya
+        // menawarkan status aktif saat Tambah baru.
+        $barangOptions = DB::table('barangs')
+            ->select('id', 'nama_barang', 'kode_barang', 'status')
+            ->orderBy('nama_barang')->get();
+        $departemenOptions = DB::table('departemens')
+            ->select('id', 'nama_dep')->orderBy('nama_dep')->get();
+        $divisiOptions = DB::table('divisis')
+            ->select('id', 'nama_div', 'id_dep')->orderBy('nama_div')->get();
 
-        $barang = $this->jalanTersedia('barangs')
-            ? DB::table('barangs')->select('id', 'nama_barang', 'kode_barang')
-            ->when(
-                Schema::hasColumn('barangs', 'status'),
-                fn($q) => $q->where('status', 'aktif')
-            )
-            ->orderBy('nama_barang')->get() : collect();
+        $totalPending = DB::table('nilai_aktivas')
+            ->where('cat', $this->jalanKategori())
+            ->where('jenisn', 1)->where('stat', 0)->count();
 
-        $departemen = $this->jalanTersedia('departemens')
-            ? DB::table('departemens')->select('id', 'nama_dep')
-            ->orderBy('nama_dep')->get() : collect();
-        $divisi = $this->jalanTersedia('divisis')
-            ? DB::table('divisis')->select('id', 'nama_div')
-            ->orderBy('nama_div')->get() : collect();
-
-        return view('kib.jalan', [
-            'gedungLokasi' => $gedung,
-            'jembatanLokasi' => $jembatan,
-            'lokasiOptions' => $lokasi,
-            'barangOptions' => $barang,
-            'departemenOptions' => $departemen,
-            'divisiOptions' => $divisi,
-            'manualReady' => $this->jalanTersedia('kib_d_manual'),
+        return view('kib.jalan', compact(
+            'gedungLokasi',
+            'jembatanLokasi',
+            'lokasiOptions',
+            'barangOptions',
+            'departemenOptions',
+            'divisiOptions',
+            'totalPending'
+        ) + [
+            'totalGedung' => array_sum(array_column($gedungLokasi, 'jumlah')),
+            'totalJembatan' => array_sum(array_column($jembatanLokasi, 'jumlah')),
             'archiveReady' => $this->jalanTersedia('kib_d_s'),
-            'totalGedung' => array_sum(array_column($gedung, 'jumlah')),
-            'totalJembatan' => array_sum(array_column($jembatan, 'jumlah')),
         ]);
     }
 
@@ -9795,26 +9778,25 @@ class KIBController extends Controller
         if ($id === 0) {
             return (object) ['id' => 0, 'lokasi' => 'Belum Ada Lokasi', 'alamat' => '—'];
         }
-        $lokasi = DB::table('lokasis')->where('id', $id)
-            ->first(['id', 'lokasi', 'alamat']);
-        abort_unless($lokasi, 404, 'Lokasi tidak ditemukan.');
-        return $lokasi;
+        $location = DB::table('lokasis')
+            ->where('id', $id)->first(['id', 'lokasi', 'alamat']);
+        abort_unless($location, 404, 'Lokasi tidak ditemukan.');
+        return $location;
     }
 
     private function jalanMilikLokasi(
-        \Illuminate\Database\Query\Builder $q,
+        \Illuminate\Database\Query\Builder $query,
         int $lokasi
     ): \Illuminate\Database\Query\Builder {
         return $lokasi === 0
-            ? $q->whereNull('t.id_lokasi')
-            : $q->where('t.id_lokasi', $lokasi);
+            ? $query->where(static fn(\Illuminate\Database\Query\Builder $q) => $q->whereNull('t.id_lokasi')->orWhere('t.id_lokasi', 0))
+            : $query->where('t.id_lokasi', $lokasi);
     }
 
-    private function jalanDetailGedung(int $id): array
+    private function jalanDetailGedung(int $lokasi): array
     {
         if (!$this->jalanTersedia('gedungs')) return [];
-
-        $hasOwner = Schema::hasColumn('gedungs', 'status_kepemilikan');
+        $owner = Schema::hasColumn('gedungs', 'status_kepemilikan');
         $query = DB::table('gedungs as t')
             ->leftJoin('barangs as b', 'b.id', '=', 't.id_barang')
             ->leftJoin('lokasis as l', 'l.id', '=', 't.id_lokasi')
@@ -9825,14 +9807,14 @@ class KIBController extends Controller
                 't.*',
                 'b.nama_barang as master_nama',
                 'b.kode_barang as master_kode',
-                'l.alamat as lokasi_alamat',
+                'l.alamat as alamat_lokasi',
                 'n.nilai as nilai_transaksi',
                 'd.nama_dep as departemen',
                 'v.nama_div as divisi'
             );
 
-        return $this->jalanMilikLokasi($query, $id)->orderBy('t.id')->get()
-            ->map(fn($r) => [
+        return $this->jalanMilikLokasi($query, $lokasi)
+            ->orderByDesc('t.id')->get()->map(static fn(object $r) => [
                 'source' => 'gedung',
                 'id' => (int) $r->id,
                 'id_lokasi' => (int) ($r->id_lokasi ?? 0),
@@ -9843,7 +9825,7 @@ class KIBController extends Controller
                 'konstruksi' => $r->konstruksi,
                 'materi' => $r->materi,
                 'luas_lantai' => $r->luas,
-                'letak' => $r->lokasi_alamat,
+                'letak' => $r->alamat_lokasi,
                 'tgl_dok' => $r->tgl_imb,
                 'no_dok' => $r->no_imb,
                 'luas' => $r->luastanah,
@@ -9852,7 +9834,7 @@ class KIBController extends Controller
                 'asal' => $r->asal,
                 'harga' => $r->nilai_transaksi,
                 'ket' => $r->ket,
-                'status_kepemilikan' => $hasOwner ? ($r->status_kepemilikan ?? null) : null,
+                'status_kepemilikan' => $owner ? ($r->status_kepemilikan ?? null) : null,
                 'departemen' => $r->departemen,
                 'divisi' => $r->divisi,
                 'foto_url' => $r->img ? route('kib.gedung.file', ['gedung' => $r->id, 'jenis' => 'foto']) : null,
@@ -9861,28 +9843,32 @@ class KIBController extends Controller
             ])->all();
     }
 
-    private function jalanDetailArsip(int $id): array
+    private function jalanDetailJembatan(int $lokasi): array
     {
         if (!$this->jalanTersedia('kib_d_s')) return [];
-        $q = DB::table('kib_d_s as t')
+        $owner = Schema::hasColumn('kib_d_s', 'status_kepemilikan');
+        $query = DB::table('kib_d_s as t')
             ->leftJoin('barangs as b', 'b.id', '=', 't.id_barang')
+            ->leftJoin('lokasis as l', 'l.id', '=', 't.id_lokasi')
             ->leftJoin('departemens as d', 'd.id', '=', 't.id_dep')
             ->leftJoin('divisis as v', 'v.id', '=', 't.id_div')
+            ->leftJoin('nilai_aktivas as n', 'n.id', '=', 't.nilai_v')
             ->select(
                 't.*',
                 'b.nama_barang as master_nama',
                 'b.kode_barang as master_kode',
+                'l.alamat as alamat_lokasi',
                 'd.nama_dep as departemen',
-                'v.nama_div as divisi'
+                'v.nama_div as divisi',
+                'n.nilai as nilai_voucher'
             );
-        $archiveOwners = $this->jalanTersedia('kib_d_arsip_pemilik')
-            ? DB::table('kib_d_arsip_pemilik')->pluck('status_kepemilikan', 'legacy_id')
-            : collect();
-        return $this->jalanMilikLokasi($q, $id)->orderBy('t.id')->get()
-            ->map(fn($r) => [
-                'source' => 'arsip',
+
+        return $this->jalanMilikLokasi($query, $lokasi)
+            ->orderByDesc('t.id')->get()->map(static fn(object $r) => [
+                'source' => 'jembatan',
                 'id' => (int) $r->id,
-                'id_lokasi' => (int) ($r->id_lokasi ?? 0),
+                'id_barang' => $r->id_barang,
+                'id_lokasi' => $r->id_lokasi,
                 'nama_barang' => $r->master_nama ?: 'Jalan / Jembatan',
                 'kode' => $r->kode ?: $r->master_kode,
                 'reg' => $r->reg,
@@ -9890,60 +9876,28 @@ class KIBController extends Controller
                 'konstruksi' => $r->struktur,
                 'materi' => $r->materi,
                 'luas_lantai' => $r->luas_lantai,
-                'letak' => null,
+                'letak' => $r->alamat_lokasi,
                 'tgl_dok' => $r->tgl_dok,
                 'no_dok' => $r->no_dok,
                 'luas' => $r->luas,
                 'status_tanah' => $r->status,
                 'kode_tanah' => $r->kode_tanah,
                 'asal' => $r->asal,
-                'harga' => $r->harga,
+                'harga' => $r->nilai_v ? ($r->nilai_voucher ?? $r->harga) : $r->harga,
                 'ket' => $r->ket,
-                'status_kepemilikan' => ($r->status_kepemilikan ?? null) ?: ($archiveOwners[$r->id] ?? null),
+                'status_kepemilikan' => $owner ? ($r->status_kepemilikan ?? null) : null,
                 'departemen' => $r->departemen,
                 'divisi' => $r->divisi,
-                'foto_url' => $r->img ? route('kib.jalan.file', ['source' => 'arsip', 'item' => $r->id, 'jenis' => 'foto']) : null,
-                'dokumen_url' => $r->dok ? route('kib.jalan.file', ['source' => 'arsip', 'item' => $r->id, 'jenis' => 'dokumen']) : null,
-                'readonly' => true,
-            ])->all();
-    }
-
-    private function jalanDetailManual(int $id): array
-    {
-        if (!$this->jalanTersedia('kib_d_manual')) return [];
-        $q = DB::table('kib_d_manual as t')
-            ->leftJoin('departemens as d', 'd.id', '=', 't.id_departemen')
-            ->leftJoin('divisis as v', 'v.id', '=', 't.id_div');
-        return $this->jalanMilikLokasi($q->select(
-            't.*',
-            'd.nama_dep as departemen',
-            'v.nama_div as divisi'
-        ), $id)
-            ->orderBy('t.id')->get()->map(fn($r) => [
-                'source' => 'manual',
-                'id' => (int) $r->id,
-                'id_lokasi' => (int) ($r->id_lokasi ?? 0),
-                'nama_barang' => $r->nama_barang,
-                'kode' => $r->kode,
-                'reg' => $r->reg,
-                'kondisi' => $r->kondisi,
-                'konstruksi' => $r->konstruksi,
-                'materi' => $r->materi,
-                'luas_lantai' => $r->luas_lantai,
-                'letak' => $r->letak,
-                'tgl_dok' => $r->tgl_dok,
-                'no_dok' => $r->no_dok,
-                'luas' => $r->luas,
-                'status_tanah' => $r->status_tanah,
-                'kode_tanah' => $r->kode_tanah,
-                'asal' => $r->asal,
-                'harga' => $r->harga,
-                'ket' => $r->ket,
-                'status_kepemilikan' => $r->status_kepemilikan,
-                'departemen' => $r->departemen,
-                'divisi' => $r->divisi,
-                'foto_url' => $r->foto_path ? route('kib.jalan.file', ['source' => 'manual', 'item' => $r->id, 'jenis' => 'foto']) : null,
-                'dokumen_url' => $r->dokumen_path ? route('kib.jalan.file', ['source' => 'manual', 'item' => $r->id, 'jenis' => 'dokumen']) : null,
+                'foto_url' => $r->img ? route('kib.jalan.file', [
+                    'source' => 'jembatan',
+                    'item' => $r->id,
+                    'jenis' => 'foto'
+                ]) : null,
+                'dokumen_url' => $r->dok ? route('kib.jalan.file', [
+                    'source' => 'jembatan',
+                    'item' => $r->id,
+                    'jenis' => 'dokumen'
+                ]) : null,
                 'readonly' => false,
             ])->all();
     }
@@ -9952,41 +9906,39 @@ class KIBController extends Controller
     {
         abort_unless(in_array($jenis, ['gedung', 'jembatan'], true), 404);
         $location = $this->jalanLokasiInfo($lokasi);
-        $rows = $jenis === 'gedung' ? $this->jalanDetailGedung($lokasi)
-            : array_merge($this->jalanDetailArsip($lokasi), $this->jalanDetailManual($lokasi));
-
-        // Tidak ada filter paginasi pada Detail. Semua inventaris lokasi dimuat.
+        $rows = $jenis === 'gedung'
+            ? $this->jalanDetailGedung($lokasi)
+            : $this->jalanDetailJembatan($lokasi);
         return response()->json([
             'success' => true,
-            'lokasi' => $location,
             'jenis' => $jenis,
+            'lokasi' => $location,
             'count' => count($rows),
             'data' => $rows,
         ]);
     }
 
-    private function jalanValidasi(Request $request): array
+    private function jalanValidasi(Request $request, bool $edit = false): array
     {
         return $request->validate([
+            'id_nilai_aktiva' => ['nullable', 'integer', Rule::exists('nilai_aktivas', 'id')],
             'id_lokasi' => ['required', 'integer', Rule::exists('lokasis', 'id')],
-            'nama_barang' => ['required', 'string', 'max:255'],
-            'id_barang' => ['nullable', 'integer', Rule::exists('barangs', 'id')],
             'id_departemen' => ['nullable', 'integer', Rule::exists('departemens', 'id')],
             'id_div' => ['nullable', 'integer', Rule::exists('divisis', 'id')],
-            'kode' => ['nullable', 'string', 'max:100'],
-            'reg' => ['nullable', 'string', 'max:100'],
-            'kondisi' => ['nullable', 'string', 'max:100'],
-            'konstruksi' => ['nullable', 'string', 'max:100'],
-            'materi' => ['nullable', 'string', 'max:100'],
-            'luas_lantai' => ['nullable', 'string', 'max:100'],
-            'letak' => ['nullable', 'string', 'max:500'],
+            'id_barang' => ['required', 'integer', Rule::exists('barangs', 'id')],
+            'kode' => ['nullable', 'string', 'max:255'],
+            'reg' => ['nullable', 'string', 'max:255'],
+            'kondisi' => ['nullable', 'string', 'max:255'],
+            'konstruksi' => ['nullable', 'string', 'max:255'],
+            'materi' => ['nullable', 'string', 'max:255'],
+            'luas_lantai' => ['nullable', 'string', 'max:255'],
             'tgl_dok' => ['nullable', 'date'],
             'no_dok' => ['nullable', 'string', 'max:255'],
-            'luas' => ['nullable', 'string', 'max:100'],
+            'luas' => ['nullable', 'string', 'max:255'],
             'status_tanah' => ['nullable', 'string', 'max:255'],
             'kode_tanah' => ['nullable', 'string', 'max:255'],
             'asal' => ['nullable', 'string', 'max:255'],
-            'harga' => ['nullable', 'numeric', 'min:0'],
+            'harga' => ['nullable', 'integer', 'min:0'],
             'ket' => ['nullable', 'string', 'max:10000'],
             'status_kepemilikan' => ['required', Rule::in(self::JALAN_PEMILIK)],
             'foto' => ['nullable', 'image', 'max:5120'],
@@ -9994,167 +9946,291 @@ class KIBController extends Controller
         ]);
     }
 
-    private function jalanTulis(array $input): array
+    /** Data baru hanya memakai Master Barang aktif; arsip yang sudah ada tetap dapat diedit. */
+    private function jalanPastikanBarangAktif(int $barangId, ?int $lama = null): void
     {
-        return collect($input)->only([
-            'id_lokasi',
-            'id_barang',
-            'id_departemen',
-            'id_div',
-            'nama_barang',
-            'kode',
-            'reg',
-            'kondisi',
-            'konstruksi',
-            'materi',
-            'luas_lantai',
-            'letak',
-            'tgl_dok',
-            'no_dok',
-            'luas',
-            'status_tanah',
-            'kode_tanah',
-            'asal',
-            'harga',
-            'ket',
-            'status_kepemilikan',
-        ])->all();
+        if (!Schema::hasColumn('barangs', 'status') || $lama === $barangId) return;
+        $status = DB::table('barangs')->where('id', $barangId)->value('status');
+        if ($status !== 'aktif') {
+            throw ValidationException::withMessages([
+                'id_barang' => 'Pilih Barang yang berstatus Aktif pada Master Data.',
+            ]);
+        }
+    }
+
+    /** Nama field form dipetakan ke kolom asli kib_d_s. */
+    private function jalanTulis(array $form): array
+    {
+        return [
+            'id_lokasi' => (int) $form['id_lokasi'],
+            'id_dep' => isset($form['id_departemen']) ? (int) $form['id_departemen'] : null,
+            'id_div' => isset($form['id_div']) ? (int) $form['id_div'] : null,
+            'id_barang' => (int) $form['id_barang'],
+            'kode' => $form['kode'] ?? null,
+            'reg' => $form['reg'] ?? null,
+            'kondisi' => $form['kondisi'] ?? null,
+            'struktur' => $form['konstruksi'] ?? null,
+            'materi' => $form['materi'] ?? null,
+            'luas_lantai' => $form['luas_lantai'] ?? null,
+            'tgl_dok' => $form['tgl_dok'] ?? null,
+            'no_dok' => $form['no_dok'] ?? null,
+            'luas' => $form['luas'] ?? null,
+            'status' => $form['status_tanah'] ?? null,
+            'kode_tanah' => $form['kode_tanah'] ?? null,
+            'asal' => $form['asal'] ?? null,
+            'ket' => $form['ket'] ?? null,
+            'status_kepemilikan' => $form['status_kepemilikan'],
+        ];
+    }
+
+    /** Pastikan voucher kategori D, jenis Penambahan Aset, belum diproses dan belum dipakai. */
+    private function jalanValidasiVoucher(int $voucherId): object
+    {
+        $voucher = DB::table('nilai_aktivas')->where('id', $voucherId)
+            ->lockForUpdate()->first();
+        if (
+            !$voucher || (int)$voucher->cat !== $this->jalanKategori()
+            || (int)$voucher->jenisn !== 1 || (int)$voucher->stat !== 0
+        ) {
+            throw ValidationException::withMessages([
+                'id_nilai_aktiva' => 'Voucher tidak tersedia atau sudah diproses.',
+            ]);
+        }
+        if (DB::table('kib_d_s')->where('nilai_v', $voucherId)->exists()) {
+            throw ValidationException::withMessages([
+                'id_nilai_aktiva' => 'Voucher sudah terhubung ke inventaris Jembatan.',
+            ]);
+        }
+        if (!$voucher->id_lokasi || !$voucher->dep || !$voucher->div) {
+            throw ValidationException::withMessages([
+                'id_nilai_aktiva' => 'Data lokasi, departemen, atau divisi pada voucher belum lengkap.',
+            ]);
+        }
+        return $voucher;
     }
 
     public function jalanSimpan(Request $request)
     {
-        abort_unless($this->jalanTersedia('kib_d_manual'), 503, 'Tabel KIB D manual belum tersedia.');
+        abort_unless($this->jalanTersedia('kib_d_s'), 503, 'Tabel Jembatan lama belum tersedia.');
+        abort_unless(
+            Schema::hasColumn('kib_d_s', 'status_kepemilikan'),
+            503,
+            'Jalankan migration Status Kepemilikan K.I.B D lebih dulu.'
+        );
         $input = $this->jalanValidasi($request);
-        $data = $this->jalanTulis($input);
-        $data['created_by'] = Auth::id();
-        $data['created_at'] = now();
-        $data['updated_at'] = now();
+        $this->jalanPastikanBarangAktif((int)$input['id_barang']);
         $files = [];
         try {
-            if ($request->hasFile('foto')) {
-                $files[] = $data['foto_path'] = $request->file('foto')
-                    ->store('kib/d/jembatan/foto', 'public');
-            }
-            if ($request->hasFile('dokumen')) {
-                $files[] = $data['dokumen_path'] = $request->file('dokumen')
-                    ->store('kib/d/jembatan/dokumen', 'public');
-            }
-            $id = DB::table('kib_d_manual')->insertGetId($data);
-        } catch (\Throwable $e) {
-            foreach ($files as $path) Storage::disk('public')->delete($path);
-            throw $e;
+            $id = DB::transaction(function () use ($request, $input, &$files) {
+                $data = $this->jalanTulis($input);
+                $voucherId = (int) ($input['id_nilai_aktiva'] ?? 0);
+                $voucher = $voucherId ? $this->jalanValidasiVoucher($voucherId) : null;
+                if ($voucher) {
+                    $data['id_lokasi'] = (int) $voucher->id_lokasi;
+                    $data['id_dep'] = (int) $voucher->dep;
+                    $data['id_div'] = (int) $voucher->div;
+                    $data['nilai_v'] = $voucherId;
+                    // Harga lama INTEGER. Nilai besar tetap dibaca dari nilai_aktivas.nilai,
+                    // tanpa dipotong atau mengubah struktur data arsip.
+                    $value = (float) ($voucher->nilai ?? 0);
+                    $data['harga'] = $value <= 2147483647 ? (int) $value : null;
+                } else {
+                    $value = $input['harga'] ?? null;
+                    if ($value !== null && (float) $value > 2147483647) {
+                        throw ValidationException::withMessages([
+                            'harga' => 'Harga data langsung melewati batas INTEGER arsip. Gunakan voucher Nilai Aset.',
+                        ]);
+                    }
+                    $data['harga'] = $value !== null ? (int) round((float) $value) : null;
+                    $data['nilai_v'] = null;
+                }
+                $data['input'] = 1;
+                $data['user'] = Auth::id();
+                $data['created_at'] = now();
+                $data['updated_at'] = now();
+                foreach (['foto' => 'img', 'dokumen' => 'dok'] as $field => $column) {
+                    if ($request->hasFile($field)) {
+                        $data[$column] = $request->file($field)->store(
+                            'kib/jalan/' . ($field === 'foto' ? 'foto' : 'dokumen'),
+                            'local'
+                        );
+                        $files[] = $data[$column];
+                    }
+                }
+                $id = DB::table('kib_d_s')->insertGetId($data);
+                if ($voucher) {
+                    $updated = DB::table('nilai_aktivas')->where('id', $voucherId)
+                        ->where('stat', 0)->update(['stat' => 1, 'updated_at' => now()]);
+                    if ($updated !== 1) {
+                        throw ValidationException::withMessages([
+                            'id_nilai_aktiva' => 'Gagal memproses voucher, penyimpanan dibatalkan.',
+                        ]);
+                    }
+                }
+                return $id;
+            });
+        } catch (\Throwable $error) {
+            foreach ($files as $path) Storage::disk('local')->delete($path);
+            throw $error;
         }
-        return response()->json(['success' => true, 'message' => 'Jembatan berhasil ditambahkan.', 'id' => $id]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Jembatan berhasil ditambahkan.',
+            'id' => $id
+        ]);
     }
 
     public function jalanEdit(int $item)
     {
-        $row = DB::table('kib_d_manual')->where('id', $item)->first();
+        $row = DB::table('kib_d_s')->where('id', $item)->first();
         abort_unless($row, 404);
-        return response()->json(['success' => true, 'data' => $row]);
+        $linkedValue = $row->nilai_v
+            ? DB::table('nilai_aktivas')->where('id', $row->nilai_v)->value('nilai')
+            : null;
+        return response()->json(['success' => true, 'data' => [
+            'id' => $row->id,
+            'id_nilai_aktiva' => $row->nilai_v,
+            'id_barang' => $row->id_barang,
+            'id_lokasi' => $row->id_lokasi,
+            'id_departemen' => $row->id_dep,
+            'id_div' => $row->id_div,
+            'kode' => trim((string)$row->kode),
+            'reg' => trim((string)$row->reg),
+            'kondisi' => trim((string)$row->kondisi),
+            'konstruksi' => trim((string)$row->struktur),
+            'materi' => trim((string)$row->materi),
+            'luas_lantai' => trim((string)$row->luas_lantai),
+            'tgl_dok' => $row->tgl_dok,
+            'no_dok' => trim((string)$row->no_dok),
+            'luas' => trim((string)$row->luas),
+            'status_tanah' => trim((string)$row->status),
+            'kode_tanah' => trim((string)$row->kode_tanah),
+            'asal' => trim((string)$row->asal),
+            'harga' => $linkedValue ?? $row->harga,
+            'nama_barang' => DB::table('barangs')->where('id', $row->id_barang)->value('nama_barang'),
+            'ket' => $row->ket,
+            'status_kepemilikan' => $row->status_kepemilikan ?? null,
+        ]]);
     }
 
     public function jalanPerbarui(Request $request, int $item)
     {
-        $old = DB::table('kib_d_manual')->where('id', $item)->first();
+        $old = DB::table('kib_d_s')->where('id', $item)->first();
         abort_unless($old, 404);
-        $data = $this->jalanTulis($this->jalanValidasi($request));
+        $form = $this->jalanValidasi($request, true);
+        $this->jalanPastikanBarangAktif((int)$form['id_barang'], (int)$old->id_barang);
+        $data = $this->jalanTulis($form);
+        // Relasi voucher lama dipertahankan, tidak dapat dipindahkan lewat Edit.
+        if ($old->nilai_v) {
+            $data['harga'] = $old->harga;
+        } else {
+            $value = $form['harga'] ?? null;
+            if ($value !== null && (float)$value > 2147483647) {
+                throw ValidationException::withMessages([
+                    'harga' => 'Harga melebihi batas INTEGER.',
+                ]);
+            }
+            $data['harga'] = $value !== null ? (int) round((float)$value) : null;
+        }
+        // Jangan hapus tanggal dokumen historis non-ISO hanya karena input date kosong.
+        if (
+            empty($form['tgl_dok']) && !empty($old->tgl_dok)
+            && !preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $old->tgl_dok)
+        ) {
+            $data['tgl_dok'] = $old->tgl_dok;
+        }
         $data['updated_at'] = now();
-        $newPaths = [];
+        $files = [];
         try {
-            if ($request->hasFile('foto')) {
-                $newPaths[] = $data['foto_path'] = $request->file('foto')
-                    ->store('kib/d/jembatan/foto', 'public');
+            foreach (['foto' => 'img', 'dokumen' => 'dok'] as $field => $column) {
+                if ($request->hasFile($field)) {
+                    $data[$column] = $request->file($field)->store(
+                        'kib/jalan/' . ($field === 'foto' ? 'foto' : 'dokumen'),
+                        'local'
+                    );
+                    $files[] = $data[$column];
+                }
             }
-            if ($request->hasFile('dokumen')) {
-                $newPaths[] = $data['dokumen_path'] = $request->file('dokumen')
-                    ->store('kib/d/jembatan/dokumen', 'public');
+            DB::table('kib_d_s')->where('id', $item)->update($data);
+        } catch (\Throwable $error) {
+            foreach ($files as $path) Storage::disk('local')->delete($path);
+            throw $error;
+        }
+        foreach (['img', 'dok'] as $column) {
+            $oldPath = trim((string) ($old->{$column} ?? ''));
+            if (array_key_exists($column, $data) && str_starts_with($oldPath, 'kib/jalan/')) {
+                Storage::disk('local')->delete($oldPath);
             }
-            DB::table('kib_d_manual')->where('id', $item)->update($data);
-        } catch (\Throwable $e) {
-            foreach ($newPaths as $path) Storage::disk('public')->delete($path);
-            throw $e;
-        }
-        if (isset($data['foto_path']) && $old->foto_path) {
-            Storage::disk('public')->delete($old->foto_path);
-        }
-        if (isset($data['dokumen_path']) && $old->dokumen_path) {
-            Storage::disk('public')->delete($old->dokumen_path);
         }
         return response()->json(['success' => true, 'message' => 'Jembatan berhasil diperbarui.']);
     }
 
     public function jalanHapus(int $item)
     {
-        $old = DB::table('kib_d_manual')->where('id', $item)->first();
-        abort_unless($old, 404);
-        DB::table('kib_d_manual')->where('id', $item)->delete();
-        foreach ([$old->foto_path, $old->dokumen_path] as $path) {
-            if ($path) Storage::disk('public')->delete($path);
+        $files = DB::transaction(function () use ($item) {
+            $old = DB::table('kib_d_s')->where('id', $item)->lockForUpdate()->first();
+            abort_unless($old, 404);
+            DB::table('kib_d_s')->where('id', $item)->delete();
+            if ($old->nilai_v && !DB::table('kib_d_s')->where('nilai_v', $old->nilai_v)->exists()) {
+                DB::table('nilai_aktivas')->where('id', $old->nilai_v)
+                    ->where('stat', 1)->update(['stat' => 0, 'updated_at' => now()]);
+            }
+            return [$old->img, $old->dok];
+        });
+        foreach ($files as $path) {
+            $stored = trim((string)$path);
+            if (str_starts_with($stored, 'kib/jalan/')) Storage::disk('local')->delete($stored);
         }
         return response()->json(['success' => true, 'message' => 'Jembatan berhasil dihapus.']);
     }
 
-    /** Ubah status kepemilikan arsip langsung pada kib_d_s (jika kolom sudah ditambahkan). */
     public function jalanPerbaruiPemilikArsip(Request $request, int $item)
     {
         abort_unless(
-            $this->jalanTersedia('kib_d_s'),
+            Schema::hasColumn('kib_d_s', 'status_kepemilikan'),
             503,
-            'Tabel arsip K.I.B D belum tersedia.'
+            'Kolom Status Kepemilikan belum tersedia.'
         );
         abort_unless(DB::table('kib_d_s')->where('id', $item)->exists(), 404);
-
-        $input = $request->validate([
+        $form = $request->validate([
             'status_kepemilikan' => ['required', Rule::in(self::JALAN_PEMILIK)],
         ]);
-        $status = $input['status_kepemilikan'];
-
-        if (Schema::hasColumn('kib_d_s', 'status_kepemilikan')) {
-            DB::table('kib_d_s')->where('id', $item)
-                ->update(['status_kepemilikan' => $status]);
-        } elseif ($this->jalanTersedia('kib_d_arsip_pemilik')) {
-            // Fallback untuk instalasi lama yang memakai tabel pendamping.
-            DB::table('kib_d_arsip_pemilik')->updateOrInsert(
-                ['legacy_id' => $item],
-                [
-                    'status_kepemilikan' => $status,
-                    'updated_by' => Auth::id(),
-                    'updated_at' => now(),
-                    'created_at' => now()
-                ]
-            );
-        } else {
-            abort(503, 'Kolom status_kepemilikan belum dimigrasi.');
-        }
-        return response()->json([
-            'success' => true,
-            'message' => 'Status kepemilikan arsip berhasil diperbarui.',
-        ]);
+        DB::table('kib_d_s')->where('id', $item)
+            ->update(['status_kepemilikan' => $form['status_kepemilikan'], 'updated_at' => now()]);
+        return response()->json(['success' => true, 'message' => 'Status Kepemilikan diperbarui.']);
     }
 
+    /** Jalur berkas yang tersimpan baru bersifat privat; berkas lama dibaca aman. */
     public function jalanFile(string $source, int $item, string $jenis)
     {
-        abort_unless(in_array($source, ['manual', 'arsip'], true)
+        abort_unless(in_array($source, ['jembatan', 'arsip'], true)
             && in_array($jenis, ['foto', 'dokumen'], true), 404);
-        if ($source === 'manual') {
-            $row = DB::table('kib_d_manual')->where('id', $item)->first();
-            abort_unless($row, 404);
-            $path = $jenis === 'foto' ? $row->foto_path : $row->dokumen_path;
-            abort_unless($path && Storage::disk('public')->exists($path), 404);
-            $file = Storage::disk('public')->path($path);
+        $row = DB::table('kib_d_s')->where('id', $item)->first();
+        abort_unless($row, 404);
+        $value = trim((string) ($jenis === 'foto' ? $row->img : $row->dok));
+        abort_unless($value !== '', 404);
+        $path = null;
+        if (str_starts_with($value, 'kib/jalan/') && Storage::disk('local')->exists($value)) {
+            $path = Storage::disk('local')->path($value);
         } else {
-            $row = DB::table('kib_d_s')->where('id', $item)->first();
-            abort_unless($row, 404);
-            $name = basename((string) ($jenis === 'foto' ? $row->img : $row->dok));
-            abort_unless($name && $name !== '.' && $name !== '..', 404);
-            $root = realpath(public_path('assets/img/jalan/' . ($jenis === 'foto' ? 'img' : 'dok')));
-            $file = $root ? realpath($root . DIRECTORY_SEPARATOR . $name) : false;
-            abort_unless($file && str_starts_with($file, $root . DIRECTORY_SEPARATOR), 404);
+            $name = basename(str_replace('\\', '/', $value));
+            $roots = [
+                public_path('assets/img/jalan/' . ($jenis === 'foto' ? 'img' : 'dok')),
+                public_path('assets/img/jalan'),
+            ];
+            foreach ($roots as $root) {
+                $rootReal = realpath($root);
+                $candidate = $rootReal ? realpath($rootReal . DIRECTORY_SEPARATOR . $name) : false;
+                if ($candidate && str_starts_with($candidate, $rootReal . DIRECTORY_SEPARATOR)) {
+                    $path = $candidate;
+                    break;
+                }
+            }
         }
-        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        abort_unless($path && is_file($path), 404);
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         abort_unless(in_array($ext, $jenis === 'foto'
             ? ['jpg', 'jpeg', 'png', 'webp'] : ['pdf'], true), 415);
-        return response()->file($file, ['X-Content-Type-Options' => 'nosniff']);
+        return response()->file($path, ['X-Content-Type-Options' => 'nosniff']);
     }
 }

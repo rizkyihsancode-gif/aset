@@ -21,6 +21,7 @@
         belum_diatur: 'Belum Diatur'
     });
     const state = {
+        pending: [], pendingLoaded: false, voucher: null,
         tab: 'gedung', page: 1, perPage: 10,
         location: null, locationName: '', data: [], selectedIndex: -1,
         editingId: null, editingLegacyOwner: null, exporting: false, requestNo: 0
@@ -99,7 +100,7 @@
             addButton.innerHTML = state.tab === 'gedung'
                 ? '<i data-lucide="building-2"></i> Kelola Gedung / Irigasi'
                 : '<i data-lucide="plus"></i> Tambah Jembatan';
-            addButton.disabled = state.tab === 'jembatan' && root.dataset.manualReady !== '1';
+            addButton.disabled = false;
         }
         const panel = root.querySelector(`[data-kd-pane="${state.tab}"]`);
         const rows = Array.from(panel.querySelectorAll('[data-kd-row]'));
@@ -160,12 +161,33 @@
         renderPage();
     });
 
+    /* Kelompok lokasi mengikuti model Konstruksi. */
+    function renderGroups() {
+        const pane = root.querySelector(`[data-kd-pane="${state.tab}"]`);
+        const query = plain($('kdGroupSearch').value).toLocaleLowerCase('id-ID');
+        const list = [...pane.querySelectorAll('[data-kd-row]')]
+            .filter(row => !query || (row.dataset.query || '').includes(query));
+        $('kdGroupList').innerHTML = list.length ? list.map(row => `
+            <button type="button" class="kd-group-item ${Number(row.dataset.location)===state.location?'active':''}"
+                data-group-location="${Number(row.dataset.location)}">
+                <strong>${esc(row.dataset.name)}</strong>
+                <small>${esc(row.querySelector('.kd-primary-cell small')?.textContent || '')}</small>
+            </button>`).join('') : '<p class="kd-group-empty">Lokasi tidak ditemukan.</p>';
+    }
+    $('kdGroupSearch').addEventListener('input', renderGroups);
+    $('kdGroupList').addEventListener('click', event => {
+        const group = event.target.closest('[data-group-location]');
+        if (group) loadDetail(state.tab, group.dataset.groupLocation);
+    });
+
     /* ------------------------------------------------------------
        DETAIL LOKASI (SELURUH DATA, TIDAK TERPOTONG PAGINATION)
        ------------------------------------------------------------ */
     async function loadDetail(kind, location) {
         const requestNo = ++state.requestNo;
         state.location = Number(location);
+        $('kdGroupSearch').value = '';
+        renderGroups();
         state.data = [];
         state.selectedIndex = -1;
         $('kdDetailTitle').textContent = 'Memuat inventaris...';
@@ -179,6 +201,7 @@
             state.tab = kind;
             state.location = Number(response.lokasi.id);
             state.locationName = response.lokasi.lokasi || 'Tanpa Lokasi';
+            renderGroups();
             state.data = response.data || [];
             $('kdDetailTitle').textContent = `DATA ${state.locationName.toUpperCase()}`;
             $('kdDetailSubtitle').textContent = `${kind === 'gedung' ? 'Gedung / Irigasi' : 'Jembatan'} · ${response.lokasi.alamat || 'Alamat belum tersedia'}`;
@@ -219,10 +242,9 @@
         renderDetail();
         $('kdBerkas').hidden = false;
         $('kdBerkasTitle').textContent = item.nama_barang || 'Inventaris';
-        $('kdBerkasSource').textContent = item.source === 'arsip'
-            ? 'Arsip web lama · hanya baca' : item.source === 'gedung'
-            ? 'Tersinkron dengan K.I.B C · kelola di Gedung dan Bangunan'
-            : 'Jembatan · data baru';
+        $('kdBerkasSource').textContent = item.source === 'gedung'
+            ? 'Terhubung dengan K.I.B C — kelola melalui Gedung dan Bangunan'
+            : 'Jembatan — data asli web lama (kib_d_s)';
         $('kdBerkasFoto').innerHTML = item.foto_url
             ? `<a href="${esc(item.foto_url)}" target="_blank" rel="noopener"><img src="${esc(item.foto_url)}" loading="lazy" alt="Foto ${esc(item.nama_barang)}"></a>`
             : 'Foto belum tersedia';
@@ -230,16 +252,12 @@
             ? `<a href="${esc(item.dokumen_url)}" target="_blank" rel="noopener">Lihat PDF / Dokumen</a>`
             : 'Dokumen belum tersedia';
         const actions = $('kdBerkasActions');
-        if (item.source === 'manual') {
+        if (item.source === 'jembatan') {
             actions.innerHTML = `<button type="button" class="kd-button outline" data-kd-edit="${Number(item.id)}"><i data-lucide="pencil"></i> Edit</button>` +
                 `<button type="button" class="kd-button outline" data-kd-delete="${Number(item.id)}"><i data-lucide="trash-2"></i> Hapus</button>` +
                 '<button type="button" class="kd-button outline" data-kd-hide="1">Tutup Berkas</button>';
         } else if (item.source === 'gedung') {
             actions.innerHTML = `<a href="${esc(root.dataset.gedung)}" class="kd-button outline"><i data-lucide="building-2"></i> Kelola di K.I.B C</a>` +
-                '<button type="button" class="kd-button outline" data-kd-hide="1">Tutup Berkas</button>';
-        } else {
-            actions.innerHTML = `<button type="button" class="kd-button outline" data-kd-owner-legacy="${Number(item.id)}"><i data-lucide="user-round-cog"></i> Atur Kepemilikan</button>` +
-                '<span class="kd-owner unknown">Data inventaris asli tetap aman</span>' +
                 '<button type="button" class="kd-button outline" data-kd-hide="1">Tutup Berkas</button>';
         }
         icons();
@@ -274,11 +292,13 @@
         const input = wrapper.querySelector('[data-kd-search]');
         const select = wrapper.querySelector('[data-kd-native]');
         const menu = wrapper.querySelector('[data-kd-menu]');
-        const options = [...select.options].filter(option => option.value);
+        const options = () => [...select.options].filter(option => option.value);
         const show = () => {
             const query = plain(input.value).toLocaleLowerCase('id-ID');
-            const matched = options.filter(option => !query ||
-                option.textContent.toLocaleLowerCase('id-ID').includes(query)).slice(0, 80);
+            const matched = options().filter(option =>
+                (select.name !== 'id_barang' || state.editingId || option.dataset.status === 'aktif') &&
+                (!query ||
+                option.textContent.toLocaleLowerCase('id-ID').includes(query))).slice(0, 80);
             menu.innerHTML = matched.length ? matched.map(option =>
                 `<button type="button" role="option" data-value="${esc(option.value)}">${esc(option.textContent)}</button>`
             ).join('') : '<div class="kd-option-empty">Pilihan tidak ditemukan</div>';
@@ -286,7 +306,7 @@
         };
         const selectValue = value => {
             select.value = String(value ?? '');
-            const option = options.find(opt => opt.value === select.value);
+            const option = options().find(opt => opt.value === select.value);
             input.value = option?.textContent.trim() || '';
             menu.hidden = true;
             select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -331,24 +351,34 @@
         const selected = locationCombo.select.selectedOptions[0];
         $('kdAlamat').value = selected?.dataset.alamat || '';
     });
-    const nameInput = $('kdNamaBarang');
-    nameInput.addEventListener('input', () => { $('kdIdBarang').value = ''; });
-    nameInput.addEventListener('change', () => {
-        const target = plain(nameInput.value).toLocaleLowerCase('id-ID');
-        const match = [...$('kdBarangOptions').options].find(option =>
-            plain(option.value).toLocaleLowerCase('id-ID') === target);
-        $('kdIdBarang').value = match?.dataset.id || '';
-        if (match && !$('kdKode').value.trim()) $('kdKode').value = match.dataset.code || '';
+    const barangCombo = comboControls.find(c => c.select.name === 'id_barang');
+    barangCombo?.select.addEventListener('change', () => {
+        const option = barangCombo.select.selectedOptions[0];
+        $('kdKode').value = option?.dataset.code || $('kdKode').value;
+    });
+    function syncAlamat() {
+        $('kdLetak').value = $('kdAlamat').value;
+    }
+    locationCombo?.select.addEventListener('change', syncAlamat);
+    const depCombo = comboControls.find(c => c.select.name === 'id_departemen');
+    const divCombo = comboControls.find(c => c.select.name === 'id_div');
+    depCombo?.select.addEventListener('change', () => {
+        if (!divCombo) return;
+        const dep = depCombo.select.value;
+        [...divCombo.select.options].forEach(option => {
+            option.hidden = Boolean(option.value && option.dataset.dep && dep && option.dataset.dep !== dep);
+        });
+        if (divCombo.select.selectedOptions[0]?.hidden) divCombo.selectValue('');
     });
 
-    /* Kepemilikan arsip disimpan pada kolom kib_d_s.status_kepemilikan bila tersedia. */
+    /* Update Status Kepemilikan langsung di kib_d_s. */
     function openLegacyOwner(id) {
-        const item = state.data.find(row => row.source === 'arsip' && Number(row.id) === id);
+        const item = state.data.find(row => row.source === 'jembatan' && Number(row.id) === id);
         if (!item) return;
         state.editingLegacyOwner = id;
         $('kdOwnerMessage').textContent = '';
         $('kdOwnerTitle').textContent = `Atur Kepemilikan — ${item.nama_barang}`;
-        // Ada dua select status: satu milik form Jembatan, satu khusus arsip.
+        // Status dapat diubah tanpa menimpa field lain.
         const legacyCombo = comboControls.find(c => c.wrapper.closest('#kdOwnerForm'));
         legacyCombo?.selectValue(item.status_kepemilikan);
         openDialog('kdOwnerDialog');
@@ -372,8 +402,77 @@
     });
 
     /* ------------------------------------------------------------
-       CRUD MANUAL: arsip & gedung read-only.
+       CRUD JEMBATAN: langsung kib_d_s. Gedung dari K.I.B C.
        ------------------------------------------------------------ */
+    /* Pending Nilai Aset, mengikuti form K.I.R; endpoint existing /kib/pending/jalan. */
+    function pendingRows() {
+        const text = plain($('kdPendingSearch').value).toLocaleLowerCase('id-ID');
+        return state.pending.filter(row => [row.no_voucher,row.lokasi,row.departemen,row.divisi,row.urai]
+            .some(value => plain(value).toLocaleLowerCase('id-ID').includes(text)));
+    }
+    function renderPending() {
+        const rows = pendingRows();
+        $('kdPendingCount').textContent = `${rows.length} voucher`;
+        $('kdPendingBody').innerHTML = rows.length ? rows.map((row,i) => `
+            <tr><td>${i+1}</td><td><strong>${esc(row.no_voucher)}</strong><small>${esc(fmtDate(row.tgl_voucher))}</small></td>
+            <td>${esc(row.lokasi)}</td><td>${esc(row.departemen)}</td><td>${esc(row.divisi)}</td>
+            <td class="kd-money">${esc(money(row.nilai))}</td><td>${esc(row.urai)}</td>
+            <td><button type="button" class="kd-button small primary" data-pick-pending="${Number(row.id)}">Pilih</button></td></tr>`
+        ).join('') : '<tr><td colspan="8" class="kd-empty-pending">Tidak ada data pending yang sesuai.</td></tr>';
+    }
+    async function loadPending() {
+        $('kdPendingBody').innerHTML = '<tr><td colspan="8">Memuat transaksi Nilai Aset...</td></tr>';
+        try {
+            const response = await api(root.dataset.pending);
+            state.pending = (response.data || []).filter(row => Number(row.jenisn) === 1 && Number(row.stat) === 0);
+            state.pendingLoaded = true;
+            renderPending();
+        } catch (error) {
+            $('kdPendingBody').innerHTML = `<tr><td colspan="8">${esc(error.message)}</td></tr>`;
+        }
+    }
+    function useVoucher(row) {
+        state.voucher = row;
+        $('kdVoucherId').value = String(row?.id || '');
+        $('kdSelectedVoucher').hidden = !row;
+        $('kdPendingPicker').hidden = Boolean(row);
+        $('kdVoucherLabel').textContent = row?.no_voucher || 'Input tanpa voucher';
+        $('kdVoucherMeta').textContent = row
+            ? `${row.lokasi || '—'} · ${money(row.nilai)}` : '';
+        if (!row) return;
+        setCombo('id_lokasi', row.id_lokasi);
+        setCombo('id_departemen', row.dep);
+        setCombo('id_div', row.div);
+        $('kdHarga').value = row.nilai ?? '';
+        $('kdHarga').readOnly = true;
+        syncAlamat();
+    }
+    $('kdPendingSearch').addEventListener('input', renderPending);
+    $('kdPendingBody').addEventListener('click', event => {
+        const button = event.target.closest('[data-pick-pending]');
+        if (!button) return;
+        const found = state.pending.find(row => Number(row.id) === Number(button.dataset.pickPending));
+        if (found) useVoucher(found);
+    });
+    $('kdDirectInput').addEventListener('click', () => {
+        useVoucher(null); $('kdPendingPicker').hidden = true;
+        $('kdSelectedVoucher').hidden = false;
+        $('kdVoucherLabel').textContent = 'Input langsung tanpa voucher';
+        $('kdVoucherMeta').textContent = 'Isi data lokasi dan inventaris secara manual';
+        $('kdHarga').readOnly = false;
+    });
+    $('kdChangeVoucher').addEventListener('click', () => {
+        useVoucher(null); $('kdSelectedVoucher').hidden = true;
+        $('kdPendingPicker').hidden = false;
+        $('kdHarga').readOnly = false;
+        loadPending();
+    });
+    $('kdViewPending').addEventListener('click', () => {
+        // Tab Gedung dibaca dari K.I.B C; pending K.I.B D dipakai untuk Jembatan.
+        if (state.tab !== 'jembatan') root.querySelector('[data-kd-tab="jembatan"]')?.click();
+        openForm();
+    });
+
     async function openForm(id = null) {
         const form = $('kdForm');
         form.reset();
@@ -381,22 +480,29 @@
         $('kdEditId').value = id || '';
         $('kdFormTitle').textContent = id ? 'Edit Data Jembatan' : 'Tambah Data Jembatan';
         $('kdFormMessage').textContent = '';
-        $('kdIdBarang').value = '';
-        ['id_lokasi','id_departemen','id_div','kondisi',
+        useVoucher(null);
+        $('kdHarga').readOnly = false;
+        $('kdPendingPicker').hidden = false;
+        $('kdPendingSection').hidden = Boolean(id);
+        if (!id) loadPending();
+        ['id_barang','id_lokasi','id_departemen','id_div','kondisi',
          'konstruksi','materi','status_kepemilikan']
             .forEach(name => setCombo(name, ''));
+        syncAlamat();
         if (id) {
             try {
-                const res = await api(`${base}/manual/${id}`);
+                const res = await api(`${base}/item/${id}`);
                 for (const [name,value] of Object.entries(res.data)) {
-                    if (['id_lokasi','id_departemen','id_div','kondisi','konstruksi',
+                    if (['id_barang','id_lokasi','id_departemen','id_div','kondisi','konstruksi',
                          'materi','status_kepemilikan','foto_path','dokumen_path'].includes(name)) continue;
                     const control = form.elements.namedItem(name);
                     if (control && control.type !== 'file') control.value = value ?? '';
                 }
-                ['id_lokasi','id_departemen','id_div','kondisi',
+                ['id_barang','id_lokasi','id_departemen','id_div','kondisi',
                  'konstruksi','materi','status_kepemilikan'].forEach(
                     name => setCombo(name, res.data[name]));
+                syncAlamat();
+                $('kdHarga').readOnly = Boolean(res.data.id_nilai_aktiva);
             } catch (error) { alert(error.message); return; }
         }
         openDialog('kdFormDialog');
@@ -413,8 +519,8 @@
         const form = event.currentTarget;
         const owner = comboControls.find(c =>
             c.select.name === 'status_kepemilikan' && c.wrapper.closest('#kdForm'));
-        if (!locationCombo?.select.value || !owner?.select.value || !nameInput.value.trim()) {
-            $('kdFormMessage').textContent = 'Isi lokasi, nama barang dan Status Kepemilikan dari pilihan yang tersedia.';
+        if (!locationCombo?.select.value || !owner?.select.value || !barangCombo?.select.value) {
+            $('kdFormMessage').textContent = 'Pilih Lokasi, Nama Barang, dan Status Kepemilikan dari dropdown.';
             return;
         }
         const button = $('kdSave');
@@ -423,7 +529,7 @@
         button.disabled = true;
         $('kdFormMessage').textContent = 'Menyimpan data...';
         try {
-            await api(state.editingId ? `${base}/manual/${state.editingId}` : `${base}/manual`, {
+            await api(state.editingId ? `${base}/item/${state.editingId}` : `${base}/item`, {
                 method:'POST', body:data
             });
             closeDialog('kdFormDialog');
@@ -433,9 +539,9 @@
         } finally { button.disabled = false; }
     });
     async function deleteManual(id) {
-        if (!confirm('Hapus data Jembatan ini? Data arsip tidak akan berubah.')) return;
+        if (!confirm('Hapus inventaris Jembatan ini dari database? Tindakan ini tidak dapat dibatalkan.')) return;
         try {
-            await api(`${base}/manual/${id}`, { method:'DELETE' });
+            await api(`${base}/item/${id}`, { method:'DELETE' });
             window.location.reload();
         } catch (error) { alert('Gagal menghapus: ' + error.message); }
     }
@@ -503,8 +609,7 @@
                     fmtDate(item.tgl_dok),item.no_dok,item.luas,item.status_tanah,
                     item.kode_tanah,item.asal,item.harga,item.ket,
                     ownerText(item.status_kepemilikan),
-                    item.source === 'arsip' ? 'Arsip KIB D' : item.source === 'gedung'
-                        ? 'KIB C' : 'KIB D Baru'];
+                    item.source === 'gedung' ? 'KIB C' : 'KIB D Jembatan'];
                 return row(r,values.map((value,c) => c===0 || c===15
                     ? num(`${keys[c]}${r}`,value)
                     : cell(`${keys[c]}${r}`,value)),27);
