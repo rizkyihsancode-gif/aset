@@ -737,9 +737,28 @@ Route::delete(
     ->name('kib.gedung.destroy');
 
 
-Route::get('/kib/jalan', function () {
-    return view('kib.jalan');
-})->name('kib.jalan');
+// ========================================================
+// K.I.B D — Gedung/Irigasi (baca KIB C), Jembatan (arsip & manual)
+// Seluruh route memanggil KIBController — tidak ada KibDController.
+// ========================================================
+Route::get('/kib/jalan', [KIBController::class, 'jalanIndex'])
+    ->name('kib.jalan');
+Route::get('/kib/jalan/{jenis}/lokasi/{lokasi}', [KIBController::class, 'jalanDetailLokasi'])
+    ->whereIn('jenis', ['gedung', 'jembatan'])->whereNumber('lokasi')
+    ->name('kib.jalan.detail');
+Route::post('/kib/jalan/manual', [KIBController::class, 'jalanSimpan'])
+    ->name('kib.jalan.manual.store');
+Route::get('/kib/jalan/manual/{item}', [KIBController::class, 'jalanEdit'])
+    ->whereNumber('item')->name('kib.jalan.manual.show');
+Route::put('/kib/jalan/manual/{item}', [KIBController::class, 'jalanPerbarui'])
+    ->whereNumber('item')->name('kib.jalan.manual.update');
+Route::delete('/kib/jalan/manual/{item}', [KIBController::class, 'jalanHapus'])
+    ->whereNumber('item')->name('kib.jalan.manual.destroy');
+Route::put('/kib/jalan/arsip/{item}/kepemilikan', [KIBController::class, 'jalanPerbaruiPemilikArsip'])
+    ->whereNumber('item')->name('kib.jalan.arsip.kepemilikan');
+Route::get('/kib/jalan/file/{source}/{item}/{jenis}', [KIBController::class, 'jalanFile'])
+    ->whereIn('source', ['manual', 'arsip'])->whereIn('jenis', ['foto', 'dokumen'])
+    ->whereNumber('item')->name('kib.jalan.file');
 
 
 // ========================================================

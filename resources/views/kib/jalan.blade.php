@@ -1,1527 +1,468 @@
 @extends('layouts.main')
 
-@section('title', 'Jalan, Irigasi dan Jaringan')
+@section('title', 'K.I.B D — Jalan, Irigasi dan Jaringan')
 
 @push('styles')
     <link rel="stylesheet"
-        href="{{ asset('css/pages/kib/jalan.css') }}?v={{ filemtime(public_path('css/pages/kib/jalan.css')) }}">
+        href="{{ asset('css/pages/kib/jalan.css') }}?v={{ file_exists(public_path('css/pages/kib/jalan.css')) ? filemtime(public_path('css/pages/kib/jalan.css')) : '1' }}">
 @endpush
 
 @section('content')
-
-    <section class="content jalan-page">
-
-        {{-- =========================================================
-         HERO
-    ========================================================== --}}
-
-        <section class="jalan-hero">
-
-            <div class="jalan-hero-overlay"></div>
-
-            <div class="jalan-hero-inner">
-
-                {{-- BREADCRUMB --}}
-                <nav class="jalan-breadcrumb" aria-label="Breadcrumb">
-
-                    <a href="{{ route('dashboard') }}" aria-label="Home">
-                        <i data-lucide="house"></i>
-                    </a>
-
-                    <i data-lucide="chevron-right"></i>
-
-                    <span>K.I.B</span>
-
-                    <i data-lucide="chevron-right"></i>
-
-                    <strong aria-current="page">
-                        Jalan, Irigasi dan Jaringan
-                    </strong>
-
-                </nav>
-
-
-                {{-- HEADING --}}
-                <div class="jalan-heading">
-
-                    <h1>
-                        Jalan, Irigasi dan Jaringan
-                    </h1>
-
-                    <p>
-                        Kelola data aset tetap kategori jalan, irigasi dan jaringan
-                        pada Perumdam Tirta Kencana Kota Samarinda.
-                    </p>
-
-                </div>
-
-
-                {{-- =================================================
-                 KPI
-            ================================================== --}}
-
-                <div class="jalan-kpi-grid">
-
-                    {{-- TOTAL ASET --}}
-                    <div class="jalan-kpi-card">
-
-                        <div class="jalan-kpi-icon">
-                            <i data-lucide="road"></i>
-                        </div>
-
-                        <div class="jalan-kpi-content">
-
-                            <span>
-                                Total Aset
-                            </span>
-
-                            <div class="jalan-kpi-inline">
-
-                                <strong>
-                                    342
-                                </strong>
-
-                                <small>
-                                    <i data-lucide="arrow-up"></i>
-                                    +18
-                                </small>
-
-                            </div>
-
-                            <p>
-                                dari tahun lalu
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- NILAI PEROLEHAN --}}
-                    <div class="jalan-kpi-card">
-
-                        <div class="jalan-kpi-icon">
-                            <i data-lucide="database"></i>
-                        </div>
-
-                        <div class="jalan-kpi-content">
-
-                            <span>
-                                Total Nilai Perolehan
-                            </span>
-
-                            <strong>
-                                Rp 425,80 M
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- NILAI BUKU --}}
-                    <div class="jalan-kpi-card">
-
-                        <div class="jalan-kpi-icon">
-                            <i data-lucide="chart-no-axes-combined"></i>
-                        </div>
-
-                        <div class="jalan-kpi-content">
-
-                            <span>
-                                Nilai Buku
-                            </span>
-
-                            <strong>
-                                Rp 312,65 M
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- LOKASI --}}
-                    <div class="jalan-kpi-card">
-
-                        <div class="jalan-kpi-icon">
-                            <i data-lucide="map-pin"></i>
-                        </div>
-
-                        <div class="jalan-kpi-content">
-
-                            <span>
-                                Jumlah Lokasi
-                            </span>
-
-                            <strong>
-                                56
-                            </strong>
-
-                            <p>
-                                lokasi
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        {{-- =========================================================
-         WORKSPACE
-    ========================================================== --}}
-
-        <section class="jalan-card jalan-workspace">
-
-            {{-- =====================================================
-             TABS + TAMBAH
-        ====================================================== --}}
-
-            <div class="jalan-workspace-head">
-
-                <div class="jalan-tabs" role="tablist" aria-label="Menu data Jalan, Irigasi dan Jaringan">
-
-                    <button type="button" class="active" data-jalan-tab="list" role="tab" aria-selected="true">
-                        Daftar Aset
-                    </button>
-
-                    <button type="button" data-jalan-tab="recap" role="tab" aria-selected="false">
-                        Rekapitulasi
-                    </button>
-
-                    <button type="button" data-jalan-tab="chart" role="tab" aria-selected="false">
-                        Grafik
-                    </button>
-
-                    <button type="button" data-jalan-tab="depreciation" role="tab" aria-selected="false">
-                        Penyusutan
-                    </button>
-
-                </div>
-
-
-                <button type="button" class="jalan-add-button" onclick="openJalanModal('add')">
-
-                    <i data-lucide="plus"></i>
-
-                    Tambah Aset
-
-                </button>
-
-            </div>
-
-
-
-            {{-- =====================================================
-             FILTER
-        ====================================================== --}}
-
-            <div class="jalan-filter-row">
-
-                {{-- SEARCH --}}
-                <div class="jalan-search">
-
-                    <i data-lucide="search"></i>
-
-                    <input type="search" id="jalanSearch" placeholder="Cari kode, nama aset, lokasi, atau keterangan..."
-                        aria-label="Cari data aset">
-
-                </div>
-
-
-                {{-- JENIS --}}
-                <div class="jalan-select-field">
-
-                    <select id="jalanJenis" aria-label="Filter jenis aset">
-
-                        <option value="">
-                            Semua Jenis Aset
-                        </option>
-
-                        <option value="Jalan">
-                            Jalan
-                        </option>
-
-                        <option value="Jembatan">
-                            Jembatan
-                        </option>
-
-                        <option value="Irigasi">
-                            Irigasi
-                        </option>
-
-                        <option value="Jaringan">
-                            Jaringan
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                {{-- LOKASI --}}
-                <div class="jalan-select-field">
-
-                    <select id="jalanLokasi" aria-label="Filter lokasi">
-
-                        <option value="">
-                            Semua Lokasi
-                        </option>
-
-                        <option value="IPA Gunung Lipan">
-                            IPA Gunung Lipan
-                        </option>
-
-                        <option value="Jl. P. Antasari">
-                            Jl. P. Antasari
-                        </option>
-
-                        <option value="IPA Sungai Kapih">
-                            IPA Sungai Kapih
-                        </option>
-
-                        <option value="Reservoir Lempake">
-                            Reservoir Lempake
-                        </option>
-
-                        <option value="Samarinda Seberang">
-                            Samarinda Seberang
-                        </option>
-
-                        <option value="Palaran">
-                            Palaran
-                        </option>
-
-                        <option value="Sungai Kapih">
-                            Sungai Kapih
-                        </option>
-
-                        <option value="Loa Janan">
-                            Loa Janan
-                        </option>
-
-                        <option value="Wilayah Kota">
-                            Wilayah Kota
-                        </option>
-
-                        <option value="Sungai Karang Mumus">
-                            Sungai Karang Mumus
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                {{-- KONDISI --}}
-                <div class="jalan-select-field">
-
-                    <select id="jalanKondisi" aria-label="Filter kondisi">
-
-                        <option value="">
-                            Semua Kondisi
-                        </option>
-
-                        <option value="Baik">
-                            Baik
-                        </option>
-
-                        <option value="Cukup">
-                            Cukup
-                        </option>
-
-                        <option value="Rusak">
-                            Rusak
-                        </option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-
-
-            {{-- FILTER ACTION --}}
-            <div class="jalan-filter-actions">
-
+    @php
+        $pemilik = [
+            'perumdam' => 'Perumdam Tirta Kencana',
+            'pusat' => 'Pemerintah Pusat',
+            'pemprov' => 'Pemerintah Provinsi',
+            'pemkot' => 'Pemerintah Kota',
+            'swasta' => 'Swasta',
+            'campuran' => 'Campuran',
+            'belum_diatur' => 'Belum Diatur',
+        ];
+    @endphp
+    <main id="jalanPage" class="content jalan-page kd-page" data-base="{{ url('/kib/jalan') }}"
+        data-manual-ready="{{ $manualReady ? '1' : '0' }}" data-gedung="{{ route('kib.gedung') }}"
+        data-token="{{ csrf_token() }}">
+
+        <header class="kd-hero">
+            <div class="kd-hero-top">
                 <div>
-
-                    <button type="button" class="jalan-secondary-button" onclick="filterJalanTable()">
-                        <i data-lucide="list-filter"></i>
-                        Filter Lainnya
-                    </button>
-
-                </div>
-
-
-                <div>
-
-                    <button type="button" class="jalan-secondary-button" onclick="resetJalanFilter()">
-                        <i data-lucide="refresh-cw"></i>
-                        Reset
-                    </button>
-
-
-                    <button type="button" class="jalan-secondary-button jalan-export-button" onclick="exportJalanCSV()">
-                        <i data-lucide="download"></i>
-                        Export
-                    </button>
-
-                </div>
-
-            </div>
-
-
-
-            {{-- =====================================================
-             TABLE
-        ====================================================== --}}
-
-            <div class="jalan-table-scroll" tabindex="0" aria-label="Daftar aset Jalan, Irigasi dan Jaringan">
-
-                <table class="jalan-table" id="jalanTable">
-
-                    <thead>
-
-                        <tr>
-
-                            <th class="jalan-check-col">
-                                <input type="checkbox" aria-label="Pilih semua">
-                            </th>
-
-                            <th>
-                                No
-                            </th>
-
-                            <th>
-                                Kode Aset
-                            </th>
-
-                            <th class="jalan-thumb-col">
-                                Foto
-                            </th>
-
-                            <th>
-                                Nama Aset
-                            </th>
-
-                            <th>
-                                Jenis Aset
-                            </th>
-
-                            <th>
-                                Panjang/Dimensi
-                            </th>
-
-                            <th>
-                                Lokasi
-                            </th>
-
-                            <th>
-                                Tahun
-                            </th>
-
-                            <th>
-                                Nilai Perolehan
-                            </th>
-
-                            <th>
-                                Nilai Buku
-                            </th>
-
-                            <th>
-                                Kondisi
-                            </th>
-
-                            <th class="jalan-action-col">
-                                Aksi
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-
-                        {{-- =================================================
-                         DATA 1
-                    ================================================== --}}
-
-                        <tr data-record data-jenis="Jalan" data-lokasi="IPA Gunung Lipan" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox" aria-label="Pilih aset Jalan Akses IPA Gunung Lipan">
-                            </td>
-
-                            <td>
-                                1
-                            </td>
-
-                            <td class="jalan-code">
-                                03.01.01.001
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td class="jalan-name">
-                                Jalan Akses IPA Gunung Lipan
-                            </td>
-
-                            <td>
-                                Jalan
-                            </td>
-
-                            <td>
-                                1.250 m × 6 m
-                            </td>
-
-                            <td>
-                                IPA Gunung Lipan
-                            </td>
-
-                            <td>
-                                2021
-                            </td>
-
-                            <td>
-                                Rp 8.750.000.000
-                            </td>
-
-                            <td>
-                                Rp 5.600.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view" title="Lihat">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit" title="Edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete" title="Hapus">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 2 --}}
-                        <tr data-record data-jenis="Jaringan" data-lokasi="Jl. P. Antasari" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                2
-                            </td>
-
-                            <td>
-                                03.02.01.005
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Jaringan Pipa Distribusi Ø300
-                            </td>
-
-                            <td>
-                                Jaringan
-                            </td>
-
-                            <td>
-                                2.350 m
-                            </td>
-
-                            <td>
-                                Jl. P. Antasari
-                            </td>
-
-                            <td>
-                                2022
-                            </td>
-
-                            <td>
-                                Rp 12.500.000.000
-                            </td>
-
-                            <td>
-                                Rp 10.800.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 3 --}}
-                        <tr data-record data-jenis="Jaringan" data-lokasi="IPA Sungai Kapih" data-kondisi="Cukup">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                3
-                            </td>
-
-                            <td>
-                                03.02.02.011
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Jaringan Pipa Transmisi Ø400
-                            </td>
-
-                            <td>
-                                Jaringan
-                            </td>
-
-                            <td>
-                                1.800 m
-                            </td>
-
-                            <td>
-                                IPA Sungai Kapih
-                            </td>
-
-                            <td>
-                                2020
-                            </td>
-
-                            <td>
-                                Rp 18.200.000.000
-                            </td>
-
-                            <td>
-                                Rp 11.900.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-fair">
-                                    Cukup
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 4 --}}
-                        <tr data-record data-jenis="Irigasi" data-lokasi="Reservoir Lempake" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                4
-                            </td>
-
-                            <td>
-                                03.03.01.018
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Saluran Irigasi Drainase
-                            </td>
-
-                            <td>
-                                Irigasi
-                            </td>
-
-                            <td>
-                                950 m
-                            </td>
-
-                            <td>
-                                Reservoir Lempake
-                            </td>
-
-                            <td>
-                                2021
-                            </td>
-
-                            <td>
-                                Rp 6.400.000.000
-                            </td>
-
-                            <td>
-                                Rp 4.850.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 5 --}}
-                        <tr data-record data-jenis="Jalan" data-lokasi="Samarinda Seberang" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                5
-                            </td>
-
-                            <td>
-                                03.01.02.021
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Jalan Lingkungan Zona Distribusi
-                            </td>
-
-                            <td>
-                                Jalan
-                            </td>
-
-                            <td>
-                                2.100 m × 5 m
-                            </td>
-
-                            <td>
-                                Samarinda Seberang
-                            </td>
-
-                            <td>
-                                2023
-                            </td>
-
-                            <td>
-                                Rp 10.750.000.000
-                            </td>
-
-                            <td>
-                                Rp 9.100.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 6 --}}
-                        <tr data-record data-jenis="Jaringan" data-lokasi="Palaran" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                6
-                            </td>
-
-                            <td>
-                                03.02.03.025
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Jaringan Pipa Sekunder Ø200
-                            </td>
-
-                            <td>
-                                Jaringan
-                            </td>
-
-                            <td>
-                                3.600 m
-                            </td>
-
-                            <td>
-                                Palaran
-                            </td>
-
-                            <td>
-                                2022
-                            </td>
-
-                            <td>
-                                Rp 14.800.000.000
-                            </td>
-
-                            <td>
-                                Rp 11.200.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 7 --}}
-                        <tr data-record data-jenis="Jaringan" data-lokasi="Sungai Kapih" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                7
-                            </td>
-
-                            <td>
-                                03.02.04.028
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Jaringan Pipa Tersier Ø110
-                            </td>
-
-                            <td>
-                                Jaringan
-                            </td>
-
-                            <td>
-                                4.250 m
-                            </td>
-
-                            <td>
-                                Sungai Kapih
-                            </td>
-
-                            <td>
-                                2023
-                            </td>
-
-                            <td>
-                                Rp 9.600.000.000
-                            </td>
-
-                            <td>
-                                Rp 8.700.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 8 --}}
-                        <tr data-record data-jenis="Irigasi" data-lokasi="Loa Janan" data-kondisi="Rusak">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                8
-                            </td>
-
-                            <td>
-                                03.03.02.031
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Saluran Pembuang (Buang Air)
-                            </td>
-
-                            <td>
-                                Irigasi
-                            </td>
-
-                            <td>
-                                680 m
-                            </td>
-
-                            <td>
-                                Loa Janan
-                            </td>
-
-                            <td>
-                                2020
-                            </td>
-
-                            <td>
-                                Rp 5.200.000.000
-                            </td>
-
-                            <td>
-                                Rp 3.100.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-bad">
-                                    Rusak
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 9 --}}
-                        <tr data-record data-jenis="Jaringan" data-lokasi="Wilayah Kota" data-kondisi="Baik">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                9
-                            </td>
-
-                            <td>
-                                03.02.05.034
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Jaringan Kabel SCADA
-                            </td>
-
-                            <td>
-                                Jaringan
-                            </td>
-
-                            <td>
-                                5.800 m
-                            </td>
-
-                            <td>
-                                Wilayah Kota
-                            </td>
-
-                            <td>
-                                2024
-                            </td>
-
-                            <td>
-                                Rp 4.750.000.000
-                            </td>
-
-                            <td>
-                                Rp 4.300.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-good">
-                                    Baik
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-
-                        {{-- DATA 10 --}}
-                        <tr data-record data-jenis="Jaringan" data-lokasi="Sungai Karang Mumus" data-kondisi="Cukup">
-
-                            <td>
-                                <input type="checkbox">
-                            </td>
-
-                            <td>
-                                10
-                            </td>
-
-                            <td>
-                                03.01.03.040
-                            </td>
-
-                            <td>
-                                <div class="jalan-thumb">
-                                    <i data-lucide="image"></i>
-                                </div>
-                            </td>
-
-                            <td>
-                                Jembatan Pipa Sungai Karang Mumus
-                            </td>
-
-                            <td>
-                                Jaringan
-                            </td>
-
-                            <td>
-                                120 m
-                            </td>
-
-                            <td>
-                                Sungai Karang Mumus
-                            </td>
-
-                            <td>
-                                2021
-                            </td>
-
-                            <td>
-                                Rp 7.900.000.000
-                            </td>
-
-                            <td>
-                                Rp 5.600.000.000
-                            </td>
-
-                            <td>
-                                <span class="jalan-status is-fair">
-                                    Cukup
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <div class="jalan-actions">
-
-                                    <button type="button" class="view" data-action="view">
-                                        <i data-lucide="eye"></i>
-                                    </button>
-
-                                    <button type="button" class="edit" data-action="edit">
-                                        <i data-lucide="square-pen"></i>
-                                    </button>
-
-                                    <button type="button" class="delete" data-action="delete">
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-
-                        {{-- EMPTY --}}
-                        <tr id="jalanEmptyRow" hidden>
-
-                            <td colspan="13" class="jalan-empty">
-                                Tidak ada data yang sesuai dengan filter.
-                            </td>
-
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-
-            {{-- =====================================================
-             FOOTER
-        ====================================================== --}}
-
-            <div class="jalan-table-footer">
-
-                <div class="jalan-table-info" id="jalanTableInfo" role="status" aria-live="polite">
-                    Menampilkan 1 - 10 dari 342 data
-                </div>
-
-
-                <div class="jalan-pagination-area">
-
-                    <select id="jalanPageSize" aria-label="Jumlah data per halaman">
-
-                        <option value="10">
-                            10
-                        </option>
-
-                        <option value="25">
-                            25
-                        </option>
-
-                        <option value="50">
-                            50
-                        </option>
-
-                    </select>
-
-                    <span>
-                        data per halaman
-                    </span>
-
-
-                    <nav class="jalan-pagination" id="jalanPagination"
-                        aria-label="Pagination data Jalan, Irigasi dan Jaringan">
+                    <nav class="kd-breadcrumb" aria-label="Breadcrumb">
+                        <a href="{{ route('dashboard') }}"><i data-lucide="house"></i></a>
+                        <i data-lucide="chevron-right"></i><span>K.I.B</span>
+                        <i data-lucide="chevron-right"></i><strong>Jalan, Irigasi dan Jaringan</strong>
                     </nav>
-
+                    <h1>Jalan, Irigasi dan Jaringan</h1>
+                    <p>Inventaris K.I.B D dengan tampilan Detail sesuai kartu inventaris Excel.</p>
                 </div>
+                <span class="kd-hero-date"><i data-lucide="calendar-days"></i>
+                    {{ now('Asia/Makassar')->locale('id')->translatedFormat('d F Y') }}
+                </span>
+            </div>
+            <div class="kd-stats">
+                <article><i data-lucide="building-2"></i>
+                    <div><small>Gedung /
+                            Irigasi</small><strong>{{ number_format($totalGedung, 0, ',', '.') }}</strong><span>Data
+                            terhubung K.I.B C</span></div>
+                </article>
+                <article><i data-lucide="route"></i>
+                    <div><small>Jembatan / Arsip K.I.B
+                            D</small><strong>{{ number_format($totalJembatan, 0, ',', '.') }}</strong><span>Arsip lama +
+                            data baru</span></div>
+                </article>
+                <article><i data-lucide="map-pin"></i>
+                    <div><small>Lokasi Gedung</small><strong>{{ count($gedungLokasi) }}</strong><span>Lokasi
+                            terdaftar</span></div>
+                </article>
+                <article><i data-lucide="folder-open"></i>
+                    <div><small>Lokasi Jembatan</small><strong>{{ count($jembatanLokasi) }}</strong><span>Lokasi
+                            terdaftar</span></div>
+                </article>
+            </div>
+        </header>
 
+        <section class="kd-workspace" aria-label="Data KIB D">
+            <div class="kd-section-top">
+                <div>
+                    <small>KARTU INVENTARIS BARANG D</small>
+                    <h2>Data Jalan, Irigasi dan Jaringan</h2>
+                    <p>Ringkasan lokasi · Detail Excel · Status Kepemilikan</p>
+                </div>
+                <button class="kd-button primary" id="kdNew" type="button" {{ $manualReady ? '' : 'disabled' }}>
+                    <i data-lucide="plus"></i> Tambah Jembatan
+                </button>
             </div>
 
+            <div class="kd-tabs" role="tablist" aria-label="Kategori KIB D">
+                <button type="button" class="kd-tab active" role="tab" aria-selected="true"
+                    aria-controls="kdPaneGedung" data-kd-tab="gedung">
+                    <i data-lucide="building-2"></i> Gedung / Irigasi
+                    <span>{{ number_format($totalGedung, 0, ',', '.') }}</span>
+                </button>
+                <button type="button" class="kd-tab" role="tab" aria-selected="false" aria-controls="kdPaneJembatan"
+                    data-kd-tab="jembatan">
+                    <i data-lucide="route"></i> Jembatan
+                    <span>{{ number_format($totalJembatan, 0, ',', '.') }}</span>
+                </button>
+            </div>
+
+            <div class="kd-toolbar">
+                <label class="kd-search-field"><i data-lucide="search"></i>
+                    <input id="kdSearch" type="search" placeholder="Cari lokasi atau alamat..." autocomplete="off"
+                        aria-label="Cari lokasi">
+                </label>
+                <label class="kd-filter-field"><span>Status Kepemilikan</span>
+                    <select id="kdOwnerFilter" aria-label="Filter Status Kepemilikan">
+                        <option value="">Semua Status</option>
+                        @foreach ($pemilik as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <label class="kd-filter-field"><span>Per halaman</span>
+                    <select id="kdPerPage">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </label>
+            </div>
+
+            @foreach (['gedung' => $gedungLokasi, 'jembatan' => $jembatanLokasi] as $tab => $items)
+                <section class="kd-tab-pane" role="tabpanel"
+                    id="{{ $tab === 'gedung' ? 'kdPaneGedung' : 'kdPaneJembatan' }}" data-kd-pane="{{ $tab }}"
+                    {{ $tab === 'jembatan' ? 'hidden' : '' }}>
+                    <p class="kd-origin-note">
+                        @if ($tab === 'gedung')
+                            <i data-lucide="info"></i> Menampilkan seluruh data Gedung dan Bangunan dari K.I.B C tanpa
+                            menyalin atau mengganti data aslinya.
+                        @else
+                            <i data-lucide="database"></i> Menampilkan data K.I.B D dari web lama dan inventaris Jembatan
+                            baru. Arsip lama tetap aman; Status Kepemilikan bisa diperbarui.
+                        @endif
+                    </p>
+                    <div class="kd-table-shell">
+                        <table class="kd-main-table">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Lokasi</th>
+                                    <th>Alamat</th>
+                                    <th>Status Kepemilikan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($items as $row)
+                                    @php
+                                        $status = strtolower(trim((string) $row['status_kepemilikan']));
+                                        $labelStatus = $pemilik[$status] ?? 'Belum Diatur';
+                                    @endphp
+                                    <tr data-kd-row data-kind="{{ $tab }}"
+                                        data-location="{{ $row['id_lokasi'] }}" data-name="{{ $row['lokasi'] }}"
+                                        data-status="{{ $status }}"
+                                        data-query="{{ mb_strtolower($row['lokasi'] . ' ' . $row['alamat'], 'UTF-8') }}">
+                                        <td data-kd-number>{{ $loop->iteration }}</td>
+                                        <td class="kd-primary-cell">
+                                            <strong>{{ $row['lokasi'] }}</strong><small>{{ number_format($row['jumlah'], 0, ',', '.') }}
+                                                inventaris</small></td>
+                                        <td>{{ $row['alamat'] }}</td>
+                                        <td><span
+                                                class="kd-owner {{ $status === 'campuran' ? 'mixed' : (isset($pemilik[$status]) && $status !== 'belum_diatur' ? 'known' : 'unknown') }}">{{ $labelStatus }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="kd-row-actions">
+                                                <button type="button" class="kd-button small outline"
+                                                    data-kd-detail="{{ $row['id_lokasi'] }}"
+                                                    data-kind="{{ $tab }}"><i data-lucide="eye"></i>
+                                                    Detail</button>
+                                                <button type="button" class="kd-icon-button" title="Export Excel lokasi"
+                                                    aria-label="Export Excel {{ $row['lokasi'] }}"
+                                                    data-kd-export="{{ $row['id_lokasi'] }}"
+                                                    data-kind="{{ $tab }}"><i
+                                                        data-lucide="file-spreadsheet"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr class="kd-blank">
+                                        <td colspan="5">Belum ada inventaris yang dapat ditampilkan pada kategori ini.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            @endforeach
+            <div class="kd-table-footer"><small id="kdRange">—</small>
+                <div class="kd-pagination" id="kdPages"></div>
+            </div>
+            @unless ($archiveReady)
+                <p class="kd-help">Tabel arsip <code>kib_d_s</code> belum tersedia di database aplikasi ini. Data Jembatan lama
+                    akan muncul setelah arsip tersedia.</p>
+            @endunless
+            @unless ($manualReady)
+                <p class="kd-help">Untuk menambahkan Jembatan baru, jalankan migration khusus <code>kib_d_manual</code> dahulu.
+                </p>
+            @endunless
         </section>
 
-
-
-        {{-- =========================================================
-         MODAL
-    ========================================================== --}}
-
-        <dialog class="jalan-modal" id="jalanModal">
-
-            <div class="jalan-modal-dialog">
-
-                {{-- HEADER --}}
-                <div class="jalan-modal-header">
-
-                    <div>
-
-                        <h3 id="jalanModalTitle">
-                            Tambah Aset
-                        </h3>
-
-                        <p id="jalanModalDescription">
-                            Tambahkan data jalan, irigasi atau jaringan.
-                        </p>
-
-                    </div>
-
-
-                    <button type="button" onclick="closeJalanModal()" aria-label="Tutup">
-                        <i data-lucide="x"></i>
-                    </button>
-
+        {{-- DETAIL MODEL EXCEL --}}
+        <dialog class="kd-dialog detail" id="kdDetailDialog" aria-labelledby="kdDetailTitle">
+            <div class="kd-dialog-head">
+                <div><small>K.I.B D / KARTU INVENTARIS BARANG</small>
+                    <h2 id="kdDetailTitle">Detail Lokasi</h2>
+                    <p id="kdDetailSubtitle">—</p>
                 </div>
-
-
-
-                {{-- FORM --}}
-                <form id="jalanForm">
-
-                    <div class="jalan-modal-body">
-
-                        <p class="jalan-modal-note" id="jalanModalNote">
-                            Form UI contoh.
-                            Penyimpanan database belum dihubungkan.
-                        </p>
-
-
-                        {{-- KODE --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanCode">
-                                Kode Aset
-                            </label>
-
-                            <input id="jalanCode" name="kode" type="text" placeholder="03.01.01.001" required>
-
-                        </div>
-
-
-                        {{-- NAMA --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanName">
-                                Nama Aset
-                            </label>
-
-                            <input id="jalanName" name="nama" type="text" placeholder="Masukkan nama aset"
-                                required>
-
-                        </div>
-
-
-                        {{-- JENIS --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanFormJenis">
-                                Jenis Aset
-                            </label>
-
-                            <select id="jalanFormJenis" name="jenis" required>
-
-                                <option value="Jalan">
-                                    Jalan
-                                </option>
-
-                                <option value="Jembatan">
-                                    Jembatan
-                                </option>
-
-                                <option value="Irigasi">
-                                    Irigasi
-                                </option>
-
-                                <option value="Jaringan">
-                                    Jaringan
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        {{-- DIMENSI --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanDimensi">
-                                Panjang / Dimensi
-                            </label>
-
-                            <input id="jalanDimensi" name="dimensi" type="text" placeholder="Contoh: 1.250 m × 6 m"
-                                required>
-
-                        </div>
-
-
-                        {{-- LOKASI --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanFormLokasi">
-                                Lokasi
-                            </label>
-
-                            <input id="jalanFormLokasi" name="lokasi" type="text" placeholder="Masukkan lokasi aset"
-                                required>
-
-                        </div>
-
-
-                        {{-- TAHUN --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanFormTahun">
-                                Tahun Perolehan
-                            </label>
-
-                            <input id="jalanFormTahun" name="tahun" type="text" placeholder="2024" required>
-
-                        </div>
-
-
-                        {{-- NILAI PEROLEHAN --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanPerolehan">
-                                Nilai Perolehan
-                            </label>
-
-                            <input id="jalanPerolehan" name="perolehan" type="text" placeholder="Rp 0" required>
-
-                        </div>
-
-
-                        {{-- NILAI BUKU --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanBuku">
-                                Nilai Buku
-                            </label>
-
-                            <input id="jalanBuku" name="buku" type="text" placeholder="Rp 0" required>
-
-                        </div>
-
-
-                        {{-- KONDISI --}}
-                        <div class="jalan-form-group">
-
-                            <label for="jalanFormKondisi">
-                                Kondisi
-                            </label>
-
-                            <select id="jalanFormKondisi" name="kondisi" required>
-
-                                <option value="Baik">
-                                    Baik
-                                </option>
-
-                                <option value="Cukup">
-                                    Cukup
-                                </option>
-
-                                <option value="Rusak">
-                                    Rusak
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-
-
-                    {{-- FOOTER --}}
-                    <div class="jalan-modal-footer">
-
-                        <button type="button" class="jalan-cancel-button" onclick="closeJalanModal()">
-                            Batal
-                        </button>
-
-
-                        <button type="submit" class="jalan-save-button" id="jalanSaveButton">
-                            Simpan Aset
-                        </button>
-
-                    </div>
-
-                </form>
-
+                <button class="kd-icon-button" data-kd-close="kdDetailDialog" aria-label="Tutup"><i
+                        data-lucide="x"></i></button>
             </div>
-
+            <div class="kd-dialog-body">
+                <div class="kd-detail-bar">
+                    <div><strong>Daftar Inventaris · Format Excel K.I.B D</strong>
+                        <p>Geser tabel ke kanan untuk melihat seluruh kolom.</p>
+                    </div>
+                    <div class="kd-detail-controls">
+                        <input id="kdDetailSearch" type="search" placeholder="Cari barang, kode, register..."
+                            aria-label="Cari barang dalam detail">
+                        <span class="kd-count" id="kdDetailCount">0 data</span>
+                        <button type="button" class="kd-button primary" id="kdExportDetail"><i
+                                data-lucide="file-spreadsheet"></i> Export Excel</button>
+                    </div>
+                </div>
+                <div class="kd-excel-scroll" role="region" tabindex="0" aria-label="Tabel Excel KIB D">
+                    <table class="kd-excel-table" id="kdExcelTable">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">No.</th>
+                                <th rowspan="2">Nama Barang / Jenis Barang</th>
+                                <th colspan="2">Nomor</th>
+                                <th rowspan="2">Kondisi Bangunan (B, KB, RB)</th>
+                                <th colspan="2">Konstruksi Bangunan</th>
+                                <th rowspan="2">Luas Lantai (M²)</th>
+                                <th rowspan="2">Letak / Lokasi Alamat</th>
+                                <th colspan="2">Dokumen Gedung</th>
+                                <th rowspan="2">Luas (M²)</th>
+                                <th rowspan="2">Status Tanah</th>
+                                <th rowspan="2">Nomor Kode Tanah</th>
+                                <th rowspan="2">Asal Usul</th>
+                                <th rowspan="2">Harga (Rp.)</th>
+                                <th rowspan="2">Keterangan</th>
+                                <th rowspan="2">Status Kepemilikan</th>
+                                <th rowspan="2">Berkas</th>
+                            </tr>
+                            <tr>
+                                <th>Kode Barang</th>
+                                <th>Register</th>
+                                <th>Bertingkat / Tidak</th>
+                                <th>Beton / Tidak</th>
+                                <th>Tanggal</th>
+                                <th>Nomor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kdExcelBody">
+                            <tr>
+                                <td colspan="19">Pilih lokasi untuk melihat inventaris.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="kd-table-hint"><span><i data-lucide="move-horizontal"></i> Geser ke kanan untuk kolom
+                        selanjutnya</span><span>Data arsip tidak diubah otomatis</span></div>
+                <section class="kd-berkas" id="kdBerkas" hidden aria-live="polite">
+                    <div class="kd-berkas-head">
+                        <div><small>LAMPIRAN & TINDAKAN</small>
+                            <h3 id="kdBerkasTitle">Detail Inventaris</h3><span id="kdBerkasSource"></span>
+                        </div>
+                        <div id="kdBerkasActions" class="kd-row-actions"></div>
+                    </div>
+                    <div class="kd-berkas-grid">
+                        <div class="kd-file-box"><strong>Foto Aset</strong>
+                            <div id="kdBerkasFoto" class="kd-image-placeholder">Foto belum tersedia</div>
+                        </div>
+                        <div class="kd-file-box"><strong>Dokumen PDF / Berkas</strong>
+                            <div id="kdBerkasDok" class="kd-document-placeholder">Dokumen belum tersedia</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </dialog>
 
-    </section>
+        {{-- UBAH STATUS KEPEMILIKAN ARSIP JEMBATAN --}}
+        <dialog class="kd-dialog form kd-owner-dialog" id="kdOwnerDialog" aria-labelledby="kdOwnerTitle">
+            <div class="kd-dialog-head">
+                <div><small>ARSIP K.I.B D / STATUS KEPEMILIKAN</small>
+                    <h2 id="kdOwnerTitle">Atur Kepemilikan Jembatan</h2>
+                    <p>Hanya kolom Status Kepemilikan yang diperbarui; identitas aset lama tetap aman.</p>
+                </div><button type="button" class="kd-icon-button" data-kd-close="kdOwnerDialog" aria-label="Tutup"><i
+                        data-lucide="x"></i></button>
+            </div>
+            <form id="kdOwnerForm" class="kd-form" novalidate>
+                <section class="kd-form-section"><label class="kd-field"><span>Status Kepemilikan <em>*</em></span>
+                        <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                placeholder="Ketik status kepemilikan..." autocomplete="off"><select
+                                name="status_kepemilikan" data-kd-native required>
+                                <option value="">Pilih status</option>
+                                @foreach (array_slice($pemilik, 0, 5, true) as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                        </div>
+                    </label></section>
+                <div class="kd-form-foot"><small id="kdOwnerMessage" role="status"></small><button type="button"
+                        class="kd-button outline" data-kd-close="kdOwnerDialog">Batal</button><button
+                        class="kd-button primary" type="submit"><i data-lucide="save"></i> Simpan Status</button></div>
+            </form>
+        </dialog>
 
-
-    @push('scripts')
-        <script src="{{ asset('js/pages/kib/jalan.js') }}"></script>
-    @endpush
-
+        {{-- TAMBAH / EDIT HANYA UNTUK JEMBATAN BARU --}}
+        <dialog class="kd-dialog form" id="kdFormDialog" aria-labelledby="kdFormTitle">
+            <div class="kd-dialog-head">
+                <div><small>K.I.B D / DATA JEMBATAN</small>
+                    <h2 id="kdFormTitle">Tambah Data Jembatan</h2>
+                    <p>Urutan form mengikuti tabel inventaris Excel K.I.B D.</p>
+                </div><button type="button" class="kd-icon-button" data-kd-close="kdFormDialog" aria-label="Tutup"><i
+                        data-lucide="x"></i></button>
+            </div>
+            <form id="kdForm" class="kd-form" enctype="multipart/form-data" novalidate>
+                <input id="kdEditId" type="hidden" value="">
+                <section class="kd-form-section">
+                    <div class="kd-section-label"><b>01</b>
+                        <div><strong>Identitas Lokasi</strong><small>Data organisasi dan lokasi inventaris</small></div>
+                    </div>
+                    <div class="kd-form-grid">
+                        <label class="kd-field"><span>Lokasi <em>*</em></span>
+                            <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                    placeholder="Ketik nama lokasi..." autocomplete="off" required><select
+                                    name="id_lokasi" data-kd-native required>
+                                    <option value="">Pilih lokasi</option>
+                                    @foreach ($lokasiOptions as $opt)
+                                        <option value="{{ $opt->id }}" data-alamat="{{ $opt->alamat }}">
+                                            {{ $opt->lokasi }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
+                        <label class="kd-field"><span>Alamat Lokasi</span><input id="kdAlamat" type="text" readonly
+                                placeholder="Terisi otomatis dari Lokasi"></label>
+                        <label class="kd-field"><span>Departemen</span>
+                            <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                    placeholder="Cari departemen..." autocomplete="off"><select data-kd-native
+                                    name="id_departemen">
+                                    <option value="">Tidak ditentukan</option>
+                                    @foreach ($departemenOptions as $opt)
+                                        <option value="{{ $opt->id }}">{{ $opt->nama_dep }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
+                        <label class="kd-field"><span>Divisi</span>
+                            <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                    placeholder="Cari divisi..." autocomplete="off"><select data-kd-native
+                                    name="id_div">
+                                    <option value="">Tidak ditentukan</option>
+                                    @foreach ($divisiOptions as $opt)
+                                        <option value="{{ $opt->id }}">{{ $opt->nama_div }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
+                    </div>
+                </section>
+                <section class="kd-form-section">
+                    <div class="kd-section-label"><b>02</b>
+                        <div><strong>Kartu Inventaris Barang D</strong><small>Urut sesuai kolom Excel</small></div>
+                    </div>
+                    <div class="kd-form-grid">
+                        <label class="kd-field"><span>Nama Barang / Jenis Barang <em>*</em></span><input type="text"
+                                name="nama_barang" id="kdNamaBarang" list="kdBarangOptions"
+                                placeholder="Ketik nama barang..." required maxlength="255"><datalist
+                                id="kdBarangOptions">
+                                @foreach ($barangOptions as $opt)
+                                    <option value="{{ $opt->nama_barang }}" data-id="{{ $opt->id }}"
+                                        data-code="{{ $opt->kode_barang }}"></option>
+                                @endforeach
+                            </datalist>
+                            <input type="hidden" name="id_barang" id="kdIdBarang"></label>
+                        <label class="kd-field"><span>Kode Barang</span><input name="kode" id="kdKode"
+                                maxlength="100" placeholder="03.11.01.16.04"></label>
+                        <label class="kd-field"><span>Nomor Register</span><input name="reg" maxlength="100"
+                                placeholder="Nomor register"></label>
+                        <label class="kd-field"><span>Kondisi Bangunan</span>
+                            <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                    placeholder="Cari kondisi..." autocomplete="off"><select data-kd-native
+                                    name="kondisi">
+                                    <option value="">Pilih kondisi</option>
+                                    <option>Baik</option>
+                                    <option>Kurang Baik</option>
+                                    <option>Rusak Berat</option>
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
+                        <label class="kd-field"><span>Konstruksi — Bertingkat / Tidak</span>
+                            <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                    placeholder="Cari konstruksi..." autocomplete="off"><select data-kd-native
+                                    name="konstruksi">
+                                    <option value="">Pilih konstruksi</option>
+                                    <option>Bertingkat</option>
+                                    <option>Tidak</option>
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
+                        <label class="kd-field"><span>Konstruksi — Beton / Tidak</span>
+                            <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                    placeholder="Cari material..." autocomplete="off"><select data-kd-native
+                                    name="materi">
+                                    <option value="">Pilih material</option>
+                                    <option>Beton</option>
+                                    <option>Tidak</option>
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
+                        <label class="kd-field"><span>Luas Lantai (M²)</span><input name="luas_lantai" maxlength="100"
+                                placeholder="Contoh 240"></label>
+                        <label class="kd-field"><span>Letak / Lokasi Alamat</span><input name="letak" maxlength="500"
+                                placeholder="Contoh Jl. Cipto Mangunkusumo"></label>
+                        <label class="kd-field"><span>Tanggal Dokumen</span><input type="date" name="tgl_dok"></label>
+                        <label class="kd-field"><span>Nomor Dokumen</span><input name="no_dok" maxlength="255"
+                                placeholder="Nomor dokumen"></label>
+                        <label class="kd-field"><span>Luas (M²)</span><input name="luas" maxlength="100"
+                                placeholder="Luas keseluruhan"></label>
+                        <label class="kd-field"><span>Status Tanah</span><input name="status_tanah" maxlength="255"
+                                placeholder="Contoh Hak Pakai"></label>
+                        <label class="kd-field"><span>Nomor Kode Tanah</span><input name="kode_tanah" maxlength="255"
+                                placeholder="Contoh 01.01.11.03.24"></label>
+                        <label class="kd-field"><span>Asal Usul</span><input name="asal" maxlength="255"
+                                placeholder="Contoh SK Walikota"></label>
+                        <label class="kd-field"><span>Harga Perolehan (Rp.)</span><input type="number" name="harga"
+                                min="0" step="0.01" placeholder="0"></label>
+                        <label class="kd-field"><span>Status Kepemilikan <em>*</em></span>
+                            <div class="kd-combo" data-kd-combo><input type="search" data-kd-search
+                                    placeholder="Ketik untuk mencari kepemilikan..." autocomplete="off" required><select
+                                    name="status_kepemilikan" data-kd-native required>
+                                    <option value="">Pilih status</option>
+                                    @foreach (array_slice($pemilik, 0, 5, true) as $value => $label)
+                                        <option value="{{ $value }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="kd-combo-menu" data-kd-menu role="listbox" hidden></div>
+                            </div>
+                        </label>
+                        <label class="kd-field wide"><span>Keterangan</span>
+                            <textarea name="ket" rows="3" maxlength="10000" placeholder="Keterangan inventaris"></textarea>
+                        </label>
+                    </div>
+                </section>
+                <section class="kd-form-section">
+                    <div class="kd-section-label"><b>03</b>
+                        <div><strong>Lampiran dan Dokumen</strong><small>Kosongkan saat Edit jika tidak ingin mengganti
+                                berkas lama.</small></div>
+                    </div>
+                    <div class="kd-form-grid">
+                        <label class="kd-field"><span>Foto (JPG, PNG, WEBP — maksimal 5 MB)</span><input type="file"
+                                name="foto" accept="image/jpeg,image/png,image/webp"></label>
+                        <label class="kd-field"><span>Dokumen PDF (maksimal 15 MB)</span><input type="file"
+                                name="dokumen" accept="application/pdf"></label>
+                    </div>
+                </section>
+                <div class="kd-form-foot"><small id="kdFormMessage" role="status"></small><button type="button"
+                        class="kd-button outline" data-kd-close="kdFormDialog">Batal</button><button
+                        class="kd-button primary" id="kdSave" type="submit"><i data-lucide="save"></i>
+                        Simpan</button></div>
+            </form>
+        </dialog>
+    </main>
 @endsection
+
+@push('scripts')
+    <script
+        src="{{ asset('js/pages/kib/jalan.js') }}?v={{ file_exists(public_path('js/pages/kib/jalan.js')) ? filemtime(public_path('js/pages/kib/jalan.js')) : '1' }}">
+    </script>
+@endpush
