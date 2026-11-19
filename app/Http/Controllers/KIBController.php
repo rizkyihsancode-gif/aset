@@ -8214,6 +8214,14 @@ class KIBController extends Controller
                 'COUNT(*) AS jumlah'
             )
 
+            // Dalam satu lokasi dapat ada beberapa pemilik barang.
+            // Karena itu status lokasi bukan otomatis satu pemilik.
+            ->selectRaw("CASE
+                WHEN COUNT(DISTINCT COALESCE(NULLIF(BTRIM(status_kepemilikan), ''), '__belum__')) > 1
+                    THEN 'campuran'
+                ELSE COALESCE(MAX(NULLIF(BTRIM(status_kepemilikan), '')), '')
+                END AS status_kepemilikan_ringkas")
+
             ->groupBy('id_lokasi')
 
             ->get()
@@ -8306,6 +8314,13 @@ class KIBController extends Controller
                         ->get($lokasi->id)
                         ->jumlah
                         ?? 0
+                    );
+
+                    $lokasi->status_kepemilikan_ringkas = (string) (
+                        $itemCounts
+                        ->get($lokasi->id)
+                        ->status_kepemilikan_ringkas
+                        ?? ''
                     );
 
                     $lokasi->nilai = (int) (
@@ -8898,6 +8913,12 @@ class KIBController extends Controller
                 'max:255',
             ],
 
+            'status_kepemilikan' => [
+                $creating ? 'required' : 'nullable',
+                'string',
+                Rule::in(['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta']),
+            ],
+
             'baik' => [
                 'required',
                 'integer',
@@ -9018,7 +9039,7 @@ class KIBController extends Controller
     private function kirFields(
         array $data
     ): array {
-        return [
+        $fields = [
 
             'id_barang' => (int) $data['id_barang'],
 
@@ -9040,6 +9061,14 @@ class KIBController extends Controller
 
             'updated_at' => now(),
         ];
+
+        // Edit arsip historis tanpa memilih status baru tidak menghapus
+        // nilai kepemilikan sebelumnya. Tambah wajib memilih satu status.
+        if (!empty($data['status_kepemilikan'])) {
+            $fields['status_kepemilikan'] = $data['status_kepemilikan'];
+        }
+
+        return $fields;
     }
 
     /*
