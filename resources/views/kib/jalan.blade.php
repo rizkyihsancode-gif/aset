@@ -40,7 +40,7 @@
             </div>
             <div class="kd-stats">
                 <article><i data-lucide="building-2"></i>
-                    <div><small>Gedung
+                    <div><small>Gedung /
                             Irigasi</small><strong>{{ number_format($totalGedung, 0, ',', '.') }}</strong><span>Data
                             terhubung K.I.B C</span></div>
                 </article>
@@ -98,7 +98,7 @@
             <div class="kd-tabs" role="tablist" aria-label="Kategori KIB D">
                 <button type="button" class="kd-tab active" role="tab" aria-selected="true"
                     aria-controls="kdPaneGedung" data-kd-tab="gedung">
-                    <i data-lucide="building-2"></i> Gedung / Irigasi
+                    <i data-lucide="building-2"></i> Gedung Irigasi
                     <span>{{ number_format($totalGedung, 0, ',', '.') }}</span>
                 </button>
                 <button type="button" class="kd-tab" role="tab" aria-selected="false" aria-controls="kdPaneJembatan"
