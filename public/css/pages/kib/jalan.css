@@ -299,3 +299,54 @@
 @media (max-width:700px) {
     #jalanPage .kd-form-foot {margin:0 -13px -13px;padding:13px;}
 }
+
+/* ===============================================================
+   K.I.B D — TABEL BERGARIS TEGAS DAN AKSI CRUD TERLIHAT
+   Seluruh selector dibatasi pada #jalanPage.
+   =============================================================== */
+#jalanPage .kd-table-shell {
+    overflow-x:auto;
+    border:1px solid #829fbd;
+    border-radius:10px;
+}
+#jalanPage .kd-main-table {
+    border-collapse:collapse;
+    border-spacing:0;
+    width:100%;
+    min-width:1050px;
+    font-size:14px;
+}
+#jalanPage .kd-main-table th,
+#jalanPage .kd-main-table td {
+    border:1px solid #9db4cc !important;
+    padding:13px 12px;
+    vertical-align:middle;
+}
+#jalanPage .kd-main-table thead th {
+    background:#dceafb;
+    color:#123a64;
+    font-size:13px;
+    font-weight:800;
+}
+#jalanPage .kd-main-table tbody tr:nth-child(even) td {background:#f5f9fd;}
+#jalanPage .kd-main-table tbody tr:hover td {background:#e9f3ff;}
+#jalanPage .kd-main-table th:last-child {min-width:290px;width:290px;}
+#jalanPage .kd-row-actions {display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+#jalanPage .kd-row-actions .kd-button {font-size:12px;min-height:34px;padding:7px 10px;}
+#jalanPage .kd-button.warning {border-color:#edc57e;background:#fff5e3;color:#8d540e;}
+#jalanPage .kd-button.warning:hover {background:#ffe9bd;border-color:#dfa95c;}
+#jalanPage .kd-button.danger {border-color:#edb3bd;background:#fff0f2;color:#bd3349;}
+#jalanPage .kd-button.danger:hover {background:#ffdde2;border-color:#dd8396;}
+#jalanPage .kd-pending-table th,
+#jalanPage .kd-pending-table td {border:1px solid #b4cbe1;}
+#jalanPage .kd-excel-table th,
+#jalanPage .kd-excel-table td {border:1px solid #354858;}
+#jalanPage .kd-group-action-note {border:1px solid #f1d49b;background:#fff9ed;color:#79551a;border-radius:8px;padding:11px 13px;font-size:13px;margin:0 0 12px;}
+#jalanPage .kd-pending-warning {color:#975013!important;background:#fff7e9;padding:7px 10px;border-radius:7px;margin-top:9px!important;line-height:1.55;}
+#jalanPage .kd-pending-pages {display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:11px;font-size:13px;color:#496a88;}
+#jalanPage .kd-pending-pages .kd-button {min-width:96px;}
+#jalanPage .kd-pending-table button:disabled {cursor:not-allowed;opacity:.5;}
+@media (max-width:700px) {
+  #jalanPage .kd-main-table {min-width:1020px;}
+  #jalanPage .kd-pending-pages {justify-content:space-between;gap:7px;}
+}

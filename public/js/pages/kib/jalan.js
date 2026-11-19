@@ -21,10 +21,10 @@
         belum_diatur: 'Belum Diatur'
     });
     const state = {
-        pending: [], pendingLoaded: false, voucher: null,
+        pending: [], pendingLoaded: false, pendingPage: 1, voucher: null,
         tab: 'gedung', page: 1, perPage: 10,
         location: null, locationName: '', data: [], selectedIndex: -1,
-        editingId: null, editingLegacyOwner: null, exporting: false, requestNo: 0
+        editingId: null, editingLegacyOwner: null, exporting: false, requestNo: 0, groupAction: null
     };
     const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -183,8 +183,10 @@
     /* ------------------------------------------------------------
        DETAIL LOKASI (SELURUH DATA, TIDAK TERPOTONG PAGINATION)
        ------------------------------------------------------------ */
-    async function loadDetail(kind, location) {
+    async function loadDetail(kind, location, groupAction = null) {
         const requestNo = ++state.requestNo;
+        state.groupAction = groupAction;
+        $('kdGroupActionNote').hidden = true;
         state.location = Number(location);
         $('kdGroupSearch').value = '';
         renderGroups();
@@ -207,6 +209,13 @@
             $('kdDetailSubtitle').textContent = `${kind === 'gedung' ? 'Gedung / Irigasi' : 'Jembatan'} · ${response.lokasi.alamat || 'Alamat belum tersedia'}`;
             $('kdDetailSearch').value = '';
             renderDetail();
+            if (state.groupAction && kind === 'jembatan') {
+                const action = state.groupAction === 'delete' ? 'dihapus' : 'diedit';
+                const note = $('kdGroupActionNote');
+                note.textContent = `Lokasi ini berisi ${state.data.length} barang. Pilih baris barang yang ingin ${action}, lalu gunakan tombol tindakan pada panel Berkas. Tidak ada penghapusan otomatis terhadap satu lokasi.`;
+                note.hidden = false;
+                if (state.data.length === 1) showBerkas(0);
+            }
         } catch (error) {
             $('kdExcelBody').innerHTML = `<tr><td colspan="19">${esc(error.message)}</td></tr>`;
             $('kdDetailCount').textContent = 'Gagal memuat';
@@ -280,6 +289,12 @@
     root.addEventListener('click', event => {
         const detail = event.target.closest('[data-kd-detail]');
         const excel = event.target.closest('[data-kd-export]');
+        const groupAction = event.target.closest('[data-kd-group-action]');
+        if (groupAction) {
+            return loadDetail(groupAction.dataset.kind,
+                groupAction.dataset.kdLocation,
+                groupAction.dataset.kdGroupAction);
+        }
         if (detail) return loadDetail(detail.dataset.kind, detail.dataset.kdDetail);
         if (excel) return exportLocation(excel.dataset.kind, excel.dataset.kdExport);
     });
@@ -407,30 +422,62 @@
     /* Pending Nilai Aset, mengikuti form K.I.R; endpoint existing /kib/pending/jalan. */
     function pendingRows() {
         const text = plain($('kdPendingSearch').value).toLocaleLowerCase('id-ID');
-        return state.pending.filter(row => [row.no_voucher,row.lokasi,row.departemen,row.divisi,row.urai]
+        return state.pending.filter(row => [row.no_voucher, row.lokasi,
+            row.departemen, row.divisi, row.urai]
             .some(value => plain(value).toLocaleLowerCase('id-ID').includes(text)));
     }
     function renderPending() {
-        const rows = pendingRows();
-        $('kdPendingCount').textContent = `${rows.length} voucher`;
-        $('kdPendingBody').innerHTML = rows.length ? rows.map((row,i) => `
-            <tr><td>${i+1}</td><td><strong>${esc(row.no_voucher)}</strong><small>${esc(fmtDate(row.tgl_voucher))}</small></td>
+        const matches = pendingRows();
+        const perPage = 50;
+        const pages = Math.max(1, Math.ceil(matches.length / perPage));
+        state.pendingPage = Math.min(Math.max(1, state.pendingPage), pages);
+        const offset = (state.pendingPage - 1) * perPage;
+        const visible = matches.slice(offset, offset + perPage);
+        const readyCount = matches.filter(row => row.siap !== false).length;
+        $('kdPendingCount').textContent =
+            `${matches.length} voucher · ${readyCount} siap dipilih`;
+        $('kdPendingPageLabel').textContent = `Halaman ${state.pendingPage} / ${pages}`;
+        $('kdPendingPrev').disabled = state.pendingPage <= 1;
+        $('kdPendingNext').disabled = state.pendingPage >= pages;
+        $('kdPendingBody').innerHTML = visible.length ? visible.map((row,i) => `
+            <tr><td>${offset+i+1}</td>
+            <td><strong>${esc(row.no_voucher)}</strong><small>${esc(fmtDate(row.tgl_voucher))}</small></td>
             <td>${esc(row.lokasi)}</td><td>${esc(row.departemen)}</td><td>${esc(row.divisi)}</td>
             <td class="kd-money">${esc(money(row.nilai))}</td><td>${esc(row.urai)}</td>
-            <td><button type="button" class="kd-button small primary" data-pick-pending="${Number(row.id)}">Pilih</button></td></tr>`
-        ).join('') : '<tr><td colspan="8" class="kd-empty-pending">Tidak ada data pending yang sesuai.</td></tr>';
+            <td>${row.siap === false
+                ? '<span title="Lokasi, departemen, atau divisi pada voucher belum lengkap">Perbaiki data voucher</span>'
+                : `<button type="button" class="kd-button small primary" data-pick-pending="${Number(row.id)}">Pilih</button>`}</td></tr>`
+        ).join('') : '<tr><td colspan="8" class="kd-empty-pending">Tidak ada voucher Penambahan Aset K.I.B D yang cocok. Periksa kategori dan jenis transaksi pada menu Nilai Aset.</td></tr>';
     }
     async function loadPending() {
         $('kdPendingBody').innerHTML = '<tr><td colspan="8">Memuat transaksi Nilai Aset...</td></tr>';
         try {
             const response = await api(root.dataset.pending);
-            state.pending = (response.data || []).filter(row => Number(row.jenisn) === 1 && Number(row.stat) === 0);
+            state.pending = Array.isArray(response.data) ? response.data : [];
             state.pendingLoaded = true;
+            state.pendingPage = 1;
             renderPending();
+            if (response.truncated) {
+                $('kdPendingCount').textContent += ' · Hanya 3.000 baris pertama ditampilkan';
+            }
         } catch (error) {
+            state.pending = [];
             $('kdPendingBody').innerHTML = `<tr><td colspan="8">${esc(error.message)}</td></tr>`;
+            $('kdPendingCount').textContent = 'Gagal memuat pending';
+            $('kdPendingPageLabel').textContent = '—';
+            $('kdPendingPrev').disabled = true;
+            $('kdPendingNext').disabled = true;
         }
     }
+    $('kdPendingPrev').addEventListener('click', () => {
+        state.pendingPage--;
+        renderPending();
+    });
+    $('kdPendingNext').addEventListener('click', () => {
+        state.pendingPage++;
+        renderPending();
+    });
+
     function useVoucher(row) {
         state.voucher = row;
         $('kdVoucherId').value = String(row?.id || '');
@@ -447,7 +494,10 @@
         $('kdHarga').readOnly = true;
         syncAlamat();
     }
-    $('kdPendingSearch').addEventListener('input', renderPending);
+    $('kdPendingSearch').addEventListener('input', () => {
+        state.pendingPage = 1;
+        renderPending();
+    });
     $('kdPendingBody').addEventListener('click', event => {
         const button = event.target.closest('[data-pick-pending]');
         if (!button) return;

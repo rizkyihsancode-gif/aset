@@ -9690,10 +9690,52 @@ class KIBController extends Controller
         return Schema::hasTable($table);
     }
 
-    private function jalanKategori(): int
+    /**
+     * Ambil kategori yang BENAR untuk K.I.B D dari tabel golongans.
+     * Fallback config dipakai hanya jika nama golongan tidak cocok.
+     * Jangan memasukkan semua jenis kategori ke form Jembatan.
+     *
+     * @return list<int>
+     */
+    private function jalanKategoriIds(): array
     {
-        return (int) (app(KibNotificationService::class)->categoryId('jalan')
-            ?? config('kib.modules.jalan.cat_fallback', 4));
+        $aliases = config('kib.modules.jalan.aliases', []);
+        $normalize = static function (?string $name): string {
+            $clean = preg_replace('/[^\pL\pN]+/u', ' ', (string) $name) ?? '';
+            return mb_strtoupper(trim(preg_replace('/\s+/u', ' ', $clean) ?? ''), 'UTF-8');
+        };
+        $validNames = array_map($normalize, $aliases);
+        $matches = [];
+
+        if (Schema::hasTable('golongans')) {
+            foreach (DB::table('golongans')->select('id', 'nama')->get() as $golongan) {
+                $name = $normalize($golongan->nama);
+                if ($name === '') continue;
+                if (
+                    in_array($name, $validNames, true)
+                    || (str_contains($name, 'JALAN') && str_contains($name, 'IRIGASI'))
+                    || str_starts_with($name, 'KIB D ')
+                ) {
+                    $matches[] = (int) $golongan->id;
+                }
+            }
+        }
+
+        if ($matches !== []) {
+            return array_values(array_unique($matches));
+        }
+
+        $fallback = app(KibNotificationService::class)->categoryId('jalan')
+            ?? config('kib.modules.jalan.cat_fallback');
+        return $fallback === null ? [] : [(int) $fallback];
+    }
+
+    /** Query dasar pending D, konsisten untuk banner, daftar dan validasi voucher. */
+    private function jalanPendingBase(): \Illuminate\Database\Query\Builder
+    {
+        $query = DB::table('nilai_aktivas as n')->where('n.stat', 0);
+        $ids = $this->jalanKategoriIds();
+        return $ids === [] ? $query->whereRaw('1 = 0') : $query->whereIn('n.cat', $ids);
     }
 
     /** Rekap per lokasi, diurutkan berdasarkan ID barang terakhir (terbaru nomor 1). */
@@ -9754,9 +9796,19 @@ class KIBController extends Controller
         $divisiOptions = DB::table('divisis')
             ->select('id', 'nama_div', 'id_dep')->orderBy('nama_div')->get();
 
-        $totalPending = DB::table('nilai_aktivas')
-            ->where('cat', $this->jalanKategori())
-            ->where('jenisn', 1)->where('stat', 0)->count();
+        // Total D tidak boleh disamakan dengan total seluruh modul K.I.B.
+        $totalPending = (clone $this->jalanPendingBase())->count();
+        $totalPendingTambah = (clone $this->jalanPendingBase())
+            ->where('n.jenisn', 1)->count();
+        $totalPendingSiap = (clone $this->jalanPendingBase())
+            ->where('n.jenisn', 1)
+            ->whereNotNull('n.id_lokasi')
+            ->whereNotNull('n.dep')
+            ->whereNotNull('n.div')
+            ->count();
+        $totalPendingSemuaKategori = DB::table('nilai_aktivas')
+            ->where('stat', 0)->count();
+        $kategoriPendingD = $this->jalanKategoriIds();
 
         return view('kib.jalan', compact(
             'gedungLokasi',
@@ -9765,11 +9817,90 @@ class KIBController extends Controller
             'barangOptions',
             'departemenOptions',
             'divisiOptions',
-            'totalPending'
+            'totalPending',
+            'totalPendingTambah',
+            'totalPendingSiap',
+            'totalPendingSemuaKategori',
+            'kategoriPendingD'
         ) + [
             'totalGedung' => array_sum(array_column($gedungLokasi, 'jumlah')),
             'totalJembatan' => array_sum(array_column($jembatanLokasi, 'jumlah')),
             'archiveReady' => $this->jalanTersedia('kib_d_s'),
+        ]);
+    }
+
+    /**
+     * API khusus K.I.B D. Mengembalikan seluruh kandidat Penambahan Aset D
+     * maksimal 3.000 baris; count adalah total sesuai kategori di database.
+     * Baris tanpa identitas organisasi tetap tampak agar dapat diperbaiki.
+     */
+    public function jalanPending()
+    {
+        $base = $this->jalanPendingBase();
+        $total = (clone $base)->count();
+        $countTambah = (clone $base)->where('n.jenisn', 1)->count();
+        $semua = DB::table('nilai_aktivas')->where('stat', 0)->count();
+
+        $rows = $base
+            ->leftJoin('lokasis as l', 'l.id', '=', 'n.id_lokasi')
+            ->leftJoin('departemens as d', 'd.id', '=', 'n.dep')
+            ->leftJoin('divisis as dv', 'dv.id', '=', 'n.div')
+            ->where('n.jenisn', 1)
+            ->select(
+                'n.id',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.nilai',
+                'n.urai',
+                'n.tahun',
+                'n.id_lokasi',
+                'n.dep',
+                'n.div',
+                'n.cat',
+                'n.stat',
+                'n.jenisn',
+                'l.lokasi',
+                'l.alamat',
+                'd.nama_dep as departemen',
+                'dv.nama_div as divisi'
+            )
+            ->orderByDesc('n.tgl_voucher')
+            ->orderByDesc('n.id')
+            ->limit(3000)
+            ->get()
+            ->map(static function (object $r): array {
+                $siap = !empty($r->id_lokasi) && !empty($r->dep) && !empty($r->div);
+                return [
+                    'id' => (int) $r->id,
+                    'no_voucher' => $r->no_voucher ?: '—',
+                    'tgl_voucher' => $r->tgl_voucher,
+                    'nilai' => $r->nilai,
+                    'urai' => $r->urai ?: '—',
+                    'tahun' => $r->tahun,
+                    'id_lokasi' => $r->id_lokasi === null ? null : (int) $r->id_lokasi,
+                    'dep' => $r->dep === null ? null : (int) $r->dep,
+                    'div' => $r->div === null ? null : (int) $r->div,
+                    'lokasi' => $r->lokasi ?: '—',
+                    'alamat' => $r->alamat ?: '—',
+                    'departemen' => $r->departemen ?: '—',
+                    'divisi' => $r->divisi ?: '—',
+                    'jenisn' => (int) $r->jenisn,
+                    'stat' => (int) $r->stat,
+                    'cat' => $r->cat === null ? null : (int) $r->cat,
+                    'siap' => $siap,
+                ];
+            })->values();
+
+        return response()->json([
+            'success' => true,
+            'kategori_kib_d' => $this->jalanKategoriIds(),
+            'total_pending_kib_d' => $total,
+            'total_penambahan_kib_d' => $countTambah,
+            'total_pending_semua_kategori' => $semua,
+            'count' => $countTambah,
+            'shown' => $rows->count(),
+            'truncated' => $countTambah > $rows->count(),
+            'data' => $rows,
         ]);
     }
 
@@ -9989,7 +10120,7 @@ class KIBController extends Controller
         $voucher = DB::table('nilai_aktivas')->where('id', $voucherId)
             ->lockForUpdate()->first();
         if (
-            !$voucher || (int)$voucher->cat !== $this->jalanKategori()
+            !$voucher || !in_array((int)$voucher->cat, $this->jalanKategoriIds(), true)
             || (int)$voucher->jenisn !== 1 || (int)$voucher->stat !== 0
         ) {
             throw ValidationException::withMessages([

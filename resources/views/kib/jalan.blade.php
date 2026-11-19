@@ -20,7 +20,7 @@
         ];
     @endphp
     <main id="jalanPage" class="content jalan-page kd-page" data-base="{{ url('/kib/jalan') }}"
-        data-pending="{{ route('kib.pending', ['module' => 'jalan']) }}" data-gedung="{{ route('kib.gedung') }}"
+        data-pending="{{ route('kib.jalan.pending') }}" data-gedung="{{ route('kib.gedung') }}"
         data-token="{{ csrf_token() }}">
 
         <header class="kd-hero">
@@ -64,11 +64,20 @@
             <div class="kd-pending-symbol"><i data-lucide="bell-ring"></i></div>
             <div class="kd-pending-copy">
                 <small>NILAI ASET · DATA BELUM DIPROSES</small>
-                <h2>Data Jalan, Irigasi & Jaringan Menunggu Diproses
-                    <span class="kd-pending-badge">{{ number_format($totalPending, 0, ',', '.') }}</span>
+                <h2>Data Nilai Aset Menunggu Diproses
+                    <span class="kd-pending-badge">{{ number_format($totalPendingSemuaKategori, 0, ',', '.') }}</span>
                 </h2>
-                <p>Ada {{ number_format($totalPending, 0, ',', '.') }} transaksi penambahan aset yang belum diubah menjadi
-                    K.I.B D.</p>
+                <p><strong>{{ number_format($totalPendingSemuaKategori, 0, ',', '.') }}</strong> pending seluruh kategori
+                    &nbsp;·&nbsp; <strong>{{ number_format($totalPending, 0, ',', '.') }}</strong> khusus K.I.B D
+                    &nbsp;·&nbsp; <strong>{{ number_format($totalPendingTambah, 0, ',', '.') }}</strong> Penambahan Aset D
+                    &nbsp;·&nbsp; <strong>{{ number_format($totalPendingSiap, 0, ',', '.') }}</strong> siap dipilih.
+                </p>
+                @if ($totalPending === 0 && $totalPendingSemuaKategori > 0)
+                    <p class="kd-pending-warning">Pending tersedia pada kategori lain. Kategori K.I.B D terdeteksi:
+                        {{ implode(', ', $kategoriPendingD) ?: 'tidak ditemukan' }}.
+                        Periksa kategori transaksi di Nilai Aset; voucher kategori lain tidak boleh dimasukkan ke Jembatan.
+                    </p>
+                @endif
             </div>
             <button type="button" class="kd-button outline" id="kdViewPending"><i data-lucide="inbox"></i> Lihat Data
                 Pending</button>
@@ -158,7 +167,8 @@
                                         <td data-kd-number>{{ $loop->iteration }}</td>
                                         <td class="kd-primary-cell">
                                             <strong>{{ $row['lokasi'] }}</strong><small>{{ number_format($row['jumlah'], 0, ',', '.') }}
-                                                inventaris</small></td>
+                                                inventaris</small>
+                                        </td>
                                         <td>{{ $row['alamat'] }}</td>
                                         <td><span
                                                 class="kd-owner {{ $status === 'campuran' ? 'mixed' : (isset($pemilik[$status]) && $status !== 'belum_diatur' ? 'known' : 'unknown') }}">{{ $labelStatus }}</span>
@@ -169,11 +179,30 @@
                                                     data-kd-detail="{{ $row['id_lokasi'] }}"
                                                     data-kind="{{ $tab }}"><i data-lucide="eye"></i>
                                                     Detail</button>
-                                                <button type="button" class="kd-icon-button" title="Export Excel lokasi"
+                                                @if ($tab === 'jembatan')
+                                                    <button type="button" class="kd-button small warning"
+                                                        data-kd-group-action="edit"
+                                                        data-kd-location="{{ $row['id_lokasi'] }}"
+                                                        data-kind="{{ $tab }}"
+                                                        title="Pilih satu barang Jembatan untuk diedit"><i
+                                                            data-lucide="pencil"></i> Edit</button>
+                                                    <button type="button" class="kd-button small danger"
+                                                        data-kd-group-action="delete"
+                                                        data-kd-location="{{ $row['id_lokasi'] }}"
+                                                        data-kind="{{ $tab }}"
+                                                        title="Pilih satu barang Jembatan untuk dihapus"><i
+                                                            data-lucide="trash-2"></i> Hapus</button>
+                                                @else
+                                                    <a class="kd-button small warning" href="{{ route('kib.gedung') }}"
+                                                        title="Kelola data Gedung/Irigasi melalui K.I.B C"><i
+                                                            data-lucide="pencil"></i> Edit di K.I.B C</a>
+                                                @endif
+                                                <button type="button" class="kd-button small outline"
+                                                    title="Export Excel lokasi"
                                                     aria-label="Export Excel {{ $row['lokasi'] }}"
                                                     data-kd-export="{{ $row['id_lokasi'] }}"
                                                     data-kind="{{ $tab }}"><i
-                                                        data-lucide="file-spreadsheet"></i></button>
+                                                        data-lucide="file-spreadsheet"></i> Excel</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -226,6 +255,7 @@
                                     data-lucide="file-spreadsheet"></i> Export Excel</button>
                         </div>
                     </div>
+                    <p class="kd-group-action-note" id="kdGroupActionNote" hidden></p>
                     <div class="kd-excel-scroll" role="region" tabindex="0" aria-label="Tabel Excel KIB D">
                         <table class="kd-excel-table" id="kdExcelTable">
                             <thead>
@@ -366,6 +396,11 @@
                         <div class="kd-pending-actions"><span id="kdPendingCount">0 data</span>
                             <button type="button" id="kdDirectInput" class="kd-button outline"><i
                                     data-lucide="plus"></i> Input langsung tanpa voucher</button>
+                        </div>
+                        <div class="kd-pending-pages" id="kdPendingPages" aria-label="Navigasi halaman voucher">
+                            <button type="button" id="kdPendingPrev" class="kd-button outline">Sebelumnya</button>
+                            <span id="kdPendingPageLabel">Halaman 1 / 1</span>
+                            <button type="button" id="kdPendingNext" class="kd-button outline">Berikutnya</button>
                         </div>
                     </div>
                 </section>

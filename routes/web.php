@@ -743,6 +743,9 @@ Route::delete(
 // ========================================================
 Route::get('/kib/jalan', [KIBController::class, 'jalanIndex'])
     ->name('kib.jalan');
+// Route ini khusus menampilkan pending K.I.B D; tidak mengubah route Nilai Aset lain.
+Route::get('/kib/jalan/pending/list', [KIBController::class, 'jalanPending'])
+    ->name('kib.jalan.pending');
 Route::get('/kib/jalan/{jenis}/lokasi/{lokasi}', [KIBController::class, 'jalanDetailLokasi'])
     ->whereIn('jenis', ['gedung', 'jembatan'])->whereNumber('lokasi')->name('kib.jalan.detail');
 // CRUD Jembatan: langsung tabel kib_d_s, bukan kib_d_manual.
