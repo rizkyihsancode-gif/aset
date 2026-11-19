@@ -985,26 +985,53 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================
 
     async function fetchDetail(path) {
-        const response = await fetch(path, {
-            credentials: 'same-origin',
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(
-                `HTTP ${response.status}`
-            );
+        if (!path) {
+            throw new Error('URL detail transaksi belum tersedia.');
         }
 
-        const body = await response.json();
+        let response;
+        try {
+            response = await fetch(path, {
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+        } catch (networkError) {
+            console.error('Koneksi detail Nilai Aset gagal:', networkError);
+            throw new Error('Tidak dapat terhubung ke server. Periksa koneksi.');
+        }
 
-        if (!body.data) {
-            throw new Error(
-                'Data tidak ditemukan dalam respons.'
-            );
+        const contentType = response.headers.get('content-type') || '';
+        let body = null;
+        if (contentType.includes('json')) {
+            body = await response.json().catch(() => null);
+        }
+
+        if (!response.ok) {
+            const serverMessage = typeof body?.message === 'string'
+                ? body.message.trim().slice(0, 300)
+                : '';
+            const hint = response.status === 404
+                ? 'Transaksi atau alamat endpoint tidak ditemukan.'
+                : response.status === 401 || response.status === 419
+                    ? 'Sesi login tidak berlaku. Silakan masuk kembali.'
+                    : response.status === 403
+                        ? 'Akses transaksi ditolak.'
+                        : response.status === 500
+                            ? 'Terjadi kesalahan server. Periksa storage/logs/laravel.log.'
+                            : 'Periksa koneksi dan log Laravel.';
+            console.error('Gagal mengambil detail Nilai Aset:', {
+                url: path,
+                status: response.status,
+                message: serverMessage
+            });
+            throw new Error(`HTTP ${response.status}. ${hint}${serverMessage ? ' (' + serverMessage + ')' : ''}`);
+        }
+
+        if (!body || body.success === false || !body.data) {
+            throw new Error('Respons detail tidak berisi data JSON yang valid.');
         }
 
         return body.data;
@@ -1287,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
 
                 alert(
-                    'Data Nilai Aset tidak dapat dimuat.'
+                    'Data Nilai Aset tidak dapat dimuat.\n' + error.message
                 );
             }
         });
@@ -1408,7 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
 
                 alert(
-                    'Detail Nilai Aset tidak dapat dimuat.'
+                    'Detail Nilai Aset tidak dapat dimuat.\n' + error.message
                 );
             }
         });
@@ -1505,7 +1532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
 
                 alert(
-                    'Daftar dokumen tidak dapat dimuat.'
+                    'Daftar dokumen tidak dapat dimuat.\n' + error.message
                 );
             }
         });

@@ -104,6 +104,33 @@ Route::get(
     ->name('nilai.pdf.download');
 
 
+/*
+|--------------------------------------------------------------------------
+| NILAI ASET - DOKUMEN PDF TAMBAHAN (MULTI PDF)
+|--------------------------------------------------------------------------
+| Controller membuat URL sementara dengan nama route ini. Tanpa keduanya,
+| show() dapat melempar RouteNotFoundException saat transaksi punya PDF
+| tambahan, sehingga Detail, Edit dan tombol Lihat PDF sama-sama gagal.
+*/
+Route::get(
+    '/nilai/{nilai}/dokumen/{dokumen}/preview',
+    [NilaiAsetController::class, 'previewDokumen']
+)
+    ->whereNumber('nilai')
+    ->whereNumber('dokumen')
+    ->middleware('signed')
+    ->name('nilai.dokumen.preview');
+
+Route::get(
+    '/nilai/{nilai}/dokumen/{dokumen}/download',
+    [NilaiAsetController::class, 'downloadDokumen']
+)
+    ->whereNumber('nilai')
+    ->whereNumber('dokumen')
+    ->middleware('signed')
+    ->name('nilai.dokumen.download');
+
+
 Route::get(
     '/nilai/{nilai}',
     [NilaiAsetController::class, 'show']
@@ -743,7 +770,6 @@ Route::delete(
 // ========================================================
 Route::get('/kib/jalan', [KIBController::class, 'jalanIndex'])
     ->name('kib.jalan');
-// Route ini khusus menampilkan pending K.I.B D; tidak mengubah route Nilai Aset lain.
 Route::get('/kib/jalan/pending/list', [KIBController::class, 'jalanPending'])
     ->name('kib.jalan.pending');
 Route::get('/kib/jalan/{jenis}/lokasi/{lokasi}', [KIBController::class, 'jalanDetailLokasi'])
