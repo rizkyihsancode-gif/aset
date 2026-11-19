@@ -8513,6 +8513,53 @@ class KIBController extends Controller
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | EXPORT K.I.R BERDASARKAN LOKASI — SEMUA RUANGAN
+    |--------------------------------------------------------------------------
+    | Satu lokasi = satu berkas XLSX yang dibuat browser.
+    | Query langsung seluruh kirs untuk lokasi terpilih,
+    | bukan tabel hasil pagination atau ruangan yang sedang aktif.
+    | Tidak mengubah data, voucher, status, atau lampiran.
+    */
+    public function exportKirLokasi(int $lokasi)
+    {
+        $lokasiRow = DB::table('lokasis')
+            ->select('id', 'lokasi', 'alamat')
+            ->where('id', $lokasi)
+            ->first();
+
+        abort_unless($lokasiRow !== null, 404);
+
+        $rows = $this->kirQuery()
+            ->where('k.id_lokasi', $lokasi)
+            ->orderBy('d.nama_dep')
+            ->orderBy('v.nama_div')
+            ->orderBy('k.gedung')
+            ->orderBy('k.ruangan')
+            ->orderBy('b.nama_barang')
+            ->orderBy('k.id')
+            ->get();
+
+        $materials = $this->kirMaterials();
+
+        return response()->json([
+            'success' => true,
+            'lokasi' => [
+                'id' => (int) $lokasiRow->id,
+                'nama' => (string) $lokasiRow->lokasi,
+                'alamat' => (string) ($lokasiRow->alamat ?? ''),
+            ],
+            'jumlah_barang' => $rows->count(),
+            'total_unit' => (int) $rows->sum(
+                fn($row) => (int) ($row->jumlah ?? 0)
+            ),
+            'data' => $rows->map(
+                fn($row) => $this->kirResource($row, $materials)
+            )->values(),
+        ]);
+    }
+
     public function detailKirLokasi(
         int $lokasi
     ) {

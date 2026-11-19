@@ -169,6 +169,7 @@
         const rows = [
             row(1, [cell('A1', 'KARTU INVENTARIS BARANG (KIB)', 1)], 28),
             row(2, [cell('A2', 'E. ASET TETAP LAINNYA', 1)], 26),
+            row(3, [cell('A3', 'PERIODE NOVEMBER 2026', 1)], 26),
             ...details.map(([key, val], i) => row(4 + i, [cell(`A${4 + i}`, key, 4), cell(`C${4 + i}`, val)])),
             row(13, headers.map((label, i) => cell(`${cols[i]}13`, label, 2)), 40),
             row(14, valueList.map((value, i) => [6, 7].includes(i)
@@ -1353,6 +1354,12 @@
                 'strong',
                 '',
                 'E. ASET TETAP LAINNYA'
+            ),
+
+            elem(
+                'strong',
+                '',
+                'PERIODE NOVEMBER 2026'
             )
         );
 

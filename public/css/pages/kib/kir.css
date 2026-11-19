@@ -1531,3 +1531,372 @@
     border: 1px solid #d5e2f0;
     border-radius: 6px;
 }
+
+/* ==============================================================
+   K.I.R — DETAIL MODEL TABEL EXCEL & EXPORT XLSX PER LOKASI
+   Tambahan terisolasi, tanpa mengubah form, CRUD, atau dashboard.
+============================================================== */
+
+.kir-icon.kir-export-icon {
+    color: #16784a;
+    background: #e7f8ed;
+    border: 1px solid #bde9d0;
+}
+
+.kir-icon.kir-export-icon:hover:not(:disabled),
+.kir-btn.kir-excel-btn:hover:not(:disabled) {
+    background: #d6f1e1;
+    color: #0d653c;
+}
+
+.kir-icon:disabled,
+.kir-btn.kir-excel-btn:disabled {
+    cursor: not-allowed;
+    opacity: .48;
+}
+
+.kir-detail-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.kir-export-summary {
+    color: #527493;
+    font-size: 11px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.kir-btn.kir-excel-btn {
+    background: #effaf4;
+    color: #146b42;
+    border: 1px solid #aedfc5;
+    white-space: nowrap;
+    font-weight: 800;
+}
+
+.kir-right #kirRoomContent {
+    min-height: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.kir-room-intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 11px 1px;
+}
+
+.kir-room-intro strong {
+    color: #153a67;
+    font-size: 13px;
+    letter-spacing: .2px;
+}
+
+.kir-room-intro span,
+.kir-excel-item-count {
+    display: inline-flex;
+    padding: 6px 11px;
+    border-radius: 20px;
+    background: #eaf3ff;
+    color: #215c9a;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.kir-modal .kir-excel-scroll {
+    min-width: 0;
+    max-width: 100%;
+    border: 1px solid #34495e;
+    border-radius: 9px;
+    overflow: auto;
+    scrollbar-width: thin;
+    background: white;
+}
+
+.kir-right .kir-excel-scroll {
+    flex: 1 1 auto;
+    min-height: 120px;
+}
+
+.kir-modal .kir-excel-table,
+.kir-modal .kir-items-table.kir-excel-table {
+    min-width: 1450px;
+    width: max-content;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+    font-size: 11px;
+}
+
+.kir-modal .kir-excel-table thead tr:first-child th {
+    height: 46px;
+    box-sizing: border-box;
+}
+
+.kir-modal .kir-excel-table thead tr:nth-child(2) th {
+    height: 38px;
+    box-sizing: border-box;
+}
+
+.kir-modal .kir-excel-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    padding: 9px 11px;
+    background: #dceaf7;
+    color: #13385f;
+    border-right: 1px solid #4b5e71;
+    border-bottom: 1px solid #4b5e71;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 11px;
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.kir-modal .kir-excel-table thead tr:nth-child(2) th {
+    top: 46px;
+    z-index: 5;
+    background: #c8ddf1;
+}
+
+.kir-modal .kir-excel-table thead th[rowspan="2"] {
+    z-index: 6;
+}
+
+.kir-modal .kir-excel-table .kir-excel-group {
+    background: #b9d3ed;
+    text-transform: uppercase;
+    letter-spacing: .25px;
+}
+
+.kir-modal .kir-excel-table tbody td {
+    padding: 12px 10px;
+    border-right: 1px solid #b2c5d7;
+    border-bottom: 1px solid #b2c5d7;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: normal;
+    vertical-align: middle;
+}
+
+.kir-modal .kir-excel-table tbody tr:nth-child(even) td {
+    background: #f4f9ff;
+}
+
+.kir-modal .kir-excel-table tbody tr:hover td {
+    background: #e8f3ff;
+}
+
+.kir-modal .kir-excel-table th:first-child,
+.kir-modal .kir-excel-table td:first-child {
+    min-width: 54px;
+    width: 54px;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: #eff6fd;
+    text-align: center;
+}
+
+.kir-modal .kir-excel-table th:nth-child(2)[rowspan],
+.kir-modal .kir-excel-table tbody td:nth-child(2) {
+    position: sticky;
+    left: 54px;
+    z-index: 3;
+    min-width: 215px;
+    max-width: 300px;
+    background: #f4f9fe;
+    box-shadow: 2px 0 #4b5e71;
+}
+
+.kir-modal .kir-excel-table thead th:first-child,
+.kir-modal .kir-excel-table thead th:nth-child(2)[rowspan] {
+    z-index: 8;
+    background: #dceaf7;
+}
+
+.kir-modal .kir-excel-table .kir-excel-center {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.kir-modal .kir-excel-table th:last-child,
+.kir-modal .kir-excel-table td:last-child {
+    min-width: 140px;
+}
+
+.kir-excel-actions .kir-berkas-btn {
+    padding: 7px 10px;
+    min-height: 34px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.kir-excel-actions .kir-berkas-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.kir-excel-hint {
+    margin: 10px 0 0;
+    color: #6e849c;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.kir-modal.kir-item-excel-modal {
+    width: min(1500px, calc(100vw - 30px));
+}
+
+.kir-excel-item-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 15px;
+    margin-bottom: 14px;
+    background: #f2f8ff;
+    border: 1px solid #d7e5f4;
+    border-radius: 10px;
+}
+
+.kir-excel-item-heading small {
+    color: #246ac0;
+    font-size: 10px;
+    font-weight: 850;
+}
+
+.kir-excel-item-heading h3 {
+    margin: 4px 0 2px;
+    color: #113c6c;
+    font-size: 16px;
+}
+
+.kir-excel-item-heading p {
+    margin: 3px 0;
+    color: #62809b;
+    font-size: 12px;
+}
+
+.kir-berkas-panel {
+    margin-top: 16px;
+    padding: 15px;
+    border: 1px solid #cfdfef;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.kir-berkas-panel h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    color: #184676;
+    font-size: 13px;
+}
+
+.kir-berkas-panel h3 svg {
+    width: 17px;
+    height: 17px;
+}
+
+.kir-berkas-panel .kir-detail-photo {
+    display: block;
+    max-width: 580px;
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    margin: 0;
+    object-fit: contain;
+    border: 1px solid #e0eaf5;
+}
+
+.kir-berkas-empty {
+    display: grid;
+    place-items: center;
+    min-height: 110px;
+    color: #8599aa;
+    border: 1px dashed #d5e2ee;
+    background: #f7faff;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .kir-detail-heading-actions {
+        gap: 5px;
+    }
+
+    .kir-detail-heading-actions .kir-export-summary {
+        display: none;
+    }
+
+    .kir-btn.kir-excel-btn {
+        font-size: 11px;
+        padding: 8px;
+    }
+
+    .kir-modal.kir-item-excel-modal {
+        width: calc(100vw - 14px);
+    }
+
+    .kir-modal .kir-excel-table thead th,
+    .kir-modal .kir-excel-table tbody td {
+        font-size: 10px;
+        padding: 8px;
+    }
+}
+
+
+/* ================================================================
+   KIR — STATUS KEPEMILIKAN (TAMBAHAN, DESAIN LAMA TETAP)
+   ================================================================ */
+.kir-page .kir-owner-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 235px;
+    padding: 6px 10px;
+    border: 1px solid #c9e6d4;
+    border-radius: 999px;
+    background: #ecf9f1;
+    color: #167349;
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.35;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+.kir-page .kir-owner-badge.is-unknown {
+    background: #f1f5f9;
+    border-color: #dbe3ed;
+    color: #617389;
+}
+.kir-page .kir-owner-badge.is-mixed {
+    background: #fff8e7;
+    border-color: #f4d89a;
+    color: #936019;
+}
+.kir-page .kir-field-help {
+    display: block;
+    margin-top: 5px;
+    color: #71859f;
+    font-size: 11px;
+    line-height: 1.4;
+}
+.kir-page .kir-excel-table th,
+.kir-page .kir-excel-table td {
+    white-space: normal;
+}

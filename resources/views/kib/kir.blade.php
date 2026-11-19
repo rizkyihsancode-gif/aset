@@ -10,6 +10,14 @@
 @section('content')
     @php
         $rp = fn($v) => 'Rp ' . number_format((float) ($v ?? 0), 0, ',', '.');
+        $kirOwnerLabels = [
+            'perumdam' => 'Perumdam Tirta Kencana',
+            'pusat' => 'Pemerintah Pusat',
+            'pemprov' => 'Pemerintah Provinsi',
+            'pemkot' => 'Pemerintah Kota',
+            'swasta' => 'Swasta',
+            'campuran' => 'Campuran',
+        ];
     @endphp
 
     <section class="content kir-page" id="kirApp" data-base="{{ url('/kib/kir') }}"
@@ -199,6 +207,7 @@
                             <th>Lokasi</th>
                             <th>Alamat</th>
                             <th>Inventaris</th>
+                            <th>Status Kepemilikan</th>
                             <th>Nilai (Rp)</th>
                             <th>Aksi</th>
                         </tr>
@@ -207,7 +216,7 @@
                     <tbody>
                         @forelse ($lokasis as $lok)
                             <tr data-kir-row
-                                data-search="{{ mb_strtolower(($lok->lokasi ?? '') . ' ' . ($lok->alamat ?? '')) }}">
+                                data-search="{{ mb_strtolower(($lok->lokasi ?? '') . ' ' . ($lok->alamat ?? '') . ' ' . ($kirOwnerLabels[trim((string) ($lok->status_kepemilikan_ringkas ?? ''))] ?? 'Belum Diatur')) }}">
                                 <td class="kir-nomor">
                                     {{ $loop->iteration }}
                                 </td>
@@ -239,6 +248,18 @@
                                 </td>
 
                                 <td>
+                                    @php
+                                        $ownerValue = trim((string) ($lok->status_kepemilikan_ringkas ?? ''));
+                                        $ownerLabel = $kirOwnerLabels[$ownerValue] ?? ($ownerValue ?: 'Belum Diatur');
+                                    @endphp
+                                    <span
+                                        class="kir-owner-badge {{ $ownerValue === 'campuran' ? 'is-mixed' : ($ownerValue === '' ? 'is-unknown' : '') }}"
+                                        title="Ringkasan status barang dalam lokasi; detail per barang ada di tabel ruangan">
+                                        {{ $ownerLabel }}
+                                    </span>
+                                </td>
+
+                                <td>
                                     <button type="button" class="kir-value" data-kir-value="{{ $lok->id }}"
                                         data-name="{{ $lok->lokasi }}">
                                         <strong>
@@ -254,6 +275,14 @@
                                         <button class="kir-icon view" type="button" title="Detail KIR"
                                             data-kir-location="{{ $lok->id }}" data-name="{{ $lok->lokasi }}">
                                             <i data-lucide="eye"></i>
+                                        </button>
+
+                                        <button class="kir-icon kir-export-icon" type="button"
+                                            title="Export Excel khusus lokasi ini"
+                                            aria-label="Export Excel lokasi {{ $lok->lokasi }}"
+                                            data-kir-export-location="{{ $lok->id }}" data-name="{{ $lok->lokasi }}"
+                                            @disabled((int) $lok->jumlah === 0)>
+                                            <i data-lucide="file-spreadsheet"></i>
                                         </button>
 
                                         <button class="kir-icon add" type="button" title="Tambah KIR di lokasi"
@@ -356,9 +385,16 @@
                 </p>
             </div>
 
-            <button class="kir-close" type="button" data-kir-close="kirModalLokasi">
-                <i data-lucide="x"></i>
-            </button>
+            <div class="kir-detail-heading-actions">
+                <span class="kir-export-summary" id="kirExportSummary">Memuat jumlah barang...</span>
+                <button id="kirExportLokasi" class="kir-btn kir-excel-btn" type="button" disabled>
+                    <i data-lucide="file-spreadsheet"></i>
+                    Export Excel Lokasi
+                </button>
+                <button class="kir-close" type="button" data-kir-close="kirModalLokasi">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
         </div>
 
         <div class="kir-modal-body kir-layout">
@@ -404,10 +440,10 @@
 
     {{-- MODAL DETAIL SATU BARANG --}}
 
-    <dialog class="kir-modal" id="kirModalBarang" aria-labelledby="kirBarangTitle">
+    <dialog class="kir-modal kir-item-excel-modal" id="kirModalBarang" aria-labelledby="kirBarangTitle">
         <div class="kir-modal-head">
             <div>
-                <small>DETAIL INVENTARIS RUANGAN</small>
+                <small>K.I.R / KARTU INVENTARIS RUANGAN</small>
 
                 <h2 id="kirBarangTitle">
                     Data KIR
@@ -702,6 +738,23 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </label>
+
+                        <label>
+                            Status Kepemilikan <b>*</b>
+
+                            <input id="kirKepemilikanCari" type="text" list="kirKepemilikanPilihan"
+                                placeholder="Ketik untuk cari status kepemilikan" autocomplete="off" required>
+                            <input type="hidden" name="status_kepemilikan" id="kirKepemilikan">
+                            <datalist id="kirKepemilikanPilihan">
+                                <option value="Perumdam Tirta Kencana"></option>
+                                <option value="Pemerintah Pusat"></option>
+                                <option value="Pemerintah Provinsi"></option>
+                                <option value="Pemerintah Kota"></option>
+                                <option value="Swasta"></option>
+                            </datalist>
+                            <small class="kir-field-help">Cari dan pilih salah satu dari lima status. Data lama dapat tetap
+                                tanpa status saat Edit.</small>
                         </label>
 
                         <label>

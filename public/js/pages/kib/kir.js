@@ -45,6 +45,25 @@
             Number(value) || 0
         );
 
+    const kirOwnershipOptions = Object.freeze({
+        perumdam: 'Perumdam Tirta Kencana',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemerintah Provinsi',
+        pemkot: 'Pemerintah Kota',
+        swasta: 'Swasta'
+    });
+
+    const ownershipLabel = value => {
+        const key = str(value).toLowerCase();
+        return kirOwnershipOptions[key] || (str(value) || 'Belum Diatur');
+    };
+
+    const ownershipBadge = value => {
+        const key = str(value).toLowerCase();
+        const category = kirOwnershipOptions[key] ? '' : ' is-unknown';
+        return `<span class="kir-owner-badge${category}">${esc(ownershipLabel(value))}</span>`;
+    };
+
     const icons = () =>
         window.lucide?.createIcons?.();
 
@@ -68,7 +87,10 @@
         voucher: null,
 
         editId: null,
-        saving: false
+        legacyOwnership: '',
+        saving: false,
+        exporting: false,
+        locationCount: 0
     };
 
     /*
@@ -588,108 +610,77 @@
         const items = state.roomItems;
 
         $('kirRoomContent').innerHTML = `
-            <div class="kir-table-wrap">
-                <table class="kir-table kir-items-table">
+            <div class="kir-room-intro">
+                <strong>KARTU INVENTARIS RUANGAN</strong>
+                <span>${items.length} barang pada ruangan ini</span>
+            </div>
+            <div class="kir-table-wrap kir-excel-scroll" role="region"
+                 tabindex="0" aria-label="Tabel inventaris ruangan">
+                <table class="kir-table kir-items-table kir-excel-table">
                     <thead>
                         <tr>
-                            <th>No.</th>
-                            <th>Nama Aset / Kode</th>
-                            <th>Merk/Type</th>
-                            <th>Bahan</th>
-                            <th>Jumlah</th>
-                            <th>Satuan</th>
+                            <th rowspan="2">No.</th>
+                            <th rowspan="2">Nama Barang</th>
+                            <th rowspan="2">Kode Barang</th>
+                            <th rowspan="2">Merk / Type</th>
+                            <th rowspan="2">Bahan</th>
+                            <th rowspan="2">Jumlah</th>
+                            <th rowspan="2">Satuan</th>
+                            <th colspan="3" class="kir-excel-group">Kondisi</th>
+                            <th rowspan="2">Keterangan</th>
+                            <th rowspan="2">Status Kepemilikan</th>
+                            <th rowspan="2">Berkas &amp; Aksi</th>
+                        </tr>
+                        <tr>
                             <th>Baik</th>
-                            <th>Ringan</th>
-                            <th>Berat</th>
-                            <th>Foto</th>
-                            <th>Aksi</th>
+                            <th>Rusak Ringan</th>
+                            <th>Rusak Berat</th>
                         </tr>
                     </thead>
-
                     <tbody>
-                        ${
-                            items.length
-                                ? items.map((item, index) => `
-                                    <tr>
-                                        <td>${index + 1}</td>
-
-                                        <td>
-                                            <strong>
-                                                ${esc(item.nama_barang || '—')}
-                                            </strong>
-
-                                            <small>
-                                                ${esc(item.kode_barang || '')}
-                                            </small>
-                                        </td>
-
-                                        <td>${esc(item.merk || '—')}</td>
-                                        <td>${esc(item.nama_bahan || '—')}</td>
-                                        <td>${esc(item.jumlah)}</td>
-                                        <td>${esc(item.satuan || '—')}</td>
-                                        <td>${esc(item.baik)}</td>
-                                        <td>${esc(item.ringan)}</td>
-                                        <td>${esc(item.berat)}</td>
-
-                                        <td>
-                                            ${
-                                                item.foto_url
-                                                    ? `
-                                                        <img
-                                                            class="kir-thumb"
-                                                            src="${esc(item.foto_url)}"
-                                                            alt="Foto aset"
-                                                            loading="lazy"
-                                                        >
-                                                    `
-                                                    : '—'
-                                            }
-                                        </td>
-
-                                        <td>
-                                            <div class="kir-actions">
-                                                <button
-                                                    type="button"
-                                                    class="kir-icon view"
-                                                    data-item-view="${item.id}"
-                                                    title="Detail"
-                                                >
-                                                    <i data-lucide="eye"></i>
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    class="kir-icon edit"
-                                                    data-item-edit="${item.id}"
-                                                    title="Edit"
-                                                >
-                                                    <i data-lucide="pencil"></i>
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    class="kir-icon delete"
-                                                    data-item-delete="${item.id}"
-                                                    title="Hapus"
-                                                >
-                                                    <i data-lucide="trash-2"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `).join('')
-
-                                : `
-                                    <tr>
-                                        <td colspan="11" class="kir-empty">
-                                            Belum ada barang pada ruangan.
-                                        </td>
-                                    </tr>
-                                `
-                        }
+                        ${items.length
+                            ? items.map((item, index) => `
+                                <tr>
+                                    <td class="kir-excel-center">${index + 1}</td>
+                                    <td><strong>${esc(item.nama_barang || '—')}</strong></td>
+                                    <td>${esc(item.kode_barang || '—')}</td>
+                                    <td>${esc(item.merk || '—')}</td>
+                                    <td>${esc(item.nama_bahan || '—')}</td>
+                                    <td class="kir-excel-center">${esc(item.jumlah ?? 0)}</td>
+                                    <td class="kir-excel-center">${esc(item.satuan || '—')}</td>
+                                    <td class="kir-excel-center">${esc(item.baik ?? 0)}</td>
+                                    <td class="kir-excel-center">${esc(item.ringan ?? 0)}</td>
+                                    <td class="kir-excel-center">${esc(item.berat ?? 0)}</td>
+                                    <td class="kir-wrap">${esc(item.ket || '—')}</td>
+                                    <td>${ownershipBadge(item.status_kepemilikan)}</td>
+                                    <td>
+                                        <div class="kir-actions kir-excel-actions">
+                                            <button type="button" class="kir-btn outline kir-berkas-btn"
+                                                data-item-view="${item.id}" title="Buka Detail dan Foto">
+                                                <i data-lucide="folder-open"></i> Berkas
+                                            </button>
+                                            <button type="button" class="kir-icon edit"
+                                                data-item-edit="${item.id}" title="Edit">
+                                                <i data-lucide="pencil"></i>
+                                            </button>
+                                            <button type="button" class="kir-icon delete"
+                                                data-item-delete="${item.id}" title="Hapus">
+                                                <i data-lucide="trash-2"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')
+                            : `<tr><td colspan="13" class="kir-empty">
+                                Belum ada barang pada ruangan ini.
+                               </td></tr>`}
                     </tbody>
                 </table>
             </div>
+            <p class="kir-excel-hint">
+                Geser tabel ke kanan untuk melihat kondisi, keterangan, dan berkas.
+                Export Excel Lokasi mencakup seluruh ruangan dalam lokasi yang dipilih.
+            </p>
         `;
 
         icons();
@@ -708,6 +699,9 @@
         state.units = [];
         state.activeUnit = null;
         state.roomItems = [];
+        state.locationCount = 0;
+        $('kirExportLokasi').disabled = true;
+        $('kirExportSummary').textContent = 'Memuat jumlah barang...';
 
         $('kirLokasiJudul').textContent = name;
 
@@ -724,6 +718,12 @@
             );
 
             state.units = response.data || [];
+            state.locationCount = state.units.reduce(
+                (sum, unit) => sum + (Number(unit.jumlah) || 0), 0
+            );
+            $('kirExportSummary').textContent =
+                `${state.locationCount} barang di lokasi ini`;
+            $('kirExportLokasi').disabled = state.locationCount === 0;
 
             renderTree();
 
@@ -754,6 +754,336 @@
 
     /*
     |--------------------------------------------------------------------------
+    | EXPORT EXCEL K.I.R PER LOKASI (XLSX ASLI, SATU kir.js)
+    |--------------------------------------------------------------------------
+    | - Seluruh data berdasarkan id_lokasi, lintas ruangan dan gedung.
+    | - Tidak menggunakan hanya baris pagination atau ruangan yang dipilih.
+    | - Satu baris pada worksheet = satu record inventaris KIR.
+    | - Tidak perlu CDN, Composer, atau JavaScript kedua.
+    | - Text XML menjadi inlineStr sehingga formula injection tidak dieksekusi.
+    */
+
+    function buildKirLocationXlsx(payload) {
+        const lokasi = payload?.lokasi;
+        const items = payload?.data;
+        if (!lokasi?.id || !Array.isArray(items) || !items.length) {
+            throw new Error('Tidak ada barang KIR untuk diekspor pada lokasi ini.');
+        }
+
+        // Menjamin satu XLSX hanya memuat record dari satu lokasi yang diminta.
+        if (items.some(item => Number(item.id_lokasi) !== Number(lokasi.id))) {
+            throw new Error('Data inventaris berisi lokasi yang tidak sesuai. Ekspor dibatalkan.');
+        }
+
+        const enc = new TextEncoder();
+        const declaration = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+        const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+        const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+        const pkg = 'http://schemas.openxmlformats.org/package/2006/relationships';
+        const cellText = value => String(value ?? '').trim() || '—';
+        const xml = value => String(value ?? '')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+        const cell = (ref, value, style = 6) =>
+            `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+        const numeric = (ref, value, style = 7) => {
+            const number = Number(value);
+            return value !== null && value !== undefined &&
+                String(value).trim() !== '' && Number.isFinite(number)
+                ? `<c r="${ref}" s="${style}"><v>${number}</v></c>`
+                : cell(ref, cellText(value), style);
+        };
+        const condition = (ref, value) =>
+            Number(value) > 0 ? numeric(ref, value) : cell(ref, '—', 7);
+        const row = (r, cells, height = 22) =>
+            `<row r="${r}" ht="${height}" customHeight="1">${cells.join('')}</row>`;
+        const unique = (key, fallback = '—') => {
+            const values = [...new Set(items.map(item =>
+                String(item[key] ?? '').trim()
+            ).filter(Boolean))];
+            return values.length === 1 ? values[0] :
+                values.length > 1 ? 'Beberapa (lihat kolom tabel)' : fallback;
+        };
+        const totalUnit = items.reduce((sum, item) => sum + (Number(item.jumlah) || 0), 0);
+        const code = unique('kode_dep') !== '—' || unique('kode_div') !== '—'
+            ? `${unique('kode_dep')} / ${unique('kode_div')}` : '—';
+
+        // Kolom A:K sama seperti contoh Excel KIR.
+        // L: status kepemilikan; M:P identitas unit/ruangan.
+        // Satu lokasi berisi seluruh barang tanpa terpengaruh pagination.
+        const meta = [
+            ['PROVINSI', 'KALIMANTAN TIMUR'],
+            ['KOTA', 'SAMARINDA'],
+            ['UNIT', 'PERUMDAM TIRTA KENCANA KOTA SAMARINDA'],
+            ['LOKASI', cellText(lokasi.nama)],
+            ['ALAMAT', cellText(lokasi.alamat)],
+            ['DEPARTEMEN', unique('departemen')],
+            ['DIVISI', unique('divisi')],
+            ['GEDUNG / RUANGAN', `${unique('gedung')} / ${unique('ruangan')}`],
+            ['KODE DEPT / DIV', code],
+            ['JUMLAH INVENTARIS', `${items.length} barang · ${totalUnit} unit`]
+        ];
+
+        const rows = [
+            row(1, [cell('A1', 'KARTU INVENTARIS RUANGAN', 1)], 30),
+            row(2, [cell('A2', `KIR PER LOKASI — ${cellText(lokasi.nama)}`, 2)], 25),
+            ...meta.map(([label, value], index) => row(index + 4, [
+                cell(`A${index + 4}`, label, 3),
+                cell(`C${index + 4}`, `: ${value}`, 4)
+            ])),
+            row(15, [
+                cell('A15', 'NO.', 5),
+                cell('B15', 'NAMA BARANG', 5),
+                cell('C15', 'KODE BARANG', 5),
+                cell('D15', 'MERK / TYPE', 5),
+                cell('E15', 'BAHAN', 5),
+                cell('F15', 'JUMLAH', 5),
+                cell('G15', 'SATUAN', 5),
+                cell('H15', 'KONDISI', 5),
+                cell('K15', 'KETERANGAN', 5),
+                cell('L15', 'STATUS KEPEMILIKAN', 5),
+                cell('M15', 'DEPARTEMEN', 5),
+                cell('N15', 'DIVISI', 5),
+                cell('O15', 'GEDUNG', 5),
+                cell('P15', 'RUANGAN', 5)
+            ], 34),
+            row(16, [
+                cell('H16', 'BAIK', 5),
+                cell('I16', 'RUSAK RINGAN', 5),
+                cell('J16', 'RUSAK BERAT', 5)
+            ], 28),
+            ...items.map((item, index) => {
+                const r = index + 17;
+                return row(r, [
+                    numeric(`A${r}`, index + 1),
+                    cell(`B${r}`, cellText(item.nama_barang)),
+                    cell(`C${r}`, cellText(item.kode_barang)),
+                    cell(`D${r}`, cellText(item.merk)),
+                    cell(`E${r}`, cellText(item.nama_bahan)),
+                    numeric(`F${r}`, item.jumlah ?? 0),
+                    cell(`G${r}`, cellText(item.satuan)),
+                    condition(`H${r}`, item.baik),
+                    condition(`I${r}`, item.ringan),
+                    condition(`J${r}`, item.berat),
+                    cell(`K${r}`, cellText(item.ket)),
+                    cell(`L${r}`, ownershipLabel(item.status_kepemilikan)),
+                    cell(`M${r}`, cellText(item.departemen)),
+                    cell(`N${r}`, cellText(item.divisi)),
+                    cell(`O${r}`, cellText(item.gedung)),
+                    cell(`P${r}`, cellText(item.ruangan))
+                ], 26);
+            })
+        ];
+
+        const widths = [8, 38, 22, 28, 20, 12, 14, 12, 17, 17, 42, 28, 28, 28, 24, 26];
+        const merges = ['A1:P1', 'A2:P2', 'H15:J15',
+            ...'ABCDEFGKLMNOP'.split('').map(col => `${col}15:${col}16`)];
+        const lastRow = 16 + items.length;
+        const sheet = declaration + `<worksheet xmlns="${ns}">` +
+            `<dimension ref="A1:P${lastRow}"/>` +
+            '<sheetViews><sheetView workbookViewId="0">' +
+            '<pane xSplit="2" ySplit="16" topLeftCell="C17" activePane="bottomRight" state="frozen"/>' +
+            '</sheetView></sheetViews>' +
+            `<cols>${widths.map((width, i) =>
+                `<col min="${i + 1}" max="${i + 1}" width="${width}" customWidth="1"/>`
+            ).join('')}</cols>` +
+            `<sheetData>${rows.join('')}</sheetData>` +
+            `<mergeCells count="${merges.length}">${merges.map(ref =>
+                `<mergeCell ref="${ref}"/>`
+            ).join('')}</mergeCells>` +
+            `<printOptions horizontalCentered="1"/>` +
+            `<pageMargins left="0.25" right="0.25" top="0.45" bottom="0.45" header="0.2" footer="0.2"/>` +
+            '<pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="0"/>' +
+            '</worksheet>';
+
+        const styles = declaration + `<styleSheet xmlns="${ns}">` +
+            '<fonts count="3">' +
+            '<font><sz val="11"/><name val="Calibri"/></font>' +
+            '<font><b/><sz val="16"/><name val="Calibri"/><color rgb="FF173B66"/></font>' +
+            '<font><b/><sz val="10"/><name val="Calibri"/><color rgb="FF163F6E"/></font>' +
+            '</fonts>' +
+            '<fills count="4">' +
+            '<fill><patternFill patternType="none"/></fill>' +
+            '<fill><patternFill patternType="gray125"/></fill>' +
+            '<fill><patternFill patternType="solid"><fgColor rgb="FFD8E4F1"/></patternFill></fill>' +
+            '<fill><patternFill patternType="solid"><fgColor rgb="FFF4F8FD"/></patternFill></fill>' +
+            '</fills>' +
+            '<borders count="2">' +
+            '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+            '<border><left style="thin"><color rgb="FF56677A"/></left>' +
+            '<right style="thin"><color rgb="FF56677A"/></right>' +
+            '<top style="thin"><color rgb="FF56677A"/></top>' +
+            '<bottom style="thin"><color rgb="FF56677A"/></bottom><diagonal/></border>' +
+            '</borders>' +
+            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+            '<cellXfs count="8">' +
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+            '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+            '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+            '</cellXfs></styleSheet>';
+        const workbook = declaration + `<workbook xmlns="${ns}" xmlns:r="${rel}">` +
+            '<sheets><sheet name="KIR Lokasi" sheetId="1" r:id="rId1"/></sheets></workbook>';
+        const workbookRels = declaration + `<Relationships xmlns="${pkg}">` +
+            `<Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/>` +
+            `<Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>`;
+        const rootRels = declaration + `<Relationships xmlns="${pkg}">` +
+            `<Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/>` +
+            '</Relationships>';
+        const contentTypes = declaration +
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+            '<Default Extension="xml" ContentType="application/xml"/>' +
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+            '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+            '</Types>';
+
+        // Writer ZIP tanpa kompresi, sah untuk format .xlsx OpenXML.
+        const crcTable = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let j = 0; j < 8; j++) {
+                c = (c >>> 1) ^ ((c & 1) ? 0xEDB88320 : 0);
+            }
+            crcTable[i] = c >>> 0;
+        }
+        const crc32 = bytes => {
+            let crc = 0xFFFFFFFF;
+            for (const b of bytes) {
+                crc = crcTable[(crc ^ b) & 255] ^ (crc >>> 8);
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        };
+        const zipStore = files => {
+            const localParts = [];
+            const centralParts = [];
+            let offset = 0;
+            let centralSize = 0;
+            for (const [filename, content] of files) {
+                const name = enc.encode(filename);
+                const bytes = enc.encode(content);
+                const crc = crc32(bytes);
+                const local = new Uint8Array(30 + name.length + bytes.length);
+                const l = new DataView(local.buffer);
+                l.setUint32(0, 0x04034b50, true);
+                l.setUint16(4, 20, true);
+                l.setUint16(6, 0x0800, true);
+                l.setUint32(14, crc, true);
+                l.setUint32(18, bytes.length, true);
+                l.setUint32(22, bytes.length, true);
+                l.setUint16(26, name.length, true);
+                local.set(name, 30);
+                local.set(bytes, 30 + name.length);
+                localParts.push(local);
+                const central = new Uint8Array(46 + name.length);
+                const c = new DataView(central.buffer);
+                c.setUint32(0, 0x02014b50, true);
+                c.setUint16(4, 20, true);
+                c.setUint16(6, 20, true);
+                c.setUint16(8, 0x0800, true);
+                c.setUint32(16, crc, true);
+                c.setUint32(20, bytes.length, true);
+                c.setUint32(24, bytes.length, true);
+                c.setUint16(28, name.length, true);
+                c.setUint32(42, offset, true);
+                central.set(name, 46);
+                centralParts.push(central);
+                centralSize += central.length;
+                offset += local.length;
+            }
+            const tail = new Uint8Array(22);
+            const t = new DataView(tail.buffer);
+            t.setUint32(0, 0x06054b50, true);
+            t.setUint16(8, files.length, true);
+            t.setUint16(10, files.length, true);
+            t.setUint32(12, centralSize, true);
+            t.setUint32(16, offset, true);
+            const parts = [...localParts, ...centralParts, tail];
+            const result = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
+            let at = 0;
+            for (const part of parts) {
+                result.set(part, at);
+                at += part.length;
+            }
+            return result;
+        };
+        return zipStore([
+            ['[Content_Types].xml', contentTypes],
+            ['_rels/.rels', rootRels],
+            ['xl/workbook.xml', workbook],
+            ['xl/_rels/workbook.xml.rels', workbookRels],
+            ['xl/styles.xml', styles],
+            ['xl/worksheets/sheet1.xml', sheet]
+        ]);
+    }
+
+    async function exportLocation(id, locationName = '', trigger = null) {
+        const locationId = Number(id);
+        if (!Number.isSafeInteger(locationId) || locationId < 1 || state.exporting) {
+            return;
+        }
+        state.exporting = true;
+        const disabledBefore = trigger?.disabled ?? false;
+        if (trigger) trigger.disabled = true;
+        const button = $('kirExportLokasi');
+        if (button) button.disabled = true;
+        const summary = $('kirExportSummary');
+        const summaryOld = summary?.textContent;
+        if (summary && state.locationId === locationId) {
+            summary.textContent = 'Menyiapkan Excel lokasi...';
+        }
+        try {
+            const result = await api(`${base}/lokasi/${locationId}/export-data`);
+            const count = (result.data || []).length;
+            if (count === 0) {
+                throw new Error('Lokasi ini belum mempunyai barang inventaris KIR.');
+            }
+            const xlsx = buildKirLocationXlsx(result);
+            const blob = new Blob([xlsx], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            const fileName = String(result.lokasi?.nama || locationName || locationId)
+                .normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g, '_')
+                .replace(/^_+|_+$/g, '').slice(0, 65) || String(locationId);
+            anchor.href = url;
+            anchor.download = `KIR_Lokasi_${fileName}_${locationId}.xlsx`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 3000);
+            if (summary && state.locationId === locationId) {
+                summary.textContent = `${count} barang berhasil disiapkan untuk Excel`;
+            }
+        } catch (exception) {
+            console.error('EXPORT KIR LOKASI:', exception);
+            alert('Export Excel KIR gagal: ' + exception.message);
+            if (summary && state.locationId === locationId) {
+                summary.textContent = summaryOld || 'Export gagal';
+            }
+        } finally {
+            state.exporting = false;
+            if (trigger) trigger.disabled = disabledBefore;
+            if (button) button.disabled = state.locationCount === 0 || !state.locationId;
+        }
+    }
+
+    $('kirExportLokasi')?.addEventListener('click', event => {
+        if (state.locationId) {
+            exportLocation(state.locationId, state.locationName, event.currentTarget);
+        }
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | EVENT TABEL LOKASI
     |--------------------------------------------------------------------------
     */
@@ -769,6 +1099,18 @@
                 return valueLocation(
                     Number(nilai.dataset.kirValue),
                     nilai.dataset.name
+                );
+            }
+
+            const exportButton = event.target.closest(
+                '[data-kir-export-location]'
+            );
+
+            if (exportButton) {
+                return exportLocation(
+                    Number(exportButton.dataset.kirExportLocation),
+                    exportButton.dataset.name,
+                    exportButton
                 );
             }
 
@@ -806,93 +1148,87 @@
     |--------------------------------------------------------------------------
     */
 
-    const field = (name, value) => `
-        <div class="kir-detail-field">
-            <small>${esc(name)}</small>
-
-            <strong>
-                ${esc(str(value) || '—')}
-            </strong>
-        </div>
-    `;
-
     async function viewItem(id) {
         state.selectedItem = null;
-
-        $('kirBarangDetail').textContent =
-            'Memuat detail inventaris...';
-
+        $('kirBarangDetail').textContent = 'Memuat detail inventaris...';
         $('kirEditDetail').disabled = true;
         $('kirDeleteDetail').disabled = true;
-
         openModal('kirModalBarang');
 
         try {
-            const response = await api(
-                `${base}/${id}`
-            );
-
+            const response = await api(`${base}/${id}`);
             const item = response.data;
-
             state.selectedItem = item;
-
             $('kirBarangTitle').textContent =
                 item.nama_barang || 'Detail KIR';
 
             $('kirBarangDetail').innerHTML = `
-                <div class="kir-detail-hero">
+                <div class="kir-excel-item-heading">
                     <div>
-                        <strong>
-                            ${esc(item.nama_barang || '—')}
-                        </strong>
-
-                        <p>
-                            ${esc(item.nama_lokasi || '—')}
-                            · ${esc(item.divisi || '—')}
-                            / ${esc(item.gedung || '—')}
-                            / ${esc(item.ruangan || '—')}
-                        </p>
+                        <small>KARTU INVENTARIS RUANGAN</small>
+                        <h3>${esc(item.nama_lokasi || 'Lokasi belum diatur')}</h3>
+                        <p>${esc(item.departemen || '—')} / ${esc(item.divisi || '—')}
+                           · ${esc(item.gedung || '—')} / ${esc(item.ruangan || '—')}</p>
                     </div>
+                    <span class="kir-excel-item-count">1 barang</span>
                 </div>
-
-                ${
-                    item.foto_url
-                        ? `
-                            <img
-                                class="kir-detail-photo"
-                                src="${esc(item.foto_url)}"
-                                alt="Foto inventaris"
-                            >
-                        `
-                        : `
-                            <p class="kir-muted">
-                                Belum ada foto.
-                            </p>
-                        `
-                }
-
-                <div class="kir-detail-grid">
-                    ${field('Kode Aset', item.kode_barang)}
-                    ${field('Nama Aset', item.nama_barang)}
-                    ${field('Merk/Type', item.merk)}
-                    ${field('Bahan', item.nama_bahan)}
-                    ${field('Jumlah', item.jumlah)}
-                    ${field('Satuan', item.satuan)}
-                    ${field('Kondisi Baik', item.baik)}
-                    ${field('Rusak Ringan', item.ringan)}
-                    ${field('Rusak Berat', item.berat)}
-                    ${field('Gedung', item.gedung)}
-                    ${field('Ruangan', item.ruangan)}
-                    ${field('Keterangan', item.ket)}
+                <div class="kir-table-wrap kir-excel-scroll" role="region"
+                     tabindex="0" aria-label="Tabel detail barang KIR">
+                    <table class="kir-table kir-excel-table kir-item-detail-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">No.</th>
+                                <th rowspan="2">Nama Barang</th>
+                                <th rowspan="2">Kode Barang</th>
+                                <th rowspan="2">Merk / Type</th>
+                                <th rowspan="2">Bahan</th>
+                                <th rowspan="2">Jumlah</th>
+                                <th rowspan="2">Satuan</th>
+                                <th colspan="3" class="kir-excel-group">Kondisi</th>
+                                <th rowspan="2">Keterangan</th>
+                                <th rowspan="2">Status Kepemilikan</th>
+                            </tr>
+                            <tr>
+                                <th>Baik</th>
+                                <th>Rusak Ringan</th>
+                                <th>Rusak Berat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="kir-excel-center">1</td>
+                                <td><strong>${esc(item.nama_barang || '—')}</strong></td>
+                                <td>${esc(item.kode_barang || '—')}</td>
+                                <td>${esc(item.merk || '—')}</td>
+                                <td>${esc(item.nama_bahan || '—')}</td>
+                                <td class="kir-excel-center">${esc(item.jumlah ?? 0)}</td>
+                                <td class="kir-excel-center">${esc(item.satuan || '—')}</td>
+                                <td class="kir-excel-center">${esc(item.baik ?? 0)}</td>
+                                <td class="kir-excel-center">${esc(item.ringan ?? 0)}</td>
+                                <td class="kir-excel-center">${esc(item.berat ?? 0)}</td>
+                                <td class="kir-wrap">${esc(item.ket || '—')}</td>
+                                <td>${ownershipBadge(item.status_kepemilikan)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
+                <p class="kir-excel-hint">Geser tabel secara horizontal jika diperlukan.</p>
+                <section class="kir-berkas-panel">
+                    <h3><i data-lucide="image"></i> Foto &amp; Berkas</h3>
+                    ${item.foto_url
+                        ? `<a href="${esc(item.foto_url)}" target="_blank"
+                              rel="noopener noreferrer" title="Buka foto asli">
+                               <img class="kir-detail-photo" src="${esc(item.foto_url)}"
+                                    alt="Foto ${esc(item.nama_barang || 'barang')}" loading="lazy">
+                           </a>`
+                        : `<div class="kir-berkas-empty">Foto belum tersedia.</div>`}
+                </section>
             `;
-
             $('kirEditDetail').disabled = false;
             $('kirDeleteDetail').disabled = false;
-
+            icons();
         } catch (exception) {
-            $('kirBarangDetail').textContent =
-                exception.message;
+            $('kirBarangDetail').textContent = exception.message;
         }
     }
 
@@ -1124,11 +1460,39 @@
             state.editId !== null;
     }
 
+    function syncKirOwnership() {
+        const input = $('kirKepemilikanCari');
+        const hidden = $('kirKepemilikan');
+        const typed = str(input.value).toLowerCase();
+        const found = Object.entries(kirOwnershipOptions).find(
+            ([key, label]) => typed === key || typed === label.toLowerCase()
+        );
+        hidden.value = found ? found[0] : '';
+
+        const isLegacyUntouched = Boolean(
+            state.editId && state.legacyOwnership &&
+            typed === state.legacyOwnership.toLowerCase()
+        );
+        input.setCustomValidity(
+            typed && !found && !isLegacyUntouched
+                ? 'Pilih salah satu status kepemilikan dari daftar.'
+                : ''
+        );
+        return Boolean(found || isLegacyUntouched || (!typed && state.editId));
+    }
+
+    $('kirKepemilikanCari').addEventListener('input', syncKirOwnership);
+    $('kirKepemilikanCari').addEventListener('change', syncKirOwnership);
+
     function resetForm() {
         state.voucher = null;
         state.editId = null;
+        state.legacyOwnership = '';
 
         $('kirForm').reset();
+        $('kirKepemilikanCari').required = true;
+        $('kirKepemilikanCari').setCustomValidity('');
+        $('kirKepemilikan').value = '';
 
         error('');
 
@@ -1595,6 +1959,15 @@
                 item.bahan
             );
 
+            const ownershipRaw = str(item.status_kepemilikan);
+            const ownershipKnown = Boolean(kirOwnershipOptions[ownershipRaw.toLowerCase()]);
+            state.legacyOwnership = ownershipKnown ? '' : ownershipRaw;
+            $('kirKepemilikanCari').required = false;
+            $('kirKepemilikanCari').value = ownershipKnown
+                ? kirOwnershipOptions[ownershipRaw.toLowerCase()]
+                : ownershipRaw;
+            syncKirOwnership();
+
             $('kirMerk').value = item.merk || '';
             $('kirJumlah').value = item.jumlah;
             $('kirSatuan').value = item.satuan || '';
@@ -1718,6 +2091,9 @@
                 return;
             }
 
+            // Input pencarian harus dipilih dari opsi yang sah.
+            // Edit arsip lama boleh tanpa mengganti status yang sudah ada.
+            syncKirOwnership();
             if (!event.currentTarget.reportValidity()) {
                 return;
             }

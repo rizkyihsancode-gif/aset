@@ -491,15 +491,6 @@ Route::prefix('kib')
         )
             ->whereNumber('pdf')->name('tanah.pdf.download');
 
-        Route::get(
-            '/tanah/lampiran/{lampiran}/{aksi}',
-            [KIBController::class, 'lampiranTanah']
-        )
-            ->whereNumber('lampiran')
-            ->where('aksi', 'view|download')
-            ->middleware('signed:relative')
-            ->name('tanah.lampiran');
-
         Route::post(
             '/tanah',
             [KIBController::class, 'store']
@@ -901,6 +892,13 @@ Route::get(
 )
     ->whereNumber('lokasi')
     ->name('kib.kir.nilai');
+
+// Export seluruh barang di satu lokasi, lintas gedung/ruangan.
+// Respons JSON untuk pembuat XLSX lokal di kir.js.
+Route::get(
+    '/kib/kir/lokasi/{lokasi}/export-data',
+    [KIBController::class, 'exportKirLokasi']
+)->whereNumber('lokasi')->name('kib.kir.export');
 
 // Struktur departemen, divisi, gedung, ruangan.
 Route::get(
