@@ -18,6 +18,15 @@
 
         $suggestions = $suggestions ?? [];
         $kfMasterOptions = $kfMasterOptions ?? [];
+
+        $pembiayaanLabel = fn($value) => match (strtolower(trim((string) $value))) {
+            'perumdam' => 'Perumdam Tirta Kencana',
+            'pusat' => 'Pemerintah Pusat',
+            'pemprov' => 'Pemerintah Provinsi',
+            'pemkot' => 'Pemerintah Kota',
+            'swasta' => 'Swasta',
+            default => trim((string) $value) ?: 'Belum Diatur',
+        };
     @endphp
 
     <link rel="stylesheet"
@@ -252,6 +261,21 @@
 
                     </select>
 
+                    <select class="kf-filter" name="pembiayaan" aria-label="Filter asal usul pembiayaan">
+                        <option value="">Semua Pembiayaan</option>
+                        @foreach ([
+            'perumdam' => 'Perumdam Tirta Kencana',
+            'pusat' => 'Pemerintah Pusat',
+            'pemprov' => 'Pemerintah Provinsi',
+            'pemkot' => 'Pemerintah Kota',
+            'swasta' => 'Swasta',
+        ] as $kode => $nama)
+                            <option value="{{ $kode }}" @selected(($pembiayaan ?? '') === $kode)>
+                                {{ $nama }}
+                            </option>
+                        @endforeach
+                    </select>
+
                 @endif
 
 
@@ -302,6 +326,8 @@
                                 <th>Tahun</th>
 
                                 <th>Status</th>
+
+                                <th>Asal Usul Pembiayaan</th>
 
                                 <th>Nilai (Rp)</th>
 
@@ -396,14 +422,22 @@
                                     </td>
 
 
-                                    {{-- 8. NILAI --}}
+                                    {{-- 8. ASAL USUL PEMBIAYAAN --}}
+
+                                    <td>
+                                        <span class="kf-pembiayaan-badge">
+                                            {{ $pembiayaanLabel($item->asal_pembiayaan ?? null) }}
+                                        </span>
+                                    </td>
+
+                                    {{-- 9. NILAI --}}
 
                                     <td class="kf-money">
                                         {{ $rupiah($item->nilai) }}
                                     </td>
 
 
-                                    {{-- 9. AKSI --}}
+                                    {{-- 10. AKSI --}}
 
                                     <td class="kf-actions-cell">
 
@@ -443,7 +477,7 @@
 
                                 <tr>
 
-                                    <td colspan="9" class="kf-empty">
+                                    <td colspan="10" class="kf-empty">
                                         Belum ada data Konstruksi manual.
                                     </td>
 
@@ -1057,10 +1091,15 @@
 
                             <label>
 
-                                Asal Usul Pembiayaan
+                                Asal Usul Pembiayaan <em>*</em>
 
-                                <input name="asal" data-kf-combo="asal" maxlength="255" autocomplete="off"
-                                    placeholder="Asal pembiayaan">
+                                <input name="asal" id="kfAsal" data-kf-combo="asal" maxlength="20" required
+                                    autocomplete="off" placeholder="Cari: Perumdam, Pusat, Pemprov, Pemkot, Swasta"
+                                    aria-describedby="kfAsalHelp">
+
+                                <small id="kfAsalHelp" class="kf-field-help">
+                                    Pilih salah satu sumber pembiayaan. Data lama tetap dipertahankan.
+                                </small>
 
                             </label>
 
@@ -1229,6 +1268,11 @@
 
 
             <footer class="kf-dialog-foot">
+
+                <button type="button" id="kfExportExcel" class="kf-btn kf-excel-export" disabled>
+                    <i data-lucide="file-spreadsheet"></i>
+                    Export Excel (.xlsx)
+                </button>
 
                 <button type="button" class="kf-btn kf-outline" data-kf-close="kfModalDetail">
                     Tutup

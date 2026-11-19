@@ -6802,6 +6802,16 @@ class KIBController extends Controller
         'PERPIPAAN',
     ];
 
+    // Lima sumber pembiayaan yang berlaku untuk entri K.I.B F baru.
+    // Nilai historis lain tetap boleh dipertahankan tanpa perubahan saat Edit.
+    private const KONSTRUKSI_PEMBIAYAAN = [
+        'perumdam',
+        'pusat',
+        'pemprov',
+        'pemkot',
+        'swasta',
+    ];
+
 
     /*
     |--------------------------------------------------------------------------
@@ -6899,6 +6909,14 @@ class KIBController extends Controller
         $view = $request->query('view') === 'arsip'
             ? 'arsip'
             : 'manual';
+
+        $pembiayaan = strtolower(trim(
+            (string) $request->query('pembiayaan', '')
+        ));
+
+        if (!in_array($pembiayaan, self::KONSTRUKSI_PEMBIAYAAN, true)) {
+            $pembiayaan = '';
+        }
 
         $category = in_array(
             $category,
@@ -7030,6 +7048,10 @@ class KIBController extends Controller
                 $query->where('m.kategori', $category);
             }
 
+            if ($pembiayaan !== '') {
+                $query->where('m.asal_pembiayaan', $pembiayaan);
+            }
+
             $items = $query
                 ->orderByDesc('m.id')
                 ->paginate(20)
@@ -7110,6 +7132,7 @@ class KIBController extends Controller
             'jumlahLokasi',
             'search',
             'category',
+            'pembiayaan',
             'view',
             'archiveCount',
             'suggestions',
@@ -7125,13 +7148,46 @@ class KIBController extends Controller
     */
 
     private function validasiKonstruksiManual(
-        Request $request
+        Request $request,
+        ?int $konstruksi = null
     ): array {
+
+        $submitted = trim((string) $request->input('asal', ''));
+        $normal = strtolower($submitted);
+
+        $allowed = self::KONSTRUKSI_PEMBIAYAAN;
+        $oldValue = null;
+        $legacyEmpty = false;
+
+        if ($konstruksi !== null) {
+            $row = DB::table(self::KONSTRUKSI_MANUAL_TABLE)
+                ->where('id', $konstruksi)
+                ->first(['asal_pembiayaan']);
+
+            abort_unless($row, 404);
+            $oldValue = trim((string) ($row->asal_pembiayaan ?? ''));
+        }
+
+        // Simpan persis nilai lama bila tidak disentuh ketika Edit.
+        // Jika user memilih pilihan baru, simpan kode lowercase.
+        $unchangedLegacy = $konstruksi !== null &&
+            $oldValue === $submitted;
+        $asal = $unchangedLegacy
+            ? $submitted
+            : (in_array($normal, $allowed, true) ? $normal : $submitted);
+
+        if ($konstruksi !== null) {
+            $legacyEmpty = $oldValue === '' && $asal === '';
+            if ($oldValue !== '' && $unchangedLegacy) {
+                $allowed[] = $oldValue;
+            }
+        }
 
         $request->merge([
             'kategori' => strtoupper(
                 trim((string) $request->input('kategori'))
             ),
+            'asal' => $asal,
         ]);
 
         return $request->validate([
@@ -7219,9 +7275,10 @@ class KIBController extends Controller
             ],
 
             'asal' => [
-                'nullable',
+                $legacyEmpty ? 'nullable' : 'required',
                 'string',
                 'max:255',
+                Rule::in($allowed),
             ],
 
             'status_aset' => [
@@ -7611,7 +7668,8 @@ class KIBController extends Controller
     ) {
 
         $data = $this->validasiKonstruksiManual(
-            $request
+            $request,
+            $konstruksi
         );
 
         $added = [];

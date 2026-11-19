@@ -1,4 +1,5 @@
 
+
 /*
 |--------------------------------------------------------------------------
 | K.I.B F — KONSTRUKSI
@@ -134,6 +135,20 @@
     const master = parseJson('kfMasterOptions');
 
     const combos = new Map();
+
+    const pembiayaanNames = Object.freeze({
+        perumdam: 'Perumdam Tirta Kencana',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemerintah Provinsi',
+        pemkot: 'Pemerintah Kota',
+        swasta: 'Swasta'
+    });
+
+    function pembiayaanLabel(value) {
+        const original = String(value ?? '').trim();
+        if (!original) return 'Belum Diatur';
+        return pembiayaanNames[norm(original)] || original;
+    }
 
     let active = null;
     let editId = null;
@@ -318,11 +333,14 @@
             { value: 'Milik Perumda' }
         ],
 
+        // Asal Usul Pembiayaan memakai standar kepemilikan,
+        // bukan daftar teks bebas seperti versi sebelumnya.
         asal: [
-            { value: 'Pemprov' },
-            { value: 'Pemkot' },
-            { value: 'Perumda' },
-            { value: 'Hibah' }
+            { value: 'perumdam', label: 'Perumdam Tirta Kencana' },
+            { value: 'pusat', label: 'Pemerintah Pusat' },
+            { value: 'pemprov', label: 'Pemerintah Provinsi' },
+            { value: 'pemkot', label: 'Pemerintah Kota' },
+            { value: 'swasta', label: 'Swasta' }
         ],
 
         status_aset: [
@@ -864,6 +882,7 @@
 
         active = null;
         editId = null;
+        if ($('kfAsal')) $('kfAsal').required = true;
 
         $('kfTahun').value = new Date().getFullYear();
 
@@ -919,6 +938,14 @@
                 );
             }
         });
+
+        // Jika sumber pembiayaan data historis kosong, boleh tetap
+        // kosong saat mengubah field lain. Entri baru tetap wajib diisi.
+        if ($('kfAsal')) {
+            $('kfAsal').required = Boolean(String(
+                item.asal_pembiayaan ?? item.asal ?? ''
+            ).trim());
+        }
 
         renderSavedFiles(item.dokumens);
 
@@ -976,6 +1003,8 @@
         if (!item) return;
 
         active = item;
+        const exportButton = $('kfExportExcel');
+        if (exportButton) exportButton.disabled = false;
 
         const body = $('kfDetailBody');
         if (!body) return;
@@ -1326,10 +1355,7 @@
 
         addCell(
             dataRow,
-            shown(
-                item.asal ??
-                item.asal_pembiayaan
-            ),
+            pembiayaanLabel(item.asal ?? item.asal_pembiayaan),
             'kf-excel-center'
         );
 
@@ -1446,6 +1472,269 @@
         openDialog(detailDialog);
         icons();
     }
+
+    /* ======================================================
+       EXPORT DETAIL K.I.B F KE XLSX ASLI (SATU FILE JS)
+       - Tidak memerlukan CDN atau plugin tambahan.
+       - Teks ditulis sebagai inlineStr: tidak dieksekusi sebagai formula.
+       - Foto/PDF tidak ditanam di dalam XLSX; nama lampiran dicatat.
+    ====================================================== */
+
+    function buildKonstruksiXlsx(item) {
+        if (!item || !item.id) {
+            throw new Error('Pilih Detail Konstruksi terlebih dahulu.');
+        }
+
+        const encoder = new TextEncoder();
+        const declaration = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+        const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+        const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+        const pkg = 'http://schemas.openxmlformats.org/package/2006/relationships';
+
+        const xml = value => String(value ?? '')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+
+        const string = value => String(value ?? '').trim() || '—';
+        const safeCell = (ref, value, style = 0) =>
+            `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+        const numericCell = (ref, value, style = 0) => {
+            const n = Number(value);
+            return value !== null && value !== undefined &&
+                String(value).trim() !== '' && Number.isFinite(n)
+                ? `<c r="${ref}" s="${style}"><v>${n}</v></c>`
+                : safeCell(ref, string(value), style);
+        };
+        const row = (index, cells, height = 0) =>
+            `<row r="${index}"${height ? ` ht="${height}" customHeight="1"` : ''}>${cells.join('')}</row>`;
+
+        function crc32(bytes) {
+            let crc = 0xFFFFFFFF;
+            for (const byte of bytes) {
+                crc ^= byte;
+                for (let i = 0; i < 8; i++) {
+                    crc = (crc >>> 1) ^ ((crc & 1) ? 0xEDB88320 : 0);
+                }
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        function zipStore(files) {
+            const localParts = [];
+            const centralParts = [];
+            let offset = 0;
+            let centralSize = 0;
+
+            for (const [filename, content] of files) {
+                const name = encoder.encode(filename);
+                const bytes = encoder.encode(content);
+                const crc = crc32(bytes);
+
+                const local = new Uint8Array(30 + name.length + bytes.length);
+                const l = new DataView(local.buffer);
+                l.setUint32(0, 0x04034b50, true);
+                l.setUint16(4, 20, true);
+                l.setUint16(6, 0x0800, true);
+                l.setUint32(14, crc, true);
+                l.setUint32(18, bytes.length, true);
+                l.setUint32(22, bytes.length, true);
+                l.setUint16(26, name.length, true);
+                local.set(name, 30);
+                local.set(bytes, 30 + name.length);
+                localParts.push(local);
+
+                const central = new Uint8Array(46 + name.length);
+                const c = new DataView(central.buffer);
+                c.setUint32(0, 0x02014b50, true);
+                c.setUint16(4, 20, true);
+                c.setUint16(6, 20, true);
+                c.setUint16(8, 0x0800, true);
+                c.setUint32(16, crc, true);
+                c.setUint32(20, bytes.length, true);
+                c.setUint32(24, bytes.length, true);
+                c.setUint16(28, name.length, true);
+                c.setUint32(42, offset, true);
+                central.set(name, 46);
+                centralParts.push(central);
+                centralSize += central.length;
+                offset += local.length;
+            }
+
+            const tail = new Uint8Array(22);
+            const v = new DataView(tail.buffer);
+            v.setUint32(0, 0x06054b50, true);
+            v.setUint16(8, files.length, true);
+            v.setUint16(10, files.length, true);
+            v.setUint32(12, centralSize, true);
+            v.setUint32(16, offset, true);
+
+            const chunks = [...localParts, ...centralParts, tail];
+            const result = new Uint8Array(
+                chunks.reduce((size, part) => size + part.length, 0)
+            );
+            let at = 0;
+            for (const chunk of chunks) {
+                result.set(chunk, at);
+                at += chunk.length;
+            }
+            return result;
+        }
+
+        const place = [
+            item.nama_lokasi ?? item.lokasi,
+            item.alamat_lokasi ?? item.alamat,
+            item.letak
+        ].map(value => String(value ?? '').trim())
+         .filter(Boolean)
+         .filter((value, i, all) =>
+             all.findIndex(other => norm(other) === norm(value)) === i
+         ).join('\n');
+
+        const docs = asArray(item.dokumens)
+            .map(doc => String(doc.nama || '').trim())
+            .filter(Boolean);
+        if (item.foto_url) docs.push('Foto Utama Konstruksi');
+        const note = [
+            string(item.ket ?? item.keterangan),
+            docs.length ? `Lampiran: ${docs.join(', ')}` : ''
+        ].filter(value => value && value !== '—').join('\n');
+
+        const columns = 'ABCDEFGHIJKLM'.split('');
+        const headers = [
+            'No.', 'Nama Barang / Jenis Barang', 'Tahun',
+            'Bangunan (P, SP, D)', 'Bertingkat / Tidak', 'Beton / Tidak',
+            'Letak / Lokasi Alamat', 'Cakupan', 'Status Tanah',
+            'Asal Usul Pembiayaan', 'Status Aset', 'Nilai (Rp)',
+            'Dokumen Pendukung / Keterangan'
+        ];
+        const values = [
+            1,
+            string(item.nama_barang ?? item.nama_pekerjaan),
+            item.tahun,
+            buildingName(item.type ?? item.jenis_bangunan),
+            string(item.struktur ?? item.bertingkat),
+            string(item.materi ?? item.material),
+            string(place),
+            string(item.cakupan),
+            string(item.status_tanah),
+            pembiayaanLabel(item.asal ?? item.asal_pembiayaan),
+            string(item.status_aset),
+            item.nilai,
+            string(note)
+        ];
+        const metadata = [
+            ['PROVINSI', 'KALIMANTAN TIMUR'],
+            ['KOTA', 'SAMARINDA'],
+            ['UNIT', 'PERUMDA TIRTA KENCANA'],
+            ['DEPARTEMEN', string(item.nama_departemen ?? item.departemen)],
+            ['DIVISI', string(item.nama_divisi ?? item.divisi)],
+            ['KATEGORI', categoryName(item.kategori)],
+            ['CAKUPAN', string(item.cakupan)],
+            ['LOKASI', string(item.nama_lokasi ?? item.lokasi)]
+        ];
+
+        const rows = [
+            row(1, [safeCell('A1', 'KARTU INVENTARIS BARANG (KIB) F', 1)], 28),
+            row(2, [safeCell('A2', 'KONSTRUKSI DALAM PENGERJAAN', 1)], 26),
+            ...metadata.map(([label, value], index) => row(index + 4, [
+                safeCell(`A${index + 4}`, label, 4),
+                safeCell(`C${index + 4}`, value)
+            ])),
+            row(13, headers.map((label, index) =>
+                safeCell(`${columns[index]}13`, label, 2)
+            ), 48),
+            row(14, values.map((value, index) =>
+                [0, 2, 11].includes(index)
+                    ? numericCell(`${columns[index]}14`, value, 3)
+                    : safeCell(`${columns[index]}14`, value, 3)
+            ), 60)
+        ];
+
+        const widths = [8, 42, 12, 24, 24, 20, 42, 30, 24, 28, 24, 22, 45];
+        const sheet = declaration + `<worksheet xmlns="${ns}">` +
+            `<sheetViews><sheetView workbookViewId="0"/></sheetViews>` +
+            `<cols>${widths.map((width, index) =>
+                `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`
+            ).join('')}</cols>` +
+            `<sheetData>${rows.join('')}</sheetData>` +
+            '<mergeCells count="2"><mergeCell ref="A1:M1"/>' +
+            '<mergeCell ref="A2:M2"/></mergeCells></worksheet>';
+
+        const styles = declaration + `<styleSheet xmlns="${ns}">` +
+            '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font>' +
+            '<font><b/><sz val="14"/><name val="Calibri"/><color rgb="FF133D67"/></font>' +
+            '<font><b/><sz val="10"/><name val="Calibri"/><color rgb="FF143B64"/></font></fonts>' +
+            '<fills count="3"><fill><patternFill patternType="none"/></fill>' +
+            '<fill><patternFill patternType="gray125"/></fill>' +
+            '<fill><patternFill patternType="solid"><fgColor rgb="FFDCEBFA"/></patternFill></fill></fills>' +
+            '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' +
+            '<border><left style="thin"><color rgb="FF293746"/></left>' +
+            '<right style="thin"><color rgb="FF293746"/></right>' +
+            '<top style="thin"><color rgb="FF293746"/></top>' +
+            '<bottom style="thin"><color rgb="FF293746"/></bottom><diagonal/></border></borders>' +
+            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+            '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+            '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+            '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
+            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>';
+        const workbook = declaration + `<workbook xmlns="${ns}" xmlns:r="${rel}">` +
+            '<sheets><sheet name="KIB F" sheetId="1" r:id="rId1"/></sheets></workbook>';
+        const workbookRels = declaration + `<Relationships xmlns="${pkg}">` +
+            `<Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/>` +
+            `<Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>`;
+        const rootRels = declaration + `<Relationships xmlns="${pkg}">` +
+            `<Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+        const contentTypes = declaration +
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+            '<Default Extension="xml" ContentType="application/xml"/>' +
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+            '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>';
+
+        return zipStore([
+            ['[Content_Types].xml', contentTypes],
+            ['_rels/.rels', rootRels],
+            ['xl/workbook.xml', workbook],
+            ['xl/_rels/workbook.xml.rels', workbookRels],
+            ['xl/styles.xml', styles],
+            ['xl/worksheets/sheet1.xml', sheet]
+        ]);
+    }
+
+    $('kfExportExcel')?.addEventListener('click', () => {
+        if (!active || !detailDialog?.open) {
+            toast('Buka Detail Konstruksi terlebih dahulu.');
+            return;
+        }
+
+        try {
+            const content = buildKonstruksiXlsx(active);
+            const blob = new Blob([content], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            const filename = String(active.nama_barang ?? active.nama_pekerjaan ?? active.id)
+                .replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 48);
+
+            anchor.href = url;
+            anchor.download = `KIB_F_${active.id}_${filename || 'Konstruksi'}.xlsx`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 3000);
+        } catch (error) {
+            console.error('EXPORT KIB F:', error);
+            toast('Ekspor Excel gagal: ' + error.message);
+        }
+    });
+
 
     /* ======================================================
        DETAIL KELOMPOK
