@@ -524,6 +524,23 @@ Route::prefix('kib')
         )
             ->name('tanah.store');
 
+
+        /*
+|--------------------------------------------------------------------------
+| K.I.B TANAH — LAMPIRAN PDF DAN FOTO
+|--------------------------------------------------------------------------
+*/
+
+        Route::get(
+            '/tanah/lampiran/{lampiran}/{aksi?}',
+            [KIBController::class, 'lampiranTanah']
+        )
+            ->whereNumber('lampiran')
+            ->whereIn('aksi', ['view', 'download'])
+            ->middleware('signed:relative')
+            ->name('tanah.lampiran');
+
+
         Route::get(
             '/tanah/{tanah}',
             [KIBController::class, 'show']
