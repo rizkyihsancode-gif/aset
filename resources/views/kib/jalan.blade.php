@@ -40,7 +40,7 @@
             </div>
             <div class="kd-stats">
                 <article><i data-lucide="building-2"></i>
-                    <div><small>Gedung /
+                    <div><small>Gedung
                             Irigasi</small><strong>{{ number_format($totalGedung, 0, ',', '.') }}</strong><span>Data
                             terhubung K.I.B C</span></div>
                 </article>

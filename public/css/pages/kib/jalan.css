@@ -301,36 +301,53 @@
 }
 
 /* ===============================================================
-   K.I.B D — TABEL BERGARIS TEGAS DAN AKSI CRUD TERLIHAT
-   Seluruh selector dibatasi pada #jalanPage.
+   K.I.B D — TABEL UTAMA MODEL KONSTRUKSI (K.I.B F)
+   Garis tipis biru-abu, bukan border gelap/tebal.
+   Tidak memengaruhi tabel Excel pada Detail.
    =============================================================== */
 #jalanPage .kd-table-shell {
-    overflow-x:auto;
-    border:1px solid #829fbd;
-    border-radius:10px;
+    overflow-x: auto;
+    border: 1px solid #dbe7f2;
+    border-radius: 9px;
 }
 #jalanPage .kd-main-table {
-    border-collapse:collapse;
-    border-spacing:0;
-    width:100%;
-    min-width:1050px;
-    font-size:14px;
+    width: 100%;
+    min-width: 1050px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+    color: #254d78;
 }
-#jalanPage .kd-main-table th,
+#jalanPage .kd-main-table th {
+    padding: 13px 11px;
+    background: #dcebf9;
+    color: #164073;
+    border: 0;
+    border-right: 1px solid #cddfed;
+    border-bottom: 1px solid #c7dbeb;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: center;
+    vertical-align: middle;
+}
 #jalanPage .kd-main-table td {
-    border:1px solid #9db4cc !important;
-    padding:13px 12px;
-    vertical-align:middle;
+    padding: 13px 11px;
+    border: 0;
+    border-right: 1px solid #e4edf6;
+    border-bottom: 1px solid #e4edf6;
+    background: transparent;
+    line-height: 1.6;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
 }
-#jalanPage .kd-main-table thead th {
-    background:#dceafb;
-    color:#123a64;
-    font-size:13px;
-    font-weight:800;
+#jalanPage .kd-main-table th:last-child,
+#jalanPage .kd-main-table td:last-child {
+    border-right: 0;
 }
-#jalanPage .kd-main-table tbody tr:nth-child(even) td {background:#f5f9fd;}
-#jalanPage .kd-main-table tbody tr:hover td {background:#e9f3ff;}
-#jalanPage .kd-main-table th:last-child {min-width:290px;width:290px;}
+#jalanPage .kd-main-table tbody tr:last-child td { border-bottom: 0; }
+#jalanPage .kd-main-table tbody tr:nth-child(even) { background: #fafdff; }
+#jalanPage .kd-main-table tbody tr:hover { background: #edf6ff; }
+#jalanPage .kd-main-table th:last-child { min-width: 290px; width: 290px; }
 #jalanPage .kd-row-actions {display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
 #jalanPage .kd-row-actions .kd-button {font-size:12px;min-height:34px;padding:7px 10px;}
 #jalanPage .kd-button.warning {border-color:#edc57e;background:#fff5e3;color:#8d540e;}
