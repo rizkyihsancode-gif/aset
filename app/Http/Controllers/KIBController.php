@@ -5301,6 +5301,8 @@ class KIBController extends Controller
             (string) $request->query('kondisi', '')
         );
 
+        $ownershipFilter = trim((string) $request->query('status_kepemilikan', ''));
+
         /*
          * Statistik tabel manual.
          */
@@ -5445,6 +5447,14 @@ class KIBController extends Controller
                 );
             }
 
+            if (in_array($ownershipFilter, ['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta'], true)) {
+                $query->where('m.status_kepemilikan', $ownershipFilter);
+            } elseif ($ownershipFilter === 'belum_diatur') {
+                $query->where(function ($q) {
+                    $q->whereNull('m.status_kepemilikan')->orWhere('m.status_kepemilikan', '');
+                });
+            }
+
             $items = $query
                 ->orderByDesc('m.id')
                 ->paginate(15)
@@ -5531,6 +5541,7 @@ class KIBController extends Controller
                 'viewMode',
                 'search',
                 'condition',
+                'ownershipFilter',
                 'master',
                 'history'
             )
@@ -5639,6 +5650,11 @@ class KIBController extends Controller
                 'string'
             ],
 
+            'status_kepemilikan' => [
+                'required',
+                \Illuminate\Validation\Rule::in(['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta']),
+            ],
+
             'foto' => [
                 'nullable',
                 'image',
@@ -5698,6 +5714,7 @@ class KIBController extends Controller
                 'kondisi',
                 'asal_perolehan',
                 'keterangan',
+                'status_kepemilikan',
             ] as $key
         ) {
             $result[$key] = $data[$key] ?? null;
@@ -6334,6 +6351,7 @@ class KIBController extends Controller
                 'jumlah_unit',
                 'asal_perolehan',
                 'keterangan',
+                'status_kepemilikan',
             ])
             ->orderBy('nama_aset')
             ->orderBy('id')
@@ -6371,6 +6389,7 @@ class KIBController extends Controller
                 $row->asal_perolehan,
 
                 'keterangan' => $row->keterangan,
+                'status_kepemilikan' => $row->status_kepemilikan,
             ])
             ->all();
 

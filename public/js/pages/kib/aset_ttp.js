@@ -19,6 +19,238 @@
 
     root.dataset.loaded = '1';
 
+    /* ======================================================
+       EXPORT EXCEL XLSX — MENYATU DALAM ASET_TTP.JS
+       Sebelumnya file terpisah: aset_ttp_excel.js
+       Semua fungsi XLSX tetap dipertahankan.
+       ====================================================== */
+
+    const AEMExcel = (() => {
+    const encoder = new TextEncoder();
+    const ownership = {
+        perumdam: 'Perumdam Tirta Kencana',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemerintah Provinsi',
+        pemkot: 'Pemerintah Kota',
+        swasta: 'Swasta'
+    };
+    const conditions = {
+        BAIK: 'Baik (B)',
+        'KURANG BAIK': 'Kurang Baik (KB)',
+        'RUSAK BERAT': 'Rusak Berat (RB)',
+        CUKUP: 'Cukup (lama)',
+        'RUSAK RINGAN': 'Rusak Ringan (lama)'
+    };
+
+    const text = value => String(value ?? '').trim();
+    const shown = value => text(value) || '—';
+    const xmlEscape = value => String(value)
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+
+    function crc32(bytes) {
+        let crc = 0xFFFFFFFF;
+        for (const byte of bytes) {
+            crc ^= byte;
+            for (let i = 0; i < 8; i++) {
+                crc = (crc >>> 1) ^ ((crc & 1) ? 0xEDB88320 : 0);
+            }
+        }
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    // ZIP tanpa kompresi valid untuk .xlsx, kompatibel dengan Excel/LibreOffice.
+    function zipStore(files) {
+        const localParts = [];
+        const centralParts = [];
+        let offset = 0;
+        let centralSize = 0;
+
+        for (const [fileName, xml] of files) {
+            const name = encoder.encode(fileName);
+            const bytes = encoder.encode(xml);
+            const crc = crc32(bytes);
+            const local = new Uint8Array(30 + name.length + bytes.length);
+            const l = new DataView(local.buffer);
+            l.setUint32(0, 0x04034b50, true);
+            l.setUint16(4, 20, true);
+            l.setUint16(6, 0x0800, true); // Nama UTF-8
+            l.setUint16(8, 0, true); // Store (tanpa kompresi)
+            l.setUint32(14, crc, true);
+            l.setUint32(18, bytes.length, true);
+            l.setUint32(22, bytes.length, true);
+            l.setUint16(26, name.length, true);
+            local.set(name, 30);
+            local.set(bytes, 30 + name.length);
+            localParts.push(local);
+
+            const central = new Uint8Array(46 + name.length);
+            const c = new DataView(central.buffer);
+            c.setUint32(0, 0x02014b50, true);
+            c.setUint16(4, 20, true);
+            c.setUint16(6, 20, true);
+            c.setUint16(8, 0x0800, true);
+            c.setUint16(10, 0, true);
+            c.setUint32(16, crc, true);
+            c.setUint32(20, bytes.length, true);
+            c.setUint32(24, bytes.length, true);
+            c.setUint16(28, name.length, true);
+            c.setUint32(42, offset, true);
+            central.set(name, 46);
+            centralParts.push(central);
+            centralSize += central.length;
+            offset += local.length;
+        }
+
+        const end = new Uint8Array(22);
+        const v = new DataView(end.buffer);
+        v.setUint32(0, 0x06054b50, true);
+        v.setUint16(8, files.length, true);
+        v.setUint16(10, files.length, true);
+        v.setUint32(12, centralSize, true);
+        v.setUint32(16, offset, true);
+
+        const all = [...localParts, ...centralParts, end];
+        const result = new Uint8Array(all.reduce((total, part) => total + part.length, 0));
+        let at = 0;
+        for (const part of all) {
+            result.set(part, at);
+            at += part.length;
+        }
+        return result;
+    }
+
+    function xlsx(item) {
+        if (!item || !item.id) throw new Error('Detail aset belum dipilih.');
+
+        const prefix = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+        const m = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+        const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+        const pkg = 'http://schemas.openxmlformats.org/package/2006/relationships';
+
+        const cell = (ref, value, style = 0) =>
+            `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
+        const numberCell = (ref, value, style = 0) =>
+            Number.isFinite(Number(value)) && text(value)
+                ? `<c r="${ref}" s="${style}"><v>${Number(value)}</v></c>`
+                : cell(ref, shown(value), style);
+        const row = (index, contents, height = 0) =>
+            `<row r="${index}"${height ? ` ht="${height}" customHeight="1"` : ''}>${contents.join('')}</row>`;
+        const cols = 'ABCDEFGHIJK'.split('');
+
+        const details = [
+            ['PROVINSI', 'KALIMANTAN TIMUR'],
+            ['KOTA', 'SAMARINDA'],
+            ['UNIT', 'PERUMDAM TIRTA KENCANA'],
+            ['DEPARTEMEN', shown(item.departemen)],
+            ['DIVISI', shown(item.divisi)],
+            ['KODE STRUKTUR', shown(item.kode_struktur)],
+            ['LOKASI / UNIT KERJA', shown(item.lokasi)],
+            ['ALAMAT', shown(item.alamat)]
+        ];
+        const headers = [
+            'No.', 'Nama Barang / Jenis Barang', 'Kode Barang', 'Register',
+            'Kondisi Barang (B, KB, RB)', 'Bahan', 'Tahun Pengadaan / Perolehan',
+            'Jumlah', 'Asal Usul / Cara Perolehan', 'Keterangan', 'Status Kepemilikan'
+        ];
+        const valueList = [
+            '1', shown(item.nama_aset), shown(item.kode_inventaris),
+            shown(item.nomor_register),
+            conditions[text(item.kondisi).toUpperCase()] || shown(item.kondisi),
+            shown(item.bahan), item.tahun, item.jumlah_unit,
+            shown(item.asal_perolehan), shown(item.keterangan),
+            ownership[text(item.status_kepemilikan).toLowerCase()] || 'Belum Diatur'
+        ];
+
+        const rows = [
+            row(1, [cell('A1', 'KARTU INVENTARIS BARANG (KIB)', 1)], 28),
+            row(2, [cell('A2', 'E. ASET TETAP LAINNYA', 1)], 26),
+            ...details.map(([key, val], i) => row(4 + i, [cell(`A${4 + i}`, key, 4), cell(`C${4 + i}`, val)])),
+            row(13, headers.map((label, i) => cell(`${cols[i]}13`, label, 2)), 40),
+            row(14, valueList.map((value, i) => [6, 7].includes(i)
+                ? numberCell(`${cols[i]}14`, value, 3)
+                : cell(`${cols[i]}14`, value, 3)), 40)
+        ];
+
+        const worksheet = prefix + `<worksheet xmlns="${m}">` +
+            `<sheetViews><sheetView workbookViewId="0"/></sheetViews>` +
+            `<cols>${[9, 42, 22, 18, 30, 21, 23, 15, 32, 50, 27]
+                .map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>` +
+            `<sheetData>${rows.join('')}</sheetData>` +
+            `<mergeCells count="2"><mergeCell ref="A1:K1"/><mergeCell ref="A2:K2"/></mergeCells>` +
+            `</worksheet>`;
+
+        const styles = prefix + `<styleSheet xmlns="${m}">` +
+            `<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font>` +
+            `<font><b/><sz val="14"/><name val="Calibri"/><color rgb="FF12395F"/></font>` +
+            `<font><b/><sz val="10"/><name val="Calibri"/><color rgb="FF092D56"/></font></fonts>` +
+            `<fills count="3"><fill><patternFill patternType="none"/></fill>` +
+            `<fill><patternFill patternType="gray125"/></fill>` +
+            `<fill><patternFill patternType="solid"><fgColor rgb="FFDCEBFA"/><bgColor indexed="64"/></patternFill></fill></fills>` +
+            `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>` +
+            `<border><left style="thin"><color rgb="FF364758"/></left>` +
+            `<right style="thin"><color rgb="FF364758"/></right>` +
+            `<top style="thin"><color rgb="FF364758"/></top>` +
+            `<bottom style="thin"><color rgb="FF364758"/></bottom><diagonal/></border></borders>` +
+            `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
+            `<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+            `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
+            `<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>` +
+            `<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>` +
+            `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
+            `</cellXfs></styleSheet>`;
+
+        const workbook = prefix + `<workbook xmlns="${m}" xmlns:r="${rel}">` +
+            `<sheets><sheet name="KIB E" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+        const workbookRel = prefix + `<Relationships xmlns="${pkg}">` +
+            `<Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/>` +
+            `<Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/>` +
+            `</Relationships>`;
+        const rootRel = prefix + `<Relationships xmlns="${pkg}"><Relationship Id="rId1" ` +
+            `Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+        const types = prefix + `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+            `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+            `<Default Extension="xml" ContentType="application/xml"/>` +
+            `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>` +
+            `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>` +
+            `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>` +
+            `</Types>`;
+
+        return zipStore([
+            ['[Content_Types].xml', types],
+            ['_rels/.rels', rootRel],
+            ['xl/workbook.xml', workbook],
+            ['xl/_rels/workbook.xml.rels', workbookRel],
+            ['xl/styles.xml', styles],
+            ['xl/worksheets/sheet1.xml', worksheet]
+        ]);
+    }
+
+    function download(item) {
+        const data = xlsx(item);
+        const blob = new Blob([data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        const slug = text(item.kode_inventaris || item.id)
+            .replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 55);
+        anchor.href = url;
+        anchor.download = `KIB_E_${slug || 'Detail'}.xlsx`;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+
+        return Object.freeze({ build: xlsx, download });
+    })();
+
+
     const $ = id => document.getElementById(id);
 
     const base = String(
@@ -48,7 +280,8 @@
         'tahun',
         'jumlah_unit',
         'asal_perolehan',
-        'keterangan'
+        'keterangan',
+        'status_kepemilikan'
     ];
 
     const norm = value =>
@@ -315,6 +548,14 @@
             }
         ],
 
+        kepemilikan: [
+            { value: 'perumdam', label: 'Perumdam Tirta Kencana' },
+            { value: 'pusat', label: 'Pemerintah Pusat' },
+            { value: 'pemprov', label: 'Pemerintah Provinsi' },
+            { value: 'pemkot', label: 'Pemerintah Kota' },
+            { value: 'swasta', label: 'Swasta' }
+        ],
+
         asal: [
             'PENGADAAN',
             'PEMBELIAN',
@@ -523,8 +764,8 @@
                             elem(
                                 'div',
                                 'aem-combo-empty',
-                                type === 'kondisi'
-                                    ? 'Pilih kondisi yang tersedia.'
+                                ['kondisi', 'kepemilikan'].includes(type)
+                                    ? 'Pilih salah satu status yang tersedia.'
                                     : 'Belum ada pilihan. Kamu bisa mengetik nilai baru.'
                             )
                         );
@@ -1009,6 +1250,14 @@
        TANPA TANDA TANGAN
     ====================================================== */
 
+    const labelKepemilikan = value => ({
+        perumdam: 'Perumdam Tirta Kencana',
+        pusat: 'Pemerintah Pusat',
+        pemprov: 'Pemerintah Provinsi',
+        pemkot: 'Pemerintah Kota',
+        swasta: 'Swasta'
+    }[norm(value)] || 'Belum Diatur');
+
     function detail(item) {
         if (!item) return;
 
@@ -1149,7 +1398,7 @@
 
         sheet.append(meta);
 
-        /* TABEL EXCEL 10 KOLOM */
+        /* TABEL EXCEL 11 KOLOM: TAMBAHAN STATUS KEPEMILIKAN */
 
         const scroll = elem(
             'div',
@@ -1163,7 +1412,7 @@
 
         const cols = elem('colgroup');
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 11; i++) {
             cols.append(elem('col'));
         }
 
@@ -1226,11 +1475,12 @@
         );
 
         th(h1, 'Keterangan', 2);
+        th(h1, 'Status Kepemilikan', 2);
 
         th(h2, 'Kode Barang');
         th(h2, 'Register');
 
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= 11; i++) {
             th(nums, String(i));
         }
 
@@ -1262,7 +1512,8 @@
 
             showValue(item.asal_perolehan),
 
-            showValue(item.keterangan)
+            showValue(item.keterangan),
+            labelKepemilikan(item.status_kepemilikan)
         ];
 
         values.forEach((value, index) => {
@@ -1551,7 +1802,7 @@
     };
 
     /* ======================================================
-       PANEL KANAN — 11 KOLOM SESUAI EXCEL
+       PANEL KANAN — 11 KOLOM EXCEL + 1 VIEW
     ====================================================== */
 
     function renderGroupRows(items) {
@@ -1568,7 +1819,7 @@
                 tr,
                 'Tidak ada barang pada kelompok ini.',
                 'aem-empty'
-            ).colSpan = 11;
+            ).colSpan = 12;
 
             tbody.append(tr);
 
@@ -1590,7 +1841,7 @@
                 ] || showValue(item.kondisi);
 
             /*
-             * KOLOM 1–10
+             * KOLOM 1–11
              * URUTAN WAJIB SAMA DENGAN EXCEL
              */
 
@@ -1626,7 +1877,10 @@
                 showValue(item.asal_perolehan),
 
                 // 10. Keterangan
-                showValue(item.keterangan)
+                showValue(item.keterangan),
+
+                // 11. Status Kepemilikan
+                labelKepemilikan(item.status_kepemilikan)
             ];
 
             values.forEach((value, i) => {
@@ -1645,7 +1899,7 @@
             });
 
             /*
-             * KOLOM 11 — TOMBOL VIEW
+             * KOLOM 12 — TOMBOL VIEW
              * Tidak ada kolom foto tambahan.
              */
 
@@ -1711,7 +1965,7 @@
             loading,
             'Memuat data barang...',
             'aem-empty'
-        ).colSpan = 11;
+        ).colSpan = 12;
 
         tbody.replaceChildren(loading);
 
@@ -1977,6 +2231,22 @@
         }
     );
 
+    $('aemExportDetail')?.addEventListener('click', () => {
+        if (!active) return;
+
+        if (!AEMExcel?.download) {
+            toast('Modul ekspor Excel belum tersedia. Muat ulang halaman.');
+            return;
+        }
+
+        try {
+            AEMExcel.download(active);
+        } catch (err) {
+            console.error('K.I.B E EXPORT EXCEL:', err);
+            toast('Gagal membuat Excel: ' + (err.message || 'Kesalahan tak diketahui'));
+        }
+    });
+
     /* ======================================================
        DELETE DATA
     ====================================================== */
@@ -2075,6 +2345,16 @@
                     allowed.includes(condition.value)
                         ? ''
                         : 'Pilih BAIK, KURANG BAIK, atau RUSAK BERAT.'
+                );
+            }
+
+            const ownership = $('aemKepemilikan');
+            if (ownership) {
+                ownership.value = norm(ownership.value);
+                ownership.setCustomValidity(
+                    ['perumdam', 'pusat', 'pemprov', 'pemkot', 'swasta'].includes(ownership.value)
+                        ? ''
+                        : 'Pilih Status Kepemilikan dari lima pilihan yang tersedia.'
                 );
             }
 

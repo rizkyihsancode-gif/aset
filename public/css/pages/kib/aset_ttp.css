@@ -1994,3 +1994,54 @@
         padding: 7px 4px;
     }
 }
+
+
+/* ==========================================================
+   KIB E — STATUS KEPEMILIKAN & FORM BERPANDU EXCEL
+   Perubahan visual tambahan tanpa mengganti gaya View lama.
+   ========================================================== */
+.aem-owner-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 110px; padding: 6px 10px;
+    border: 1px solid #bae6d5; border-radius: 999px;
+    background: #e7f8f0; color: #15714a;
+    font-size: 11px; font-weight: 750; line-height: 1.4;
+}
+.aem-owner-pill.is-empty {
+    background: #f0f4f8; border-color: #e2e8f0; color: #61758d;
+}
+.aem-main-table th:nth-last-child(2),
+.aem-main-table td:nth-last-child(2) { min-width: 135px; }
+.aem-group-table .aem-col-owner { width: 160px; }
+.aem-group-table tbody td:nth-last-child(2) { font-weight: 700; color: #155a86; }
+.aem-form-step {
+    display: inline-flex; height: 28px; min-width: 28px;
+    align-items: center; justify-content: center; border-radius: 8px;
+    background: #eaf4ff; color: #1269cd; font-size: 12px; font-weight: 850;
+    margin-right: 7px;
+}
+.aem-section-note { margin: -2px 0 15px; color: #7088a2; font-size: 11px; line-height: 1.6; }
+.aem-dialog #aemForm fieldset { border: 1px solid #d7e5f3; border-radius: 12px; padding: 16px; background: #fff; margin-bottom: 14px; }
+.aem-dialog #aemForm fieldset legend { font-size: 13px; font-weight: 800; color: #143c70; padding: 0 8px; }
+.aem-dialog #aemForm .aem-fields > label[data-aem-step] { position: relative; padding-top: 18px; }
+.aem-dialog #aemForm .aem-fields > label[data-aem-step]::before {
+    content: "KOLOM " attr(data-aem-step); position: absolute; top: 1px; left: 0;
+    font-size: 9px; letter-spacing: .075em; color: #3e81c9; font-weight: 900;
+}
+.aem-dialog #aemForm .aem-fields > label[data-aem-step]:focus-within::before { color: #0869e7; }
+.aem-export-btn { background: #e8f7ec; color: #137642; border: 1px solid #b6e4c4; }
+.aem-export-btn:hover { background: #d9f3e1; }
+@media (max-width: 700px) {
+    .aem-dialog #aemForm fieldset { padding: 12px; }
+    .aem-form-step { height: 24px; min-width: 24px; }
+}
+
+/* Menambah satu kolom tanpa mempersempit kolom Excel yang sudah ada. */
+#aemGroupPanel .aem-group-table {
+    width: 1760px;
+    min-width: 1760px;
+}
+#aemGroupPanel .aem-col-owner { width: 160px; }
+#aemDetailDialog .aem-kib-table { min-width: 1500px; }
+#aemDetailDialog .aem-kib-table col:nth-child(11) { width: 180px; }
+#aemDetailDialog .aem-kib-table td:last-child { font-weight: 750; color: #17643f; }

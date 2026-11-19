@@ -7,6 +7,15 @@
     @php
         $viewMode = ($viewMode ?? 'manual') === 'arsip' ? 'arsip' : 'manual';
 
+        $labelKepemilikan = fn($value) => match (strtolower(trim((string) $value))) {
+            'perumdam' => 'Perumdam Tirta Kencana',
+            'pusat' => 'Pemerintah Pusat',
+            'pemprov' => 'Pemerintah Provinsi',
+            'pemkot' => 'Pemerintah Kota',
+            'swasta' => 'Swasta',
+            default => 'Belum Diatur',
+        };
+
         $labelKondisi = fn($value) => match (strtoupper(trim((string) $value))) {
             'BAIK' => 'Baik (B)',
             'KURANG BAIK' => 'Kurang Baik (KB)',
@@ -193,6 +202,15 @@
 
                 @endif
 
+                @if ($viewMode === 'manual')
+                    <select name="status_kepemilikan" aria-label="Filter status kepemilikan">
+                        <option value="">Semua Kepemilikan</option>
+                        @foreach (['perumdam' => 'Perumdam', 'pusat' => 'Pusat', 'pemprov' => 'Pemprov', 'pemkot' => 'Pemkot', 'swasta' => 'Swasta', 'belum_diatur' => 'Belum Diatur'] as $value => $label)
+                            <option value="{{ $value }}" @selected(($ownershipFilter ?? '') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                @endif
+
                 <button type="submit" class="aem-btn primary">
                     <i data-lucide="filter"></i>
                     Filter
@@ -230,6 +248,9 @@
                             <th>Jumlah</th>
                             <th>Kondisi</th>
                             <th>Lokasi</th>
+                            @if ($viewMode === 'manual')
+                                <th>Status Kepemilikan</th>
+                            @endif
                             <th>
                                 {{ $viewMode === 'manual' ? 'Aksi' : 'Asal' }}
                             </th>
@@ -280,6 +301,12 @@
                                     {{ $item->lokasi ?: '—' }}
                                 </td>
 
+                                @if ($viewMode === 'manual')
+                                    <td><span
+                                            class="aem-owner-pill {{ empty($item->status_kepemilikan) ? 'is-empty' : '' }}">{{ $labelKepemilikan($item->status_kepemilikan ?? null) }}</span>
+                                    </td>
+                                @endif
+
                                 <td class="aem-action-cell">
 
                                     @if ($viewMode === 'manual')
@@ -315,7 +342,7 @@
                         @empty
 
                             <tr>
-                                <td colspan="8" class="aem-empty">
+                                <td colspan="{{ $viewMode === 'manual' ? 9 : 8 }}" class="aem-empty">
                                     Belum ada data yang sesuai.
                                 </td>
                             </tr>
@@ -553,7 +580,7 @@
 
                             {{-- ==========================================================
      TABEL KELOMPOK KIB E — FORMAT EXCEL
-     10 KOLOM INVENTARIS + 1 KOLOM VIEW
+     11 KOLOM INVENTARIS + 1 KOLOM VIEW
 ========================================================== --}}
 
                             <table class="aem-table aem-group-table">
@@ -569,6 +596,7 @@
                                     <col class="aem-col-quantity">
                                     <col class="aem-col-origin">
                                     <col class="aem-col-description">
+                                    <col class="aem-col-owner">
                                     <col class="aem-col-view">
                                 </colgroup>
 
@@ -613,6 +641,10 @@
                                         </th>
 
                                         <th rowspan="2">
+                                            Status Kepemilikan
+                                        </th>
+
+                                        <th rowspan="2">
                                             View
                                         </th>
 
@@ -627,7 +659,7 @@
 
                                     <tr class="aem-group-number-row">
 
-                                        @for ($i = 1; $i <= 10; $i++)
+                                        @for ($i = 1; $i <= 11; $i++)
                                             <th>{{ $i }}</th>
                                         @endfor
 
@@ -640,7 +672,7 @@
                                 <tbody id="aemGroupRows">
 
                                     <tr>
-                                        <td colspan="11" class="aem-empty">
+                                        <td colspan="12" class="aem-empty">
                                             Memuat data inventaris...
                                         </td>
                                     </tr>
@@ -737,9 +769,9 @@
 
                     <fieldset>
 
-                        <legend>
-                            1. Identitas KIB E
-                        </legend>
+                        <legend><span class="aem-form-step">01</span> Identitas Lokasi dan Organisasi</legend>
+                        <p class="aem-section-note">Isi identitas tempat barang berada. Kolom ini mendahului data
+                            inventaris pada lembar Excel K.I.B E.</p>
 
                         <div class="aem-fields">
 
@@ -808,25 +840,25 @@
 
                     <fieldset>
 
-                        <legend>
-                            2. Informasi Barang — Sesuai Excel
-                        </legend>
+                        <legend><span class="aem-form-step">02</span> Data Inventaris — Urutan Kolom Excel</legend>
+                        <p class="aem-section-note">Masukkan data berurutan dari Nama Barang sampai Status Kepemilikan.
+                            Nomor urut tabel dibuat otomatis.</p>
 
                         <div class="aem-fields">
 
-                            <label class="aem-full">
+                            <label class="aem-full" data-aem-step="2">
                                 Nama Barang / Jenis Barang <em>*</em>
 
                                 <input name="nama_aset" maxlength="500" required placeholder="Papan Nama Instansi">
                             </label>
 
-                            <label>
+                            <label data-aem-step="3">
                                 Nomor — Kode Barang <em>*</em>
 
                                 <input name="kode_inventaris" maxlength="255" required placeholder="02.06.01.05.06">
                             </label>
 
-                            <label>
+                            <label data-aem-step="4">
                                 Nomor — Register <em>*</em>
 
                                 <input name="nomor_register" maxlength="255" required placeholder="001">
@@ -837,44 +869,53 @@
                                 </small>
                             </label>
 
-                            <label>
+                            <label data-aem-step="5">
                                 Kondisi Barang (B, KB, RB) <em>*</em>
 
                                 <input name="kondisi" id="aemKondisi" data-aem-combo="kondisi" required
                                     autocomplete="off" placeholder="Baik / Kurang Baik / Rusak Berat">
                             </label>
 
-                            <label>
+                            <label data-aem-step="6">
                                 Bahan
 
                                 <input name="bahan" id="aemBahan" data-aem-combo="bahan" maxlength="255"
                                     autocomplete="off" placeholder="Aluminium">
                             </label>
 
-                            <label>
+                            <label data-aem-step="7">
                                 Tahun Pengadaan / Perolehan <em>*</em>
 
                                 <input name="tahun" type="number" min="1900" max="2100" required
                                     placeholder="2026">
                             </label>
 
-                            <label>
+                            <label data-aem-step="8">
                                 Jumlah <em>*</em>
 
                                 <input name="jumlah_unit" type="number" min="1" required value="1">
                             </label>
 
-                            <label class="aem-full">
+                            <label class="aem-full" data-aem-step="9">
                                 Asal Usul / Cara Perolehan
 
                                 <input name="asal_perolehan" id="aemAsal" data-aem-combo="asal" maxlength="255"
                                     autocomplete="off" placeholder="Pengadaan / Hibah / Bantuan">
                             </label>
 
-                            <label class="aem-full">
+                            <label class="aem-full" data-aem-step="10">
                                 Keterangan
 
                                 <textarea name="keterangan" rows="4" placeholder="Kantor Pusat, UPW I, nomor berita acara, dll."></textarea>
+                            </label>
+
+                            <label class="aem-full" data-aem-step="11">
+                                Status Kepemilikan <em>*</em>
+                                <input name="status_kepemilikan" id="aemKepemilikan" data-aem-combo="kepemilikan"
+                                    maxlength="20" required autocomplete="off"
+                                    placeholder="Ketik Perumdam, Pusat, Pemprov, Pemkot, atau Swasta">
+                                <small>Harus memilih salah satu dari lima kategori. Data lama yang belum diatur tetap
+                                    ditampilkan sebagai Belum Diatur sampai diperbarui.</small>
                             </label>
 
                         </div>
@@ -886,9 +927,8 @@
 
                     <fieldset>
 
-                        <legend>
-                            3. Foto dan Dokumen Pendukung
-                        </legend>
+                        <legend><span class="aem-form-step">03</span> Foto dan Dokumen Pendukung</legend>
+                        <p class="aem-section-note">Lampiran tidak mengubah nilai atau urutan kolom inventaris.</p>
 
                         <div class="aem-fields">
 
@@ -972,6 +1012,12 @@
 
                 <button type="button" class="aem-btn outline" data-aem-close="aemDetailDialog">
                     Tutup
+                </button>
+
+                <button type="button" id="aemExportDetail" class="aem-btn aem-export-btn"
+                    title="Ekspor detail ke Excel (.xlsx)">
+                    <i data-lucide="file-spreadsheet"></i>
+                    Export Excel
                 </button>
 
                 <button type="button" id="aemEditDetail" class="aem-btn outline">
