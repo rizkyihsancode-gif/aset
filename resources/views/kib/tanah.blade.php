@@ -103,7 +103,8 @@
 
     <div id="tanahPage" class="tanah-page" data-store-url="{{ url('/kib/tanah') }}"
         data-record-base-url="{{ url('/kib/tanah') }}" data-location-base-url="{{ url('/kib/tanah/lokasi') }}"
-        data-pending-url="{{ url('/kib/pending/tanah') }}" data-has-errors="{{ $errors->any() ? '1' : '0' }}">
+        data-pending-url="{{ url('/kib/pending/tanah') }}" data-report-logo-url="{{ asset('images/logo.png') }}"
+        data-report-css-url="{{ asset('css/pages/kib/tanah.css') }}" data-has-errors="{{ $errors->any() ? '1' : '0' }}">
 
 
         {{-- =========================================================
@@ -1717,6 +1718,10 @@
                                     aria-label="Cari dalam daftar sertifikat Tanah" autocomplete="off">
                             </label>
                             <span id="tanahLegacyRecordCount" class="tanah-sheet-total">0 data</span>
+                            <button type="button" class="tanah-report-open-button" id="tanahReportOpen">
+                                <i data-lucide="file-spreadsheet"></i>
+                                Print Excel
+                            </button>
                         </div>
                     </div>
 
@@ -1830,6 +1835,81 @@
                 </section>
                 <div id="tanahLegacyEmpty" hidden></div>
             </div>
+        </dialog>
+
+        {{-- =========================================================
+             CETAK K.I.B A — PERIODE, PENANDATANGAN, PREVIEW, XLSX
+             Laporan mencakup seluruh sertifikat di lokasi aktif.
+             Status kepemilikan dan kolom lampiran tidak diekspor.
+        ========================================================== --}}
+        <dialog class="tanah-modal tanah-report-modal" id="tanahReportModal" aria-labelledby="tanahReportTitle">
+            <header class="tanah-report-modal-header">
+                <div>
+                    <span class="tanah-modal-eyebrow">LAPORAN KARTU INVENTARIS BARANG (K.I.B A)</span>
+                    <h3 id="tanahReportTitle">Print Excel — Tanah</h3>
+                    <p id="tanahReportLocation">Pilih informasi penandatangan sebelum mencetak.</p>
+                </div>
+                <button type="button" class="tanah-modal-close" data-close-dialog="tanahReportModal"
+                    aria-label="Tutup cetak Tanah">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+
+            <div class="tanah-report-modal-body">
+                <form id="tanahReportForm" class="tanah-report-form" autocomplete="off" novalidate>
+                    <div class="tanah-report-field tanah-report-period-field">
+                        <label for="tanahReportPeriod">Periode laporan <span aria-hidden="true">*</span></label>
+                        <input type="month" id="tanahReportPeriod" required>
+                        <small>Contoh: November 2026</small>
+                    </div>
+
+                    @foreach ([['diketahui', 'Diketahui oleh'], ['diperiksa1', 'Diperiksa oleh (1)'], ['diperiksa2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$kode, $label])
+                        <div class="tanah-report-field tanah-report-person" data-role="{{ $kode }}">
+                            <label for="tanahReportSearch-{{ $kode }}">{{ $label }} <span
+                                    aria-hidden="true">*</span></label>
+                            <div class="tanah-report-combobox">
+                                <input type="search" id="tanahReportSearch-{{ $kode }}"
+                                    class="tanah-report-person-search" data-role="{{ $kode }}" role="combobox"
+                                    aria-autocomplete="list" aria-expanded="false"
+                                    aria-controls="tanahReportOptions-{{ $kode }}"
+                                    placeholder="Ketik nama, NIP, atau jabatan..." required>
+                                <input type="hidden" class="tanah-report-person-id" data-role="{{ $kode }}">
+                                <div class="tanah-report-person-options" id="tanahReportOptions-{{ $kode }}"
+                                    role="listbox" hidden></div>
+                            </div>
+                            <small class="tanah-report-person-description">Pilih dari Master SDM Pendukung.</small>
+                        </div>
+                    @endforeach
+                </form>
+
+                <p id="tanahReportState" class="tanah-report-state" role="status" aria-live="polite">
+                    Memuat data inventaris dan SDM Pendukung...
+                </p>
+
+                <section id="tanahReportPreviewSection" class="tanah-report-preview-section" hidden>
+                    <div class="tanah-report-preview-heading">
+                        <strong>Preview laporan K.I.B A</strong>
+                        <span id="tanahReportTotal">0 data</span>
+                    </div>
+                    <div class="tanah-report-preview-scroll" tabindex="0">
+                        <div id="tanahReportPreview" class="tanah-report-paper"></div>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="tanah-report-footer">
+                <span>File Excel mengikuti 13 kolom K.I.B A; tanpa Status Kepemilikan dan Lampiran.</span>
+                <div class="tanah-report-footer-actions">
+                    <button type="button" class="tanah-button-secondary"
+                        data-close-dialog="tanahReportModal">Batal</button>
+                    <button type="button" id="tanahReportPrint" class="tanah-report-print-button" disabled>
+                        <i data-lucide="printer"></i> Print
+                    </button>
+                    <button type="button" id="tanahReportDownload" class="tanah-report-download-button" disabled>
+                        <i data-lucide="download"></i> Download Excel
+                    </button>
+                </div>
+            </footer>
         </dialog>
 
         {{-- =========================================================

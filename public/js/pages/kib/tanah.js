@@ -4344,4 +4344,713 @@ async function loadPending()
 
     refreshIcons();
 
+
+    /**
+     * ========================================================================
+     * 34. PRINT EXCEL K.I.B A — SATU LOKASI, SEMUA SERTIFIKAT
+     * ========================================================================
+     * - Penandatangan berasal dari Master SDM Pendukung (ID tersimpan di form).
+     * - Laporan dibaca ulang dari endpoint khusus, tidak dari pagination.
+     * - Preview, print, dan workbook memakai snapshot data yang sama.
+     * - XLSX OpenXML asli, ZIP dibuat di browser tanpa pustaka/CDN tambahan.
+     * - Kolom Status Kepemilikan dan Lampiran TIDAK masuk laporan.
+     */
+
+    const TANAH_REPORT_ROLES = [
+        ['diketahui', 'Diketahui'],
+        ['diperiksa1', 'Diperiksa Oleh'],
+        ['diperiksa2', 'Diperiksa Oleh'],
+        ['dibuat', 'Dibuat Oleh'],
+    ];
+
+    let tanahReportSource = null;
+    let tanahReportStaff = [];
+    let tanahReportSequence = 0;
+    const tanahReportSelections = Object.create(null);
+
+    const reportForm = $('#tanahReportForm');
+    const reportPeriod = $('#tanahReportPeriod');
+    const reportPreview = $('#tanahReportPreview');
+    const reportPreviewSection = $('#tanahReportPreviewSection');
+    const reportState = $('#tanahReportState');
+    const reportDownloadButton = $('#tanahReportDownload');
+    const reportPrintButton = $('#tanahReportPrint');
+
+    function reportWitaDate() {
+        return new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Makassar',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        }).format(new Date());
+    }
+
+    function reportDefaultMonth() {
+        const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Makassar',
+            month: '2-digit',
+            year: 'numeric',
+        }).formatToParts(new Date());
+        return `${parts.find(part => part.type === 'year').value}-${parts.find(part => part.type === 'month').value}`;
+    }
+
+    function reportPeriodName() {
+        const match = String(reportPeriod?.value || '').match(/^(\d{4})-(0[1-9]|1[0-2])$/);
+        if (!match) return '';
+        return new Intl.DateTimeFormat('id-ID', {
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'UTC',
+        }).format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1)));
+    }
+
+    function reportCellValue(value) {
+        const text = String(value ?? '').trim();
+        return text || '-';
+    }
+
+    function reportNomorDanTanggal(nomor, tanggal) {
+        const result = reportCellValue(nomor);
+        const date = formatDate(tanggal);
+        return date !== '-' ? `${result}\n${date}` : result;
+    }
+
+    function reportTableRows() {
+        return Array.isArray(tanahReportSource?.data) ? tanahReportSource.data : [];
+    }
+
+    function reportPersonById(id) {
+        return tanahReportStaff.find(item => String(item.id) === String(id));
+    }
+
+    function reportSigner(role) {
+        return reportPersonById(tanahReportSelections[role]);
+    }
+
+    function reportReady() {
+        return Boolean(
+            tanahReportSource &&
+            reportTableRows().length &&
+            reportPeriodName() &&
+            TANAH_REPORT_ROLES.every(([role]) => reportSigner(role))
+        );
+    }
+
+    function reportSetMessage(message, error = false) {
+        if (!reportState) return;
+        reportState.textContent = message;
+        reportState.classList.toggle('is-error', error);
+    }
+
+    function reportCloseSuggestions(except = null) {
+        $$('.tanah-report-person', reportForm).forEach(field => {
+            if (field === except) return;
+            const container = $('.tanah-report-person-options', field);
+            const input = $('.tanah-report-person-search', field);
+            if (container) container.hidden = true;
+            if (input) input.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    function reportSearchOptions(field) {
+        const input = $('.tanah-report-person-search', field);
+        const options = $('.tanah-report-person-options', field);
+        if (!input || !options) return;
+
+        reportCloseSuggestions(field);
+        const term = input.value.trim().toLocaleLowerCase('id-ID');
+        const filtered = tanahReportStaff.filter(person =>
+            [person.nama, person.nip, person.jabatan]
+                .some(value => String(value || '').toLocaleLowerCase('id-ID').includes(term))
+        ).slice(0, 70);
+
+        options.replaceChildren();
+        filtered.forEach((person, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'tanah-report-person-option';
+            button.setAttribute('role', 'option');
+            button.dataset.personId = String(person.id);
+            button.id = `${options.id}-option-${index}`;
+            const name = document.createElement('strong');
+            name.textContent = person.nama;
+            const details = document.createElement('small');
+            details.textContent = [person.jabatan, person.nip ? `NIP. ${person.nip}` : '']
+                .filter(Boolean).join(' · ') || 'Belum ada jabatan/NIP';
+            button.append(name, details);
+            options.appendChild(button);
+        });
+
+        if (!filtered.length) {
+            const empty = document.createElement('div');
+            empty.className = 'tanah-report-person-option';
+            empty.textContent = 'Tidak ditemukan dalam Master SDM aktif.';
+            options.appendChild(empty);
+        }
+
+        options.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    function reportSelectPerson(field, person) {
+        const input = $('.tanah-report-person-search', field);
+        const hidden = $('.tanah-report-person-id', field);
+        if (!input || !hidden || !person) return;
+        const role = field.dataset.role;
+        input.value = person.nama;
+        hidden.value = String(person.id);
+        tanahReportSelections[role] = person.id;
+        $('.tanah-report-person-description', field).textContent =
+            [person.jabatan, person.nip ? `NIP. ${person.nip}` : ''].filter(Boolean).join(' · ') ||
+            'Nama dipilih dari Master SDM Pendukung';
+        reportCloseSuggestions();
+        reportUpdatePreview();
+    }
+
+    $$('.tanah-report-person', reportForm).forEach(field => {
+        const input = $('.tanah-report-person-search', field);
+        const options = $('.tanah-report-person-options', field);
+        const hidden = $('.tanah-report-person-id', field);
+        if (!input || !options || !hidden) return;
+
+        input.addEventListener('focus', () => reportSearchOptions(field));
+        input.addEventListener('input', () => {
+            tanahReportSelections[field.dataset.role] = null;
+            hidden.value = '';
+            $('.tanah-report-person-description', field).textContent =
+                'Pilih nama yang muncul pada daftar, bukan sekadar mengetik.';
+            reportSearchOptions(field);
+            reportUpdatePreview();
+        });
+        input.addEventListener('keydown', event => {
+            const enabled = $$('button[role="option"]', options);
+            if (event.key === 'Escape') {
+                options.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+                return;
+            }
+            if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+            if (options.hidden) reportSearchOptions(field);
+            const current = enabled.findIndex(button => button.classList.contains('is-highlighted'));
+            if (!enabled.length) return;
+            event.preventDefault();
+            if (event.key === 'Enter') {
+                const button = enabled[current >= 0 ? current : 0];
+                reportSelectPerson(field, reportPersonById(button.dataset.personId));
+                return;
+            }
+            const next = event.key === 'ArrowDown'
+                ? (current + 1) % enabled.length
+                : (current - 1 + enabled.length) % enabled.length;
+            enabled.forEach(button => button.classList.remove('is-highlighted'));
+            enabled[next].classList.add('is-highlighted');
+            enabled[next].scrollIntoView({ block: 'nearest' });
+            input.setAttribute('aria-activedescendant', enabled[next].id);
+        });
+        options.addEventListener('click', event => {
+            const button = event.target.closest('button[data-person-id]');
+            if (!button) return;
+            reportSelectPerson(field, reportPersonById(button.dataset.personId));
+        });
+    });
+
+    reportForm?.addEventListener('submit', event => event.preventDefault());
+    reportPeriod?.addEventListener('change', reportUpdatePreview);
+    document.addEventListener('click', event => {
+        if (reportForm && !reportForm.contains(event.target)) reportCloseSuggestions();
+    });
+
+    // HTML yang dipakai bersama untuk preview dan jendela Print.
+    function reportRenderPaper() {
+        const rows = reportTableRows();
+        const org = tanahReportSource.organisasi || {};
+        const loc = tanahReportSource.lokasi || {};
+        const meta = [
+            ['PROVINSI', org.provinsi],
+            ['KOTA', org.kota],
+            ['UNIT', org.unit],
+            ['DEPARTEMEN', org.departemen],
+            ['DIVISI', org.divisi],
+            ['LOKASI', loc.lokasi],
+            ['ALAMAT', loc.alamat],
+        ];
+        const metaHtml = meta.map(([label, value]) =>
+            `<b>${escapeHtml(label)}</b><span>: ${escapeHtml(reportCellValue(value))}</span>`
+        ).join('');
+        const header = [
+            '<tr>',
+            '<th rowspan="2" style="width:3%">No.</th>',
+            '<th rowspan="2" style="width:14%">Alamat / Letak</th>',
+            '<th rowspan="2" style="width:14%">Nama Barang / Jenis Barang</th>',
+            '<th colspan="2" style="width:20%">Nomor</th>',
+            '<th rowspan="2" style="width:6%">Tahun Pengadaan</th>',
+            '<th rowspan="2" style="width:7%">Luas (m²)</th>',
+            '<th rowspan="2" style="width:8%">Hak</th>',
+            '<th rowspan="2" style="width:11%">Nomor Surat / SPPT / Sertifikat</th>',
+            '<th rowspan="2" style="width:8%">Luas Tanah (m²)</th>',
+            '<th rowspan="2" style="width:11%">Keperluan</th>',
+            '<th rowspan="2" style="width:7%">Asal Usul</th>',
+            '<th rowspan="2" style="width:10%">Keterangan</th>',
+            '</tr>',
+            '<tr><th>Kode Barang</th><th>Nomor Surat Penunjukan</th></tr>',
+            `<tr>${Array.from({ length: 13 }, (_, i) => `<th>${i + 1}</th>`).join('')}</tr>`,
+        ].join('');
+        const body = rows.map((item, i) => {
+            const values = [
+                i + 1, item.alamat || loc.alamat || loc.lokasi,
+                item.nama_barang, item.kode_barang,
+                reportNomorDanTanggal(item.no_tunjuk, item.tgl_tunjuk),
+                item.tahun, item.luas_tunjuk, item.hak,
+                reportNomorDanTanggal(item.sertifikat, item.tgl_sertifikat),
+                item.luas_sertifikat, item.guna, item.asal, item.ket,
+            ];
+            return `<tr>${values.map((value, index) =>
+                `<td${index === 0 ? ' class="tanah-report-number"' : ''}>${escapeHtml(reportCellValue(value)).replace(/\n/g, '<br>')}</td>`
+            ).join('')}</tr>`;
+        }).join('');
+        const signatures = TANAH_REPORT_ROLES.map(([role, title]) => {
+            const signer = reportSigner(role);
+            return `<div class="tanah-report-signature">
+                <strong>${escapeHtml(title)},</strong>
+                <span>${escapeHtml(signer?.jabatan || '-')}</span>
+                <u>${escapeHtml(signer?.nama || '-')}</u>
+                <span>${escapeHtml(signer?.nip ? `NIP. ${signer.nip}` : 'NIP. -')}</span>
+            </div>`;
+        }).join('');
+        return `
+            <div class="tanah-report-paper-header">
+                <img class="tanah-report-paper-logo" src="${escapeHtml(root.dataset.reportLogoUrl || '')}" alt="Logo Perumda Tirta Kencana">
+                <div class="tanah-report-paper-company"><strong>PERUMDA TIRTA KENCANA</strong><span>KOTA SAMARINDA</span></div>
+                <div class="tanah-report-paper-title">
+                    <strong>KARTU INVENTARIS BARANG (K.I.B)</strong>
+                    <strong>A. KARTU INVENTARIS TANAH</strong>
+                    <span>S/D BULAN ${escapeHtml(reportPeriodName().toUpperCase())}</span>
+                </div>
+            </div>
+            <div class="tanah-report-meta">${metaHtml}</div>
+            <table class="tanah-report-paper-table"><thead>${header}</thead><tbody>${body}</tbody></table>
+            <div class="tanah-report-sign-date">Samarinda, ${escapeHtml(reportWitaDate())}</div>
+            <div class="tanah-report-signatures">${signatures}</div>`;
+    }
+
+    function reportUpdatePreview() {
+        const ready = reportReady();
+        if (reportPrintButton) reportPrintButton.disabled = !ready;
+        if (reportDownloadButton) reportDownloadButton.disabled = !ready;
+        if (!reportPreviewSection || !reportPreview) return;
+        reportPreviewSection.hidden = !ready;
+        if (!tanahReportSource) return;
+
+        if (!reportTableRows().length) {
+            reportSetMessage('Lokasi ini tidak memiliki sertifikat untuk dicetak.', true);
+        } else if (!reportPeriodName()) {
+            reportSetMessage('Pilih bulan dan tahun periode laporan.');
+        } else if (!ready) {
+            reportSetMessage('Pilih keempat penandatangan dari Master SDM Pendukung untuk menampilkan preview.');
+        } else {
+            reportSetMessage(`Preview siap: ${integerFormatter.format(reportTableRows().length)} data Tanah dalam satu lokasi.`);
+            reportPreview.innerHTML = reportRenderPaper();
+            const total = $('#tanahReportTotal');
+            if (total) total.textContent = `${integerFormatter.format(reportTableRows().length)} sertifikat`;
+        }
+    }
+
+    $('#tanahReportOpen')?.addEventListener('click', async () => {
+        if (!activeLocationId) {
+            notify('Buka detail lokasi Tanah sebelum mencetak laporan.', true);
+            return;
+        }
+
+        const mySequence = ++tanahReportSequence;
+        tanahReportSource = null;
+        tanahReportStaff = [];
+        TANAH_REPORT_ROLES.forEach(([role]) => { tanahReportSelections[role] = null; });
+        $$('.tanah-report-person', reportForm).forEach(field => {
+            $('.tanah-report-person-search', field).value = '';
+            $('.tanah-report-person-id', field).value = '';
+            $('.tanah-report-person-description', field).textContent =
+                'Pilih dari Master SDM Pendukung.';
+        });
+        reportCloseSuggestions();
+        if (reportPeriod) reportPeriod.value = reportDefaultMonth();
+        const locationText = $('#tanahReportLocation');
+        if (locationText) locationText.textContent = `Lokasi: ${activeLocationName}`;
+        if (reportPreviewSection) reportPreviewSection.hidden = true;
+        reportSetMessage('Memuat seluruh sertifikat dan Master SDM Pendukung...');
+        if (reportDownloadButton) reportDownloadButton.disabled = true;
+        if (reportPrintButton) reportPrintButton.disabled = true;
+        openDialog('tanahReportModal');
+
+        try {
+            const data = await getJson(
+                `${LOCATION_URL}/${encodeURIComponent(activeLocationId)}/laporan`
+            );
+            if (mySequence !== tanahReportSequence) return;
+            tanahReportSource = data;
+            tanahReportStaff = Array.isArray(data.sdm) ? data.sdm : [];
+            if (locationText) locationText.textContent =
+                `Lokasi: ${data.lokasi?.lokasi || activeLocationName} · ${data.jumlah || 0} data`;
+            if (!tanahReportStaff.length) {
+                reportSetMessage('Tidak ada SDM aktif di Master SDM Pendukung. Aktifkan data SDM sebelum mencetak.', true);
+            } else {
+                reportUpdatePreview();
+            }
+        } catch (error) {
+            console.error('Gagal memuat laporan K.I.B A:', error);
+            reportSetMessage(`Gagal memuat laporan: ${error.message}`, true);
+            notify('Data cetak Tanah gagal dimuat. Periksa log Laravel.', true);
+        }
+    });
+
+    // ---------------------- PEMBUAT FILE XLSX OPENXML -----------------------
+
+    function reportXmlEscape(value) {
+        return String(value ?? '')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+    }
+
+    function reportColumnName(number) {
+        let name = '';
+        let n = number;
+        while (n > 0) {
+            name = String.fromCharCode(65 + ((n - 1) % 26)) + name;
+            n = Math.floor((n - 1) / 26);
+        }
+        return name;
+    }
+
+    function reportNumeric(value) {
+        const text = String(value ?? '').trim().replace(/\s/g, '');
+        if (!text || text === '-') return null;
+        let cleaned = text;
+        if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(cleaned)) {
+            cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else if (/^-?\d+(,\d+)?$/.test(cleaned)) {
+            cleaned = cleaned.replace(',', '.');
+        }
+        if (!/^-?\d+(\.\d+)?$/.test(cleaned)) return null;
+        const number = Number(cleaned);
+        return Number.isFinite(number) ? number : null;
+    }
+
+    // ZIP tanpa kompresi adalah ZIP/XLSX standar valid. Tidak memakai CSV terselubung.
+    function reportZip(entries) {
+        const encoder = new TextEncoder();
+        const crcTable = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+            let c = n;
+            for (let bit = 0; bit < 8; bit++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            crcTable[n] = c >>> 0;
+        }
+        const crc32 = bytes => {
+            let crc = 0xFFFFFFFF;
+            for (const byte of bytes) crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8);
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        };
+        const bytesOf = value => value instanceof Uint8Array ? value : encoder.encode(value);
+        const localParts = [];
+        const centralParts = [];
+        let offset = 0;
+        let centralLength = 0;
+        const write16 = (view, pos, val) => view.setUint16(pos, val, true);
+        const write32 = (view, pos, val) => view.setUint32(pos, val >>> 0, true);
+
+        for (const entry of entries) {
+            const nameBytes = encoder.encode(entry.name);
+            const data = bytesOf(entry.data);
+            const checksum = crc32(data);
+            const local = new Uint8Array(30 + nameBytes.length);
+            const l = new DataView(local.buffer);
+            write32(l, 0, 0x04034B50);
+            write16(l, 4, 20);
+            write16(l, 6, 0x0800); // UTF-8
+            write16(l, 8, 0);      // stored/no compression
+            write32(l, 14, checksum);
+            write32(l, 18, data.length);
+            write32(l, 22, data.length);
+            write16(l, 26, nameBytes.length);
+            local.set(nameBytes, 30);
+            localParts.push(local, data);
+
+            const central = new Uint8Array(46 + nameBytes.length);
+            const c = new DataView(central.buffer);
+            write32(c, 0, 0x02014B50);
+            write16(c, 4, 20);
+            write16(c, 6, 20);
+            write16(c, 8, 0x0800);
+            write16(c, 10, 0);
+            write32(c, 16, checksum);
+            write32(c, 20, data.length);
+            write32(c, 24, data.length);
+            write16(c, 28, nameBytes.length);
+            write32(c, 42, offset);
+            central.set(nameBytes, 46);
+            centralParts.push(central);
+            offset += local.length + data.length;
+            centralLength += central.length;
+        }
+        const end = new Uint8Array(22);
+        const v = new DataView(end.buffer);
+        write32(v, 0, 0x06054B50);
+        write16(v, 8, entries.length);
+        write16(v, 10, entries.length);
+        write32(v, 12, centralLength);
+        write32(v, 16, offset);
+        return new Blob([...localParts, ...centralParts, end], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+    }
+
+    function reportBuildXlsx(logoBytes) {
+        const rows = reportTableRows();
+        const org = tanahReportSource.organisasi || {};
+        const loc = tanahReportSource.lokasi || {};
+        const entries = new Map();
+        const merges = [];
+        const heights = new Map();
+        let finalRow = 18 + rows.length;
+        const put = (r, col, value, style = 0, numeric = false) => {
+            if (!entries.has(r)) entries.set(r, []);
+            entries.get(r).push({ col, value: value ?? '', style, numeric });
+        };
+        const merged = (r1, col1, r2, col2, value, style = 0) => {
+            put(r1, col1, value, style);
+            merges.push(`${reportColumnName(col1)}${r1}:${reportColumnName(col2)}${r2}`);
+        };
+        const blank = value => reportCellValue(value);
+
+        // Area identitas perusahaan dan laporan (logo A1:B5).
+        if (logoBytes?.length) merges.push('A1:B5');
+        merged(2, 4, 2, 7, 'PERUMDA TIRTA KENCANA', 13);
+        merged(3, 4, 3, 7, 'KOTA SAMARINDA', 13);
+        merged(2, 8, 2, 13, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
+        merged(3, 8, 3, 13, 'A. KARTU INVENTARIS TANAH', 2);
+        merged(4, 8, 4, 13, `S/D BULAN ${reportPeriodName().toUpperCase()}`, 2);
+        heights.set(1, 26);
+        heights.set(2, 28);
+        heights.set(3, 24);
+        heights.set(4, 24);
+        heights.set(5, 23);
+
+        const metadata = [
+            ['PROVINSI', org.provinsi], ['KOTA', org.kota],
+            ['UNIT', org.unit], ['DEPARTEMEN', org.departemen],
+            ['DIVISI', org.divisi], ['LOKASI', loc.lokasi],
+            ['ALAMAT', loc.alamat],
+        ];
+        metadata.forEach(([name, value], index) => {
+            const r = 7 + index;
+            merged(r, 1, r, 2, name, 3);
+            merged(r, 3, r, 7, `: ${blank(value)}`, 4);
+            heights.set(r, 19);
+        });
+
+        const h = 15;
+        const header = (col, col2, title) => merged(h, col, h + 1, col2, title, 5);
+        header(1, 1, 'No.');
+        header(2, 2, 'ALAMAT / LETAK');
+        header(3, 3, 'NAMA BARANG / JENIS BARANG');
+        merged(h, 4, h, 5, 'NOMOR', 5);
+        put(h + 1, 4, 'KODE BARANG', 5);
+        put(h + 1, 5, 'NOMOR SURAT PENUNJUKAN', 5);
+        for (const [column, title] of [
+            [6, 'TAHUN PENGADAAN'], [7, 'LUAS (M2)'], [8, 'HAK'],
+            [9, 'NOMOR SURAT / SPPT / SERTIFIKAT'], [10, 'LUAS TANAH (M2)'],
+            [11, 'KEPERLUAN'], [12, 'ASAL USUL'], [13, 'KETERANGAN'],
+        ]) header(column, column, title);
+        heights.set(h, 34);
+        heights.set(h + 1, 34);
+        for (let c = 1; c <= 13; c++) put(h + 2, c, c, 9, true);
+        heights.set(h + 2, 21);
+
+        rows.forEach((item, index) => {
+            const r = h + 3 + index;
+            const data = [
+                index + 1, blank(item.alamat || loc.alamat || loc.lokasi),
+                blank(item.nama_barang), blank(item.kode_barang),
+                reportNomorDanTanggal(item.no_tunjuk, item.tgl_tunjuk),
+                blank(item.tahun), blank(item.luas_tunjuk), blank(item.hak),
+                reportNomorDanTanggal(item.sertifikat, item.tgl_sertifikat),
+                blank(item.luas_sertifikat), blank(item.guna),
+                blank(item.asal), blank(item.ket),
+            ];
+            data.forEach((value, col) => {
+                const numeric = [0, 5, 6, 9].includes(col) ? reportNumeric(value) : null;
+                put(r, col + 1, numeric !== null ? numeric : value,
+                    col === 0 ? 7 : numeric !== null ? 8 : 6, numeric !== null);
+            });
+            const maxLength = Math.max(...data.map(value => String(value).length));
+            heights.set(r, Math.min(90, Math.max(28, Math.ceil(maxLength / 47) * 15 + 9)));
+        });
+
+        const dateRow = h + 3 + rows.length + 2;
+        finalRow = dateRow + 11;
+        merged(dateRow, 10, dateRow, 13, `Samarinda, ${reportWitaDate()}`, 10);
+        const slots = [[1, 3], [4, 6], [7, 9], [10, 13]];
+        TANAH_REPORT_ROLES.forEach(([role, label], i) => {
+            const person = reportSigner(role);
+            const [start, end] = slots[i];
+            merged(dateRow + 2, start, dateRow + 2, end, `${label},`, 10);
+            merged(dateRow + 3, start, dateRow + 3, end, blank(person?.jabatan), 11);
+            merged(dateRow + 8, start, dateRow + 8, end, blank(person?.nama), 12);
+            merged(dateRow + 9, start, dateRow + 9, end,
+                person?.nip ? `NIP. ${person.nip}` : 'NIP. -', 11);
+        });
+        heights.set(dateRow + 8, 24);
+
+        const columnWidths = [7, 26, 33, 17, 24, 12, 14, 17, 29, 17, 26, 19, 31];
+        const colsXml = columnWidths.map((width, index) =>
+            `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`
+        ).join('');
+        const rowXml = [...entries.keys()].sort((a, b) => a - b).map(r => {
+            const cells = entries.get(r).sort((a, b) => a.col - b.col).map(entry => {
+                const address = `${reportColumnName(entry.col)}${r}`;
+                if (entry.numeric) return `<c r="${address}" s="${entry.style}"><v>${entry.value}</v></c>`;
+                const value = reportXmlEscape(entry.value);
+                return `<c r="${address}" t="inlineStr" s="${entry.style}"><is><t xml:space="preserve">${value}</t></is></c>`;
+            }).join('');
+            return `<row r="${r}"${heights.has(r) ? ` ht="${heights.get(r)}" customHeight="1"` : ''}>${cells}</row>`;
+        }).join('');
+        const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+        const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+        const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <worksheet xmlns="${main}" xmlns:r="${rel}">
+              <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
+              <dimension ref="A1:M${finalRow}"/>
+              <sheetViews><sheetView workbookViewId="0" showGridLines="0">
+                <pane ySplit="17" topLeftCell="A18" activePane="bottomLeft" state="frozen"/>
+              </sheetView></sheetViews>
+              <sheetFormatPr defaultRowHeight="17"/>
+              <cols>${colsXml}</cols>
+              <sheetData>${rowXml}</sheetData>
+              <mergeCells count="${merges.length}">${merges.map(ref => `<mergeCell ref="${ref}"/>`).join('')}</mergeCells>
+              <printOptions horizontalCentered="1" gridLines="0"/>
+              <pageMargins left="0.28" right="0.28" top="0.4" bottom="0.4" header="0.15" footer="0.15"/>
+              <pageSetup paperSize="8" orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+              ${logoBytes?.length ? '<drawing r:id="rId1"/>' : ''}
+            </worksheet>`;
+
+        const fonts = [
+            '<font><sz val="10"/><name val="Arial"/></font>',
+            '<font><b/><sz val="13"/><name val="Arial"/></font>',
+            '<font><b/><sz val="11"/><name val="Arial"/></font>',
+            '<font><b/><sz val="9"/><name val="Arial"/></font>',
+            '<font><u/><b/><sz val="10"/><name val="Arial"/></font>',
+        ].join('');
+        const fill = '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD5DFEA"/><bgColor indexed="64"/></patternFill></fill></fills>';
+        const border = '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF52616E"/></left><right style="thin"><color rgb="FF52616E"/></right><top style="thin"><color rgb="FF52616E"/></top><bottom style="thin"><color rgb="FF52616E"/></bottom><diagonal/></border></borders>';
+        const xfs = [
+            [0, 0, 0, 'left', 'center', 1],
+            [1, 0, 0, 'center', 'center', 1],
+            [2, 0, 0, 'center', 'center', 1],
+            [3, 0, 0, 'left', 'center', 1],
+            [0, 0, 0, 'left', 'center', 1],
+            [3, 2, 1, 'center', 'center', 1],
+            [0, 0, 1, 'left', 'top', 1],
+            [0, 0, 1, 'center', 'top', 1],
+            [0, 0, 1, 'right', 'top', 1],
+            [3, 2, 1, 'center', 'center', 1],
+            [2, 0, 0, 'center', 'center', 1],
+            [0, 0, 0, 'center', 'center', 1],
+            [4, 0, 0, 'center', 'center', 1],
+            [2, 0, 0, 'left', 'center', 1],
+        ].map(([font, fillId, borderId, horizontal, vertical, wrap]) =>
+            `<xf numFmtId="0" fontId="${font}" fillId="${fillId}" borderId="${borderId}" xfId="0" applyAlignment="1"><alignment horizontal="${horizontal}" vertical="${vertical}" wrapText="${wrap}"/></xf>`
+        ).join('');
+        const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${main}">
+            <fonts count="5">${fonts}</fonts>${fill}${border}
+            <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+            <cellXfs count="14">${xfs}</cellXfs>
+            <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+        </styleSheet>`;
+        const packageFiles = [
+            { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+            { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${main}" xmlns:r="${rel}"><bookViews><workbookView/></bookViews><sheets><sheet name="KIB A - Tanah" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'KIB A - Tanah'!$15:$17</definedName><definedName name="_xlnm.Print_Area" localSheetId="0">'KIB A - Tanah'!$A$1:$M${finalRow}</definedName></definedNames></workbook>` },
+            { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>` },
+            { name: 'xl/styles.xml', data: styles },
+            { name: 'xl/worksheets/sheet1.xml', data: sheet },
+        ];
+        if (logoBytes?.length) {
+            packageFiles.push(
+                { name: 'xl/worksheets/_rels/sheet1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>` },
+                { name: 'xl/drawings/_rels/drawing1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/image" Target="../media/image1.png"/></Relationships>` },
+                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:ext cx="780000" cy="950000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` },
+                { name: 'xl/media/image1.png', data: logoBytes },
+            );
+        }
+        const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${logoBytes?.length ? '<Default Extension="png" ContentType="image/png"/>' : ''}<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${logoBytes?.length ? '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>' : ''}</Types>`;
+        packageFiles.unshift({ name: '[Content_Types].xml', data: contentTypes });
+        return reportZip(packageFiles);
+    }
+
+    reportDownloadButton?.addEventListener('click', async () => {
+        if (!reportReady()) return;
+        reportDownloadButton.disabled = true;
+        try {
+            let logoBytes = null;
+            try {
+                const imageResponse = await fetch(root.dataset.reportLogoUrl, { credentials: 'same-origin' });
+                if (imageResponse.ok) logoBytes = new Uint8Array(await imageResponse.arrayBuffer());
+            } catch (imageError) {
+                console.warn('Logo Excel tidak ditemukan, file tetap dibuat.', imageError);
+            }
+            const file = reportBuildXlsx(logoBytes);
+            const safeLocation = String(tanahReportSource.lokasi?.lokasi || 'Lokasi')
+                .replace(/[^a-zA-Z0-9\-_ ]/g, '').trim().replace(/\s+/g, '_').slice(0, 55);
+            const name = `KIB_A_Tanah_${safeLocation || 'Lokasi'}_${reportPeriod.value}.xlsx`;
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(file);
+            link.href = url;
+            link.download = name;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+            notify(`${reportTableRows().length} data Tanah disiapkan dalam file Excel.`);
+        } catch (error) {
+            console.error('Gagal membuat XLSX Tanah:', error);
+            notify(`Gagal membuat Excel: ${error.message}`, true);
+        } finally {
+            reportDownloadButton.disabled = !reportReady();
+        }
+    });
+
+    reportPrintButton?.addEventListener('click', () => {
+        if (!reportReady()) return;
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            notify('Browser memblokir jendela Print. Izinkan pop-up situs ini.', true);
+            return;
+        }
+        const stylesUrl = escapeHtml(root.dataset.reportCssUrl || '');
+        const title = escapeHtml(`K.I.B A Tanah - ${tanahReportSource.lokasi?.lokasi || 'Lokasi'}`);
+        printWindow.document.open();
+        printWindow.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8">
+            <title>${title}</title><link rel="stylesheet" href="${stylesUrl}">
+            <style>
+                @page { size: A3 landscape; margin: 10mm; }
+                html, body { margin:0; padding:0; background:#fff; color:#111; }
+                .tanah-report-paper { font-family:Arial,sans-serif; font-size:10px; width:100%; min-width:0; box-sizing:border-box; padding:0; box-shadow:none; }
+                .tanah-report-paper-header { display:grid; grid-template-columns:80px 1fr 1.5fr; gap:12px; align-items:center; }
+                .tanah-report-paper-logo { width:65px; height:78px; object-fit:contain; }
+                .tanah-report-meta { width:60%; }
+                .tanah-report-paper-table { font-size:9px; page-break-inside:auto; }
+                .tanah-report-paper-table thead { display:table-header-group; }
+                .tanah-report-paper-table tr { page-break-inside:avoid; }
+                .tanah-report-signatures { break-inside:avoid; }
+                .tanah-report-paper-table td { overflow-wrap:anywhere; }
+                @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+            </style></head><body><main class="tanah-report-paper">${reportRenderPaper()}</main></body></html>`);
+        printWindow.addEventListener('load', () => {
+            printWindow.focus();
+            printWindow.print();
+        }, { once: true });
+        printWindow.document.close();
+    });
+
 });

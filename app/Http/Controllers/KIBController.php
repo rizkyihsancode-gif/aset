@@ -1570,6 +1570,94 @@ class KIBController extends Controller
         ]);
     }
 
+    /**
+     * Data resmi laporan K.I.B A per lokasi.
+     * Mengambil semua baris tanah (tanpa pagination), identitas organisasi dari
+     * voucher Nilai Aset yang terkait, dan pilihan penandatangan dari Master SDM.
+     * Tidak melakukan perubahan data / transaksi.
+     */
+    public function laporanTanahLokasi(int $lokasi)
+    {
+        $tempat = DB::table('lokasis')
+            ->where('id', $lokasi)
+            ->first(['id', 'lokasi', 'alamat']);
+
+        abort_unless($tempat, 404, 'Lokasi tidak ditemukan.');
+
+        $items = $this->sertifikatQuery()
+            ->where('t.id_lokasi', $lokasi)
+            ->orderBy('t.id', 'ASC')
+            ->get();
+
+        // Prioritaskan identitas organisasi yang benar-benar terhubung ke
+        // sertifikat pada lokasi ini, bukan voucher kategori aset lain.
+        $organisasi = null;
+        if (Schema::hasColumn('tanahs', 'nilai_aktiva_id')) {
+            $organisasi = DB::table('tanahs as t')
+                ->join('nilai_aktivas as n', 'n.id', '=', 't.nilai_aktiva_id')
+                ->leftJoin('departemens as d', 'd.id', '=', 'n.dep')
+                ->leftJoin('divisis as v', 'v.id', '=', 'n.div')
+                ->where('t.id_lokasi', $lokasi)
+                ->whereNotNull('t.nilai_aktiva_id')
+                ->orderByDesc('t.id')
+                ->first(['d.kode_dep', 'v.nama_div']);
+        }
+
+        // Data Tanah lama dapat tidak mempunyai tautan langsung ke voucher.
+        if (!$organisasi) {
+            $organisasi = DB::table('nilai_aktivas as n')
+                ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+                ->leftJoin('departemens as d', 'd.id', '=', 'n.dep')
+                ->leftJoin('divisis as v', 'v.id', '=', 'n.div')
+                ->where('n.id_lokasi', $lokasi)
+                ->whereRaw(
+                    "TRIM(REGEXP_REPLACE(UPPER(COALESCE(a.kib, '')), '[^A-Z0-9]+', ' ', 'g')) IN (?, ?)",
+                    ['TANAH', 'KIB A TANAH']
+                )
+                ->orderByDesc('n.id')
+                ->first(['d.kode_dep', 'v.nama_div']);
+        }
+
+        $sdm = collect();
+        if (Schema::hasTable('sdms') && Schema::hasTable('jabatans')) {
+            $sdm = DB::table('sdms as s')
+                ->leftJoin('jabatans as j', 'j.id', '=', 's.id_jabat')
+                ->when(
+                    Schema::hasColumn('sdms', 'status'),
+                    fn($query) => $query->where('s.status', 'aktif')
+                )
+                ->whereNotNull('s.nama_sdm')
+                ->whereRaw("BTRIM(s.nama_sdm) <> ''")
+                ->orderBy('s.nama_sdm')
+                ->get(['s.id', 's.nama_sdm', 's.nip', 'j.jabat'])
+                ->map(static fn($orang) => [
+                    'id' => (int) $orang->id,
+                    'nama' => trim((string) $orang->nama_sdm),
+                    'nip' => trim((string) ($orang->nip ?? '')),
+                    'jabatan' => trim((string) ($orang->jabat ?? '')),
+                ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'lokasi' => [
+                'id' => (int) $tempat->id,
+                'lokasi' => trim((string) $tempat->lokasi),
+                'alamat' => trim((string) ($tempat->alamat ?? '')),
+            ],
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                'departemen' => trim((string) ($organisasi->kode_dep ?? '')) ?: '-',
+                'divisi' => trim((string) ($organisasi->nama_div ?? '')) ?: '-',
+            ],
+            'jumlah' => $items->count(),
+            'data' => $items,
+            'sdm' => $sdm,
+        ]);
+    }
+
     public function lokasiPdf(int $lokasi)
     {
         abort_unless(DB::table('lokasis')->where('id', $lokasi)->exists(), 404);

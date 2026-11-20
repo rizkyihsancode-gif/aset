@@ -4400,3 +4400,412 @@ dl > div:last-child {
 .tanah-page .tanah-sheet-modal #tanahExcelTable tbody tr:hover {
     background: #edf5ff;
 }
+
+/* ===========================================================================
+   34. LAPORAN PRINT EXCEL K.I.B A — MODAL, SDM SEARCH, DAN PREVIEW
+   Tidak mengubah tabel/detail/aksi Tanah yang sudah tersedia.
+   =========================================================================== */
+
+.tanah-page .tanah-report-open-button,
+.tanah-page .tanah-report-download-button,
+.tanah-page .tanah-report-print-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 9px 14px;
+    border: 1px solid #1671be;
+    border-radius: 9px;
+    background: #086ad8;
+    color: #ffffff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.tanah-page .tanah-report-open-button svg,
+.tanah-page .tanah-report-download-button svg,
+.tanah-page .tanah-report-print-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.tanah-page .tanah-report-print-button {
+    background: #ffffff;
+    border-color: #a9c8e6;
+    color: #145a9a;
+}
+
+.tanah-page .tanah-report-open-button:hover,
+.tanah-page .tanah-report-download-button:hover {
+    background: #0756b2;
+}
+
+.tanah-page .tanah-report-download-button:disabled,
+.tanah-page .tanah-report-print-button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.tanah-page .tanah-report-modal {
+    position: fixed;
+    width: min(1260px, calc(100vw - 32px));
+    max-width: none;
+    max-height: min(92dvh, 960px);
+    padding: 0;
+    border: 1px solid #c5d8eb;
+    border-radius: 16px;
+    background: #fff;
+    color: #193957;
+    box-shadow: 0 24px 95px #072a4e55;
+    overflow: hidden;
+}
+
+.tanah-page .tanah-report-modal::backdrop {
+    background: rgba(6, 28, 53, .67);
+}
+
+.tanah-report-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 24px;
+    background: #f7fbff;
+    border-bottom: 1px solid #dce8f3;
+}
+
+.tanah-report-modal-header h3 {
+    margin: 5px 0;
+    color: #103f70;
+    font-size: 19px;
+    font-weight: 850;
+}
+
+.tanah-report-modal-header p {
+    margin: 0;
+    color: #68819d;
+    font-size: 12px;
+}
+
+.tanah-report-modal-body {
+    max-height: calc(92dvh - 170px);
+    overflow: auto;
+    padding: 20px 24px 26px;
+}
+
+.tanah-report-form {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px 14px;
+    padding: 19px;
+    border: 1px solid #d9e7f5;
+    border-radius: 12px;
+    background: #f7faff;
+}
+
+.tanah-report-field {
+    min-width: 0;
+    position: relative;
+}
+
+.tanah-report-period-field {
+    grid-column: 1 / -1;
+    max-width: 310px;
+}
+
+.tanah-report-field label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 800;
+    font-size: 12px;
+    color: #1e4669;
+}
+
+.tanah-report-field label span {
+    color: #d33049;
+}
+
+.tanah-report-field input[type="month"],
+.tanah-report-field input[type="search"] {
+    display: block;
+    width: 100%;
+    min-height: 39px;
+    padding: 10px 11px;
+    border: 1px solid #b9cce0;
+    border-radius: 8px;
+    background: #fff;
+    color: #183d60;
+    font: inherit;
+    font-size: 12px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.tanah-report-field input:focus {
+    border-color: #207ad5;
+    box-shadow: 0 0 0 3px #207ad51f;
+}
+
+.tanah-report-field small {
+    display: block;
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: #6d839b;
+    line-height: 1.45;
+}
+
+.tanah-report-combobox {
+    position: relative;
+}
+
+.tanah-report-person-options {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid #b7cfe6;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 28px #092f4f23;
+}
+
+.tanah-report-person-option {
+    display: block;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-bottom: 1px solid #edf1f7;
+    background: #fff;
+    color: #193957;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.tanah-report-person-option strong,
+.tanah-report-person-option small {
+    display: block;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.tanah-report-person-option:hover,
+.tanah-report-person-option.is-highlighted {
+    background: #e8f3ff;
+}
+
+.tanah-report-state {
+    padding: 12px 14px;
+    margin: 14px 0 0;
+    border-radius: 9px;
+    border: 1px solid #c9def2;
+    background: #f1f8ff;
+    color: #4e6c86;
+    font-size: 12px;
+}
+
+.tanah-report-state.is-error {
+    background: #fff4f5;
+    border-color: #eebdc5;
+    color: #a82335;
+}
+
+.tanah-report-preview-section {
+    margin-top: 22px;
+}
+
+.tanah-report-preview-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 11px;
+    font-size: 13px;
+    color: #17486f;
+}
+
+.tanah-report-preview-heading span {
+    font-size: 12px;
+    color: #567896;
+}
+
+.tanah-report-preview-scroll {
+    max-height: 58dvh;
+    overflow: auto;
+    border: 1px solid #cdddea;
+    border-radius: 9px;
+    background: #eaf0f6;
+    padding: 12px;
+}
+
+.tanah-report-paper {
+    min-width: 1380px;
+    padding: 21px;
+    background: white;
+    color: #17232e;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    box-shadow: 0 2px 12px #17334b12;
+}
+
+.tanah-report-paper-header {
+    display: grid;
+    grid-template-columns: 100px minmax(310px, 1fr) minmax(450px, 1.3fr);
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.tanah-report-paper-logo {
+    width: 75px;
+    max-height: 95px;
+    object-fit: contain;
+}
+
+.tanah-report-paper-company strong,
+.tanah-report-paper-company span {
+    display: block;
+    line-height: 1.6;
+}
+
+.tanah-report-paper-company strong {
+    font-size: 13px;
+}
+
+.tanah-report-paper-title {
+    text-align: center;
+}
+
+.tanah-report-paper-title strong,
+.tanah-report-paper-title span {
+    display: block;
+    line-height: 1.5;
+}
+
+.tanah-report-paper-title strong {
+    font-size: 13px;
+}
+
+.tanah-report-meta {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    width: 52%;
+    gap: 3px 8px;
+    margin-bottom: 18px;
+    font-size: 11px;
+}
+
+.tanah-report-meta b {
+    font-weight: 700;
+}
+
+.tanah-report-paper-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 10px;
+}
+
+.tanah-report-paper-table th,
+.tanah-report-paper-table td {
+    border: 1px solid #465565;
+    padding: 5px 6px;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+}
+
+.tanah-report-paper-table thead th {
+    text-align: center;
+    vertical-align: middle;
+    background: #d6dfe9;
+    font-weight: 800;
+}
+
+.tanah-report-paper-table thead tr:last-child th {
+    background: #e8edf3;
+}
+
+.tanah-report-paper-table .tanah-report-number {
+    text-align: center;
+}
+
+.tanah-report-paper-table small {
+    display: block;
+    font-size: 9px;
+    margin-top: 3px;
+}
+
+.tanah-report-sign-date {
+    text-align: right;
+    margin: 17px 0 8px;
+}
+
+.tanah-report-signatures {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    text-align: center;
+    gap: 14px;
+}
+
+.tanah-report-signature {
+    min-height: 150px;
+}
+
+.tanah-report-signature strong,
+.tanah-report-signature span,
+.tanah-report-signature u {
+    display: block;
+}
+
+.tanah-report-signature strong {
+    margin-bottom: 5px;
+}
+
+.tanah-report-signature u {
+    margin-top: 68px;
+    font-weight: 800;
+    text-underline-offset: 2px;
+}
+
+.tanah-report-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 22px;
+    border-top: 1px solid #dce8f3;
+    background: #fff;
+    font-size: 11px;
+    color: #7289a0;
+}
+
+.tanah-report-footer-actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+@media (max-width: 1050px) {
+    .tanah-report-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tanah-report-footer { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 630px) {
+    .tanah-page .tanah-report-modal { width: calc(100vw - 14px); max-height: 96dvh; }
+    .tanah-report-modal-header,
+    .tanah-report-modal-body { padding: 14px; }
+    .tanah-report-modal-body { max-height: calc(96dvh - 180px); }
+    .tanah-report-form { grid-template-columns: 1fr; padding: 12px; }
+    .tanah-report-period-field { grid-column: auto; }
+    .tanah-report-footer { padding: 12px; }
+    .tanah-report-footer-actions { width: 100%; }
+    .tanah-report-footer-actions button { flex: 1; }
+}
