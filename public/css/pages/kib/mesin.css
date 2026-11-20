@@ -4923,3 +4923,192 @@ min-height: 39px;
     font-size: 12px;
     line-height: 1.5;
 }
+
+/* ==========================================================================
+   K.I.B B — CETAK KENDARAAN (SEMUA) DAN MESIN (SATU DETAIL)
+   Tidak mengganti selector, grid, atau fungsi Mesin sebelumnya.
+   ========================================================================== */
+.mesin-page .mesin-kendaraan-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.mesin-page .mesin-report-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 40px;
+    padding: 0 17px;
+    border: 1px solid #087560;
+    border-radius: 9px;
+    color: #fff;
+    font-weight: 700;
+    background: linear-gradient(135deg, #0b9874, #087560);
+    box-shadow: 0 6px 18px rgba(8, 117, 96, .15);
+}
+.mesin-page .mesin-report-button:hover {
+    background: linear-gradient(135deg, #0b8767, #065944);
+    transform: translateY(-1px);
+}
+.mesin-page .mesin-uninventoried {
+    display: block;
+    width: fit-content;
+    margin-top: 5px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: #fff4dd;
+    color: #9c5d0b;
+    font-size: 10px;
+    font-weight: 700;
+}
+.mesin-page .mesin-sheet-report {
+    background: #e6f6ee;
+    color: #087153;
+    border: 1px solid #a9d8c0;
+}
+.mesin-report-dialog {
+    width: min(1450px, calc(100vw - 36px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 1px solid #bed3e8;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 22px 80px rgba(11, 35, 65, .25);
+    color: #133559;
+}
+.mesin-report-dialog::backdrop { background: rgba(7, 24, 49, .58); }
+.mesin-report-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 17px 21px;
+    gap: 18px;
+    border-bottom: 1px solid #dbe7f3;
+}
+.mesin-report-head small { color: #0874c9; font-size: 10px; font-weight: 800; }
+.mesin-report-head h2 { margin: 4px 0; font-size: 20px; color: #113f71; }
+.mesin-report-head p { margin: 0; font-size: 12px; color: #6b839c; }
+.mesin-report-close {
+    width: 35px;
+    height: 35px;
+    border: 0;
+    border-radius: 8px;
+    color: #285f97;
+    background: #edf5fc;
+    font-size: 25px;
+    cursor: pointer;
+}
+.mesin-report-content { max-height: min(74vh, 860px); overflow: auto; padding: 20px; }
+.mesin-report-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 13px;
+    padding: 15px;
+    background: #f5f9fd;
+    border: 1px solid #dce8f3;
+    border-radius: 10px;
+}
+.mesin-report-field { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 700; }
+.mesin-report-field input {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #bcd0e3;
+    border-radius: 8px;
+    background: #fff;
+    color: #163a60;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+}
+.mesin-report-field input:focus { outline: 2px solid #8ac0eb; border-color: #2289d4; }
+.mesin-report-info { min-height: 18px; color: #55738d; font-size: 12px; }
+.mesin-report-preview-box { padding: 14px; border: 1px solid #dce7f2; border-radius: 10px; }
+.mesin-report-preview-box[hidden] { display: none !important; }
+.mesin-report-preview-box h3 { margin: 0 0 13px; font-size: 14px; }
+.mesin-report-preview { max-width: 100%; overflow-x: auto; }
+.mesin-report-paper {
+    padding: 20px;
+    min-width: 1010px;
+    box-sizing: border-box;
+    font: 11px/1.4 Arial, sans-serif;
+    color: #111;
+    background: #fff;
+}
+.mesin-report-kop {
+    position: relative;
+    min-height: 125px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+.mesin-report-kop img {
+    position: absolute;
+    left: 7px;
+    top: 15px;
+    width: 260px;
+    height: auto;
+    max-height: 85px;
+    object-fit: contain;
+}
+.mesin-report-kop-title {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+}
+.mesin-report-meta { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 3px 25px; margin-bottom: 17px; }
+.mesin-report-meta div { display: flex; gap: 9px; }
+.mesin-report-meta b { min-width: 110px; }
+.mesin-report-table-scroll { max-width: 100%; overflow-x: auto; }
+.mesin-report-table { border-collapse: collapse; width: 100%; min-width: 1020px; table-layout: auto; }
+.mesin-report-table th, .mesin-report-table td {
+    border: 1px solid #384b5c;
+    text-align: center;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+    padding: 7px 6px;
+    font-size: 10px;
+}
+.mesin-report-table th { background: #fff061; font-weight: 700; }
+.mesin-report-date { margin: 18px 0 8px; text-align: right; font-weight: 700; }
+.mesin-report-signatures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; text-align: center; }
+.mesin-report-signature { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.mesin-report-signature u { margin-top: 42px; font-weight: 700; }
+.mesin-report-footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 13px 20px;
+    border-top: 1px solid #dce7f3;
+    background: #f9fcff;
+}
+.mesin-report-footer button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #c6d9e9;
+    background: #fff;
+    color: #1a5c93;
+    font-size: 12px;
+    cursor: pointer;
+}
+.mesin-report-footer .mesin-report-primary { color: #fff; background: #098566; border-color: #098566; }
+.mesin-report-footer button:disabled { opacity: .47; cursor: not-allowed; }
+.mesin-report-footer svg { width: 16px; height: 16px; }
+@media (max-width: 850px) {
+    .mesin-page .mesin-kendaraan-actions { justify-content: flex-start; }
+    .mesin-report-meta { grid-template-columns: 1fr; }
+    .mesin-report-content { padding: 10px; }
+}

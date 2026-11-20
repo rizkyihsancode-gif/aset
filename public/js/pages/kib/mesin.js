@@ -1402,6 +1402,7 @@ $('#mesinExport').addEventListener('click', () => {
             </div>
             <div class="mesin-sheet-attachment-actions">
                 ${locationIsValid ? `<button type="button" class="mesin-sheet-mini value" data-sheet-nilai="${locationId}">Nilai Lokasi</button>` : ''}
+                ${!isVehicleItem(item) ? `<button type="button" class="mesin-sheet-mini mesin-sheet-report" data-mesin-report-item="${id}">Print Excel Detail</button>` : ''}
                 <button type="button" class="mesin-sheet-mini edit" data-edit="${id}">Edit</button>
                 <button type="button" class="mesin-sheet-mini delete" data-delete="${id}">Hapus</button>
                 <button type="button" class="mesin-sheet-mini close" data-sheet-close="1">Tutup Berkas</button>
@@ -2609,7 +2610,7 @@ document.getElementById('pajakTerlambat').textContent =
                 formatAngka(
                     summary.belum_didata
                 ) +
-                ' kendaraan belum memiliki catatan pembaruan pajak.';
+                ' referensi belum memiliki catatan pembaruan pajak.';
 
             isiDropdown();
 
@@ -2618,7 +2619,9 @@ document.getElementById('pajakTerlambat').textContent =
             gambarTabel();
 
             $('#pajakInfoStatus').textContent =
-                `${formatAngka(kendaraan.length)} kendaraan berkode Aktiva 31.08.%`;
+                `${formatAngka(kendaraan.length)} data berkode 31.08 · ` +
+                `${formatAngka(summary.sudah_inventaris || 0)} inventaris · ` +
+                `${formatAngka(summary.belum_inventaris || 0)} referensi Nilai Aset`;
 
         } catch (error) {
             sudahDimuat = false;
@@ -2728,7 +2731,7 @@ document.getElementById('pajakTerlambat').textContent =
             )
         );
 
-        kendaraan.forEach(k => {
+        kendaraan.filter(k => k.terinventaris && nomorId(k.mesin_id)).forEach(k => {
             const label = [
                 k.kode_aktiva || '31.08',
                 k.merk ||
@@ -2846,7 +2849,7 @@ document.getElementById('pajakTerlambat').textContent =
         const data = dataTersaring();
 
         const ukuran =
-            Number($('#pajakLimit').value) || 10;
+            (Number($('#pajakLimit').value) || data.length || 10);
 
         const jumlahHalaman = Math.max(
             1,
@@ -2871,9 +2874,8 @@ document.getElementById('pajakTerlambat').textContent =
         $('#pajakTableBody').innerHTML =
             baris.length
                 ? baris.map((k, idx) => {
-                    const id = nomorId(
-                        k.mesin_id
-                    );
+                    const id = nomorId(k.mesin_id);
+                    const key = k.kunci || (id ? `m-${id}` : `n-${k.nilai_id}`);
 
                     const pajakId = nomorId(
                         k.pajak_id
@@ -2931,6 +2933,7 @@ document.getElementById('pajakTerlambat').textContent =
                                 ${escapeHTML(
                                     k.jenis || '—'
                                 )}
+                                ${k.terinventaris ? '' : '<small class="mesin-uninventoried">Belum diinventarisasi</small>'}
 
                                 <small>
                                     ${escapeHTML(
@@ -2980,7 +2983,7 @@ document.getElementById('pajakTerlambat').textContent =
                                     <button
                                         type="button"
                                         class="view"
-                                        data-pajak-view="${id}"
+                                        data-pajak-view="${key}"
                                         title="Detail Pajak"
                                         aria-label="Detail Pajak"
                                     >
@@ -2990,9 +2993,10 @@ document.getElementById('pajakTerlambat').textContent =
                                     <button
                                         type="button"
                                         class="edit"
-                                        data-pajak-edit="${id}"
+                                        data-pajak-edit="${key}"
                                         title="${pajakId ? 'Edit Pajak' : 'Catat Pajak'}"
                                         aria-label="Edit atau Catat Pajak"
+                                        ${k.terinventaris ? '' : 'disabled'}
                                     >
                                         <i data-lucide="square-pen"></i>
                                     </button>
@@ -3000,7 +3004,7 @@ document.getElementById('pajakTerlambat').textContent =
                                     <button
                                         type="button"
                                         class="delete"
-                                        data-pajak-delete="${id}"
+                                        data-pajak-delete="${id || ''}"
                                         title="Hapus Catatan Pajak"
                                         aria-label="Hapus Catatan Pajak"
                                         ${pajakId ? '' : 'disabled'}
@@ -3174,7 +3178,7 @@ document.getElementById('pajakTerlambat').textContent =
                 $('#' + id).value = '';
             });
 
-            $('#pajakLimit').value = '10';
+            $('#pajakLimit').value = '0';
 
             halamanAktif = 1;
 
@@ -3278,12 +3282,12 @@ document.getElementById('pajakTerlambat').textContent =
 
     const form = $('#pajakForm');
 
-    const cariKendaraan = id =>
-        kendaraan.find(
-            k =>
-                String(k.mesin_id) ===
-                String(id)
-        );
+    // Pencarian berdasarkan ID inventaris digunakan oleh form pajak.
+    const cariKendaraan = id => kendaraan.find(k =>
+        k.terinventaris && String(k.mesin_id) === String(id));
+    // Pencarian berdasarkan kunci unik digunakan oleh tabel gabungan.
+    const cariBarisKendaraan = key => kendaraan.find(k =>
+        String(k.kunci || (k.mesin_id ? `m-${k.mesin_id}` : `n-${k.nilai_id}`)) === String(key));
 
     function informasiKendaraan() {
         const k = cariKendaraan(
@@ -3637,7 +3641,7 @@ document.getElementById('pajakTerlambat').textContent =
                 button.dataset.pajakEdit ||
                 button.dataset.pajakDelete;
 
-            const k = cariKendaraan(id);
+            const k = cariBarisKendaraan(id);
 
             if (!k) {
                 return;
@@ -3645,12 +3649,21 @@ document.getElementById('pajakTerlambat').textContent =
 
             // Detail
             if (button.dataset.pajakView) {
-                lihatDetail(k);
+                if (!k.terinventaris) {
+                    const detail = $('#pajakDetailData');
+                    $('#pajakDetailTitle').textContent = `Referensi Kendaraan — ${k.kode_aktiva}`;
+                    detail.innerHTML = `<p class="pajak-excel-warning">Transaksi Nilai Aset #${escapeHTML(k.nilai_id)} belum menjadi inventaris kendaraan. Lengkapi data melalui menu Peralatan dan Mesin sebelum pencatatan pajak.</p><p>${escapeHTML(k.nama_kendaraan || k.jenis || '-')} · ${escapeHTML(k.lokasi || '-')}</p>`;
+                    $('#pajakDetailDocument').replaceChildren();
+                    tampilkanDialog('pajakDetailDialog');
+                } else {
+                    lihatDetail(k);
+                }
                 return;
             }
 
             // Edit / catat
             if (button.dataset.pajakEdit) {
+                if (!k.terinventaris) return;
                 bukaForm(k);
                 return;
             }
@@ -3975,6 +3988,16 @@ document.addEventListener('DOMContentLoaded', () => {
              * Jika belum ada catatan pajak,
              * tampilkan informasi tanpa menghapus data.
              */
+
+            // Hanya inventaris yang memiliki ID mesins dapat menjalankan
+            // pemeriksaan/hapus pajak. Referensi Nilai Aset (tanpa mesins.id)
+            // tidak boleh mengaktifkan tombol Delete.
+            const mesinId = Number(button.dataset.pajakDelete);
+            if (!Number.isSafeInteger(mesinId) || mesinId <= 0) {
+                button.disabled = true;
+                button.title = 'Belum diinventarisasi — tidak ada catatan pajak';
+                return;
+            }
 
             button.disabled = false;
 
@@ -4655,5 +4678,475 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.closest('#pajakTambah, [data-pajak-edit]')) {
             queueMicrotask(() => comboboxes.forEach(combo => combo.sync()));
         }
+    });
+});
+
+/* ==========================================================================
+   K.I.B B -- LAPORAN KENDARAAN & PERALATAN/MESIN (GABUNGAN)
+   Modul ini sebelumnya berada di mesin-report.js.
+   Disatukan di mesin.js tanpa mengubah event listener & generator XLSX.
+   ========================================================================== */
+/**
+ * K.I.B B — Print Excel Kendaraan (seluruh sumber 31.08) dan Mesin (per item).
+ * Endpoint hanya baca. Tidak membuat inventaris, mengubah pajak, atau Nilai Aset.
+ * XLSX asli berupa paket Office OpenXML, tanpa dependensi CDN.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+
+    const page = document.getElementById('mesinPage');
+    const dialog = document.getElementById('mesinReportDialog');
+    if (!page || !dialog || !page.dataset.reportUrl) return;
+
+    const $ = selector => dialog.querySelector(selector);
+    const roles = [
+        ['diketahui', 'Diketahui'],
+        ['periksa_1', 'Diperiksa Oleh'],
+        ['periksa_2', 'Diperiksa Oleh'],
+        ['dibuat', 'Dibuat Oleh'],
+    ];
+    const org = { provinsi: 'KALIMANTAN TIMUR', kota: 'SAMARINDA', unit: 'PERUMDA TIRTA KENCANA' };
+    const state = { jenis: 'kendaraan', data: [], sdm: [], organisasi: org };
+    const form = $('#mesinReportForm');
+    const month = $('#mesinReportPeriod');
+    const info = $('#mesinReportInfo');
+    const previewBox = $('#mesinReportPreviewBox');
+    const preview = $('#mesinReportPreview');
+    const download = $('#mesinReportDownload');
+    const print = $('#mesinReportPrint');
+    const optionList = $('#mesinReportStaff');
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g,
+        char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    const cell = value => {
+        const v = String(value ?? '').trim();
+        return v && v !== 'null' ? v : '-';
+    };
+    const periodName = () => {
+        if (!/^\d{4}-\d{2}$/.test(month.value)) return '';
+        const [year, m] = month.value.split('-').map(Number);
+        if (m < 1 || m > 12) return '';
+        const display = new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric', timeZone: 'Asia/Makassar' });
+        return display.format(new Date(Date.UTC(year, m - 1, 1))).toUpperCase();
+    };
+    const dateName = () => new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'Asia/Makassar', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(new Date());
+    const staffLabel = person => `${person.nama} — ${person.jabatan || 'Jabatan belum diisi'} — ${person.nip || 'NIP -'} (#${person.id})`;
+    const chosen = role => {
+        const value = $(`[data-report-role="${role}"]`)?.value.trim();
+        return state.sdm.find(person => staffLabel(person) === value) || null;
+    };
+    const ready = () => Boolean(periodName() && state.data.length && roles.every(([r]) => chosen(r)));
+
+    function columns() {
+        if (state.jenis === 'kendaraan') {
+            return [
+                'No.', 'Kode Barang', 'Nama Barang / Jenis Barang', 'Nomor Register',
+                'Merk / Type', 'Ukuran / CC', 'Bahan', 'Tahun Pembelian',
+                'Pabrik', 'Rangka', 'Mesin', 'Polisi', 'BPKB',
+                'Asal Usul / Cara Perolehan', 'Keterangan'
+            ];
+        }
+        return [
+            'No.', 'Nama Barang', 'Kode Inventaris', 'No. Register',
+            'Merk / Type', 'Ukuran', 'Fungsi', 'Penggunaan', 'Bahan',
+            'Baik', 'Rusak Ringan', 'Rusak Berat',
+            'Tahun Pengadaan', 'Asal Usul', 'No. Dokumen', 'Harga Rp', 'Keterangan'
+        ];
+    }
+
+    function rowValues(row, index) {
+        if (state.jenis === 'kendaraan') {
+            return [index + 1, row.kode_barang || '-', row.nama_kendaraan || row.jenis || '-',
+                row.register || '-', row.merk || '-', row.ukuran || '-', row.bahan || '-',
+                row.tahun || '-', row.pabrik || '-', row.rangka || '-', row.nomor_mesin || '-',
+                row.nomor_polisi || '-', row.bpkb || '-', row.asal || '-',
+                [row.ket, !row.terinventaris ? `Belum Inventaris (Nilai Aset #${row.nilai_id})` : '']
+                    .filter(Boolean).join(' · ') || '-'];
+        }
+        const kondisi = String(row.kondisi ?? '').toLowerCase();
+        const baik = (kondisi === 'b' || kondisi.includes('baik'))
+            && !kondisi.includes('tidak');
+        const ringan = kondisi.includes('ringan') || ['kb', 'rr'].includes(kondisi);
+        const berat = kondisi.includes('berat') || kondisi === 'rb';
+        return [index + 1, row.nama_barang || '-', row.kode_barang || '-', row.register || '-',
+            row.merk || '-', row.ukuran || '-', row.fungsi || '-', row.penggunaan || '-',
+            row.bahan || '-', baik ? '√' : '-', ringan ? '√' : '-', berat ? '√' : '-',
+            row.tahun || '-', row.asal || '-', row.no_dokumen || '-',
+            row.harga === null || row.harga === undefined ? '-' : String(row.harga),
+            row.keterangan || '-'];
+    }
+
+    function metaEntries() {
+        const o = state.organisasi || org;
+        const lokasi = state.jenis === 'kendaraan' ? 'SELURUH LOKASI'
+            : state.data[0]?.lokasi || '-';
+        return [
+            ['PROVINSI', o.provinsi || org.provinsi],
+            ['KOTA', o.kota || org.kota],
+            ['UNIT', o.unit || org.unit],
+            ['DEPARTEMEN', o.departemen || '-'],
+            ['DIVISI', o.divisi || '-'],
+            ['LOKASI', lokasi],
+            ['KODE AKTIVA', state.jenis === 'kendaraan' ? '31.08.*' : cell(state.data[0]?.kode_aktiva)],
+        ];
+    }
+    const title = () => state.jenis === 'kendaraan'
+        ? 'B. KENDARAAN MOBIL TRUK & ALAT BERAT'
+        : 'B. PERALATAN DAN MESIN';
+
+    function updatePreview() {
+        const ok = ready();
+        print.disabled = download.disabled = !ok;
+        previewBox.hidden = !ok;
+        if (!state.data.length) {
+            info.textContent = 'Tidak ada data yang memenuhi kriteria laporan.';
+        } else if (!ok) {
+            info.textContent = `${state.data.length} baris siap. Pilih periode dan keempat penandatangan untuk melihat preview.`;
+        } else {
+            info.textContent = `Preview siap: ${state.data.length} baris. Status Kepemilikan tidak termasuk laporan.`;
+            preview.innerHTML = paperHtml();
+        }
+    }
+
+    function paperHtml() {
+        const labels = columns();
+        const group = state.jenis === 'kendaraan'
+            ? { index: 8, length: 5, label: 'Nomor' }
+            : { index: 9, length: 3, label: 'Kondisi' };
+        const top = labels.map((name, i) => i === group.index
+            ? `<th colspan="${group.length}">${group.label}</th>`
+            : i > group.index && i < group.index + group.length ? ''
+                : `<th rowspan="2">${escapeHtml(name)}</th>`).join('');
+        const second = labels.slice(group.index, group.index + group.length)
+            .map(name => `<th>${escapeHtml(name)}</th>`).join('');
+        const data = state.data.map((row, i) => `<tr>${rowValues(row, i)
+            .map(v => `<td>${escapeHtml(cell(v))}</td>`).join('')}</tr>`).join('');
+        const meta = metaEntries().map(([k, v]) => `<div><b>${escapeHtml(k)}</b><span>: ${escapeHtml(cell(v))}</span></div>`).join('');
+        const signers = roles.map(([role, label]) => {
+            const person = chosen(role);
+            return `<div class="mesin-report-signature"><b>${escapeHtml(label)},</b>
+                <span>${escapeHtml(cell(person?.jabatan))}</span>
+                <u>${escapeHtml(cell(person?.nama))}</u>
+                <span>NIP. ${escapeHtml(cell(person?.nip))}</span></div>`;
+        }).join('');
+        return `<article class="mesin-report-paper">
+            <div class="mesin-report-kop">
+                <img src="${escapeHtml(page.dataset.reportLogo)}" alt="Logo Perumda Tirta Kencana">
+                <div class="mesin-report-kop-title"><strong>KARTU INVENTARIS BARANG (K.I.B)</strong>
+                    <strong>${escapeHtml(title())}</strong><strong>PERIODE ${escapeHtml(periodName())}</strong></div>
+            </div>
+            <div class="mesin-report-meta">${meta}</div>
+            <div class="mesin-report-table-scroll"><table class="mesin-report-table">
+                <thead><tr>${top}</tr><tr>${second}</tr><tr>${labels.map((_, i) => `<th>${i+1}</th>`).join('')}</tr></thead>
+                <tbody>${data}</tbody>
+            </table></div>
+            <div class="mesin-report-date">Samarinda, ${escapeHtml(dateName())}</div>
+            <div class="mesin-report-signatures">${signers}</div>
+        </article>`;
+    }
+
+    async function openReport(mesinId = null) {
+        state.jenis = mesinId ? 'mesin' : 'kendaraan';
+        state.data = [];
+        state.sdm = [];
+        info.textContent = 'Memuat data laporan dan Master SDM Pendukung...';
+        $('#mesinReportTitle').textContent = mesinId ? 'Print Excel Detail Mesin' : 'Print Excel Seluruh Kendaraan';
+        $('#mesinReportScope').textContent = mesinId ? 'Satu inventaris terpilih' : 'Semua Kode Aktiva 31.08 dari Nilai Aset dan inventaris';
+        form.reset();
+        const dateParts = new Intl.DateTimeFormat('en-CA', {
+            year: 'numeric', month: '2-digit', timeZone: 'Asia/Makassar'
+        }).formatToParts(new Date());
+        month.value = `${dateParts.find(p => p.type === 'year').value}-${dateParts.find(p => p.type === 'month').value}`;
+        optionList.replaceChildren();
+        updatePreview();
+        if (!dialog.open) dialog.showModal();
+        try {
+            const url = new URL(page.dataset.reportUrl, location.origin);
+            if (mesinId) url.searchParams.set('mesin_id', String(mesinId));
+            const resp = await fetch(url, { credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+            const json = await resp.json();
+            if (!resp.ok || !json.success || !Array.isArray(json.data))
+                throw new Error(json.message || `HTTP ${resp.status}`);
+            if (!dialog.open) return;
+            state.jenis = json.jenis || state.jenis;
+            state.data = json.data;
+            state.sdm = Array.isArray(json.sdm) ? json.sdm : [];
+            state.organisasi = json.organisasi || org;
+            optionList.replaceChildren(...state.sdm.map(person => {
+                const option = document.createElement('option');
+                option.value = staffLabel(person);
+                return option;
+            }));
+            if (!state.sdm.length) info.textContent = 'Master SDM Pendukung belum memiliki SDM aktif.';
+            else updatePreview();
+        } catch (error) {
+            console.error('Gagal mengambil laporan K.I.B B:', error);
+            info.textContent = `Gagal memuat: ${error.message}`;
+        }
+    }
+
+    document.getElementById('mesinReportKendaraanBtn')?.addEventListener('click', () => openReport());
+    document.getElementById('mesinDetailBody')?.addEventListener('click', event => {
+        const button = event.target.closest('[data-mesin-report-item]');
+        if (button) openReport(Number(button.dataset.mesinReportItem));
+    });
+    dialog.querySelectorAll('[data-mesin-report-close]').forEach(button =>
+        button.addEventListener('click', () => dialog.close()));
+    form.addEventListener('input', updatePreview);
+    form.addEventListener('change', updatePreview);
+
+    // ZIP tanpa kompresi adalah XLSX Office OpenXML valid. Semua string
+    // ditulis sebagai inlineStr sehingga kode barang tidak ditafsir formula.
+    function reportZip(entries) {
+        const encoder = new TextEncoder();
+        const crcTable = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+            let c = n;
+            for (let bit = 0; bit < 8; bit++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            crcTable[n] = c >>> 0;
+        }
+        const crc32 = bytes => {
+            let crc = 0xFFFFFFFF;
+            for (const byte of bytes) crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8);
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        };
+        const bytesOf = value => value instanceof Uint8Array ? value : encoder.encode(value);
+        const localParts = [];
+        const centralParts = [];
+        let offset = 0;
+        let centralLength = 0;
+        const write16 = (view, pos, val) => view.setUint16(pos, val, true);
+        const write32 = (view, pos, val) => view.setUint32(pos, val >>> 0, true);
+
+        for (const entry of entries) {
+            const nameBytes = encoder.encode(entry.name);
+            const data = bytesOf(entry.data);
+            const checksum = crc32(data);
+            const local = new Uint8Array(30 + nameBytes.length);
+            const l = new DataView(local.buffer);
+            write32(l, 0, 0x04034B50);
+            write16(l, 4, 20);
+            write16(l, 6, 0x0800); // UTF-8
+            write16(l, 8, 0);      // stored/no compression
+            write32(l, 14, checksum);
+            write32(l, 18, data.length);
+            write32(l, 22, data.length);
+            write16(l, 26, nameBytes.length);
+            local.set(nameBytes, 30);
+            localParts.push(local, data);
+
+            const central = new Uint8Array(46 + nameBytes.length);
+            const c = new DataView(central.buffer);
+            write32(c, 0, 0x02014B50);
+            write16(c, 4, 20);
+            write16(c, 6, 20);
+            write16(c, 8, 0x0800);
+            write16(c, 10, 0);
+            write32(c, 16, checksum);
+            write32(c, 20, data.length);
+            write32(c, 24, data.length);
+            write16(c, 28, nameBytes.length);
+            write32(c, 42, offset);
+            central.set(nameBytes, 46);
+            centralParts.push(central);
+            offset += local.length + data.length;
+            centralLength += central.length;
+        }
+        const end = new Uint8Array(22);
+        const v = new DataView(end.buffer);
+        write32(v, 0, 0x06054B50);
+        write16(v, 8, entries.length);
+        write16(v, 10, entries.length);
+        write32(v, 12, centralLength);
+        write32(v, 16, offset);
+        return new Blob([...localParts, ...centralParts, end], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+    }
+
+
+    function xmlText(value) {
+        return String(value ?? '')
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    }
+    function colName(n) {
+        let result = '';
+        while (n > 0) {
+            result = String.fromCharCode(65 + (n - 1) % 26) + result;
+            n = Math.floor((n - 1) / 26);
+        }
+        return result;
+    }
+
+    function buildXlsx(logoBytes) {
+        const labels = columns();
+        const count = labels.length;
+        const entries = new Map();
+        const merges = [];
+        const heights = new Map();
+        function put(r, c, value, style = 0) {
+            if (!entries.has(r)) entries.set(r, new Map());
+            entries.get(r).set(c, { value: value ?? '', style });
+        }
+        function merged(r1, c1, r2, c2, value, style = 0) {
+            for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) put(r, c, '', style);
+            put(r1, c1, value, style);
+            merges.push(`${colName(c1)}${r1}:${colName(c2)}${r2}`);
+        }
+        const meta = metaEntries();
+        // Logo horizontal menempati kiri; judul dipusatkan relatif SELURUH tabel.
+        // Gambar ditempatkan sebagai drawing overlay, bukan merge A1:C5.
+        // Dengan demikian tidak bertabrakan dengan judul gabungan A2:O2.
+        merged(2, 1, 2, count, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
+        merged(3, 1, 3, count, title(), 1);
+        merged(4, 1, 4, count, `PERIODE ${periodName()}`, 1);
+        [26, 26, 25, 25, 24, 23].forEach((height, i) => heights.set(i + 1, height));
+        meta.forEach(([k, v], i) => {
+            merged(7+i, 1, 7+i, 2, k, 4);
+            merged(7+i, 3, 7+i, 6, `: ${cell(v)}`, 4);
+            heights.set(7+i, 18);
+        });
+
+        const group = state.jenis === 'kendaraan'
+            ? { start: 9, end: 13, title: 'NOMOR' }
+            : { start: 10, end: 12, title: 'KONDISI' };
+        const header = 15;
+        for (let c = 1; c <= count; c++) {
+            if (c === group.start) {
+                merged(header, group.start, header, group.end, group.title, 2);
+                for (let k = group.start; k <= group.end; k++) put(header + 1, k, labels[k - 1].toUpperCase(), 2);
+            } else if (c < group.start || c > group.end) {
+                merged(header, c, header + 1, c, labels[c - 1].toUpperCase(), 2);
+            }
+            put(header + 2, c, String(c), 2);
+        }
+        heights.set(header, 33);
+        heights.set(header + 1, 30);
+        heights.set(header + 2, 20);
+
+        state.data.forEach((r, index) => {
+            const row = header + 3 + index;
+            const values = rowValues(r, index);
+            values.forEach((value, c) => put(row, c + 1, cell(value), 3));
+            const longest = Math.max(...values.map(v => String(v ?? '').length));
+            heights.set(row, Math.min(130, Math.max(29, Math.ceil(longest / 42) * 16 + 12)));
+        });
+        const dateRow = header + 3 + state.data.length + 2;
+        merged(dateRow, Math.floor(count * .67), dateRow, count, `Samarinda, ${dateName()}`, 5);
+        const slots = [
+            [1, Math.floor(count/4)],
+            [Math.floor(count/4)+1, Math.floor(count/2)],
+            [Math.floor(count/2)+1, Math.floor(count*3/4)],
+            [Math.floor(count*3/4)+1, count]
+        ];
+        roles.forEach(([role, label], index) => {
+            const person = chosen(role);
+            const [a, b] = slots[index];
+            merged(dateRow + 2, a, dateRow + 2, b, `${label},`, 5);
+            merged(dateRow + 3, a, dateRow + 3, b, cell(person?.jabatan), 5);
+            merged(dateRow + 8, a, dateRow + 8, b, cell(person?.nama), 6);
+            merged(dateRow + 9, a, dateRow + 9, b, `NIP. ${cell(person?.nip)}`, 5);
+        });
+        const finalRow = dateRow + 10;
+        const columnXml = labels.map((_, i) => {
+            const width = i === 0 ? 7 : (labels[i].length > 18 ? 25 : 17);
+            return `<col min="${i+1}" max="${i+1}" width="${width}" customWidth="1"/>`;
+        }).join('');
+        const rowXml = [...entries].sort(([a],[b]) => a-b).map(([r, row]) => {
+            const cells = [...row].sort(([a],[b]) => a-b).map(([c, data]) =>
+                `<c r="${colName(c)}${r}" s="${data.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(data.value)}</t></is></c>`).join('');
+            return `<row r="${r}"${heights.has(r)?` ht="${heights.get(r)}" customHeight="1"`:''}>${cells}</row>`;
+        }).join('');
+        const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+        const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+        const mergesXml = merges.map(ref => `<mergeCell ref="${ref}"/>`).join('');
+        const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <worksheet xmlns="${main}" xmlns:r="${rel}"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
+            <dimension ref="A1:${colName(count)}${finalRow}"/>
+            <sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>
+            <sheetFormatPr defaultRowHeight="18"/><cols>${columnXml}</cols>
+            <sheetData>${rowXml}</sheetData>
+            <mergeCells count="${merges.length}">${mergesXml}</mergeCells>
+            <printOptions horizontalCentered="1" gridLines="0"/>
+            <pageMargins left="0.24" right="0.24" top="0.4" bottom="0.4" header="0.15" footer="0.15"/>
+            <pageSetup paperSize="8" orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+            ${logoBytes?.length ? '<drawing r:id="rId1"/>' : ''}</worksheet>`;
+        const fonts = [
+            '<font><sz val="10"/><name val="Arial"/></font>',
+            '<font><b/><sz val="12"/><name val="Arial"/></font>',
+            '<font><b/><sz val="9"/><name val="Arial"/></font>',
+            '<font><b/><u/><sz val="10"/><name val="Arial"/></font>',
+        ].join('');
+        const fills = '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFEF37"/><bgColor indexed="64"/></patternFill></fill></fills>';
+        const borders = '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders>';
+        const xfs = [
+            [0, 0, 0, 'left'], [1, 0, 0, 'center'], [2, 2, 1, 'center'],
+            [0, 0, 1, 'center'], [2, 0, 0, 'left'],
+            [0, 0, 0, 'center'], [3, 0, 0, 'center']
+        ].map(([fontId, fillId, borderId, align]) =>
+            `<xf numFmtId="0" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
+        const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <styleSheet xmlns="${main}"><fonts count="4">${fonts}</fonts>${fills}${borders}
+            <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+            <cellXfs count="7">${xfs}</cellXfs>
+            <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+        const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <workbook xmlns="${main}" xmlns:r="${rel}"><sheets><sheet name="KIB B - ${state.jenis === 'kendaraan' ? 'Kendaraan' : 'Mesin'}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+        const files = [
+            { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+            { name: 'xl/workbook.xml', data: workbook },
+            { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>` },
+            { name: 'xl/worksheets/sheet1.xml', data: sheet },
+            { name: 'xl/styles.xml', data: styles }
+        ];
+        if (logoBytes?.length) {
+            files.push(
+                { name: 'xl/media/image1.png', data: logoBytes },
+                { name: 'xl/worksheets/_rels/sheet1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>` },
+                { name: 'xl/drawings/_rels/drawing1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/image" Target="../media/image1.png"/></Relationships>` },
+                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>120000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>25000</xdr:rowOff></xdr:from><xdr:ext cx="3000000" cy="920000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` }
+            );
+        }
+        const types = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${logoBytes?.length?'<Default Extension="png" ContentType="image/png"/>':''}<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${logoBytes?.length?'<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>':''}</Types>`;
+        files.unshift({ name: '[Content_Types].xml', data: types });
+        return reportZip(files);
+    }
+
+    download.addEventListener('click', async () => {
+        if (!ready()) return;
+        download.disabled = true;
+        try {
+            let logoBytes = null;
+            const resp = await fetch(page.dataset.reportLogo, { credentials: 'same-origin' });
+            if (resp.ok) logoBytes = new Uint8Array(await resp.arrayBuffer());
+            const blob = buildXlsx(logoBytes);
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = `KIB_B_${state.jenis === 'kendaraan' ? 'Seluruh_Kendaraan' : 'Detail_Mesin'}_${month.value}.xlsx`;
+            document.body.appendChild(link);
+            link.click(); link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch (error) {
+            console.error('XLSX K.I.B B gagal dibuat:', error);
+            info.textContent = `Gagal membuat Excel: ${error.message}`;
+        } finally { download.disabled = !ready(); }
+    });
+
+    print.addEventListener('click', () => {
+        if (!ready()) return;
+        const popup = window.open('', '_blank');
+        if (!popup) { info.textContent = 'Browser memblokir pop-up. Izinkan pop-up untuk mencetak.'; return; }
+        popup.document.open();
+        popup.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>K.I.B B ${escapeHtml(state.jenis)}</title>
+            <link rel="stylesheet" href="${escapeHtml(page.querySelector('link[href*="mesin.css"]')?.href || '/css/pages/kib/mesin.css')}">
+            <style>@page{size:A3 landscape;margin:9mm}body{margin:0;color:#111;background:#fff}.mesin-report-paper{min-width:0;width:100%;padding:0;box-shadow:none}.mesin-report-table-scroll{overflow:visible}.mesin-report-table{font-size:8px}.mesin-report-table thead{display:table-header-group}.mesin-report-table tr{break-inside:avoid}.mesin-report-signatures{break-inside:avoid}</style>
+            </head><body>${paperHtml()}</body></html>`);
+        popup.document.close();
+        popup.addEventListener('load', () => popup.print(), { once: true });
     });
 });

@@ -17,7 +17,8 @@
         href="{{ asset('css/pages/kib/mesin.css') }}?v={{ filemtime(public_path('css/pages/kib/mesin.css')) }}">
     <section id="mesinPage" class="content mesin-page" data-store-url="{{ route('kib.mesin.store') }}"
         data-record-base="{{ url('/kib/mesin') }}" data-detail-base="{{ url('/kib/mesin/lokasi') }}"
-        data-pending-url="{{ route('kib.mesin.pending') }}">
+        data-pending-url="{{ route('kib.mesin.pending') }}" data-report-url="{{ route('kib.mesin.laporan') }}"
+        data-report-logo="{{ asset('images/logo_hr.png') }}">
 
         {{-- =====================================================
          01. HEADER PERALATAN DAN MESIN
@@ -235,7 +236,7 @@
                         <div>
 
                             <small>
-                                Total Kendaraan
+                                Data Kendaraan 31.08
                             </small>
 
                             <strong id="pajakTotal">
@@ -243,7 +244,7 @@
                             </strong>
 
                             <span>
-                                Kode Aktiva 31.08.xx
+                                Inventaris + referensi Nilai Aset
                             </span>
 
                         </div>
@@ -788,19 +789,26 @@
                         </h2>
 
                         <p>
-                            Kendaraan inventaris K.I.B B berdasarkan
-                            Kode Aktiva 31.08.xx.
+                            Semua Kode Aktiva 31.08 dari Nilai Aset dan inventaris.
+                            Transaksi yang belum diinventarisasi diberi penanda khusus.
                         </p>
 
                     </div>
 
-                    <button type="button" id="pajakTambah" class="pajak-btn primary">
+                    <div class="mesin-kendaraan-actions">
+                        <button type="button" id="mesinReportKendaraanBtn" class="pajak-btn mesin-report-button">
+                            <i data-lucide="file-spreadsheet"></i>
+                            Print Excel Seluruh Kendaraan
+                        </button>
 
-                        <i data-lucide="plus"></i>
+                        <button type="button" id="pajakTambah" class="pajak-btn primary">
 
-                        Pembaruan Pajak
+                            <i data-lucide="plus"></i>
 
-                    </button>
+                            Pembaruan Pajak
+
+                        </button>
+                    </div>
 
                 </header>
 
@@ -988,6 +996,10 @@
 
                                 <option value="50">
                                     50
+                                </option>
+
+                                <option value="0" selected>
+                                    Semua Data
                                 </option>
 
                             </select>
@@ -2095,6 +2107,57 @@
             @method('DELETE')
 
         </form>
+
+
+        {{-- =====================================================
+             LAPORAN EXCEL KIB B — KENDARAAN GLOBAL / MESIN DETAIL
+             Sumber data dan empat penandatangan dari Master SDM.
+        ====================================================== --}}
+        <dialog id="mesinReportDialog" class="mesin-report-dialog" aria-labelledby="mesinReportTitle">
+            <div class="mesin-report-head">
+                <div>
+                    <small>KARTU INVENTARIS BARANG — K.I.B B</small>
+                    <h2 id="mesinReportTitle">Print Excel</h2>
+                    <p id="mesinReportScope">Memuat data laporan...</p>
+                </div>
+                <button type="button" class="mesin-report-close" data-mesin-report-close aria-label="Tutup">×</button>
+            </div>
+            <div class="mesin-report-content">
+                <form id="mesinReportForm" class="mesin-report-form" autocomplete="off">
+                    <label class="mesin-report-field">
+                        Periode Laporan
+                        <input type="month" id="mesinReportPeriod" required>
+                    </label>
+                    @foreach ([
+            'diketahui' => 'Diketahui Oleh',
+            'periksa_1' => 'Diperiksa Oleh (1)',
+            'periksa_2' => 'Diperiksa Oleh (2)',
+            'dibuat' => 'Dibuat Oleh',
+        ] as $role => $label)
+                        <label class="mesin-report-field">
+                            {{ $label }}
+                            <input type="search" class="mesin-report-signer" data-report-role="{{ $role }}"
+                                list="mesinReportStaff" placeholder="Ketik nama, jabatan, atau NIP" required>
+                        </label>
+                    @endforeach
+                    <datalist id="mesinReportStaff"></datalist>
+                </form>
+                <p class="mesin-report-info" id="mesinReportInfo" role="status"></p>
+                <section id="mesinReportPreviewBox" class="mesin-report-preview-box" hidden>
+                    <h3>Preview Laporan</h3>
+                    <div id="mesinReportPreview" class="mesin-report-preview"></div>
+                </section>
+            </div>
+            <footer class="mesin-report-footer">
+                <button type="button" class="mesin-report-secondary" data-mesin-report-close>Tutup</button>
+                <button type="button" id="mesinReportPrint" class="mesin-report-secondary" disabled>
+                    <i data-lucide="printer"></i> Print
+                </button>
+                <button type="button" id="mesinReportDownload" class="mesin-report-primary" disabled>
+                    <i data-lucide="file-spreadsheet"></i> Download Excel
+                </button>
+            </footer>
+        </dialog>
 
     </section>
 

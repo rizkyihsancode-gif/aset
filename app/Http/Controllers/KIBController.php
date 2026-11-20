@@ -10513,4 +10513,279 @@ class KIBController extends Controller
             ? ['jpg', 'jpeg', 'png', 'webp'] : ['pdf'], true), 415);
         return response()->file($path, ['X-Content-Type-Options' => 'nosniff']);
     }
+
+    /*
+     |--------------------------------------------------------------------------
+     | K.I.B B — KENDARAAN 31.08 DAN LAPORAN EXCEL
+     | Seluruh menu K.I.B menggunakan KIBController.
+     | Fungsi lama tidak diubah; metode baru bersifat read-only.
+     |--------------------------------------------------------------------------
+     */
+
+    /** @return \Illuminate\Support\Collection<int, object> */
+    private function transaksiKendaraanKibB()
+    {
+        return DB::table('nilai_aktivas as n')
+            ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+            ->leftJoin('lokasis as l', 'l.id', '=', 'n.id_lokasi')
+            ->whereRaw("(BTRIM(COALESCE(a.kode, '')) = ? OR BTRIM(COALESCE(a.kode, '')) LIKE ?)", ['31.08', '31.08.%'])
+            ->select(
+                'n.id',
+                'n.id_lokasi',
+                'n.id_aktiva',
+                'n.cat',
+                'n.stat',
+                'n.no_voucher',
+                'n.tgl_voucher',
+                'n.tahun',
+                'n.urai',
+                'n.nilai',
+                'a.kode as kode_aktiva',
+                'a.aktiva as jenis_aktiva',
+                'l.lokasi'
+            )
+            ->orderBy('a.kode')->orderBy('n.id')
+            ->get();
+    }
+
+    /** @return \Illuminate\Support\Collection<int, object> */
+    private function inventarisKendaraanKibB()
+    {
+        return DB::table('mesins as m')
+            ->leftJoin('nilai_aktivas as n', 'n.id', '=', 'm.id_voucher2')
+            ->join('aktivas as a', 'a.id', '=', DB::raw('COALESCE(n.id_aktiva, m.id_aktiva)'))
+            ->leftJoin('barangs as b', 'b.id', '=', 'm.id_barang')
+            ->leftJoin('lokasis as l', 'l.id', '=', 'm.id_lokasi')
+            ->whereRaw("(BTRIM(COALESCE(a.kode, '')) = ? OR BTRIM(COALESCE(a.kode, '')) LIKE ?)", ['31.08', '31.08.%'])
+            ->select(
+                'm.*',
+                'a.kode as kode_aktiva',
+                'a.aktiva as jenis_aktiva',
+                'b.nama_barang',
+                'l.lokasi'
+            )
+            ->orderBy('a.kode')->orderBy('m.id')
+            ->get();
+    }
+
+    private function sdmAktifKibB()
+    {
+        if (!Schema::hasTable('sdms') || !Schema::hasTable('jabatans')) {
+            return collect();
+        }
+
+        return DB::table('sdms as s')
+            ->leftJoin('jabatans as j', 'j.id', '=', 's.id_jabat')
+            ->when(
+                Schema::hasColumn('sdms', 'status'),
+                fn($query) => $query->where('s.status', 'aktif')
+            )
+            ->whereNotNull('s.nama_sdm')
+            ->whereRaw("BTRIM(s.nama_sdm) <> ''")
+            ->select('s.id', 's.nama_sdm', 's.nip', 'j.jabat')
+            ->orderBy('s.nama_sdm')->get()
+            ->map(static fn($sdm) => [
+                'id' => (int) $sdm->id,
+                'nama' => trim((string) $sdm->nama_sdm),
+                'nip' => trim((string) ($sdm->nip ?? '')),
+                'jabatan' => trim((string) ($sdm->jabat ?? '')),
+            ]);
+    }
+
+    private function daftarKendaraanKibB(): array
+    {
+        $transaksi = $this->transaksiKendaraanKibB();
+        $inventaris = $this->inventarisKendaraanKibB();
+        $inventarisByVoucher = $inventaris
+            ->filter(fn($m) => (int) ($m->id_voucher2 ?? 0) > 0)
+            ->groupBy(fn($m) => (int) $m->id_voucher2);
+        $terpasang = [];
+        $rows = [];
+
+        foreach ($transaksi as $n) {
+            $match = $inventarisByVoucher->get((int) $n->id, collect());
+            if ($match->isEmpty()) {
+                $rows[] = $this->kendaraanRowKibB(null, $n);
+                continue;
+            }
+            foreach ($match as $m) {
+                $terpasang[(int) $m->id] = true;
+                $rows[] = $this->kendaraanRowKibB($m, $n);
+            }
+        }
+
+        // Inventaris historis yang tidak punya tautan voucher tetap tampil.
+        foreach ($inventaris as $m) {
+            if (!isset($terpasang[(int) $m->id])) {
+                $rows[] = $this->kendaraanRowKibB($m, null);
+            }
+        }
+
+        usort($rows, static fn($a, $b) =>
+        strcmp((string) $a['kode_aktiva'], (string) $b['kode_aktiva'])
+            ?: strcmp((string) $a['lokasi'], (string) $b['lokasi'])
+            ?: strcmp((string) $a['kunci'], (string) $b['kunci']));
+
+        $ids = collect($rows)->pluck('mesin_id')->filter()->unique()->values();
+        $latest = $ids->isEmpty() ? collect() : DB::table('mesin_pajaks')
+            ->whereIn('mesin_id', $ids)
+            ->orderByDesc('jatuh_tempo')->orderByDesc('id')
+            ->get()->unique('mesin_id')->keyBy('mesin_id');
+        $today = Carbon::today('Asia/Makassar');
+        $summary = [
+            'total' => count($rows),
+            'aktif' => 0,
+            'segera_habis' => 0,
+            'kedaluwarsa' => 0,
+            'belum_didata' => 0,
+            'sudah_inventaris' => 0,
+            'belum_inventaris' => 0,
+            'total_transaksi_31_08' => $transaksi->count(),
+        ];
+
+        foreach ($rows as &$row) {
+            $pajak = $row['mesin_id'] ? $latest->get($row['mesin_id']) : null;
+            $status = 'belum_didata';
+            $hari = null;
+            if ($pajak && $pajak->jatuh_tempo) {
+                $tempo = Carbon::parse($pajak->jatuh_tempo, 'Asia/Makassar')->startOfDay();
+                $hari = (int) $today->diffInDays($tempo, false);
+                $status = $hari <= 0 ? 'kedaluwarsa' : ($hari <= 14 ? 'segera_habis' : 'aktif');
+            }
+            $row += [
+                'pajak_id' => $pajak ? (int) $pajak->id : null,
+                'tanggal_bayar' => $pajak->tanggal_bayar ?? null,
+                'masa_berlaku_bulan' => $pajak->masa_berlaku_bulan ?? null,
+                'jatuh_tempo' => $pajak->jatuh_tempo ?? null,
+                'nominal' => $pajak->nominal ?? null,
+                'nomor_stnk' => $pajak->nomor_stnk ?? null,
+                'keterangan' => $pajak->keterangan ?? null,
+                'ada_dokumen' => !empty($pajak->dokumen_pdf),
+                'status' => $status,
+                'sisa_hari' => $hari,
+            ];
+            $summary[$status]++;
+            $summary[$row['terinventaris'] ? 'sudah_inventaris' : 'belum_inventaris']++;
+        }
+        unset($row);
+
+        return [$rows, $summary, $today];
+    }
+
+    private function kendaraanRowKibB(?object $m, ?object $n): array
+    {
+        $terinventaris = $m !== null;
+        $mesinId = $m ? (int) $m->id : null;
+        $nilaiId = $n ? (int) $n->id : null;
+        return [
+            'kunci' => $terinventaris ? 'm-' . $mesinId : 'n-' . $nilaiId,
+            'mesin_id' => $mesinId,
+            'nilai_id' => $nilaiId,
+            'terinventaris' => $terinventaris,
+            'status_inventaris' => $terinventaris ? 'Sudah Inventaris' : 'Belum Inventaris',
+            'kode_aktiva' => trim((string) ($m->kode_aktiva ?? $n->kode_aktiva ?? '')),
+            'jenis' => trim((string) ($m->jenis_aktiva ?? $n->jenis_aktiva ?? '')),
+            'nama_kendaraan' => trim((string) ($m->nama_barang ?? $n->jenis_aktiva ?? '')),
+            'pengguna' => trim((string) ($m->guna ?? $n->urai ?? '')),
+            'merk' => trim((string) ($m->merk ?? '')),
+            'nomor_polisi' => trim((string) ($m->polisi ?? '')),
+            'tahun' => $m->tahun ?? $n->tahun ?? null,
+            'lokasi_id' => $m->id_lokasi ?? $n->id_lokasi ?? null,
+            'lokasi' => trim((string) ($m->lokasi ?? $n->lokasi ?? '')),
+            'kode_barang' => trim((string) ($m->kode ?? '')),
+            'register' => trim((string) ($m->reg ?? '')),
+            'ukuran' => trim((string) ($m->ukuran ?? '')),
+            'bahan' => trim((string) ($m->bahan ?? '')),
+            'pabrik' => trim((string) ($m->pabrik ?? '')),
+            'rangka' => trim((string) ($m->rangka ?? '')),
+            'nomor_mesin' => trim((string) ($m->mesin ?? '')),
+            'bpkb' => trim((string) ($m->bpkb ?? '')),
+            'asal' => trim((string) ($m->asal ?? '')),
+            'ket' => trim((string) ($m->ket ?? '')),
+            'no_voucher' => trim((string) ($n->no_voucher ?? '')),
+            'nilai_transaksi' => $n->nilai ?? null,
+        ];
+    }
+
+    /**
+     * Endpoint tab Kendaraan, bentuk JSON kompatibel dengan UI Masa Pajak.
+     */
+    public function dataKendaraanKibB(): \Illuminate\Http\JsonResponse
+    {
+        [$rows, $summary, $today] = $this->daftarKendaraanKibB();
+        return response()->json([
+            'success' => true,
+            'tanggal' => $today->toDateString(),
+            'summary' => $summary,
+            'data' => $rows,
+        ]);
+    }
+
+    /**
+     * Sumber laporan kendaraan seluruhnya atau satu data mesin saat Detail.
+     * Read-only, tidak melakukan pembaruan nilai_aktivas / mesins.
+     */
+    public function laporanMesinKibB(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'mesin_id' => ['nullable', 'integer', 'min:1'],
+        ]);
+        $mesinId = isset($validated['mesin_id']) ? (int) $validated['mesin_id'] : null;
+        if ($mesinId !== null) {
+            $m = DB::table('mesins as m')
+                ->leftJoin('barangs as b', 'b.id', '=', 'm.id_barang')
+                ->leftJoin('lokasis as l', 'l.id', '=', 'm.id_lokasi')
+                ->leftJoin('nilai_aktivas as n', 'n.id', '=', 'm.id_voucher2')
+                ->leftJoin('aktivas as a', 'a.id', '=', DB::raw('COALESCE(n.id_aktiva, m.id_aktiva)'))
+                ->where('m.id', $mesinId)
+                ->select(
+                    'm.*',
+                    'b.nama_barang',
+                    'l.lokasi',
+                    'a.kode as kode_aktiva',
+                    'a.aktiva as jenis_aktiva'
+                )
+                ->first();
+            abort_unless($m, 404);
+            // Form K.I.B B Mesin (17 kolom), per satu barang inventaris.
+            $rows = [[
+                'mesin_id' => (int) $m->id,
+                'nama_barang' => $m->nama_barang ?? '',
+                'kode_barang' => $m->kode ?? '',
+                'register' => $m->reg ?? '',
+                'merk' => $m->merk ?? '',
+                'ukuran' => $m->ukuran ?? '',
+                'fungsi' => $m->fungsi ?? '',
+                'penggunaan' => $m->guna ?? '',
+                'bahan' => $m->bahan ?? '',
+                'kondisi' => $m->kondisi ?? '',
+                'tahun' => $m->tahun ?? '',
+                'asal' => $m->asal ?? '',
+                'no_dokumen' => !empty($m->dok) && $m->dok !== '-' ? 'Ada PDF' : '-',
+                'harga' => $m->harga ?? null,
+                'keterangan' => $m->ket ?? '',
+                'lokasi' => $m->lokasi ?? '',
+                'kode_aktiva' => $m->kode_aktiva ?? '',
+            ]];
+            $jenis = 'mesin';
+        } else {
+            [$rows] = $this->daftarKendaraanKibB();
+            $jenis = 'kendaraan';
+        }
+
+        return response()->json([
+            'success' => true,
+            'jenis' => $jenis,
+            'jumlah' => count($rows),
+            'data' => $rows,
+            'sdm' => $this->sdmAktifKibB(),
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                'departemen' => $jenis === 'kendaraan' ? 'SELURUH DEPARTEMEN' : '-',
+                'divisi' => $jenis === 'kendaraan' ? 'SELURUH DIVISI' : '-',
+            ],
+        ]);
+    }
 }

@@ -611,6 +611,12 @@ Route::post('/kib/mesin', [
     'storeMesin'
 ])->name('kib.mesin.store');
 
+// K.I.B B — opsi empat SDM dan data cetak seluruh Kendaraan / satu Mesin.
+Route::get('/kib/mesin/laporan', [
+    KIBController::class,
+    'laporanMesinKibB'
+])->name('kib.mesin.laporan');
+
 Route::get('/kib/mesin/{mesin}', [
     KIBController::class,
     'showMesin'
@@ -651,7 +657,7 @@ Route::get('/kib/mesin/{mesin}/file/{jenis}', [
 
 Route::get(
     '/kib/mesin/pajak/data',
-    [KIBController::class, 'dataPajakMesin']
+    [KIBController::class, 'dataKendaraanKibB']
 )->name('kib.mesin.pajak.data');
 
 Route::post(
