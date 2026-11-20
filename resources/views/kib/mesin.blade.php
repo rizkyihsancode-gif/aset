@@ -503,12 +503,6 @@
 
                 </div>
 
-                <div class="mesin-identitas-ringkas" aria-label="Identitas laporan K.I.B B">
-                    <div><strong>PROVINSI</strong><span>: KALIMANTAN TIMUR</span></div>
-                    <div><strong>KOTA</strong><span>: SAMARINDA</span></div>
-                    <div><strong>UNIT</strong><span>: PERUMDA TIRTA KENCANA</span></div>
-                    <div><strong>LOKASI</strong><span>: PILIH DETAIL LOKASI</span></div>
-                </div>
 
                 {{-- FILTER DAFTAR MESIN --}}
 
@@ -816,15 +810,6 @@
 
                 </header>
 
-                <div class="mesin-identitas-ringkas mesin-identitas-kendaraan" aria-label="Identitas seluruh kendaraan">
-                    <div><strong>PROVINSI</strong><span>: KALIMANTAN TIMUR</span></div>
-                    <div><strong>KOTA</strong><span>: SAMARINDA</span></div>
-                    <div><strong>UNIT</strong><span>: PERUMDA TIRTA KENCANA</span></div>
-                    <div><strong>DEPARTEMEN</strong><span>: SELURUH DEPARTEMEN</span></div>
-                    <div><strong>DIVISI</strong><span>: SELURUH DIVISI</span></div>
-                    <div><strong>LOKASI</strong><span>: SELURUH LOKASI</span></div>
-                    <div><strong>KODE AKTIVA</strong><span>: 31.08.*</span></div>
-                </div>
 
                 {{-- ============================================
                  FILTER MASA PAJAK
