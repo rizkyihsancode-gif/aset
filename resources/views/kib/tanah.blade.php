@@ -191,19 +191,7 @@
                     </div>
 
 
-                    {{-- Print Excel berada di level menu karena mencakup SEMUA data Tanah. --}}
-                    <button type="button" class="tanah-report-open-button" id="tanahReportOpen">
-                        <i data-lucide="file-spreadsheet"></i>
-                        Print Excel Seluruh Tanah
-                    </button>
 
-                    <button type="button" class="tanah-add-button" id="tanahAddButton">
-
-                        <i data-lucide="plus"></i>
-
-                        Tambah Data Tanah
-
-                    </button>
 
                 </div>
 
@@ -516,6 +504,19 @@
 
                 </div>
 
+                {{-- Print Excel berada di level menu karena mencakup SEMUA data Tanah. --}}
+                <button type="button" class="tanah-report-open-button" id="tanahReportOpen">
+                    <i data-lucide="file-spreadsheet"></i>
+                    Print Excel Seluruh Tanah
+                </button>
+
+                <button type="button" class="tanah-add-button" id="tanahAddButton">
+
+                    <i data-lucide="plus"></i>
+
+                    Tambah Data Tanah
+
+                </button>
 
                 <button type="button" class="tanah-export-button" id="tanahExportButton">
 
