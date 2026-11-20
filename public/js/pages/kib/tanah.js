@@ -4619,8 +4619,8 @@ async function loadPending()
         }).join('');
         return `
             <div class="tanah-report-paper-header">
-                <!-- Logo horizontal sudah mengandung nama perusahaan, jadi tidak dicetak dua kali. -->
-                <img class="tanah-report-paper-logo" src="${escapeHtml(root.dataset.reportLogoUrl || '')}" alt="Perumda Tirta Kencana Kota Samarinda">
+                <img class="tanah-report-paper-logo" src="${escapeHtml(root.dataset.reportLogoUrl || '')}" alt="Logo Perumda Tirta Kencana">
+                <div class="tanah-report-paper-company"><strong>PERUMDA TIRTA KENCANA</strong><span>KOTA SAMARINDA</span></div>
                 <div class="tanah-report-paper-title">
                     <strong>KARTU INVENTARIS BARANG (K.I.B)</strong>
                     <strong>A. KARTU INVENTARIS TANAH</strong>
@@ -4829,20 +4829,13 @@ async function loadPending()
         };
         const blank = value => reportCellValue(value);
 
-        // Kop: logo horizontal mengisi sisi kiri (A:D), judul berada
-        // hampir tepat di pusat lebar seluruh tabel A:M.
-        // Kolom E:J memiliki titik tengah ~139.5 dari 272 unit lebar kolom,
-        // sedangkan titik tengah tabel A:M = 136; jauh lebih tepat daripada G:M.
-        if (logoBytes?.length) {
-            merges.push('A1:D5');
-        } else {
-            // Teks cadangan bila logo tidak tersedia, agar identitas tidak hilang.
-            merged(2, 1, 2, 4, 'PERUMDA TIRTA KENCANA', 13);
-            merged(3, 1, 3, 4, 'KOTA SAMARINDA', 13);
-        }
-        merged(2, 5, 2, 10, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
-        merged(3, 5, 3, 10, 'A. KARTU INVENTARIS TANAH', 2);
-        merged(4, 5, 4, 10, `PERIODE ${reportPeriodName().toUpperCase()}`, 2);
+        // Area identitas perusahaan dan laporan (logo A1:B5).
+        if (logoBytes?.length) merges.push('A1:B5');
+        merged(2, 3, 2, 5, 'PERUMDA TIRTA KENCANA', 13);
+        merged(3, 3, 3, 5, 'KOTA SAMARINDA', 13);
+        merged(3, 7, 3, 13, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
+        merged(4, 7, 4, 13, 'A. KARTU INVENTARIS TANAH', 2);
+        merged(5, 7, 5, 13, `PERIODE ${reportPeriodName().toUpperCase()}`, 2);
         heights.set(1, 26);
         heights.set(2, 28);
         heights.set(3, 24);
@@ -4856,7 +4849,7 @@ async function loadPending()
             ['ALAMAT', loc.alamat],
         ];
         metadata.forEach(([name, value], index) => {
-            const r = 7 + index;
+            const r = 8 + index;
             merged(r, 1, r, 2, name, 3);
             merged(r, 3, r, 7, `: ${blank(value)}`, 4);
             heights.set(r, 19);
@@ -4998,7 +4991,7 @@ async function loadPending()
             packageFiles.push(
                 { name: 'xl/worksheets/_rels/sheet1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>` },
                 { name: 'xl/drawings/_rels/drawing1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/image" Target="../media/image1.png"/></Relationships>` },
-                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>160000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>170000</xdr:rowOff></xdr:from><xdr:ext cx="3800000" cy="1205000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` },
+                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>120000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>35000</xdr:rowOff></xdr:from><xdr:ext cx="590000" cy="760000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` },
                 { name: 'xl/media/image1.png', data: logoBytes },
             );
         }
@@ -5053,9 +5046,8 @@ async function loadPending()
                 @page { size: A3 landscape; margin: 10mm; }
                 html, body { margin:0; padding:0; background:#fff; color:#111; }
                 .tanah-report-paper { font-family:Arial,sans-serif; font-size:10px; width:100%; min-width:0; box-sizing:border-box; padding:0; box-shadow:none; }
-                .tanah-report-paper-header { position:relative; display:flex; align-items:center; justify-content:center; min-height:145px; padding:6px 12px; }
-                .tanah-report-paper-logo { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:395px; max-width:33%; height:auto; max-height:130px; object-fit:contain; margin:0; }
-                .tanah-report-paper-title { width:100%; text-align:center; align-self:center; }
+                .tanah-report-paper-header { display:grid; grid-template-columns:88px minmax(240px,0.82fr) minmax(420px,1.45fr); gap:10px; align-items:start; }
+                .tanah-report-paper-logo { width:68px; height:82px; object-fit:contain; margin-left:8px; }
                 .tanah-report-meta { width:60%; }
                 .tanah-report-paper-table { font-size:9px; page-break-inside:auto; }
                 .tanah-report-paper-table thead { display:table-header-group; }
