@@ -2103,52 +2103,91 @@
 
 
         {{-- =====================================================
-             LAPORAN EXCEL KIB B — KENDARAAN GLOBAL / MESIN PER LOKASI
-             Sumber data dan empat penandatangan dari Master SDM.
+             MODAL PRINT EXCEL K.I.B B — TAMPILAN SERAGAM K.I.B A
+             Fungsi laporan tetap memakai mesin.js dan KIBController.php.
+             - Kendaraan: seluruh data Kode Aktiva 31.08.
+             - Peralatan/Mesin: seluruh barang pada Detail lokasi terpilih.
         ====================================================== --}}
-        <dialog id="mesinReportDialog" class="mesin-report-dialog" aria-labelledby="mesinReportTitle">
-            <div class="mesin-report-head">
-                <div>
-                    <small>KARTU INVENTARIS BARANG — K.I.B B</small>
-                    <h2 id="mesinReportTitle">Print Excel</h2>
+        <dialog id="mesinReportDialog" class="mesin-report-dialog" aria-labelledby="mesinReportTitle"
+            aria-describedby="mesinReportScope">
+
+            <header class="mesin-report-head">
+                <div class="mesin-report-heading">
+                    <span class="mesin-report-eyebrow">LAPORAN KARTU INVENTARIS BARANG (K.I.B B)</span>
+                    <h2 id="mesinReportTitle">Print Excel — Peralatan dan Mesin</h2>
                     <p id="mesinReportScope">Memuat data laporan...</p>
                 </div>
-                <button type="button" class="mesin-report-close" data-mesin-report-close aria-label="Tutup">×</button>
-            </div>
+
+                <button type="button" class="mesin-report-close" data-mesin-report-close
+                    aria-label="Tutup cetak K.I.B B">
+                    <i data-lucide="x" aria-hidden="true"></i>
+                </button>
+            </header>
+
             <div class="mesin-report-content">
-                <form id="mesinReportForm" class="mesin-report-form" autocomplete="off">
-                    <label class="mesin-report-field">
-                        Periode Laporan
-                        <input type="month" id="mesinReportPeriod" required>
-                    </label>
-                    @foreach ([
-            'diketahui' => 'Diketahui Oleh',
-            'periksa_1' => 'Diperiksa Oleh (1)',
-            'periksa_2' => 'Diperiksa Oleh (2)',
-            'dibuat' => 'Dibuat Oleh',
-        ] as $role => $label)
-                        <label class="mesin-report-field">
-                            {{ $label }}
-                            <input type="search" class="mesin-report-signer" data-report-role="{{ $role }}"
-                                list="mesinReportStaff" placeholder="Ketik nama, jabatan, atau NIP" required>
+                <form id="mesinReportForm" class="mesin-report-form" autocomplete="off" novalidate>
+
+                    <div class="mesin-report-field mesin-report-period-field">
+                        <label for="mesinReportPeriod">
+                            Periode laporan <span class="mesin-report-required" aria-hidden="true">*</span>
                         </label>
-                    @endforeach
+                        <input type="month" id="mesinReportPeriod" required>
+                        <small>Contoh: November 2026</small>
+                    </div>
+
+                    <div class="mesin-report-signers">
+                        @foreach ([
+            'diketahui' => 'Diketahui oleh',
+            'periksa_1' => 'Diperiksa oleh (1)',
+            'periksa_2' => 'Diperiksa oleh (2)',
+            'dibuat' => 'Dibuat oleh',
+        ] as $role => $label)
+                            <div class="mesin-report-field mesin-report-person">
+                                <label for="mesinReportSigner-{{ $role }}">
+                                    {{ $label }} <span class="mesin-report-required" aria-hidden="true">*</span>
+                                </label>
+                                <input type="search" id="mesinReportSigner-{{ $role }}"
+                                    class="mesin-report-signer" data-report-role="{{ $role }}"
+                                    list="mesinReportStaff" placeholder="Ketik nama, NIP, atau jabatan..."
+                                    autocomplete="off" required>
+                                <small>Pilih dari Master SDM Pendukung.</small>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Sumber dropdown tetap Master SDM Pendukung via mesin.js. --}}
                     <datalist id="mesinReportStaff"></datalist>
                 </form>
-                <p class="mesin-report-info" id="mesinReportInfo" role="status"></p>
+
+                <p class="mesin-report-info" id="mesinReportInfo" role="status" aria-live="polite">
+                    Pilih periode dan keempat penandatangan untuk menampilkan preview.
+                </p>
+
                 <section id="mesinReportPreviewBox" class="mesin-report-preview-box" hidden>
-                    <h3>Preview Laporan</h3>
-                    <div id="mesinReportPreview" class="mesin-report-preview"></div>
+                    <div class="mesin-report-preview-heading">
+                        <strong>Preview laporan K.I.B B</strong>
+                    </div>
+                    <div class="mesin-report-preview-scroll" tabindex="0" aria-label="Preview laporan Excel">
+                        <div id="mesinReportPreview" class="mesin-report-preview"></div>
+                    </div>
                 </section>
             </div>
+
             <footer class="mesin-report-footer">
-                <button type="button" class="mesin-report-secondary" data-mesin-report-close>Tutup</button>
-                <button type="button" id="mesinReportPrint" class="mesin-report-secondary" disabled>
-                    <i data-lucide="printer"></i> Print
-                </button>
-                <button type="button" id="mesinReportDownload" class="mesin-report-primary" disabled>
-                    <i data-lucide="file-spreadsheet"></i> Download Excel
-                </button>
+                <span class="mesin-report-footer-note">
+                    K.I.B B · Kendaraan seluruh data / Peralatan dan Mesin per lokasi · tanpa Status Kepemilikan.
+                </span>
+                <div class="mesin-report-footer-actions">
+                    <button type="button" class="mesin-report-secondary" data-mesin-report-close>Batal</button>
+                    <button type="button" id="mesinReportPrint" class="mesin-report-secondary" disabled>
+                        <i data-lucide="printer" aria-hidden="true"></i>
+                        Print
+                    </button>
+                    <button type="button" id="mesinReportDownload" class="mesin-report-primary" disabled>
+                        <i data-lucide="download" aria-hidden="true"></i>
+                        Download Excel
+                    </button>
+                </div>
             </footer>
         </dialog>
 

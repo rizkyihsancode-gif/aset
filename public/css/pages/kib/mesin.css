@@ -5328,3 +5328,389 @@ min-height: 39px;
         transition: none;
     }
 }
+
+
+/* ============================================================================
+   K.I.B B — KONSISTENSI DESAIN DENGAN K.I.B A TANAH (20 NOVEMBER 2026)
+   Hanya tombol aksi utama dan modal Print Excel.
+   Semua ID, endpoint, fungsi modal dan ekspor lama tetap dipertahankan.
+   ============================================================================ */
+
+/* Tambah Data Mesin dan Pembaruan Pajak: biru seperti Tambah Data Tanah. */
+#mesinPage .mesin-workspace-head #mesinAddButton.mesin-button.primary,
+#mesinPage .mesin-kendaraan-actions #pajakTambah.pajak-btn.primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 1px solid #0868d5;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #197df0 0%, #0868d5 100%);
+    color: #fff;
+    box-shadow: 0 6px 17px rgba(8, 104, 213, .18);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+#mesinPage .mesin-workspace-head #mesinAddButton.mesin-button.primary:hover:not(:disabled),
+#mesinPage .mesin-kendaraan-actions #pajakTambah.pajak-btn.primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0868d5 0%, #0754a8 100%);
+    box-shadow: 0 9px 20px rgba(8, 104, 213, .23);
+    transform: translateY(-1px);
+}
+
+#mesinPage .mesin-workspace-head #mesinAddButton.mesin-button.primary:focus-visible,
+#mesinPage .mesin-kendaraan-actions #pajakTambah.pajak-btn.primary:focus-visible {
+    outline: 3px solid rgba(25, 125, 240, .24);
+    outline-offset: 2px;
+}
+
+#mesinPage .mesin-workspace-head #mesinAddButton svg,
+#mesinPage .mesin-kendaraan-actions #pajakTambah svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    stroke: currentColor;
+}
+
+/* Dialog memakai lebar, spasi, warna dan ritme sama seperti Tanah. */
+#mesinPage .mesin-report-dialog {
+    position: fixed;
+    width: min(1260px, calc(100vw - 32px));
+    max-width: none;
+    max-height: min(92dvh, 960px);
+    margin: auto;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid #c5d8eb;
+    border-radius: 16px;
+    background: #fff;
+    color: #193957;
+    box-shadow: 0 24px 95px rgba(7, 42, 78, .34);
+}
+
+#mesinPage .mesin-report-dialog::backdrop {
+    background: rgba(6, 28, 53, .67);
+}
+
+#mesinPage .mesin-report-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 24px;
+    background: #f7fbff;
+    border-bottom: 1px solid #dce8f3;
+}
+
+#mesinPage .mesin-report-heading {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#mesinPage .mesin-report-eyebrow {
+    display: inline-block;
+    color: #0869e8;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .9px;
+    line-height: 1.5;
+}
+
+#mesinPage .mesin-report-head h2 {
+    margin: 5px 0;
+    font-size: 19px;
+    font-weight: 850;
+    color: #103f70;
+    line-height: 1.3;
+}
+
+#mesinPage .mesin-report-head p {
+    margin: 0;
+    font-size: 12px;
+    color: #68819d;
+    line-height: 1.45;
+}
+
+#mesinPage .mesin-report-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #edf5fc;
+    color: #285f97;
+    cursor: pointer;
+}
+
+#mesinPage .mesin-report-close:hover {
+    background: #e0effc;
+}
+
+#mesinPage .mesin-report-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+#mesinPage .mesin-report-content {
+    max-height: calc(92dvh - 170px);
+    overflow: auto;
+    padding: 20px 24px 26px;
+}
+
+#mesinPage .mesin-report-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 19px;
+    border: 1px solid #d9e7f5;
+    border-radius: 12px;
+    background: #f7faff;
+}
+
+#mesinPage .mesin-report-period-field {
+    max-width: 310px;
+}
+
+#mesinPage .mesin-report-signers {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+#mesinPage .mesin-report-field {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#mesinPage .mesin-report-field label {
+    display: block;
+    margin-bottom: 7px;
+    color: #1e4669;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+#mesinPage .mesin-report-required {
+    color: #d33049;
+}
+
+#mesinPage .mesin-report-field input[type="month"],
+#mesinPage .mesin-report-field input[type="search"] {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 10px 11px;
+    border: 1px solid #b9cce0;
+    border-radius: 8px;
+    outline: 0;
+    background: #fff;
+    color: #183d60;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+#mesinPage .mesin-report-field input:focus {
+    border-color: #207ad5;
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(32, 122, 213, .12);
+}
+
+#mesinPage .mesin-report-field small {
+    display: block;
+    margin-top: 6px;
+    color: #6d839b;
+    font-size: 10.5px;
+    font-weight: 400;
+    line-height: 1.45;
+}
+
+/* Informasi, preview dan footer mengikuti alur modal Tanah. */
+#mesinPage .mesin-report-info {
+    display: block;
+    min-height: 42px;
+    margin: 14px 0 0;
+    padding: 13px 15px;
+    border: 1px solid #bddcf6;
+    border-radius: 9px;
+    background: #edf6ff;
+    color: #4c7094;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+#mesinPage .mesin-report-preview-box {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #d9e7f5;
+    border-radius: 10px;
+    background: #fff;
+}
+
+#mesinPage .mesin-report-preview-box[hidden] {
+    display: none !important;
+}
+
+#mesinPage .mesin-report-preview-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #133f6b;
+}
+
+#mesinPage .mesin-report-preview-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dfeaf5;
+    border-radius: 8px;
+}
+
+#mesinPage .mesin-report-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 22px;
+    border-top: 1px solid #dce8f3;
+    background: #fff;
+}
+
+#mesinPage .mesin-report-footer-note {
+    min-width: 0;
+    max-width: 52%;
+    color: #7289a0;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+#mesinPage .mesin-report-footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+#mesinPage .mesin-report-footer-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 35px;
+    padding: 8px 13px;
+    border: 1px solid #c7d8eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #41688d;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+#mesinPage .mesin-report-footer-actions .mesin-report-primary {
+    border-color: #1674dd;
+    background: #1674dd;
+    color: #fff;
+}
+
+#mesinPage .mesin-report-footer-actions button:not(:disabled):hover {
+    border-color: #89bce9;
+    background: #eff6ff;
+    color: #175899;
+}
+
+#mesinPage .mesin-report-footer-actions .mesin-report-primary:not(:disabled):hover {
+    border-color: #075cb9;
+    background: #075cb9;
+    color: #fff;
+}
+
+#mesinPage .mesin-report-footer-actions button:disabled {
+    opacity: .52;
+    cursor: not-allowed;
+}
+
+#mesinPage .mesin-report-footer-actions svg {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 1050px) {
+    #mesinPage .mesin-report-signers {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    #mesinPage .mesin-report-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    #mesinPage .mesin-report-footer-note {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 630px) {
+    #mesinPage .mesin-report-dialog {
+        width: calc(100vw - 14px);
+        max-height: 96dvh;
+    }
+    #mesinPage .mesin-report-head,
+    #mesinPage .mesin-report-content {
+        padding: 14px;
+    }
+    #mesinPage .mesin-report-content {
+        max-height: calc(96dvh - 170px);
+    }
+    #mesinPage .mesin-report-form {
+        padding: 12px;
+    }
+    #mesinPage .mesin-report-signers {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    #mesinPage .mesin-report-footer {
+        padding: 12px;
+    }
+    #mesinPage .mesin-report-footer-actions {
+        width: 100%;
+    }
+    #mesinPage .mesin-report-footer-actions button {
+        flex: 1 1 0;
+    }
+    #mesinPage .mesin-workspace-head #mesinAddButton,
+    #mesinPage .mesin-kendaraan-actions #pajakTambah {
+        white-space: normal;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #mesinPage .mesin-workspace-head #mesinAddButton,
+    #mesinPage .mesin-kendaraan-actions #pajakTambah {
+        transition: none;
+    }
+}
