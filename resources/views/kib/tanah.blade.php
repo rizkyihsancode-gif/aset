@@ -489,42 +489,40 @@
 
             <div class="tanah-filter-header">
 
-                <div>
+                {{-- Informasi filter di sisi kiri. --}}
+                <div class="tanah-filter-copy">
 
-                    <h3>
-                        Filter Data Tanah
-                    </h3>
+                    <h3>Filter Data Tanah</h3>
 
-                    <p>
-
-                        Cari berdasarkan lokasi,
-                        alamat atau penggunaan tanah.
-
-                    </p>
+                    <p>Cari berdasarkan lokasi, alamat atau penggunaan tanah.</p>
 
                 </div>
 
-                {{-- Print Excel berada di level menu karena mencakup SEMUA data Tanah. --}}
-                <button type="button" class="tanah-report-open-button" id="tanahReportOpen">
-                    <i data-lucide="file-spreadsheet"></i>
-                    Print Excel Seluruh Tanah
-                </button>
+                {{-- Toolbar aksi kanan. ID tombol tetap agar fungsi JavaScript lama tidak berubah. --}}
+                <div class="tanah-filter-actions" role="group" aria-label="Aksi data tanah">
 
-                <button type="button" class="tanah-add-button" id="tanahAddButton">
+                    <button type="button" class="tanah-report-open-button" id="tanahReportOpen">
+                        <i data-lucide="file-spreadsheet" aria-hidden="true"></i>
+                        <span>Print Excel Seluruh Tanah</span>
+                    </button>
 
-                    <i data-lucide="plus"></i>
+                    <button type="button" class="tanah-add-button" id="tanahAddButton">
+                        <i data-lucide="plus" aria-hidden="true"></i>
+                        <span>Tambah Data Tanah</span>
+                    </button>
 
-                    Tambah Data Tanah
+                    <button type="button" class="tanah-export-button" id="tanahExportButton"
+                        title="Unduh data Tanah dalam format CSV">
+                        <span class="tanah-export-icon" aria-hidden="true">
+                            <i data-lucide="download"></i>
+                        </span>
+                        <span class="tanah-export-text">
+                            <strong>Export CSV</strong>
+                            <small>Unduh data tabel</small>
+                        </span>
+                    </button>
 
-                </button>
-
-                <button type="button" class="tanah-export-button" id="tanahExportButton">
-
-                    <i data-lucide="download"></i>
-
-                    Export CSV
-
-                </button>
+                </div>
 
             </div>
 

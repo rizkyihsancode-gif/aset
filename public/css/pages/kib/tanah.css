@@ -4836,3 +4836,191 @@ dl > div:last-child {
         width: 100%;
     }
 }
+
+/* ==========================================================================
+   35. FILTER TANAH — TOOLBAR AKSI DAN KARTU EKSPOR CSV
+   Berlaku hanya untuk header Filter Data Tanah; fungsi JavaScript tidak diubah.
+   ========================================================================== */
+
+.tanah-page .tanah-filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.tanah-page .tanah-filter-copy {
+    flex: 1 1 250px;
+    min-width: 0;
+}
+
+.tanah-page .tanah-filter-copy h3 {
+    margin: 0;
+}
+
+.tanah-page .tanah-filter-copy p {
+    margin: 5px 0 0;
+}
+
+.tanah-page .tanah-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.tanah-page .tanah-filter-actions .tanah-report-open-button,
+.tanah-page .tanah-filter-actions .tanah-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    padding: 0 15px;
+    border-radius: 11px;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.tanah-page .tanah-filter-actions .tanah-report-open-button {
+    border: 1px solid #08765f;
+    background: linear-gradient(135deg, #09896f 0%, #08765f 100%);
+    box-shadow: 0 5px 14px rgba(8, 118, 95, .14);
+}
+
+.tanah-page .tanah-filter-actions .tanah-report-open-button:hover {
+    background: linear-gradient(135deg, #08765f 0%, #065844 100%);
+    box-shadow: 0 8px 18px rgba(8, 118, 95, .20);
+    transform: translateY(-1px);
+}
+
+.tanah-page .tanah-filter-actions .tanah-add-button {
+    border: 1px solid #0868d5;
+    background: linear-gradient(135deg, #197df0 0%, #0868d5 100%);
+    box-shadow: 0 5px 14px rgba(8, 104, 213, .15);
+}
+
+.tanah-page .tanah-filter-actions .tanah-add-button:hover {
+    background: linear-gradient(135deg, #0868d5 0%, #0754a8 100%);
+    box-shadow: 0 8px 18px rgba(8, 104, 213, .20);
+    transform: translateY(-1px);
+}
+
+.tanah-page .tanah-filter-actions .tanah-report-open-button svg,
+.tanah-page .tanah-filter-actions .tanah-add-button svg {
+    width: 17px;
+    height: 17px;
+    flex: none;
+}
+
+/* Export CSV sebagai mini-card putih dengan aksen hijau. */
+.tanah-page .tanah-filter-actions .tanah-export-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    min-height: 48px;
+    padding: 6px 13px 6px 7px;
+    border: 1px solid #bddfd3;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #ffffff 0%, #f1fbf7 100%);
+    color: #185f50;
+    box-shadow: 0 4px 13px rgba(22, 106, 86, .06);
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease,
+                box-shadow .2s ease, transform .2s ease;
+}
+
+.tanah-page .tanah-filter-actions .tanah-export-button:hover {
+    border-color: #56b69a;
+    background: linear-gradient(135deg, #f4fff9 0%, #e5f8ef 100%);
+    box-shadow: 0 8px 18px rgba(22, 106, 86, .12);
+    transform: translateY(-1px);
+}
+
+.tanah-page .tanah-filter-actions .tanah-export-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #daf5e9;
+    color: #08765f;
+}
+
+.tanah-page .tanah-filter-actions .tanah-export-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.tanah-page .tanah-filter-actions .tanah-export-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    gap: 2px;
+}
+
+.tanah-page .tanah-filter-actions .tanah-export-text strong {
+    color: #115844;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.tanah-page .tanah-filter-actions .tanah-export-text small {
+    color: #63877e;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+@media (max-width: 1220px) {
+    .tanah-page .tanah-filter-header {
+        flex-wrap: wrap;
+    }
+
+    .tanah-page .tanah-filter-actions {
+        width: 100%;
+        justify-content: flex-start;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 650px) {
+    .tanah-page .tanah-filter-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 9px;
+    }
+
+    .tanah-page .tanah-filter-actions .tanah-report-open-button,
+    .tanah-page .tanah-filter-actions .tanah-add-button,
+    .tanah-page .tanah-filter-actions .tanah-export-button {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .tanah-page .tanah-filter-actions .tanah-export-button {
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tanah-page .tanah-filter-actions button {
+        transition: none;
+    }
+}
