@@ -487,8 +487,8 @@
                         </h2>
 
                         <p>
-                            Data K.I.B dikelompokkan berdasarkan lokasi
-                            seperti pada website aset lama.
+                            Satu baris mewakili lokasi. Klik Detail untuk melihat seluruh barang
+                            dalam format 17 kolom K.I.B B dan mencetak Excel per lokasi.
                         </p>
 
                     </div>
@@ -501,6 +501,13 @@
 
                     </button>
 
+                </div>
+
+                <div class="mesin-identitas-ringkas" aria-label="Identitas laporan K.I.B B">
+                    <div><strong>PROVINSI</strong><span>: KALIMANTAN TIMUR</span></div>
+                    <div><strong>KOTA</strong><span>: SAMARINDA</span></div>
+                    <div><strong>UNIT</strong><span>: PERUMDA TIRTA KENCANA</span></div>
+                    <div><strong>LOKASI</strong><span>: PILIH DETAIL LOKASI</span></div>
                 </div>
 
                 {{-- FILTER DAFTAR MESIN --}}
@@ -796,21 +803,28 @@
                     </div>
 
                     <div class="mesin-kendaraan-actions">
-                        <button type="button" id="mesinReportKendaraanBtn" class="pajak-btn mesin-report-button">
-                            <i data-lucide="file-spreadsheet"></i>
-                            Print Excel Seluruh Kendaraan
+                        <button type="button" id="mesinReportKendaraanBtn" class="pajak-btn mesin-report-button"
+                            title="Cetak seluruh kendaraan Kode Aktiva 31.08">
+                            <i data-lucide="file-spreadsheet" aria-hidden="true"></i>
+                            <span>Print Excel Seluruh Kendaraan</span>
                         </button>
-
                         <button type="button" id="pajakTambah" class="pajak-btn primary">
-
                             <i data-lucide="plus"></i>
-
                             Pembaruan Pajak
-
                         </button>
                     </div>
 
                 </header>
+
+                <div class="mesin-identitas-ringkas mesin-identitas-kendaraan" aria-label="Identitas seluruh kendaraan">
+                    <div><strong>PROVINSI</strong><span>: KALIMANTAN TIMUR</span></div>
+                    <div><strong>KOTA</strong><span>: SAMARINDA</span></div>
+                    <div><strong>UNIT</strong><span>: PERUMDA TIRTA KENCANA</span></div>
+                    <div><strong>DEPARTEMEN</strong><span>: SELURUH DEPARTEMEN</span></div>
+                    <div><strong>DIVISI</strong><span>: SELURUH DIVISI</span></div>
+                    <div><strong>LOKASI</strong><span>: SELURUH LOKASI</span></div>
+                    <div><strong>KODE AKTIVA</strong><span>: 31.08.*</span></div>
+                </div>
 
                 {{-- ============================================
                  FILTER MASA PAJAK
@@ -928,46 +942,40 @@
 
                 </div>
 
-                {{-- ============================================
-                 TABEL MASA PAJAK KENDARAAN
-                 10 KOLOM
-            ============================================= --}}
-
-                <div class="pajak-scroll">
-
-                    <table class="pajak-table">
-
+                {{-- Tabel KIB B Kendaraan: 15 kolom standar Excel + status/aksi pajak. --}}
+                <div class="pajak-scroll mesin-kendaraan-scroll" tabindex="0" role="region"
+                    aria-label="Daftar kendaraan K.I.B B, geser horizontal untuk seluruh kolom">
+                    <table class="pajak-table mesin-kendaraan-table">
                         <thead>
-
                             <tr>
-                                <th>No</th>
-                                <th>Pengguna</th>
-                                <th>Merk / Type</th>
-                                <th>Jenis</th>
-                                <th>Nomor Polisi</th>
-                                <th>Tahun</th>
-                                <th>Lokasi</th>
-                                <th>Berlaku s/d</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
+                                <th rowspan="2">No.</th>
+                                <th rowspan="2">Kode Barang</th>
+                                <th rowspan="2">Nama Barang / Jenis</th>
+                                <th rowspan="2">Nomor Register</th>
+                                <th rowspan="2">Merk / Type</th>
+                                <th rowspan="2">Ukuran / CC</th>
+                                <th rowspan="2">Bahan</th>
+                                <th rowspan="2">Tahun Pembelian</th>
+                                <th colspan="5">Nomor</th>
+                                <th rowspan="2">Asal Usul / Cara Perolehan</th>
+                                <th rowspan="2">Keterangan</th>
+                                <th rowspan="2">Status Pajak</th>
+                                <th rowspan="2">Aksi</th>
                             </tr>
-
+                            <tr>
+                                <th>Pabrik</th>
+                                <th>Rangka</th>
+                                <th>Mesin</th>
+                                <th>Polisi</th>
+                                <th>BPKB</th>
+                            </tr>
                         </thead>
-
                         <tbody id="pajakTableBody">
-
                             <tr>
-
-                                <td colspan="10" class="pajak-empty">
-                                    Memuat data kendaraan...
-                                </td>
-
+                                <td colspan="17" class="pajak-empty">Memuat data kendaraan...</td>
                             </tr>
-
                         </tbody>
-
                     </table>
-
                 </div>
 
                 {{-- ============================================
@@ -2110,7 +2118,7 @@
 
 
         {{-- =====================================================
-             LAPORAN EXCEL KIB B — KENDARAAN GLOBAL / MESIN DETAIL
+             LAPORAN EXCEL KIB B — KENDARAAN GLOBAL / MESIN PER LOKASI
              Sumber data dan empat penandatangan dari Master SDM.
         ====================================================== --}}
         <dialog id="mesinReportDialog" class="mesin-report-dialog" aria-labelledby="mesinReportTitle">

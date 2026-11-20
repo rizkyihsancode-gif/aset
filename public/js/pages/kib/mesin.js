@@ -1402,7 +1402,6 @@ $('#mesinExport').addEventListener('click', () => {
             </div>
             <div class="mesin-sheet-attachment-actions">
                 ${locationIsValid ? `<button type="button" class="mesin-sheet-mini value" data-sheet-nilai="${locationId}">Nilai Lokasi</button>` : ''}
-                ${!isVehicleItem(item) ? `<button type="button" class="mesin-sheet-mini mesin-sheet-report" data-mesin-report-item="${id}">Print Excel Detail</button>` : ''}
                 <button type="button" class="mesin-sheet-mini edit" data-edit="${id}">Edit</button>
                 <button type="button" class="mesin-sheet-mini delete" data-delete="${id}">Hapus</button>
                 <button type="button" class="mesin-sheet-mini close" data-sheet-close="1">Tutup Berkas</button>
@@ -1521,6 +1520,34 @@ $('#mesinExport').addEventListener('click', () => {
                             <span class="mesin-sheet-count" id="mesinSheetVisibleCount">${firstTab === 'machine' ? machines.length : vehicles.length} data</span>
                         </div>
                     </div>
+                    <div class="mesin-sheet-identitas mesin-identitas-ringkas" aria-label="Identitas K.I.B B lokasi">
+                        ${(() => {
+                            const uniqueValue = key => {
+                                const values = [...new Set(items.map(x => String(x[key] || '').trim()).filter(Boolean))];
+                                return values.length === 1 ? values[0] : values.length ? 'BERAGAM' : '-';
+                            };
+                            const fields = [
+                                ['PROVINSI', 'KALIMANTAN TIMUR'],
+                                ['KOTA', 'SAMARINDA'],
+                                ['UNIT', 'PERUMDA TIRTA KENCANA'],
+                                ['DEPARTEMEN', uniqueValue('departemen')],
+                                ['DIVISI', uniqueValue('divisi')],
+                                ['LOKASI', location.lokasi || '-'],
+                                ['ALAMAT', location.alamat || '-'],
+                                ['KODE AKTIVA', uniqueValue('kode_aktiva')],
+                            ];
+                            return fields.map(([key, value]) => `<div><strong>${key}</strong><span>: ${escapeHtml(value)}</span></div>`).join('');
+                        })()}
+                    </div>
+                    <div class="mesin-sheet-actions-top">
+                        <div><strong>Seluruh inventaris lokasi</strong>
+                            <small>${items.length} barang (Peralatan/Mesin: ${machines.length}, Kendaraan: ${vehicles.length})</small></div>
+                        <button type="button" class="mesin-button mesin-sheet-print-location"
+                            data-mesin-report-lokasi="${Number(location.id) || Number(lokasiId)}">
+                            <i data-lucide="file-spreadsheet"></i>
+                            <span>Print Excel Lokasi · ${items.length} Data</span>
+                        </button>
+                    </div>
                     <div class="mesin-sheet-tabs" role="tablist" aria-label="Jenis tabel K.I.B B">
                         <button type="button" class="mesin-sheet-tab ${firstTab === 'machine' ? 'active' : ''}"
                             data-sheet-tab="machine" role="tab" aria-selected="${firstTab === 'machine'}">Peralatan &amp; Mesin (${machines.length})</button>
@@ -1536,7 +1563,7 @@ $('#mesinExport').addEventListener('click', () => {
                     <div class="mesin-sheet-footnote">
                         <span>↔ Geser tabel ke kanan untuk melihat kolom lanjutan</span>
                         <span>▤ Klik <b>Berkas</b> untuk foto, PDF, Edit dan Hapus</span>
-                        <span>Data lama tanpa status: <b>Belum Diatur</b></span>
+                        <span>Excel lokasi mencakup <b>seluruh ${items.length} barang</b>, tanpa Status Kepemilikan</span>
                     </div>
                 </section>
                 <section id="mesinSheetAttachments" class="mesin-sheet-attachments" aria-label="Lampiran inventaris terpilih" hidden></section>
@@ -2632,7 +2659,7 @@ document.getElementById('pajakTerlambat').textContent =
             $('#pajakTableBody').innerHTML = `
                 <tr>
                     <td
-                        colspan="10"
+                        colspan="17"
                         class="pajak-empty"
                     >
                         ${escapeHTML(error.message)}
@@ -2776,7 +2803,9 @@ document.getElementById('pajakTerlambat').textContent =
                 k.nomor_polisi,
                 k.tahun,
                 k.lokasi,
-                k.nama_kendaraan
+                k.nama_kendaraan, k.kode_barang, k.register, k.ukuran,
+                k.bahan, k.pabrik, k.rangka, k.nomor_mesin, k.bpkb,
+                k.asal, k.ket
             ]
                 .join(' ')
                 .toLocaleLowerCase('id-ID');
@@ -2842,8 +2871,13 @@ document.getElementById('pajakTerlambat').textContent =
     }
 
     // ======================================================
-    // 11. RENDER TABEL 10 KOLOM
+    // 11. TABEL KENDARAAN — 15 KOLOM K.I.B B + STATUS/AKSI PAJAK
     // ======================================================
+
+    const kendaraanCell = value => escapeHTML(
+        value === null || value === undefined || String(value).trim() === ''
+            ? '—' : String(value)
+    );
 
     function gambarTabel() {
         const data = dataTersaring();
@@ -2911,107 +2945,47 @@ document.getElementById('pajakTerlambat').textContent =
                             ? k.status
                             : 'belum_didata';
 
+                    const nilaiTeks = k.terinventaris
+                        ? kendaraanCell(k.nama_kendaraan || k.jenis)
+                        : `${kendaraanCell(k.nama_kendaraan || k.jenis)}<small class="mesin-uninventoried">Belum Inventaris · Referensi Nilai Aset</small>`;
                     return `
                         <tr>
-                            <td>
-                                ${mulai + idx + 1}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    k.pengguna || '—'
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    k.merk || '—'
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    k.jenis || '—'
-                                )}
-                                ${k.terinventaris ? '' : '<small class="mesin-uninventoried">Belum diinventarisasi</small>'}
-
-                                <small>
-                                    ${escapeHTML(
-                                        k.kode_aktiva || ''
-                                    )}
-                                </small>
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    k.nomor_polisi ||
-                                    'Belum diisi'
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    k.tahun || '—'
-                                )}
-                            </td>
-
-                            <td>
-                                ${escapeHTML(
-                                    k.lokasi || '—'
-                                )}
-                            </td>
-
-                            <td>
-                                ${tanggalIndonesia(
-                                    k.jatuh_tempo
-                                )}
-                            </td>
-
-                            <td>
-                                <span
-                                    class="pajak-status ${statusClass}"
-                                >
-                                    ${statusLabel[statusClass]}
-                                </span>
-
+                            <td>${mulai + idx + 1}</td>
+                            <td>${kendaraanCell(k.kode_barang)}</td>
+                            <td class="mesin-kendaraan-nama">${nilaiTeks}</td>
+                            <td>${kendaraanCell(k.register)}</td>
+                            <td>${kendaraanCell(k.merk)}</td>
+                            <td>${kendaraanCell(k.ukuran)}</td>
+                            <td>${kendaraanCell(k.bahan)}</td>
+                            <td>${kendaraanCell(k.tahun)}</td>
+                            <td>${kendaraanCell(k.pabrik)}</td>
+                            <td>${kendaraanCell(k.rangka)}</td>
+                            <td>${kendaraanCell(k.nomor_mesin)}</td>
+                            <td>${kendaraanCell(k.nomor_polisi)}</td>
+                            <td>${kendaraanCell(k.bpkb)}</td>
+                            <td>${kendaraanCell(k.asal)}</td>
+                            <td>${kendaraanCell(k.ket)}</td>
+                            <td class="mesin-kendaraan-status">
+                                <span class="pajak-status ${statusClass}">${statusLabel[statusClass]}</span>
                                 ${catatan}
+                                <small>${tanggalIndonesia(k.jatuh_tempo)}</small>
                             </td>
-
                             <td>
                                 <div class="pajak-row-actions">
-
-                                    <button
-                                        type="button"
-                                        class="view"
-                                        data-pajak-view="${key}"
-                                        title="Detail Pajak"
-                                        aria-label="Detail Pajak"
-                                    >
+                                    <button type="button" class="view" data-pajak-view="${escapeHTML(key)}"
+                                        title="Detail Kendaraan dan Pajak" aria-label="Detail Kendaraan dan Pajak">
                                         <i data-lucide="eye"></i>
                                     </button>
-
-                                    <button
-                                        type="button"
-                                        class="edit"
-                                        data-pajak-edit="${key}"
+                                    <button type="button" class="edit" data-pajak-edit="${escapeHTML(key)}"
                                         title="${pajakId ? 'Edit Pajak' : 'Catat Pajak'}"
-                                        aria-label="Edit atau Catat Pajak"
-                                        ${k.terinventaris ? '' : 'disabled'}
-                                    >
+                                        aria-label="Edit atau Catat Pajak" ${k.terinventaris ? '' : 'disabled'}>
                                         <i data-lucide="square-pen"></i>
                                     </button>
-
-                                    <button
-                                        type="button"
-                                        class="delete"
-                                        data-pajak-delete="${id || ''}"
-                                        title="Hapus Catatan Pajak"
-                                        aria-label="Hapus Catatan Pajak"
-                                        ${pajakId ? '' : 'disabled'}
-                                    >
+                                    <button type="button" class="delete" data-pajak-delete="${id || ''}"
+                                        title="Hapus Catatan Pajak" aria-label="Hapus Catatan Pajak"
+                                        ${pajakId ? '' : 'disabled'}>
                                         <i data-lucide="trash-2"></i>
                                     </button>
-
                                 </div>
                             </td>
                         </tr>
@@ -3021,7 +2995,7 @@ document.getElementById('pajakTerlambat').textContent =
                 : `
                     <tr>
                         <td
-                            colspan="10"
+                            colspan="17"
                             class="pajak-empty"
                         >
                             Tidak ada kendaraan sesuai filter.
@@ -4780,7 +4754,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function metaEntries() {
         const o = state.organisasi || org;
         const lokasi = state.jenis === 'kendaraan' ? 'SELURUH LOKASI'
-            : state.data[0]?.lokasi || '-';
+            : state.lokasi?.nama || state.data[0]?.lokasi || '-';
         return [
             ['PROVINSI', o.provinsi || org.provinsi],
             ['KOTA', o.kota || org.kota],
@@ -4788,7 +4762,11 @@ document.addEventListener('DOMContentLoaded', () => {
             ['DEPARTEMEN', o.departemen || '-'],
             ['DIVISI', o.divisi || '-'],
             ['LOKASI', lokasi],
-            ['KODE AKTIVA', state.jenis === 'kendaraan' ? '31.08.*' : cell(state.data[0]?.kode_aktiva)],
+            ['ALAMAT', state.jenis === 'kendaraan' ? 'BERBAGAI LOKASI' : (state.lokasi?.alamat || '-')],
+            ['KODE AKTIVA', state.jenis === 'kendaraan' ? '31.08.*' : (() => {
+                const codes = [...new Set(state.data.map(item => String(item.kode_aktiva || '').trim()).filter(Boolean))];
+                return codes.length === 1 ? codes[0] : codes.length ? 'BERAGAM' : '-';
+            })()],
         ];
     }
     const title = () => state.jenis === 'kendaraan'
@@ -4804,7 +4782,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (!ok) {
             info.textContent = `${state.data.length} baris siap. Pilih periode dan keempat penandatangan untuk melihat preview.`;
         } else {
-            info.textContent = `Preview siap: ${state.data.length} baris. Status Kepemilikan tidak termasuk laporan.`;
+            info.textContent = `Preview siap: ${state.data.length} baris ${state.jenis === 'mesin' ? 'di lokasi ini' : 'kendaraan'}. Status Kepemilikan tidak dicetak.`;
             preview.innerHTML = paperHtml();
         }
     }
@@ -4846,13 +4824,16 @@ document.addEventListener('DOMContentLoaded', () => {
         </article>`;
     }
 
-    async function openReport(mesinId = null) {
-        state.jenis = mesinId ? 'mesin' : 'kendaraan';
+    async function openReport({ lokasiId = null, mesinId = null } = {}) {
+        state.jenis = lokasiId || mesinId ? 'mesin' : 'kendaraan';
         state.data = [];
         state.sdm = [];
         info.textContent = 'Memuat data laporan dan Master SDM Pendukung...';
-        $('#mesinReportTitle').textContent = mesinId ? 'Print Excel Detail Mesin' : 'Print Excel Seluruh Kendaraan';
-        $('#mesinReportScope').textContent = mesinId ? 'Satu inventaris terpilih' : 'Semua Kode Aktiva 31.08 dari Nilai Aset dan inventaris';
+        $('#mesinReportTitle').textContent = lokasiId ? 'Print Excel Seluruh Mesin per Lokasi'
+            : mesinId ? 'Print Excel Mesin' : 'Print Excel Seluruh Kendaraan';
+        $('#mesinReportScope').textContent = lokasiId
+            ? 'Seluruh inventaris pada lokasi terpilih (tanpa batas tab/pagination)'
+            : mesinId ? 'Satu inventaris (mode lama)' : 'Seluruh Kode Aktiva 31.08 dari Nilai Aset dan inventaris';
         form.reset();
         const dateParts = new Intl.DateTimeFormat('en-CA', {
             year: 'numeric', month: '2-digit', timeZone: 'Asia/Makassar'
@@ -4863,7 +4844,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dialog.open) dialog.showModal();
         try {
             const url = new URL(page.dataset.reportUrl, location.origin);
-            if (mesinId) url.searchParams.set('mesin_id', String(mesinId));
+            if (lokasiId) url.searchParams.set('lokasi_id', String(lokasiId));
+            else if (mesinId) url.searchParams.set('mesin_id', String(mesinId));
             const resp = await fetch(url, { credentials: 'same-origin',
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
             const json = await resp.json();
@@ -4874,6 +4856,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.data = json.data;
             state.sdm = Array.isArray(json.sdm) ? json.sdm : [];
             state.organisasi = json.organisasi || org;
+            state.lokasi = json.lokasi || null;
             optionList.replaceChildren(...state.sdm.map(person => {
                 const option = document.createElement('option');
                 option.value = staffLabel(person);
@@ -4889,8 +4872,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('mesinReportKendaraanBtn')?.addEventListener('click', () => openReport());
     document.getElementById('mesinDetailBody')?.addEventListener('click', event => {
-        const button = event.target.closest('[data-mesin-report-item]');
-        if (button) openReport(Number(button.dataset.mesinReportItem));
+        const button = event.target.closest('[data-mesin-report-lokasi]');
+        if (button) {
+            const lokasiId = Number(button.dataset.mesinReportLokasi);
+            if (Number.isSafeInteger(lokasiId) && lokasiId > 0) openReport({ lokasiId });
+        }
     });
     dialog.querySelectorAll('[data-mesin-report-close]').forEach(button =>
         button.addEventListener('click', () => dialog.close()));
@@ -5014,7 +5000,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const group = state.jenis === 'kendaraan'
             ? { start: 9, end: 13, title: 'NOMOR' }
             : { start: 10, end: 12, title: 'KONDISI' };
-        const header = 15;
+        const header = Math.max(17, 7 + meta.length + 2);
         for (let c = 1; c <= count; c++) {
             if (c === group.start) {
                 merged(header, group.start, header, group.end, group.title, 2);
@@ -5127,7 +5113,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.href = url;
-            link.download = `KIB_B_${state.jenis === 'kendaraan' ? 'Seluruh_Kendaraan' : 'Detail_Mesin'}_${month.value}.xlsx`;
+            const slugLokasi = String(state.lokasi?.nama || 'Lokasi')
+                .normalize('NFKD').replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 48);
+            link.download = `KIB_B_${state.jenis === 'kendaraan' ? 'Seluruh_Kendaraan' : `Lokasi_${slugLokasi}`}_${month.value}.xlsx`;
             document.body.appendChild(link);
             link.click(); link.remove();
             setTimeout(() => URL.revokeObjectURL(url), 10000);

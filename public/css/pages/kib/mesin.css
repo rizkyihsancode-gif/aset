@@ -5112,3 +5112,132 @@ min-height: 39px;
     .mesin-report-meta { grid-template-columns: 1fr; }
     .mesin-report-content { padding: 10px; }
 }
+
+/* ==========================================================================
+   K.I.B B — Identitas vertikal dan Print Excel per Lokasi / Semua Kendaraan
+   Semua selector dibatasi .mesin-page agar tidak menyentuh modul lain.
+   ========================================================================== */
+.mesin-page .mesin-identitas-ringkas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    width: min(100%, 510px);
+    margin: 12px 0 16px;
+    padding: 14px 17px;
+    border: 1px solid #dbe7f2;
+    border-left: 3px solid #0870d5;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f8fbff, #fff);
+    font-size: 11px;
+}
+.mesin-page .mesin-identitas-ringkas > div {
+    display: grid;
+    grid-template-columns: 125px minmax(0,1fr);
+    gap: 7px;
+    align-items: start;
+    line-height: 1.5;
+}
+.mesin-page .mesin-identitas-ringkas strong {
+    color: #164977;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+.mesin-page .mesin-identitas-ringkas span { color: #324d6b; overflow-wrap: anywhere; }
+.mesin-page .mesin-sheet-identitas { margin: 0 0 13px; }
+.mesin-page .mesin-sheet-actions-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 11px 13px;
+    margin: 0 0 14px;
+    border: 1px solid #c9e5d9;
+    border-radius: 10px;
+    background: #f3fbf7;
+}
+.mesin-page .mesin-sheet-actions-top > div { display: grid; gap: 3px; }
+.mesin-page .mesin-sheet-actions-top strong { font-size: 12px; color: #175d48; }
+.mesin-page .mesin-sheet-actions-top small { font-size: 11px; color: #5b8173; }
+.mesin-page .mesin-sheet-print-location,
+.mesin-page .mesin-kendaraan-actions .mesin-report-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 45px;
+    padding: 9px 17px;
+    border: 1px solid #0a7959;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #13a57b 0%, #08755b 100%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 5px 15px rgba(9,118,89,.17);
+    white-space: normal;
+    text-align: center;
+    cursor: pointer;
+    transition: box-shadow .18s ease, transform .18s ease;
+}
+.mesin-page .mesin-sheet-print-location:hover,
+.mesin-page .mesin-kendaraan-actions .mesin-report-button:hover {
+    background: linear-gradient(135deg,#0c9270,#075c48);
+    box-shadow: 0 7px 17px rgba(9,118,89,.24);
+    transform: translateY(-1px);
+}
+.mesin-page .mesin-sheet-print-location svg,
+.mesin-page .mesin-kendaraan-actions .mesin-report-button svg {
+    width: 17px;
+    height: 17px;
+    flex: none;
+}
+.mesin-page .mesin-kendaraan-scroll { overflow: auto; max-width: 100%; }
+.mesin-page .mesin-kendaraan-table {
+    width: max-content;
+    min-width: 1950px;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 11px;
+}
+.mesin-page .mesin-kendaraan-table th,
+.mesin-page .mesin-kendaraan-table td {
+    border: 1px solid #cbd8e7;
+    padding: 8px 10px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 65px;
+}
+.mesin-page .mesin-kendaraan-table th {
+    background: #e8f1fb;
+    color: #173d67;
+    line-height: 1.3;
+    font-weight: 800;
+}
+.mesin-page .mesin-kendaraan-table .mesin-kendaraan-nama { min-width: 165px; }
+.mesin-page .mesin-kendaraan-table td:nth-child(3) { min-width: 160px; }
+.mesin-page .mesin-kendaraan-table td:nth-child(10),
+.mesin-page .mesin-kendaraan-table td:nth-child(11) { min-width: 128px; }
+.mesin-page .mesin-kendaraan-table td:nth-child(15) { min-width: 185px; }
+.mesin-page .mesin-kendaraan-table .mesin-kendaraan-status { min-width: 130px; }
+.mesin-page .mesin-kendaraan-table .pajak-row-actions { min-width: 114px; }
+.mesin-page .mesin-kendaraan-table .mesin-uninventoried { margin: 5px auto 0; }
+/* Preview mengikuti urutan metadata seperti kop Excel; tidak dua kolom berdampingan. */
+.mesin-page .mesin-report-meta { display: grid; grid-template-columns: 1fr; gap: 4px; width: fit-content; max-width: 100%; }
+.mesin-page .mesin-report-meta div { display: grid; grid-template-columns: 145px minmax(0,1fr); gap: 7px; }
+.mesin-page .mesin-report-meta b { min-width: 0; }
+@media(max-width:780px) {
+    .mesin-page .mesin-identitas-ringkas { width: 100%; }
+    .mesin-page .mesin-sheet-actions-top { align-items: stretch; }
+    .mesin-page .mesin-sheet-print-location { width: 100%; }
+    .mesin-page .mesin-kendaraan-actions { justify-content: flex-start; width: 100%; }
+}
+@media(max-width:480px) {
+    .mesin-page .mesin-identitas-ringkas > div { grid-template-columns: 100px minmax(0,1fr); }
+    .mesin-page .mesin-report-meta div { grid-template-columns: 110px minmax(0,1fr); }
+}
+@media(prefers-reduced-motion:reduce) {
+    .mesin-page .mesin-sheet-print-location,
+    .mesin-page .mesin-kendaraan-actions .mesin-report-button { transition: none; }
+}

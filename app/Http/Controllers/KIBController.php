@@ -10725,12 +10725,106 @@ class KIBController extends Controller
      * Sumber laporan kendaraan seluruhnya atau satu data mesin saat Detail.
      * Read-only, tidak melakukan pembaruan nilai_aktivas / mesins.
      */
+    /**
+     * Excel 17 kolom untuk SELURUH barang dalam satu lokasi K.I.B B.
+     * Cocok untuk tombol Print Excel pada Detail lokasi (misal AWS: 5 barang).
+     * Tidak mengubah tabel, transaksi, atau daftar pajak.
+     */
+    private function laporanMesinPerLokasiKibB(int $lokasiId): \Illuminate\Http\JsonResponse
+    {
+        $lokasi = DB::table('lokasis')->where('id', $lokasiId)
+            ->first(['id', 'lokasi', 'alamat']);
+        abort_unless($lokasi, 404, 'Lokasi peralatan dan mesin tidak ditemukan.');
+
+        $barang = DB::table('mesins as m')
+            ->leftJoin('barangs as b', 'b.id', '=', 'm.id_barang')
+            ->leftJoin('departemens as d', 'd.id', '=', 'm.id_departemen')
+            ->leftJoin('divisis as dv', 'dv.id', '=', 'm.id_div')
+            ->leftJoin('nilai_aktivas as n', 'n.id', '=', 'm.id_voucher2')
+            ->leftJoin('aktivas as a', 'a.id', '=', DB::raw('COALESCE(n.id_aktiva, m.id_aktiva)'))
+            ->where('m.id_lokasi', $lokasiId)
+            ->select(
+                'm.*',
+                'b.nama_barang',
+                'b.kode_barang',
+                'd.nama_dep as departemen',
+                'dv.nama_div as divisi',
+                'a.kode as kode_aktiva'
+            )
+            ->orderBy('m.id')
+            ->get();
+
+        // Metadata hanya menyatakan nilai departemen/divisi ketika seragam.
+        // Kalau lokasi berisi beberapa unit kerja, jangan menebak satu nama.
+        $identitas = static function ($values): string {
+            $unique = collect($values)->map(static fn($v) => trim((string) ($v ?? '')))
+                ->filter()->unique()->values();
+            if ($unique->count() === 0) return '-';
+            return $unique->count() === 1 ? $unique->first() : 'BERAGAM';
+        };
+
+        $data = $barang->map(static function ($m): array {
+            return [
+                'mesin_id' => (int) $m->id,
+                'nama_barang' => (string) ($m->nama_barang ?? ''),
+                'kode_barang' => (string) ($m->kode ?? $m->kode_barang ?? ''),
+                'register' => (string) ($m->reg ?? ''),
+                'merk' => (string) ($m->merk ?? ''),
+                'ukuran' => (string) ($m->ukuran ?? ''),
+                'fungsi' => (string) ($m->fungsi ?? ''),
+                'penggunaan' => (string) ($m->guna ?? ''),
+                'bahan' => (string) ($m->bahan ?? ''),
+                'kondisi' => (string) ($m->kondisi ?? ''),
+                'tahun' => $m->tahun ?? null,
+                'asal' => (string) ($m->asal ?? ''),
+                'no_dokumen' => !empty($m->dok) && $m->dok !== '-' ? 'Ada PDF' : '-',
+                'harga' => $m->harga ?? null,
+                'keterangan' => (string) ($m->ket ?? ''),
+                'lokasi' => (string) ($m->lokasi ?? ''),
+                'kode_aktiva' => (string) ($m->kode_aktiva ?? ''),
+            ];
+        })->values()->all();
+
+        return response()->json([
+            'success' => true,
+            'jenis' => 'mesin',
+            'cakupan' => 'lokasi',
+            'lokasi' => [
+                'id' => (int) $lokasi->id,
+                'nama' => (string) ($lokasi->lokasi ?? ''),
+                'alamat' => (string) ($lokasi->alamat ?? ''),
+            ],
+            'jumlah' => count($data),
+            'data' => $data,
+            'sdm' => $this->sdmAktifKibB(),
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                'departemen' => $identitas($barang->pluck('departemen')),
+                'divisi' => $identitas($barang->pluck('divisi')),
+            ],
+        ]);
+    }
+
     public function laporanMesinKibB(Request $request): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
+            'lokasi_id' => ['nullable', 'integer', 'min:1', 'exists:lokasis,id'],
+            // Kompatibilitas kode pemanggil lama. Tombol baru selalu mengirim lokasi_id.
             'mesin_id' => ['nullable', 'integer', 'min:1'],
         ]);
+        $lokasiId = isset($validated['lokasi_id']) ? (int) $validated['lokasi_id'] : null;
         $mesinId = isset($validated['mesin_id']) ? (int) $validated['mesin_id'] : null;
+
+        if ($lokasiId !== null && $mesinId !== null) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'lokasi_id' => 'Pilih lokasi ATAU satu barang, bukan keduanya.',
+            ]);
+        }
+        if ($lokasiId !== null) {
+            return $this->laporanMesinPerLokasiKibB($lokasiId);
+        }
         if ($mesinId !== null) {
             $m = DB::table('mesins as m')
                 ->leftJoin('barangs as b', 'b.id', '=', 'm.id_barang')
@@ -10747,7 +10841,7 @@ class KIBController extends Controller
                 )
                 ->first();
             abort_unless($m, 404);
-            // Form K.I.B B Mesin (17 kolom), per satu barang inventaris.
+            // Mode kompatibilitas laporan satu item; tombol Detail kini memakai lokasi_id.
             $rows = [[
                 'mesin_id' => (int) $m->id,
                 'nama_barang' => $m->nama_barang ?? '',
