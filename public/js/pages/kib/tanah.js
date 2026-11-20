@@ -4347,7 +4347,7 @@ async function loadPending()
 
     /**
      * ========================================================================
-     * 34. PRINT EXCEL K.I.B A — SATU LOKASI, SEMUA SERTIFIKAT
+     * 34. PRINT EXCEL K.I.B A — SELURUH MENU TANAH (LINTAS LOKASI)
      * ========================================================================
      * - Penandatangan berasal dari Master SDM Pendukung (ID tersimpan di form).
      * - Laporan dibaca ulang dari endpoint khusus, tidak dari pagination.
@@ -4597,7 +4597,7 @@ async function loadPending()
         ].join('');
         const body = rows.map((item, i) => {
             const values = [
-                i + 1, item.alamat || loc.alamat || loc.lokasi,
+                i + 1, item.alamat || item.lokasi || loc.alamat || loc.lokasi,
                 item.nama_barang, item.kode_barang,
                 reportNomorDanTanggal(item.no_tunjuk, item.tgl_tunjuk),
                 item.tahun, item.luas_tunjuk, item.hak,
@@ -4624,7 +4624,7 @@ async function loadPending()
                 <div class="tanah-report-paper-title">
                     <strong>KARTU INVENTARIS BARANG (K.I.B)</strong>
                     <strong>A. KARTU INVENTARIS TANAH</strong>
-                    <span>S/D BULAN ${escapeHtml(reportPeriodName().toUpperCase())}</span>
+                    <span>PERIODE ${escapeHtml(reportPeriodName().toUpperCase())}</span>
                 </div>
             </div>
             <div class="tanah-report-meta">${metaHtml}</div>
@@ -4642,13 +4642,13 @@ async function loadPending()
         if (!tanahReportSource) return;
 
         if (!reportTableRows().length) {
-            reportSetMessage('Lokasi ini tidak memiliki sertifikat untuk dicetak.', true);
+            reportSetMessage('Belum ada data Tanah untuk dicetak.', true);
         } else if (!reportPeriodName()) {
             reportSetMessage('Pilih bulan dan tahun periode laporan.');
         } else if (!ready) {
             reportSetMessage('Pilih keempat penandatangan dari Master SDM Pendukung untuk menampilkan preview.');
         } else {
-            reportSetMessage(`Preview siap: ${integerFormatter.format(reportTableRows().length)} data Tanah dalam satu lokasi.`);
+            reportSetMessage(`Preview siap: ${integerFormatter.format(reportTableRows().length)} data Tanah dari seluruh lokasi.`);
             reportPreview.innerHTML = reportRenderPaper();
             const total = $('#tanahReportTotal');
             if (total) total.textContent = `${integerFormatter.format(reportTableRows().length)} sertifikat`;
@@ -4656,11 +4656,6 @@ async function loadPending()
     }
 
     $('#tanahReportOpen')?.addEventListener('click', async () => {
-        if (!activeLocationId) {
-            notify('Buka detail lokasi Tanah sebelum mencetak laporan.', true);
-            return;
-        }
-
         const mySequence = ++tanahReportSequence;
         tanahReportSource = null;
         tanahReportStaff = [];
@@ -4674,22 +4669,22 @@ async function loadPending()
         reportCloseSuggestions();
         if (reportPeriod) reportPeriod.value = reportDefaultMonth();
         const locationText = $('#tanahReportLocation');
-        if (locationText) locationText.textContent = `Lokasi: ${activeLocationName}`;
+        if (locationText) locationText.textContent = 'Cakupan: seluruh data Tanah pada semua lokasi';
         if (reportPreviewSection) reportPreviewSection.hidden = true;
-        reportSetMessage('Memuat seluruh sertifikat dan Master SDM Pendukung...');
+        reportSetMessage('Memuat seluruh data Tanah (semua lokasi) dan Master SDM Pendukung...');
         if (reportDownloadButton) reportDownloadButton.disabled = true;
         if (reportPrintButton) reportPrintButton.disabled = true;
         openDialog('tanahReportModal');
 
         try {
             const data = await getJson(
-                `${LOCATION_URL}/${encodeURIComponent(activeLocationId)}/laporan`
+                `${BASE_URL}/laporan`
             );
             if (mySequence !== tanahReportSequence) return;
             tanahReportSource = data;
             tanahReportStaff = Array.isArray(data.sdm) ? data.sdm : [];
             if (locationText) locationText.textContent =
-                `Lokasi: ${data.lokasi?.lokasi || activeLocationName} · ${data.jumlah || 0} data`;
+                `Cakupan: seluruh menu K.I.B A · ${data.jumlah || 0} data dari semua lokasi`;
             if (!tanahReportStaff.length) {
                 reportSetMessage('Tidak ada SDM aktif di Master SDM Pendukung. Aktifkan data SDM sebelum mencetak.', true);
             } else {
@@ -4814,23 +4809,33 @@ async function loadPending()
         const merges = [];
         const heights = new Map();
         let finalRow = 18 + rows.length;
+        // Satu koordinat Excel hanya boleh menghasilkan satu elemen <c>.
+        // Penting untuk sel merge: seluruh sel header harus memiliki border,
+        // agar garis tabel tidak hilang ketika workbook diperbesar/diperkecil.
         const put = (r, col, value, style = 0, numeric = false) => {
-            if (!entries.has(r)) entries.set(r, []);
-            entries.get(r).push({ col, value: value ?? '', style, numeric });
+            if (!entries.has(r)) entries.set(r, new Map());
+            entries.get(r).set(col, { col, value: value ?? '', style, numeric });
         };
         const merged = (r1, col1, r2, col2, value, style = 0) => {
-            put(r1, col1, value, style);
+            for (let row = r1; row <= r2; row++) {
+                for (let col = col1; col <= col2; col++) {
+                    const isPrimary = row === r1 && col === col1;
+                    // Border + fill dibentuk pada setiap sel penyusun merge,
+                    // bukan hanya pada sel pojok kiri atas.
+                    put(row, col, isPrimary ? value : '', style);
+                }
+            }
             merges.push(`${reportColumnName(col1)}${r1}:${reportColumnName(col2)}${r2}`);
         };
         const blank = value => reportCellValue(value);
 
         // Area identitas perusahaan dan laporan (logo A1:B5).
         if (logoBytes?.length) merges.push('A1:B5');
-        merged(2, 4, 2, 7, 'PERUMDA TIRTA KENCANA', 13);
-        merged(3, 4, 3, 7, 'KOTA SAMARINDA', 13);
-        merged(2, 8, 2, 13, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
-        merged(3, 8, 3, 13, 'A. KARTU INVENTARIS TANAH', 2);
-        merged(4, 8, 4, 13, `S/D BULAN ${reportPeriodName().toUpperCase()}`, 2);
+        merged(2, 3, 2, 5, 'PERUMDA TIRTA KENCANA', 13);
+        merged(3, 3, 3, 5, 'KOTA SAMARINDA', 13);
+        merged(2, 7, 2, 13, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
+        merged(3, 7, 3, 13, 'A. KARTU INVENTARIS TANAH', 2);
+        merged(4, 7, 4, 13, `PERIODE ${reportPeriodName().toUpperCase()}`, 2);
         heights.set(1, 26);
         heights.set(2, 28);
         heights.set(3, 24);
@@ -4871,7 +4876,7 @@ async function loadPending()
         rows.forEach((item, index) => {
             const r = h + 3 + index;
             const data = [
-                index + 1, blank(item.alamat || loc.alamat || loc.lokasi),
+                index + 1, blank(item.alamat || item.lokasi || loc.alamat || loc.lokasi),
                 blank(item.nama_barang), blank(item.kode_barang),
                 reportNomorDanTanggal(item.no_tunjuk, item.tgl_tunjuk),
                 blank(item.tahun), blank(item.luas_tunjuk), blank(item.hak),
@@ -4908,7 +4913,7 @@ async function loadPending()
             `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`
         ).join('');
         const rowXml = [...entries.keys()].sort((a, b) => a - b).map(r => {
-            const cells = entries.get(r).sort((a, b) => a.col - b.col).map(entry => {
+            const cells = [...entries.get(r).values()].sort((a, b) => a.col - b.col).map(entry => {
                 const address = `${reportColumnName(entry.col)}${r}`;
                 if (entry.numeric) return `<c r="${address}" s="${entry.style}"><v>${entry.value}</v></c>`;
                 const value = reportXmlEscape(entry.value);
@@ -4943,18 +4948,25 @@ async function loadPending()
             '<font><u/><b/><sz val="10"/><name val="Arial"/></font>',
         ].join('');
         const fill = '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD5DFEA"/><bgColor indexed="64"/></patternFill></fill></fills>';
-        const border = '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF52616E"/></left><right style="thin"><color rgb="FF52616E"/></right><top style="thin"><color rgb="FF52616E"/></top><bottom style="thin"><color rgb="FF52616E"/></bottom><diagonal/></border></borders>';
+        // Border tegas: 1 = isi tabel, 2 = header (lebih jelas saat zoom).
+        const borderColor = 'FF354454';
+        const borderEdges = line => `<left style="${line}"><color rgb="${borderColor}"/></left>`
+            + `<right style="${line}"><color rgb="${borderColor}"/></right>`
+            + `<top style="${line}"><color rgb="${borderColor}"/></top>`
+            + `<bottom style="${line}"><color rgb="${borderColor}"/></bottom><diagonal/>`;
+        const border = `<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border>`
+            + `<border>${borderEdges('thin')}</border><border>${borderEdges('medium')}</border></borders>`;
         const xfs = [
             [0, 0, 0, 'left', 'center', 1],
             [1, 0, 0, 'center', 'center', 1],
             [2, 0, 0, 'center', 'center', 1],
             [3, 0, 0, 'left', 'center', 1],
             [0, 0, 0, 'left', 'center', 1],
-            [3, 2, 1, 'center', 'center', 1],
-            [0, 0, 1, 'left', 'top', 1],
-            [0, 0, 1, 'center', 'top', 1],
-            [0, 0, 1, 'right', 'top', 1],
-            [3, 2, 1, 'center', 'center', 1],
+            [3, 2, 2, 'center', 'center', 1],
+            [0, 0, 1, 'center', 'center', 1],
+            [0, 0, 1, 'center', 'center', 1],
+            [0, 0, 1, 'center', 'center', 1],
+            [3, 2, 2, 'center', 'center', 1],
             [2, 0, 0, 'center', 'center', 1],
             [0, 0, 0, 'center', 'center', 1],
             [4, 0, 0, 'center', 'center', 1],
@@ -4979,7 +4991,7 @@ async function loadPending()
             packageFiles.push(
                 { name: 'xl/worksheets/_rels/sheet1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>` },
                 { name: 'xl/drawings/_rels/drawing1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/image" Target="../media/image1.png"/></Relationships>` },
-                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:ext cx="780000" cy="950000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` },
+                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>120000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>20000</xdr:rowOff></xdr:from><xdr:ext cx="660000" cy="860000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` },
                 { name: 'xl/media/image1.png', data: logoBytes },
             );
         }
@@ -5000,9 +5012,7 @@ async function loadPending()
                 console.warn('Logo Excel tidak ditemukan, file tetap dibuat.', imageError);
             }
             const file = reportBuildXlsx(logoBytes);
-            const safeLocation = String(tanahReportSource.lokasi?.lokasi || 'Lokasi')
-                .replace(/[^a-zA-Z0-9\-_ ]/g, '').trim().replace(/\s+/g, '_').slice(0, 55);
-            const name = `KIB_A_Tanah_${safeLocation || 'Lokasi'}_${reportPeriod.value}.xlsx`;
+            const name = `KIB_A_Tanah_Seluruh_Data_${reportPeriod.value}.xlsx`;
             const link = document.createElement('a');
             const url = URL.createObjectURL(file);
             link.href = url;
@@ -5028,7 +5038,7 @@ async function loadPending()
             return;
         }
         const stylesUrl = escapeHtml(root.dataset.reportCssUrl || '');
-        const title = escapeHtml(`K.I.B A Tanah - ${tanahReportSource.lokasi?.lokasi || 'Lokasi'}`);
+        const title = escapeHtml('K.I.B A Tanah - Seluruh Lokasi');
         printWindow.document.open();
         printWindow.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8">
             <title>${title}</title><link rel="stylesheet" href="${stylesUrl}">
@@ -5036,13 +5046,18 @@ async function loadPending()
                 @page { size: A3 landscape; margin: 10mm; }
                 html, body { margin:0; padding:0; background:#fff; color:#111; }
                 .tanah-report-paper { font-family:Arial,sans-serif; font-size:10px; width:100%; min-width:0; box-sizing:border-box; padding:0; box-shadow:none; }
-                .tanah-report-paper-header { display:grid; grid-template-columns:80px 1fr 1.5fr; gap:12px; align-items:center; }
-                .tanah-report-paper-logo { width:65px; height:78px; object-fit:contain; }
+                .tanah-report-paper-header { display:grid; grid-template-columns:88px minmax(240px,0.82fr) minmax(420px,1.45fr); gap:10px; align-items:start; }
+                .tanah-report-paper-logo { width:68px; height:82px; object-fit:contain; margin-left:8px; }
                 .tanah-report-meta { width:60%; }
                 .tanah-report-paper-table { font-size:9px; page-break-inside:auto; }
                 .tanah-report-paper-table thead { display:table-header-group; }
                 .tanah-report-paper-table tr { page-break-inside:avoid; }
                 .tanah-report-signatures { break-inside:avoid; }
+                .tanah-report-paper-table th, .tanah-report-paper-table td {
+                    border:1px solid #354454;
+                    text-align:center;
+                    vertical-align:middle;
+                }
                 .tanah-report-paper-table td { overflow-wrap:anywhere; }
                 @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
             </style></head><body><main class="tanah-report-paper">${reportRenderPaper()}</main></body></html>`);

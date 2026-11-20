@@ -1658,6 +1658,67 @@ class KIBController extends Controller
         ]);
     }
 
+    /**
+     * Seluruh sertifikat K.I.B A Tanah pada semua lokasi di menu utama.
+     *
+     * Method baru yang berdiri sendiri: laporanTanahLokasi() tetap dipertahankan.
+     * Tidak ada pagination, mutasi database, atau kolom status kepemilikan
+     * yang ditambahkan secara khusus ke hasil cetak.
+     */
+    public function laporanTanah()
+    {
+        // Menu utama hanya menampilkan lokasi yang valid (inner join lokasis).
+        // Samakan cakupan ekspor supaya record di setiap lokasi yang tampil
+        // masuk seluruhnya, termasuk bila satu lokasi punya banyak sertifikat.
+        $items = $this->sertifikatQuery()
+            ->whereNotNull('l.id')
+            ->orderBy('l.lokasi', 'asc')
+            ->orderBy('t.id', 'asc')
+            ->get();
+
+        // Dropdown penandatangan memakai data yang sudah ada di Master SDM.
+        $sdm = collect();
+        if (Schema::hasTable('sdms') && Schema::hasTable('jabatans')) {
+            $sdm = DB::table('sdms as s')
+                ->leftJoin('jabatans as j', 'j.id', '=', 's.id_jabat')
+                ->when(
+                    Schema::hasColumn('sdms', 'status'),
+                    fn($query) => $query->where('s.status', 'aktif')
+                )
+                ->whereNotNull('s.nama_sdm')
+                ->whereRaw("BTRIM(s.nama_sdm) <> ''")
+                ->orderBy('s.nama_sdm')
+                ->get(['s.id', 's.nama_sdm', 's.nip', 'j.jabat'])
+                ->map(static fn($orang) => [
+                    'id' => (int) $orang->id,
+                    'nama' => trim((string) $orang->nama_sdm),
+                    'nip' => trim((string) ($orang->nip ?? '')),
+                    'jabatan' => trim((string) ($orang->jabat ?? '')),
+                ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'cakupan' => 'seluruh_menu_tanah',
+            'lokasi' => [
+                'lokasi' => 'SELURUH LOKASI',
+                'alamat' => 'BERBAGAI LOKASI',
+            ],
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                // Laporan lintas lokasi/departemen tidak boleh memakai
+                // identitas satu sertifikat tertentu sebagai identitas global.
+                'departemen' => 'SELURUH DEPARTEMEN',
+                'divisi' => 'SELURUH DIVISI',
+            ],
+            'jumlah' => $items->count(),
+            'data' => $items,
+            'sdm' => $sdm,
+        ]);
+    }
+
     public function lokasiPdf(int $lokasi)
     {
         abort_unless(DB::table('lokasis')->where('id', $lokasi)->exists(), 404);

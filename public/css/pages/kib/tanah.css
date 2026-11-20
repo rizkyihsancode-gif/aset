@@ -4426,6 +4426,19 @@ dl > div:last-child {
     cursor: pointer;
 }
 
+/* Tombol global di header: tidak bergantung pada modal Detail lokasi. */
+.tanah-page .tanah-hero-actions .tanah-report-open-button {
+    min-height: 43px;
+    padding-inline: 15px;
+    background: #087b55;
+    border-color: #087b55;
+    box-shadow: 0 8px 20px rgba(8, 123, 85, .17);
+}
+
+.tanah-page .tanah-hero-actions .tanah-report-open-button:hover {
+    background: #066647;
+}
+
 .tanah-page .tanah-report-open-button svg,
 .tanah-page .tanah-report-download-button svg,
 .tanah-page .tanah-report-print-button svg {
@@ -4657,22 +4670,28 @@ dl > div:last-child {
 
 .tanah-report-paper-header {
     display: grid;
-    grid-template-columns: 100px minmax(310px, 1fr) minmax(450px, 1.3fr);
-    gap: 16px;
-    align-items: center;
+    grid-template-columns: 88px minmax(240px, 0.82fr) minmax(420px, 1.45fr);
+    gap: 10px;
+    align-items: start;
     margin-bottom: 12px;
 }
 
 .tanah-report-paper-logo {
-    width: 75px;
-    max-height: 95px;
+    width: 68px;
+    max-height: 86px;
     object-fit: contain;
+    margin-left: 8px;
+}
+
+.tanah-report-paper-company {
+    align-self: center;
 }
 
 .tanah-report-paper-company strong,
 .tanah-report-paper-company span {
     display: block;
-    line-height: 1.6;
+    line-height: 1.35;
+    text-align: left;
 }
 
 .tanah-report-paper-company strong {
@@ -4681,6 +4700,7 @@ dl > div:last-child {
 
 .tanah-report-paper-title {
     text-align: center;
+    align-self: center;
 }
 
 .tanah-report-paper-title strong,
@@ -4718,7 +4738,8 @@ dl > div:last-child {
     border: 1px solid #465565;
     padding: 5px 6px;
     overflow-wrap: anywhere;
-    vertical-align: top;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .tanah-report-paper-table thead th {
@@ -4808,4 +4829,10 @@ dl > div:last-child {
     .tanah-report-footer { padding: 12px; }
     .tanah-report-footer-actions { width: 100%; }
     .tanah-report-footer-actions button { flex: 1; }
+}
+
+@media (max-width: 600px) {
+    .tanah-page .tanah-hero-actions .tanah-report-open-button {
+        width: 100%;
+    }
 }

@@ -494,14 +494,12 @@ Route::prefix('kib')
         | CRUD SERTIFIKAT DAN PDF TANAH — CONTROLLER YANG SAMA
         |--------------------------------------------------------------
         */
-        // Data cetak K.I.B A: semua sertifikat satu lokasi + SDM Pendukung.
-        // Diletakkan sebelum route dinamis /tanah/{tanah}.
+        // Laporan lengkap K.I.B A: SELURUH Tanah lintas lokasi,
+        // bukan per Detail dan tidak terbatasi pagination.
         Route::get(
-            '/tanah/lokasi/{lokasi}/laporan',
-            [KIBController::class, 'laporanTanahLokasi']
-        )
-            ->whereNumber('lokasi')
-            ->name('tanah.laporan');
+            '/tanah/laporan',
+            [KIBController::class, 'laporanTanah']
+        )->name('tanah.laporan');
 
         Route::get(
             '/tanah/lokasi/{lokasi}/sertifikat',

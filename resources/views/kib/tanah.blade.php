@@ -191,6 +191,12 @@
                     </div>
 
 
+                    {{-- Print Excel berada di level menu karena mencakup SEMUA data Tanah. --}}
+                    <button type="button" class="tanah-report-open-button" id="tanahReportOpen">
+                        <i data-lucide="file-spreadsheet"></i>
+                        Print Excel Seluruh Tanah
+                    </button>
+
                     <button type="button" class="tanah-add-button" id="tanahAddButton">
 
                         <i data-lucide="plus"></i>
@@ -1718,10 +1724,6 @@
                                     aria-label="Cari dalam daftar sertifikat Tanah" autocomplete="off">
                             </label>
                             <span id="tanahLegacyRecordCount" class="tanah-sheet-total">0 data</span>
-                            <button type="button" class="tanah-report-open-button" id="tanahReportOpen">
-                                <i data-lucide="file-spreadsheet"></i>
-                                Print Excel
-                            </button>
                         </div>
                     </div>
 
@@ -1839,7 +1841,7 @@
 
         {{-- =========================================================
              CETAK K.I.B A — PERIODE, PENANDATANGAN, PREVIEW, XLSX
-             Laporan mencakup seluruh sertifikat di lokasi aktif.
+             Laporan mencakup seluruh sertifikat Tanah lintas lokasi.
              Status kepemilikan dan kolom lampiran tidak diekspor.
         ========================================================== --}}
         <dialog class="tanah-modal tanah-report-modal" id="tanahReportModal" aria-labelledby="tanahReportTitle">
@@ -1847,7 +1849,7 @@
                 <div>
                     <span class="tanah-modal-eyebrow">LAPORAN KARTU INVENTARIS BARANG (K.I.B A)</span>
                     <h3 id="tanahReportTitle">Print Excel — Tanah</h3>
-                    <p id="tanahReportLocation">Pilih informasi penandatangan sebelum mencetak.</p>
+                    <p id="tanahReportLocation">Seluruh data Tanah dari semua lokasi pada menu K.I.B A.</p>
                 </div>
                 <button type="button" class="tanah-modal-close" data-close-dialog="tanahReportModal"
                     aria-label="Tutup cetak Tanah">
@@ -1898,7 +1900,7 @@
             </div>
 
             <footer class="tanah-report-footer">
-                <span>File Excel mengikuti 13 kolom K.I.B A; tanpa Status Kepemilikan dan Lampiran.</span>
+                <span>Seluruh lokasi · 13 kolom K.I.B A · tanpa Status Kepemilikan dan Lampiran.</span>
                 <div class="tanah-report-footer-actions">
                     <button type="button" class="tanah-button-secondary"
                         data-close-dialog="tanahReportModal">Batal</button>
