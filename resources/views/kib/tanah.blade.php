@@ -103,7 +103,7 @@
 
     <div id="tanahPage" class="tanah-page" data-store-url="{{ url('/kib/tanah') }}"
         data-record-base-url="{{ url('/kib/tanah') }}" data-location-base-url="{{ url('/kib/tanah/lokasi') }}"
-        data-pending-url="{{ url('/kib/pending/tanah') }}" data-report-logo-url="{{ asset('images/logo.png') }}"
+        data-pending-url="{{ url('/kib/pending/tanah') }}" data-report-logo-url="{{ asset('images/logo_hr.png') }}"
         data-report-css-url="{{ asset('css/pages/kib/tanah.css') }}" data-has-errors="{{ $errors->any() ? '1' : '0' }}">
 
 

@@ -4669,38 +4669,35 @@ dl > div:last-child {
 }
 
 .tanah-report-paper-header {
-    display: grid;
-    grid-template-columns: 88px minmax(240px, 0.82fr) minmax(420px, 1.45fr);
-    gap: 10px;
-    align-items: start;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 145px;
+    padding: 6px 12px;
     margin-bottom: 12px;
 }
 
+/* Logo horizontal asli sudah menyertakan nama Perumda dan kota. */
 .tanah-report-paper-logo {
-    width: 68px;
-    max-height: 86px;
-    object-fit: contain;
-    margin-left: 8px;
-}
-
-.tanah-report-paper-company {
-    align-self: center;
-}
-
-.tanah-report-paper-company strong,
-.tanah-report-paper-company span {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
     display: block;
-    line-height: 1.35;
-    text-align: left;
+    width: 395px;
+    max-width: 33%;
+    height: auto;
+    max-height: 130px;
+    margin: 0;
+    object-fit: contain;
 }
 
-.tanah-report-paper-company strong {
-    font-size: 13px;
-}
-
+/* Judul mengikuti pusat seluruh kertas/tabel, bukan kolom kanan. */
 .tanah-report-paper-title {
-    text-align: center;
+    width: 100%;
     align-self: center;
+    text-align: center;
 }
 
 .tanah-report-paper-title strong,
