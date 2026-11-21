@@ -1398,9 +1398,13 @@
         page: 1,
         groups: [],
         selected: null,
-        pagination: null
+        pagination: null,
+        currentItems: [],
+        activeItemId: null,
+        selectedItem: null
     };
 
+    let inspectSequence = 0;
     let groupRequest = null;
     let groupTimer = null;
 
@@ -1432,6 +1436,10 @@
 
         gs.page = 1;
         gs.q = '';
+        gs.activeItemId = null;
+        gs.selectedItem = null;
+        inspectSequence++;
+        if ($('aemGroupInspect')) $('aemGroupInspect').hidden = true;
 
         $('aemGroupSearch').value = '';
         $('aemGroupItemSearch').value = '';
@@ -1446,127 +1454,49 @@
 
     function renderGroups() {
         const container = $('aemGroupList');
-
         if (!container) return;
 
         container.replaceChildren();
-
-        const q = norm(
-            $('aemGroupSearch')?.value
-        );
-
-        const entries = gs.groups.filter(g =>
-            norm(
-                `${g.lokasi} ${g.divisi}`
-            ).includes(q)
+        const q = norm($('aemGroupSearch')?.value);
+        const entries = gs.groups.filter(group =>
+            norm(`${group.lokasi} ${group.divisi}`).includes(q)
         );
 
         if (!entries.length) {
-            container.append(
-                elem(
-                    'div',
-                    'aem-empty',
-                    'Tidak ada kelompok yang sesuai.'
-                )
-            );
-
+            container.append(elem('div', 'aem-empty', 'Tidak ada lokasi yang sesuai.'));
             return;
         }
 
-        const locations = new Map();
-
         entries.forEach(group => {
-            if (!locations.has(group.lokasi)) {
-                locations.set(
-                    group.lokasi,
-                    []
-                );
-            }
+            const button = elem('button', 'aem-location-card');
+            button.type = 'button';
+            const selected = gs.selected &&
+                gs.selected.lokasi === group.lokasi &&
+                gs.selected.divisi === group.divisi;
+            if (selected) button.classList.add('active');
+            button.setAttribute('aria-pressed', String(Boolean(selected)));
+            button.title = `Lokasi ${group.lokasi} · Divisi ${group.divisi}`;
 
-            locations
-                .get(group.lokasi)
-                .push(group);
-        });
-
-        locations.forEach((groups, location) => {
-            const section = elem(
-                'div',
-                'aem-group-location'
+            button.append(
+                elem('strong', '', group.lokasi),
+                elem('small', '', `Divisi: ${group.divisi}`),
+                elem('span', '', `${Number(group.jumlah || 0).toLocaleString('id-ID')} inventaris`)
             );
 
-            const title = elem(
-                'div',
-                'aem-group-location-title'
-            );
-
-            const folder = elem('i');
-
-            folder.setAttribute(
-                'data-lucide',
-                'folder'
-            );
-
-            title.append(
-                folder,
-                elem('span', '', location)
-            );
-
-            section.append(title);
-
-            groups.forEach(g => {
-                const button = elem(
-                    'button',
-                    'aem-group-select'
-                );
-
-                button.type = 'button';
-
-                const chosen =
-                    gs.selected &&
-                    gs.selected.lokasi === g.lokasi &&
-                    gs.selected.divisi === g.divisi;
-
-                if (chosen) {
-                    button.classList.add('active');
-                }
-
-                button.setAttribute(
-                    'aria-pressed',
-                    String(Boolean(chosen))
-                );
-
-                button.append(
-                    elem(
-                        'span',
-                        '',
-                        g.divisi
-                    ),
-
-                    elem(
-                        'span',
-                        '',
-                        g.jumlah
-                    )
-                );
-
-                button.addEventListener('click', () => {
-                    gs.lokasi = g.lokasi;
-                    gs.divisi = g.divisi;
-                    gs.page = 1;
-                    gs.q = '';
-
-                    $('aemGroupItemSearch').value = '';
-
-                    loadGroup();
-                });
-
-                section.append(button);
+            button.addEventListener('click', () => {
+                gs.lokasi = group.lokasi;
+                gs.divisi = group.divisi;
+                gs.page = 1;
+                gs.q = '';
+                gs.activeItemId = null;
+                gs.selectedItem = null;
+                inspectSequence++;
+                if ($('aemGroupInspect')) $('aemGroupInspect').hidden = true;
+                $('aemGroupItemSearch').value = '';
+                loadGroup();
             });
-
-            container.append(section);
+            container.append(button);
         });
-
-        icons();
     }
 
     /* ======================================================
@@ -1591,140 +1521,166 @@
 
     function renderGroupRows(items) {
         const tbody = $('aemGroupRows');
-
         if (!tbody) return;
-
         tbody.replaceChildren();
+        gs.currentItems = items;
 
         if (!items.length) {
             const tr = elem('tr');
-
-            cell(
-                tr,
-                'Tidak ada barang pada kelompok ini.',
-                'aem-empty'
-            ).colSpan = 12;
-
+            cell(tr, 'Tidak ada barang pada kelompok ini.', 'aem-empty').colSpan = 12;
             tbody.append(tr);
-
             return;
         }
 
-        const start = Number(
-            gs.pagination?.from ?? 1
-        );
+        const start = Number(gs.pagination?.from ?? 1);
 
         items.forEach((item, index) => {
-            const tr = elem('tr');
+            const tr = elem('tr', 'aem-inventory-row');
+            tr.dataset.aemRowId = String(item.id);
+            tr.tabIndex = 0;
+            tr.setAttribute('aria-label', `Lihat lampiran ${showValue(item.nama_aset)}`);
+            if (Number(gs.activeItemId) === Number(item.id)) tr.classList.add('is-selected');
 
-            const condition =
-                conditions[
-                    String(item.kondisi ?? '')
-                        .trim()
-                        .toUpperCase()
-                ] || showValue(item.kondisi);
-
-            /*
-             * KOLOM 1–11
-             * URUTAN WAJIB SAMA DENGAN EXCEL
-             */
-
+            const condition = conditions[String(item.kondisi ?? '').trim().toUpperCase()] ||
+                showValue(item.kondisi);
             const values = [
-                // 1. No.
                 start + index,
-
-                // 2. Nama Barang
                 showValue(item.nama_aset),
-
-                // 3. Kode Barang
                 showValue(item.kode_inventaris),
-
-                // 4. Register
                 showValue(item.nomor_register),
-
-                // 5. Kondisi Barang
                 condition,
-
-                // 6. Bahan
                 showValue(item.bahan),
-
-                // 7. Tahun
                 showValue(item.tahun),
-
-                // 8. Jumlah
-                item.jumlah_unit == null
-                    ? '—'
-                    : `${Number(item.jumlah_unit)
-                        .toLocaleString('id-ID')} buah`,
-
-                // 9. Asal Perolehan
+                item.jumlah_unit == null ? '—' :
+                    `${Number(item.jumlah_unit).toLocaleString('id-ID')} buah`,
                 showValue(item.asal_perolehan),
-
-                // 10. Keterangan
                 showValue(item.keterangan),
-
-                // 11. Status Kepemilikan
-                labelKepemilikan(item.status_kepemilikan)
+                labelKepemilikan(item.status_kepemilikan),
             ];
 
             values.forEach((value, i) => {
-                const centered =
-                    [0, 6, 7].includes(i);
-
-                cell(
-                    tr,
-                    value,
-                    centered
-                        ? 'aem-center'
-                        : i === 9
-                            ? 'aem-kib-notes'
-                            : ''
-                );
+                cell(tr, value, [0, 6, 7].includes(i) ? 'aem-center' :
+                    i === 9 ? 'aem-kib-notes' : '');
             });
 
-            /*
-             * KOLOM 12 — TOMBOL VIEW
-             * Tidak ada kolom foto tambahan.
-             */
-
-            const button = elem(
-                'button',
-                'aem-icon view'
-            );
-
+            const button = elem('button', 'aem-icon view');
             button.type = 'button';
-
-            button.title =
-                'Lihat Detail KIB E';
-
-            button.dataset.aemAction = 'view';
-            button.dataset.id = String(item.id);
-
-            button.setAttribute(
-                'aria-label',
-                `Lihat detail ${showValue(item.nama_aset)}`
-            );
-
+            button.dataset.aemInspect = String(item.id);
+            button.title = 'Lihat lampiran dan tindakan';
+            button.setAttribute('aria-label', `Pilih ${showValue(item.nama_aset)}`);
             const eye = elem('i');
-
-            eye.setAttribute(
-                'data-lucide',
-                'eye'
-            );
-
+            eye.setAttribute('data-lucide', 'eye');
             button.append(eye);
-
-            cell(
-                tr,
-                button,
-                'aem-center'
-            );
-
+            cell(tr, button, 'aem-center');
             tbody.append(tr);
         });
-
         icons();
     }
+
+    function markSelectedGroupRow(id) {
+        $('aemGroupRows')?.querySelectorAll('[data-aem-row-id]').forEach(row => {
+            row.classList.toggle('is-selected', Number(row.dataset.aemRowId) === Number(id));
+        });
+    }
+
+    function buildInspectFiles(item) {
+        const photoTarget = $('aemInspectPhoto');
+        const docTarget = $('aemInspectDocs');
+        if (!photoTarget || !docTarget) return;
+        photoTarget.replaceChildren();
+        docTarget.replaceChildren();
+
+        if (item.foto_url) {
+            const link = elem('a', 'aem-inspect-photo-link');
+            link.href = item.foto_url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            const img = elem('img');
+            img.src = item.foto_url;
+            img.alt = `Foto ${showValue(item.nama_aset)}`;
+            img.loading = 'lazy';
+            img.addEventListener('error', () => {
+                link.replaceChildren(elem('span', '', 'Foto tidak dapat dimuat.'));
+            }, { once: true });
+            link.append(img);
+            photoTarget.append(link);
+        } else {
+            photoTarget.append(elem('span', '', 'Foto belum tersedia'));
+        }
+
+        const docs = asArray(item.dokumens);
+        if (!docs.length) {
+            docTarget.append(elem('span', '', 'Dokumen belum tersedia'));
+        } else {
+            docs.forEach(doc => {
+                const link = fileLink(doc.url, doc.nama || 'Dokumen pendukung',
+                    /\.pdf$/i.test(doc.nama || '') ? 'file-text' : 'file');
+                if (link) docTarget.append(link);
+            });
+        }
+    }
+
+    async function inspectGroupItem(id) {
+        if (!groupDialog?.open || !Number.isSafeInteger(Number(id))) return;
+        const selectedId = Number(id);
+        gs.activeItemId = selectedId;
+        gs.selectedItem = null;
+        markSelectedGroupRow(selectedId);
+        const sequence = ++inspectSequence;
+        const section = $('aemGroupInspect');
+        if (section) section.hidden = false;
+        $('aemInspectTitle').textContent = 'Memuat detail inventaris...';
+        $('aemInspectMeta').textContent = 'Memeriksa foto dan dokumen pendukung.';
+        $('aemInspectPhoto').textContent = 'Memuat foto...';
+        $('aemInspectDocs').textContent = 'Memuat dokumen...';
+        ['aemInspectView', 'aemInspectEdit', 'aemInspectDelete'].forEach(name => {
+            if ($(name)) $(name).disabled = true;
+        });
+
+        try {
+            const item = await fetchItem(selectedId);
+            if (sequence !== inspectSequence || !groupDialog.open) return;
+            gs.selectedItem = item;
+            $('aemInspectTitle').textContent = showValue(item.nama_aset);
+            $('aemInspectMeta').textContent =
+                `${showValue(item.lokasi)} · ${showValue(item.divisi)} · ` +
+                `Status Kepemilikan: ${labelKepemilikan(item.status_kepemilikan)}`;
+            buildInspectFiles(item);
+            ['aemInspectView', 'aemInspectEdit', 'aemInspectDelete'].forEach(name => {
+                if ($(name)) $(name).disabled = false;
+            });
+            icons();
+        } catch (error) {
+            if (sequence !== inspectSequence) return;
+            $('aemInspectTitle').textContent = 'Data tidak dapat dimuat';
+            $('aemInspectMeta').textContent = error.message || 'Gagal mengambil detail.';
+            $('aemInspectPhoto').textContent = 'Foto tidak tersedia';
+            $('aemInspectDocs').textContent = 'Dokumen tidak tersedia';
+        }
+    }
+
+    $('aemGroupRows')?.addEventListener('click', event => {
+        const target = event.target.closest('[data-aem-row-id]');
+        if (target) inspectGroupItem(target.dataset.aemRowId);
+    });
+
+    $('aemGroupRows')?.addEventListener('keydown', event => {
+        if (!['Enter', ' '].includes(event.key)) return;
+        const target = event.target.closest('[data-aem-row-id]');
+        if (!target || event.target.closest('button')) return;
+        event.preventDefault();
+        inspectGroupItem(target.dataset.aemRowId);
+    });
+
+    $('aemInspectView')?.addEventListener('click', () => {
+        if (gs.selectedItem) detail(gs.selectedItem);
+    });
+    $('aemInspectEdit')?.addEventListener('click', () => {
+        if (gs.selectedItem) editForm(gs.selectedItem);
+    });
+    $('aemInspectDelete')?.addEventListener('click', () => {
+        if (gs.selectedItem) confirmDelete(gs.selectedItem.id, gs.selectedItem.nama_aset);
+    });
 
     /* ======================================================
        LOAD KELOMPOK DARI LARAVEL
@@ -1784,18 +1740,17 @@
             if (gs.selected) {
                 gs.lokasi = gs.selected.lokasi;
                 gs.divisi = gs.selected.divisi;
-
-                $('aemGroupTitle').textContent =
-                    gs.selected.divisi;
-
+                $('aemGroupDialogTitle').textContent = `DATA ${gs.selected.lokasi.toUpperCase()}`;
+                $('aemGroupDialogSubtitle').textContent =
+                    `Aset Tetap Lainnya · Divisi ${gs.selected.divisi}`;
+                $('aemGroupTitle').textContent = gs.selected.divisi;
                 $('aemGroupSubtitle').textContent =
-                    `Lokasi: ${gs.selected.lokasi}`;
+                    `Divisi: ${gs.selected.divisi} · Lokasi: ${gs.selected.lokasi}`;
             } else {
-                $('aemGroupTitle').textContent =
-                    'Belum ada kelompok aset';
-
-                $('aemGroupSubtitle').textContent =
-                    'Tambahkan data manual terlebih dahulu.';
+                $('aemGroupDialogTitle').textContent = 'DETAIL ASET TETAP LAINNYA';
+                $('aemGroupDialogSubtitle').textContent = 'Belum ada kelompok aset.';
+                $('aemGroupTitle').textContent = 'Belum ada kelompok';
+                $('aemGroupSubtitle').textContent = 'Tambahkan data manual terlebih dahulu.';
             }
 
             const p = gs.pagination;
@@ -1818,9 +1773,18 @@
 
             renderGroups();
 
-            renderGroupRows(
-                asArray(result.items)
-            );
+            const visibleItems = asArray(result.items);
+            renderGroupRows(visibleItems);
+            const stillVisible = visibleItems.some(item => Number(item.id) === Number(gs.activeItemId));
+            if (!stillVisible) {
+                gs.selectedItem = null;
+                gs.activeItemId = null;
+                inspectSequence++;
+                if ($('aemGroupInspect')) $('aemGroupInspect').hidden = true;
+            }
+            if (visibleItems.length && !stillVisible) {
+                inspectGroupItem(visibleItems[0].id);
+            }
 
             /*
              * Mulai tabel dari kolom pertama
@@ -1871,6 +1835,7 @@
         'close',
         () => {
             groupRequest?.abort();
+            inspectSequence++;
             clearTimeout(groupTimer);
         }
     );

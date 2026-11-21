@@ -484,20 +484,20 @@
 
         @if ($viewMode === 'manual')
 
-            <dialog id="aemGroupPanel" class="aem-group-dialog" aria-labelledby="aemGroupDialogTitle">
+            <dialog id="aemGroupPanel" class="aem-group-dialog aem-kib-detail-dialog"
+                aria-labelledby="aemGroupDialogTitle">
 
                 <div class="aem-group-header">
 
                     <div>
-                        <small>K.I.B E — INVENTARIS MANUAL</small>
+                        <small>K.I.B E / KARTU INVENTARIS BARANG</small>
 
                         <h2 id="aemGroupDialogTitle">
-                            Detail Kelompok Aset
+                            DETAIL ASET TETAP LAINNYA
                         </h2>
 
-                        <p>
-                            Lokasi dan divisi di kiri;
-                            daftar barang di kanan.
+                        <p id="aemGroupDialogSubtitle">
+                            Pilih kelompok lokasi untuk melihat inventaris.
                         </p>
                     </div>
 
@@ -536,9 +536,9 @@
 
                     <section class="aem-group-right">
 
-                        <div class="aem-panel-head">
+                        <div class="aem-panel-head aem-detail-toolbar">
 
-                            <div>
+                            <div class="aem-detail-heading">
                                 <small>DAFTAR BARANG</small>
 
                                 <h3 id="aemGroupTitle">
@@ -548,14 +548,14 @@
                                 <p id="aemGroupSubtitle">—</p>
                             </div>
 
-                            <span id="aemGroupCount" class="aem-pill">
+                            <span id="aemGroupCount" class="aem-pill aem-detail-count">
                                 0 barang
                             </span>
 
                         </div>
 
 
-                        <div class="aem-toolbar">
+                        <div class="aem-toolbar aem-detail-controls">
 
                             <label class="aem-search">
 
@@ -575,7 +575,7 @@
                         <div id="aemGroupAlert" class="aem-error" hidden></div>
 
 
-                        <div class="aem-table-wrap">
+                        <div class="aem-table-wrap aem-detail-table-scroll">
 
 
 
@@ -584,7 +584,7 @@
      11 KOLOM INVENTARIS + 1 KOLOM VIEW
 ========================================================== --}}
 
-                            <table class="aem-table aem-group-table">
+                            <table class="aem-table aem-group-table" id="aemGroupTable">
 
                                 <colgroup>
                                     <col class="aem-col-no">
@@ -687,7 +687,7 @@
                         </div>
 
 
-                        <div class="aem-group-footer">
+                        <div class="aem-group-footer aem-detail-pager">
 
                             <span id="aemGroupInfo">0 data</span>
 
@@ -708,6 +708,57 @@
                             </div>
 
                         </div>
+
+
+                        {{-- ============================================================
+                             LAMPIRAN DAN TINDAKAN: TAMBAHAN DETAIL K.I.B E
+                             Tabel, status kepemilikan, tombol, dan pagination lama
+                             sengaja dipertahankan tanpa menghilangkan satu pun ID.
+                             ============================================================ --}}
+                        <section id="aemGroupInspect" class="aem-group-inspect" aria-live="polite" hidden>
+
+                            <header class="aem-inspect-head">
+                                <div>
+                                    <small>LAMPIRAN & TINDAKAN</small>
+                                    <h3 id="aemInspectTitle">Detail Inventaris</h3>
+                                    <p id="aemInspectMeta">Pilih salah satu barang pada tabel.</p>
+                                </div>
+
+                                <div class="aem-inspect-actions">
+                                    <button type="button" class="aem-btn outline" id="aemInspectView">
+                                        <i data-lucide="eye"></i>
+                                        Detail Lengkap
+                                    </button>
+
+                                    <button type="button" class="aem-btn outline" id="aemInspectEdit">
+                                        <i data-lucide="pencil"></i>
+                                        Edit
+                                    </button>
+
+                                    <button type="button" class="aem-btn danger" id="aemInspectDelete">
+                                        <i data-lucide="trash-2"></i>
+                                        Hapus
+                                    </button>
+                                </div>
+                            </header>
+
+                            <div class="aem-inspect-grid">
+                                <div class="aem-inspect-box">
+                                    <strong>Foto Aset</strong>
+                                    <div id="aemInspectPhoto" class="aem-inspect-placeholder">
+                                        Foto belum tersedia
+                                    </div>
+                                </div>
+
+                                <div class="aem-inspect-box">
+                                    <strong>Dokumen PDF / Berkas</strong>
+                                    <div id="aemInspectDocs" class="aem-inspect-placeholder">
+                                        Dokumen belum tersedia
+                                    </div>
+                                </div>
+                            </div>
+
+                        </section>
 
                     </section>
 

@@ -2197,3 +2197,363 @@
 @media (prefers-reduced-motion: reduce) {
     #aemApp .aem-report-open { transition: none; }
 }
+
+
+/* ============================================================================
+   K.I.B E — DETAIL KELOMPOK (ACUAN K.I.B C/D)
+   Sidebar lokasi + tabel Excel + lampiran/tindakan dalam satu popup.
+   Semua kelas di-scope pada #aemGroupPanel agar form dan popup lain aman.
+   ============================================================================ */
+
+#aemGroupPanel.aem-kib-detail-dialog {
+    width: min(1510px, calc(100vw - 56px));
+    height: min(860px, calc(100dvh - 54px));
+    max-height: calc(100dvh - 54px);
+    background: #ffffff;
+    color: #163a67;
+    border-radius: 16px;
+}
+
+#aemGroupPanel .aem-group-header {
+    padding: 22px 24px 18px;
+    align-items: flex-start;
+    background: #ffffff;
+    border-bottom: 1px solid #dce7f4;
+}
+#aemGroupPanel .aem-group-header small {
+    color: #0065dc;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+}
+#aemGroupPanel .aem-group-header h2 {
+    color: #0e3665;
+    font-size: clamp(18px, 1.5vw, 23px);
+    font-weight: 850;
+    margin: 7px 0 4px;
+}
+#aemGroupPanel .aem-group-header p {
+    font-size: 12px;
+    color: #6d88aa;
+}
+
+#aemGroupPanel .aem-group-layout {
+    display: grid;
+    grid-template-columns: 288px minmax(0, 1fr);
+    align-items: stretch;
+    gap: 14px;
+    padding: 18px 20px 20px;
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    background: #f5f9ff;
+}
+
+#aemGroupPanel .aem-group-left,
+#aemGroupPanel .aem-group-right {
+    border: 1px solid #d4e4f6;
+    background: #ffffff;
+    border-radius: 11px;
+    box-shadow: none;
+    min-height: 0;
+}
+#aemGroupPanel .aem-group-left {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 14px;
+}
+#aemGroupPanel .aem-group-left h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #164679;
+    margin: 0 0 14px;
+}
+#aemGroupPanel .aem-group-left h3 svg { width: 18px; height: 18px; }
+#aemGroupPanel .aem-search { min-width: 0; }
+#aemGroupPanel .aem-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    max-height: none;
+    flex: 1;
+    overflow: auto;
+}
+#aemGroupPanel .aem-location-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    padding: 13px 12px;
+    gap: 4px;
+    border: 1px solid #d1e2f4;
+    border-radius: 9px;
+    background: #f3f8fe;
+    text-align: left;
+    color: #174779;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+#aemGroupPanel .aem-location-card strong {
+    font-size: 12px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+#aemGroupPanel .aem-location-card small {
+    color: #6685a7;
+    font-size: 10px;
+}
+#aemGroupPanel .aem-location-card span {
+    color: #7893b2;
+    font-size: 10px;
+}
+#aemGroupPanel .aem-location-card.active,
+#aemGroupPanel .aem-location-card:hover {
+    border-color: #8ebcfd;
+    background: #e0edff;
+}
+#aemGroupPanel .aem-location-card:focus-visible,
+#aemGroupPanel .aem-inventory-row:focus-visible {
+    outline: 3px solid #71adfa;
+    outline-offset: -2px;
+}
+
+#aemGroupPanel .aem-group-right {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 12px;
+    overflow: visible;
+}
+#aemGroupPanel .aem-detail-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+#aemGroupPanel .aem-detail-heading { min-width: 175px; flex: 1 1 210px; }
+#aemGroupPanel .aem-detail-heading strong { color: #143e6c; font-size: 14px; }
+#aemGroupPanel .aem-detail-heading p { color: #718eaa; font-size: 11px; margin: 4px 0 0; }
+#aemGroupPanel .aem-detail-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+#aemGroupPanel .aem-detail-controls .aem-search { width: min(235px, 100%); }
+#aemGroupPanel .aem-detail-count {
+    padding: 8px 10px;
+    border: 1px solid #d2e4f7;
+    background: #f0f6ff;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    color: #1557a2;
+}
+#aemGroupPanel #aemGroupPrint.aem-report-open {
+    min-height: 44px;
+    padding: 10px 15px;
+    white-space: nowrap;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0b9579, #08765f);
+    border: 1px solid #08765f;
+    box-shadow: 0 7px 16px #08765f20;
+    color: white;
+}
+#aemGroupPanel #aemGroupPrint.aem-report-open:hover:not(:disabled) {
+    background: linear-gradient(135deg, #08765f, #065643);
+}
+#aemGroupPanel .aem-detail-table-scroll {
+    width: 100%;
+    min-height: 135px;
+    max-height: 290px;
+    flex: 0 0 auto;
+    overflow: auto;
+    border: 1px solid #193c61;
+    border-radius: 9px;
+    scrollbar-width: thin;
+}
+#aemGroupPanel .aem-group-table {
+    width: 1500px;
+    min-width: 1500px;
+    font-size: 11px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+#aemGroupPanel .aem-group-table th {
+    padding: 9px 8px;
+    border: 1px solid #29465e;
+    background: #e0eaf5;
+    color: #163c62;
+    vertical-align: middle;
+    text-align: center;
+    line-height: 1.4;
+    font-weight: 800;
+}
+#aemGroupPanel .aem-group-number-row th { background: #edf4fb; padding: 5px; }
+#aemGroupPanel .aem-group-table td {
+    padding: 10px 8px;
+    border: 1px solid #bfcedf;
+    background: #ffffff;
+    vertical-align: middle;
+    text-align: center;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+}
+#aemGroupPanel .aem-group-table .aem-inventory-row { cursor: pointer; }
+#aemGroupPanel .aem-group-table tbody .aem-inventory-row:hover td,
+#aemGroupPanel .aem-group-table tbody .aem-inventory-row.is-selected td { background: #e1efff; }
+#aemGroupPanel .aem-col-no { width: 52px; }
+#aemGroupPanel .aem-col-name { width: 245px; }
+#aemGroupPanel .aem-col-code { width: 155px; }
+#aemGroupPanel .aem-col-register { width: 105px; }
+#aemGroupPanel .aem-col-condition { width: 145px; }
+#aemGroupPanel .aem-col-material { width: 130px; }
+#aemGroupPanel .aem-col-year { width: 145px; }
+#aemGroupPanel .aem-col-quantity { width: 85px; }
+#aemGroupPanel .aem-col-origin { width: 170px; }
+#aemGroupPanel .aem-col-description { width: 190px; }
+#aemGroupPanel .aem-col-view { width: 78px; }
+#aemGroupPanel .aem-detail-hint {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    color: #7890aa;
+    font-size: 10px;
+}
+#aemGroupPanel .aem-detail-hint svg { width: 14px; height: 14px; vertical-align: middle; }
+#aemGroupPanel .aem-detail-pager {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #7189a5;
+    font-size: 11px;
+}
+#aemGroupPanel .aem-detail-pager-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+#aemGroupPanel .aem-detail-pager-controls .aem-btn { padding: 7px 10px; font-size: 11px; }
+
+#aemGroupPanel .aem-group-inspect {
+    border: 1px solid #cfe1f5;
+    border-radius: 11px;
+    padding: 15px;
+    background: #f9fbff;
+    min-width: 0;
+}
+#aemGroupPanel .aem-group-inspect[hidden] { display: none !important; }
+#aemGroupPanel .aem-inspect-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #dce7f6;
+}
+#aemGroupPanel .aem-inspect-head small {
+    color: #006be0;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 1px;
+}
+#aemGroupPanel .aem-inspect-head h3 {
+    color: #173f6d;
+    font-size: 14px;
+    margin: 5px 0;
+}
+#aemGroupPanel .aem-inspect-head p { font-size: 11px; margin: 0; color: #7692af; }
+#aemGroupPanel .aem-inspect-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#aemGroupPanel .aem-inspect-actions .aem-btn { font-size: 11px; padding: 8px 12px; }
+#aemGroupPanel .aem-inspect-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+#aemGroupPanel .aem-inspect-box {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid #d5e3f5;
+    background: #fff;
+    border-radius: 9px;
+}
+#aemGroupPanel .aem-inspect-box > strong {
+    display: block;
+    font-size: 11px;
+    color: #16446f;
+    margin-bottom: 9px;
+}
+#aemGroupPanel .aem-inspect-placeholder {
+    min-height: 80px;
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px;
+    background: #eff4fb;
+    color: #839ab3;
+    text-align: center;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+#aemGroupPanel .aem-inspect-photo-link img {
+    max-width: 100%;
+    max-height: 145px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+}
+#aemGroupPanel .aem-inspect-placeholder .aem-kib-file { max-width: 100%; }
+#aemGroupPanel .aem-group-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 11px 20px;
+    border-top: 1px solid #dbe7f3;
+    background: #ffffff;
+    flex-shrink: 0;
+}
+#aemGroupPanel .aem-group-bottom > span { font-size: 10px; color: #6c86a4; }
+#aemGroupPanel .aem-visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+@media (max-width: 1080px) {
+    #aemGroupPanel .aem-group-layout { grid-template-columns: 230px minmax(0, 1fr); }
+    #aemGroupPanel .aem-detail-controls { justify-content: flex-start; }
+}
+@media (max-width: 760px) {
+    #aemGroupPanel.aem-kib-detail-dialog {
+        width: calc(100vw - 14px); height: calc(100dvh - 14px);
+        max-height: calc(100dvh - 14px);
+    }
+    #aemGroupPanel .aem-group-layout { display: block; overflow-y: auto; padding: 10px; }
+    #aemGroupPanel .aem-group-left { max-height: 255px; margin-bottom: 12px; }
+    #aemGroupPanel .aem-group-list { min-height: 100px; }
+    #aemGroupPanel .aem-detail-controls { width: 100%; }
+    #aemGroupPanel .aem-detail-controls .aem-search { width: 100%; }
+    #aemGroupPanel .aem-inspect-grid { grid-template-columns: 1fr; }
+    #aemGroupPanel .aem-group-header { padding: 15px; }
+    #aemGroupPanel .aem-inspect-head { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #aemGroupPanel .aem-location-card { transition: none; }
+}
