@@ -198,9 +198,10 @@ class KIBController extends Controller
                 't.id_lokasi'
             )
 
-            ->orderByRaw(
-                'MIN(l.lokasi) ASC'
-            )
+            // Urutan lokasi mengikuti ID sertifikat yang paling baru dimasukkan.
+            // Menambah data di lokasi lama juga menaikkan lokasi tersebut ke atas.
+            ->orderByRaw('MAX(t.id) DESC')
+            ->orderByRaw('MIN(l.lokasi) ASC')
 
             ->get();
 
@@ -527,7 +528,7 @@ class KIBController extends Controller
 
             ->orderBy(
                 't.id',
-                'ASC'
+                'DESC'
             )
 
             ->get();
@@ -1560,7 +1561,7 @@ class KIBController extends Controller
 
         $rows = $this->sertifikatQuery()
             ->where('t.id_lokasi', $lokasi)
-            ->orderBy('t.id')
+            ->orderByDesc('t.id')
             ->get();
 
         return response()->json([
@@ -2526,6 +2527,8 @@ class KIBController extends Controller
                 'l.lokasi',
                 'l.alamat'
             )
+            // Lokasi dengan inventaris yang terakhir diinput muncul pertama.
+            ->orderByRaw('MAX(m.id) DESC')
             ->orderBy('l.lokasi')
             ->get();
 
@@ -2816,7 +2819,7 @@ class KIBController extends Controller
             ->selectRaw(
                 "BTRIM(COALESCE(a.aktiva, '')) AS nama_aktiva"
             )
-            ->orderBy('m.id')
+            ->orderByDesc('m.id')
             ->get();
 
         return response()->json([
@@ -10681,10 +10684,24 @@ class KIBController extends Controller
             }
         }
 
-        usort($rows, static fn($a, $b) =>
-        strcmp((string) $a['kode_aktiva'], (string) $b['kode_aktiva'])
-            ?: strcmp((string) $a['lokasi'], (string) $b['lokasi'])
-            ?: strcmp((string) $a['kunci'], (string) $b['kunci']));
+        // Kendaraan yang baru diinventarisasi selalu tampil paling atas.
+        // ID mesins dan nilai_aktivas berasal dari sequence berbeda,
+        // jadi jangan membandingkan nilainya secara langsung.
+        // Transaksi 31.08 yang belum diinventarisasi tetap tampil setelahnya,
+        // dengan transaksi paling baru di urutan awal kelompok pending.
+        usort($rows, static function (array $a, array $b): int {
+            $aMesinId = (int) ($a['mesin_id'] ?? 0);
+            $bMesinId = (int) ($b['mesin_id'] ?? 0);
+
+            if ($aMesinId > 0 && $bMesinId > 0) {
+                return $bMesinId <=> $aMesinId;
+            }
+            if ($aMesinId > 0) return -1;
+            if ($bMesinId > 0) return 1;
+
+            return ((int) ($b['nilai_id'] ?? 0))
+                <=> ((int) ($a['nilai_id'] ?? 0));
+        });
 
         $ids = collect($rows)->pluck('mesin_id')->filter()->unique()->values();
         $latest = $ids->isEmpty() ? collect() : DB::table('mesin_pajaks')
