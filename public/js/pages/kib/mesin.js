@@ -4657,11 +4657,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ==========================================================================
    K.I.B B -- LAPORAN KENDARAAN & PERALATAN/MESIN (GABUNGAN)
-   Modul ini sebelumnya berada di mesin-report.js.
-   Disatukan di mesin.js tanpa mengubah event listener & generator XLSX.
+   Seluruh fitur cetak tetap berada pada satu mesin.js.
+   Tidak membutuhkan file JavaScript laporan terpisah.
    ========================================================================== */
 /**
- * K.I.B B — Print Excel Kendaraan (seluruh sumber 31.08) dan Mesin (per item).
+ * K.I.B B — Print Excel Kendaraan (seluruh 31.08) dan Mesin (per lokasi Detail).
  * Endpoint hanya baca. Tidak membuat inventaris, mengubah pajak, atau Nilai Aset.
  * XLSX asli berupa paket Office OpenXML, tanpa dependensi CDN.
  */
@@ -4673,14 +4673,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!page || !dialog || !page.dataset.reportUrl) return;
 
     const $ = selector => dialog.querySelector(selector);
+    // Urutan peran selalu mengacu pada popup K.I.B A Tanah (PRD v2.1).
     const roles = [
-        ['diketahui', 'Diketahui'],
-        ['periksa_1', 'Diperiksa Oleh'],
-        ['periksa_2', 'Diperiksa Oleh'],
-        ['dibuat', 'Dibuat Oleh'],
+        ['diketahui', 'Diketahui oleh'],
+        ['periksa_1', 'Diperiksa oleh (1)'],
+        ['periksa_2', 'Diperiksa oleh (2)'],
+        ['dibuat', 'Dibuat oleh'],
     ];
     const org = { provinsi: 'KALIMANTAN TIMUR', kota: 'SAMARINDA', unit: 'PERUMDA TIRTA KENCANA' };
-    const state = { jenis: 'kendaraan', data: [], sdm: [], organisasi: org };
+    const state = { jenis: 'kendaraan', data: [], sdm: [], organisasi: org, lokasi: null };
+    // Respons popup sebelumnya tidak boleh mengganti data lokasi/jenis yang baru dibuka.
+    let reportRequestVersion = 0;
     const form = $('#mesinReportForm');
     const month = $('#mesinReportPeriod');
     const info = $('#mesinReportInfo');
@@ -4718,14 +4721,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 'No.', 'Kode Barang', 'Nama Barang / Jenis Barang', 'Nomor Register',
                 'Merk / Type', 'Ukuran / CC', 'Bahan', 'Tahun Pembelian',
                 'Pabrik', 'Rangka', 'Mesin', 'Polisi', 'BPKB',
-                'Asal Usul / Cara Perolehan', 'Keterangan'
+                'Asal Usul Cara Perolehan', 'Keterangan'
             ];
         }
         return [
             'No.', 'Nama Barang', 'Kode Inventaris', 'No. Register',
             'Merk / Type', 'Ukuran', 'Fungsi', 'Penggunaan', 'Bahan',
             'Baik', 'Rusak Ringan', 'Rusak Berat',
-            'Tahun Pengadaan', 'Asal Usul', 'No. Dokumen', 'Harga Rp', 'Keterangan'
+            'Tahun Pengadaan', 'Asal Usul', 'No. Dokumen', 'Harga (Rp)', 'Keterangan'
         ];
     }
 
@@ -4751,22 +4754,26 @@ document.addEventListener('DOMContentLoaded', () => {
             row.keterangan || '-'];
     }
 
+    // Metadata tidak disalin dari K.I.B A. Setiap jenis mengikuti contoh Excel K.I.B B.
+    // KODE STRUKTUR bukan Kode Aktiva 31.08; jangan menampilkan nilai fiktif.
     function metaEntries() {
         const o = state.organisasi || org;
-        const lokasi = state.jenis === 'kendaraan' ? 'SELURUH LOKASI'
-            : state.lokasi?.nama || state.data[0]?.lokasi || '-';
-        return [
+        const umum = [
             ['PROVINSI', o.provinsi || org.provinsi],
             ['KOTA', o.kota || org.kota],
             ['UNIT', o.unit || org.unit],
             ['DEPARTEMEN', o.departemen || '-'],
             ['DIVISI', o.divisi || '-'],
-            ['LOKASI', lokasi],
-            ['ALAMAT', state.jenis === 'kendaraan' ? 'BERBAGAI LOKASI' : (state.lokasi?.alamat || '-')],
-            ['KODE AKTIVA', state.jenis === 'kendaraan' ? '31.08.*' : (() => {
-                const codes = [...new Set(state.data.map(item => String(item.kode_aktiva || '').trim()).filter(Boolean))];
-                return codes.length === 1 ? codes[0] : codes.length ? 'BERAGAM' : '-';
-            })()],
+        ];
+        if (state.jenis === 'kendaraan') {
+            // Referensi: KIB B Kendaraan.jpeg — enam baris identitas.
+            return [...umum, ['KODE STRUKTUR', o.kode_struktur || '-']];
+        }
+        // Referensi: KIB B mesin.jpeg — tujuh baris identitas.
+        return [
+            ...umum,
+            ['LOKASI', state.lokasi?.nama || state.data[0]?.lokasi || '-'],
+            ['KODE STI / STRUKTUR', state.lokasi?.kode_struktur || o.kode_struktur || '-'],
         ];
     }
     const title = () => state.jenis === 'kendaraan'
@@ -4777,6 +4784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ok = ready();
         print.disabled = download.disabled = !ok;
         previewBox.hidden = !ok;
+        if (!ok) preview.replaceChildren();
         if (!state.data.length) {
             info.textContent = 'Tidak ada data yang memenuhi kriteria laporan.';
         } else if (!ok) {
@@ -4825,9 +4833,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function openReport({ lokasiId = null, mesinId = null } = {}) {
+        const currentRequest = ++reportRequestVersion;
         state.jenis = lokasiId || mesinId ? 'mesin' : 'kendaraan';
         state.data = [];
         state.sdm = [];
+        state.lokasi = null;
+        state.organisasi = org;
         info.textContent = 'Memuat data laporan dan Master SDM Pendukung...';
         $('#mesinReportTitle').textContent = lokasiId ? 'Print Excel Seluruh Mesin per Lokasi'
             : mesinId ? 'Print Excel Mesin' : 'Print Excel Seluruh Kendaraan';
@@ -4851,12 +4862,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const json = await resp.json();
             if (!resp.ok || !json.success || !Array.isArray(json.data))
                 throw new Error(json.message || `HTTP ${resp.status}`);
-            if (!dialog.open) return;
+            if (!dialog.open || currentRequest !== reportRequestVersion) return;
             state.jenis = json.jenis || state.jenis;
             state.data = json.data;
             state.sdm = Array.isArray(json.sdm) ? json.sdm : [];
             state.organisasi = json.organisasi || org;
             state.lokasi = json.lokasi || null;
+            const scope = state.jenis === 'kendaraan'
+                ? `Seluruh kendaraan Kode Aktiva 31.08 · ${state.data.length} baris dari semua lokasi`
+                : `Seluruh barang di lokasi ${state.lokasi?.nama || 'terpilih'} · ${state.data.length} baris`;
+            $('#mesinReportScope').textContent = scope;
             optionList.replaceChildren(...state.sdm.map(person => {
                 const option = document.createElement('option');
                 option.value = staffLabel(person);
@@ -4865,6 +4880,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!state.sdm.length) info.textContent = 'Master SDM Pendukung belum memiliki SDM aktif.';
             else updatePreview();
         } catch (error) {
+            // Jangan tampilkan error dari dialog lama pada dialog yang baru.
+            if (!dialog.open || currentRequest !== reportRequestVersion) return;
             console.error('Gagal mengambil laporan K.I.B B:', error);
             info.textContent = `Gagal memuat: ${error.message}`;
         }
@@ -4880,6 +4897,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     dialog.querySelectorAll('[data-mesin-report-close]').forEach(button =>
         button.addEventListener('click', () => dialog.close()));
+    dialog.addEventListener('close', () => { reportRequestVersion++; });
     form.addEventListener('input', updatePreview);
     form.addEventListener('change', updatePreview);
 
@@ -5080,8 +5098,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
             <cellXfs count="7">${xfs}</cellXfs>
             <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+        const sheetName = `KIB B - ${state.jenis === 'kendaraan' ? 'Kendaraan' : 'Mesin'}`;
         const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-            <workbook xmlns="${main}" xmlns:r="${rel}"><sheets><sheet name="KIB B - ${state.jenis === 'kendaraan' ? 'Kendaraan' : 'Mesin'}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+            <workbook xmlns="${main}" xmlns:r="${rel}"><sheets><sheet name="${sheetName}" sheetId="1" r:id="rId1"/></sheets>
+            <definedNames>
+                <definedName name="_xlnm.Print_Titles" localSheetId="0">'${sheetName}'!$${header}:$${header+2}</definedName>
+                <definedName name="_xlnm.Print_Area" localSheetId="0">'${sheetName}'!$A$1:$${colName(count)}$${finalRow}</definedName>
+            </definedNames></workbook>`;
         const files = [
             { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
             { name: 'xl/workbook.xml', data: workbook },
@@ -5090,11 +5113,21 @@ document.addEventListener('DOMContentLoaded', () => {
             { name: 'xl/styles.xml', data: styles }
         ];
         if (logoBytes?.length) {
+            // Ukuran logo horizontal dihitung dari IHDR PNG agar tidak terdistorsi.
+            let logoHeightEmu = 950000;
+            if (logoBytes.length >= 24 && logoBytes[0] === 137 && logoBytes[1] === 80) {
+                const view = new DataView(logoBytes.buffer, logoBytes.byteOffset, logoBytes.byteLength);
+                const imageWidth = view.getUint32(16, false);
+                const imageHeight = view.getUint32(20, false);
+                if (imageWidth > 0 && imageHeight > 0) {
+                    logoHeightEmu = Math.round(3000000 * imageHeight / imageWidth);
+                }
+            }
             files.push(
                 { name: 'xl/media/image1.png', data: logoBytes },
                 { name: 'xl/worksheets/_rels/sheet1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>` },
                 { name: 'xl/drawings/_rels/drawing1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/image" Target="../media/image1.png"/></Relationships>` },
-                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>120000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>25000</xdr:rowOff></xdr:from><xdr:ext cx="3000000" cy="920000"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` }
+                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>120000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>25000</xdr:rowOff></xdr:from><xdr:ext cx="3000000" cy="${logoHeightEmu}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` }
             );
         }
         const types = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${logoBytes?.length?'<Default Extension="png" ContentType="image/png"/>':''}<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${logoBytes?.length?'<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>':''}</Types>`;
@@ -5107,8 +5140,12 @@ document.addEventListener('DOMContentLoaded', () => {
         download.disabled = true;
         try {
             let logoBytes = null;
-            const resp = await fetch(page.dataset.reportLogo, { credentials: 'same-origin' });
-            if (resp.ok) logoBytes = new Uint8Array(await resp.arrayBuffer());
+            try {
+                const resp = await fetch(page.dataset.reportLogo, { credentials: 'same-origin' });
+                if (resp.ok) logoBytes = new Uint8Array(await resp.arrayBuffer());
+            } catch (error) {
+                console.warn('Logo cetak tidak dapat dimuat; laporan tetap diekspor.', error);
+            }
             const blob = buildXlsx(logoBytes);
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
@@ -5131,10 +5168,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!popup) { info.textContent = 'Browser memblokir pop-up. Izinkan pop-up untuk mencetak.'; return; }
         popup.document.open();
         popup.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>K.I.B B ${escapeHtml(state.jenis)}</title>
-            <link rel="stylesheet" href="${escapeHtml(page.querySelector('link[href*="mesin.css"]')?.href || '/css/pages/kib/mesin.css')}">
+            <link rel="stylesheet" href="${escapeHtml(document.querySelector('link[href*="mesin.css"]')?.href || '/css/pages/kib/mesin.css')}">
             <style>@page{size:A3 landscape;margin:9mm}body{margin:0;color:#111;background:#fff}.mesin-report-paper{min-width:0;width:100%;padding:0;box-shadow:none}.mesin-report-table-scroll{overflow:visible}.mesin-report-table{font-size:8px}.mesin-report-table thead{display:table-header-group}.mesin-report-table tr{break-inside:avoid}.mesin-report-signatures{break-inside:avoid}</style>
             </head><body>${paperHtml()}</body></html>`);
         popup.document.close();
         popup.addEventListener('load', () => popup.print(), { once: true });
     });
-});
+}); 

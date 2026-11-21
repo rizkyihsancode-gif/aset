@@ -5714,3 +5714,81 @@ min-height: 39px;
         transition: none;
     }
 }
+
+
+/* ============================================================================
+   K.I.B B — STATUS IDENTITAS KENDARAAN BERDAMPINGAN DENGAN STATUS PAJAK
+   ============================================================================ */
+#mesinPage .mesin-kendaraan-lokasi {
+    display: block;
+    margin-top: 5px;
+    color: #6784a3;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+#mesinPage .mesin-vehicle-completeness {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 7px;
+    padding: 5px 8px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.4;
+    white-space: normal;
+    text-align: center;
+}
+#mesinPage .mesin-vehicle-completeness.is-complete {
+    background: #e9f8ef;
+    color: #167548;
+    border-color: #c5e9d5;
+}
+#mesinPage .mesin-vehicle-completeness.is-incomplete {
+    background: #fff1de;
+    color: #9f5d0e;
+    border-color: #f4d5aa;
+}
+#mesinPage .mesin-vehicle-completeness.is-pending {
+    background: #edf2f8;
+    color: #5b6f88;
+    border-color: #d5e0ee;
+}
+#mesinPage .mesin-vehicle-fix {
+    display: block;
+    margin: 0 auto 8px;
+    padding: 4px 8px;
+    border: 1px solid #bdd8f8;
+    background: #f0f7ff;
+    color: #1266b8;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.4;
+    cursor: pointer;
+}
+#mesinPage .mesin-vehicle-fix:hover { background: #dfeeff; }
+#mesinPage .mesin-vehicle-help { display: none; }
+#mesinPage #mesinFormDialog.is-vehicle-mode .mesin-vehicle-help {
+    display: block;
+    margin: 10px 0 15px;
+    padding: 11px 13px;
+    border: 1px solid #bfdbfb;
+    border-radius: 9px;
+    background: #f0f7ff;
+    color: #2f5d88;
+    font-size: 12px;
+    line-height: 1.65;
+}
+#mesinPage #mesinFormDialog.is-vehicle-mode .mesin-vehicle-group {
+    border-color: #c7dcf5;
+    background: #fcfdff;
+}
+
+#mesinPage .mesin-lokasi-kendaraan {
+    color: #1268bc;
+    font-weight: 800;
+}

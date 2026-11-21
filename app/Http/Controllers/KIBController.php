@@ -2457,6 +2457,8 @@ class KIBController extends Controller
                 '=',
                 'm.id_lokasi'
             )
+            ->leftJoin('nilai_aktivas as nv', 'nv.id', '=', 'm.id_voucher2')
+            ->leftJoin('aktivas as av', 'av.id', '=', DB::raw('COALESCE(nv.id_aktiva, m.id_aktiva)'))
             ->leftJoinSub(
                 $nilaiLokasi,
                 'v',
@@ -2474,9 +2476,11 @@ class KIBController extends Controller
                 'l.lokasi',
                 'l.alamat'
             )
-            ->selectRaw(
-                'COUNT(DISTINCT m.id) AS jumlah_barang'
-            )
+            ->selectRaw('COUNT(DISTINCT m.id) AS jumlah_barang')
+            ->selectRaw("COUNT(DISTINCT CASE
+                WHEN BTRIM(COALESCE(av.kode, '')) = '31.08'
+                  OR BTRIM(COALESCE(av.kode, '')) LIKE '31.08.%'
+                THEN m.id END) AS jumlah_kendaraan")
             ->selectRaw("
                 CASE
                     WHEN COUNT(DISTINCT COALESCE(NULLIF(BTRIM(m.status_kepemilikan), ''), '__kosong__')) > 1
@@ -2547,22 +2551,9 @@ class KIBController extends Controller
         $totalNilai = $this->queryNilaiMesin()
             ->sum('n.nilai');
 
-        // Pending mempertahankan aturan notifikasi lama:
-        // kategori transaksi dan stat = 0.
-
-        /*
-    |--------------------------------------------------------------------------
-    | JUMLAH PENDING K.I.B GEDUNG
-    |--------------------------------------------------------------------------
-    | Hanya menghitung Penambahan Aset
-    | yang belum diproses menjadi inventaris.
-    */
-
-        $totalPending = DB::table('nilai_aktivas')
-            ->where('cat', $this->gedungKategori())
-            ->where('jenisn', 1)
-            ->where('stat', 0)
-            ->count();
+        // Jumlah pending menggunakan query yang sama dengan modal Data Pending.
+        // Kode Aktiva 31.08 tetap tampil walaupun kategori transaksi lama berbeda.
+        $totalPending = $this->pendingSumberMesinKibB()->count('n.id');
 
 
         return view(
@@ -2583,6 +2574,33 @@ class KIBController extends Controller
 
 
     /**
+     * Sumber pending K.I.B B.
+     * Kode Aktiva 31.08 mengidentifikasi kendaraan, meskipun kategori
+     * transaksi historis tidak sama dengan konfigurasi kategori Mesin.
+     * Hanya transaksi belum diproses yang dapat dipilih.
+     */
+    private function pendingSumberMesinKibB(): \Illuminate\Database\Query\Builder
+    {
+        $kategori = $this->mesinKategori();
+
+        return DB::table('nilai_aktivas as n')
+            ->leftJoin('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+            ->where('n.stat', 0)
+            ->where(function ($query) use ($kategori) {
+                $query->where('n.cat', $kategori)
+                    ->orWhereRaw(
+                        "(BTRIM(COALESCE(a.kode, '')) = ? OR BTRIM(COALESCE(a.kode, '')) LIKE ?)",
+                        ['31.08', '31.08.%']
+                    );
+            });
+    }
+
+    private function isKodeAktivaKendaraanKibB(?string $kode): bool
+    {
+        return preg_match('/^31\.08(?:\.|$)/', trim((string) $kode)) === 1;
+    }
+
+    /**
      * ============================================================
      * PENDING NILAI ASET PERALATAN DAN MESIN
      *
@@ -2594,21 +2612,10 @@ class KIBController extends Controller
     {
         $cat = $this->mesinKategori();
 
-        $base = DB::table('nilai_aktivas')
-            ->where('cat', $cat)
-            ->where('stat', 0);
+        $base = $this->pendingSumberMesinKibB();
+        $count = (clone $base)->count('n.id');
 
-        $count = (clone $base)->count();
-
-        $rows = DB::table('nilai_aktivas as n')
-
-            ->leftJoin(
-                'aktivas as a',
-                'a.id',
-                '=',
-                'n.id_aktiva'
-            )
-
+        $rows = (clone $base)
             ->leftJoin(
                 'lokasis as l',
                 'l.id',
@@ -2629,9 +2636,6 @@ class KIBController extends Controller
                 '=',
                 'n.div'
             )
-
-            ->where('n.cat', $cat)
-            ->where('n.stat', 0)
 
             ->select([
                 'n.id',
@@ -2931,8 +2935,10 @@ class KIBController extends Controller
                 '=',
                 'm.id_div'
             )
+            ->leftJoin('nilai_aktivas as n', 'n.id', '=', 'm.id_voucher2')
+            ->leftJoin('aktivas as a', 'a.id', '=', DB::raw('COALESCE(n.id_aktiva, m.id_aktiva)'))
             ->where('m.id', $mesin)
-            ->select('m.*')
+            ->select('m.*', 'a.kode as kode_aktiva', 'a.aktiva as nama_aktiva')
             ->selectRaw(
                 "BTRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
             )
@@ -3130,31 +3136,40 @@ class KIBController extends Controller
         $cat = $this->mesinKategori();
 
         $files = [];
+        $kendaraanDisimpan = false;
 
         try {
             DB::transaction(function () use (
                 $request,
                 $input,
                 $cat,
-                &$files
+                &$files,
+                &$kendaraanDisimpan
             ) {
                 // Kunci transaksi sumber agar tidak diproses bersamaan.
+                // Kunci hanya tabel nilai_aktivas: PostgreSQL melarang
+                // FOR UPDATE pada sisi nullable sebuah LEFT JOIN.
                 $source = DB::table('nilai_aktivas')
                     ->where('id', $input['id_nilai_aktiva'])
-                    ->where('cat', $cat)
                     ->where('stat', 0)
                     ->lockForUpdate()
                     ->first();
 
+                $kodeAktivaSource = $source && $source->id_aktiva
+                    ? DB::table('aktivas')->where('id', $source->id_aktiva)->value('kode')
+                    : null;
+                $kodeKendaraan = $this->isKodeAktivaKendaraanKibB($kodeAktivaSource);
+
                 if (
                     !$source
+                    || (!$kodeKendaraan && (int) $source->cat !== $cat)
                     || !$source->id_lokasi
                     || !$source->dep
                     || !$source->div
                 ) {
                     throw ValidationException::withMessages([
                         'id_nilai_aktiva' =>
-                        'Transaksi pending tidak tersedia atau Lokasi, Departemen, Divisi belum lengkap.'
+                        'Transaksi pending tidak dapat dipakai. Pastikan kategori K.I.B B atau kode 31.08 serta Lokasi, Departemen, dan Divisi lengkap.'
                     ]);
                 }
 
@@ -3171,15 +3186,19 @@ class KIBController extends Controller
                 }
 
                 $data = $this->fieldsMesin($input);
+                $kendaraanDisimpan = $kodeKendaraan;
 
                 // Data organisasi berasal dari database.
                 $data['id_lokasi'] = (int) $source->id_lokasi;
                 $data['id_departemen'] = (int) $source->dep;
                 $data['id_div'] = (int) $source->div;
 
-                // Hubungan dengan transaksi Nilai Aset.
+                // Hubungan dengan Nilai Aset tetap menjadi sumber kebenaran.
                 $data['id_voucher2'] = (int) $source->id;
                 $data['jenis'] = (int) ($source->jenisn ?? 0);
+                if (Schema::hasColumn('mesins', 'id_aktiva') && $source->id_aktiva) {
+                    $data['id_aktiva'] = (int) $source->id_aktiva;
+                }
 
                 $data['input'] = 1;
                 $data['id_user'] = Auth::id();
@@ -3235,11 +3254,10 @@ class KIBController extends Controller
         }
 
         return redirect()
-            ->route('kib.mesin')
-            ->with(
-                'success',
-                'Data Peralatan dan Mesin berhasil disimpan.'
-            );
+            ->to(route('kib.mesin') . ($kendaraanDisimpan ? '#masa-pajak' : '#daftar-mesin'))
+            ->with('success', $kendaraanDisimpan
+                ? 'Kendaraan berhasil diinventarisasi dan terhubung ke lokasi serta menu Masa Pajak Kendaraan.'
+                : 'Data Peralatan dan Mesin berhasil disimpan.');
     }
 
 
@@ -10641,6 +10659,8 @@ class KIBController extends Controller
             'sudah_inventaris' => 0,
             'belum_inventaris' => 0,
             'total_transaksi_31_08' => $transaksi->count(),
+            'data_lengkap' => 0,
+            'data_belum_lengkap' => 0,
         ];
 
         foreach ($rows as &$row) {
@@ -10664,12 +10684,57 @@ class KIBController extends Controller
                 'status' => $status,
                 'sisa_hari' => $hari,
             ];
+            [$kelengkapan, $kolomBelumLengkap] = $this->kelengkapanKendaraanKibB($row);
+            $row['kelengkapan'] = $kelengkapan;
+            $row['kolom_belum_lengkap'] = $kolomBelumLengkap;
+            if ($row['terinventaris']) {
+                $summary[$kelengkapan === 'lengkap' ? 'data_lengkap' : 'data_belum_lengkap']++;
+            }
             $summary[$status]++;
             $summary[$row['terinventaris'] ? 'sudah_inventaris' : 'belum_inventaris']++;
         }
         unset($row);
 
         return [$rows, $summary, $today];
+    }
+
+    /**
+     * Status kelengkapan administrasi kendaraan.
+     * Tidak mengubah status pajak; keduanya ditampilkan berdampingan.
+     * Kelengkapan mengikuti kolom identitas pada template Kendaraan.
+     * Keterangan tetap opsional, karena bukan setiap unit memiliki catatan.
+     * Nilai '-' dari inventaris lama dihitung sebagai belum diisi.
+     */
+    private function kelengkapanKendaraanKibB(array $row): array
+    {
+        if (!$row['terinventaris']) {
+            return ['belum_inventaris', ['Belum diinventarisasi dari Data Pending']];
+        }
+
+        $wajibIdentitas = [
+            'kode_barang' => 'Kode Barang',
+            'nama_kendaraan' => 'Nama Barang',
+            'register' => 'Nomor Register',
+            'merk' => 'Merk/Tipe',
+            'ukuran' => 'Ukuran/CC',
+            'bahan' => 'Bahan',
+            'pabrik' => 'Nomor Pabrik',
+            'tahun' => 'Tahun Pembelian',
+            'rangka' => 'Nomor Rangka',
+            'nomor_mesin' => 'Nomor Mesin',
+            'nomor_polisi' => 'Nomor Polisi',
+            'bpkb' => 'Nomor BPKB',
+            'asal' => 'Asal Usul/Cara Perolehan',
+            'lokasi' => 'Lokasi Pengguna',
+        ];
+        $kosong = [];
+        foreach ($wajibIdentitas as $key => $label) {
+            $value = trim((string) ($row[$key] ?? ''));
+            if ($value === '' || $value === '-' || $value === '—') {
+                $kosong[] = $label;
+            }
+        }
+        return [count($kosong) === 0 ? 'lengkap' : 'belum_lengkap', $kosong];
     }
 
     private function kendaraanRowKibB(?object $m, ?object $n): array
@@ -10726,6 +10791,30 @@ class KIBController extends Controller
      * Read-only, tidak melakukan pembaruan nilai_aktivas / mesins.
      */
     /**
+     * Kode struktur laporan K.I.B B hanya dari atribut struktur yang benar-benar ada.
+     * Dukung DB lama tanpa kolom kode_struktur; jangan invent nilai.
+     */
+    private function kodeStrukturLokasiKibB(array $lokasiIds): string
+    {
+        $lokasiIds = collect($lokasiIds)->filter(static fn($id) => (int) $id > 0)
+            ->map(static fn($id) => (int) $id)->unique()->values()->all();
+        if (!$lokasiIds) return '-';
+
+        $kode = collect();
+        if (Schema::hasColumn('lokasis', 'kode_struktur')) {
+            $kode = DB::table('lokasis')->whereIn('id', $lokasiIds)
+                ->pluck('kode_struktur');
+        } elseif (Schema::hasColumn('mesins', 'kode_struktur')) {
+            $kode = DB::table('mesins')->whereIn('id_lokasi', $lokasiIds)
+                ->pluck('kode_struktur');
+        }
+        $unik = $kode->map(static fn($v) => trim((string) ($v ?? '')))
+            ->filter()->unique()->values();
+        return $unik->count() > 1 ? 'BERAGAM'
+            : ($unik->count() === 1 ? $unik->first() : '-');
+    }
+
+    /**
      * Excel 17 kolom untuk SELURUH barang dalam satu lokasi K.I.B B.
      * Cocok untuk tombol Print Excel pada Detail lokasi (misal AWS: 5 barang).
      * Tidak mengubah tabel, transaksi, atau daftar pajak.
@@ -10743,6 +10832,14 @@ class KIBController extends Controller
             ->leftJoin('nilai_aktivas as n', 'n.id', '=', 'm.id_voucher2')
             ->leftJoin('aktivas as a', 'a.id', '=', DB::raw('COALESCE(n.id_aktiva, m.id_aktiva)'))
             ->where('m.id_lokasi', $lokasiId)
+            // Kode Aktiva 31.08 termasuk tab Kendaraan, bukan laporan Mesin lokasi.
+            ->where(function ($query) {
+                $query->whereNull('a.kode')
+                    ->orWhereRaw(
+                        "NOT (BTRIM(a.kode) = ? OR BTRIM(a.kode) LIKE ?)",
+                        ['31.08', '31.08.%']
+                    );
+            })
             ->select(
                 'm.*',
                 'b.nama_barang',
@@ -10793,6 +10890,7 @@ class KIBController extends Controller
                 'id' => (int) $lokasi->id,
                 'nama' => (string) ($lokasi->lokasi ?? ''),
                 'alamat' => (string) ($lokasi->alamat ?? ''),
+                'kode_struktur' => $this->kodeStrukturLokasiKibB([$lokasiId]),
             ],
             'jumlah' => count($data),
             'data' => $data,
@@ -10803,6 +10901,7 @@ class KIBController extends Controller
                 'unit' => 'PERUMDA TIRTA KENCANA',
                 'departemen' => $identitas($barang->pluck('departemen')),
                 'divisi' => $identitas($barang->pluck('divisi')),
+                'kode_struktur' => $this->kodeStrukturLokasiKibB([$lokasiId]),
             ],
         ]);
     }
@@ -10867,6 +10966,10 @@ class KIBController extends Controller
             $jenis = 'kendaraan';
         }
 
+        $kodeStruktur = $jenis === 'kendaraan'
+            ? $this->kodeStrukturLokasiKibB(collect($rows)->pluck('lokasi_id')->all())
+            : '-';
+
         return response()->json([
             'success' => true,
             'jenis' => $jenis,
@@ -10879,6 +10982,7 @@ class KIBController extends Controller
                 'unit' => 'PERUMDA TIRTA KENCANA',
                 'departemen' => $jenis === 'kendaraan' ? 'SELURUH DEPARTEMEN' : '-',
                 'divisi' => $jenis === 'kendaraan' ? 'SELURUH DIVISI' : '-',
+                'kode_struktur' => $kodeStruktur,
             ],
         ]);
     }

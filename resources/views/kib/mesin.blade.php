@@ -614,7 +614,11 @@
                                         </strong>
 
                                         <small>
-                                            ID Lokasi #{{ $row->id_lokasi }}
+                                            ID Lokasi #{{ $row->id_lokasi }} · {{ (int) $row->jumlah_barang }} barang
+                                            @if ((int) ($row->jumlah_kendaraan ?? 0) > 0)
+                                                · <span class="mesin-lokasi-kendaraan">{{ (int) $row->jumlah_kendaraan }}
+                                                    kendaraan</span>
+                                            @endif
                                         </small>
 
                                     </td>
@@ -858,6 +862,8 @@
                         <option value="belum_didata">
                             Belum Dicatat
                         </option>
+                        <option value="belum_lengkap">Identitas Belum Lengkap</option>
+                        <option value="belum_inventaris">Belum Diinventarisasi</option>
 
                     </select>
 
@@ -1551,6 +1557,11 @@
                             </h3>
 
                             <span id="mesinVehicleBadge" class="mesin-vehicle-badge" hidden></span>
+                            <p class="mesin-vehicle-help">
+                                Kode Aktiva <strong>31.08</strong> menggunakan format Kendaraan K.I.B B.
+                                Data kendaraan yang belum lengkap tetap terlihat pada menu Kendaraan
+                                agar dapat diperbarui; status pajak dipantau terpisah.
+                            </p>
 
                             <p id="mesinStep3Desc">
                                 Lengkapi informasi teknis berdasarkan
@@ -1860,7 +1871,7 @@
 
                             <i data-lucide="save"></i>
 
-                            Simpan Data Mesin
+                            <span id="mesinSubmitLabel">Simpan Data Mesin</span>
 
                         </button>
 
