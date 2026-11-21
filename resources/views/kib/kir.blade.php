@@ -189,8 +189,8 @@
                     <h2>Daftar Lokasi KIR</h2>
 
                     <p>
-                        Pilih nilai untuk melihat transaksi
-                        dan Detail untuk membuka inventaris ruangan.
+                        Pilih nilai untuk melihat transaksi. Gunakan Detail untuk melihat
+                        inventaris ruangan, lalu Edit atau Hapus untuk memilih satu barang.
                     </p>
                 </div>
 
@@ -284,17 +284,21 @@
                                             <i data-lucide="eye"></i>
                                         </button>
 
-                                        <button class="kir-icon kir-export-icon" type="button"
-                                            title="Print Excel seluruh inventaris lokasi ini"
-                                            aria-label="Print Excel lokasi {{ $lok->lokasi }}"
-                                            data-kir-export-location="{{ $lok->id }}" data-name="{{ $lok->lokasi }}"
-                                            @disabled((int) $lok->jumlah === 0)>
-                                            <i data-lucide="file-spreadsheet"></i>
+                                        {{-- Satu lokasi bisa memuat banyak K.I.R.
+                                             Edit / Hapus membuka Detail untuk memilih BARANG,
+                                             bukan mengubah atau menghapus seluruh lokasi. --}}
+                                        <button class="kir-icon edit" type="button"
+                                            title="Pilih inventaris yang akan diedit"
+                                            aria-label="Pilih inventaris untuk diedit di {{ $lok->lokasi }}"
+                                            data-kir-group-edit="{{ $lok->id }}" data-name="{{ $lok->lokasi }}">
+                                            <i data-lucide="pencil"></i>
                                         </button>
 
-                                        <button class="kir-icon add" type="button" title="Tambah KIR di lokasi"
-                                            data-kir-add-location="{{ $lok->id }}">
-                                            <i data-lucide="plus"></i>
+                                        <button class="kir-icon delete" type="button"
+                                            title="Pilih inventaris yang akan dihapus"
+                                            aria-label="Pilih inventaris untuk dihapus di {{ $lok->lokasi }}"
+                                            data-kir-group-delete="{{ $lok->id }}" data-name="{{ $lok->lokasi }}">
+                                            <i data-lucide="trash-2"></i>
                                         </button>
                                     </div>
                                 </td>

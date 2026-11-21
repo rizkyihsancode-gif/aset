@@ -82,6 +82,10 @@
         roomItems: [],
 
         selectedItem: null,
+        selectedRoomId: null,
+        roomItemRequest: 0,
+        roomLoadRequest: 0,
+        locationIntent: 'detail',
 
         pending: [],
         voucher: null,
@@ -563,6 +567,9 @@
     */
 
     async function selectUnit(index) {
+        state.roomItemRequest++;
+        const roomRequestId = ++state.roomLoadRequest;
+        state.selectedRoomId = null;
         const unit = state.units[index];
 
         if (!unit) {
@@ -590,11 +597,13 @@
                 `${base}/ruangan?${unitQuery(unit)}`
             );
 
+            if (roomRequestId !== state.roomLoadRequest) return;
             state.roomItems = response.data || [];
 
             renderRoomItems();
 
         } catch (exception) {
+            if (roomRequestId !== state.roomLoadRequest) return;
             $('kirRoomContent').textContent =
                 exception.message;
         }
@@ -614,6 +623,12 @@
                 <strong>KARTU INVENTARIS RUANGAN</strong>
                 <span>${items.length} barang pada ruangan ini</span>
             </div>
+            ${state.locationIntent === 'detail' ? '' : `
+                <p class="kir-room-action-guidance" role="status">
+                    ${state.locationIntent === 'edit'
+                        ? 'Pilih barang pada ruangan ini, kemudian klik ikon pensil untuk Edit.'
+                        : 'Pilih barang yang tepat, kemudian klik ikon tempat sampah untuk Hapus. Tidak ada penghapusan massal.'}
+                </p>`}
             <div class="kir-table-wrap kir-excel-scroll" role="region"
                  tabindex="0" aria-label="Tabel inventaris ruangan">
                 <table class="kir-table kir-items-table kir-excel-table">
@@ -629,7 +644,7 @@
                             <th colspan="3" class="kir-excel-group">Kondisi</th>
                             <th rowspan="2">Keterangan</th>
                             <th rowspan="2">Status Kepemilikan</th>
-                            <th rowspan="2">Berkas &amp; Aksi</th>
+                            <th rowspan="2">Aksi</th>
                         </tr>
                         <tr>
                             <th>Baik</th>
@@ -640,7 +655,8 @@
                     <tbody>
                         ${items.length
                             ? items.map((item, index) => `
-                                <tr>
+                                <tr class="kir-room-data-row" data-kir-room-row="${Number(item.id)}"
+                                    title="Klik baris untuk melihat foto dan dokumen di bawah tabel">
                                     <td class="kir-excel-center">${index + 1}</td>
                                     <td><strong>${esc(item.nama_barang || '—')}</strong></td>
                                     <td>${esc(item.kode_barang || '—')}</td>
@@ -655,9 +671,11 @@
                                     <td>${ownershipBadge(item.status_kepemilikan)}</td>
                                     <td>
                                         <div class="kir-actions kir-excel-actions">
-                                            <button type="button" class="kir-btn outline kir-berkas-btn"
-                                                data-item-view="${item.id}" title="Buka Detail dan Foto">
-                                                <i data-lucide="folder-open"></i> Berkas
+                                            <button type="button" class="kir-icon view"
+                                                data-item-view="${Number(item.id)}"
+                                                title="Detail & lampiran di bawah tabel"
+                                                aria-label="Lihat detail dan lampiran ${esc(item.nama_barang || 'barang')}">
+                                                <i data-lucide="eye"></i>
                                             </button>
                                             <button type="button" class="kir-icon edit"
                                                 data-item-edit="${item.id}" title="Edit">
@@ -678,12 +696,113 @@
                 </table>
             </div>
             <p class="kir-excel-hint">
-                Geser tabel ke kanan untuk melihat kondisi, keterangan, dan berkas.
-                Export Excel Lokasi mencakup seluruh ruangan dalam lokasi yang dipilih.
+                Geser tabel ke kanan untuk melihat seluruh kolom dan aksi.
+                Klik baris atau ikon Detail untuk menampilkan foto dan berkas di bawah tabel.
+                Print Excel Lokasi mencakup seluruh ruangan dalam lokasi yang dipilih.
             </p>
+
+            <section class="kir-inline-files" id="kirInlineFiles" aria-live="polite"
+                     aria-label="Lampiran barang KIR terpilih">
+                <div class="kir-inline-files-head">
+                    <div>
+                        <small>LAMPIRAN &amp; TINDAKAN</small>
+                        <h4 id="kirInlineTitle">Pilih salah satu barang</h4>
+                        <p id="kirInlineSubtitle">Klik baris inventaris atau ikon Detail untuk melihat lampiran.</p>
+                    </div>
+                    <span class="kir-inline-files-status" id="kirInlineStatus">Belum dipilih</span>
+                </div>
+                <div class="kir-inline-files-grid">
+                    <article class="kir-inline-file-card">
+                        <h5><i data-lucide="image"></i> Foto Aset</h5>
+                        <div class="kir-inline-file-content" id="kirInlinePhoto">
+                            <div class="kir-berkas-empty">Pilih barang untuk melihat foto.</div>
+                        </div>
+                    </article>
+                    <article class="kir-inline-file-card">
+                        <h5><i data-lucide="file-text"></i> Dokumen PDF / Berkas</h5>
+                        <div class="kir-inline-file-content" id="kirInlineDocument">
+                            <div class="kir-berkas-empty">Pilih barang untuk melihat dokumen.</div>
+                        </div>
+                    </article>
+                </div>
+            </section>
         `;
 
         icons();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LAMPIRAN INLINE — DIBUKA DI BAWAH TABEL RUANGAN
+    | Tidak mengubah data. PDF hanya ditampilkan jika API menyediakan URL.
+    |--------------------------------------------------------------------------
+    */
+
+    const kirSafeAttachmentUrl = value => {
+        const url = str(value);
+        return (/^\/(?!\/)/.test(url) || /^https?:\/\//i.test(url))
+            ? url
+            : '';
+    };
+
+    async function showRoomAttachments(id) {
+        const selected = state.roomItems.find(item => Number(item.id) === Number(id));
+        const panel = $('kirInlineFiles');
+        if (!selected || !panel) return;
+
+        const requestId = ++state.roomItemRequest;
+        state.selectedRoomId = Number(id);
+        $('kirInlineTitle').textContent = selected.nama_barang || 'Barang K.I.R';
+        $('kirInlineSubtitle').textContent = 'Memuat lampiran barang...';
+        $('kirInlineStatus').textContent = 'Memuat...';
+        $('kirInlinePhoto').innerHTML = '<div class="kir-berkas-empty">Memuat foto...</div>';
+        $('kirInlineDocument').innerHTML = '<div class="kir-berkas-empty">Memuat dokumen...</div>';
+
+        document.querySelectorAll('#kirRoomContent [data-kir-room-row]').forEach(row => {
+            row.classList.toggle('is-selected', Number(row.dataset.kirRoomRow) === Number(id));
+        });
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        try {
+            const response = await api(`${base}/${Number(id)}`);
+            if (requestId !== state.roomItemRequest ||
+                Number(state.selectedRoomId) !== Number(id) ||
+                !$('kirInlineFiles')) return;
+
+            const item = response.data || {};
+            const photo = kirSafeAttachmentUrl(item.foto_url);
+            const doc = kirSafeAttachmentUrl(item.dokumen_url || item.pdf_url);
+            const docName = str(item.dokumen_nama || item.pdf_nama || 'Lihat dokumen PDF');
+
+            $('kirInlineTitle').textContent = item.nama_barang || 'Barang K.I.R';
+            $('kirInlineSubtitle').textContent = [item.gedung, item.ruangan]
+                .filter(Boolean).join(' / ') || 'Inventaris ruangan';
+            $('kirInlineStatus').textContent = `ID #${Number(id)}`;
+            $('kirInlinePhoto').innerHTML = photo
+                ? `<a class="kir-inline-photo-link" href="${esc(photo)}" target="_blank"
+                      rel="noopener noreferrer" title="Buka foto asli">
+                      <img src="${esc(photo)}" loading="lazy" alt="Foto ${esc(item.nama_barang || 'aset')}">
+                      <span>Buka foto ukuran asli</span>
+                   </a>`
+                : '<div class="kir-berkas-empty">Foto aset belum tersedia.</div>';
+            $('kirInlineDocument').innerHTML = doc
+                ? `<a class="kir-inline-pdf-link" href="${esc(doc)}" target="_blank"
+                      rel="noopener noreferrer">
+                      <i data-lucide="file-text"></i>
+                      <span>${esc(docName)}</span>
+                      <i data-lucide="external-link"></i>
+                   </a>`
+                : `<div class="kir-berkas-empty">
+                      Dokumen PDF belum tersedia pada inventaris K.I.R ini.
+                   </div>`;
+            icons();
+        } catch (exception) {
+            if (requestId !== state.roomItemRequest || !$('kirInlineFiles')) return;
+            $('kirInlineStatus').textContent = 'Gagal memuat';
+            $('kirInlineSubtitle').textContent = exception.message;
+            $('kirInlinePhoto').innerHTML = '<div class="kir-berkas-empty">Lampiran tidak dapat dimuat.</div>';
+            $('kirInlineDocument').innerHTML = '<div class="kir-berkas-empty">Coba pilih ulang barang.</div>';
+        }
     }
 
     /*
@@ -692,7 +811,11 @@
     |--------------------------------------------------------------------------
     */
 
-    async function openLocation(id, name) {
+    async function openLocation(id, name, intent = 'detail') {
+        state.roomItemRequest++;
+        state.roomLoadRequest++;
+        state.selectedRoomId = null;
+        state.locationIntent = intent;
         state.locationId = id;
         state.locationName = name;
 
@@ -1312,16 +1435,16 @@
                 );
             }
 
-            const exportButton = event.target.closest(
-                '[data-kir-export-location]'
-            );
+            const groupEdit = event.target.closest('[data-kir-group-edit]');
+            if (groupEdit) {
+                return openLocation(Number(groupEdit.dataset.kirGroupEdit),
+                    groupEdit.dataset.name, 'edit');
+            }
 
-            if (exportButton) {
-                return exportLocation(
-                    Number(exportButton.dataset.kirExportLocation),
-                    exportButton.dataset.name,
-                    exportButton
-                );
+            const groupDelete = event.target.closest('[data-kir-group-delete]');
+            if (groupDelete) {
+                return openLocation(Number(groupDelete.dataset.kirGroupDelete),
+                    groupDelete.dataset.name, 'delete');
             }
 
             const view = event.target.closest(
@@ -1335,20 +1458,8 @@
                 );
             }
 
-            const add = event.target.closest(
-                '[data-kir-add-location]'
-            );
-
-            if (add) {
-                return openCreate(
-                    false,
-                    {
-                        lokasi: Number(
-                            add.dataset.kirAddLocation
-                        )
-                    }
-                );
-            }
+            // Tambah tersedia di tombol global dan Detail ruangan.
+            // Tidak ada lagi tombol Tambah pada kolom Aksi lokasi.
         }
     );
 
@@ -2102,9 +2213,7 @@
             );
 
             if (view) {
-                viewItem(
-                    Number(view.dataset.itemView)
-                );
+                showRoomAttachments(Number(view.dataset.itemView));
 
             } else if (edit) {
                 startEdit(
@@ -2115,6 +2224,9 @@
                 deleteItem(
                     Number(del.dataset.itemDelete)
                 );
+            } else {
+                const row = event.target.closest('[data-kir-room-row]');
+                if (row) showRoomAttachments(Number(row.dataset.kirRoomRow));
             }
         }
     );

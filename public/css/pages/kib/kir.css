@@ -2067,3 +2067,187 @@
     .kir-report-foot{flex-direction:column;align-items:stretch;}
     .kir-report-footer-actions{justify-content:flex-end;}
 }
+
+/* ===============================================================
+   K.I.R — AKSI DETAIL / EDIT / HAPUS & LAMPIRAN INLINE
+   Tambahan khusus UI; tidak mengubah export, CRUD maupun modal form.
+================================================================ */
+
+#kirTabelLokasi .kir-actions,
+#kirRoomContent .kir-excel-actions {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+}
+
+.kir-right #kirRoomContent {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+
+.kir-right #kirRoomContent .kir-excel-scroll {
+    flex: 0 0 auto;
+    height: auto;
+    max-height: min(42vh, 430px);
+    min-height: 100px;
+    overflow: auto;
+}
+
+#kirRoomContent .kir-room-data-row {
+    cursor: pointer;
+}
+
+#kirRoomContent .kir-room-data-row.is-selected td {
+    background: #dcecff !important;
+}
+
+#kirRoomContent .kir-room-data-row:focus-within td {
+    outline-offset: -2px;
+}
+
+.kir-room-action-guidance {
+    padding: 10px 12px;
+    margin: 0 0 10px;
+    color: #174e87;
+    font-size: 12px;
+    line-height: 1.55;
+    border: 1px solid #bcd9f5;
+    border-radius: 8px;
+    background: #edf6ff;
+}
+
+.kir-inline-files {
+    margin-top: 14px;
+    border: 1px solid #d4e3f3;
+    border-radius: 12px;
+    padding: 14px;
+    background: #f7faff;
+    flex: none;
+}
+
+.kir-inline-files-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #d8e6f5;
+}
+
+.kir-inline-files-head small {
+    display: block;
+    color: #086acb;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .6px;
+}
+
+.kir-inline-files-head h4 {
+    color: #153f72;
+    margin: 4px 0;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.kir-inline-files-head p {
+    margin: 0;
+    color: #6883a0;
+    font-size: 12px;
+}
+
+.kir-inline-files-status {
+    border-radius: 8px;
+    padding: 7px 10px;
+    background: #e7f1fd;
+    color: #245b97;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.kir-inline-files-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.kir-inline-file-card {
+    padding: 12px;
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #dbe7f5;
+    border-radius: 10px;
+}
+
+.kir-inline-file-card h5 {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: #164572;
+    margin: 0 0 10px;
+}
+
+.kir-inline-file-card h5 svg {
+    width: 16px;
+    height: 16px;
+}
+
+.kir-inline-file-content {
+    display: grid;
+    min-height: 128px;
+    align-content: center;
+}
+
+.kir-inline-photo-link {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    color: #0a68bf;
+    font-weight: 650;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.kir-inline-photo-link img {
+    width: 100%;
+    height: auto;
+    max-height: 230px;
+    object-fit: contain;
+    border-radius: 7px;
+    background: #f3f7fc;
+}
+
+.kir-inline-pdf-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px 10px;
+    border-radius: 8px;
+    background: #eff7ff;
+    color: #0965c2;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+}
+
+.kir-inline-pdf-link svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+}
+
+.kir-inline-file-content .kir-berkas-empty {
+    min-height: 120px;
+    padding: 14px;
+    text-align: center;
+}
+
+@media (max-width: 850px) {
+    .kir-inline-files-grid { grid-template-columns: 1fr; }
+    .kir-right #kirRoomContent .kir-excel-scroll { max-height: 300px; }
+}
