@@ -11092,7 +11092,7 @@ class KIBController extends Controller
         return $cache;
     }
 
-    private function kibNamaDepartemenUntukLaporan(int $nilai, $idDepartemen = null): string
+    private function kibNamaDepartemenUntukLaporan(int|string|null $nilai, $idDepartemen = null): string
     {
         $raw = trim((string) ($nilai ?? ''));
         if (in_array(strtoupper($raw), ['BERAGAM', 'SELURUH DEPARTEMEN'], true)) {
