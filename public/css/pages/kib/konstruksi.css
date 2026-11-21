@@ -2539,3 +2539,112 @@
     text-align: left;
     vertical-align: middle;
 }
+
+
+/* ========================================================================
+   K.I.B F — Dropdown Print Excel (khusus empat penandatangan)
+   Tidak mengubah dropdown pada form Tambah/Edit Konstruksi.
+   ======================================================================== */
+#kfReportDialog .kf-report-sign-grid { align-items: start; overflow: visible; }
+#kfReportDialog .kf-report-signer-field {
+    display: grid;
+    position: relative;
+    gap: 7px;
+    min-width: 0;
+    z-index: 1;
+}
+#kfReportDialog .kf-report-signer-field.is-open { z-index: 80; }
+#kfReportDialog .kf-report-signer-field > label { display: block; }
+#kfReportDialog .kf-report-signer-control { position: relative; min-width: 0; }
+#kfReportDialog .kf-report-signer-control input {
+    width: 100%;
+    min-height: 44px;
+    padding-right: 38px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: #ffffff;
+    border: 1px solid #b9d1ec;
+    border-radius: 9px;
+    color: #173d69;
+    font-size: 12px;
+    line-height: 1.4;
+}
+#kfReportDialog .kf-report-signer-field.is-selected input {
+    border-color: #68b59c;
+    background: #f5fdf9;
+}
+#kfReportDialog .kf-report-dropdown-chevron {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-54%);
+    pointer-events: none;
+    font-size: 21px;
+    font-weight: 700;
+    color: #587da4;
+    line-height: 1;
+    transition: transform .16s ease;
+}
+#kfReportDialog .kf-report-signer-field.is-open .kf-report-dropdown-chevron {
+    transform: translateY(-42%) rotate(180deg);
+}
+#kfReportDialog .kf-report-signer-field .kf-report-suggestions {
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 215px;
+    border: 1px solid #b8d4f0;
+    border-radius: 11px;
+    padding: 5px;
+    background: #ffffff;
+    box-shadow: 0 16px 32px rgba(17, 62, 112, .20);
+    z-index: 90;
+}
+#kfReportDialog .kf-report-signer-field .kf-report-suggestions.opens-up {
+    top: auto;
+    bottom: calc(100% + 6px);
+}
+#kfReportDialog .kf-report-suggestion-heading {
+    position: sticky;
+    top: -5px;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e1edf9;
+    background: #f6faff;
+    border-radius: 7px 7px 0 0;
+    color: #54799d;
+    font-size: 10px;
+    letter-spacing: .4px;
+}
+#kfReportDialog .kf-report-suggestion-heading strong {
+    color: #2566a1;
+    font-weight: 800;
+}
+#kfReportDialog .kf-report-suggestion { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+#kfReportDialog .kf-report-suggestion-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+#kfReportDialog .kf-report-suggestion strong { font-size: 12px; }
+#kfReportDialog .kf-report-suggestion small { font-size: 11px; overflow-wrap: anywhere; }
+#kfReportDialog .kf-report-suggestion-check {
+    width: 21px;
+    height: 21px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background: #dbf6e8;
+    color: #08765f;
+    font-size: 12px;
+    font-weight: 800;
+    opacity: 0;
+    flex: none;
+}
+#kfReportDialog .kf-report-suggestion.is-selected .kf-report-suggestion-check { opacity: 1; }
+#kfReportDialog .kf-report-suggestion:hover,
+#kfReportDialog .kf-report-suggestion.is-active { background: #e8f3ff; }
+@media(max-width: 760px) {
+    #kfReportDialog .kf-report-signer-field .kf-report-suggestions { max-height: 180px; }
+}

@@ -2508,14 +2508,18 @@
         const bangunan = {P:'Permanen',SP:'Semi Permanen',D:'Darurat'}[String(row.bangunan ?? '').toUpperCase()]
             || reportCell(row.bangunan);
         const financing = pembiayaanLabel(row.asal_pembiayaan);
-        // Satu baris kosong antara identitas barang/cakupan dan uraian pekerjaan.
-        // Pemisah \n\n dipertahankan pada preview, Print, serta sel Excel (wrap text).
-        const nameHeader = [reportCell(row.nama),
-            row.cakupan ? `Cakupan: ${String(row.cakupan).trim()}` : '']
+        // Sumber tunggal bagi Preview, Print browser dan sel B pada XLSX.
+        // Excel membaca dua karakter LF berturut-turut sebagai satu baris kosong.
+        const namaBarang = reportCell(row.nama);
+        const cakupan = String(row.cakupan ?? '').trim();
+        const uraian = String(row.uraian ?? row.uraian_pekerjaan ?? '')
+            .replace(/^\s*Uraian Pekerjaan\s*:\s*/i, '')
+            .trim();
+        const identitas = [namaBarang, cakupan ? `Cakupan: ${cakupan}` : '']
             .filter(Boolean).join('\n');
-        const name = String(row.uraian ?? '').trim()
-            ? `${nameHeader}\n\nUraian Pekerjaan:\n${String(row.uraian).trim()}`
-            : nameHeader;
+        const name = uraian
+            ? `${identitas}\n\nUraian Pekerjaan:\n${uraian}`
+            : identitas;
         return [index+1,name,reportCell(row.tahun),bangunan,reportCell(row.bertingkat),
             reportCell(row.beton),reportCell(row.luas),reportLocation(row),
             reportCell(row.status_tanah),financing,reportCell(row.status_aset),
@@ -2597,10 +2601,13 @@
         const version=++reportState.request;
         reportState.response=null;
         reportState.loading=true;
-        reportInputs.forEach(input => {if(input)input.value='';});
+        reportInputs.forEach(input => {
+            if (!input) return;
+            input.value = '';
+            input.closest('.kf-report-signer-field')?.classList.remove('is-selected');
+        });
         closeSignerMenus();
-        // Hapus pilihan laporan sebelumnya sebelum mengambil daftar SDM aktif terbaru.
-        $('kfReportSdmOptions')?.replaceChildren();
+        // Daftar penandatangan dirender sebagai combobox khusus di popup Print.
         $('kfReportCount').textContent=`${kategori} / ${lokasi} / ${divisi}`;
         if(reportInfo)reportInfo.textContent='Memuat seluruh data kelompok dan SDM Pendukung...';
         reportDialog.showModal();
@@ -2613,14 +2620,8 @@
             const result=await api(url.toString());
             if(version!==reportState.request || !reportDialog.open)return;
             reportState.response=result;
-            const list=$('kfReportSdmOptions');
-            if(list){ list.replaceChildren();
-                asArray(result.sdm).forEach(s => {
-                    const option=document.createElement('option');
-                    option.value=reportSdmOption(s);
-                    list.appendChild(option);
-                });
-            }
+            // Hanya data SDM aktif dari respons backend yang dipakai.
+            // Tidak mengisi datalist native, agar popup Chrome tidak menutup form.
         } catch(error) {
             if(version===reportState.request && reportInfo) {
                 reportInfo.textContent='Gagal memuat laporan: '+error.message;
@@ -2658,12 +2659,14 @@
             }
             input.setAttribute('aria-expanded', 'false');
             input.removeAttribute('aria-activedescendant');
+            input.closest('.kf-report-signer-field')?.classList.remove('is-open');
         });
     }
 
     function chooseSigner(input, sdm) {
         if (!input || !sdm) return;
         input.value = reportSdmOption(sdm);
+        input.closest('.kf-report-signer-field')?.classList.add('is-selected');
         closeSignerMenus();
         renderReport();
     }
@@ -2691,12 +2694,21 @@
             return;
         }
 
+        const heading = document.createElement('div');
+        heading.className = 'kf-report-suggestion-heading';
+        const headingTitle = document.createElement('strong');
+        headingTitle.textContent = 'PILIH SDM AKTIF';
+        const headingCount = document.createElement('span');
+        headingCount.textContent = `${matches.length} pilihan`;
+        heading.append(headingTitle, headingCount);
+        menu.appendChild(heading);
+
         if (!matches.length) {
             const empty = document.createElement('div');
             empty.className = 'kf-report-suggestion-empty';
             empty.textContent = asArray(reportState.response?.sdm).length
-                ? 'Tidak ada SDM aktif yang cocok.'
-                : 'Belum ada SDM Pendukung aktif.';
+                ? 'Nama, jabatan, atau NIP tidak ditemukan.'
+                : 'Tidak ada SDM berstatus aktif.';
             menu.appendChild(empty);
         }
 
@@ -2712,7 +2724,15 @@
             name.textContent = String(sdm.nama || 'Tanpa nama');
             const detail = document.createElement('small');
             detail.textContent = `${sdm.jabatan || 'Tanpa Jabatan'} · NIP ${sdm.nip || '-'}`;
-            option.append(name, detail);
+            const textGroup = document.createElement('span');
+            textGroup.className = 'kf-report-suggestion-text';
+            textGroup.append(name, detail);
+            const check = document.createElement('span');
+            check.className = 'kf-report-suggestion-check';
+            check.textContent = '✓';
+            check.setAttribute('aria-hidden', 'true');
+            if (input.value.trim() === reportSdmOption(sdm)) option.classList.add('is-selected');
+            option.append(textGroup, check);
 
             // Pilih saat pointerdown agar tidak kalah oleh blur input.
             option.addEventListener('pointerdown', event => {
@@ -2725,6 +2745,11 @@
             menu.appendChild(option);
         });
 
+        const field = input.closest('.kf-report-signer-field');
+        if (field) field.classList.add('is-open');
+        // Menu membuka ke atas bila ruang bawah jendela tidak cukup.
+        const below = window.innerHeight - input.getBoundingClientRect().bottom;
+        menu.classList.toggle('opens-up', below < 230 && input.getBoundingClientRect().top > 240);
         menu.hidden = false;
         input.setAttribute('aria-expanded', 'true');
     }
@@ -2752,8 +2777,15 @@
             if (menu?.hidden) openSignerMenu(input);
         });
         input.addEventListener('input', () => {
+            input.closest('.kf-report-signer-field')?.classList.remove('is-selected');
             renderReport();
             openSignerMenu(input);
+        });
+        input.closest('.kf-report-signer-control')?.addEventListener('click', () => {
+            input.focus();
+            if (!input.getAttribute('aria-expanded') || input.getAttribute('aria-expanded') === 'false') {
+                openSignerMenu(input);
+            }
         });
         input.addEventListener('change', renderReport);
         input.addEventListener('keydown', event => {
@@ -2880,7 +2912,10 @@
                 String(value??'').split(/\r?\n/).reduce((sum,line) =>
                     sum+Math.max(1,Math.ceil(line.length/wrapWidths[col])),0)
             ));
-            heights.set(r,Math.min(390,Math.max(38,maxLines*15+15)));
+            // Tambahan ruang menjaga baris kosong sebelum 'Uraian Pekerjaan'
+            // tetap terbaca saat Excel dicetak, bukan hanya pada preview.
+            const hasUraian = Boolean(String(item.uraian ?? item.uraian_pekerjaan ?? '').trim());
+            heights.set(r,Math.min(405,Math.max(42,maxLines*16+18+(hasUraian ? 12 : 0))));
         });
         const signatureRow=header+data.length+6;
         merged(signatureRow,10,signatureRow,13,
