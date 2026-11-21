@@ -343,6 +343,21 @@
         ].map(value => ({ value }))
     };
 
+    // Dropdown selalu menampilkan nama Master; kode dari arsip lama hanya
+    // dipakai sebagai kunci lookup dan tidak menjadi saran yang dipilih.
+    function namaDepartemenCombo(value) {
+        const raw = String(value ?? '').trim();
+        if (!raw) return '';
+        const match = asArray(master.departemen).find(item =>
+            [item.nama_dep, item.kode_dep, item.id]
+                .some(part => norm(part) === norm(raw))
+        );
+        const result = String(match?.nama_dep || raw).trim();
+        return /^[0-9.\s\/\-]+$/.test(result)
+            || result.startsWith('Nama belum diatur')
+            ? '' : result;
+    }
+
     function comboOptions(type) {
         let options = [];
 
@@ -358,9 +373,10 @@
         if (type === 'departemen') {
             options = asArray(master.departemen)
                 .map(o => ({
-                    value: o.nama_dep,
+                    value: namaDepartemenCombo(o.nama_dep),
                     raw: o
-                }));
+                }))
+                .filter(o => o.value);
         }
 
         if (type === 'divisi') {
@@ -406,9 +422,10 @@
         };
 
         for (const value of asArray(more[type])) {
-            options.push({
-                value: String(value)
-            });
+            const label = type === 'departemen'
+                ? namaDepartemenCombo(value)
+                : String(value);
+            if (label) options.push({ value: label });
         }
 
         const seen = new Set();
@@ -983,13 +1000,12 @@
         editId = Number(item.id);
 
         fields.forEach(name => {
-            const input =
-                form.elements.namedItem(name);
-
+            const input = form.elements.namedItem(name);
             if (input) {
-                input.value = String(
-                    item[name] ?? ''
-                );
+                const value = name === 'departemen'
+                    ? (namaDepartemenCombo(item[name]) || item[name] || '')
+                    : (item[name] ?? '');
+                input.value = String(value);
             }
         });
 

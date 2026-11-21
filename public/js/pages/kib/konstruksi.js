@@ -365,7 +365,10 @@
 
         if (source === 'departemen') {
             options.push(
-                ...asArray(master.departemen).map(row => ({
+                ...asArray(master.departemen).filter(row =>
+                    !/^[0-9.\s\/\-]+$/.test(String(row.nama_dep ?? ''))
+                    && !String(row.nama_dep ?? '').startsWith('Nama belum diatur')
+                ).map(row => ({
                     value: row.nama_dep,
                     raw: row
                 }))
@@ -404,9 +407,21 @@
         if (suggestionKey) {
             options.push(
                 ...asArray(suggestions[suggestionKey])
-                    .map(value => ({
-                        value: String(value)
-                    }))
+                    .map(value => {
+                        if (source === 'departemen') {
+                            const raw = String(value);
+                            const match = asArray(master.departemen).find(row =>
+                                [row.nama_dep, row.kode_dep, row.id]
+                                    .some(part => norm(part) === norm(raw))
+                            );
+                            return { value: String(match?.nama_dep || raw) };
+                        }
+                        return { value: String(value) };
+                    })
+                    .filter(row => source !== 'departemen' || (
+                        !/^[0-9.\s\/\-]+$/.test(row.value)
+                        && !row.value.startsWith('Nama belum diatur')
+                    ))
             );
         }
 
@@ -2497,4 +2512,3 @@
     icons();
 
 })();
-    
