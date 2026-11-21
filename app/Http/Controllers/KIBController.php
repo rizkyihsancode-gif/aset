@@ -5528,6 +5528,81 @@ class KIBController extends Controller
     |--------------------------------------------------------------------------
     */
 
+
+    /**
+     * K.I.B E — laporan satu inventaris atau seluruh kelompok lokasi/divisi.
+     * Data manual dan arsip lama sengaja dipisah sesuai perilaku halaman E.
+     * Tidak menggunakan pagination; semua baris kelompok ikut dicetak.
+     */
+    public function laporanAsetTetapKibE(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $params = $request->validate([
+            'mode' => ['required', \Illuminate\Validation\Rule::in(['detail', 'kelompok'])],
+            'id' => ['required_if:mode,detail', 'nullable', 'integer', 'min:1'],
+            'lokasi' => ['required_if:mode,kelompok', 'nullable', 'string', 'max:500'],
+            'divisi' => ['required_if:mode,kelompok', 'nullable', 'string', 'max:255'],
+        ]);
+
+        $query = DB::table(self::AEM_TABLE);
+        if ($params['mode'] === 'detail') {
+            $query->where('id', (int) $params['id']);
+        } else {
+            $lokasiExpr = "COALESCE(NULLIF(BTRIM(lokasi), ''), 'Tanpa Lokasi')";
+            $divisiExpr = "COALESCE(NULLIF(BTRIM(divisi), ''), 'Tanpa Divisi')";
+            $query->whereRaw("{$lokasiExpr} = ?", [trim($params['lokasi'])]);
+            $query->whereRaw("{$divisiExpr} = ?", [trim($params['divisi'])]);
+        }
+        $items = $query->orderByDesc('id')->get([
+            'id',
+            'nama_aset',
+            'kode_inventaris',
+            'nomor_register',
+            'kondisi',
+            'bahan',
+            'tahun',
+            'jumlah_unit',
+            'asal_perolehan',
+            'keterangan',
+            'departemen',
+            'divisi',
+            'lokasi',
+            'alamat',
+            'kode_struktur',
+        ]);
+        if ($params['mode'] === 'detail' && $items->isEmpty()) {
+            abort(404, 'Inventaris K.I.B E tidak ditemukan.');
+        }
+
+        $identitas = static function (string $field) use ($items): string {
+            $values = $items->pluck($field)
+                ->map(static fn($v) => trim((string) ($v ?? '')))
+                ->filter()->unique()->values();
+            if ($values->isEmpty()) return '-';
+            return $values->count() === 1 ? (string) $values->first() : 'BERAGAM';
+        };
+        return response()->json([
+            'success' => true,
+            'mode' => $params['mode'],
+            'jumlah' => $items->count(),
+            'lokasi' => [
+                'nama' => $params['mode'] === 'kelompok'
+                    ? trim($params['lokasi']) : $identitas('lokasi'),
+                'alamat' => $identitas('alamat'),
+            ],
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                'departemen' => $identitas('departemen'),
+                'divisi' => $params['mode'] === 'kelompok'
+                    ? trim($params['divisi']) : $identitas('divisi'),
+                'kode_struktur' => $identitas('kode_struktur'),
+            ],
+            'sdm' => $this->sdmAktifKibB(),
+            'data' => $items->values()->all(),
+        ]);
+    }
+
     private const AEM_TABLE = 'kib_aset_tetap_manual';
 
     private const AEM_DOCS = 'kib_aset_tetap_dokumens';
@@ -6510,12 +6585,14 @@ class KIBController extends Controller
             ->selectRaw("
             {$lokasiExpr} AS lokasi,
             {$divisiExpr} AS divisi,
-            COUNT(*) AS jumlah
+            COUNT(*) AS jumlah,
+            MAX(id) AS id_terbaru
         ")
             ->groupByRaw("
             {$lokasiExpr},
             {$divisiExpr}
         ")
+            ->orderByDesc('id_terbaru')
             ->orderBy('lokasi')
             ->orderBy('divisi')
             ->get();
@@ -6620,8 +6697,7 @@ class KIBController extends Controller
                 'keterangan',
                 'status_kepemilikan',
             ])
-            ->orderBy('nama_aset')
-            ->orderBy('id')
+            ->orderByDesc('id')
             ->paginate(10);
 
         /*

@@ -848,6 +848,10 @@ Route::post(
     [KIBController::class, 'storeAsetTetapManual']
 )->name('kib.aset_ttp.store');
 
+// K.I.B E — sumber laporan Excel, selalu sebelum route {aset}.
+Route::get('/kib/aset_ttp/laporan', [KIBController::class, 'laporanAsetTetapKibE'])
+    ->name('kib.aset_ttp.laporan');
+
 Route::get(
     '/kib/aset_ttp/{aset}/foto',
     [KIBController::class, 'fotoAsetTetapManual']

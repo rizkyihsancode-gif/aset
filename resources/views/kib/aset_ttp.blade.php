@@ -31,7 +31,8 @@
 
     <section id="aemApp" class="aem-page" data-base="{{ url('/kib/aset_ttp') }}"
         data-group-url="{{ route('kib.aset_ttp.kelompok') }}" data-token="{{ csrf_token() }}"
-        data-logo-url="{{ asset('images/logo.png') }}">
+        data-logo-url="{{ asset('images/logo.png') }}" data-report-url="{{ route('kib.aset_ttp.laporan') }}"
+        data-report-logo="{{ asset('images/logo_hr.png') }}" data-report-css="{{ asset('css/pages/kib/aset_ttp.css') }}">
 
         {{-- HEADER --}}
 
@@ -713,7 +714,12 @@
                 </div>
 
 
-                <footer class="aem-dialog-foot">
+                <footer class="aem-dialog-foot aem-group-actions">
+
+                    <button type="button" class="aem-btn aem-report-open" id="aemGroupPrint" disabled>
+                        <i data-lucide="file-spreadsheet"></i>
+                        Print Excel Kelompok
+                    </button>
 
                     <button type="button" class="aem-btn outline" id="aemBack">
                         Kembali ke Daftar
@@ -1014,10 +1020,10 @@
                     Tutup
                 </button>
 
-                <button type="button" id="aemExportDetail" class="aem-btn aem-export-btn"
-                    title="Ekspor detail ke Excel (.xlsx)">
+                <button type="button" id="aemExportDetail" class="aem-btn aem-report-open"
+                    title="Preview dan cetak detail dalam format Excel (.xlsx)">
                     <i data-lucide="file-spreadsheet"></i>
-                    Export Excel
+                    Print Excel
                 </button>
 
                 <button type="button" id="aemEditDetail" class="aem-btn outline">
@@ -1032,6 +1038,63 @@
 
             </footer>
 
+        </dialog>
+
+
+        {{-- POPUP CETAK EXCEL K.I.B E — ACUAN TANAH / PRD V2.1 --}}
+        <dialog id="aemReportDialog" class="aem-report-dialog">
+            <div class="aem-report-head">
+                <div>
+                    <small>LAPORAN KARTU INVENTARIS BARANG (K.I.B E)</small>
+                    <h2>Print Excel — Aset Tetap Lainnya</h2>
+                    <p id="aemReportScope">Memuat data inventaris...</p>
+                </div>
+                <button type="button" class="aem-report-x" data-aem-report-close aria-label="Tutup laporan">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="aem-report-body">
+                <form id="aemReportForm" class="aem-report-form" autocomplete="off">
+                    <label class="aem-report-period-field">
+                        <span>Periode laporan <b>*</b></span>
+                        <input id="aemReportPeriod" type="month" required>
+                        <small>Contoh: November 2026</small>
+                    </label>
+                    <div class="aem-report-sign-grid">
+                        @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
+                            <label>
+                                <span>{{ $judul }} <b>*</b></span>
+                                <input type="text" data-aem-report-role="{{ $peran }}" list="aemReportStaff"
+                                    placeholder="Ketik nama, NIP, atau jabatan..." required>
+                                <small>Pilih dari Master SDM Pendukung.</small>
+                            </label>
+                        @endforeach
+                        <datalist id="aemReportStaff"></datalist>
+                    </div>
+                </form>
+                <div id="aemReportInfo" class="aem-report-info" role="status" aria-live="polite">
+                    Pilih periode dan penandatangan untuk menampilkan preview.
+                </div>
+                <section id="aemReportPreviewBox" class="aem-report-preview-box" hidden>
+                    <div class="aem-report-preview-title">
+                        <strong>Preview Laporan K.I.B E</strong>
+                        <span id="aemReportCount">0 data</span>
+                    </div>
+                    <div class="aem-report-preview-scroller" id="aemReportPreview"></div>
+                </section>
+            </div>
+            <div class="aem-report-footer">
+                <span>Detail / Kelompok · 10 kolom K.I.B E · tanpa Status Kepemilikan</span>
+                <div class="aem-report-footer-buttons">
+                    <button type="button" class="aem-report-cancel" data-aem-report-close>Batal</button>
+                    <button type="button" class="aem-report-print" id="aemReportPrint" disabled>
+                        <i data-lucide="printer"></i> Print
+                    </button>
+                    <button type="button" class="aem-report-download" id="aemReportDownload" disabled>
+                        <i data-lucide="download"></i> Download Excel
+                    </button>
+                </div>
+            </div>
         </dialog>
 
 
