@@ -1267,6 +1267,9 @@
             '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
             '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
         const sheet=declaration+`<worksheet xmlns="${ns}" xmlns:r="${rel}">`+
+            // SpreadsheetML: sheetPr HARUS sebelum dimension/sheetViews/sheetData.
+            // Excel dapat meminta repair jika sheetPr diletakkan setelah pageMargins.
+            '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'+
             `<dimension ref="A1:K${lastRow}"/>`+
             '<sheetViews><sheetView workbookViewId="0"><pane ySplit="20" topLeftCell="A21" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'+
             `<cols>${widths.map((width,i)=>`<col min="${i+1}" max="${i+1}" width="${width}" customWidth="1"/>`).join('')}</cols>`+
@@ -1274,7 +1277,6 @@
             `<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells>`+
             '<printOptions horizontalCentered="1"/>'+
             '<pageMargins left="0.23" right="0.23" top="0.4" bottom="0.4" header="0.2" footer="0.2"/>'+
-            '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'+
             '<pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="0"/>'+
             '<drawing r:id="rId1"/>'+
             '</worksheet>';
