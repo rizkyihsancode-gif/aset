@@ -2160,11 +2160,23 @@
 .aem-report-kop img { position: absolute; left: 6px; top: 13px; width: 230px; max-height: 75px; object-fit: contain; object-position: left center; }
 .aem-report-kop-title { text-align: center; font-weight: 700; }
 .aem-report-kop-title strong { display: block; margin-bottom: 4px; font-size: 12px; }
+/* Kop K.I.B E: enam identitas organisasi dalam satu kolom vertikal,
+   mengikuti contoh Excel K.I.B E (bukan layout dua kolom). */
 .aem-report-meta {
-    display: grid; grid-template-columns: 320px 320px;
-    gap: 3px 9px; margin: 16px 0 22px;
+    display: grid;
+    grid-template-columns: minmax(0, 460px);
+    gap: 3px;
+    margin: 16px 0 22px;
 }
-.aem-report-meta > div { display: grid; grid-template-columns: 125px 1fr; gap: 5px; }
+.aem-report-meta > div {
+    display: grid;
+    grid-template-columns: 145px minmax(0, 1fr);
+    gap: 5px;
+    align-items: baseline;
+}
+.aem-report-meta > div b {
+    font-weight: 700;
+}
 .aem-report-table-scroll { width: 100%; overflow: visible; }
 .aem-report-table {
     width: 100%; border-collapse: collapse; table-layout: fixed;

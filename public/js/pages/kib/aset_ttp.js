@@ -2243,6 +2243,10 @@ document.addEventListener('DOMContentLoaded', () => {
         conditions[String(e.kondisi ?? '').trim().toUpperCase()] || e.kondisi,
         e.bahan, e.tahun, e.jumlah_unit, e.asal_perolehan, e.keterangan
     ].map(cell));
+    // Standar metadata laporan K.I.B E sesuai referensi Excel perusahaan.
+    // Hanya enam atribut resmi, tersusun vertikal dalam urutan yang sama.
+    // Identitas lokasi tetap digunakan untuk memilih cakupan laporan,
+    // tetapi tidak menjadi baris tambahan pada kop Excel K.I.B E.
     const meta = () => {
         const o = state.organisasi || {};
         return [
@@ -2251,8 +2255,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ['UNIT', o.unit || 'PERUMDA TIRTA KENCANA'],
             ['DEPARTEMEN', o.departemen || '-'],
             ['DIVISI', o.divisi || '-'],
-            ['LOKASI / UNIT KERJA', state.lokasi?.nama || '-'],
-            ['ALAMAT', state.lokasi?.alamat || '-'],
             ['KODE STRUKTUR', o.kode_struktur || '-'],
         ];
     };
@@ -2491,6 +2493,8 @@ document.addEventListener('DOMContentLoaded', () => {
         merged(4, 1, 4, count, title(), 1);
         merged(5, 1, 5, count, `PERIODE ${periodName()}`, 1);
         [29, 25, 26, 25, 24, 27].forEach((n, i) => heights.set(i + 1, n));
+        // Baris 8–13: PROVINSI, KOTA, UNIT, DEPARTEMEN, DIVISI,
+        // KODE STRUKTUR. Baris 14–16: ruang kosong sebelum tabel.
         meta().forEach(([key, value], i) => {
             merged(8+i, 1, 8+i, 2, key, 4);
             merged(8+i, 3, 8+i, 6, `: ${cell(value)}`, 4);
