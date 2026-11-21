@@ -494,6 +494,12 @@ Route::prefix('kib')
         | CRUD SERTIFIKAT DAN PDF TANAH — CONTROLLER YANG SAMA
         |--------------------------------------------------------------
         */
+        // K.I.B A: laporan semua Tanah (digunakan tombol Print Excel halaman utama).
+        Route::get(
+            '/tanah/laporan',
+            [KIBController::class, 'laporanTanah']
+        )->name('tanah.laporan');
+
         Route::get(
             '/tanah/lokasi/{lokasi}/sertifikat',
             [KIBController::class, 'lokasiSertifikat']
@@ -604,6 +610,13 @@ Route::post('/kib/mesin', [
     'storeMesin'
 ])->name('kib.mesin.store');
 
+// K.I.B B: sumber popup/preview Print Excel Kendaraan dan Mesin per lokasi.
+// Penting: route ini harus ada sebelum route dinamis /kib/mesin/{mesin}.
+Route::get('/kib/mesin/laporan', [
+    KIBController::class,
+    'laporanMesinKibB'
+])->name('kib.mesin.laporan');
+
 Route::get('/kib/mesin/{mesin}', [
     KIBController::class,
     'showMesin'
@@ -644,7 +657,7 @@ Route::get('/kib/mesin/{mesin}/file/{jenis}', [
 
 Route::get(
     '/kib/mesin/pajak/data',
-    [KIBController::class, 'dataPajakMesin']
+    [KIBController::class, 'dataKendaraanKibB']
 )->name('kib.mesin.pajak.data');
 
 Route::post(
