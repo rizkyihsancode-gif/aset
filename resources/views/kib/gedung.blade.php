@@ -222,8 +222,8 @@
         </section>
 
         {{-- =====================================================
-         DAFTAR GEDUNG DAN BANGUNAN
-         HANYA 4 KOLOM
+         DAFTAR GEDUNG DAN BANGUNAN — PER LOKASI
+         TERMASUK KOLOM JUMLAH DATA LOKASI
     ===================================================== --}}
 
         <section class="gedung-card">
@@ -293,6 +293,7 @@
                         <col class="gc-lokasi">
                         <col class="gc-alamat">
                         <col class="gc-status">
+                        <col class="gc-data-lokasi">
                         <col class="gc-aksi">
                     </colgroup>
 
@@ -303,6 +304,7 @@
                             <th>Lokasi</th>
                             <th>Alamat</th>
                             <th>Status Kepemilikan</th>
+                            <th>Data Lokasi</th>
                             <th>Aksi</th>
                         </tr>
 
@@ -331,7 +333,6 @@
 
                                     <small>
                                         ID Lokasi #{{ $row->id_lokasi }}
-                                        · {{ $row->jumlah_gedung }} gedung
                                     </small>
 
                                 </td>
@@ -364,7 +365,30 @@
                                     </span>
                                 </td>
 
-                                {{-- 5. AKSI --}}
+                                {{-- 5. DATA LOKASI: JUMLAH GEDUNG DARI DATABASE --}}
+
+                                <td class="gedung-center gedung-data-lokasi-cell">
+
+                                    <button type="button" class="gedung-data-lokasi-btn"
+                                        data-lokasi="{{ $row->id_lokasi }}"
+                                        title="Lihat {{ (int) $row->jumlah_gedung }} gedung pada lokasi {{ trim((string) $row->lokasi) }}"
+                                        aria-label="Lihat {{ (int) $row->jumlah_gedung }} data gedung di lokasi {{ trim((string) $row->lokasi) }}">
+
+                                        <span class="gedung-data-lokasi-icon" aria-hidden="true">
+                                            <i data-lucide="files"></i>
+                                        </span>
+
+                                        <span class="gedung-data-lokasi-text">
+                                            <strong>{{ number_format((int) $row->jumlah_gedung, 0, ',', '.') }}
+                                                data</strong>
+                                            <small>Lihat gedung</small>
+                                        </span>
+
+                                    </button>
+
+                                </td>
+
+                                {{-- 6. AKSI --}}
 
                                 <td class="gedung-center">
 
@@ -397,7 +421,7 @@
                         @empty
 
                             <tr>
-                                <td colspan="5" class="gedung-empty">
+                                <td colspan="6" class="gedung-empty">
                                     Belum ada inventaris Gedung pada database.
                                     Data Nilai Aset dapat diproses
                                     melalui Lihat Data Masuk.
