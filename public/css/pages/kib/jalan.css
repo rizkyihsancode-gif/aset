@@ -367,3 +367,192 @@
   #jalanPage .kd-main-table {min-width:1020px;}
   #jalanPage .kd-pending-pages {justify-content:space-between;gap:7px;}
 }
+
+
+/* PRD v2.1: tombol dan popup Print Excel K.I.B D, mengikuti Tanah. */
+
+/* ==========================================================================
+   K.I.B D — STANDAR UI PRINT EXCEL PRD V2.1 (ACUAN HALAMAN TANAH)
+   Tombol hanya tampil pada Detail satu lokasi, bukan daftar seluruh menu.
+   ========================================================================== */
+#jalanPage #kdExportDetail.kd-report-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid #08765f;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #09896f 0%, #08765f 100%);
+    color: #fff;
+    box-shadow: 0 5px 14px rgba(8, 118, 95, .16);
+    font-size: 12px; font-family: inherit; font-weight: 750; line-height: 1.35;
+    cursor: pointer;
+    transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+}
+#jalanPage #kdExportDetail.kd-report-open svg { width: 17px; height: 17px; flex: none; }
+#jalanPage #kdExportDetail.kd-report-open:hover:not(:disabled) {
+    background: linear-gradient(135deg, #08765f 0%, #065844 100%);
+    box-shadow: 0 8px 20px rgba(8, 118, 95, .22);
+    transform: translateY(-1px);
+}
+#jalanPage #kdExportDetail.kd-report-open:disabled { opacity: .55; cursor: not-allowed; }
+#jalanPage #kdExportDetail.kd-report-open:focus-visible {
+    outline: 3px solid rgba(19, 133, 107, .24); outline-offset: 3px;
+}
+
+#jalanPage .kd-report-dialog {
+    width: min(1260px, calc(100vw - 38px));
+    max-width: 1260px;
+    max-height: min(92vh, 1050px);
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #d2e1f3;
+    border-radius: 16px;
+    background: #fff;
+    color: #17385e;
+    box-shadow: 0 25px 80px rgba(12, 31, 61, .22);
+}
+#jalanPage .kd-report-dialog::backdrop { background: rgba(13, 40, 70, .54); backdrop-filter: blur(3px); }
+#jalanPage .kd-report-dialog[open] { display: flex; flex-direction: column; }
+#jalanPage .kd-report-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 22px 24px 20px;
+    border-bottom: 1px solid #d6e4f1;
+    background: #f6faff;
+}
+#jalanPage .kd-report-head small {
+    display: block; margin-bottom: 7px; color: #076cdb;
+    font-size: 10px; font-weight: 850; letter-spacing: .09em;
+}
+#jalanPage .kd-report-head h2 { margin: 0; color: #123b70; font-size: 18px; font-weight: 850; }
+#jalanPage .kd-report-head p { margin: 7px 0 0; color: #647d9b; font-size: 12px; }
+#jalanPage .kd-report-x {
+    display: grid; flex: none; place-items: center;
+    width: 36px; height: 36px; border: 0; border-radius: 9px;
+    background: #e9f1fb; color: #607b9d; cursor: pointer;
+}
+#jalanPage .kd-report-x svg { width: 19px; height: 19px; }
+#jalanPage .kd-report-body { padding: 19px 24px 24px; min-height: 120px; overflow: auto; }
+#jalanPage .kd-report-form {
+    display: flex; flex-direction: column; gap: 20px;
+    border: 1px solid #d2e3f6; border-radius: 11px;
+    padding: 18px 19px 20px; background: #f7faff;
+}
+#jalanPage .kd-report-form label { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+#jalanPage .kd-report-form label > span { color: #173a61; font-size: 12px; font-weight: 800; }
+#jalanPage .kd-report-form label > span b { color: #df4054; }
+#jalanPage .kd-report-form input {
+    width: 100%; height: 41px; min-width: 0; box-sizing: border-box;
+    padding: 0 11px; background: #fff; border: 1px solid #b7cce7;
+    border-radius: 8px; color: #183b64; font-size: 12px; font-family: inherit; line-height: 1.3;
+}
+#jalanPage .kd-report-form input:focus { border-color: #2685e2; outline: 3px solid #2685e21a; }
+#jalanPage .kd-report-form label small { color: #8196ae; font-size: 10px; }
+#jalanPage .kd-report-period-field { width: min(310px, 100%); }
+#jalanPage .kd-report-sign-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+#jalanPage .kd-report-info {
+    padding: 13px 16px; margin-top: 14px;
+    border: 1px solid #bcd8f3; border-radius: 9px;
+    background: #eef6ff; color: #476b91; font-size: 12px;
+}
+#jalanPage .kd-report-preview-box { margin-top: 18px; border: 1px solid #d1e0f1; border-radius: 11px; overflow: hidden; }
+#jalanPage .kd-report-preview-box[hidden] { display: none !important; }
+#jalanPage .kd-report-preview-title {
+    padding: 10px 14px; display: flex; justify-content: space-between; gap: 12px;
+    background: #f6faff; color: #174c80; font-size: 12px;
+}
+#jalanPage .kd-report-preview-scroller { overflow: auto; padding: 14px; background: #f0f4fa; }
+#jalanPage .kd-report-footer {
+    flex: none; display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 15px 22px;
+    border-top: 1px solid #dae7f3; background: #fff;
+}
+#jalanPage .kd-report-footer > span { color: #6982a1; font-size: 11px; }
+#jalanPage .kd-report-footer-buttons { display: flex; align-items: center; gap: 9px; }
+#jalanPage .kd-report-footer button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 38px; padding: 0 13px; border-radius: 8px;
+    font-size: 12px; font-family: inherit; font-weight: 700; line-height: 1.3; cursor: pointer;
+}
+#jalanPage .kd-report-footer svg { width: 15px; height: 15px; }
+#jalanPage .kd-report-cancel, #jalanPage .kd-report-print {
+    border: 1px solid #ccdbef; color: #39658f; background: #fff;
+}
+#jalanPage .kd-report-download { border: 1px solid #1377d5; color: #fff; background: #147fe4; }
+#jalanPage .kd-report-footer button:disabled { cursor: not-allowed; opacity: .52; }
+
+/* Kertas preview dan halaman print: sama-sama 18 kolom serta empat tanda tangan. */
+.kd-report-paper {
+    width: 100%; min-width: 1200px; padding: 19px;
+    box-sizing: border-box; background: white; color: #111;
+    font: 10px/1.4 Arial, sans-serif;
+}
+.kd-report-kop { position: relative; min-height: 112px; display: flex; align-items: center; justify-content: center; }
+.kd-report-kop img { position: absolute; left: 6px; top: 13px; width: 230px; max-height: 75px; object-fit: contain; object-position: left center; }
+.kd-report-kop-title { text-align: center; font-weight: 700; }
+.kd-report-kop-title strong { display: block; margin-bottom: 4px; font-size: 12px; }
+.kd-report-meta {
+    display: grid; grid-template-columns: 320px 320px;
+    gap: 3px 9px; margin: 16px 0 22px;
+}
+.kd-report-meta > div { display: grid; grid-template-columns: 125px 1fr; gap: 5px; }
+.kd-report-table-scroll { width: 100%; overflow: visible; }
+.kd-report-table {
+    width: 100%; border-collapse: collapse; table-layout: fixed;
+    font: 9px/1.35 Arial, sans-serif;
+}
+.kd-report-table th, .kd-report-table td {
+    border: 1px solid #263545; text-align: center; vertical-align: middle;
+    padding: 5px 4px; overflow-wrap: anywhere; white-space: normal;
+}
+.kd-report-table thead th { background: #fff700; font-weight: 700; }
+.kd-report-table thead tr:last-child th { background: #fff; }
+.kd-report-table tbody tr { break-inside: avoid; }
+.kd-report-date { margin: 24px 5% 7px 0; text-align: right; font-weight: 700; }
+.kd-report-signatures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+.kd-report-signature { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.kd-report-signature u { margin-top: 53px; font-weight: 700; }
+@media (max-width: 850px) {
+    #jalanPage .kd-report-sign-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #jalanPage .kd-report-footer { flex-direction: column; align-items: stretch; }
+    #jalanPage .kd-report-footer-buttons { justify-content: flex-end; flex-wrap: wrap; }
+}
+@media (max-width: 520px) {
+    #jalanPage .kd-report-dialog { width: calc(100vw - 16px); max-height: 95vh; }
+    #jalanPage .kd-report-head, #jalanPage .kd-report-body { padding: 14px; }
+    #jalanPage .kd-report-sign-grid { grid-template-columns: minmax(0, 1fr); }
+    #jalanPage .kd-report-footer { padding: 12px 14px; }
+    #jalanPage .kd-report-footer-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    #jalanPage .kd-report-footer button { font-size: 10px; padding: 0 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #jalanPage .kd-report-open { transition: none; }
+}
+
+
+#jalanPage #kdExportDetail.kd-report-open {
+    min-height: 46px; padding: 0 15px; border: 1px solid #08765f;
+    background: linear-gradient(135deg,#09896f,#08765f);
+    color: #fff; font-weight: 750; border-radius: 10px;
+}
+#jalanPage #kdExportDetail.kd-report-open:hover:not(:disabled) {
+    background: linear-gradient(135deg,#08765f,#065844);
+    color: #fff;
+}
+#jalanPage .kd-location-count {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid #c4def7; border-radius: 9px;
+    padding: 8px 10px; background: #f1f8ff; color: #1265ba;
+    font-family: inherit; text-align: left; cursor: pointer;
+}
+#jalanPage .kd-location-count svg { width: 17px; height: 17px; flex: none; }
+#jalanPage .kd-location-count span { display: flex; flex-direction: column; gap: 2px; }
+#jalanPage .kd-location-count strong { font-size: 12px; }
+#jalanPage .kd-location-count small { font-size: 10px; color: #7288a2; }
+#jalanPage .kd-location-count:hover { background: #e6f3ff; border-color: #86bff1; }
+#jalanPage .kd-main-table { min-width: 900px; } 

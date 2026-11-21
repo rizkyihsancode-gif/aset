@@ -814,6 +814,9 @@ Route::get('/kib/jalan/pending/list', [KIBController::class, 'jalanPending'])
     ->name('kib.jalan.pending');
 Route::get('/kib/jalan/{jenis}/lokasi/{lokasi}', [KIBController::class, 'jalanDetailLokasi'])
     ->whereIn('jenis', ['gedung', 'jembatan'])->whereNumber('lokasi')->name('kib.jalan.detail');
+// Report K.I.B D: data per Detail lokasi, tanpa pagination.
+Route::get('/kib/jalan/{jenis}/lokasi/{lokasi}/laporan', [KIBController::class, 'laporanJalanKibD'])
+    ->whereIn('jenis', ['gedung', 'jembatan'])->whereNumber('lokasi')->name('kib.jalan.laporan');
 // CRUD Jembatan: langsung tabel kib_d_s, bukan kib_d_manual.
 Route::post('/kib/jalan/item', [KIBController::class, 'jalanSimpan'])
     ->name('kib.jalan.item.store');

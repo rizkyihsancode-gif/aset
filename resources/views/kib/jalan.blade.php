@@ -21,7 +21,8 @@
     @endphp
     <main id="jalanPage" class="content jalan-page kd-page" data-base="{{ url('/kib/jalan') }}"
         data-pending="{{ route('kib.jalan.pending') }}" data-gedung="{{ route('kib.gedung') }}"
-        data-token="{{ csrf_token() }}">
+        data-token="{{ csrf_token() }}" data-report-base-url="{{ url('/kib/jalan') }}"
+        data-report-logo="{{ asset('images/logo_hr.png') }}" data-report-css="{{ asset('css/pages/kib/jalan.css') }}">
 
         <header class="kd-hero">
             <div class="kd-hero-top">
@@ -88,7 +89,7 @@
                 <div>
                     <small>KARTU INVENTARIS BARANG D</small>
                     <h2>Data Jalan, Irigasi dan Jaringan</h2>
-                    <p>Ringkasan lokasi · Detail Excel · Status Kepemilikan</p>
+                    <p>Ringkasan lokasi · Detail per kategori · Print Excel sesuai 17 kolom K.I.B D</p>
                 </div>
                 <button class="kd-button primary" id="kdNew" type="button">
                     <i data-lucide="plus"></i> Tambah Jembatan
@@ -151,6 +152,7 @@
                                     <th>Lokasi</th>
                                     <th>Alamat</th>
                                     <th>Status Kepemilikan</th>
+                                    <th>Data Lokasi</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -172,6 +174,16 @@
                                         <td>{{ $row['alamat'] }}</td>
                                         <td><span
                                                 class="kd-owner {{ $status === 'campuran' ? 'mixed' : (isset($pemilik[$status]) && $status !== 'belum_diatur' ? 'known' : 'unknown') }}">{{ $labelStatus }}</span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="kd-location-count"
+                                                data-kd-detail="{{ $row['id_lokasi'] }}" data-kind="{{ $tab }}"
+                                                aria-label="Lihat {{ $row['jumlah'] }} data di {{ $row['lokasi'] }}">
+                                                <i data-lucide="files"></i>
+                                                <span><strong>{{ number_format($row['jumlah'], 0, ',', '.') }}
+                                                        data</strong>
+                                                    <small>Lihat inventaris</small></span>
+                                            </button>
                                         </td>
                                         <td>
                                             <div class="kd-row-actions">
@@ -197,18 +209,12 @@
                                                         title="Kelola data Gedung/Irigasi melalui K.I.B C"><i
                                                             data-lucide="pencil"></i> Edit di K.I.B C</a>
                                                 @endif
-                                                <button type="button" class="kd-button small outline"
-                                                    title="Export Excel lokasi"
-                                                    aria-label="Export Excel {{ $row['lokasi'] }}"
-                                                    data-kd-export="{{ $row['id_lokasi'] }}"
-                                                    data-kind="{{ $tab }}"><i
-                                                        data-lucide="file-spreadsheet"></i> Excel</button>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr class="kd-blank">
-                                        <td colspan="5">Belum ada inventaris yang dapat ditampilkan pada kategori ini.
+                                        <td colspan="6">Belum ada inventaris yang dapat ditampilkan pada kategori ini.
                                         </td>
                                     </tr>
                                 @endforelse
@@ -251,8 +257,9 @@
                             <input id="kdDetailSearch" type="search" placeholder="Cari barang, kode, register..."
                                 aria-label="Cari barang dalam detail">
                             <span class="kd-count" id="kdDetailCount">0 data</span>
-                            <button type="button" class="kd-button primary" id="kdExportDetail"><i
-                                    data-lucide="file-spreadsheet"></i> Export Excel</button>
+                            <button type="button" class="kd-button kd-report-open" id="kdExportDetail" disabled>
+                                <i data-lucide="file-spreadsheet"></i> Print Excel Lokasi
+                            </button>
                         </div>
                     </div>
                     <p class="kd-group-action-note" id="kdGroupActionNote" hidden></p>
@@ -562,6 +569,65 @@
                         Jembatan</button></div>
             </form>
         </dialog>
+        {{-- =====================================================
+            POPUP PRINT EXCEL K.I.B D — ACUAN K.I.B A TANAH (PRD V2.1)
+            Mengambil seluruh inventaris pada Detail/tab lokasi, tanpa pagination.
+        ===================================================== --}}
+        <dialog id="kdReportDialog" class="kd-report-dialog">
+            <div class="kd-report-head">
+                <div>
+                    <small>LAPORAN KARTU INVENTARIS BARANG (K.I.B D)</small>
+                    <h2>Print Excel — Jalan, Irigasi dan Jaringan</h2>
+                    <p id="kdReportScope">Memuat data lokasi...</p>
+                </div>
+                <button type="button" class="kd-report-x" data-kd-report-close aria-label="Tutup laporan">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="kd-report-body">
+                <form id="kdReportForm" class="kd-report-form" autocomplete="off">
+                    <label class="kd-report-period-field">
+                        <span>Periode laporan <b>*</b></span>
+                        <input id="kdReportPeriod" type="month" required>
+                        <small>Contoh: November 2026</small>
+                    </label>
+                    <div class="kd-report-sign-grid">
+                        @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
+                            <label>
+                                <span>{{ $judul }} <b>*</b></span>
+                                <input type="text" data-kd-report-role="{{ $peran }}" list="kdReportStaff"
+                                    placeholder="Ketik nama, NIP, atau jabatan..." required>
+                                <small>Pilih dari Master SDM Pendukung.</small>
+                            </label>
+                        @endforeach
+                        <datalist id="kdReportStaff"></datalist>
+                    </div>
+                </form>
+                <div id="kdReportInfo" class="kd-report-info" role="status" aria-live="polite">
+                    Pilih periode dan penandatangan untuk menampilkan preview.
+                </div>
+                <section id="kdReportPreviewBox" class="kd-report-preview-box" hidden>
+                    <div class="kd-report-preview-title">
+                        <strong>Preview Laporan K.I.B D</strong>
+                        <span id="kdReportCount">0 data</span>
+                    </div>
+                    <div class="kd-report-preview-scroller" id="kdReportPreview"></div>
+                </section>
+            </div>
+            <div class="kd-report-footer">
+                <span>Detail lokasi · 17 kolom K.I.B D · tanpa Status Kepemilikan</span>
+                <div class="kd-report-footer-buttons">
+                    <button type="button" class="kd-report-cancel" data-kd-report-close>Batal</button>
+                    <button type="button" class="kd-report-print" id="kdReportPrint" disabled>
+                        <i data-lucide="printer"></i> Print
+                    </button>
+                    <button type="button" class="kd-report-download" id="kdReportDownload" disabled>
+                        <i data-lucide="download"></i> Download Excel
+                    </button>
+                </div>
+            </div>
+        </dialog>
+
     </main>
 @endsection
 

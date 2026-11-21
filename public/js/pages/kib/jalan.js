@@ -191,6 +191,7 @@
         $('kdGroupSearch').value = '';
         renderGroups();
         state.data = [];
+        $('kdExportDetail').disabled = true;
         state.selectedIndex = -1;
         $('kdDetailTitle').textContent = 'Memuat inventaris...';
         $('kdDetailSubtitle').textContent = kind === 'gedung' ? 'Gedung / Irigasi' : 'Jembatan';
@@ -205,6 +206,7 @@
             state.locationName = response.lokasi.lokasi || 'Tanpa Lokasi';
             renderGroups();
             state.data = response.data || [];
+            $('kdExportDetail').disabled = !state.data.length;
             $('kdDetailTitle').textContent = `DATA ${state.locationName.toUpperCase()}`;
             $('kdDetailSubtitle').textContent = `${kind === 'gedung' ? 'Gedung / Irigasi' : 'Jembatan'} · ${response.lokasi.alamat || 'Alamat belum tersedia'}`;
             $('kdDetailSearch').value = '';
@@ -600,156 +602,526 @@
        XLSX: satu lokasi, seluruh record, urutan sesuai Excel K.I.B D.
        Text inlineStr melindungi dari eksekusi formula input pengguna.
        ------------------------------------------------------------ */
-    function buildXlsx(payload) {
-        const items = payload.data;
-        if (!Array.isArray(items) || !items.length) {
-            throw new Error('Lokasi ini belum memiliki inventaris untuk diekspor.');
-        }
-        const locationId = Number(payload.lokasi.id);
-        if (items.some(item => Number(item.id_lokasi) !== locationId)) {
-            throw new Error('Lokasi barang tidak sesuai. Export dibatalkan.');
-        }
-        const enc = new TextEncoder();
-        const decl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-        const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
-        const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
-        const pkg = 'http://schemas.openxmlformats.org/package/2006/relationships';
-        const xml = value => String(value ?? '')
-            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g,'')
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-            .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-        const cell = (address,value,style=4) => `<c r="${address}" t="inlineStr" s="${style}"><is><t xml:space="preserve">${xml(empty(value))}</t></is></c>`;
-        const num = (address,value,style=5) => {
-            const n = Number(value);
-            return value !== null && value !== undefined && plain(value) !== '' && Number.isFinite(n)
-                ? `<c r="${address}" s="${style}"><v>${n}</v></c>` : cell(address, value, style);
-        };
-        const row = (i,cells,height=25) => `<row r="${i}" ht="${height}" customHeight="1">${cells.join('')}</row>`;
-        const keys = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S'];
-        const meta = [
-            ['PROVINSI','KALIMANTAN TIMUR'],
-            ['KOTA','SAMARINDA'],
-            ['UNIT','PERUMDAM TIRTA KENCANA KOTA SAMARINDA'],
-            ['LOKASI',payload.lokasi.lokasi],
-            ['ALAMAT',payload.lokasi.alamat],
-            ['KATEGORI',payload.jenis === 'gedung' ? 'GEDUNG / IRIGASI (SUMBER K.I.B C)' : 'JEMBATAN (K.I.B D)'],
-            ['JUMLAH INVENTARIS',String(items.length)]
-        ];
-        const firstHeader = [
-            ['A','No.'],['B','Nama Barang / Jenis Barang'],['C','Nomor'],
-            ['E','Kondisi Bangunan (B,KB,RB)'],['F','Konstruksi Bangunan'],
-            ['H','Luas Lantai (M²)'],['I','Letak / Lokasi Alamat'],
-            ['J','Dokumen Gedung'],['L','Luas (M²)'],['M','Status Tanah'],
-            ['N','Nomor Kode Tanah'],['O','Asal Usul'],['P','Harga (Rp.)'],
-            ['Q','Keterangan'],['R','Status Kepemilikan'],['S','Sumber Data']
-        ];
-        const rows = [
-            row(1,[cell('A1','KARTU INVENTARIS BARANG D',1)],32),
-            row(2,[cell('A2','JALAN, IRIGASI DAN JARINGAN',2)],27),
-            ...meta.map(([key,value], i) => row(i+3,[cell(`A${i+3}`,key,3),cell(`C${i+3}`,': '+empty(value))])),
-            row(10,[]),
-            row(11,firstHeader.map(([column,value]) => cell(`${column}11`,value,3)),40),
-            row(12,[cell('C12','Kode Barang',3),cell('D12','Register',3),
-                cell('F12','Bertingkat / Tidak',3),cell('G12','Beton / Tidak',3),
-                cell('J12','Tanggal',3),cell('K12','Nomor',3)],32),
-            ...items.map((item,i) => {
-                const r = i + 13;
-                const values = [i+1,item.nama_barang,item.kode,item.reg,item.kondisi,
-                    item.konstruksi,item.materi,item.luas_lantai,item.letak || payload.lokasi.alamat,
-                    fmtDate(item.tgl_dok),item.no_dok,item.luas,item.status_tanah,
-                    item.kode_tanah,item.asal,item.harga,item.ket,
-                    ownerText(item.status_kepemilikan),
-                    item.source === 'gedung' ? 'KIB C' : 'KIB D Jembatan'];
-                return row(r,values.map((value,c) => c===0 || c===15
-                    ? num(`${keys[c]}${r}`,value)
-                    : cell(`${keys[c]}${r}`,value)),27);
-            })
-        ];
-        const vertical = ['A','B','E','H','I','L','M','N','O','P','Q','R','S'];
-        const merges = ['A1:S1','A2:S2','C11:D11','F11:G11','J11:K11',
-            ...vertical.map(x => `${x}11:${x}12`)];
-        const widths = [7,37,21,15,24,20,20,18,37,18,24,15,19,23,25,22,37,26,18];
-        const sheet = decl + `<worksheet xmlns="${ns}">` +
-            `<dimension ref="A1:S${items.length+12}"/>` +
-            '<sheetViews><sheetView workbookViewId="0"><pane xSplit="2" ySplit="12" topLeftCell="C13" activePane="bottomRight" state="frozen"/></sheetView></sheetViews>' +
-            `<cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols>` +
-            `<sheetData>${rows.join('')}</sheetData>` +
-            `<mergeCells count="${merges.length}">${merges.map(v=>`<mergeCell ref="${v}"/>`).join('')}</mergeCells>` +
-            '<pageMargins left="0.25" right="0.25" top="0.4" bottom="0.4" header="0.2" footer="0.2"/>' +
-            '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>';
-        const styles = decl + `<styleSheet xmlns="${ns}">` +
-            '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="16"/><name val="Calibri"/></font><font><b/><sz val="10"/><name val="Calibri"/></font></fonts>' +
-            '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
-            '<fill><patternFill patternType="solid"><fgColor rgb="FFFFEC34"/></patternFill></fill>' +
-            '<fill><patternFill patternType="solid"><fgColor rgb="FFF0F6FD"/></patternFill></fill></fills>' +
-            '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' +
-            '<border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders>' +
-            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-            '<cellXfs count="6"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
-            '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
-            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
-            '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
-            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
-            '<xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyNumberFormat="1"/>' +
-            '</cellXfs></styleSheet>';
-        const workbook = decl + `<workbook xmlns="${ns}" xmlns:r="${rel}"><sheets><sheet name="KIB D Lokasi" sheetId="1" r:id="rId1"/></sheets></workbook>`;
-        const workbookRels = decl + `<Relationships xmlns="${pkg}"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>`;
-        const rootRels = decl + `<Relationships xmlns="${pkg}"><Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
-        const types = decl + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-            '<Default Extension="xml" ContentType="application/xml"/>' +
-            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
-            '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
-            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>';
-
-        // OpenXML ZIP writer; STORE tanpa kompresi, tanpa pustaka eksternal.
-        const table = new Uint32Array(256);
-        for (let i=0;i<256;i++) { let n=i;for(let k=0;k<8;k++)n=(n>>>1)^((n&1)?0xEDB88320:0);table[i]=n>>>0; }
-        const crc32 = bytes => { let c=0xFFFFFFFF;for(const b of bytes)c=table[(c^b)&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0; };
-        const zip = files => {
-            const parts=[],central=[];let offset=0,centralSize=0;
-            for(const [name,body] of files) {
-                const n=enc.encode(name),b=enc.encode(body),crc=crc32(b);
-                const local=new Uint8Array(30+n.length+b.length),l=new DataView(local.buffer);
-                l.setUint32(0,0x04034b50,true);l.setUint16(4,20,true);l.setUint16(6,0x0800,true);
-                l.setUint32(14,crc,true);l.setUint32(18,b.length,true);l.setUint32(22,b.length,true);
-                l.setUint16(26,n.length,true);local.set(n,30);local.set(b,30+n.length);parts.push(local);
-                const cd=new Uint8Array(46+n.length),c=new DataView(cd.buffer);
-                c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);
-                c.setUint32(16,crc,true);c.setUint32(20,b.length,true);c.setUint32(24,b.length,true);
-                c.setUint16(28,n.length,true);c.setUint32(42,offset,true);cd.set(n,46);
-                central.push(cd);centralSize+=cd.length;offset+=local.length;
-            }
-            const end=new Uint8Array(22),view=new DataView(end.buffer);
-            view.setUint32(0,0x06054b50,true);view.setUint16(8,files.length,true);view.setUint16(10,files.length,true);
-            view.setUint32(12,centralSize,true);view.setUint32(16,offset,true);
-            const chunks=[...parts,...central,end],result=new Uint8Array(chunks.reduce((s,p)=>s+p.length,0));
-            let at=0;for(const part of chunks){result.set(part,at);at+=part.length;}return result;
-        };
-        return zip([['[Content_Types].xml',types],['_rels/.rels',rootRels],
-            ['xl/workbook.xml',workbook],['xl/_rels/workbook.xml.rels',workbookRels],
-            ['xl/styles.xml',styles],['xl/worksheets/sheet1.xml',sheet]]);
+    // Tombol Print Excel membuka dialog standar Tanah (bukan langsung download).
+    // Event dikonsumsi modul laporan pada file jalan.js yang SAMA.
+    function exportLocation(kind, location) {
+        if (!['gedung', 'jembatan'].includes(kind)) return;
+        const id = Number(location);
+        if (!Number.isSafeInteger(id) || id < 0) return;
+        document.dispatchEvent(new CustomEvent('kibd:report', {
+            detail: { kind, location: id }
+        }));
     }
-    async function exportLocation(kind, location) {
-        if (state.exporting) return;
-        state.exporting = true;
-        try {
-            // Seluruh baris diambil dari endpoint lokasi, bukan pagination browser.
-            const payload = await api(`${base}/${encodeURIComponent(kind)}/lokasi/${encodeURIComponent(location)}`);
-            const bytes = buildXlsx(payload);
-            const blob = new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            const fileLocation = plain(payload.lokasi.lokasi).replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,60);
-            anchor.href=url;
-            anchor.download=`KIB_D_${kind}_${fileLocation || location}.xlsx`;
-            document.body.appendChild(anchor);
-            anchor.click();anchor.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 2000);
-        } catch(error) { alert('Export Excel gagal: '+error.message); }
-        finally { state.exporting=false; }
-    }
-    $('kdExportDetail').addEventListener('click', () => exportLocation(state.tab, state.location));
+    $('kdExportDetail').addEventListener('click', () => {
+        if (state.data.length && state.location !== null) {
+            exportLocation(state.tab, state.location);
+        }
+    });
     renderPage();
     icons();
 })();
+
+
+/* K.I.B D - Modal laporan dan XLSX 17 kolom, standar PRD v2.1. */
+document.addEventListener('DOMContentLoaded', () => {
+    'use strict';
+
+    const page = document.getElementById('jalanPage');
+    const dialog = document.getElementById('kdReportDialog');
+    if (!page || !dialog || !page.dataset.reportBaseUrl) return;
+
+    const $ = selector => dialog.querySelector(selector);
+    const form = $('#kdReportForm');
+    const month = $('#kdReportPeriod');
+    const info = $('#kdReportInfo');
+    const previewBox = $('#kdReportPreviewBox');
+    const preview = $('#kdReportPreview');
+    const download = $('#kdReportDownload');
+    const print = $('#kdReportPrint');
+    const datalist = $('#kdReportStaff');
+    const scope = $('#kdReportScope');
+    const roles = [
+        ['diketahui', 'Diketahui oleh'],
+        ['periksa_1', 'Diperiksa oleh (1)'],
+        ['periksa_2', 'Diperiksa oleh (2)'],
+        ['dibuat', 'Dibuat oleh'],
+    ];
+    const state = { lokasi: null, organisasi: {}, data: [], sdm: [], jenis: 'jembatan' };
+    let requestVersion = 0;
+
+    const escapeHtml = v => String(v ?? '').replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const cell = v => {
+        const text = String(v ?? '').trim();
+        return text && text !== 'null' ? text : '-';
+    };
+    const periodName = () => {
+        if (!/^\d{4}-\d{2}$/.test(month.value)) return '';
+        const [year, m] = month.value.split('-').map(Number);
+        if (m < 1 || m > 12) return '';
+        return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'long',
+            timeZone: 'Asia/Makassar' }).format(new Date(Date.UTC(year, m-1, 1))).toUpperCase();
+    };
+    const dateName = () => new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Makassar'
+    }).format(new Date());
+    const fmtDate = v => {
+        const hit = String(v ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return hit ? `${hit[3]}/${hit[2]}/${hit[1]}` : cell(v);
+    };
+    const yearOf = v => {
+        if (!v) return '-';
+        const m = String(v).match(/^(\d{4})/);
+        return m ? m[1] : cell(v);
+    };
+    const money = n => {
+        if (n === null || n === undefined || String(n).trim() === '') return '-';
+        const num = Number(n);
+        return Number.isFinite(num) ? new Intl.NumberFormat('id-ID').format(num) : cell(n);
+    };
+    const staffLabel = p => `${p.nama} — ${p.jabatan || 'Jabatan -'} — ${p.nip || 'NIP -'} (#${p.id})`;
+    const chosen = key => {
+        const label = $(`[data-kd-report-role="${key}"]`)?.value.trim();
+        return state.sdm.find(p => staffLabel(p) === label) || null;
+    };
+    const ready = () => Boolean(periodName() && state.data.length && roles.every(([key]) => chosen(key)));
+    // Header persis 17 kolom template K.I.B D (KIB D.jpeg).
+    const columns = [
+        'No.', 'Nama Barang / Jenis Barang', 'Kode Barang', 'Register',
+        'Kondisi Bangunan', 'Bertingkat / Tidak', 'Beton / Tidak',
+        'Luas Lantai (M2)', 'Letak / Lokasi Alamat',
+        'Tanggal Dokumen', 'Nomor Dokumen', 'Luas (M2)',
+        'Status Tanah', 'Nomor Kode Tanah', 'Asal Usul',
+        'Harga (Rp)', 'Keterangan'
+    ];
+    const groups = [
+        { first: 3, last: 4, title: 'NOMOR' },
+        { first: 6, last: 7, title: 'KONSTRUKSI BANGUNAN' },
+        { first: 10, last: 11, title: 'DOKUMEN GEDUNG' },
+    ];
+    const rows = () => state.data.map((g, i) => [
+        i + 1, g.nama_barang, g.kode, g.reg, g.kondisi,
+        g.konstruksi, g.materi, g.luas_lantai,
+        g.letak || state.lokasi?.alamat || state.lokasi?.nama,
+        fmtDate(g.tgl_dok), g.no_dok, g.luas,
+        g.status_tanah, g.kode_tanah, g.asal,
+        money(g.harga), g.ket
+    ].map(cell));
+    const meta = () => {
+        const o = state.organisasi || {};
+        return [
+            ['PROVINSI', o.provinsi || 'KALIMANTAN TIMUR'],
+            ['KOTA', o.kota || 'SAMARINDA'],
+            ['UNIT', o.unit || 'PERUMDA TIRTA KENCANA'],
+            ['LOKASI', state.lokasi?.nama || '-'],
+            ['DEPARTEMEN', o.departemen || '-'],
+            ['DIVISI', o.divisi || '-'],
+            ['RUANG', o.ruang || '-'],
+            ['NO KODE STRUKTUR', o.kode_struktur || '-'],
+        ];
+    };
+    const title = () => 'D. JALAN, IRIGASI DAN JARINGAN';
+    const jenisNama = () => state.jenis === 'gedung' ? 'GEDUNG / IRIGASI' : 'JEMBATAN';
+
+    function tableHead() {
+        let first = '';
+        let second = '';
+        for (let n = 1; n <= columns.length; n++) {
+            const group = groups.find(g => g.first === n);
+            if (group) {
+                first += `<th colspan="${group.last - group.first + 1}">${escapeHtml(group.title)}</th>`;
+                for (let c = group.first; c <= group.last; c++) {
+                    second += `<th>${escapeHtml(columns[c-1])}</th>`;
+                }
+            } else if (!groups.some(g => n > g.first && n <= g.last)) {
+                first += `<th rowspan="2">${escapeHtml(columns[n-1])}</th>`;
+            }
+        }
+        return `<tr>${first}</tr><tr>${second}</tr><tr>${columns.map((_, i) =>
+            `<th>${i+1}</th>`).join('')}</tr>`;
+    }
+
+    function paperHtml() {
+        const body = rows().map(row => `<tr>${row.map(value =>
+            `<td>${escapeHtml(cell(value))}</td>`).join('')}</tr>`).join('');
+        const metadata = meta().map(([key, value]) => `<div><b>${escapeHtml(key)}</b><span>: ${escapeHtml(cell(value))}</span></div>`).join('');
+        const signatures = roles.map(([key, label]) => {
+            const person = chosen(key);
+            return `<div class="kd-report-signature"><b>${escapeHtml(label)},</b>
+                <span>${escapeHtml(cell(person?.jabatan))}</span>
+                <u>${escapeHtml(cell(person?.nama))}</u>
+                <span>NIP. ${escapeHtml(cell(person?.nip))}</span></div>`;
+        }).join('');
+        return `<article class="kd-report-paper">
+            <div class="kd-report-kop">
+                <img src="${escapeHtml(page.dataset.reportLogo)}" alt="Logo horizontal Perumda Tirta Kencana">
+                <div class="kd-report-kop-title">
+                    <strong>KARTU INVENTARIS BARANG (K.I.B)</strong>
+                    <strong>${escapeHtml(title())}</strong>
+                    <small>${escapeHtml(jenisNama())} · ${escapeHtml(state.lokasi?.nama || '-')}</small>
+                    <strong>PERIODE ${escapeHtml(periodName())}</strong>
+                </div>
+            </div>
+            <div class="kd-report-meta">${metadata}</div>
+            <div class="kd-report-table-scroll"><table class="kd-report-table">
+                <thead>${tableHead()}</thead><tbody>${body}</tbody>
+            </table></div>
+            <div class="kd-report-date">Samarinda, ${escapeHtml(dateName())}</div>
+            <div class="kd-report-signatures">${signatures}</div>
+        </article>`;
+    }
+
+    function updatePreview() {
+        const ok = ready();
+        print.disabled = download.disabled = !ok;
+        previewBox.hidden = !ok;
+        if (!ok) preview.replaceChildren();
+        if (!state.data.length) {
+            info.textContent = 'Belum ada data K.I.B D pada lokasi ini atau data masih dimuat.';
+        } else if (!ok) {
+            info.textContent = `${state.data.length} data K.I.B D siap. Pilih periode dan 4 penandatangan dari Master SDM.`;
+        } else {
+            info.textContent = `Preview siap: ${state.data.length} data K.I.B D di lokasi ${state.lokasi?.nama || '-'}. Status Kepemilikan tidak dicetak.`;
+            $('#kdReportCount').textContent = `${state.data.length} data`;
+            preview.innerHTML = paperHtml();
+        }
+    }
+
+    async function openReport(kind, lokasiId) {
+        const version = ++requestVersion;
+        state.data = [];
+        state.sdm = [];
+        state.lokasi = null;
+        state.organisasi = {};
+        state.jenis = kind;
+        form.reset();
+        datalist.replaceChildren();
+        const parts = new Intl.DateTimeFormat('en-CA', {
+            year: 'numeric', month: '2-digit', timeZone: 'Asia/Makassar'
+        }).formatToParts(new Date());
+        month.value = `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}`;
+        scope.textContent = 'Memuat seluruh inventaris pada Detail lokasi terpilih...';
+        info.textContent = 'Memuat sumber laporan dan Master SDM Pendukung...';
+        updatePreview();
+        if (!dialog.open) dialog.showModal();
+        window.lucide?.createIcons?.();
+        try {
+            const url = `${page.dataset.reportBaseUrl}/${encodeURIComponent(kind)}/lokasi/${encodeURIComponent(lokasiId)}/laporan`;
+            const response = await fetch(url, { credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+            const json = await response.json();
+            if (!response.ok || !json.success || !Array.isArray(json.data)) {
+                throw new Error(json.message || `HTTP ${response.status}`);
+            }
+            if (!dialog.open || version !== requestVersion) return;
+            state.data = json.data;
+            state.sdm = Array.isArray(json.sdm) ? json.sdm : [];
+            state.lokasi = json.lokasi || null;
+            state.organisasi = json.organisasi || {};
+            state.jenis = json.jenis || kind;
+            scope.textContent = `${jenisNama()} · lokasi ${state.lokasi?.nama || '-'} · ${state.data.length} data`;
+            datalist.replaceChildren(...state.sdm.map(p => {
+                const option = document.createElement('option');
+                option.value = staffLabel(p);
+                return option;
+            }));
+            updatePreview();
+        } catch (error) {
+            if (!dialog.open || version !== requestVersion) return;
+            console.error('K.I.B D: gagal memuat laporan:', error);
+            state.data = [];
+            updatePreview();
+            info.textContent = `Gagal memuat laporan: ${error.message}`;
+        }
+    }
+    document.addEventListener('kibd:report', event => {
+        const kind = event.detail?.kind;
+        const location = Number(event.detail?.location);
+        if (['gedung', 'jembatan'].includes(kind) && Number.isSafeInteger(location) && location >= 0) {
+            openReport(kind, location);
+        }
+    });
+    dialog.querySelectorAll('[data-kd-report-close]').forEach(button => {
+        button.addEventListener('click', () => dialog.close());
+    });
+    dialog.addEventListener('close', () => { requestVersion++; });
+    form.addEventListener('input', updatePreview);
+    form.addEventListener('change', updatePreview);
+
+    function reportZip(entries) {
+        const encoder = new TextEncoder();
+        const crcTable = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+            let c = n;
+            for (let bit = 0; bit < 8; bit++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            crcTable[n] = c >>> 0;
+        }
+        const crc32 = bytes => {
+            let crc = 0xFFFFFFFF;
+            for (const byte of bytes) crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8);
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        };
+        const bytesOf = value => value instanceof Uint8Array ? value : encoder.encode(value);
+        const localParts = [];
+        const centralParts = [];
+        let offset = 0;
+        let centralLength = 0;
+        const write16 = (view, pos, val) => view.setUint16(pos, val, true);
+        const write32 = (view, pos, val) => view.setUint32(pos, val >>> 0, true);
+
+        for (const entry of entries) {
+            const nameBytes = encoder.encode(entry.name);
+            const data = bytesOf(entry.data);
+            const checksum = crc32(data);
+            const local = new Uint8Array(30 + nameBytes.length);
+            const l = new DataView(local.buffer);
+            write32(l, 0, 0x04034B50);
+            write16(l, 4, 20);
+            write16(l, 6, 0x0800); // UTF-8
+            write16(l, 8, 0);      // stored/no compression
+            write32(l, 14, checksum);
+            write32(l, 18, data.length);
+            write32(l, 22, data.length);
+            write16(l, 26, nameBytes.length);
+            local.set(nameBytes, 30);
+            localParts.push(local, data);
+
+            const central = new Uint8Array(46 + nameBytes.length);
+            const c = new DataView(central.buffer);
+            write32(c, 0, 0x02014B50);
+            write16(c, 4, 20);
+            write16(c, 6, 20);
+            write16(c, 8, 0x0800);
+            write16(c, 10, 0);
+            write32(c, 16, checksum);
+            write32(c, 20, data.length);
+            write32(c, 24, data.length);
+            write16(c, 28, nameBytes.length);
+            write32(c, 42, offset);
+            central.set(nameBytes, 46);
+            centralParts.push(central);
+            offset += local.length + data.length;
+            centralLength += central.length;
+        }
+        const end = new Uint8Array(22);
+        const v = new DataView(end.buffer);
+        write32(v, 0, 0x06054B50);
+        write16(v, 8, entries.length);
+        write16(v, 10, entries.length);
+        write32(v, 12, centralLength);
+        write32(v, 16, offset);
+        return new Blob([...localParts, ...centralParts, end], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+    }
+
+
+    function xmlText(value) {
+        return String(value ?? '')
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    }
+    function colName(n) {
+        let result = '';
+        while (n > 0) {
+            result = String.fromCharCode(65 + (n - 1) % 26) + result;
+            n = Math.floor((n - 1) / 26);
+        }
+        return result;
+    }
+
+    /** Workbook Office OpenXML 17 kolom sesuai contoh K.I.B D. */
+    function buildXlsx(logoBytes) {
+        const count = 17;
+        const entries = new Map();
+        const merges = [];
+        const heights = new Map();
+        function put(r, c, value, style = 0) {
+            if (!entries.has(r)) entries.set(r, new Map());
+            entries.get(r).set(c, { value: value ?? '', style });
+        }
+        function merged(r1, c1, r2, c2, value, style = 0) {
+            for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
+                put(r, c, '', style);
+            }
+            put(r1, c1, value, style);
+            merges.push(`${colName(c1)}${r1}:${colName(c2)}${r2}`);
+        }
+        // Judul dipusatkan terhadap SELURUH lebar tabel A:R. Logo horizontal
+        // diletakkan sebagai drawing di kiri, tanpa teks perusahaan tambahan.
+        merged(3, 1, 3, count, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
+        merged(4, 1, 4, count, title(), 1);
+        merged(5, 1, 5, count, `PERIODE ${periodName()}`, 1);
+        [29, 25, 26, 25, 24, 27].forEach((n, i) => heights.set(i + 1, n));
+        meta().forEach(([key, value], i) => {
+            merged(8+i, 1, 8+i, 2, key, 4);
+            merged(8+i, 3, 8+i, 6, `: ${cell(value)}`, 4);
+            heights.set(8+i, 19);
+        });
+
+        const header = 17;
+        const grouped = c => groups.find(g => c >= g.first && c <= g.last);
+        for (let c = 1; c <= count; c++) {
+            const group = grouped(c);
+            if (group && group.first === c) {
+                merged(header, group.first, header, group.last, group.title, 2);
+                for (let x = group.first; x <= group.last; x++) {
+                    put(header + 1, x, columns[x-1].toUpperCase(), 2);
+                }
+            } else if (!group) {
+                merged(header, c, header + 1, c, columns[c-1].toUpperCase(), 2);
+            }
+            put(header + 2, c, String(c), 2);
+        }
+        heights.set(header, 33);
+        heights.set(header + 1, 34);
+        heights.set(header + 2, 20);
+        const data = rows();
+        data.forEach((values, i) => {
+            const row = header + 3 + i;
+            values.forEach((value, column) => put(row, column + 1, cell(value), 3));
+            // Tinggi disesuaikan dengan konten panjang, tetap wrap dan middle.
+            const longest = Math.max(...values.map(v => String(v ?? '').length));
+            heights.set(row, Math.min(145, Math.max(29, Math.ceil(longest / 34) * 15 + 9)));
+        });
+        const dateRow = header + 3 + data.length + 2;
+        merged(dateRow, 13, dateRow, 17, `Samarinda, ${dateName()}`, 5);
+        const slots = [[1,4], [5,8], [9,12], [13,17]];
+        roles.forEach(([key, label], i) => {
+            const signer = chosen(key);
+            const [a, b] = slots[i];
+            merged(dateRow + 2, a, dateRow + 2, b, `${label},`, 5);
+            merged(dateRow + 3, a, dateRow + 3, b, cell(signer?.jabatan), 5);
+            merged(dateRow + 8, a, dateRow + 8, b, cell(signer?.nama), 6);
+            merged(dateRow + 9, a, dateRow + 9, b, `NIP. ${cell(signer?.nip)}`, 5);
+        });
+        const lastRow = dateRow + 10;
+        const widths = [7,30,22,14,21,19,18,17,34,20,28,17,22,24,22,22,38];
+        const colsXml = widths.map((w, i) =>
+            `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
+        const rowsXml = [...entries].sort(([a], [b]) => a - b).map(([r, row]) => {
+            const cellsXml = [...row].sort(([a], [b]) => a - b).map(([c, item]) =>
+                `<c r="${colName(c)}${r}" s="${item.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(item.value)}</t></is></c>`).join('');
+            return `<row r="${r}"${heights.has(r)?` ht="${heights.get(r)}" customHeight="1"`:''}>${cellsXml}</row>`;
+        }).join('');
+        const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+        const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+        const xmlSheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+          <worksheet xmlns="${main}" xmlns:r="${rel}">
+            <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
+            <dimension ref="A1:Q${lastRow}"/>
+            <sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>
+            <sheetFormatPr defaultRowHeight="18"/>
+            <cols>${colsXml}</cols><sheetData>${rowsXml}</sheetData>
+            <mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>
+            <printOptions horizontalCentered="1" gridLines="0"/>
+            <pageMargins left="0.25" right="0.25" top="0.40" bottom="0.40" header="0.15" footer="0.15"/>
+            <pageSetup paperSize="8" orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+            ${logoBytes?.length?'<drawing r:id="rId1"/>':''}
+          </worksheet>`;
+        const fonts = [
+            '<font><sz val="10"/><name val="Arial"/></font>',
+            '<font><b/><sz val="12"/><name val="Arial"/></font>',
+            '<font><b/><sz val="9"/><name val="Arial"/></font>',
+            '<font><b/><u/><sz val="10"/><name val="Arial"/></font>',
+        ].join('');
+        const fills = '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFFF00"/><bgColor indexed="64"/></patternFill></fill></fills>';
+        const borders = '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF243344"/></left><right style="thin"><color rgb="FF243344"/></right><top style="thin"><color rgb="FF243344"/></top><bottom style="thin"><color rgb="FF243344"/></bottom><diagonal/></border></borders>';
+        const xfs = [
+            [0,0,0,'left'], [1,0,0,'center'], [2,2,1,'center'],
+            [0,0,1,'center'], [2,0,0,'left'],
+            [0,0,0,'center'], [3,0,0,'center'],
+        ].map(([font, fill, border, align]) =>
+            `<xf numFmtId="0" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
+        const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <styleSheet xmlns="${main}"><fonts count="4">${fonts}</fonts>${fills}${borders}
+            <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+            <cellXfs count="7">${xfs}</cellXfs>
+            <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+        const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <workbook xmlns="${main}" xmlns:r="${rel}"><sheets><sheet name="KIB D - Inventaris" sheetId="1" r:id="rId1"/></sheets>
+            <definedNames>
+                <definedName name="_xlnm.Print_Titles" localSheetId="0">'KIB D - Inventaris'!$17:$19</definedName>
+                <definedName name="_xlnm.Print_Area" localSheetId="0">'KIB D - Inventaris'!$A$1:$Q$${lastRow}</definedName>
+            </definedNames></workbook>`;
+        const files = [
+            { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+            { name: 'xl/workbook.xml', data: workbook },
+            { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>` },
+            { name: 'xl/worksheets/sheet1.xml', data: xmlSheet },
+            { name: 'xl/styles.xml', data: styles },
+        ];
+        if (logoBytes?.length) {
+            let cy = 950000;
+            if (logoBytes.length >= 24 && logoBytes[0] === 137 && logoBytes[1] === 80) {
+                const image = new DataView(logoBytes.buffer, logoBytes.byteOffset, logoBytes.byteLength);
+                const w = image.getUint32(16, false);
+                const h = image.getUint32(20, false);
+                if (w && h) cy = Math.round(3000000 * h / w);
+            }
+            files.push(
+                { name: 'xl/media/image1.png', data: logoBytes },
+                { name: 'xl/worksheets/_rels/sheet1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>` },
+                { name: 'xl/drawings/_rels/drawing1.xml.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/image" Target="../media/image1.png"/></Relationships>` },
+                { name: 'xl/drawings/drawing1.xml', data: `<?xml version="1.0" encoding="UTF-8"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>120000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>20000</xdr:rowOff></xdr:from><xdr:ext cx="3000000" cy="${cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda Tirta Kencana"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>` },
+            );
+        }
+        const types = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${logoBytes?.length?'<Default Extension="png" ContentType="image/png"/>':''}<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${logoBytes?.length?'<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>':''}</Types>`;
+        files.unshift({name:'[Content_Types].xml', data:types});
+        return reportZip(files);
+    }
+
+    download.addEventListener('click', async () => {
+        if (!ready()) return;
+        download.disabled = true;
+        try {
+            let logoBytes = null;
+            try {
+                const response = await fetch(page.dataset.reportLogo, {credentials: 'same-origin'});
+                if (response.ok) logoBytes = new Uint8Array(await response.arrayBuffer());
+            } catch (error) {
+                console.warn('Logo laporan tidak dimuat; Excel tetap dihasilkan.', error);
+            }
+            const workbook = buildXlsx(logoBytes);
+            const url = URL.createObjectURL(workbook);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `KIB_D_Inventaris_${String(state.lokasi?.nama || 'Lokasi')
+                .normalize('NFKD').replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 48)}_${month.value}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        } catch (error) {
+            console.error('Gagal membuat Excel K.I.B D:', error);
+            info.textContent = `Gagal membuat Excel: ${error.message}`;
+        } finally {
+            download.disabled = !ready();
+        }
+    });
+
+    print.addEventListener('click', () => {
+        if (!ready()) return;
+        const w = window.open('', '_blank');
+        if (!w) {
+            info.textContent = 'Browser memblokir popup Print. Izinkan popup untuk situs ini.';
+            return;
+        }
+        const cssUrl = escapeHtml(page.dataset.reportCss || '');
+        w.document.open();
+        w.document.write(`<!doctype html><html lang="id"><head><meta charset="UTF-8">
+          <title>K.I.B D — Jalan, Irigasi dan Jaringan</title><link rel="stylesheet" href="${cssUrl}">
+          <style>@page { size:A3 landscape; margin:10mm; }
+          html,body{margin:0;padding:0;background:#fff}
+          .kd-report-paper{width:100%;max-width:none;min-width:0;box-shadow:none;border:0;padding:0}
+          .kd-report-table-scroll{overflow:visible}
+          .kd-report-table{font-size:8px}
+          .kd-report-table thead{display:table-header-group}
+          .kd-report-table tr{break-inside:avoid}
+          .kd-report-signatures{break-inside:avoid}
+          </style></head><body>${paperHtml()}</body></html>`);
+        w.document.close();
+        w.addEventListener('load', () => { w.focus(); w.print(); }, {once:true});
+    });
+});

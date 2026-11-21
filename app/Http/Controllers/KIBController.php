@@ -10316,6 +10316,63 @@ class KIBController extends Controller
         ]);
     }
 
+    /**
+     * Laporan K.I.B D hanya untuk satu tab dan satu lokasi.
+     * Gedung/Irigasi dibaca dari K.I.B C; Jembatan dari kib_d_s.
+     * Tidak melakukan mutation dan tidak memotong baris dengan pagination.
+     */
+    public function laporanJalanKibD(string $jenis, int $lokasi): \Illuminate\Http\JsonResponse
+    {
+        abort_unless(in_array($jenis, ['gedung', 'jembatan'], true), 404);
+
+        // Endpoint Detail menjadi sumber tunggal supaya jumlah dan isi baris identik.
+        $payload = $this->jalanDetailLokasi($jenis, $lokasi)->getData(true);
+        $items = collect($payload['data'] ?? []);
+        $lokasiInfo = $payload['lokasi'] ?? [];
+
+        $identitas = static function ($nilai): string {
+            $unik = collect($nilai)->map(static fn($v) => trim((string) ($v ?? '')))
+                ->filter()->unique()->values();
+            return $unik->count() === 1 ? (string) $unik->first()
+                : ($unik->isEmpty() ? '-' : 'BERAGAM');
+        };
+
+        // Kode struktur bukan Kode Aktiva; baca hanya bila kolom sungguh ada.
+        $kodeStruktur = '-';
+        if ($lokasi > 0 && Schema::hasColumn('lokasis', 'kode_struktur')) {
+            $kodeStruktur = trim((string) (DB::table('lokasis')
+                ->where('id', $lokasi)->value('kode_struktur') ?? '')) ?: '-';
+        }
+        $ruang = '-';
+        if ($lokasi > 0 && Schema::hasColumn('lokasis', 'ruang')) {
+            $ruang = trim((string) (DB::table('lokasis')
+                ->where('id', $lokasi)->value('ruang') ?? '')) ?: '-';
+        }
+
+        return response()->json([
+            'success' => true,
+            'jenis' => $jenis,
+            'cakupan' => 'lokasi',
+            'jumlah' => $items->count(),
+            'lokasi' => [
+                'id' => (int) ($lokasiInfo['id'] ?? $lokasi),
+                'nama' => (string) ($lokasiInfo['lokasi'] ?? ''),
+                'alamat' => (string) ($lokasiInfo['alamat'] ?? ''),
+            ],
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                'departemen' => $identitas($items->pluck('departemen')),
+                'divisi' => $identitas($items->pluck('divisi')),
+                'ruang' => $ruang,
+                'kode_struktur' => $kodeStruktur,
+            ],
+            'sdm' => $this->sdmAktifKibB(),
+            'data' => $items->values()->all(),
+        ]);
+    }
+
     private function jalanValidasi(Request $request, bool $edit = false): array
     {
         return $request->validate([
