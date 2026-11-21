@@ -21,7 +21,8 @@
     @endphp
 
     <section class="content kir-page" id="kirApp" data-base="{{ url('/kib/kir') }}"
-        data-pending="{{ route('kib.pending', ['module' => 'kir']) }}" data-token="{{ csrf_token() }}">
+        data-pending="{{ route('kib.pending', ['module' => 'kir']) }}" data-token="{{ csrf_token() }}"
+        data-logo="{{ asset('images/logo_hr.png') }}">
 
         {{-- HEADER --}}
 
@@ -242,9 +243,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="kir-pill">
-                                        {{ $lok->jumlah }} barang
-                                    </span>
+                                    <button type="button" class="kir-count-link" data-kir-location="{{ $lok->id }}"
+                                        data-name="{{ $lok->lokasi }}"
+                                        aria-label="Lihat {{ $lok->jumlah }} inventaris lokasi {{ $lok->lokasi }}">
+                                        <i data-lucide="files"></i>
+                                        <span>
+                                            <strong>{{ $lok->jumlah }} data</strong>
+                                            <small>Lihat inventaris</small>
+                                        </span>
+                                    </button>
                                 </td>
 
                                 <td>
@@ -278,8 +285,8 @@
                                         </button>
 
                                         <button class="kir-icon kir-export-icon" type="button"
-                                            title="Export Excel khusus lokasi ini"
-                                            aria-label="Export Excel lokasi {{ $lok->lokasi }}"
+                                            title="Print Excel seluruh inventaris lokasi ini"
+                                            aria-label="Print Excel lokasi {{ $lok->lokasi }}"
                                             data-kir-export-location="{{ $lok->id }}" data-name="{{ $lok->lokasi }}"
                                             @disabled((int) $lok->jumlah === 0)>
                                             <i data-lucide="file-spreadsheet"></i>
@@ -294,7 +301,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="kir-empty">
+                                <td colspan="7" class="kir-empty">
                                     Belum ada lokasi dengan data KIR.
                                 </td>
                             </tr>
@@ -389,7 +396,7 @@
                 <span class="kir-export-summary" id="kirExportSummary">Memuat jumlah barang...</span>
                 <button id="kirExportLokasi" class="kir-btn kir-excel-btn" type="button" disabled>
                     <i data-lucide="file-spreadsheet"></i>
-                    Export Excel Lokasi
+                    Print Excel Lokasi
                 </button>
                 <button class="kir-close" type="button" data-kir-close="kirModalLokasi">
                     <i data-lucide="x"></i>
@@ -849,6 +856,65 @@
                 </button>
             </div>
         </form>
+    </dialog>
+
+    {{-- POPUP PRINT EXCEL K.I.R — Standar visual K.I.B A Tanah. --}}
+    <dialog class="kir-modal kir-report-modal" id="kirReportDialog" aria-labelledby="kirReportTitle">
+        <div class="kir-modal-head">
+            <div>
+                <small>LAPORAN KARTU INVENTARIS RUANGAN (K.I.R)</small>
+                <h2 id="kirReportTitle">Print Excel — Inventaris Ruangan</h2>
+                <p id="kirReportSubtitle">Seluruh barang di lokasi terpilih, lintas ruangan.</p>
+            </div>
+            <button class="kir-close" type="button" data-kir-close="kirReportDialog" aria-label="Tutup laporan">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="kir-modal-body kir-report-body">
+            <section class="kir-report-fields">
+                <label class="kir-report-period-field" for="kirReportPeriod">
+                    <strong>Periode laporan <b>*</b></strong>
+                    <input type="month" id="kirReportPeriod" required>
+                    <small>Periode akan ditulis pada preview dan Excel.</small>
+                </label>
+                <div class="kir-report-signers">
+                    @foreach (['Diketahui oleh', 'Diperiksa oleh (1)', 'Diperiksa oleh (2)', 'Dibuat oleh'] as $i => $caption)
+                        <div class="kir-report-signer" data-kir-signer-field="{{ $i }}">
+                            <label for="kirReportSigner{{ $i }}">{{ $caption }} <b>*</b></label>
+                            <input id="kirReportSigner{{ $i }}" data-kir-signer="{{ $i }}"
+                                type="search" placeholder="Cari nama, NIP, atau jabatan..." role="combobox"
+                                aria-autocomplete="list" aria-expanded="false"
+                                aria-controls="kirReportList{{ $i }}" autocomplete="off" required>
+                            <div class="kir-report-suggestions" id="kirReportList{{ $i }}" role="listbox"
+                                hidden></div>
+                            <small>Pilih dari Master SDM Pendukung aktif.</small>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+            <div id="kirReportInfo" class="kir-report-info" role="status" aria-live="polite">
+                Pilih periode dan empat penandatangan untuk melihat preview.
+            </div>
+            <section id="kirReportPreviewBox" class="kir-report-preview-box" hidden>
+                <div class="kir-report-preview-head">
+                    <strong>Preview Laporan K.I.R</strong>
+                    <span id="kirReportPreviewCount">0 barang</span>
+                </div>
+                <div id="kirReportPreview" class="kir-report-preview-scroll"></div>
+            </section>
+        </div>
+        <div class="kir-modal-foot kir-report-foot">
+            <span>Seluruh inventaris lokasi · 11 kolom K.I.R · tanpa Status Kepemilikan.</span>
+            <div class="kir-report-footer-actions">
+                <button class="kir-btn outline" type="button" data-kir-close="kirReportDialog">Batal</button>
+                <button class="kir-btn outline" type="button" id="kirReportPrint" disabled>
+                    <i data-lucide="printer"></i> Print
+                </button>
+                <button class="kir-btn kir-excel-btn" type="button" id="kirReportDownload" disabled>
+                    <i data-lucide="download"></i> Download Excel
+                </button>
+            </div>
+        </div>
     </dialog>
 @endsection
 

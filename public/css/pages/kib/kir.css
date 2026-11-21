@@ -1900,4 +1900,170 @@
 .kir-page .kir-excel-table td {
     white-space: normal;
 }
-    
+
+/* ======================================================================
+   K.I.R — STANDAR TOMBOL PRINT, DATA LOKASI, DAN POPUP TANAH (PRD 2.1)
+   Ditambahkan tanpa menimpa aturan CRUD/Detail/Form sebelumnya.
+   ====================================================================== */
+
+.kir-page .kir-count-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 130px;
+    min-height: 46px;
+    padding: 7px 10px;
+    border: 1px solid #c2def8;
+    border-radius: 9px;
+    background: #f1f8ff;
+    color: #0a62b5;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .2s, background .2s;
+}
+.kir-page .kir-count-link:hover { background: #e4f2ff; border-color: #7db9ef; }
+.kir-page .kir-count-link svg { width: 20px; height: 20px; flex: none; }
+.kir-page .kir-count-link span { display: flex; flex-direction: column; gap: 2px; }
+.kir-page .kir-count-link strong { font-size: 13px; font-weight: 800; }
+.kir-page .kir-count-link small { font-size: 11px; color: #547c9f; }
+
+/* Tombol cetak hijau mengikuti K.I.B A Tanah. */
+#kirApp .kir-btn.kir-excel-btn,
+.kir-modal .kir-btn.kir-excel-btn,
+#kirApp .kir-icon.kir-export-icon {
+    background: linear-gradient(135deg, #0c9977 0%, #08785e 100%);
+    color: #ffffff;
+    border: 1px solid #08785e;
+    box-shadow: 0 5px 15px rgba(8, 120, 94, .17);
+}
+#kirApp .kir-btn.kir-excel-btn:hover:not(:disabled),
+.kir-modal .kir-btn.kir-excel-btn:hover:not(:disabled),
+#kirApp .kir-icon.kir-export-icon:hover:not(:disabled) {
+    background: #076149;
+    color: white;
+}
+
+.kir-modal.kir-report-modal {
+    width: min(1200px, calc(100vw - 42px));
+    max-width: 1200px;
+    max-height: min(90vh, 930px);
+    background: #ffffff;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    border-radius: 14px;
+}
+.kir-modal.kir-report-modal[open] { display: flex; }
+.kir-report-modal .kir-modal-head { background: #f5f9ff; flex: 0 0 auto; }
+.kir-report-modal .kir-modal-head small { color: #0769d8; letter-spacing: .9px; }
+.kir-report-modal .kir-modal-head h2 { color: #103e71; font-size: 20px; }
+.kir-report-modal .kir-report-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 20px 24px;
+    background: white;
+}
+.kir-report-fields {
+    display: grid;
+    gap: 20px;
+    padding: 18px 20px;
+    border: 1px solid #d4e4f5;
+    border-radius: 12px;
+    background: #f6faff;
+}
+.kir-report-period-field { display: flex; flex-direction: column; gap: 7px; width: min(330px,100%); }
+.kir-report-period-field strong,
+.kir-report-signer label { font-size: 13px; color: #234b77; font-weight: 800; }
+.kir-report-fields b { color: #d52e4b; }
+.kir-report-fields input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 41px;
+    padding: 9px 11px;
+    background: white;
+    border: 1px solid #b9d1ec;
+    border-radius: 8px;
+    color: #193f6a;
+    font-size: 12px;
+    font-family: inherit;
+}
+.kir-report-fields input:focus { outline: 2px solid #b5d8ff; border-color: #3587e5; }
+.kir-report-fields small { font-size: 11px; color: #7890a9; }
+.kir-report-signers { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+.kir-report-signer { display: flex; flex-direction: column; gap: 7px; min-width: 0; position: relative; }
+.kir-report-signer input { text-overflow: ellipsis; }
+.kir-report-suggestions {
+    position: absolute;
+    top: calc(100% - 19px);
+    left: 0;
+    right: 0;
+    z-index: 130;
+    max-height: 190px;
+    overflow-y: auto;
+    border: 1px solid #b9d7f7;
+    border-radius: 9px;
+    padding: 5px;
+    background: #ffffff;
+    box-shadow: 0 12px 26px rgba(15,54,95,.15);
+}
+.kir-report-suggestions[hidden] { display: none !important; }
+.kir-report-suggestion {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    border: 0;
+    border-radius: 6px;
+    padding: 9px 10px;
+    background: white;
+    text-align: left;
+    color: #103e71;
+    cursor: pointer;
+}
+.kir-report-suggestion:hover,.kir-report-suggestion.is-selected { background: #e7f3ff; }
+.kir-report-suggestion strong { font-size: 12px; }
+.kir-report-suggestion small { font-size: 11px; }
+.kir-report-suggestion-empty { font-size: 12px; padding: 10px; color: #627d9c; }
+.kir-report-info {
+    padding: 13px 15px;
+    margin: 15px 0;
+    border: 1px solid #b9d9f9;
+    border-radius: 8px;
+    background: #eff7ff;
+    color: #41688d;
+    font-size: 12px;
+}
+.kir-report-preview-box { border: 1px solid #cfe1f5; border-radius: 10px; overflow: hidden; }
+.kir-report-preview-box[hidden] { display: none !important; }
+.kir-report-preview-head { display: flex; justify-content: space-between; gap: 12px; padding: 13px 15px; background: #f4f8fd; color: #174778; font-size: 12px; }
+.kir-report-preview-scroll { overflow: auto; max-height: 550px; padding: 15px; background: #f7f9fc; }
+.kir-report-sheet { box-sizing: border-box; min-width: 1070px; padding: 20px 18px 30px; background: white; font-family: Arial,sans-serif; font-size: 11px; color: #15233b; }
+.kir-report-sheet-top { height: 118px; position: relative; display: flex; align-items: flex-start; }
+.kir-report-sheet-top img { width: 245px; height: auto; object-fit: contain; }
+.kir-report-sheet-title { position: absolute; top: 24px; left: 31%; right: 12%; display: grid; gap: 8px; font-size: 16px; text-align: center; }
+.kir-report-sheet-title strong + strong { font-size: 13px; }
+.kir-report-meta { margin-bottom: 18px; display: grid; gap: 4px; }
+.kir-report-meta-line { display: grid; grid-template-columns: 175px 1fr; align-items: center; }
+.kir-report-meta-line strong { font-size: 11px; }
+.kir-report-table-wrap { width: 100%; overflow: auto; }
+.kir-report-table { border-collapse: collapse; width: 100%; min-width: 1050px; }
+.kir-report-table th,.kir-report-table td { border: 1px solid #53687f; padding: 7px 6px; text-align: center; vertical-align: middle; font-size: 11px; overflow-wrap: anywhere; }
+.kir-report-table th { background: #d5dfea; font-weight: 800; }
+.kir-report-table td:nth-child(2),.kir-report-table td:nth-child(11) { text-align: left; }
+.kir-report-dateline { text-align: right; margin-top: 20px; }
+.kir-report-sheet-signers { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; margin-top: 14px; }
+.kir-report-sheet-signers section { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
+.kir-report-sheet-signers u { margin-top: 40px; font-weight: bold; }
+.kir-report-foot { display: flex; gap: 15px; align-items: center; justify-content: space-between; flex: 0 0 auto; }
+.kir-report-foot > span { font-size: 11px; color: #6985a0; }
+.kir-report-footer-actions { display: flex; gap: 9px; align-items: center; }
+@media(max-width:1040px){.kir-report-signers{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:650px){
+    .kir-modal.kir-report-modal{width:calc(100vw - 16px);max-height:94vh;}
+    .kir-report-modal .kir-report-body{padding:12px;}
+    .kir-report-fields{padding:12px;}
+    .kir-report-signers{grid-template-columns:minmax(0,1fr);}
+    .kir-report-foot{flex-direction:column;align-items:stretch;}
+    .kir-report-footer-actions{justify-content:flex-end;}
+}

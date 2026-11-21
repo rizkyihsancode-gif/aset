@@ -752,337 +752,547 @@
         }
     );
 
-    /*
-    |--------------------------------------------------------------------------
-    | EXPORT EXCEL K.I.R PER LOKASI (XLSX ASLI, SATU kir.js)
-    |--------------------------------------------------------------------------
-    | - Seluruh data berdasarkan id_lokasi, lintas ruangan dan gedung.
-    | - Tidak menggunakan hanya baris pagination atau ruangan yang dipilih.
-    | - Satu baris pada worksheet = satu record inventaris KIR.
-    | - Tidak perlu CDN, Composer, atau JavaScript kedua.
-    | - Text XML menjadi inlineStr sehingga formula injection tidak dieksekusi.
-    */
+    /* ========================================================================
+     * K.I.R — PRINT EXCEL PER LOKASI (standar K.I.B A)
+     * - 11 kolom sesuai referensi KIR.jpeg
+     * - seluruh inventaris satu lokasi lintas ruangan; tanpa pagination
+     * - periode & empat penandatangan Master SDM aktif
+     * - satu kir.js, tanpa library eksternal
+     * ======================================================================== */
 
-    function buildKirLocationXlsx(payload) {
-        const lokasi = payload?.lokasi;
+    const kirReport = {
+        payload: null,
+        locationId: null,
+        requestId: 0,
+        busy: false,
+        selected: [null, null, null, null],
+        currentChoice: [-1, -1, -1, -1]
+    };
+    const kirSignerLabels = ['Diketahui oleh', 'Diperiksa oleh (1)',
+        'Diperiksa oleh (2)', 'Dibuat oleh'];
+    const kirReportInputs = [0, 1, 2, 3].map(i => $(`kirReportSigner${i}`));
+    const kirReportLists = [0, 1, 2, 3].map(i => $(`kirReportList${i}`));
+    const kirReportDialog = $('kirReportDialog');
+
+    function kirReportPeriodLabel() {
+        const value = $('kirReportPeriod')?.value || '';
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return '';
+        const [year, month] = value.split('-').map(Number);
+        return `${new Intl.DateTimeFormat('id-ID', { month: 'long', timeZone: 'UTC' })
+            .format(new Date(Date.UTC(year, month - 1, 1)))} ${year}`.toUpperCase();
+    }
+
+    function kirUnique(items, key, label = 'BERAGAM') {
+        const values = [...new Set(items.map(item => str(item[key])).filter(Boolean))];
+        return values.length === 1 ? values[0] : (values.length > 1 ? label : '—');
+    }
+
+    function kirReportMetadata(payload) {
+        const items = payload.data || [];
+        const depCode = kirUnique(items, 'kode_dep', 'BERAGAM');
+        const divCode = kirUnique(items, 'kode_div', 'BERAGAM');
+        const deptDivCode = depCode === '—' && divCode === '—'
+            ? '—' : `${depCode} / ${divCode}`;
+        return [
+            ['PROVINSI', 'KALIMANTAN TIMUR'],
+            ['KOTA', 'SAMARINDA'],
+            ['UNIT', 'PERUMDA TIRTA KENCANA'],
+            ['DEPARTEMEN', kirUnique(items, 'departemen')],
+            ['DIVISI', kirUnique(items, 'divisi')],
+            ['LOKASI', str(payload.lokasi?.nama) || '—'],
+            ['RUANG', kirUnique(items, 'ruangan', 'BERBAGAI RUANGAN')],
+            ['KODE DEPT / DIV', deptDivCode]
+        ];
+    }
+
+    function kirReportSignerLabel(sdm) {
+        return `${str(sdm.nama)} — ${str(sdm.jabatan) || 'Tanpa Jabatan'} — NIP ${str(sdm.nip) || '—'}`;
+    }
+
+    function kirReportValid() {
+        return kirReport.payload && kirReport.payload.data?.length > 0 &&
+            kirReportPeriodLabel() && kirReport.selected.every((selected, i) =>
+                selected && kirReportInputs[i]?.value === kirReportSignerLabel(selected));
+    }
+
+    function kirCloseSignerList(index) {
+        const list = kirReportLists[index];
+        if (list) list.hidden = true;
+        kirReportInputs[index]?.setAttribute('aria-expanded', 'false');
+    }
+
+    function kirSelectSigner(index, signer) {
+        kirReport.selected[index] = signer;
+        kirReportInputs[index].value = kirReportSignerLabel(signer);
+        kirCloseSignerList(index);
+        kirReportUpdate();
+    }
+
+    function kirRenderSignerList(index) {
+        const list = kirReportLists[index];
+        const input = kirReportInputs[index];
+        if (!list || !input) return;
+        const query = input.value.toLocaleLowerCase('id-ID').trim();
+        const options = Array.isArray(kirReport.payload?.sdm) ? kirReport.payload.sdm : [];
+        const filtered = options.filter(person =>
+            [person.nama, person.jabatan, person.nip, kirReportSignerLabel(person)]
+                .some(value => str(value).toLocaleLowerCase('id-ID').includes(query))
+        ).slice(0, 30);
+        list.replaceChildren();
+        kirReport.currentChoice[index] = -1;
+        if (!filtered.length) {
+            const empty = document.createElement('div');
+            empty.className = 'kir-report-suggestion-empty';
+            empty.textContent = options.length
+                ? 'Tidak ada SDM aktif yang cocok.'
+                : 'Belum ada SDM Pendukung berstatus aktif.';
+            list.appendChild(empty);
+        }
+        filtered.forEach((person, optionIndex) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'kir-report-suggestion';
+            button.setAttribute('role', 'option');
+            button.dataset.optionIndex = String(optionIndex);
+            const name = document.createElement('strong');
+            name.textContent = str(person.nama);
+            const detail = document.createElement('small');
+            detail.textContent = `${str(person.jabatan) || 'Tanpa Jabatan'} · NIP ${str(person.nip) || '—'}`;
+            button.append(name, detail);
+            button.addEventListener('mousedown', e => e.preventDefault());
+            button.addEventListener('click', () => kirSelectSigner(index, person));
+            list.appendChild(button);
+        });
+        list.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    kirReportInputs.forEach((input, index) => {
+        if (!input) return;
+        input.addEventListener('focus', () => kirRenderSignerList(index));
+        input.addEventListener('input', () => {
+            kirReport.selected[index] = null;
+            kirRenderSignerList(index);
+            kirReportUpdate();
+        });
+        input.addEventListener('keydown', event => {
+            const list = kirReportLists[index];
+            if (event.key === 'Escape') {
+                kirCloseSignerList(index);
+                return;
+            }
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                if (list?.hidden) kirRenderSignerList(index);
+                const buttons = [...list.querySelectorAll('button')];
+                if (!buttons.length) return;
+                event.preventDefault();
+                kirReport.currentChoice[index] = event.key === 'ArrowDown'
+                    ? (kirReport.currentChoice[index] + 1) % buttons.length
+                    : (kirReport.currentChoice[index] + buttons.length - 1) % buttons.length;
+                buttons.forEach((button, i) =>
+                    button.classList.toggle('is-selected', i === kirReport.currentChoice[index]));
+                buttons[kirReport.currentChoice[index]].scrollIntoView({ block: 'nearest' });
+            }
+            if (event.key === 'Enter' && !list?.hidden) {
+                const buttons = [...list.querySelectorAll('button')];
+                const button = buttons[kirReport.currentChoice[index]] || buttons[0];
+                if (button) {
+                    event.preventDefault();
+                    button.click();
+                }
+            }
+        });
+        input.addEventListener('blur', () => {
+            setTimeout(() => kirCloseSignerList(index), 120);
+        });
+    });
+    document.addEventListener('pointerdown', event => {
+        kirReportInputs.forEach((input, i) => {
+            if (!input?.closest('[data-kir-signer-field]')?.contains(event.target)) {
+                kirCloseSignerList(i);
+            }
+        });
+    });
+
+    function kirReportPreviewHtml(payload, period, signers) {
+        const meta = kirReportMetadata(payload).map(([label, value]) =>
+            `<div class="kir-report-meta-line"><strong>${esc(label)}</strong><span>: ${esc(value)}</span></div>`
+        ).join('');
+        const dataRows = payload.data.map((item, i) => {
+            const c = value => esc(str(value) || '—');
+            const cond = n => Number(n) > 0 ? String(Number(n)) : '—';
+            return `<tr><td>${i + 1}</td><td>${c(item.nama_barang)}</td>` +
+                `<td>${c(item.kode_barang)}</td><td>${c(item.merk)}</td>` +
+                `<td>${c(item.nama_bahan)}</td><td>${Number(item.jumlah) || 0}</td>` +
+                `<td>${c(item.satuan)}</td><td>${cond(item.baik)}</td>` +
+                `<td>${cond(item.ringan)}</td><td>${cond(item.berat)}</td>` +
+                `<td>${c(item.ket)}</td></tr>`;
+        }).join('');
+        const signatures = signers.map((signer, i) =>
+            `<section><strong>${esc(kirSignerLabels[i])},</strong>` +
+            `<span>${esc(str(signer.jabatan) || '—')}</span>` +
+            `<u>${esc(str(signer.nama))}</u>` +
+            `<small>NIP. ${esc(str(signer.nip) || '—')}</small></section>`
+        ).join('');
+        const dateText = new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Makassar', day: 'numeric', month: 'long', year: 'numeric'
+        }).format(new Date());
+        return `<article class="kir-report-sheet">` +
+            `<div class="kir-report-sheet-top"><img src="${esc(app.dataset.logo)}" alt="Logo Perumda Tirta Kencana">` +
+            `<div class="kir-report-sheet-title"><strong>KARTU INVENTARIS RUANGAN</strong>` +
+            `<strong>PERIODE ${esc(period)}</strong></div></div>` +
+            `<div class="kir-report-meta">${meta}</div>` +
+            `<div class="kir-report-table-wrap"><table class="kir-report-table">` +
+            `<thead><tr><th rowspan="2">NO.</th><th rowspan="2">NAMA BARANG</th>` +
+            `<th rowspan="2">KODE BARANG</th><th rowspan="2">MERK/TYPE</th>` +
+            `<th rowspan="2">BAHAN</th><th rowspan="2">JUMLAH</th>` +
+            `<th rowspan="2">SATUAN</th><th colspan="3">KONDISI</th>` +
+            `<th rowspan="2">KETERANGAN</th></tr>` +
+            `<tr><th>BAIK</th><th>RUSAK RINGAN</th><th>RUSAK BERAT</th></tr></thead>` +
+            `<tbody>${dataRows}</tbody></table></div>` +
+            `<div class="kir-report-dateline">Samarinda, ${esc(dateText)}</div>` +
+            `<div class="kir-report-sheet-signers">${signatures}</div></article>`;
+    }
+
+    function kirReportUpdate() {
+        const valid = Boolean(kirReportValid());
+        const info = $('kirReportInfo');
+        const previewBox = $('kirReportPreviewBox');
+        $('kirReportPrint').disabled = !valid || kirReport.busy;
+        $('kirReportDownload').disabled = !valid || kirReport.busy;
+        previewBox.hidden = !valid;
+        if (!kirReport.payload) {
+            info.textContent = 'Memuat inventaris lokasi dan SDM Pendukung aktif...';
+            return;
+        }
+        if (!kirReport.payload.sdm?.length) {
+            info.textContent = 'Belum ada SDM Pendukung aktif. Atur status di Master SDM Pendukung.';
+        } else if (!valid) {
+            info.textContent = 'Pilih periode dan keempat penandatangan dari daftar SDM aktif untuk melihat preview.';
+        } else {
+            info.textContent = `Preview siap: ${kirReport.payload.data.length} barang dari lokasi ${kirReport.payload.lokasi.nama}; 11 kolom K.I.R, tanpa Status Kepemilikan.`;
+            $('kirReportPreviewCount').textContent = `${kirReport.payload.data.length} barang`;
+            $('kirReportPreview').innerHTML = kirReportPreviewHtml(
+                kirReport.payload, kirReportPeriodLabel(), kirReport.selected);
+        }
+    }
+
+    async function exportLocation(id, locationName = '') {
+        const locationId = Number(id);
+        if (!Number.isSafeInteger(locationId) || locationId < 1) return;
+        const requestId = ++kirReport.requestId;
+        kirReport.payload = null;
+        kirReport.locationId = locationId;
+        kirReport.selected = [null, null, null, null];
+        kirReportInputs.forEach(input => { if (input) input.value = ''; });
+        const month = new Intl.DateTimeFormat('sv-SE', {
+            timeZone: 'Asia/Makassar', year: 'numeric', month: '2-digit'
+        }).format(new Date());
+        $('kirReportPeriod').value = month;
+        $('kirReportSubtitle').textContent = `Seluruh inventaris di ${locationName || 'lokasi terpilih'} · memuat data...`;
+        if (!kirReportDialog.open) kirReportDialog.showModal();
+        kirReportUpdate();
+        try {
+            const response = await api(`${base}/lokasi/${locationId}/export-data`);
+            if (requestId !== kirReport.requestId || !kirReportDialog.open) return;
+            if (!Array.isArray(response.data) || !response.data.length) {
+                throw new Error('Belum ada inventaris untuk dicetak pada lokasi ini.');
+            }
+            if (response.data.some(item => Number(item.id_lokasi) !== locationId)) {
+                throw new Error('Respons mengandung barang dari lokasi lain; laporan dibatalkan.');
+            }
+            kirReport.payload = response;
+            $('kirReportSubtitle').textContent =
+                `Seluruh inventaris lokasi ${response.lokasi.nama} · ${response.data.length} barang dari semua ruangan`;
+            kirReportUpdate();
+        } catch (exception) {
+            if (requestId === kirReport.requestId) {
+                $('kirReportInfo').textContent = `Laporan gagal dimuat: ${exception.message}`;
+            }
+        }
+    }
+
+    // Mencegah respons lama mengganti lokasi setelah dialog ditutup.
+    kirReportDialog?.addEventListener('close', () => {
+        kirReport.requestId += 1;
+        kirReportLists.forEach((list, i) => kirCloseSignerList(i));
+    });
+    $('kirReportPeriod')?.addEventListener('change', kirReportUpdate);
+    $('kirExportLokasi')?.addEventListener('click', () => {
+        if (state.locationId) exportLocation(state.locationId, state.locationName);
+    });
+
+    /* XLSX OpenXML 11 kolom, kop, logo, 4 tanda tangan, border utuh. */
+    function buildKirLocationXlsx(payload, period, signers, logoBytes) {
         const items = payload?.data;
-        if (!lokasi?.id || !Array.isArray(items) || !items.length) {
-            throw new Error('Tidak ada barang KIR untuk diekspor pada lokasi ini.');
+        if (!Array.isArray(items) || !items.length || !payload?.lokasi?.id) {
+            throw new Error('Tidak ada inventaris KIR untuk dicetak.');
         }
-
-        // Menjamin satu XLSX hanya memuat record dari satu lokasi yang diminta.
-        if (items.some(item => Number(item.id_lokasi) !== Number(lokasi.id))) {
-            throw new Error('Data inventaris berisi lokasi yang tidak sesuai. Ekspor dibatalkan.');
-        }
-
         const enc = new TextEncoder();
         const declaration = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
         const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
         const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
         const pkg = 'http://schemas.openxmlformats.org/package/2006/relationships';
-        const cellText = value => String(value ?? '').trim() || '—';
         const xml = value => String(value ?? '')
             .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
             .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-        const cell = (ref, value, style = 6) =>
-            `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
-        const numeric = (ref, value, style = 7) => {
-            const number = Number(value);
-            return value !== null && value !== undefined &&
-                String(value).trim() !== '' && Number.isFinite(number)
-                ? `<c r="${ref}" s="${style}"><v>${number}</v></c>`
-                : cell(ref, cellText(value), style);
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+        const ref = (col, row) => `${String.fromCharCode(64 + col)}${row}`;
+        const cell = (c, r, value, style = 6) =>
+            `<c r="${ref(c, r)}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+        const number = (c, r, value, style = 6) =>
+            `<c r="${ref(c,r)}" s="${style}"><v>${Number(value) || 0}</v></c>`;
+        const row = (r, entries, height = 21) =>
+            `<row r="${r}" ht="${height}" customHeight="1">${entries.join('')}</row>`;
+        const merges = [];
+        const makeMerge = (r1,c1,r2,c2) => {
+            merges.push(`${ref(c1,r1)}:${ref(c2,r2)}`);
         };
-        const condition = (ref, value) =>
-            Number(value) > 0 ? numeric(ref, value) : cell(ref, '—', 7);
-        const row = (r, cells, height = 22) =>
-            `<row r="${r}" ht="${height}" customHeight="1">${cells.join('')}</row>`;
-        const unique = (key, fallback = '—') => {
-            const values = [...new Set(items.map(item =>
-                String(item[key] ?? '').trim()
-            ).filter(Boolean))];
-            return values.length === 1 ? values[0] :
-                values.length > 1 ? 'Beberapa (lihat kolom tabel)' : fallback;
-        };
-        const totalUnit = items.reduce((sum, item) => sum + (Number(item.jumlah) || 0), 0);
-        const code = unique('kode_dep') !== '—' || unique('kode_div') !== '—'
-            ? `${unique('kode_dep')} / ${unique('kode_div')}` : '—';
-
-        // Kolom A:K sama seperti contoh Excel KIR.
-        // L: status kepemilikan; M:P identitas unit/ruangan.
-        // Satu lokasi berisi seluruh barang tanpa terpengaruh pagination.
-        const meta = [
-            ['PROVINSI', 'KALIMANTAN TIMUR'],
-            ['KOTA', 'SAMARINDA'],
-            ['UNIT', 'PERUMDAM TIRTA KENCANA KOTA SAMARINDA'],
-            ['LOKASI', cellText(lokasi.nama)],
-            ['ALAMAT', cellText(lokasi.alamat)],
-            ['DEPARTEMEN', unique('departemen')],
-            ['DIVISI', unique('divisi')],
-            ['GEDUNG / RUANGAN', `${unique('gedung')} / ${unique('ruangan')}`],
-            ['KODE DEPT / DIV', code],
-            ['JUMLAH INVENTARIS', `${items.length} barang · ${totalUnit} unit`]
-        ];
-
-        const rows = [
-            row(1, [cell('A1', 'KARTU INVENTARIS RUANGAN', 1)], 30),
-            row(2, [cell('A2', `KIR PER LOKASI — ${cellText(lokasi.nama)}`, 2)], 25),
-            ...meta.map(([label, value], index) => row(index + 4, [
-                cell(`A${index + 4}`, label, 3),
-                cell(`C${index + 4}`, `: ${value}`, 4)
-            ])),
-            row(15, [
-                cell('A15', 'NO.', 5),
-                cell('B15', 'NAMA BARANG', 5),
-                cell('C15', 'KODE BARANG', 5),
-                cell('D15', 'MERK / TYPE', 5),
-                cell('E15', 'BAHAN', 5),
-                cell('F15', 'JUMLAH', 5),
-                cell('G15', 'SATUAN', 5),
-                cell('H15', 'KONDISI', 5),
-                cell('K15', 'KETERANGAN', 5),
-                cell('L15', 'STATUS KEPEMILIKAN', 5),
-                cell('M15', 'DEPARTEMEN', 5),
-                cell('N15', 'DIVISI', 5),
-                cell('O15', 'GEDUNG', 5),
-                cell('P15', 'RUANGAN', 5)
-            ], 34),
-            row(16, [
-                cell('H16', 'BAIK', 5),
-                cell('I16', 'RUSAK RINGAN', 5),
-                cell('J16', 'RUSAK BERAT', 5)
-            ], 28),
-            ...items.map((item, index) => {
-                const r = index + 17;
-                return row(r, [
-                    numeric(`A${r}`, index + 1),
-                    cell(`B${r}`, cellText(item.nama_barang)),
-                    cell(`C${r}`, cellText(item.kode_barang)),
-                    cell(`D${r}`, cellText(item.merk)),
-                    cell(`E${r}`, cellText(item.nama_bahan)),
-                    numeric(`F${r}`, item.jumlah ?? 0),
-                    cell(`G${r}`, cellText(item.satuan)),
-                    condition(`H${r}`, item.baik),
-                    condition(`I${r}`, item.ringan),
-                    condition(`J${r}`, item.berat),
-                    cell(`K${r}`, cellText(item.ket)),
-                    cell(`L${r}`, ownershipLabel(item.status_kepemilikan)),
-                    cell(`M${r}`, cellText(item.departemen)),
-                    cell(`N${r}`, cellText(item.divisi)),
-                    cell(`O${r}`, cellText(item.gedung)),
-                    cell(`P${r}`, cellText(item.ruangan))
-                ], 26);
-            })
-        ];
-
-        const widths = [8, 38, 22, 28, 20, 12, 14, 12, 17, 17, 42, 28, 28, 28, 24, 26];
-        const merges = ['A1:P1', 'A2:P2', 'H15:J15',
-            ...'ABCDEFGKLMNOP'.split('').map(col => `${col}15:${col}16`)];
-        const lastRow = 16 + items.length;
-        const sheet = declaration + `<worksheet xmlns="${ns}">` +
-            `<dimension ref="A1:P${lastRow}"/>` +
-            '<sheetViews><sheetView workbookViewId="0">' +
-            '<pane xSplit="2" ySplit="16" topLeftCell="C17" activePane="bottomRight" state="frozen"/>' +
-            '</sheetView></sheetViews>' +
-            `<cols>${widths.map((width, i) =>
-                `<col min="${i + 1}" max="${i + 1}" width="${width}" customWidth="1"/>`
-            ).join('')}</cols>` +
-            `<sheetData>${rows.join('')}</sheetData>` +
-            `<mergeCells count="${merges.length}">${merges.map(ref =>
-                `<mergeCell ref="${ref}"/>`
-            ).join('')}</mergeCells>` +
-            `<printOptions horizontalCentered="1"/>` +
-            `<pageMargins left="0.25" right="0.25" top="0.45" bottom="0.45" header="0.2" footer="0.2"/>` +
-            '<pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="0"/>' +
-            '</worksheet>';
-
-        const styles = declaration + `<styleSheet xmlns="${ns}">` +
-            '<fonts count="3">' +
-            '<font><sz val="11"/><name val="Calibri"/></font>' +
-            '<font><b/><sz val="16"/><name val="Calibri"/><color rgb="FF173B66"/></font>' +
-            '<font><b/><sz val="10"/><name val="Calibri"/><color rgb="FF163F6E"/></font>' +
-            '</fonts>' +
-            '<fills count="4">' +
-            '<fill><patternFill patternType="none"/></fill>' +
-            '<fill><patternFill patternType="gray125"/></fill>' +
-            '<fill><patternFill patternType="solid"><fgColor rgb="FFD8E4F1"/></patternFill></fill>' +
-            '<fill><patternFill patternType="solid"><fgColor rgb="FFF4F8FD"/></patternFill></fill>' +
-            '</fills>' +
-            '<borders count="2">' +
-            '<border><left/><right/><top/><bottom/><diagonal/></border>' +
-            '<border><left style="thin"><color rgb="FF56677A"/></left>' +
-            '<right style="thin"><color rgb="FF56677A"/></right>' +
-            '<top style="thin"><color rgb="FF56677A"/></top>' +
-            '<bottom style="thin"><color rgb="FF56677A"/></bottom><diagonal/></border>' +
-            '</borders>' +
-            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-            '<cellXfs count="8">' +
-            '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
-            '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
-            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
-            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
-            '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
-            '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
-            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
-            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
-            '</cellXfs></styleSheet>';
-        const workbook = declaration + `<workbook xmlns="${ns}" xmlns:r="${rel}">` +
-            '<sheets><sheet name="KIR Lokasi" sheetId="1" r:id="rId1"/></sheets></workbook>';
-        const workbookRels = declaration + `<Relationships xmlns="${pkg}">` +
-            `<Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/>` +
-            `<Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>`;
-        const rootRels = declaration + `<Relationships xmlns="${pkg}">` +
-            `<Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/>` +
-            '</Relationships>';
-        const contentTypes = declaration +
-            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-            '<Default Extension="xml" ContentType="application/xml"/>' +
-            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
-            '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
-            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
-            '</Types>';
-
-        // Writer ZIP tanpa kompresi, sah untuk format .xlsx OpenXML.
-        const crcTable = new Uint32Array(256);
-        for (let i = 0; i < 256; i++) {
-            let c = i;
-            for (let j = 0; j < 8; j++) {
-                c = (c >>> 1) ^ ((c & 1) ? 0xEDB88320 : 0);
+        const widths = [7, 36, 22, 26, 17, 11, 13, 11, 16, 16, 39];
+        const rows = [];
+        for (let r = 1; r <= 7; r++) {
+            const cells = [];
+            for (let c = 1; c <= 11; c++) {
+                cells.push(cell(c,r, (c === 1 && r === 2) ? 'KARTU INVENTARIS RUANGAN' :
+                    (c === 1 && r === 3) ? `PERIODE ${period}` : '', r === 2 ? 1 : r === 3 ? 2 : 0));
             }
-            crcTable[i] = c >>> 0;
+            rows.push(row(r,cells,r === 1 ? 16 : 21));
         }
-        const crc32 = bytes => {
-            let crc = 0xFFFFFFFF;
-            for (const b of bytes) {
-                crc = crcTable[(crc ^ b) & 255] ^ (crc >>> 8);
+        makeMerge(2,1,2,11); makeMerge(3,1,3,11);
+        kirReportMetadata(payload).forEach(([label, value], i) => {
+            const r = i + 8;
+            const entries = [];
+            for (let c = 1; c <= 11; c++) {
+                entries.push(cell(c,r,c===1 ? label : c===3 ? `: ${value}` : '', c===1 ? 3 : 4));
             }
-            return (crc ^ 0xFFFFFFFF) >>> 0;
+            rows.push(row(r, entries, 19));
+            makeMerge(r, 1, r, 2); makeMerge(r, 3, r, 6);
+        });
+        rows.push(row(16, [], 15)); rows.push(row(17, [], 15));
+        const h1 = ['NO.', 'NAMA BARANG', 'KODE BARANG', 'MERK / TYPE', 'BAHAN',
+            'JUMLAH', 'SATUAN', 'KONDISI', '', '', 'KETERANGAN'];
+        const h2 = ['', '', '', '', '', '', '', 'BAIK', 'RUSAK RINGAN', 'RUSAK BERAT', ''];
+        rows.push(row(18,h1.map((v,i)=>cell(i+1,18,v,5)),30));
+        rows.push(row(19,h2.map((v,i)=>cell(i+1,19,v,5)),27));
+        for(let c=1;c<=11;c++) if(c<8 || c===11) makeMerge(18,c,19,c);
+        makeMerge(18,8,18,10);
+        rows.push(row(20,Array.from({length:11},(_,i)=>number(i+1,20,i+1,5)),21));
+        items.forEach((item, i)=> {
+            const r=21+i;
+            const fields=[i+1, str(item.nama_barang)||'—', str(item.kode_barang)||'—',
+                str(item.merk)||'—', str(item.nama_bahan)||'—', Number(item.jumlah)||0,
+                str(item.satuan)||'—', Number(item.baik)>0?Number(item.baik):'—',
+                Number(item.ringan)>0?Number(item.ringan):'—',
+                Number(item.berat)>0?Number(item.berat):'—', str(item.ket)||'—'];
+            const maxLines=Math.max(1,Math.ceil(fields[1].length/38),Math.ceil(fields[10].length/43));
+            rows.push(row(r,fields.map((value,c)=>
+                typeof value==='number'?number(c+1,r,value,c===1||c===10?7:6)
+                    :cell(c+1,r,value,c===1||c===10?7:6)),Math.min(110,Math.max(26,maxLines*16+8))));
+        });
+        const lastData=20+items.length;
+        const dateRow=lastData+2;
+        const labelRow=dateRow+2;
+        const positionRow=labelRow+1;
+        const nameRow=labelRow+5;
+        const nipRow=nameRow+1;
+        const today=new Intl.DateTimeFormat('id-ID',{
+            timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'
+        }).format(new Date());
+        rows.push(row(dateRow,[cell(9,dateRow,`Samarinda, ${today}`,3)],23));
+        makeMerge(dateRow,9,dateRow,11);
+        const signatureCells = new Map([
+            [labelRow, []], [positionRow, []], [nameRow, []], [nipRow, []]
+        ]);
+        [[1,2],[4,5],[7,8],[10,11]].forEach(([start,end],i)=>{
+            const s=signers[i];
+            for(const [r,textValue,style] of [
+                [labelRow,`${kirSignerLabels[i]},`,9],
+                [positionRow,str(s.jabatan)||'—',9],
+                [nameRow,str(s.nama),10],
+                [nipRow,`NIP. ${str(s.nip)||'—'}`,9]
+            ]){
+                signatureCells.get(r).push(cell(start,r,textValue,style));
+                makeMerge(r,start,r,end);
+            }
+        });
+        for (const [r, cells] of signatureCells) {
+            rows.push(row(r,cells,20));
+        }
+        const lastRow=nipRow+2;
+        const styles=declaration+`<styleSheet xmlns="${ns}">`+
+            '<fonts count="4"><font><sz val="10"/><name val="Arial"/></font>'+
+            '<font><b/><sz val="14"/><name val="Arial"/></font>'+
+            '<font><b/><sz val="10"/><name val="Arial"/></font>'+
+            '<font><b/><u/><sz val="10"/><name val="Arial"/></font></fonts>'+
+            '<fills count="3"><fill><patternFill patternType="none"/></fill>'+
+            '<fill><patternFill patternType="gray125"/></fill>'+
+            '<fill><patternFill patternType="solid"><fgColor rgb="FFD5DFEA"/></patternFill></fill></fills>'+
+            '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'+
+            '<border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders>'+
+            '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+            '<cellXfs count="11">'+
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
+            '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center"/></xf>'+
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="center"/></xf>'+
+            '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'+
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'+
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>'+
+            '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+            '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+            '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+            '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+        const sheet=declaration+`<worksheet xmlns="${ns}" xmlns:r="${rel}">`+
+            `<dimension ref="A1:K${lastRow}"/>`+
+            '<sheetViews><sheetView workbookViewId="0"><pane ySplit="20" topLeftCell="A21" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'+
+            `<cols>${widths.map((width,i)=>`<col min="${i+1}" max="${i+1}" width="${width}" customWidth="1"/>`).join('')}</cols>`+
+            `<sheetData>${rows.join('')}</sheetData>`+
+            `<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells>`+
+            '<printOptions horizontalCentered="1"/>'+
+            '<pageMargins left="0.23" right="0.23" top="0.4" bottom="0.4" header="0.2" footer="0.2"/>'+
+            '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'+
+            '<pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="0"/>'+
+            '<drawing r:id="rId1"/>'+
+            '</worksheet>';
+        const workbook=declaration+`<workbook xmlns="${ns}" xmlns:r="${rel}">`+
+            '<sheets><sheet name="KIR - Inventaris Ruangan" sheetId="1" r:id="rId1"/></sheets>'+
+            `<definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'KIR - Inventaris Ruangan'!$18:$20</definedName>`+
+            `<definedName name="_xlnm.Print_Area" localSheetId="0">'KIR - Inventaris Ruangan'!$A$1:$K$${lastRow}</definedName></definedNames></workbook>`;
+        const rootRels=declaration+`<Relationships xmlns="${pkg}">`+
+            `<Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+        const workbookRels=declaration+`<Relationships xmlns="${pkg}">`+
+            `<Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/>`+
+            `<Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>`;
+        const sheetRels=declaration+`<Relationships xmlns="${pkg}">`+
+            `<Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>`;
+        const drawing=declaration+'<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" '+
+            'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '+
+            `xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from>`+
+            '<xdr:col>0</xdr:col><xdr:colOff>120000</xdr:colOff><xdr:row>1</xdr:row><xdr:rowOff>20000</xdr:rowOff></xdr:from>'+
+            '<xdr:ext cx="2450000" cy="775000"/><xdr:pic><xdr:nvPicPr>'+
+            '<xdr:cNvPr id="1" name="Logo Perumda"/><xdr:cNvPicPr/></xdr:nvPicPr>'+
+            '<xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'+
+            '<xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>'+
+            '</xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>';
+        const drawingRels=declaration+`<Relationships xmlns="${pkg}">`+
+            `<Relationship Id="rId1" Type="${rel}/image" Target="../media/logo.png"/></Relationships>`;
+        const contentTypes=declaration+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+            '<Default Extension="xml" ContentType="application/xml"/>'+
+            '<Default Extension="png" ContentType="image/png"/>'+
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+            '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+            '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'+
+            '</Types>';
+        // ZIP writer: menyimpan bytes logo PNG TANPA konversi menjadi teks.
+        const crcTable=new Uint32Array(256);
+        for(let i=0;i<256;i++){
+            let c=i;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xEDB88320:0);
+            crcTable[i]=c>>>0;
+        }
+        const crc32=bytes=>{
+            let c=0xFFFFFFFF;for(const b of bytes)c=crcTable[(c^b)&255]^(c>>>8);
+            return (c^0xFFFFFFFF)>>>0;
         };
-        const zipStore = files => {
-            const localParts = [];
-            const centralParts = [];
-            let offset = 0;
-            let centralSize = 0;
-            for (const [filename, content] of files) {
-                const name = enc.encode(filename);
-                const bytes = enc.encode(content);
-                const crc = crc32(bytes);
-                const local = new Uint8Array(30 + name.length + bytes.length);
-                const l = new DataView(local.buffer);
-                l.setUint32(0, 0x04034b50, true);
-                l.setUint16(4, 20, true);
-                l.setUint16(6, 0x0800, true);
-                l.setUint32(14, crc, true);
-                l.setUint32(18, bytes.length, true);
-                l.setUint32(22, bytes.length, true);
-                l.setUint16(26, name.length, true);
-                local.set(name, 30);
-                local.set(bytes, 30 + name.length);
+        function zipStore(files){
+            const localParts=[],centralParts=[];let offset=0,centralSize=0;
+            for(const [filename,content] of files){
+                const name=enc.encode(filename),bytes=content instanceof Uint8Array?content:enc.encode(content);
+                const crc=crc32(bytes);
+                const local=new Uint8Array(30+name.length+bytes.length),l=new DataView(local.buffer);
+                l.setUint32(0,0x04034b50,true);l.setUint16(4,20,true);l.setUint16(6,0x0800,true);
+                l.setUint32(14,crc,true);l.setUint32(18,bytes.length,true);l.setUint32(22,bytes.length,true);
+                l.setUint16(26,name.length,true);local.set(name,30);local.set(bytes,30+name.length);
                 localParts.push(local);
-                const central = new Uint8Array(46 + name.length);
-                const c = new DataView(central.buffer);
-                c.setUint32(0, 0x02014b50, true);
-                c.setUint16(4, 20, true);
-                c.setUint16(6, 20, true);
-                c.setUint16(8, 0x0800, true);
-                c.setUint32(16, crc, true);
-                c.setUint32(20, bytes.length, true);
-                c.setUint32(24, bytes.length, true);
-                c.setUint16(28, name.length, true);
-                c.setUint32(42, offset, true);
-                central.set(name, 46);
-                centralParts.push(central);
-                centralSize += central.length;
-                offset += local.length;
+                const central=new Uint8Array(46+name.length),d=new DataView(central.buffer);
+                d.setUint32(0,0x02014b50,true);d.setUint16(4,20,true);d.setUint16(6,20,true);
+                d.setUint16(8,0x0800,true);d.setUint32(16,crc,true);d.setUint32(20,bytes.length,true);
+                d.setUint32(24,bytes.length,true);d.setUint16(28,name.length,true);d.setUint32(42,offset,true);
+                central.set(name,46);centralParts.push(central);
+                centralSize+=central.length;offset+=local.length;
             }
-            const tail = new Uint8Array(22);
-            const t = new DataView(tail.buffer);
-            t.setUint32(0, 0x06054b50, true);
-            t.setUint16(8, files.length, true);
-            t.setUint16(10, files.length, true);
-            t.setUint32(12, centralSize, true);
-            t.setUint32(16, offset, true);
-            const parts = [...localParts, ...centralParts, tail];
-            const result = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
-            let at = 0;
-            for (const part of parts) {
-                result.set(part, at);
-                at += part.length;
-            }
-            return result;
-        };
+            const tail=new Uint8Array(22),t=new DataView(tail.buffer);
+            t.setUint32(0,0x06054b50,true);t.setUint16(8,files.length,true);
+            t.setUint16(10,files.length,true);t.setUint32(12,centralSize,true);t.setUint32(16,offset,true);
+            const parts=[...localParts,...centralParts,tail];
+            const out=new Uint8Array(parts.reduce((sum,p)=>sum+p.length,0));
+            let pos=0;for(const part of parts){out.set(part,pos);pos+=part.length;}
+            return out;
+        }
         return zipStore([
-            ['[Content_Types].xml', contentTypes],
-            ['_rels/.rels', rootRels],
-            ['xl/workbook.xml', workbook],
-            ['xl/_rels/workbook.xml.rels', workbookRels],
-            ['xl/styles.xml', styles],
-            ['xl/worksheets/sheet1.xml', sheet]
+            ['[Content_Types].xml',contentTypes],['_rels/.rels',rootRels],
+            ['xl/workbook.xml',workbook],['xl/_rels/workbook.xml.rels',workbookRels],
+            ['xl/styles.xml',styles],['xl/worksheets/sheet1.xml',sheet],
+            ['xl/worksheets/_rels/sheet1.xml.rels',sheetRels],
+            ['xl/drawings/drawing1.xml',drawing],['xl/drawings/_rels/drawing1.xml.rels',drawingRels],
+            ['xl/media/logo.png',logoBytes]
         ]);
     }
 
-    async function exportLocation(id, locationName = '', trigger = null) {
-        const locationId = Number(id);
-        if (!Number.isSafeInteger(locationId) || locationId < 1 || state.exporting) {
-            return;
-        }
-        state.exporting = true;
-        const disabledBefore = trigger?.disabled ?? false;
-        if (trigger) trigger.disabled = true;
-        const button = $('kirExportLokasi');
-        if (button) button.disabled = true;
-        const summary = $('kirExportSummary');
-        const summaryOld = summary?.textContent;
-        if (summary && state.locationId === locationId) {
-            summary.textContent = 'Menyiapkan Excel lokasi...';
-        }
-        try {
-            const result = await api(`${base}/lokasi/${locationId}/export-data`);
-            const count = (result.data || []).length;
-            if (count === 0) {
-                throw new Error('Lokasi ini belum mempunyai barang inventaris KIR.');
-            }
-            const xlsx = buildKirLocationXlsx(result);
-            const blob = new Blob([xlsx], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            const fileName = String(result.lokasi?.nama || locationName || locationId)
-                .normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g, '_')
-                .replace(/^_+|_+$/g, '').slice(0, 65) || String(locationId);
-            anchor.href = url;
-            anchor.download = `KIR_Lokasi_${fileName}_${locationId}.xlsx`;
-            document.body.appendChild(anchor);
-            anchor.click();
-            anchor.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 3000);
-            if (summary && state.locationId === locationId) {
-                summary.textContent = `${count} barang berhasil disiapkan untuk Excel`;
-            }
-        } catch (exception) {
-            console.error('EXPORT KIR LOKASI:', exception);
-            alert('Export Excel KIR gagal: ' + exception.message);
-            if (summary && state.locationId === locationId) {
-                summary.textContent = summaryOld || 'Export gagal';
-            }
-        } finally {
-            state.exporting = false;
-            if (trigger) trigger.disabled = disabledBefore;
-            if (button) button.disabled = state.locationCount === 0 || !state.locationId;
-        }
-    }
-
-    $('kirExportLokasi')?.addEventListener('click', event => {
-        if (state.locationId) {
-            exportLocation(state.locationId, state.locationName, event.currentTarget);
-        }
+    $('kirReportPrint')?.addEventListener('click', () => {
+        if (!kirReportValid()) return;
+        const printHtml = kirReportPreviewHtml(kirReport.payload,
+            kirReportPeriodLabel(), kirReport.selected);
+        const styles = `<style>*{box-sizing:border-box}body{font:11px Arial,sans-serif;margin:12mm;color:#111}`+
+            `.kir-report-sheet-top{display:flex;align-items:center;justify-content:space-between;position:relative;height:105px}`+
+            `.kir-report-sheet-top img{width:230px;height:auto}`+
+            `.kir-report-sheet-title{position:absolute;left:27%;right:12%;display:grid;text-align:center;gap:5px;font-size:14px}`+
+            `.kir-report-meta{display:grid;gap:4px;margin:12px 0 22px}`+
+            `.kir-report-meta-line{display:grid;grid-template-columns:160px 1fr}`+
+            `.kir-report-table{border-collapse:collapse;width:100%;table-layout:fixed}`+
+            `.kir-report-table th,.kir-report-table td{border:1px solid #444;padding:5px;font-size:10px;vertical-align:middle;text-align:center;overflow-wrap:anywhere}`+
+            `.kir-report-table td:nth-child(2),.kir-report-table td:nth-child(11){text-align:left}`+
+            `.kir-report-table th{background:#d5dfea}`+
+            `.kir-report-dateline{text-align:right;margin-top:20px}`+
+            `.kir-report-sheet-signers{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}`+
+            `.kir-report-sheet-signers section{display:grid;text-align:center;gap:5px;min-height:125px}`+
+            `.kir-report-sheet-signers u{margin-top:35px;font-weight:bold}`+
+            `@page{size:A4 landscape;margin:9mm}thead{display:table-header-group}`+
+            `</style>`;
+        const iframe=document.createElement('iframe');
+        iframe.style.position='fixed';iframe.style.width='0';iframe.style.height='0';
+        iframe.style.opacity='0';iframe.style.pointerEvents='none';
+        document.body.appendChild(iframe);
+        const doc=iframe.contentDocument;
+        doc.open();doc.write(`<!doctype html><html><head><title>Print K.I.R</title>${styles}</head>`+
+            `<body>${printHtml}</body></html>`);doc.close();
+        const printNow=()=>{
+            try{iframe.contentWindow.focus();iframe.contentWindow.print();}
+            finally{setTimeout(()=>iframe.remove(),1500);}
+        };
+        const img=doc.querySelector('img');
+        if(img&&!img.complete){img.addEventListener('load',printNow,{once:true});
+            img.addEventListener('error',printNow,{once:true});}
+        else printNow();
     });
 
-    /*
+    $('kirReportDownload')?.addEventListener('click', async () => {
+        if (!kirReportValid() || kirReport.busy) return;
+        kirReport.busy=true;kirReportUpdate();
+        try{
+            const img=await fetch(app.dataset.logo,{credentials:'same-origin'});
+            if(!img.ok)throw new Error('Logo horizontal tidak ditemukan di public/images/logo_hr.png.');
+            const logoBytes=new Uint8Array(await img.arrayBuffer());
+            const bytes=buildKirLocationXlsx(kirReport.payload,kirReportPeriodLabel(),
+                kirReport.selected,logoBytes);
+            const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            const url=URL.createObjectURL(blob);
+            const anchor=document.createElement('a');
+            const safeName=str(kirReport.payload.lokasi?.nama).normalize('NFKD')
+                .replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,60)||'LOKASI';
+            anchor.href=url;
+            anchor.download=`KIR_${safeName}_${$('kirReportPeriod').value}.xlsx`;
+            document.body.appendChild(anchor);anchor.click();anchor.remove();
+            setTimeout(()=>URL.revokeObjectURL(url),3000);
+        }catch(exception){
+            console.error('KIR XLSX:',exception);
+            alert('Download Excel KIR gagal: '+exception.message);
+        }finally{kirReport.busy=false;kirReportUpdate();}
+    });
+
+        /*
     |--------------------------------------------------------------------------
     | EVENT TABEL LOKASI
     |--------------------------------------------------------------------------

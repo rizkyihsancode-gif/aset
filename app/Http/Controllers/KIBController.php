@@ -8708,6 +8708,7 @@ class KIBController extends Controller
             ->selectRaw(
                 'COUNT(*) AS jumlah'
             )
+            ->selectRaw('MAX(id) AS terbaru_id')
 
             // Dalam satu lokasi dapat ada beberapa pemilik barang.
             // Karena itu status lokasi bukan otomatis satu pemilik.
@@ -8810,6 +8811,9 @@ class KIBController extends Controller
                         ->jumlah
                         ?? 0
                     );
+                    $lokasi->terbaru_id = (int) (
+                        $itemCounts->get($lokasi->id)->terbaru_id ?? 0
+                    );
 
                     $lokasi->status_kepemilikan_ringkas = (string) (
                         $itemCounts
@@ -8827,7 +8831,10 @@ class KIBController extends Controller
 
                     return $lokasi;
                 }
-            );
+            )
+            // Lokasi dengan inventaris baru berada di urutan paling atas.
+            ->sortByDesc('terbaru_id')
+            ->values();
 
         /*
         |--------------------------------------------------------------------------
@@ -9054,6 +9061,8 @@ class KIBController extends Controller
             'total_unit' => (int) $rows->sum(
                 fn($row) => (int) ($row->jumlah ?? 0)
             ),
+            // Penandatangan hanya SDM aktif dari master (satu sumber data).
+            'sdm' => $this->sdmAktifKibB()->values()->all(),
             'data' => $rows->map(
                 fn($row) => $this->kirResource($row, $materials)
             )->values(),
