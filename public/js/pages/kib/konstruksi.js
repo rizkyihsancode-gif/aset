@@ -2535,7 +2535,7 @@
         if (!state || !reportReady()) return '';
         const rows = asArray(state.items).map((item, i) =>
             `<tr>${reportValues(item,i).map((v, c) =>
-                `<td>${reportHtml(c===11 ? money(v) : v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('');
+                `<td${c===1 || c===12 ? ' class="kf-report-align-left"' : ''}>${reportHtml(c===11 ? money(v) : v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('');
         const header = reportColumns.map((c,i) => i===4
             ? '<th colspan="2">Konstruksi Bangunan</th>'
             : (i===5 ? '' : `<th${i===4||i===5?'':' rowspan="2"'}>${reportHtml(c)}</th>`)).join('');
@@ -2571,9 +2571,11 @@
         if (reportPreview) reportPreview.innerHTML=ok?reportPaper():'';
         if (reportInfo && !reportState.loading) {
             reportInfo.textContent = reportState.response
-                ? (ok
-                    ? `Preview siap: ${reportState.response.items.length} data dalam kelompok ${reportState.response.kelompok.lokasi}.`
-                    : `Pilih periode dan empat penandatangan dari Master SDM Pendukung untuk melihat preview. ${reportState.response.items.length} data tersedia.`)
+                ? (asArray(reportState.response.sdm).length === 0
+                    ? 'Belum ada SDM berstatus aktif pada Master SDM Pendukung. Aktifkan SDM yang berwenang sebelum mencetak.'
+                    : (ok
+                        ? `Preview siap: ${reportState.response.items.length} data dalam kelompok ${reportState.response.kelompok.lokasi}.`
+                        : `Pilih periode dan empat penandatangan dari SDM Pendukung yang aktif untuk melihat preview. ${reportState.response.items.length} data tersedia.`))
                 : 'Pilih kelompok Konstruksi untuk memuat laporan.';
             if (reportState.response?.keterangan_luas) reportInfo.textContent += ` ${reportState.response.keterangan_luas}`;
         }
@@ -2590,6 +2592,8 @@
         reportState.response=null;
         reportState.loading=true;
         reportInputs.forEach(input => {if(input)input.value='';});
+        // Hapus pilihan laporan sebelumnya sebelum mengambil daftar SDM aktif terbaru.
+        $('kfReportSdmOptions')?.replaceChildren();
         $('kfReportCount').textContent=`${kategori} / ${lokasi} / ${divisi}`;
         if(reportInfo)reportInfo.textContent='Memuat seluruh data kelompok dan SDM Pendukung...';
         reportDialog.showModal();
@@ -2648,6 +2652,7 @@
       .kf-report-sheet th,.kf-report-sheet td{border:1px solid #2e394a;text-align:center;vertical-align:middle;padding:6px 4px;overflow-wrap:anywhere}
       .kf-report-sheet th{background:#cbdff1;font-weight:700}
       .kf-report-sheet td{white-space:normal;line-height:1.35}
+      .kf-report-sheet td.kf-report-align-left{text-align:left;vertical-align:middle}
       .kf-report-sheet tr{break-inside:avoid}
       .kf-report-sheet thead{display:table-header-group}
       .kf-report-date{text-align:right;font-weight:bold;margin:20px 15px 8px}
@@ -2718,7 +2723,8 @@
         heights.set(header,32);heights.set(header+1,32);heights.set(header+2,19);
         data.forEach((item,i)=>{
             const r=header+3+i;const values=reportValues(item,i);
-            values.forEach((v,c)=>put(r,c+1,v,c===11?7:3));
+            // Kolom B (Nama + Uraian) dan M (Dokumen Pendukung): rata kiri + middle.
+            values.forEach((v,c)=>put(r,c+1,v,c===11 ? 7 : (c===1 || c===12 ? 8 : 3)));
             const longest=Math.max(...values.map(v=>String(v??'').length));
             heights.set(r,Math.min(190,Math.max(35,Math.ceil(longest/40)*14+15)));
         });
@@ -2763,12 +2769,12 @@
         const fills='<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC7DFF0"/></patternFill></fill></fills>';
         const borders='<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders>';
         const xfs=[[0,0,0,'left'],[1,0,0,'center'],[2,2,1,'center'],[0,0,1,'center'],
-            [2,0,0,'left'],[0,0,0,'center'],[3,0,0,'center'],[0,0,1,'right']]
+            [2,0,0,'left'],[0,0,0,'center'],[3,0,0,'center'],[0,0,1,'right'],[0,0,1,'left']]
             .map(([f,fill,border,align],i)=>`<xf numFmtId="${i===7?4:0}" fontId="${f}" fillId="${fill}" borderId="${border}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
         const styles=`<?xml version="1.0" encoding="UTF-8"?><styleSheet xmlns="${main}">
           <fonts count="4">${fonts}</fonts>${fills}${borders}
           <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-          <cellXfs count="8">${xfs}</cellXfs></styleSheet>`;
+          <cellXfs count="9">${xfs}</cellXfs></styleSheet>`;
         const book=`<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="${main}" xmlns:r="${rel}">
           <sheets><sheet name="KIB F - Konstruksi" sheetId="1" r:id="rId1"/></sheets>
           <definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'KIB F - Konstruksi'!$16:$18</definedName>

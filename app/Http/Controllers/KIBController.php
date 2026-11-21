@@ -6937,19 +6937,17 @@ class KIBController extends Controller
                 ? 'BERAGAM' : ($kodes->first() ?? '-');
         }
 
+        // Hanya SDM yang secara eksplisit berstatus aktif boleh menandatangani.
+        // Status NULL / nonaktif / belum diatur tidak termasuk pilihan.
         $sdm = collect();
-        if (Schema::hasTable('sdms')) {
+        if (Schema::hasTable('sdms') && Schema::hasColumn('sdms', 'status')) {
             $orang = DB::table('sdms as s');
             if (Schema::hasTable('jabatans')) {
                 $orang->leftJoin('jabatans as j', 'j.id', '=', 's.id_jabat');
             }
             $orang->whereNotNull('s.nama_sdm')
-                ->whereRaw("BTRIM(s.nama_sdm) <> ''");
-            if (Schema::hasColumn('sdms', 'status')) {
-                $orang->where(static function ($q) {
-                    $q->whereNull('s.status')->orWhere('s.status', 'aktif');
-                });
-            }
+                ->whereRaw("BTRIM(s.nama_sdm) <> ''")
+                ->whereRaw("LOWER(BTRIM(s.status)) = ?", ['aktif']);
             $fields = ['s.id', 's.nama_sdm', 's.nip'];
             $fields[] = Schema::hasTable('jabatans')
                 ? 'j.jabat as jabatan'

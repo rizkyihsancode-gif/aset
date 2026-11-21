@@ -2349,3 +2349,125 @@
  .kf-report-footer>div {width:100%;justify-content:flex-end}
 }
 @media print {.kf-report-paper{min-width:0}.kf-report-sheet tr{break-inside:avoid}}
+
+/* ========================================================================
+   K.I.B F — Kerapian form Tambah/Edit dan alignment laporan (22-11-2026)
+   Tidak mengubah fungsi input, penyimpanan, atau elemen popup lainnya.
+   ======================================================================== */
+
+#kfModalForm .kf-dialog-head {
+    padding: 20px 24px;
+    background: linear-gradient(125deg, #f6faff 0%, #ffffff 100%);
+}
+
+#kfModalForm .kf-dialog-head h2 {
+    font-size: 21px;
+    line-height: 1.3;
+}
+
+#kfModalForm .kf-dialog-head p {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+#kfModalForm .kf-dialog-body {
+    padding: 21px 24px;
+    background: #f9fbfe;
+}
+
+#kfModalForm .kf-fieldset {
+    padding: 18px 20px 20px;
+    border-radius: 12px;
+    border-color: #d5e4f5;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(13, 54, 106, 0.035);
+}
+
+#kfModalForm .kf-fieldset legend {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #163f73;
+}
+
+#kfModalForm .kf-fields {
+    gap: 17px 16px;
+}
+
+#kfModalForm .kf-fields > label {
+    gap: 7px;
+    color: #2c567e;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+#kfModalForm .kf-field-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 18px;
+}
+
+#kfModalForm .kf-field-title em {
+    font-size: 13px;
+    line-height: 1;
+}
+
+#kfModalForm .kf-fields input,
+#kfModalForm .kf-fields textarea {
+    min-height: 42px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border-color: #cbdced;
+    color: #133b69;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+#kfModalForm .kf-fields textarea {
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+#kfModalForm .kf-uraian-field textarea {
+    min-height: 132px;
+}
+
+#kfModalForm .kf-fields small {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #6a83a2;
+}
+
+#kfModalForm .kf-dialog-foot {
+    padding: 14px 24px;
+    background: #ffffff;
+}
+
+/* Data contoh Excel: Nama Barang/Jenis Barang dan Dokumen Pendukung rata kiri.
+   Middle align dipertahankan agar tulisan panjang tetap rapi. */
+.kf-report-sheet tbody td:nth-child(2),
+.kf-report-sheet tbody td:nth-child(13),
+.kf-report-sheet tbody td.kf-report-align-left {
+    text-align: left;
+    vertical-align: middle;
+}
+
+.kf-excel-table tbody td:nth-child(2),
+.kf-excel-table tbody td:nth-child(13) {
+    text-align: left;
+    vertical-align: middle;
+}
+
+@media (max-width: 650px) {
+    #kfModalForm .kf-dialog-head,
+    #kfModalForm .kf-dialog-body,
+    #kfModalForm .kf-dialog-foot {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    #kfModalForm .kf-fieldset {
+        padding: 14px;
+    }
+}

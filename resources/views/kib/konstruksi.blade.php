@@ -945,25 +945,36 @@
 
                         <legend>
                             <span>1</span>
-                            Identitas dan Cakupan
+                            Identitas Pekerjaan dan Pengelompokan
                         </legend>
 
                         <div class="kf-fields">
 
                             <label class="kf-full">
 
-                                Nama Barang / Jenis Pekerjaan
-                                <em>*</em>
+                                <span class="kf-field-title">Nama Barang / Jenis Barang <em>*</em></span>
 
                                 <input name="nama_barang_manual" id="kfNama" maxlength="500" required
-                                    placeholder="Nama pekerjaan konstruksi">
+                                    placeholder="Contoh: Pengadaan dan pemasangan pipa distribusi">
+
+                            </label>
+
+                            {{-- Uraian menyatu dengan Nama Barang sesuai kolom ke-2 Excel K.I.B F. --}}
+                            <label class="kf-full kf-uraian-field">
+
+                                <span class="kf-field-title">Uraian Pekerjaan <em>*</em></span>
+
+                                <textarea name="urai" id="kfUrai" rows="5" required
+                                    placeholder="Rincian pekerjaan, misalnya: 1. Pekerjaan pendahuluan; 2. Pemasangan pipa dan utilitas..."></textarea>
+
+                                <small>Uraian ini dicetak tepat di bawah nama barang pada kolom 2 laporan K.I.B F.</small>
 
                             </label>
 
 
                             <label>
 
-                                Kategori <em>*</em>
+                                <span class="kf-field-title">Kategori <em>*</em></span>
 
                                 <input name="kategori" id="kfKategori" data-kf-combo="kategori" required
                                     autocomplete="off" placeholder="IPA / Booster / Perpipaan">
@@ -973,7 +984,7 @@
 
                             <label>
 
-                                Cakupan <em>*</em>
+                                <span class="kf-field-title">Cakupan <em>*</em></span>
 
                                 <input name="cakupan" id="kfCakupan" data-kf-combo="cakupan" maxlength="500" required
                                     autocomplete="off" placeholder="Cari atau ketik cakupan">
@@ -983,7 +994,7 @@
 
                             <label>
 
-                                Lokasi / Unit Kerja <em>*</em>
+                                <span class="kf-field-title">Lokasi / Unit Kerja <em>*</em></span>
 
                                 <input name="lokasi_manual" id="kfLokasi" data-kf-combo="lokasi" maxlength="500"
                                     required autocomplete="off" placeholder="Cari atau ketik lokasi">
@@ -1030,14 +1041,14 @@
 
                         <legend>
                             <span>2</span>
-                            Spesifikasi Konstruksi
+                            Spesifikasi Konstruksi sesuai K.I.B F
                         </legend>
 
                         <div class="kf-fields">
 
                             <label>
 
-                                Tahun Pekerjaan <em>*</em>
+                                <span class="kf-field-title">Tahun Pekerjaan <em>*</em></span>
 
                                 <input name="tahun" id="kfTahun" type="number" min="1900" max="2100"
                                     required>
@@ -1104,7 +1115,7 @@
 
                             <label>
 
-                                Asal Usul Pembiayaan <em>*</em>
+                                <span class="kf-field-title">Asal Usul Pembiayaan <em>*</em></span>
 
                                 <input name="asal" id="kfAsal" data-kf-combo="asal" maxlength="20" required
                                     autocomplete="off" placeholder="Cari: Perumdam, Pusat, Pemprov, Pemkot, Swasta"
@@ -1129,7 +1140,7 @@
 
                             <label class="kf-full">
 
-                                Nilai Konstruksi (Rp) <em>*</em>
+                                <span class="kf-field-title">Nilai Konstruksi (Rp) <em>*</em></span>
 
                                 <input name="nilai" id="kfNilai" type="number" min="0" step="0.01"
                                     required placeholder="Nominal konstruksi">
@@ -1147,23 +1158,14 @@
 
                         <legend>
                             <span>3</span>
-                            Uraian dan Keterangan
+                            Dokumen Pendukung dan Keterangan
                         </legend>
 
                         <div class="kf-fields">
 
                             <label class="kf-full">
 
-                                Uraian Pekerjaan <em>*</em>
-
-                                <textarea name="urai" id="kfUrai" rows="6" required placeholder="Tuliskan uraian pekerjaan..."></textarea>
-
-                            </label>
-
-
-                            <label class="kf-full">
-
-                                Dokumen Pendukung / Keterangan
+                                Dokumen Pendukung / Keterangan (Kolom 13)
 
                                 <textarea name="ket" id="kfKet" rows="4"
                                     placeholder="Nomor berita acara, kontraktor, nomor kontrak, dan catatan lainnya"></textarea>
