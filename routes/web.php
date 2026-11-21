@@ -494,13 +494,6 @@ Route::prefix('kib')
         | CRUD SERTIFIKAT DAN PDF TANAH — CONTROLLER YANG SAMA
         |--------------------------------------------------------------
         */
-        // Laporan lengkap K.I.B A: SELURUH Tanah lintas lokasi,
-        // bukan per Detail dan tidak terbatasi pagination.
-        Route::get(
-            '/tanah/laporan',
-            [KIBController::class, 'laporanTanah']
-        )->name('tanah.laporan');
-
         Route::get(
             '/tanah/lokasi/{lokasi}/sertifikat',
             [KIBController::class, 'lokasiSertifikat']
@@ -611,12 +604,6 @@ Route::post('/kib/mesin', [
     'storeMesin'
 ])->name('kib.mesin.store');
 
-// K.I.B B — opsi empat SDM dan data cetak seluruh Kendaraan / satu Mesin.
-Route::get('/kib/mesin/laporan', [
-    KIBController::class,
-    'laporanMesinKibB'
-])->name('kib.mesin.laporan');
-
 Route::get('/kib/mesin/{mesin}', [
     KIBController::class,
     'showMesin'
@@ -657,7 +644,7 @@ Route::get('/kib/mesin/{mesin}/file/{jenis}', [
 
 Route::get(
     '/kib/mesin/pajak/data',
-    [KIBController::class, 'dataKendaraanKibB']
+    [KIBController::class, 'dataPajakMesin']
 )->name('kib.mesin.pajak.data');
 
 Route::post(
@@ -745,6 +732,16 @@ Route::get(
 )
     ->whereNumber('lokasi')
     ->name('kib.gedung.lokasi.nilai');
+
+
+// K.I.B C — Print Excel semua gedung pada Detail satu lokasi.
+// Controller dan tabel lama tetap digunakan; endpoint hanya baca.
+Route::get(
+    '/kib/gedung/lokasi/{lokasi}/laporan',
+    [KIBController::class, 'laporanGedungKibC']
+)
+    ->whereNumber('lokasi')
+    ->name('kib.gedung.lokasi.laporan');
 
 
 Route::get(

@@ -17,7 +17,9 @@
         href="{{ asset('css/pages/kib/gedung.css') }}?v={{ file_exists(public_path('css/pages/kib/gedung.css')) ? filemtime(public_path('css/pages/kib/gedung.css')) : time() }}">
 
     <main id="gedungPage" class="content gedung-page" data-base-url="{{ url('/kib/gedung') }}"
-        data-store-url="{{ route('kib.gedung.store') }}" data-pending-url="{{ route('kib.gedung.pending') }}">
+        data-store-url="{{ route('kib.gedung.store') }}" data-pending-url="{{ route('kib.gedung.pending') }}"
+        data-report-logo="{{ asset('images/logo_hr.png') }}" data-report-css="{{ asset('css/pages/kib/gedung.css') }}"
+        data-report-base-url="{{ url('/kib/gedung/lokasi') }}">
 
         {{-- =====================================================
          HEADER HALAMAN
@@ -719,12 +721,12 @@
                                 </label>
 
                                 <label>
-                                    Kode Inventaris *
+                                    Kode Barang / Inventaris *
                                     <input name="kode" value="{{ old('kode') }}" maxlength="255" required>
                                 </label>
 
                                 <label>
-                                    No. Register *
+                                    Nomor Register *
                                     <input name="reg" value="{{ old('reg') }}" maxlength="255" required>
                                 </label>
 
@@ -745,7 +747,7 @@
                                 </label>
 
                                 <label>
-                                    Konstruksi *
+                                    Konstruksi Bangunan — Bertingkat / Tidak *
                                     <select name="konstruksi" required>
                                         <option value="">— Pilih Konstruksi —</option>
                                         <option value="BERTINGKAT">Bertingkat</option>
@@ -754,19 +756,23 @@
                                 </label>
 
                                 <label>
-                                    Material / Bahan
+                                    Konstruksi Bangunan — Beton / Tidak Beton
                                     <input name="materi" value="{{ old('materi') }}" maxlength="255"
-                                        placeholder="Contoh: Beton">
+                                        list="gedungPilihanBeton" placeholder="Beton / Tidak Beton">
+                                    <datalist id="gedungPilihanBeton">
+                                        <option value="Beton"></option>
+                                        <option value="Tidak Beton"></option>
+                                    </datalist>
                                 </label>
 
                                 <label>
-                                    Luas Bangunan *
+                                    Luas Lantai (m²) *
                                     <input name="luas" value="{{ old('luas') }}" maxlength="255"
                                         placeholder="Contoh: 597 m²" required>
                                 </label>
 
                                 <label>
-                                    Luas Lantai / Tanah *
+                                    Luas Tanah (m²) *
                                     <input name="luastanah" value="{{ old('luastanah') }}" maxlength="255"
                                         placeholder="Contoh: 700 m²" required>
                                 </label>
@@ -802,23 +808,23 @@
                                 </label>
 
                                 <label>
-                                    Kode Tanah *
+                                    Nomor Kode Tanah *
                                     <input name="kode_tanah" value="{{ old('kode_tanah') }}" maxlength="255" required>
                                 </label>
 
                                 <label>
-                                    Asal / Perolehan *
+                                    Asal Usul / Perolehan *
                                     <input name="asal" value="{{ old('asal') }}" maxlength="255"
                                         placeholder="Contoh: Pembelian" required>
                                 </label>
 
                                 <label>
-                                    Tanggal Dokumen *
+                                    Tanggal Dokumen Gedung *
                                     <input name="tgl_imb" value="{{ old('tgl_imb') }}" type="date" required>
                                 </label>
 
                                 <label>
-                                    No. IMB / Dokumen *
+                                    Nomor Dokumen Gedung / IMB *
                                     <input name="no_imb" value="{{ old('no_imb') }}" maxlength="255" required>
                                 </label>
 
@@ -923,6 +929,9 @@
                 <section id="gedungDetailFocus" class="gedung-detail-focus" hidden></section>
 
                 <div class="gedung-detail-tools">
+                    <button type="button" class="gedung-btn gedung-report-open" id="gedungDetailReport" disabled>
+                        <i data-lucide="file-spreadsheet"></i> Print Excel Lokasi
+                    </button>
                     <button type="button" class="gedung-btn outline" id="gedungDetailNilai">
                         <i data-lucide="wallet"></i> Rincian Nilai Lokasi
                     </button>
@@ -1051,6 +1060,65 @@
 
             </div>
 
+        </dialog>
+
+        {{-- =====================================================
+            POPUP PRINT EXCEL K.I.B C — ACUAN K.I.B A TANAH (PRD V2.1)
+            Mengambil seluruh gedung pada Detail lokasi, tanpa pagination.
+        ===================================================== --}}
+        <dialog id="gedungReportDialog" class="gedung-report-dialog">
+            <div class="gedung-report-head">
+                <div>
+                    <small>LAPORAN KARTU INVENTARIS BARANG (K.I.B C)</small>
+                    <h2>Print Excel — Gedung dan Bangunan</h2>
+                    <p id="gedungReportScope">Memuat data lokasi...</p>
+                </div>
+                <button type="button" class="gedung-report-x" data-gedung-report-close aria-label="Tutup laporan">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="gedung-report-body">
+                <form id="gedungReportForm" class="gedung-report-form" autocomplete="off">
+                    <label class="gedung-report-period-field">
+                        <span>Periode laporan <b>*</b></span>
+                        <input id="gedungReportPeriod" type="month" required>
+                        <small>Contoh: November 2026</small>
+                    </label>
+                    <div class="gedung-report-sign-grid">
+                        @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
+                            <label>
+                                <span>{{ $judul }} <b>*</b></span>
+                                <input type="text" data-gedung-report-role="{{ $peran }}"
+                                    list="gedungReportStaff" placeholder="Ketik nama, NIP, atau jabatan..." required>
+                                <small>Pilih dari Master SDM Pendukung.</small>
+                            </label>
+                        @endforeach
+                        <datalist id="gedungReportStaff"></datalist>
+                    </div>
+                </form>
+                <div id="gedungReportInfo" class="gedung-report-info" role="status" aria-live="polite">
+                    Pilih periode dan penandatangan untuk menampilkan preview.
+                </div>
+                <section id="gedungReportPreviewBox" class="gedung-report-preview-box" hidden>
+                    <div class="gedung-report-preview-title">
+                        <strong>Preview Laporan K.I.B C</strong>
+                        <span id="gedungReportCount">0 data</span>
+                    </div>
+                    <div class="gedung-report-preview-scroller" id="gedungReportPreview"></div>
+                </section>
+            </div>
+            <div class="gedung-report-footer">
+                <span>Detail lokasi · 18 kolom K.I.B C · tanpa Status Kepemilikan</span>
+                <div class="gedung-report-footer-buttons">
+                    <button type="button" class="gedung-report-cancel" data-gedung-report-close>Batal</button>
+                    <button type="button" class="gedung-report-print" id="gedungReportPrint" disabled>
+                        <i data-lucide="printer"></i> Print
+                    </button>
+                    <button type="button" class="gedung-report-download" id="gedungReportDownload" disabled>
+                        <i data-lucide="download"></i> Download Excel
+                    </button>
+                </div>
+            </div>
         </dialog>
 
         {{-- FORM HAPUS DATA --}}

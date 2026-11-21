@@ -4421,6 +4421,7 @@ class KIBController extends Controller
                 'l.lokasi',
                 'l.alamat'
             )
+            ->orderByRaw('MAX(g.id) DESC')
             ->orderBy('l.lokasi')
             ->get();
 
@@ -4620,8 +4621,6 @@ class KIBController extends Controller
             ->selectRaw(
                 "TRIM(COALESCE(v.nama_div, '')) AS divisi"
             )
-            ->orderBy('d.nama_dep')
-            ->orderBy('v.nama_div')
             ->orderByDesc('g.id')
             ->get();
 
@@ -4637,6 +4636,62 @@ class KIBController extends Controller
         | DETAIL NILAI GEDUNG BERDASARKAN LOKASI
         |--------------------------------------------------------------------------
         */
+    /**
+     * K.I.B C: laporan seluruh gedung dalam SATU lokasi Detail.
+     * Sumber sama dengan Detail; tidak memakai pagination UI dan tidak mengubah database.
+     * Status Kepemilikan adalah atribut operasional, bukan kolom Excel.
+     */
+    public function laporanGedungKibC(int $lokasi): \Illuminate\Http\JsonResponse
+    {
+        // Gunakan endpoint Detail yang sudah ada agar tidak ada perbedaan filter data.
+        $response = $this->detailGedungLokasi($lokasi);
+        $detail = $response->getData(true);
+        $items = collect($detail['data'] ?? []);
+        $lokasiInfo = $detail['lokasi'] ?? [];
+
+        $identitas = static function ($values): string {
+            $unik = collect($values)
+                ->map(static fn($v) => trim((string) ($v ?? '')))
+                ->filter()
+                ->unique()
+                ->values();
+            return $unik->count() === 1 ? $unik->first()
+                : ($unik->isEmpty() ? '-' : 'BERAGAM');
+        };
+
+        // Kode struktur bukan Kode Aktiva. Ambil hanya dari kolom yang benar-benar ada.
+        $kodeStruktur = '-';
+        if (Schema::hasColumn('lokasis', 'kode_struktur')) {
+            $nilaiStruktur = DB::table('lokasis')->where('id', $lokasi)
+                ->value('kode_struktur');
+            $kodeStruktur = trim((string) ($nilaiStruktur ?? '')) ?: '-';
+        } elseif (Schema::hasColumn('gedungs', 'kode_struktur')) {
+            $kodeStruktur = $identitas($items->pluck('kode_struktur'));
+        }
+
+        return response()->json([
+            'success' => true,
+            'jenis' => 'gedung',
+            'cakupan' => 'lokasi',
+            'jumlah' => $items->count(),
+            'lokasi' => [
+                'id' => (int) ($lokasiInfo['id'] ?? $lokasi),
+                'nama' => (string) ($lokasiInfo['lokasi'] ?? ''),
+                'alamat' => (string) ($lokasiInfo['alamat'] ?? ''),
+            ],
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                'departemen' => $identitas($items->pluck('departemen')),
+                'divisi' => $identitas($items->pluck('divisi')),
+                'kode_struktur' => $kodeStruktur,
+            ],
+            'sdm' => $this->sdmAktifKibB(),
+            'data' => $items->values()->all(),
+        ]);
+    }
+
     public function detailNilaiGedungLokasi(int $lokasi)
     {
         $location = DB::table('lokasis')
