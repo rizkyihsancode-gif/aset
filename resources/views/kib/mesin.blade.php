@@ -1817,6 +1817,14 @@
 
                                 </label>
 
+                                {{-- NOMOR DOKUMEN FORM K.I.B B PERALATAN & MESIN --}}
+
+                                <label>
+                                    No. Dokumen
+                                    <input name="nomor_dokumen" maxlength="255"
+                                        placeholder="Nomor surat / dokumen barang (bukan nama file PDF)">
+                                </label>
+
                                 {{-- FOTO BARANG --}}
 
                                 <label>
@@ -1841,15 +1849,24 @@
 
                             <div id="mesinVehicleGroups" class="mesin-vehicle-groups" hidden></div>
 
-                            {{-- KETERANGAN --}}
-
-                            <label class="mesin-full-label">
-
+                            {{-- KETERANGAN: ditempatkan pada kelompok kolom sesuai kategori oleh mesin.js --}}
+                            <label class="mesin-full-label mesin-span-2">
                                 Keterangan
-
                                 <textarea name="ket" rows="3"></textarea>
-
                             </label>
+
+                            {{-- Field operasional tidak dicampurkan dengan kolom Excel utama. --}}
+                            <section id="mesinCommonSection" class="mesin-form-support-section">
+                                <h4>Administrasi & Lampiran</h4>
+                                <p>Informasi pendukung inventaris; tidak menambah kolom pada laporan Excel.</p>
+                                <div id="mesinCommonGrid" class="mesin-form-grid cols-2"></div>
+                            </section>
+
+                            {{-- Field warisan tetap dapat diedit tetapi tidak mengganggu form utama. --}}
+                            <details id="mesinExtraDetails" class="mesin-form-advanced">
+                                <summary>Atribut tambahan (opsional)</summary>
+                                <div id="mesinExtraGrid" class="mesin-form-grid cols-2"></div>
+                            </details>
 
                         </div>
 

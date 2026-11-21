@@ -83,57 +83,116 @@ const pdfDialog = $('#mesinPdfDialog');
     let selectedSourceId = null;
 
 // ==========================================================
-// MODE FORM STEP 3 (MENGGUNAKAN INPUT ASLI, TANPA DUPLIKASI)
-// Kode 31.08.% -> KIB B Kendaraan, lainnya -> standar.
+// MODE FORM K.I.B B SESUAI DUA TABEL EXCEL REFERENSI
+// 31.08: Kendaraan, selain itu: Peralatan & Mesin.
+// Satu set field asli dipindah antar kelompok. Tidak ada input duplikat.
 // ==========================================================
 const standardFields = $('#mesinStandardFields');
 const vehicleGroups = $('#mesinVehicleGroups');
 const vehicleBadge = $('#mesinVehicleBadge');
+const commonGrid = $('#mesinCommonGrid');
+const commonSection = $('#mesinCommonSection');
+const extraGrid = $('#mesinExtraGrid');
+const extraDetails = $('#mesinExtraDetails');
 const step3Title = $('#mesinStep3Title');
 const step3Description = $('#mesinStep3Desc');
 const remarkLabel = form.querySelector('[name="ket"]')?.closest('label');
 const barangSelect = standardFields?.querySelector('[name="id_barang"]');
 const originalDescription = step3Description?.textContent.trim() || '';
 const originalFieldLabels = standardFields ? [...standardFields.children] : [];
-const remarkMarker = document.createComment('posisi asli keterangan mesin');
-if (remarkLabel) remarkLabel.before(remarkMarker);
 const allFieldLabels = new Map();
 for (const label of originalFieldLabels) {
     const input = label.querySelector('[name]');
-    if (input) {
-        allFieldLabels.set(input.name, label);
-    }
+    if (input) allFieldLabels.set(input.name, label);
 }
 if (remarkLabel) allFieldLabels.set('ket', remarkLabel);
-const kodeBarangLabel = document.createElement('label');
-kodeBarangLabel.className = 'mesin-vehicle-readonly';
-kodeBarangLabel.append(document.createTextNode('Kode Barang (otomatis)'));
-const kodeBarangInput = document.createElement('input');
-kodeBarangInput.type = 'text';
-kodeBarangInput.id = 'mesinKodeBarangOtomatis';
-kodeBarangInput.readOnly = true;
-kodeBarangInput.placeholder = 'Pilih Nama Barang';
-kodeBarangLabel.append(kodeBarangInput);
-function syncKodeBarang() {
-    kodeBarangInput.value = barangSelect?.selectedOptions[0]?.dataset.kodeBarang || '';
-}
-barangSelect?.addEventListener('change', syncKodeBarang);
+const submitLabel = $('#mesinSubmitLabel');
+const formTitle = $('#mesinFormTitle');
+const kodeInventarisField = form.elements.namedItem('kode');
+let kodeInventarisAuto = '';
 let isVehicleMode = false;
+let renderedFormMode = null;
+
+// Urutan sama dengan kolom Excel; No. adalah nomor urut otomatis saat laporan.
+const machineColumns = [
+    'id_barang', 'kode', 'reg', 'merk', 'ukuran', 'fungsi', 'guna',
+    'bahan', 'kondisi', 'tahun', 'asal', 'nomor_dokumen', 'harga', 'ket'
+];
+const vehicleColumns = [
+    ['A', 'Identitas Kendaraan', ['id_barang', 'kode', 'reg', 'merk', 'ukuran', 'bahan', 'tahun']],
+    ['B', 'Nomor Identitas Kendaraan', ['pabrik', 'rangka', 'nomor_mesin', 'polisi', 'bpkb']],
+    ['C', 'Perolehan dan Keterangan', ['asal', 'ket']],
+];
+const commonColumns = ['status_kepemilikan', 'foto', 'dokumen'];
+const machineExtraColumns = ['susut', 'struktur'];
+const vehicleExtraColumns = ['harga', 'susut', 'kondisi', 'fungsi', 'guna', 'struktur'];
+const labelsByMode = {
+    machine: {
+        id_barang: 'Nama Barang *', kode: 'Kode Inventaris *',
+        reg: 'No. Register', merk: 'Merk / Type', ukuran: 'Ukuran',
+        fungsi: 'Fungsi', guna: 'Penggunaan', bahan: 'Bahan',
+        kondisi: 'Kondisi (Baik / Rusak Ringan / Rusak Berat)',
+        tahun: 'Tahun Pengadaan *', asal: 'Asal Usul',
+        nomor_dokumen: 'No. Dokumen', harga: 'Harga (Rp)', ket: 'Keterangan',
+    },
+    vehicle: {
+        id_barang: 'Nama Barang / Jenis Barang *', kode: 'Kode Barang *',
+        reg: 'Nomor Register', merk: 'Merk / Type', ukuran: 'Ukuran / CC',
+        bahan: 'Bahan', tahun: 'Tahun Pembelian *',
+        pabrik: 'Nomor Pabrik', rangka: 'Nomor Rangka',
+        nomor_mesin: 'Nomor Mesin', polisi: 'Nomor Polisi',
+        bpkb: 'Nomor BPKB', asal: 'Asal Usul / Cara Perolehan',
+        ket: 'Keterangan',
+    },
+};
+const originalTextNodes = new Map();
+for (const [name, label] of allFieldLabels) {
+    const node = [...label.childNodes].find(child => child.nodeType === 3 && child.textContent.trim());
+    if (node) originalTextNodes.set(name, node);
+}
+function setFormFieldCaptions(vehicle) {
+    const captions = labelsByMode[vehicle ? 'vehicle' : 'machine'];
+    for (const [name, node] of originalTextNodes) {
+        const caption = captions[name];
+        if (caption) node.textContent = `\n                                    ${caption}\n                                    `;
+    }
+}
+function syncKodeInventarisKendaraan() {
+    if (!isVehicleMode || !barangSelect || !kodeInventarisField) return;
+    const kodeBarang = String(barangSelect.selectedOptions[0]?.dataset.kodeBarang || '').trim();
+    const existing = String(kodeInventarisField.value || '').trim();
+    if (kodeBarang && (!existing || existing === kodeInventarisAuto)) {
+        kodeInventarisField.value = kodeBarang;
+        kodeInventarisAuto = kodeBarang;
+    }
+}
+barangSelect?.addEventListener('change', syncKodeInventarisKendaraan);
+kodeInventarisField?.addEventListener('input', () => {
+    if (kodeInventarisField.value.trim() !== kodeInventarisAuto) kodeInventarisAuto = '';
+});
+
 function setJenisFormMesin(kodeAktiva, namaAktiva = '') {
-    if (!standardFields || !vehicleGroups || !remarkLabel || !step3Title) return;
-    const kode = String(kodeAktiva ?? '').trim();
-    const kendaraan = /^31\.08\./.test(kode);
-    if (kendaraan !== isVehicleMode) {
+    const kode = String(kodeAktiva || '').trim();
+    const kendaraan = /^31\.08(?:\.|$)/.test(kode);
+    isVehicleMode = kendaraan;
+    if (!standardFields || !vehicleGroups || !remarkLabel || !commonGrid || !extraGrid) return;
+
+    // Tidak membuat field baru: semua label/input tetap satu, hanya pindah kontainer.
+    // Peralihan mode tidak menghapus isi input milik inventaris yang sedang diedit.
+    if (renderedFormMode !== kendaraan) {
+        standardFields.replaceChildren();
+        vehicleGroups.replaceChildren();
+        commonGrid.replaceChildren();
+        extraGrid.replaceChildren();
+
+        const put = (container, names) => {
+            for (const name of names) {
+                const label = allFieldLabels.get(name);
+                if (label) container.append(label);
+            }
+        };
         if (kendaraan) {
-            vehicleGroups.replaceChildren();
-            const groups = [
-                ['A', 'Identitas Barang', ['id_barang', 'kode', 'reg', 'merk']],
-                ['B', 'Spesifikasi Kendaraan', ['ukuran', 'bahan', 'tahun', 'pabrik']],
-                ['C', 'Nomor Identitas Kendaraan', ['rangka', 'nomor_mesin', 'polisi', 'bpkb']],
-                ['D', 'Asal Usul, Kepemilikan dan Pengguna', ['asal', 'status_kepemilikan', 'guna', 'ket']],
-                ['E', 'Administrasi Inventaris', ['fungsi', 'struktur', 'kondisi', 'harga', 'susut', 'foto', 'dokumen']]
-            ];
-            for (const [letter, title, names] of groups) {
+            for (const [letter, title, names] of vehicleColumns) {
                 const section = document.createElement('section');
                 section.className = 'mesin-vehicle-group';
                 const heading = document.createElement('h4');
@@ -141,41 +200,52 @@ function setJenisFormMesin(kodeAktiva, namaAktiva = '') {
                 section.append(heading);
                 const grid = document.createElement('div');
                 grid.className = 'mesin-form-grid cols-2';
-                for (const name of names) {
-                    const label = allFieldLabels.get(name);
-                    if (label) grid.append(label);
-                    if (name === 'id_barang') grid.append(kodeBarangLabel);
-                }
+                put(grid, names);
                 section.append(grid);
                 vehicleGroups.append(section);
             }
-            standardFields.hidden = true;
-            vehicleGroups.hidden = false;
+            put(extraGrid, vehicleExtraColumns);
         } else {
-            for (const label of originalFieldLabels) standardFields.append(label);
-            remarkMarker.before(remarkLabel);
-            kodeBarangLabel.remove();
-            vehicleGroups.replaceChildren();
-            vehicleGroups.hidden = true;
-            standardFields.hidden = false;
+            put(standardFields, machineColumns);
+            put(extraGrid, machineExtraColumns);
         }
-        isVehicleMode = kendaraan;
+        put(commonGrid, commonColumns);
+        standardFields.hidden = kendaraan;
+        vehicleGroups.hidden = !kendaraan;
+        renderedFormMode = kendaraan;
     }
-    step3Title.textContent = kendaraan
-        ? 'Detail Inventaris Kendaraan — KIB B'
-        : 'Detail Barang Peralatan dan Mesin';
-    if (step3Description) {
-        step3Description.textContent = kendaraan
-            ? 'Lengkapi identitas kendaraan sesuai kolom Excel KIB B. Lokasi dan organisasi tetap otomatis dari transaksi Nilai Aset.'
-            : originalDescription;
-    }
+    setFormFieldCaptions(kendaraan);
+    if (step3Title) step3Title.textContent = kendaraan
+        ? 'Form K.I.B B — Kendaraan'
+        : 'Form K.I.B B — Peralatan dan Mesin';
+    if (submitLabel) submitLabel.textContent = kendaraan
+        ? 'Simpan Data Kendaraan' : 'Simpan Data Mesin';
+    if (formTitle && $('#mesinMethod')?.disabled) formTitle.textContent = kendaraan
+        ? 'Tambah Data Kendaraan' : 'Tambah Data Mesin';
+    formDialog?.classList.toggle('is-vehicle-mode', kendaraan);
+    if (step3Description) step3Description.textContent = kendaraan
+        ? 'Kolom utama mengikuti K.I.B B Kendaraan (15 kolom). Nomor Pabrik, Rangka, Mesin, Polisi dan BPKB khusus kendaraan.'
+        : 'Kolom utama mengikuti K.I.B B Peralatan dan Mesin (17 kolom), tanpa atribut kendaraan.';
     if (vehicleBadge) {
         vehicleBadge.hidden = !kendaraan;
         vehicleBadge.textContent = kendaraan ? `${kode} — ${namaAktiva || 'Kendaraan'}` : '';
     }
-    syncKodeBarang();
+    if (extraDetails) extraDetails.open = false;
+    syncKodeInventarisKendaraan();
 }
 
+// Field nonaktif yang sementara terlepas dari DOM harus tetap di-reset.
+// Ini mencegah identitas kendaraan sebelumnya tertinggal saat Tambah berikutnya.
+function resetDetachedFieldsMesin() {
+    for (const label of allFieldLabels.values()) {
+        if (label.isConnected) continue;
+        const field = label.querySelector('[name]');
+        if (!field) continue;
+        if (field instanceof HTMLSelectElement) field.selectedIndex = 0;
+        else if (field.type === 'file') field.value = '';
+        else field.value = '';
+    }
+}
 
     // ==========================================
     // DETAIL TANGGAL DAN JENIS VOUCHER
@@ -845,6 +915,8 @@ $('#mesinExport').addEventListener('click', () => {
 
     function resetForm() {
         form.reset();
+        resetDetachedFieldsMesin();
+        kodeInventarisAuto = '';
 
         // Opsi Barang historis hanya untuk Edit, jangan terbawa ke Tambah.
         barangSelect?.querySelectorAll('option[data-historical="1"]')
@@ -954,7 +1026,7 @@ $('#mesinExport').addEventListener('click', () => {
             $('#mesinPendingSection').hidden = true;
 
             $('#mesinFormTitle').textContent =
-                `Edit Data Mesin #${id}`;
+                `${isVehicleMode ? 'Edit Data Kendaraan' : 'Edit Data Mesin'} #${id}`;
 
             $('#mesinLokasiLabel').value =
                 item.lokasi || '';
@@ -1015,20 +1087,20 @@ $('#mesinExport').addEventListener('click', () => {
                 'fungsi',
                 'struktur',
                 'kondisi',
+                'nomor_dokumen',
                 'ket'
             ];
 
             fields.forEach(name => {
-                const field = form.elements.namedItem(name);
+                const field = form.elements.namedItem(name)
+                    || allFieldLabels.get(name)?.querySelector('[name]');
 
                 if (field) {
                     field.value = item[name] ?? '';
                 }
             });
 
-            const noMesin = form.elements.namedItem(
-                'nomor_mesin'
-            );
+            const noMesin = allFieldLabels.get('nomor_mesin')?.querySelector('[name]');
 
             if (noMesin) noMesin.value = item.mesin ?? '';
 
@@ -1232,17 +1304,10 @@ $('#mesinExport').addEventListener('click', () => {
     }
 
     function isVehicleItem(item) {
+        // Klasifikasi wajib menggunakan Kode Aktiva, bukan adanya Polisi/Rangka.
+        // Field kendaraan warisan tidak boleh memindahkan mesin biasa ke tab Kendaraan.
         const code = String(item.kode_aktiva || '').trim();
-        if (/^(31\.08\.|02\.03\.)/.test(code)) return true;
-
-        const hasRegistration = ['polisi', 'rangka', 'bpkb'].some(field => {
-            const value = String(item[field] || '').trim();
-            return value !== '' && value !== '-';
-        });
-        if (hasRegistration) return true;
-
-        return /\b(mobil|sepeda motor|motor roda|truk|truck|pick\s?up|bus)\b/i
-            .test(String(item.nama_barang || ''));
+        return /^31\.08(?:\.|$)/.test(code);
     }
 
     function mesinConditionMark(item, kind) {
@@ -1303,7 +1368,7 @@ $('#mesinExport').addEventListener('click', () => {
             <td class="mesin-sheet-center">${mesinConditionMark(item, 'berat')}</td>
             <td class="mesin-sheet-center">${mesinSheetCell(item.tahun)}</td>
             <td>${mesinSheetCell(item.asal)}</td>
-            <td>${mesinSheetDocument(item)}</td>
+            <td>${mesinSheetCell(item.nomor_dokumen)}</td>
             <td class="mesin-sheet-money">${money(item.harga)}</td>
             <td>${mesinSheetCell(item.ket)}</td>
             <td class="mesin-sheet-owner">${mesinOwnerBadge(item.status_kepemilikan)}</td>
@@ -1343,7 +1408,7 @@ $('#mesinExport').addEventListener('click', () => {
                     <tr class="mesin-sheet-group-head">
                         <th rowspan="2">No.</th><th rowspan="2">Nama Barang</th>
                         <th rowspan="2">Kode Inventaris</th><th rowspan="2">No. Register</th>
-                        <th rowspan="2">Merk / Tipe</th><th rowspan="2">Ukuran</th>
+                        <th rowspan="2">Merk / Type</th><th rowspan="2">Ukuran</th>
                         <th rowspan="2">Fungsi</th><th rowspan="2">Penggunaan</th>
                         <th rowspan="2">Bahan</th><th colspan="3">Kondisi</th>
                         <th rowspan="2">Tahun Pengadaan</th><th rowspan="2">Asal Usul</th>
@@ -1366,7 +1431,7 @@ $('#mesinExport').addEventListener('click', () => {
                     <tr class="mesin-sheet-group-head">
                         <th rowspan="2">No.</th><th rowspan="2">Kode Barang</th>
                         <th rowspan="2">Nama Barang / Jenis</th><th rowspan="2">Nomor Register</th>
-                        <th rowspan="2">Merk / Tipe</th><th rowspan="2">Ukuran / CC</th>
+                        <th rowspan="2">Merk / Type</th><th rowspan="2">Ukuran / CC</th>
                         <th rowspan="2">Bahan</th><th rowspan="2">Tahun Pembelian</th>
                         <th colspan="5">Nomor</th>
                         <th rowspan="2">Asal Usul / Cara Perolehan</th>
@@ -2634,10 +2699,10 @@ document.getElementById('pajakTerlambat').textContent =
 
 
             $('#pajakBelumDicatat').textContent =
-                formatAngka(
-                    summary.belum_didata
-                ) +
-                ' referensi belum memiliki catatan pembaruan pajak.';
+                formatAngka(summary.belum_didata) +
+                ' belum memiliki catatan pajak · ' +
+                formatAngka(summary.data_belum_lengkap || 0) +
+                ' kendaraan dengan identitas belum lengkap.';
 
             isiDropdown();
 
@@ -2648,7 +2713,8 @@ document.getElementById('pajakTerlambat').textContent =
             $('#pajakInfoStatus').textContent =
                 `${formatAngka(kendaraan.length)} data berkode 31.08 · ` +
                 `${formatAngka(summary.sudah_inventaris || 0)} inventaris · ` +
-                `${formatAngka(summary.belum_inventaris || 0)} referensi Nilai Aset`;
+                `${formatAngka(summary.belum_inventaris || 0)} referensi Nilai Aset · ` +
+                `${formatAngka(summary.data_belum_lengkap || 0)} identitas perlu dilengkapi`;
 
         } catch (error) {
             sudahDimuat = false;
@@ -2831,12 +2897,9 @@ document.getElementById('pajakTerlambat').textContent =
                 return false;
             }
 
-            if (
-                status &&
-                k.status !== status
-            ) {
-                return false;
-            }
+            if (status === 'belum_lengkap' && k.kelengkapan !== 'belum_lengkap') return false;
+            if (status === 'belum_inventaris' && k.terinventaris) return false;
+            if (status && !['belum_lengkap', 'belum_inventaris'].includes(status) && k.status !== status) return false;
 
             const hari =
                 k.sisa_hari == null
@@ -2946,8 +3009,15 @@ document.getElementById('pajakTerlambat').textContent =
                             : 'belum_didata';
 
                     const nilaiTeks = k.terinventaris
-                        ? kendaraanCell(k.nama_kendaraan || k.jenis)
-                        : `${kendaraanCell(k.nama_kendaraan || k.jenis)}<small class="mesin-uninventoried">Belum Inventaris · Referensi Nilai Aset</small>`;
+                        ? `${kendaraanCell(k.nama_kendaraan || k.jenis)}<small class="mesin-kendaraan-lokasi">Lokasi: ${kendaraanCell(k.lokasi)}</small>`
+                        : `${kendaraanCell(k.nama_kendaraan || k.jenis)}<small class="mesin-uninventoried">Belum Inventaris · Referensi Nilai Aset</small><small class="mesin-kendaraan-lokasi">Lokasi: ${kendaraanCell(k.lokasi)}</small>`;
+                    const kurang = Array.isArray(k.kolom_belum_lengkap) ? k.kolom_belum_lengkap : [];
+                    const detailKurang = kurang.length ? kurang.join(', ') : '';
+                    const badgeLengkap = !k.terinventaris
+                        ? '<span class="mesin-vehicle-completeness is-pending">Belum Inventaris</span>'
+                        : k.kelengkapan === 'belum_lengkap'
+                            ? `<span class="mesin-vehicle-completeness is-incomplete" title="${escapeHTML(detailKurang)}">Data Belum Lengkap (${kurang.length})</span><button type="button" class="mesin-vehicle-fix" data-kendaraan-fix="${id}" title="Lengkapi: ${escapeHTML(detailKurang)}">Lengkapi Data</button>`
+                            : '<span class="mesin-vehicle-completeness is-complete">Identitas Lengkap</span>';
                     return `
                         <tr>
                             <td>${mulai + idx + 1}</td>
@@ -2966,6 +3036,7 @@ document.getElementById('pajakTerlambat').textContent =
                             <td>${kendaraanCell(k.asal)}</td>
                             <td>${kendaraanCell(k.ket)}</td>
                             <td class="mesin-kendaraan-status">
+                                ${badgeLengkap}
                                 <span class="pajak-status ${statusClass}">${statusLabel[statusClass]}</span>
                                 ${catatan}
                                 <small>${tanggalIndonesia(k.jatuh_tempo)}</small>
@@ -3607,6 +3678,12 @@ document.getElementById('pajakTerlambat').textContent =
                 event.target.closest('button');
 
             if (!button) {
+                return;
+            }
+
+            const perbaikiId = button.dataset.kendaraanFix;
+            if (perbaikiId) {
+                await editMesin(perbaikiId);
                 return;
             }
 
@@ -5174,4 +5251,4 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.document.close();
         popup.addEventListener('load', () => popup.print(), { once: true });
     });
-}); 
+});

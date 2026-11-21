@@ -5792,3 +5792,48 @@ min-height: 39px;
     color: #1268bc;
     font-weight: 800;
 }
+
+/* ========================================================================
+   36. PEMISAHAN FORM K.I.B B: MESIN 17 KOLOM / KENDARAAN 15 KOLOM
+   ======================================================================== */
+#mesinPage #mesinStandardFields[hidden],
+#mesinPage #mesinVehicleGroups[hidden],
+#mesinPage #mesinCommonSection[hidden] { display: none !important; }
+#mesinPage .mesin-form-support-section,
+#mesinPage .mesin-form-advanced {
+    margin-top: 15px;
+    padding: 17px 19px;
+    border-radius: 12px;
+    border: 1px solid #d9e6f4;
+    background: #f8fbff;
+}
+#mesinPage .mesin-form-support-section h4 {
+    margin: 0 0 5px;
+    font-size: 13px;
+    color: #153d72;
+}
+#mesinPage .mesin-form-support-section p {
+    color: #647c99;
+    font-size: 12px;
+    margin: 0 0 14px;
+}
+#mesinPage .mesin-form-advanced summary {
+    cursor: pointer;
+    color: #214d7a;
+    font-size: 12px;
+    font-weight: 700;
+}
+#mesinPage .mesin-form-advanced .mesin-form-grid { margin-top: 15px; }
+#mesinPage .mesin-form-grid .mesin-full-label,
+#mesinPage .mesin-vehicle-group .mesin-full-label { grid-column: 1 / -1; }
+#mesinPage .mesin-form-grid .mesin-full-label textarea,
+#mesinPage .mesin-vehicle-group .mesin-full-label textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+#mesinPage .mesin-form-grid label,
+#mesinPage .mesin-vehicle-group label { min-width: 0; }
+@media(max-width:650px){
+    #mesinPage .mesin-form-support-section,
+    #mesinPage .mesin-form-advanced { padding: 13px; }
+}

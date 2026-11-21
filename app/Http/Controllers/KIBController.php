@@ -3003,6 +3003,7 @@ class KIBController extends Controller
             'ukuran' => ['nullable', 'string', 'max:255'],
             'merk' => ['nullable', 'string', 'max:255'],
             'pabrik' => ['nullable', 'string', 'max:255'],
+            'nomor_dokumen' => ['nullable', 'string', 'max:255'],
 
             'rangka' => ['nullable', 'string', 'max:255'],
             'nomor_mesin' => ['nullable', 'string', 'max:255'],
@@ -3063,48 +3064,76 @@ class KIBController extends Controller
         |
         */
 
-    private function fieldsMesin(array $input): array
-    {
-        $legacy = fn(string $key) =>
+    /**
+     * Memetakan field sesuai jenis K.I.B B.
+     * Nomor Polisi / Rangka / Mesin / BPKB / Pabrik hanya boleh diproses
+     * untuk inventaris yang kode AKTIVA sumbernya 31.08.
+     *
+     * Pada Edit non-Kendaraan field warisan tidak ditimpa sehingga data lama
+     * tidak hilang. Pada Tambah non-Kendaraan, kolom legacy NOT NULL diisi '-'.
+     */
+    private function fieldsMesin(
+        array $input,
+        bool $kendaraan,
+        bool $create = false
+    ): array {
+        $legacy = static fn(string $key): string =>
         trim((string) ($input[$key] ?? '')) ?: '-';
 
-        return [
+        $data = [
             'id_barang' => (int) $input['id_barang'],
             'status_kepemilikan' => $input['status_kepemilikan'],
-
             'kode' => trim((string) $input['kode']),
             'reg' => $legacy('reg'),
             'tahun' => (string) $input['tahun'],
-
-            'harga' => (
-                isset($input['harga'])
-                && $input['harga'] !== ''
-            ) ? (int) $input['harga'] : null,
-
-            'susut' => (
-                isset($input['susut'])
-                && $input['susut'] !== ''
-            ) ? (int) $input['susut'] : 0,
-
+            'harga' => (isset($input['harga']) && $input['harga'] !== '')
+                ? (int) $input['harga'] : null,
+            'susut' => (isset($input['susut']) && $input['susut'] !== '')
+                ? (int) $input['susut'] : 0,
             'bahan' => $legacy('bahan'),
             'asal' => $legacy('asal'),
             'ukuran' => $legacy('ukuran'),
             'merk' => $legacy('merk'),
-            'pabrik' => $input['pabrik'] ?? null,
-
-            'rangka' => $legacy('rangka'),
-            'mesin' => $legacy('nomor_mesin'),
-            'polisi' => $legacy('polisi'),
-            'bpkb' => $legacy('bpkb'),
-
             'guna' => $input['guna'] ?? null,
             'fungsi' => $input['fungsi'] ?? null,
             'struktur' => $input['struktur'] ?? null,
             'kondisi' => $input['kondisi'] ?? null,
             'ket' => $input['ket'] ?? null,
-
             'updated_at' => now(),
         ];
+
+        if ($kendaraan) {
+            $data['pabrik'] = $legacy('pabrik');
+            $data['rangka'] = $legacy('rangka');
+            $data['mesin'] = $legacy('nomor_mesin');
+            $data['polisi'] = $legacy('polisi');
+            $data['bpkb'] = $legacy('bpkb');
+        } elseif ($create) {
+            // Kolom NOT NULL tabel mesins lawas membutuhkan placeholder.
+            // Tidak dipakai sebagai data Kendaraan dan tidak tampil di form Mesin.
+            $data['pabrik'] = '-';
+            $data['rangka'] = '-';
+            $data['mesin'] = '-';
+            $data['polisi'] = '-';
+            $data['bpkb'] = '-';
+        }
+
+        if (!$kendaraan && array_key_exists('nomor_dokumen', $input)) {
+            if (!Schema::hasColumn('mesins', 'nomor_dokumen')) {
+                if (trim((string) ($input['nomor_dokumen'] ?? '')) !== '') {
+                    throw ValidationException::withMessages([
+                        'nomor_dokumen' => 'Kolom nomor_dokumen belum tersedia. '
+                            . 'Jalankan migration tambahan K.I.B B yang disertakan, '
+                            . 'setelah backup dan pengujian pada database salinan.',
+                    ]);
+                }
+            } else {
+                $value = trim((string) ($input['nomor_dokumen'] ?? ''));
+                $data['nomor_dokumen'] = $value !== '' ? $value : null;
+            }
+        }
+
+        return $data;
     }
 
 
@@ -3185,7 +3214,7 @@ class KIBController extends Controller
                     ]);
                 }
 
-                $data = $this->fieldsMesin($input);
+                $data = $this->fieldsMesin($input, $kodeKendaraan, true);
                 $kendaraanDisimpan = $kodeKendaraan;
 
                 // Data organisasi berasal dari database.
@@ -3298,7 +3327,20 @@ class KIBController extends Controller
 
                 abort_unless($row, 404);
 
-                $data = $this->fieldsMesin($input);
+                // Kategori Edit tidak boleh hanya bergantung pada mode di browser.
+                // Ambil kode Aktiva resmi dari inventaris / voucher yang tersimpan.
+                $aktivaId = null;
+                if (!empty($row->id_voucher2)) {
+                    $aktivaId = DB::table('nilai_aktivas')
+                        ->where('id', $row->id_voucher2)
+                        ->value('id_aktiva');
+                }
+                $aktivaId ??= $row->id_aktiva ?? null;
+                $kodeAktiva = $aktivaId
+                    ? DB::table('aktivas')->where('id', $aktivaId)->value('kode')
+                    : null;
+                $kendaraan = $this->isKodeAktivaKendaraanKibB($kodeAktiva);
+                $data = $this->fieldsMesin($input, $kendaraan, false);
 
                 if ($request->hasFile('dokumen')) {
                     $data['dok'] = $request
@@ -10874,7 +10916,7 @@ class KIBController extends Controller
                 'kondisi' => (string) ($m->kondisi ?? ''),
                 'tahun' => $m->tahun ?? null,
                 'asal' => (string) ($m->asal ?? ''),
-                'no_dokumen' => !empty($m->dok) && $m->dok !== '-' ? 'Ada PDF' : '-',
+                'no_dokumen' => (string) ($m->nomor_dokumen ?? '-'),
                 'harga' => $m->harga ?? null,
                 'keterangan' => (string) ($m->ket ?? ''),
                 'lokasi' => (string) ($m->lokasi ?? ''),
@@ -10954,7 +10996,7 @@ class KIBController extends Controller
                 'kondisi' => $m->kondisi ?? '',
                 'tahun' => $m->tahun ?? '',
                 'asal' => $m->asal ?? '',
-                'no_dokumen' => !empty($m->dok) && $m->dok !== '-' ? 'Ada PDF' : '-',
+                'no_dokumen' => (string) ($m->nomor_dokumen ?? '-'),
                 'harga' => $m->harga ?? null,
                 'keterangan' => $m->ket ?? '',
                 'lokasi' => $m->lokasi ?? '',
