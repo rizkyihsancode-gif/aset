@@ -1601,7 +1601,7 @@ class KIBController extends Controller
                 ->where('t.id_lokasi', $lokasi)
                 ->whereNotNull('t.nilai_aktiva_id')
                 ->orderByDesc('t.id')
-                ->first(['d.nama_dep', 'v.nama_div']);
+                ->first(['d.kode_dep as nama_dep', 'v.nama_div']);
         }
 
         // Data Tanah lama dapat tidak mempunyai tautan langsung ke voucher.
@@ -1616,7 +1616,7 @@ class KIBController extends Controller
                     ['TANAH', 'KIB A TANAH']
                 )
                 ->orderByDesc('n.id')
-                ->first(['d.nama_dep', 'v.nama_div']);
+                ->first(['d.kode_dep as nama_dep', 'v.nama_div']);
         }
 
         $sdm = collect();
@@ -1650,7 +1650,7 @@ class KIBController extends Controller
                 'provinsi' => 'KALIMANTAN TIMUR',
                 'kota' => 'SAMARINDA',
                 'unit' => 'PERUMDA TIRTA KENCANA',
-                'departemen' => trim((string) ($organisasi->nama_dep ?? '')) ?: '-',
+                'departemen' => $this->kibNamaDepartemenUntukLaporan($organisasi->nama_dep ?? null),
                 'divisi' => trim((string) ($organisasi->nama_div ?? '')) ?: '-',
             ],
             'jumlah' => $items->count(),
@@ -2662,7 +2662,7 @@ class KIBController extends Controller
             ])
 
             ->selectRaw(
-                "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+                "BTRIM(COALESCE(d.kode_dep, d.nama_dep, '')) AS departemen"
             )
 
             ->selectRaw(
@@ -2808,7 +2808,7 @@ class KIBController extends Controller
                 "BTRIM(COALESCE(b.kode_barang, '')) AS kode_barang"
             )
             ->selectRaw(
-                "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+                "BTRIM(COALESCE(d.kode_dep, d.nama_dep, '')) AS departemen"
             )
             ->selectRaw(
                 "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
@@ -2882,7 +2882,7 @@ class KIBController extends Controller
                 'n.nilai',
                 'a.kode as kode_aktiva',
                 'a.aktiva as nama_aktiva',
-                'd.nama_dep as departemen',
+                'd.kode_dep as departemen',
                 'dv.nama_div as divisi',
             ])
             ->orderBy('n.tgl_voucher')
@@ -2952,7 +2952,7 @@ class KIBController extends Controller
                 "BTRIM(COALESCE(l.alamat, '')) AS alamat"
             )
             ->selectRaw(
-                "BTRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+                "BTRIM(COALESCE(d.kode_dep, d.nama_dep, '')) AS departemen"
             )
             ->selectRaw(
                 "BTRIM(COALESCE(v.nama_div, '')) AS divisi"
@@ -4542,7 +4542,7 @@ class KIBController extends Controller
                 'a.aktiva as nama_aktiva',
             ])
             ->selectRaw(
-                "TRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+                "TRIM(COALESCE(d.kode_dep, d.nama_dep, '')) AS departemen"
             )
             ->selectRaw(
                 "TRIM(COALESCE(v.nama_div, '')) AS divisi"
@@ -4616,7 +4616,7 @@ class KIBController extends Controller
                 "TRIM(COALESCE(b.kode_barang, '')) AS kode_barang"
             )
             ->selectRaw(
-                "TRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+                "TRIM(COALESCE(d.kode_dep, d.nama_dep, '')) AS departemen"
             )
             ->selectRaw(
                 "TRIM(COALESCE(v.nama_div, '')) AS divisi"
@@ -4683,7 +4683,8 @@ class KIBController extends Controller
                 'provinsi' => 'KALIMANTAN TIMUR',
                 'kota' => 'SAMARINDA',
                 'unit' => 'PERUMDA TIRTA KENCANA',
-                'departemen' => $identitas($items->pluck('departemen')),
+                'departemen' => $identitas($items->pluck('departemen')
+                    ->map(fn($value) => $this->kibNamaDepartemenUntukLaporan($value))),
                 'divisi' => $identitas($items->pluck('divisi')),
                 'kode_struktur' => $kodeStruktur,
             ],
@@ -4733,7 +4734,7 @@ class KIBController extends Controller
                 'n.stat',
                 'a.kode as kode_aktiva',
                 'a.aktiva as nama_aktiva',
-                'd.nama_dep as departemen',
+                'd.kode_dep as departemen',
                 'v.nama_div as divisi',
             ])
             ->orderBy('n.tgl_voucher')
@@ -4797,7 +4798,7 @@ class KIBController extends Controller
                 "TRIM(COALESCE(b.nama_barang, '')) AS nama_barang"
             )
             ->selectRaw(
-                "TRIM(COALESCE(d.nama_dep, d.kode_dep, '')) AS departemen"
+                "TRIM(COALESCE(d.kode_dep, d.nama_dep, '')) AS departemen"
             )
             ->selectRaw(
                 "TRIM(COALESCE(v.nama_div, '')) AS divisi"
@@ -5573,37 +5574,9 @@ class KIBController extends Controller
             abort(404, 'Inventaris K.I.B E tidak ditemukan.');
         }
 
-        // Data manual lama bisa menyimpan kode (misalnya 00.02) atau ID,
-        // sedangkan template Excel harus menampilkan NAMA Departemen.
-        // Pemetaan dibaca sekali agar aman untuk ekspor seluruh kelompok.
-        $namaDepartemen = [];
-        if ($items->isNotEmpty() && Schema::hasTable('departemens')) {
-            $masterDepartemen = DB::table('departemens')
-                ->get(['id', 'kode_dep', 'nama_dep']);
-
-            foreach ($masterDepartemen as $master) {
-                $nama = trim((string) ($master->nama_dep ?? ''));
-                if ($nama === '') {
-                    continue;
-                }
-
-                // Urutkan ID dulu, kode lalu nama; kode tetap menjadi acuan
-                // bila ada kemiripan angka ID dengan kode departemen.
-                foreach ([$master->id, $master->kode_dep, $nama] as $key) {
-                    $key = strtolower(trim((string) ($key ?? '')));
-                    if ($key !== '') {
-                        $namaDepartemen[$key] = $nama;
-                    }
-                }
-            }
-        }
-
-        $items->transform(static function ($item) use ($namaDepartemen) {
-            $asli = trim((string) ($item->departemen ?? ''));
-            $key = strtolower($asli);
-            // Jika master tidak memiliki padanan, pertahankan nilai asli
-            // agar ketidaksesuaian data dapat ditelusuri, bukan disembunyikan.
-            $item->departemen = $namaDepartemen[$key] ?? $asli;
+        // Normalisasi Departemen pada respons laporan, bukan mengubah arsip.
+        $items->transform(function ($item) {
+            $item->departemen = $this->kibNamaDepartemenUntukLaporan($item->departemen ?? null);
             return $item;
         });
 
@@ -5854,13 +5827,7 @@ class KIBController extends Controller
                 ->get()
                 : [],
 
-            'departemen' => Schema::hasTable('departemens')
-                ? DB::table('departemens')
-                ->select('id', 'nama_dep')
-                ->orderBy('nama_dep')
-                ->when(Schema::hasColumn('departemens', 'status'), fn($query) => $query->where('status', 'aktif'))
-                ->get()
-                : [],
+            'departemen' => $this->kibPilihanDepartemen(true),
 
             'divisi' => Schema::hasTable('divisis')
                 ? DB::table('divisis')
@@ -6093,7 +6060,9 @@ class KIBController extends Controller
                 'status_kepemilikan',
             ] as $key
         ) {
-            $result[$key] = $data[$key] ?? null;
+            $result[$key] = $key === 'departemen'
+                ? $this->kibNamaDepartemenInputManual($data[$key] ?? null)
+                : ($data[$key] ?? null);
         }
 
         return $result;
@@ -7484,12 +7453,7 @@ class KIBController extends Controller
                 ->get(),
 
             // MASTER DEPARTEMEN
-            'departemen' => DB::table('departemens')
-                ->select('id', 'nama_dep')
-                ->whereNotNull('nama_dep')
-                ->orderBy('nama_dep')
-                ->when(Schema::hasColumn('departemens', 'status'), fn($query) => $query->where('status', 'aktif'))
-                ->get(),
+            'departemen' => $this->kibPilihanDepartemen(true),
 
             // MASTER DIVISI
             'divisi' => DB::table('divisis')
@@ -7747,7 +7711,7 @@ class KIBController extends Controller
             $data['alamat_manual'] ?? null,
 
             'departemen' =>
-            $data['departemen_manual'] ?? null,
+            $this->kibNamaDepartemenInputManual($data['departemen_manual'] ?? null, 'departemen_manual'),
 
             'divisi' =>
             $data['divisi_manual'] ?? null,
@@ -8454,8 +8418,8 @@ class KIBController extends Controller
                 'b.kode_barang',
                 'l.lokasi as nama_lokasi',
                 'l.alamat',
-                'd.nama_dep as departemen',
-                'd.kode_dep',
+                'd.kode_dep as departemen',
+                'd.nama_dep as kode_dep',
                 'v.nama_div as divisi',
                 'v.kode_div',
             ]);
@@ -8533,6 +8497,10 @@ class KIBController extends Controller
         array $materials
     ): array {
         $data = (array) $row;
+        $data['departemen'] = $this->kibNamaDepartemenUntukLaporan(
+            $row->departemen ?? null,
+            $row->id_departemen ?? null
+        );
 
         $raw = trim(
             (string) ($row->bahan ?? '')
@@ -8828,17 +8796,7 @@ class KIBController extends Controller
             ->when(Schema::hasColumn('bahans', 'status'), fn($query) => $query->where('status', 'aktif'))
             ->get();
 
-        $departemens = DB::table('departemens')
-
-            ->select(
-                'id',
-                'nama_dep'
-            )
-
-            ->orderBy('nama_dep')
-
-            ->when(Schema::hasColumn('departemens', 'status'), fn($query) => $query->where('status', 'aktif'))
-            ->get();
+        $departemens = $this->kibPilihanDepartemen(true);
 
         $divisis = DB::table('divisis')
 
@@ -8925,7 +8883,7 @@ class KIBController extends Controller
 
         $rows = $this->kirQuery()
             ->where('k.id_lokasi', $lokasi)
-            ->orderBy('d.nama_dep')
+            ->orderBy('d.kode_dep')
             ->orderBy('v.nama_div')
             ->orderBy('k.gedung')
             ->orderBy('k.ruangan')
@@ -8971,7 +8929,7 @@ class KIBController extends Controller
             )
 
             ->orderBy(
-                'd.nama_dep'
+                'd.kode_dep'
             )
 
             ->orderBy(
@@ -9017,8 +8975,9 @@ class KIBController extends Controller
 
                         'div' => (int) $item->id_div,
 
-                        'departemen' => trim(
-                            (string) $item->departemen
+                        'departemen' => $this->kibNamaDepartemenUntukLaporan(
+                            $item->departemen ?? null,
+                            $item->id_departemen ?? null
                         ),
 
                         'divisi' => trim(
@@ -10168,8 +10127,7 @@ class KIBController extends Controller
         $barangOptions = DB::table('barangs')
             ->select('id', 'nama_barang', 'kode_barang', 'status')
             ->orderBy('nama_barang')->get();
-        $departemenOptions = DB::table('departemens')
-            ->select('id', 'nama_dep')->orderBy('nama_dep')->get();
+        $departemenOptions = $this->kibPilihanDepartemen(false);
         $divisiOptions = DB::table('divisis')
             ->select('id', 'nama_div', 'id_dep')->orderBy('nama_div')->get();
 
@@ -10238,7 +10196,7 @@ class KIBController extends Controller
                 'n.jenisn',
                 'l.lokasi',
                 'l.alamat',
-                'd.nama_dep as departemen',
+                'd.kode_dep as departemen',
                 'dv.nama_div as divisi'
             )
             ->orderByDesc('n.tgl_voucher')
@@ -10317,7 +10275,7 @@ class KIBController extends Controller
                 'b.kode_barang as master_kode',
                 'l.alamat as alamat_lokasi',
                 'n.nilai as nilai_transaksi',
-                'd.nama_dep as departemen',
+                'd.kode_dep as departemen',
                 'v.nama_div as divisi'
             );
 
@@ -10366,7 +10324,7 @@ class KIBController extends Controller
                 'b.nama_barang as master_nama',
                 'b.kode_barang as master_kode',
                 'l.alamat as alamat_lokasi',
-                'd.nama_dep as departemen',
+                'd.kode_dep as departemen',
                 'v.nama_div as divisi',
                 'n.nilai as nilai_voucher'
             );
@@ -10473,7 +10431,8 @@ class KIBController extends Controller
                 'provinsi' => 'KALIMANTAN TIMUR',
                 'kota' => 'SAMARINDA',
                 'unit' => 'PERUMDA TIRTA KENCANA',
-                'departemen' => $identitas($items->pluck('departemen')),
+                'departemen' => $identitas($items->pluck('departemen')
+                    ->map(fn($value) => $this->kibNamaDepartemenUntukLaporan($value))),
                 'divisi' => $identitas($items->pluck('divisi')),
                 'ruang' => $ruang,
                 'kode_struktur' => $kodeStruktur,
@@ -11095,6 +11054,128 @@ class KIBController extends Controller
             : ($unik->count() === 1 ? $unik->first() : '-');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | REFERENSI TERPADU DEPARTEMEN (KIB A–F DAN KIR)
+    |--------------------------------------------------------------------------
+    | ID/kode tidak pernah menjadi label utama pada form dan laporan.
+    | Jika master belum memiliki nama yang benar, tampilkan peringatan yang
+    | bisa ditindaklanjuti, bukan mengarang nama departemen.
+    */
+    private function kibPetaNamaDepartemen(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $cache = ['id' => [], 'kode' => [], 'nama' => []];
+        if (!Schema::hasTable('departemens')) {
+            return $cache;
+        }
+
+        foreach (DB::table('departemens')->get(['id', 'kode_dep', 'nama_dep']) as $row) {
+            $nama = trim((string) ($row->kode_dep ?? ''));
+            if ($nama === '' || preg_match('/^[0-9.\\s\\/\\-]+$/u', $nama)) {
+                continue; // Master belum mempunyai nama yang bisa dibaca pengguna.
+            }
+
+            $id = (string) $row->id;
+            $kode = strtolower(trim((string) ($row->nama_dep ?? '')));
+            $cache['id'][$id] = $nama;
+            if ($kode !== '') {
+                $cache['kode'][$kode] = $nama;
+            }
+            $cache['nama'][strtolower($nama)] = $nama;
+        }
+
+        return $cache;
+    }
+
+    private function kibNamaDepartemenUntukLaporan(int $nilai, $idDepartemen = null): string
+    {
+        $raw = trim((string) ($nilai ?? ''));
+        if (in_array(strtoupper($raw), ['BERAGAM', 'SELURUH DEPARTEMEN'], true)) {
+            return strtoupper($raw);
+        }
+
+        $peta = $this->kibPetaNamaDepartemen();
+        // ID eksplisit hanya dari relasi database. Jika raw adalah kode, utamakan kode.
+        if ($idDepartemen !== null && $idDepartemen !== '') {
+            $id = trim((string) $idDepartemen);
+            if (isset($peta['id'][$id])) {
+                return $peta['id'][$id];
+            }
+        }
+        $key = strtolower($raw);
+        if ($raw !== '') {
+            $nama = $peta['kode'][$key]
+                ?? $peta['nama'][$key]
+                ?? $peta['id'][$raw]
+                ?? null;
+            if ($nama !== null) {
+                return $nama;
+            }
+        }
+
+        if ($raw === '' || $raw === '-') {
+            return '-';
+        }
+        // Nomor yang tidak ada di Master tidak boleh disajikan sebagai nama.
+        if (preg_match('/^[0-9.\\s\\/\\-]+$/u', $raw)) {
+            return 'Nama departemen belum tersedia di Master Data';
+        }
+        return $raw; // Nama historis yang belum terdaftar tetap dapat dibaca.
+    }
+
+    private function kibPilihanDepartemen(bool $aktifSaja = true)
+    {
+        if (!Schema::hasTable('departemens')) {
+            return collect();
+        }
+
+        return DB::table('departemens')
+            ->select('id', 'kode_dep', 'nama_dep')
+            ->when(
+                $aktifSaja && Schema::hasColumn('departemens', 'status'),
+                static fn($query) => $query->where(static function ($q) {
+                    $q->whereNull('status')->orWhere('status', '<>', 'nonaktif');
+                })
+            )
+            ->orderBy('kode_dep')
+            ->get()
+            ->map(function ($row) {
+                // Skema legacy Master: nama_dep = kode, kode_dep = nama.
+                $kode = trim((string) ($row->nama_dep ?? $row->id));
+                $nama = $this->kibNamaDepartemenUntukLaporan($kode, $row->id);
+                $row->kode_dep = $kode; // kode sebenarnya, untuk pencarian JS
+                if ($nama === 'Nama departemen belum tersedia di Master Data' || $nama === '-') {
+                    $row->nama_dep = 'Nama belum diatur — kode ' . $kode . ' (perbaiki Master Departemen)';
+                } else {
+                    $row->nama_dep = $nama; // teks pilihan yang dilihat pengguna
+                }
+                return $row;
+            });
+    }
+
+    private function kibNamaDepartemenInputManual(int $nilai, string $field = 'departemen'): ?string
+    {
+        $raw = trim((string) ($nilai ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+        $nama = $this->kibNamaDepartemenUntukLaporan($raw);
+        if (
+            $nama === 'Nama departemen belum tersedia di Master Data'
+            || $nama === 'Nama belum diatur — perbaiki Master Departemen'
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $field => 'Kode Departemen tidak mempunyai nama di Master Data. Pilih nama departemen yang valid.',
+            ]);
+        }
+        return $nama;
+    }
+
     /**
      * Nama departemen untuk kop K.I.B B harus berasal dari Master Departemen.
      *
@@ -11104,79 +11185,19 @@ class KIBController extends Controller
      */
     private function namaDepartemenLaporanKibB(iterable $baris): string
     {
-        $berdasarkanId = [];
-        $berdasarkanKode = [];
-        $berdasarkanNama = [];
-
-        if (Schema::hasTable('departemens')) {
-            foreach (DB::table('departemens')->get(['id', 'kode_dep', 'nama_dep']) as $master) {
-                $nama = trim((string) ($master->nama_dep ?? ''));
-                if ($nama === '') {
-                    continue;
-                }
-
-                $id = trim((string) ($master->id ?? ''));
-                $kode = strtolower(trim((string) ($master->kode_dep ?? '')));
-                if ($id !== '') {
-                    $berdasarkanId[$id] = $nama;
-                }
-                if ($kode !== '') {
-                    $berdasarkanKode[$kode] = $nama;
-                }
-                $berdasarkanNama[strtolower($nama)] = $nama;
-            }
-        }
-
-        $namaDitemukan = [];
+        $nama = [];
         foreach ($baris as $item) {
-            // Prioritas: label dari JOIN, ID inventaris, kemudian ID voucher.
-            $kandidat = [
-                trim((string) ($item->departemen ?? '')),
-                trim((string) ($item->id_departemen ?? '')),
-                trim((string) ($item->dep_voucher ?? '')),
-            ];
-
-            $nama = null;
-            foreach ($kandidat as $nilai) {
-                if ($nilai === '' || $nilai === '-') {
-                    continue;
-                }
-
-                $key = strtolower($nilai);
-                $nama = $berdasarkanNama[$key]
-                    ?? $berdasarkanKode[$key]
-                    ?? $berdasarkanId[$nilai]
-                    ?? null;
-                if ($nama !== null) {
-                    break;
-                }
-            }
-
-            // Jangan menampilkan kode mentah sebagai nama. Teks nama lama
-            // tetap ditoleransi bila Master Departemen belum memiliki padanan.
-            if ($nama === null) {
-                $label = $kandidat[0];
-                if (
-                    $label !== '' && $label !== '-'
-                    && !preg_match('/^[0-9]+(?:[.][0-9]+)*$/', $label)
-                ) {
-                    $nama = $label;
-                }
-            }
-
-            if ($nama !== null && $nama !== '') {
-                $namaDitemukan[strtolower($nama)] = $nama;
+            $label = $this->kibNamaDepartemenUntukLaporan(
+                $item->departemen ?? null,
+                $item->id_departemen ?? $item->dep_voucher ?? null
+            );
+            if ($label !== '-') {
+                $nama[mb_strtolower($label)] = $label;
             }
         }
 
-        if (count($namaDitemukan) === 0) {
-            return '-';
-        }
-        if (count($namaDitemukan) > 1) {
-            return 'BERAGAM';
-        }
-
-        return reset($namaDitemukan);
+        if ($nama === []) return '-';
+        return count($nama) === 1 ? reset($nama) : 'BERAGAM';
     }
 
     /**
@@ -11209,7 +11230,7 @@ class KIBController extends Controller
                 'm.*',
                 'b.nama_barang',
                 'b.kode_barang',
-                'd.nama_dep as departemen',
+                'd.kode_dep as departemen',
                 'dv.nama_div as divisi',
                 'n.dep as dep_voucher',
                 'a.kode as kode_aktiva'
@@ -11302,7 +11323,7 @@ class KIBController extends Controller
                     'm.*',
                     'b.nama_barang',
                     'l.lokasi',
-                    'd.nama_dep as departemen',
+                    'd.kode_dep as departemen',
                     'n.dep as dep_voucher',
                     'a.kode as kode_aktiva',
                     'a.aktiva as jenis_aktiva'
