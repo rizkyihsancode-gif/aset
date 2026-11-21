@@ -2272,14 +2272,32 @@
 }
 #aemGroupPanel .aem-group-left h3 svg { width: 18px; height: 18px; }
 #aemGroupPanel .aem-search { min-width: 0; }
+/*
+ * .aem-search secara umum memiliki flex:1 untuk toolbar horizontal.
+ * Pada sidebar vertikal, flex:1 mendorong daftar lokasi ke dasar panel.
+ * Hanya hentikan pertumbuhan vertikal pencarian di sidebar Detail K.I.B E.
+ */
+#aemGroupPanel .aem-group-left > .aem-search {
+    flex: 0 0 auto;
+    display: block;
+    width: 100%;
+}
+#aemGroupPanel .aem-group-left > .aem-search input {
+    width: 100%;
+    height: 43px;
+}
 #aemGroupPanel .aem-group-list {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
     gap: 8px;
     margin-top: 12px;
+    min-height: 0;
     max-height: none;
-    flex: 1;
-    overflow: auto;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 #aemGroupPanel .aem-location-card {
     display: flex;
@@ -2556,4 +2574,100 @@
 }
 @media (prefers-reduced-motion: reduce) {
     #aemGroupPanel .aem-location-card { transition: none; }
+}
+
+/* ============================================================================
+   K.I.B E — PENYESUAIAN KETERBACAAN & TATA LETAK (21 NOV 2026)
+   UI halaman dan Detail saja. Template preview/Print Excel tidak disentuh.
+   ============================================================================ */
+
+/* Halaman utama: teks yang sebelumnya berkisar 10–11px dibuat lebih nyaman. */
+#aemApp.aem-page {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+#aemApp .aem-crumb { font-size: 12px; }
+#aemApp .aem-hero > p { font-size: 14px; line-height: 1.65; }
+#aemApp .aem-date strong { font-size: 12px; }
+#aemApp .aem-date small { font-size: 11px; }
+#aemApp .aem-kpis small { font-size: 12px; }
+#aemApp .aem-kpis article span { font-size: 11.5px; }
+
+#aemListPanel .aem-panel-head h2 { font-size: 19px; }
+#aemListPanel .aem-panel-head p { font-size: 13px; line-height: 1.55; }
+#aemListPanel .aem-tabs a { font-size: 13px; }
+#aemListPanel .aem-toolbar input,
+#aemListPanel .aem-toolbar select {
+    min-height: 43px;
+    height: 43px;
+    font-size: 13px;
+}
+#aemListPanel .aem-btn {
+    min-height: 39px;
+    font-size: 12.5px;
+}
+#aemListPanel .aem-main-table { font-size: 13px; }
+#aemListPanel .aem-main-table th {
+    padding: 13px 12px;
+    font-size: 12px;
+    line-height: 1.45;
+}
+#aemListPanel .aem-main-table td {
+    padding: 13px 12px;
+    line-height: 1.55;
+}
+#aemListPanel .aem-main-table small { font-size: 11.5px; }
+#aemListPanel .aem-pill { font-size: 11.5px; }
+#aemListPanel .aem-icon { width: 36px; height: 36px; }
+#aemListPanel .aem-pagination { font-size: 12.5px; }
+
+/* Detail kelompok: hierarki teks dibuat jelas tanpa membesarkan laporan Excel. */
+#aemGroupPanel .aem-group-header small { font-size: 11px; }
+#aemGroupPanel .aem-group-header h2 { font-size: clamp(20px, 1.7vw, 24px); }
+#aemGroupPanel .aem-group-header p { font-size: 13px; }
+#aemGroupPanel .aem-group-left h3 { font-size: 15px; }
+#aemGroupPanel .aem-group-left > .aem-search input,
+#aemGroupPanel .aem-detail-controls .aem-search input {
+    font-size: 13px;
+    color: #23496f;
+}
+#aemGroupPanel .aem-location-card strong { font-size: 13px; }
+#aemGroupPanel .aem-location-card small,
+#aemGroupPanel .aem-location-card span { font-size: 11.5px; }
+#aemGroupPanel .aem-detail-heading strong { font-size: 16px; }
+#aemGroupPanel .aem-detail-heading p { font-size: 12px; }
+#aemGroupPanel .aem-detail-count { font-size: 12px; }
+#aemGroupPanel .aem-detail-controls .aem-btn { font-size: 12px; }
+#aemGroupPanel .aem-group-table th { font-size: 12px; line-height: 1.45; }
+#aemGroupPanel .aem-group-table td { font-size: 12.5px; line-height: 1.5; }
+#aemGroupPanel .aem-group-number-row th { font-size: 11px; }
+#aemGroupPanel .aem-detail-hint { font-size: 11.5px; }
+#aemGroupPanel .aem-detail-pager { font-size: 12px; }
+#aemGroupPanel .aem-detail-pager-controls .aem-btn { font-size: 12px; }
+#aemGroupPanel .aem-inspect-head small { font-size: 11px; }
+#aemGroupPanel .aem-inspect-head h3 { font-size: 16px; }
+#aemGroupPanel .aem-inspect-head p { font-size: 12px; line-height: 1.5; }
+#aemGroupPanel .aem-inspect-actions .aem-btn { font-size: 12px; }
+#aemGroupPanel .aem-inspect-box > strong { font-size: 12.5px; }
+#aemGroupPanel .aem-inspect-placeholder { font-size: 12px; }
+#aemGroupPanel .aem-group-bottom > span,
+#aemGroupPanel .aem-group-actions { font-size: 12px; }
+
+/* Kendalikan tinggi tabel saat daftar lokasi/asset panjang. */
+#aemGroupPanel .aem-detail-table-scroll {
+    min-height: 155px;
+    max-height: min(37dvh, 345px);
+}
+
+@media (max-width: 760px) {
+    #aemGroupPanel .aem-group-left {
+        max-height: 280px;
+    }
+    #aemGroupPanel .aem-group-list {
+        min-height: 70px;
+    }
+    #aemGroupPanel .aem-detail-table-scroll {
+        max-height: 38dvh;
+    }
 }
