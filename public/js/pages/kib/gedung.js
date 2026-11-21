@@ -1,4 +1,3 @@
-
 /*
 |--------------------------------------------------------------------------
 | K.I.B C — GEDUNG DAN BANGUNAN
@@ -1785,7 +1784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <img src="${escapeHtml(page.dataset.reportLogo)}" alt="Logo horizontal Perumda Tirta Kencana">
                 <div class="gedung-report-kop-title">
                     <strong>KARTU INVENTARIS BARANG (K.I.B)</strong>
-                    <strong>${escapeHtml(title)}</strong>
+                    <strong>${escapeHtml(title())}</strong>
                     <strong>PERIODE ${escapeHtml(periodName())}</strong>
                 </div>
             </div>
