@@ -1601,7 +1601,7 @@ class KIBController extends Controller
                 ->where('t.id_lokasi', $lokasi)
                 ->whereNotNull('t.nilai_aktiva_id')
                 ->orderByDesc('t.id')
-                ->first(['d.kode_dep', 'v.nama_div']);
+                ->first(['d.nama_dep', 'v.nama_div']);
         }
 
         // Data Tanah lama dapat tidak mempunyai tautan langsung ke voucher.
@@ -1616,7 +1616,7 @@ class KIBController extends Controller
                     ['TANAH', 'KIB A TANAH']
                 )
                 ->orderByDesc('n.id')
-                ->first(['d.kode_dep', 'v.nama_div']);
+                ->first(['d.nama_dep', 'v.nama_div']);
         }
 
         $sdm = collect();
@@ -1650,7 +1650,7 @@ class KIBController extends Controller
                 'provinsi' => 'KALIMANTAN TIMUR',
                 'kota' => 'SAMARINDA',
                 'unit' => 'PERUMDA TIRTA KENCANA',
-                'departemen' => trim((string) ($organisasi->kode_dep ?? '')) ?: '-',
+                'departemen' => trim((string) ($organisasi->nama_dep ?? '')) ?: '-',
                 'divisi' => trim((string) ($organisasi->nama_div ?? '')) ?: '-',
             ],
             'jumlah' => $items->count(),
@@ -5572,6 +5572,40 @@ class KIBController extends Controller
         if ($params['mode'] === 'detail' && $items->isEmpty()) {
             abort(404, 'Inventaris K.I.B E tidak ditemukan.');
         }
+
+        // Data manual lama bisa menyimpan kode (misalnya 00.02) atau ID,
+        // sedangkan template Excel harus menampilkan NAMA Departemen.
+        // Pemetaan dibaca sekali agar aman untuk ekspor seluruh kelompok.
+        $namaDepartemen = [];
+        if ($items->isNotEmpty() && Schema::hasTable('departemens')) {
+            $masterDepartemen = DB::table('departemens')
+                ->get(['id', 'kode_dep', 'nama_dep']);
+
+            foreach ($masterDepartemen as $master) {
+                $nama = trim((string) ($master->nama_dep ?? ''));
+                if ($nama === '') {
+                    continue;
+                }
+
+                // Urutkan ID dulu, kode lalu nama; kode tetap menjadi acuan
+                // bila ada kemiripan angka ID dengan kode departemen.
+                foreach ([$master->id, $master->kode_dep, $nama] as $key) {
+                    $key = strtolower(trim((string) ($key ?? '')));
+                    if ($key !== '') {
+                        $namaDepartemen[$key] = $nama;
+                    }
+                }
+            }
+        }
+
+        $items->transform(static function ($item) use ($namaDepartemen) {
+            $asli = trim((string) ($item->departemen ?? ''));
+            $key = strtolower($asli);
+            // Jika master tidak memiliki padanan, pertahankan nilai asli
+            // agar ketidaksesuaian data dapat ditelusuri, bukan disembunyikan.
+            $item->departemen = $namaDepartemen[$key] ?? $asli;
+            return $item;
+        });
 
         $identitas = static function (string $field) use ($items): string {
             $values = $items->pluck($field)
