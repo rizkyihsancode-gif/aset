@@ -33,7 +33,8 @@
         href="{{ asset('css/pages/kib/konstruksi.css') }}?v={{ file_exists(public_path('css/pages/kib/konstruksi.css')) ? filemtime(public_path('css/pages/kib/konstruksi.css')) : '1' }}">
 
     <section id="kfApp" class="kf-page" data-base="{{ url('/kib/konstruksi') }}"
-        data-group-url="{{ url('/kib/konstruksi/kelompok') }}" data-token="{{ csrf_token() }}">
+        data-group-url="{{ url('/kib/konstruksi/kelompok') }}" data-report-url="{{ route('kib.konstruksi.laporan') }}"
+        data-report-logo="{{ asset('images/logo_hr.png') }}" data-token="{{ csrf_token() }}">
 
         {{-- =====================================================
          HEADER HALAMAN
@@ -881,6 +882,10 @@
 
 
                 <footer class="kf-group-dialog-footer">
+                    <button type="button" id="kfGroupReportOpen" class="kf-btn kf-report-open">
+                        <i data-lucide="file-spreadsheet"></i>
+                        Print Excel Kelompok
+                    </button>
 
                     <button type="button" class="kf-btn kf-outline" data-kf-close="kfGroupDialog">
                         Tutup
@@ -1069,6 +1074,14 @@
 
                             </label>
 
+
+                            @if ($kfLuasAvailable ?? false)
+                                <label>
+                                    Luas (m²)
+                                    <input name="luas" id="kfLuas" type="number" step="any" min="0"
+                                        placeholder="Luas fisik konstruksi (m²)">
+                                </label>
+                            @endif
 
                             <label>
 
@@ -1271,7 +1284,7 @@
 
                 <button type="button" id="kfExportExcel" class="kf-btn kf-excel-export" disabled>
                     <i data-lucide="file-spreadsheet"></i>
-                    Export Excel (.xlsx)
+                    Print Excel Kelompok
                 </button>
 
                 <button type="button" class="kf-btn kf-outline" data-kf-close="kfModalDetail">
@@ -1356,6 +1369,74 @@
 
         </dialog>
 
+
+        {{-- STANDAR PRINT EXCEL K.I.B F — POPUP MENGIKUTI K.I.B A TANAH --}}
+        @if ($view === 'manual')
+            <dialog id="kfReportDialog" class="kf-report-dialog" aria-labelledby="kfReportTitle">
+                <header class="kf-report-head">
+                    <div>
+                        <small>LAPORAN KARTU INVENTARIS BARANG (K.I.B F)</small>
+                        <h2 id="kfReportTitle">Print Excel — Konstruksi</h2>
+                        <p id="kfReportCount">Seluruh inventaris dalam kelompok terpilih</p>
+                    </div>
+                    <button type="button" class="kf-x" data-kf-report-close aria-label="Tutup laporan">
+                        <i data-lucide="x"></i>
+                    </button>
+                </header>
+                <div class="kf-report-body">
+                    <form class="kf-report-form" autocomplete="off" onsubmit="return false;">
+                        <label class="kf-report-period">
+                            <strong>Periode laporan <span>*</span></strong>
+                            <input id="kfReportPeriod" type="month" required>
+                            <small>Contoh November 2026</small>
+                        </label>
+                        <div class="kf-report-sign-grid">
+                            <label><strong>Diketahui oleh <span>*</span></strong>
+                                <input id="kfReportSignerKnown" list="kfReportSdmOptions" type="search"
+                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            </label>
+                            <label><strong>Diperiksa oleh (1) <span>*</span></strong>
+                                <input id="kfReportSignerChecked1" list="kfReportSdmOptions" type="search"
+                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            </label>
+                            <label><strong>Diperiksa oleh (2) <span>*</span></strong>
+                                <input id="kfReportSignerChecked2" list="kfReportSdmOptions" type="search"
+                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            </label>
+                            <label><strong>Dibuat oleh <span>*</span></strong>
+                                <input id="kfReportSignerCreated" list="kfReportSdmOptions" type="search"
+                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            </label>
+                        </div>
+                        <datalist id="kfReportSdmOptions"></datalist>
+                        <small>Pilih penandatangan dari Master SDM Pendukung. Nama, jabatan dan NIP diambil dari
+                            database.</small>
+                    </form>
+                    <div id="kfReportInfo" class="kf-report-info" role="status" aria-live="polite">
+                        Pilih kelompok Konstruksi untuk memuat laporan.
+                    </div>
+                    <section id="kfReportPreviewBox" class="kf-report-preview-box" hidden>
+                        <div class="kf-report-preview-head">
+                            <strong>Preview Laporan K.I.B F</strong>
+                            <span>13 kolom sesuai template Konstruksi</span>
+                        </div>
+                        <div id="kfReportPreview" class="kf-report-scroller"></div>
+                    </section>
+                </div>
+                <footer class="kf-report-footer">
+                    <span>Hanya seluruh data kelompok terpilih · tanpa pagination.</span>
+                    <div>
+                        <button type="button" class="kf-btn kf-outline" data-kf-report-close>Batal</button>
+                        <button type="button" class="kf-btn kf-outline" id="kfReportPrint" disabled>
+                            <i data-lucide="printer"></i> Print
+                        </button>
+                        <button type="button" class="kf-btn kf-report-download" id="kfReportDownload" disabled>
+                            <i data-lucide="download"></i> Download Excel
+                        </button>
+                    </div>
+                </footer>
+            </dialog>
+        @endif
 
         <div id="kfToast" class="kf-toast" role="status" hidden></div>
 

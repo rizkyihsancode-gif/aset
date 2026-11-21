@@ -2259,3 +2259,93 @@
     }
 }
 
+
+/* =======================================================================
+   K.I.B F — STANDAR PRINT EXCEL PRD v2.1 / K.I.B A TANAH
+   Hanya tambahan: aturan CSS sebelumnya tidak dihapus.
+   ======================================================================= */
+.kf-page .kf-report-open,
+.kf-page .kf-report-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 45px;
+    padding: 10px 16px;
+    border: 1px solid #08765f;
+    border-radius: 10px;
+    background: linear-gradient(135deg,#0a9476,#08765f);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 750;
+    box-shadow: 0 6px 15px rgba(8,118,95,.16);
+    cursor: pointer;
+}
+.kf-page .kf-report-open:hover,
+.kf-page .kf-report-download:hover:enabled {
+    background: linear-gradient(135deg,#08765f,#07513f);
+}
+.kf-page .kf-report-download:disabled,
+.kf-page .kf-report-open:disabled {opacity:.52;cursor:not-allowed;box-shadow:none}
+.kf-report-dialog {
+    width: min(1260px, calc(100vw - 36px));
+    max-width: 1260px;
+    height: min(94vh, 940px);
+    max-height: 94vh;
+    padding: 0;
+    border: 1px solid #d6e6f6;
+    border-radius: 16px;
+    color: #133b66;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 25px 75px rgba(6,35,69,.26);
+}
+.kf-report-dialog::backdrop {background:rgba(2,26,60,.67);backdrop-filter:blur(3px)}
+.kf-report-dialog[open]{display:flex;flex-direction:column}
+.kf-report-head {
+    display:flex;justify-content:space-between;align-items:flex-start;
+    flex:none;padding:21px 24px 18px;
+    background:#f5f9ff;border-bottom:1px solid #d9e6f6;gap:14px;
+}
+.kf-report-head small {color:#0070d9;letter-spacing:1px;font-weight:800;font-size:10px}
+.kf-report-head h2 {font-size:20px;margin:6px 0 4px;color:#103c6e}
+.kf-report-head p {font-size:12px;margin:0;color:#5278a1}
+.kf-report-body {min-height:0;overflow:auto;flex:1;padding:18px 24px 20px}
+.kf-report-form {border:1px solid #d6e5f6;border-radius:12px;background:#f6faff;padding:18px;display:grid;gap:20px}
+.kf-report-form label {display:grid;gap:7px;min-width:0;font-size:12px;color:#194269}
+.kf-report-form label strong {font-size:12px;font-weight:800}
+.kf-report-form label strong span {color:#e04252}
+.kf-report-form label input {height:42px;min-width:0;width:100%;border:1px solid #b8cee7;border-radius:8px;background:#fff;padding:0 11px;font-size:12px;font-family:inherit;color:#133b66;box-sizing:border-box}
+.kf-report-form small {font-size:11px;color:#6b8caf}
+.kf-report-period {max-width:340px}
+.kf-report-sign-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kf-report-info {margin-top:14px;padding:12px 15px;border:1px solid #b8d7f8;border-radius:9px;background:#f0f7ff;color:#4b739a;font-size:12px}
+.kf-report-preview-box {margin-top:14px;border:1px solid #cbdff4;border-radius:10px;overflow:hidden}
+.kf-report-preview-head {display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f2f7fc;font-size:12px}
+.kf-report-scroller {overflow:auto;max-width:100%;background:#fff;padding:14px}
+.kf-report-paper {min-width:1100px;padding:12px 16px;background:#fff;color:#1c2936;font:11px Arial,sans-serif}
+.kf-report-paper-head {min-height:100px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.kf-report-paper-head img {position:absolute;left:8px;max-height:72px;max-width:270px;width:auto;height:auto;object-fit:contain}
+.kf-report-paper-heading {display:flex;flex-direction:column;gap:5px;text-align:center;font-weight:700}
+.kf-report-org {display:grid;gap:4px;max-width:480px;margin:12px 0 22px}
+.kf-report-org>div {display:grid;grid-template-columns:145px 1fr;gap:8px}
+.kf-report-sheet {border-collapse:collapse;width:100%;table-layout:fixed;font-size:10px}
+.kf-report-sheet th,.kf-report-sheet td {border:1px solid #293c51;padding:7px 5px;text-align:center;vertical-align:middle;overflow-wrap:anywhere;line-height:1.4}
+.kf-report-sheet th {background:#c7def2;font-weight:750}
+.kf-report-sheet thead {display:table-header-group}
+.kf-report-date {text-align:right;font-weight:700;padding:15px 0 8px}
+.kf-report-signatures {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;text-align:center}
+.kf-report-sign {display:flex;flex-direction:column;align-items:center;min-height:125px;gap:6px}
+.kf-report-sign strong {margin-top:auto;text-decoration:underline}
+.kf-report-footer {flex:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 22px;border-top:1px solid #d9e6f6;background:#fff;font-size:11px;color:#6585a6}
+.kf-report-footer>div {display:flex;gap:8px;align-items:center}
+.kf-report-footer .kf-btn {white-space:nowrap}
+@media(max-width:960px){.kf-report-sign-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ .kf-report-dialog {width:calc(100vw - 14px);height:calc(100vh - 30px)}
+ .kf-report-head,.kf-report-body {padding:14px}
+ .kf-report-sign-grid {grid-template-columns:1fr}
+ .kf-report-footer {flex-wrap:wrap;padding:10px 14px}
+ .kf-report-footer>div {width:100%;justify-content:flex-end}
+}
+@media print {.kf-report-paper{min-width:0}.kf-report-sheet tr{break-inside:avoid}}

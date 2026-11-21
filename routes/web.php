@@ -938,6 +938,10 @@ Route::get(
     ->whereNumber('dokumen')
     ->name('kib.konstruksi.dokumen');
 
+// K.I.B F: seluruh inventaris dalam satu kelompok Detail Konstruksi.
+Route::get('/kib/konstruksi/laporan', [KIBController::class, 'laporanKonstruksiKibF'])
+    ->name('kib.konstruksi.laporan');
+
 Route::get(
     '/kib/konstruksi/{konstruksi}',
     [KIBController::class, 'showKonstruksiManual']

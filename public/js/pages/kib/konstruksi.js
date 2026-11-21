@@ -52,6 +52,7 @@
         'departemen_manual',
         'divisi_manual',
         'tahun',
+        'luas',
         'type',
         'struktur',
         'materi',
@@ -1051,10 +1052,10 @@
             el(
                 'strong',
                 '',
-                'KARTU INVENTARIS BARANG (KIB) F'
+                'KARTU INVENTARIS BARANG (K.I.B) F'
             ),
             el('h3', '', 'KONSTRUKSI'),
-            el('span', '', `S/D BULAN ${period}`)
+            el('span', '', `PERIODE ${period}`)
         );
 
         body.appendChild(heading);
@@ -1079,18 +1080,8 @@
             ],
 
             [
-                'KATEGORI',
-                categoryName(item.kategori)
-            ],
-
-            [
-                'CAKUPAN',
-                item.cakupan
-            ],
-
-            [
-                'LOKASI',
-                item.nama_lokasi ?? item.lokasi
+                'KODE STRUKTUR',
+                item.kode_struktur ?? '-'
             ]
         ];
 
@@ -1182,22 +1173,9 @@
             2
         );
 
-        th(
-            header1,
-            'Letak / Lokasi Alamat',
-            2
-        );
+        th(header1, 'Luas (M²)', 2);
 
-        /*
-         * KOLOM BARU:
-         * LANGSUNG SETELAH LOKASI.
-         */
-
-        th(
-            header1,
-            'Cakupan',
-            2
-        );
+        th(header1, 'Letak / Lokasi Alamat', 2);
 
         th(header1, 'Status Tanah', 2);
 
@@ -1325,7 +1303,10 @@
             'kf-excel-center'
         );
 
-        /* 7. LETAK / LOKASI ALAMAT */
+        /* 7. LUAS (jika kolom tersedia dalam database) */
+        addCell(dataRow, shown(item.luas), 'kf-excel-center');
+
+        /* 8. LETAK / LOKASI ALAMAT */
 
         const location = [
             item.nama_lokasi ?? item.lokasi,
@@ -1345,17 +1326,6 @@
             dataRow,
             shown(location),
             'kf-excel-multiline'
-        );
-
-        /* ==================================================
-           8. CAKUPAN — KOLOM TAMBAHAN
-           DATA DARI item.cakupan
-        ================================================== */
-
-        addCell(
-            dataRow,
-            shown(item.cakupan),
-            'kf-excel-cakupan'
         );
 
         /* 9. STATUS TANAH */
@@ -1495,6 +1465,8 @@
        - Foto/PDF tidak ditanam di dalam XLSX; nama lampiran dicatat.
     ====================================================== */
 
+    // Generator historis satu barang tidak lagi dipanggil oleh tombol laporan.
+    // Dipertahankan sementara untuk keamanan kompatibilitas kode lama.
     function buildKonstruksiXlsx(item) {
         if (!item || !item.id) {
             throw new Error('Pilih Detail Konstruksi terlebih dahulu.');
@@ -1653,7 +1625,7 @@
         ];
 
         const rows = [
-            row(1, [safeCell('A1', 'KARTU INVENTARIS BARANG (KIB) F', 1)], 28),
+            row(1, [safeCell('A1', 'KARTU INVENTARIS BARANG (K.I.B) F', 1)], 28),
             row(2, [safeCell('A2', 'KONSTRUKSI DALAM PENGERJAAN', 1)], 26),
             ...metadata.map(([label, value], index) => row(index + 4, [
                 safeCell(`A${index + 4}`, label, 4),
@@ -1722,34 +1694,8 @@
         ]);
     }
 
-    $('kfExportExcel')?.addEventListener('click', () => {
-        if (!active || !detailDialog?.open) {
-            toast('Buka Detail Konstruksi terlebih dahulu.');
-            return;
-        }
-
-        try {
-            const content = buildKonstruksiXlsx(active);
-            const blob = new Blob([content], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
-            const url = URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            const filename = String(active.nama_barang ?? active.nama_pekerjaan ?? active.id)
-                .replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 48);
-
-            anchor.href = url;
-            anchor.download = `KIB_F_${active.id}_${filename || 'Konstruksi'}.xlsx`;
-            document.body.appendChild(anchor);
-            anchor.click();
-            anchor.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 3000);
-        } catch (error) {
-            console.error('EXPORT KIB F:', error);
-            toast('Ekspor Excel gagal: ' + error.message);
-        }
-    });
-
+    // Export versi lama per satu barang digantikan popup baku per kelompok.
+    // Handler baru didefinisikan pada blok K.I.B F Report di bawah.
 
     /* ======================================================
        DETAIL KELOMPOK
@@ -2501,6 +2447,374 @@
             saving = false;
             button.disabled = false;
         }
+    });
+
+    /* ================================================================
+       K.I.B F — LAPORAN PER KELOMPOK (PRD v2.1)
+       Pola popup/preview/cetak mengikuti K.I.B A Tanah.
+       Konstruksi hanya diekspor per kategori + lokasi + divisi;
+       tidak pernah memakai pagination Detail sebagai batas ekspor.
+       ================================================================ */
+
+    const reportDialog = $('kfReportDialog');
+    const reportInputs = ['known', 'checked1', 'checked2', 'created']
+        .map(name => $(
+            'kfReportSigner' + ({known:'Known',checked1:'Checked1',checked2:'Checked2',created:'Created'}[name])
+        ));
+    const reportState = { response: null, loading: false, request: 0 };
+    const reportPeriod = $('kfReportPeriod');
+    const reportInfo = $('kfReportInfo');
+    const reportPreview = $('kfReportPreview');
+    const reportPreviewBox = $('kfReportPreviewBox');
+    const reportPrint = $('kfReportPrint');
+    const reportDownload = $('kfReportDownload');
+    const reportRoles = ['Diketahui oleh', 'Diperiksa oleh (1)', 'Diperiksa oleh (2)', 'Dibuat oleh'];
+    const reportColumns = [
+        'No.', 'Nama Barang / Jenis Barang', 'Tahun', 'Bangunan (P, SP, D)',
+        'Bertingkat / Tidak', 'Beton / Tidak', 'Luas (M²)', 'Letak / Lokasi Alamat',
+        'Status Tanah', 'Asal Usul Pembiayaan', 'Status Aset', 'Nilai (Rp)', 'Dokumen Pendukung'
+    ];
+    const reportHtml = value => String(value ?? '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    const reportCell = value => String(value ?? '').trim() || '—';
+    const reportMonth = () => {
+        const parts = String(reportPeriod?.value || '').split('-');
+        const year = Number(parts[0]);
+        const month = Number(parts[1]);
+        if (!year || month < 1 || month > 12) return '';
+        return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+            .format(new Date(Date.UTC(year, month-1, 1))).toUpperCase();
+    };
+    function reportSdmOption(s) {
+        return `${s.nama} — ${s.jabatan || 'Tanpa Jabatan'} — NIP ${s.nip || '-'}`;
+    }
+    const reportSigner = input =>
+        asArray(reportState.response?.sdm).find(s => reportSdmOption(s) === input?.value.trim()) || null;
+    function reportReady() {
+        return !!reportState.response && !reportState.loading && !!reportMonth()
+            && reportInputs.every(input => !!reportSigner(input))
+            && asArray(reportState.response.items).length > 0;
+    }
+    function reportLocation(row) {
+        return [...new Set([row.lokasi,row.alamat,row.letak]
+            .map(x => String(x ?? '').trim()).filter(Boolean))].join('\n') || '—';
+    }
+    function reportDocument(row) {
+        return [row.keterangan, ...asArray(row.dokumens)]
+            .map(s => String(s ?? '').trim()).filter(Boolean).join('\n') || '—';
+    }
+    function reportValues(row, index) {
+        const bangunan = {P:'Permanen',SP:'Semi Permanen',D:'Darurat'}[String(row.bangunan ?? '').toUpperCase()]
+            || reportCell(row.bangunan);
+        const financing = pembiayaanLabel(row.asal_pembiayaan);
+        const name = [reportCell(row.nama), row.cakupan ? `Cakupan: ${row.cakupan}` : '',
+            row.uraian ? `Uraian Pekerjaan:\n${row.uraian}` : ''].filter(Boolean).join('\n');
+        return [index+1,name,reportCell(row.tahun),bangunan,reportCell(row.bertingkat),
+            reportCell(row.beton),reportCell(row.luas),reportLocation(row),
+            reportCell(row.status_tanah),financing,reportCell(row.status_aset),
+            Number(row.nilai || 0),reportDocument(row)];
+    }
+    const reportMetadata = () => {
+        const m = reportState.response?.organisasi || {};
+        return [
+            ['PROVINSI',m.provinsi], ['KOTA',m.kota], ['UNIT',m.unit],
+            ['DEPARTEMEN',m.departemen], ['DIVISI',m.divisi],
+            ['KODE STRUKTUR',m.kode_struktur]
+        ];
+    };
+    const reportPeriodToday = () => {
+        const p = new Intl.DateTimeFormat('en-US', {
+            timeZone:'Asia/Makassar', year:'numeric', month:'2-digit'
+        }).formatToParts(new Date());
+        return `${p.find(x=>x.type==='year').value}-${p.find(x=>x.type==='month').value}`;
+    };
+    if (reportPeriod && !reportPeriod.value) reportPeriod.value = reportPeriodToday();
+    function reportPaper() {
+        const state = reportState.response;
+        if (!state || !reportReady()) return '';
+        const rows = asArray(state.items).map((item, i) =>
+            `<tr>${reportValues(item,i).map((v, c) =>
+                `<td>${reportHtml(c===11 ? money(v) : v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('');
+        const header = reportColumns.map((c,i) => i===4
+            ? '<th colspan="2">Konstruksi Bangunan</th>'
+            : (i===5 ? '' : `<th${i===4||i===5?'':' rowspan="2"'}>${reportHtml(c)}</th>`)).join('');
+        // Konstruksi Bangunan mempunyai dua subkolom (5, 6).
+        const columns = reportColumns.map((name,i) => i===4 || i===5
+            ? (i===4 ? '<th colspan="2">Konstruksi Bangunan</th>' : '')
+            : `<th rowspan="2">${reportHtml(name)}</th>`).join('');
+        const signers = reportInputs.map((input, index) => {
+            const s=reportSigner(input);
+            return `<div class="kf-report-sign"><b>${reportRoles[index]},</b><span>${reportHtml(s.jabatan || '-')}</span><strong>${reportHtml(s.nama)}</strong><small>NIP. ${reportHtml(s.nip||'-')}</small></div>`;
+        }).join('');
+        const logo = root.dataset.reportLogo || '';
+        return `<article class="kf-report-paper">
+          <header class="kf-report-paper-head">
+            <img src="${reportHtml(logo)}" alt="Logo Perumda Tirta Kencana">
+            <div class="kf-report-paper-heading"><b>KARTU INVENTARIS BARANG (K.I.B) F</b>
+            <strong>KONSTRUKSI</strong><span>PERIODE ${reportHtml(reportMonth())}</span></div>
+          </header>
+          <section class="kf-report-org">${reportMetadata().map(([k,v])=>
+              `<div><b>${reportHtml(k)}</b><span>: ${reportHtml(reportCell(v))}</span></div>`).join('')}</section>
+          <table class="kf-report-sheet"><thead><tr>${columns}</tr><tr><th>Bertingkat / Tidak</th><th>Beton / Tidak</th></tr></thead><tbody>${rows}</tbody></table>
+          <p class="kf-report-date">Samarinda, ${reportHtml(new Intl.DateTimeFormat('id-ID', {
+              timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'
+          }).format(new Date()))}</p>
+          <section class="kf-report-signatures">${signers}</section>
+        </article>`;
+    }
+    function renderReport() {
+        const ok = reportReady();
+        if (reportPrint) reportPrint.disabled=!ok;
+        if (reportDownload) reportDownload.disabled=!ok;
+        if (reportPreviewBox) reportPreviewBox.hidden=!ok;
+        if (reportPreview) reportPreview.innerHTML=ok?reportPaper():'';
+        if (reportInfo && !reportState.loading) {
+            reportInfo.textContent = reportState.response
+                ? (ok
+                    ? `Preview siap: ${reportState.response.items.length} data dalam kelompok ${reportState.response.kelompok.lokasi}.`
+                    : `Pilih periode dan empat penandatangan dari Master SDM Pendukung untuk melihat preview. ${reportState.response.items.length} data tersedia.`)
+                : 'Pilih kelompok Konstruksi untuk memuat laporan.';
+            if (reportState.response?.keterangan_luas) reportInfo.textContent += ` ${reportState.response.keterangan_luas}`;
+        }
+    }
+    async function openKfReport(group) {
+        if (!reportDialog) return;
+        const kategori=String(group?.kategori ?? '').trim();
+        const lokasi=String(group?.lokasi ?? '').trim();
+        const divisi=String(group?.divisi ?? '').trim();
+        if (!kategori || !lokasi || !divisi) {
+            toast('Pilih kelompok Konstruksi terlebih dahulu.');return;
+        }
+        const version=++reportState.request;
+        reportState.response=null;
+        reportState.loading=true;
+        reportInputs.forEach(input => {if(input)input.value='';});
+        $('kfReportCount').textContent=`${kategori} / ${lokasi} / ${divisi}`;
+        if(reportInfo)reportInfo.textContent='Memuat seluruh data kelompok dan SDM Pendukung...';
+        reportDialog.showModal();
+        renderReport();
+        const url=new URL(root.dataset.reportUrl,window.location.href);
+        url.searchParams.set('kategori',kategori);
+        url.searchParams.set('lokasi',lokasi);
+        url.searchParams.set('divisi',divisi);
+        try {
+            const result=await api(url.toString());
+            if(version!==reportState.request || !reportDialog.open)return;
+            reportState.response=result;
+            const list=$('kfReportSdmOptions');
+            if(list){ list.replaceChildren();
+                asArray(result.sdm).forEach(s => {
+                    const option=document.createElement('option');
+                    option.value=reportSdmOption(s);
+                    list.appendChild(option);
+                });
+            }
+        } catch(error) {
+            if(version===reportState.request && reportInfo) {
+                reportInfo.textContent='Gagal memuat laporan: '+error.message;
+            }
+        } finally {
+            if(version===reportState.request){reportState.loading=false;renderReport();}
+        }
+    }
+    $('kfGroupReportOpen')?.addEventListener('click', () => {
+        if(groupState.selected)openKfReport(groupState.selected);
+        else toast('Pilih kelompok lokasi terlebih dahulu.');
+    });
+    $('kfExportExcel')?.addEventListener('click', () => {
+        if(!active)return;
+        openKfReport({
+            kategori: String(active.kategori||'Tanpa Kategori'),
+            lokasi: String(active.lokasi||'Tanpa Lokasi'),
+            divisi: String(active.divisi||'Tanpa Divisi')
+        });
+    });
+    reportInputs.forEach(input => { input?.addEventListener('input',renderReport); input?.addEventListener('change',renderReport); });
+    reportPeriod?.addEventListener('change',renderReport);
+    reportDialog?.querySelectorAll('[data-kf-report-close]').forEach(btn =>
+        btn.addEventListener('click',()=>reportDialog.close()));
+    reportDialog?.addEventListener('close',()=>{reportState.request++;reportState.loading=false;});
+
+    const reportPrintCss = `@page{size:A3 landscape;margin:10mm}
+      body{margin:0;font-family:Arial,sans-serif}
+      .kf-report-paper{background:#fff;color:#111;padding:12px;font:11px Arial;min-width:0}
+      .kf-report-paper-head{position:relative;display:flex;justify-content:center;align-items:center;min-height:95px;margin-bottom:15px}
+      .kf-report-paper-head img{position:absolute;left:8px;max-width:275px;max-height:72px;width:auto;height:auto;object-fit:contain}
+      .kf-report-paper-heading{text-align:center;display:flex;flex-direction:column;gap:4px;font-weight:700}
+      .kf-report-org{margin:12px 0 18px;width:400px;max-width:100%;display:grid;gap:3px}
+      .kf-report-org>div{display:grid;grid-template-columns:140px 1fr;gap:5px}
+      .kf-report-sheet{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px}
+      .kf-report-sheet th,.kf-report-sheet td{border:1px solid #2e394a;text-align:center;vertical-align:middle;padding:6px 4px;overflow-wrap:anywhere}
+      .kf-report-sheet th{background:#cbdff1;font-weight:700}
+      .kf-report-sheet td{white-space:normal;line-height:1.35}
+      .kf-report-sheet tr{break-inside:avoid}
+      .kf-report-sheet thead{display:table-header-group}
+      .kf-report-date{text-align:right;font-weight:bold;margin:20px 15px 8px}
+      .kf-report-signatures{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;text-align:center}
+      .kf-report-sign{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:125px}
+      .kf-report-sign strong{margin-top:auto;text-decoration:underline}`;
+    reportPrint?.addEventListener('click',()=>{
+        if(!reportReady())return;
+        const windowPrint=window.open('','_blank');
+        if(!windowPrint){if(reportInfo)reportInfo.textContent='Izinkan popup untuk mencetak laporan.';return;}
+        windowPrint.document.open();
+        windowPrint.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>K.I.B F — Konstruksi</title><style>${reportPrintCss}</style></head><body>${reportPaper()}</body></html>`);
+        windowPrint.document.close();
+        windowPrint.addEventListener('load',()=>{windowPrint.focus();windowPrint.print();},{once:true});
+    });
+
+    // ZIP store tanpa dependensi: Uint8Array asli untuk logo PNG, bukan UTF-8 string.
+    function reportZip(entries) {
+        const encoder=new TextEncoder();
+        const crcTable=new Uint32Array(256);
+        for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);crcTable[i]=c>>>0;}
+        const crc32=bytes=>{let c=0xFFFFFFFF;for(const b of bytes)c=crcTable[(c^b)&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;};
+        const local=[],central=[];let offset=0,size=0;
+        for(const entry of entries){
+            const name=encoder.encode(entry.name);
+            const bytes=entry.data instanceof Uint8Array?entry.data:encoder.encode(String(entry.data));
+            const crc=crc32(bytes);
+            const head=new Uint8Array(30+name.length);const h=new DataView(head.buffer);
+            h.setUint32(0,0x04034B50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);
+            h.setUint32(14,crc,true);h.setUint32(18,bytes.length,true);h.setUint32(22,bytes.length,true);
+            h.setUint16(26,name.length,true);head.set(name,30);local.push(head,bytes);
+            const center=new Uint8Array(46+name.length);const c=new DataView(center.buffer);
+            c.setUint32(0,0x02014B50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);
+            c.setUint16(8,0x0800,true);c.setUint32(16,crc,true);c.setUint32(20,bytes.length,true);
+            c.setUint32(24,bytes.length,true);c.setUint16(28,name.length,true);c.setUint32(42,offset,true);
+            center.set(name,46);central.push(center);offset+=head.length+bytes.length;size+=center.length;
+        }
+        const end=new Uint8Array(22);const v=new DataView(end.buffer);v.setUint32(0,0x06054B50,true);
+        v.setUint16(8,entries.length,true);v.setUint16(10,entries.length,true);
+        v.setUint32(12,size,true);v.setUint32(16,offset,true);
+        return new Blob([...local,...central,end], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    }
+    const reportXml=value=>String(value??'').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,'')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+    const reportLetter=n=>String.fromCharCode(64+n);
+    function reportXlsx(logoBytes) {
+        const data=asArray(reportState.response?.items);
+        const cells=new Map(),merges=[],heights=new Map();
+        const put=(r,c,val,style=0)=>{if(!cells.has(r))cells.set(r,new Map());cells.get(r).set(c,{val:val??'',style});};
+        const merged=(r1,c1,r2,c2,val,style=0)=>{
+            for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)put(r,c,'',style);
+            put(r1,c1,val,style);merges.push(`${reportLetter(c1)}${r1}:${reportLetter(c2)}${r2}`);
+        };
+        merged(3,1,3,13,'KARTU INVENTARIS BARANG (K.I.B) F',1);
+        merged(4,1,4,13,'KONSTRUKSI',1);
+        merged(5,1,5,13,`PERIODE ${reportMonth()}`,1);
+        for(let i=1;i<=6;i++)heights.set(i,25);
+        reportMetadata().forEach(([key,value],i)=>{
+            merged(8+i,1,8+i,2,key,4);merged(8+i,3,8+i,6,`: ${reportCell(value)}`,4);heights.set(8+i,19);
+        });
+        const header=16;
+        for(let c=1;c<=13;c++){
+            if(c===5){merged(header,5,header,6,'KONSTRUKSI BANGUNAN',2);
+                put(header+1,5,'BERTINGKAT / TIDAK',2);put(header+1,6,'BETON / TIDAK',2);
+            }else if(c!==6){merged(header,c,header+1,c,reportColumns[c-1].toUpperCase(),2);}
+            put(header+2,c,String(c),2);
+        }
+        heights.set(header,32);heights.set(header+1,32);heights.set(header+2,19);
+        data.forEach((item,i)=>{
+            const r=header+3+i;const values=reportValues(item,i);
+            values.forEach((v,c)=>put(r,c+1,v,c===11?7:3));
+            const longest=Math.max(...values.map(v=>String(v??'').length));
+            heights.set(r,Math.min(190,Math.max(35,Math.ceil(longest/40)*14+15)));
+        });
+        const signatureRow=header+data.length+6;
+        merged(signatureRow,10,signatureRow,13,
+            `Samarinda, ${new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'}).format(new Date())}`,5);
+        [[1,3],[4,6],[7,9],[10,13]].forEach(([a,b],i)=>{
+            const s=reportSigner(reportInputs[i]);
+            merged(signatureRow+2,a,signatureRow+2,b,`${reportRoles[i]},`,5);
+            merged(signatureRow+3,a,signatureRow+3,b,reportCell(s.jabatan),5);
+            merged(signatureRow+8,a,signatureRow+8,b,s.nama,6);
+            merged(signatureRow+9,a,signatureRow+9,b,`NIP. ${reportCell(s.nip)}`,5);
+        });
+        const lastRow=signatureRow+10;
+        const widths=[7,42,12,17,20,19,15,42,22,24,20,21,50];
+        const cols=widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
+        const rows=[...cells].sort(([a],[b])=>a-b).map(([r,map])=>
+            `<row r="${r}"${heights.has(r)?` ht="${heights.get(r)}" customHeight="1"`:''}>`+
+                [...map].sort(([a],[b])=>a-b).map(([c,obj])=>
+                    obj.style===7
+                        ? `<c r="${reportLetter(c)}${r}" s="7"><v>${Number(obj.val)||0}</v></c>`
+                        : `<c r="${reportLetter(c)}${r}" s="${obj.style}" t="inlineStr"><is><t xml:space="preserve">${reportXml(obj.val)}</t></is></c>`).join('')+
+                '</row>').join('');
+        const main='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+        const rel='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+        const pkg='http://schemas.openxmlformats.org/package/2006/relationships';
+        const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+          <worksheet xmlns="${main}" xmlns:r="${rel}">
+          <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:M${lastRow}"/>
+          <sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>
+          <cols>${cols}</cols><sheetData>${rows}</sheetData>
+          <mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells>
+          <printOptions horizontalCentered="1"/><pageMargins left="0.25" right="0.25" top="0.4" bottom="0.4" header="0.15" footer="0.15"/>
+          <pageSetup paperSize="8" orientation="landscape" fitToWidth="1" fitToHeight="0"/>
+          ${logoBytes?.length?'<drawing r:id="rId1"/>':''}</worksheet>`;
+        const fonts=[
+            '<font><sz val="10"/><name val="Arial"/></font>',
+            '<font><b/><sz val="12"/><name val="Arial"/></font>',
+            '<font><b/><sz val="9"/><name val="Arial"/></font>',
+            '<font><b/><u/><sz val="10"/><name val="Arial"/></font>'
+        ].join('');
+        const fills='<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC7DFF0"/></patternFill></fill></fills>';
+        const borders='<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders>';
+        const xfs=[[0,0,0,'left'],[1,0,0,'center'],[2,2,1,'center'],[0,0,1,'center'],
+            [2,0,0,'left'],[0,0,0,'center'],[3,0,0,'center'],[0,0,1,'right']]
+            .map(([f,fill,border,align],i)=>`<xf numFmtId="${i===7?4:0}" fontId="${f}" fillId="${fill}" borderId="${border}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
+        const styles=`<?xml version="1.0" encoding="UTF-8"?><styleSheet xmlns="${main}">
+          <fonts count="4">${fonts}</fonts>${fills}${borders}
+          <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+          <cellXfs count="8">${xfs}</cellXfs></styleSheet>`;
+        const book=`<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="${main}" xmlns:r="${rel}">
+          <sheets><sheet name="KIB F - Konstruksi" sheetId="1" r:id="rId1"/></sheets>
+          <definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'KIB F - Konstruksi'!$16:$18</definedName>
+          <definedName name="_xlnm.Print_Area" localSheetId="0">'KIB F - Konstruksi'!$A$1:$M$${lastRow}</definedName></definedNames></workbook>`;
+        const files=[
+            {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="${pkg}"><Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+            {name:'xl/workbook.xml',data:book},
+            {name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="${pkg}"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>`},
+            {name:'xl/worksheets/sheet1.xml',data:sheet},
+            {name:'xl/styles.xml',data:styles},
+        ];
+        if(logoBytes?.length){
+            let cy=750000;
+            if(logoBytes[0]===137&&logoBytes[1]===80&&logoBytes.length>=24){
+                const view=new DataView(logoBytes.buffer,logoBytes.byteOffset,logoBytes.byteLength);
+                const w=view.getUint32(16,false),h=view.getUint32(20,false);
+                if(w&&h)cy=Math.round(2700000*h/w);
+            }
+            files.push(
+                {name:'xl/media/logo.png',data:logoBytes},
+                {name:'xl/worksheets/_rels/sheet1.xml.rels',data:`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="${pkg}"><Relationship Id="rId1" Type="${rel}/drawing" Target="../drawings/drawing1.xml"/></Relationships>`},
+                {name:'xl/drawings/_rels/drawing1.xml.rels',data:`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="${pkg}"><Relationship Id="rId1" Type="${rel}/image" Target="../media/logo.png"/></Relationships>`},
+                {name:'xl/drawings/drawing1.xml',data:`<?xml version="1.0" encoding="UTF-8"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${rel}"><xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>110000</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>20000</xdr:rowOff></xdr:from><xdr:ext cx="2700000" cy="${cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="1" name="Logo Perumda"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>`}
+            );
+        }
+        const types=`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${logoBytes?.length?'<Default Extension="png" ContentType="image/png"/>':''}<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${logoBytes?.length?'<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>':''}</Types>`;
+        files.unshift({name:'[Content_Types].xml',data:types});
+        return reportZip(files);
+    }
+    reportDownload?.addEventListener('click',async()=>{
+        if(!reportReady())return;
+        reportDownload.disabled=true;
+        try{
+            let logo=null;
+            try{const response=await fetch(root.dataset.reportLogo,{credentials:'same-origin'});
+                if(response.ok)logo=new Uint8Array(await response.arrayBuffer());
+            }catch(e){console.warn('Logo tidak termuat',e);}
+            const blob=reportXlsx(logo);
+            const link=document.createElement('a');
+            const href=URL.createObjectURL(blob);
+            const lokasi=String(reportState.response.kelompok.lokasi).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,35);
+            link.href=href;link.download=`KIB_F_Konstruksi_${lokasi}_${reportPeriod.value}.xlsx`;
+            document.body.appendChild(link);link.click();link.remove();
+            setTimeout(()=>URL.revokeObjectURL(href),12000);
+        }catch(e){if(reportInfo)reportInfo.textContent='Gagal membuat Excel: '+e.message;}
+        finally{reportDownload.disabled=!reportReady();}
     });
 
     /* ======================================================

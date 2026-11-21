@@ -6854,6 +6854,138 @@ class KIBController extends Controller
 |--------------------------------------------------------------------------
 */
 
+    /**
+     * K.I.B F: laporan keseluruhan satu kelompok Kategori + Lokasi + Divisi.
+     * Tidak memakai pagination Detail dan tidak mengubah data historis.
+     */
+    public function laporanKonstruksiKibF(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $params = $request->validate([
+            'kategori' => ['required', 'string', 'max:30'],
+            'lokasi' => ['required', 'string', 'max:500'],
+            'divisi' => ['required', 'string', 'max:255'],
+        ]);
+
+        $normal = static fn(string $column, string $fallback) =>
+        "COALESCE(NULLIF(BTRIM({$column}), ''), '{$fallback}')";
+
+        $query = DB::table('kib_konstruksi_manual')
+            ->whereRaw($normal('kategori', 'Tanpa Kategori') . ' = ?', [$params['kategori']])
+            ->whereRaw($normal('lokasi', 'Tanpa Lokasi') . ' = ?', [$params['lokasi']])
+            ->whereRaw($normal('divisi', 'Tanpa Divisi') . ' = ?', [$params['divisi']]);
+
+        // Seluruh kelompok, termasuk data di halaman pagination lain.
+        $items = $query->orderByDesc('id')->get();
+        if ($items->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kelompok konstruksi tidak memiliki data.',
+            ], 404);
+        }
+
+        $ids = $items->pluck('id')->map(static fn($id) => (int) $id)->all();
+        $docs = DB::table('kib_konstruksi_dokumens')
+            ->whereIn('konstruksi_id', $ids)
+            ->select('konstruksi_id', 'nama_asli')
+            ->orderBy('id')->get()->groupBy('konstruksi_id');
+
+        $hasLuas = Schema::hasColumn('kib_konstruksi_manual', 'luas');
+        $rows = $items->map(function ($row) use ($docs, $hasLuas) {
+            $id = (int) $row->id;
+            return [
+                'id' => $id,
+                'nama' => trim((string) ($row->nama_pekerjaan ?? '')),
+                'uraian' => trim((string) ($row->uraian_pekerjaan ?? '')),
+                'cakupan' => trim((string) ($row->cakupan ?? '')),
+                'tahun' => $row->tahun ?? null,
+                'bangunan' => $row->jenis_bangunan ?? null,
+                'bertingkat' => $row->bertingkat ?? null,
+                'beton' => $row->material ?? null,
+                'luas' => $hasLuas ? ($row->luas ?? null) : null,
+                'lokasi' => $row->lokasi ?? null,
+                'alamat' => $row->alamat ?? null,
+                'letak' => $row->letak ?? null,
+                'status_tanah' => $row->status_tanah ?? null,
+                'asal_pembiayaan' => $row->asal_pembiayaan ?? null,
+                'status_aset' => $row->status_aset ?? null,
+                'nilai' => $row->nilai ?? null,
+                'keterangan' => $row->keterangan ?? null,
+                'dokumens' => ($docs->get($id) ?? collect())
+                    ->pluck('nama_asli')->map(static fn($name) => (string) $name)->values()->all(),
+            ];
+        })->values()->all();
+
+        // Data historis boleh menggunakan nama maupun kode Departemen.
+        $departemen = $items->map(
+            fn($row) =>
+            $this->kibNamaDepartemenUntukLaporan($row->departemen ?? null)
+        )->filter(static fn($value) => $value !== '-' && trim($value) !== '')
+            ->unique()->values();
+        $namaDepartemen = $departemen->count() > 1
+            ? 'BERAGAM' : ($departemen->first() ?? '-');
+
+        // Satu lokasi dapat memiliki beberapa kode struktur lama; jangan dikarang.
+        $kodeStruktur = '-';
+        if (Schema::hasColumn('lokasis', 'kode_struktur')) {
+            $kodes = DB::table('lokasis')
+                ->where('lokasi', $params['lokasi'])
+                ->whereNotNull('kode_struktur')
+                ->distinct()->pluck('kode_struktur')
+                ->map(static fn($v) => trim((string) $v))
+                ->filter()->unique()->values();
+            $kodeStruktur = $kodes->count() > 1
+                ? 'BERAGAM' : ($kodes->first() ?? '-');
+        }
+
+        $sdm = collect();
+        if (Schema::hasTable('sdms')) {
+            $orang = DB::table('sdms as s');
+            if (Schema::hasTable('jabatans')) {
+                $orang->leftJoin('jabatans as j', 'j.id', '=', 's.id_jabat');
+            }
+            $orang->whereNotNull('s.nama_sdm')
+                ->whereRaw("BTRIM(s.nama_sdm) <> ''");
+            if (Schema::hasColumn('sdms', 'status')) {
+                $orang->where(static function ($q) {
+                    $q->whereNull('s.status')->orWhere('s.status', 'aktif');
+                });
+            }
+            $fields = ['s.id', 's.nama_sdm', 's.nip'];
+            $fields[] = Schema::hasTable('jabatans')
+                ? 'j.jabat as jabatan'
+                : DB::raw("'' AS jabatan");
+            $sdm = $orang->select($fields)->orderBy('s.nama_sdm')->get()
+                ->map(static fn($s) => [
+                    'id' => (int) $s->id,
+                    'nama' => trim((string) $s->nama_sdm),
+                    'nip' => trim((string) ($s->nip ?? '')),
+                    'jabatan' => trim((string) ($s->jabatan ?? '')),
+                ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'kelompok' => [
+                'kategori' => $params['kategori'],
+                'lokasi' => $params['lokasi'],
+                'divisi' => $params['divisi'],
+                'jumlah' => count($rows),
+            ],
+            'organisasi' => [
+                'provinsi' => 'KALIMANTAN TIMUR',
+                'kota' => 'SAMARINDA',
+                'unit' => 'PERUMDA TIRTA KENCANA',
+                'departemen' => $namaDepartemen,
+                'divisi' => $params['divisi'] === 'Tanpa Divisi' ? '-' : $params['divisi'],
+                'kode_struktur' => $kodeStruktur,
+            ],
+            'sdm' => $sdm->values()->all(),
+            'items' => $rows,
+            'keterangan_luas' => $hasLuas
+                ? null : 'Kolom Luas belum tersedia pada tabel konstruksi; laporan menampilkan tanda —.',
+        ]);
+    }
+
     public function kelompokKonstruksiManual(
         \Illuminate\Http\Request $request
     ) {
@@ -7442,6 +7574,8 @@ class KIBController extends Controller
 |--------------------------------------------------------------------------
 */
 
+        $kfLuasAvailable = Schema::hasColumn('kib_konstruksi_manual', 'luas');
+
         $kfMasterOptions = [
 
             // MASTER LOKASI
@@ -7477,7 +7611,8 @@ class KIBController extends Controller
             'view',
             'archiveCount',
             'suggestions',
-            'kfMasterOptions'
+            'kfMasterOptions',
+            'kfLuasAvailable'
         ));
     }
 
@@ -7581,6 +7716,8 @@ class KIBController extends Controller
                 'integer',
                 'between:1900,2100',
             ],
+
+            'luas' => ['nullable', 'numeric', 'min:0'],
 
             'type' => [
                 'nullable',
@@ -7694,7 +7831,7 @@ class KIBController extends Controller
         array $data
     ): array {
 
-        return [
+        $fields = [
             'nama_pekerjaan' =>
             trim($data['nama_barang_manual']),
 
@@ -7752,6 +7889,12 @@ class KIBController extends Controller
             'updated_at' =>
             now(),
         ];
+
+        if (Schema::hasColumn(self::KONSTRUKSI_MANUAL_TABLE, 'luas')) {
+            $fields['luas'] = $data['luas'] ?? null;
+        }
+
+        return $fields;
     }
 
 
@@ -7826,6 +7969,15 @@ class KIBController extends Controller
     ): array {
 
         $data = (array) $row;
+        // Nama Departemen untuk pengguna, tanpa mengganti nilai warisan DB.
+        $data['nama_departemen'] = $this->kibNamaDepartemenUntukLaporan($row->departemen ?? null);
+        $data['nama_divisi'] = $row->divisi ?? null;
+        $data['kode_struktur'] = '-';
+        if (Schema::hasColumn('lokasis', 'kode_struktur')) {
+            $data['kode_struktur'] = trim((string) (DB::table('lokasis')
+                ->where('lokasi', $row->lokasi ?? '')
+                ->value('kode_struktur') ?? '')) ?: '-';
+        }
 
         $id = (int) $row->id;
 
@@ -11092,7 +11244,7 @@ class KIBController extends Controller
         return $cache;
     }
 
-    private function kibNamaDepartemenUntukLaporan(int|string|null $nilai, $idDepartemen = null): string
+    private function kibNamaDepartemenUntukLaporan(int|string|null $nilai, int|string|null $idDepartemen = null): string
     {
         $raw = trim((string) ($nilai ?? ''));
         if (in_array(strtoupper($raw), ['BERAGAM', 'SELURUH DEPARTEMEN'], true)) {
@@ -11158,7 +11310,7 @@ class KIBController extends Controller
             });
     }
 
-    private function kibNamaDepartemenInputManual(int $nilai, string $field = 'departemen'): ?string
+    private function kibNamaDepartemenInputManual(int|string|null $nilai, string $field = 'departemen'): ?string
     {
         $raw = trim((string) ($nilai ?? ''));
         if ($raw === '') {
