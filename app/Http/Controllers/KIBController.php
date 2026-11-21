@@ -11096,6 +11096,90 @@ class KIBController extends Controller
     }
 
     /**
+     * Nama departemen untuk kop K.I.B B harus berasal dari Master Departemen.
+     *
+     * Data lama dapat menyimpan ID, kode seperti 00.02, atau nama departemen.
+     * Lakukan lookup SEKALI untuk seluruh baris laporan, bukan satu query per aset.
+     * Jika berisi lebih dari satu departemen, tampilkan BERAGAM.
+     */
+    private function namaDepartemenLaporanKibB(iterable $baris): string
+    {
+        $berdasarkanId = [];
+        $berdasarkanKode = [];
+        $berdasarkanNama = [];
+
+        if (Schema::hasTable('departemens')) {
+            foreach (DB::table('departemens')->get(['id', 'kode_dep', 'nama_dep']) as $master) {
+                $nama = trim((string) ($master->nama_dep ?? ''));
+                if ($nama === '') {
+                    continue;
+                }
+
+                $id = trim((string) ($master->id ?? ''));
+                $kode = strtolower(trim((string) ($master->kode_dep ?? '')));
+                if ($id !== '') {
+                    $berdasarkanId[$id] = $nama;
+                }
+                if ($kode !== '') {
+                    $berdasarkanKode[$kode] = $nama;
+                }
+                $berdasarkanNama[strtolower($nama)] = $nama;
+            }
+        }
+
+        $namaDitemukan = [];
+        foreach ($baris as $item) {
+            // Prioritas: label dari JOIN, ID inventaris, kemudian ID voucher.
+            $kandidat = [
+                trim((string) ($item->departemen ?? '')),
+                trim((string) ($item->id_departemen ?? '')),
+                trim((string) ($item->dep_voucher ?? '')),
+            ];
+
+            $nama = null;
+            foreach ($kandidat as $nilai) {
+                if ($nilai === '' || $nilai === '-') {
+                    continue;
+                }
+
+                $key = strtolower($nilai);
+                $nama = $berdasarkanNama[$key]
+                    ?? $berdasarkanKode[$key]
+                    ?? $berdasarkanId[$nilai]
+                    ?? null;
+                if ($nama !== null) {
+                    break;
+                }
+            }
+
+            // Jangan menampilkan kode mentah sebagai nama. Teks nama lama
+            // tetap ditoleransi bila Master Departemen belum memiliki padanan.
+            if ($nama === null) {
+                $label = $kandidat[0];
+                if (
+                    $label !== '' && $label !== '-'
+                    && !preg_match('/^[0-9]+(?:[.][0-9]+)*$/', $label)
+                ) {
+                    $nama = $label;
+                }
+            }
+
+            if ($nama !== null && $nama !== '') {
+                $namaDitemukan[strtolower($nama)] = $nama;
+            }
+        }
+
+        if (count($namaDitemukan) === 0) {
+            return '-';
+        }
+        if (count($namaDitemukan) > 1) {
+            return 'BERAGAM';
+        }
+
+        return reset($namaDitemukan);
+    }
+
+    /**
      * Excel 17 kolom untuk SELURUH barang dalam satu lokasi K.I.B B.
      * Cocok untuk tombol Print Excel pada Detail lokasi (misal AWS: 5 barang).
      * Tidak mengubah tabel, transaksi, atau daftar pajak.
@@ -11127,6 +11211,7 @@ class KIBController extends Controller
                 'b.kode_barang',
                 'd.nama_dep as departemen',
                 'dv.nama_div as divisi',
+                'n.dep as dep_voucher',
                 'a.kode as kode_aktiva'
             )
             ->orderBy('m.id')
@@ -11180,7 +11265,7 @@ class KIBController extends Controller
                 'provinsi' => 'KALIMANTAN TIMUR',
                 'kota' => 'SAMARINDA',
                 'unit' => 'PERUMDA TIRTA KENCANA',
-                'departemen' => $identitas($barang->pluck('departemen')),
+                'departemen' => $this->namaDepartemenLaporanKibB($barang),
                 'divisi' => $identitas($barang->pluck('divisi')),
                 'kode_struktur' => $this->kodeStrukturLokasiKibB([$lokasiId]),
             ],
@@ -11209,6 +11294,7 @@ class KIBController extends Controller
             $m = DB::table('mesins as m')
                 ->leftJoin('barangs as b', 'b.id', '=', 'm.id_barang')
                 ->leftJoin('lokasis as l', 'l.id', '=', 'm.id_lokasi')
+                ->leftJoin('departemens as d', 'd.id', '=', 'm.id_departemen')
                 ->leftJoin('nilai_aktivas as n', 'n.id', '=', 'm.id_voucher2')
                 ->leftJoin('aktivas as a', 'a.id', '=', DB::raw('COALESCE(n.id_aktiva, m.id_aktiva)'))
                 ->where('m.id', $mesinId)
@@ -11216,6 +11302,8 @@ class KIBController extends Controller
                     'm.*',
                     'b.nama_barang',
                     'l.lokasi',
+                    'd.nama_dep as departemen',
+                    'n.dep as dep_voucher',
                     'a.kode as kode_aktiva',
                     'a.aktiva as jenis_aktiva'
                 )
@@ -11242,9 +11330,11 @@ class KIBController extends Controller
                 'kode_aktiva' => $m->kode_aktiva ?? '',
             ]];
             $jenis = 'mesin';
+            $departemenLaporan = $this->namaDepartemenLaporanKibB([$m]);
         } else {
             [$rows] = $this->daftarKendaraanKibB();
             $jenis = 'kendaraan';
+            $departemenLaporan = 'SELURUH DEPARTEMEN';
         }
 
         $kodeStruktur = $jenis === 'kendaraan'
@@ -11261,7 +11351,7 @@ class KIBController extends Controller
                 'provinsi' => 'KALIMANTAN TIMUR',
                 'kota' => 'SAMARINDA',
                 'unit' => 'PERUMDA TIRTA KENCANA',
-                'departemen' => $jenis === 'kendaraan' ? 'SELURUH DEPARTEMEN' : '-',
+                'departemen' => $departemenLaporan,
                 'divisi' => $jenis === 'kendaraan' ? 'SELURUH DIVISI' : '-',
                 'kode_struktur' => $kodeStruktur,
             ],
