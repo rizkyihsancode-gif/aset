@@ -2471,3 +2471,71 @@
         padding: 14px;
     }
 }
+
+/* ========================================================================
+   K.I.B F — Dropdown kustom penandatangan; menggantikan popup native datalist.
+   Terkurung pada kolom terkait, dapat digulir, tidak menutupi semua form.
+   ======================================================================== */
+
+.kf-report-form { position: relative; z-index: 3; }
+.kf-report-sign-grid .kf-report-signer-field {
+    position: relative;
+    min-width: 0;
+}
+.kf-report-signer-field input[role="combobox"]:focus {
+    outline: none;
+    border-color: #2483e8;
+    box-shadow: 0 0 0 3px rgba(36,131,232,.12);
+}
+.kf-report-signer-field .kf-report-suggestions {
+    position: absolute;
+    z-index: 35;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 188px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 5px;
+    border: 1px solid #b5cee9;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(12,49,94,.18);
+}
+.kf-report-signer-field .kf-report-suggestions[hidden] { display: none !important; }
+.kf-report-suggestion {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 11px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: #1d476f;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+.kf-report-suggestion strong {
+    font-size: 12px;
+    font-weight: 750;
+    color: #164776;
+}
+.kf-report-suggestion small {
+    font-size: 11px;
+    font-weight: 500;
+    color: #6883a0;
+    line-height: 1.35;
+}
+.kf-report-suggestion:hover,
+.kf-report-suggestion.is-active {
+    background: #e9f3ff;
+}
+.kf-report-suggestion-empty {
+    padding: 11px;
+    color: #6583a1;
+    font-size: 12px;
+}
+/* Kolom panjang pada preview, sejajar dengan hasil XLSX. */
+.kf-report-sheet td.kf-report-align-left {
+    text-align: left;
+    vertical-align: middle;
+}

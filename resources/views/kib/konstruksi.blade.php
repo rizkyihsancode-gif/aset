@@ -1393,23 +1393,40 @@
                             <small>Contoh November 2026</small>
                         </label>
                         <div class="kf-report-sign-grid">
-                            <label><strong>Diketahui oleh <span>*</span></strong>
-                                <input id="kfReportSignerKnown" list="kfReportSdmOptions" type="search"
-                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            <label class="kf-report-signer-field"><strong>Diketahui oleh <span>*</span></strong>
+                                <input id="kfReportSignerKnown" type="search" placeholder="Ketik nama, NIP atau jabatan"
+                                    autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                                    aria-controls="kfReportSuggestKnown" aria-label="Diketahui oleh (pilihan)" required>
+                                <div id="kfReportSuggestKnown" class="kf-report-suggestions" role="listbox" hidden></div>
                             </label>
-                            <label><strong>Diperiksa oleh (1) <span>*</span></strong>
-                                <input id="kfReportSignerChecked1" list="kfReportSdmOptions" type="search"
-                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            <label class="kf-report-signer-field"><strong>Diperiksa oleh (1) <span>*</span></strong>
+                                <input id="kfReportSignerChecked1" type="search"
+                                    placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
+                                    aria-autocomplete="list" aria-expanded="false"
+                                    aria-controls="kfReportSuggestChecked1" aria-label="Diperiksa oleh 1 (pilihan)"
+                                    required>
+                                <div id="kfReportSuggestChecked1" class="kf-report-suggestions" role="listbox" hidden>
+                                </div>
                             </label>
-                            <label><strong>Diperiksa oleh (2) <span>*</span></strong>
-                                <input id="kfReportSignerChecked2" list="kfReportSdmOptions" type="search"
-                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            <label class="kf-report-signer-field"><strong>Diperiksa oleh (2) <span>*</span></strong>
+                                <input id="kfReportSignerChecked2" type="search"
+                                    placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
+                                    aria-autocomplete="list" aria-expanded="false"
+                                    aria-controls="kfReportSuggestChecked2" aria-label="Diperiksa oleh 2 (pilihan)"
+                                    required>
+                                <div id="kfReportSuggestChecked2" class="kf-report-suggestions" role="listbox" hidden>
+                                </div>
                             </label>
-                            <label><strong>Dibuat oleh <span>*</span></strong>
-                                <input id="kfReportSignerCreated" list="kfReportSdmOptions" type="search"
-                                    placeholder="Ketik nama, NIP atau jabatan" required>
+                            <label class="kf-report-signer-field"><strong>Dibuat oleh <span>*</span></strong>
+                                <input id="kfReportSignerCreated" type="search"
+                                    placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
+                                    aria-autocomplete="list" aria-expanded="false" aria-controls="kfReportSuggestCreated"
+                                    aria-label="Dibuat oleh (pilihan)" required>
+                                <div id="kfReportSuggestCreated" class="kf-report-suggestions" role="listbox" hidden>
+                                </div>
                             </label>
                         </div>
+                        <!-- Kompatibilitas ID lama, tidak lagi terhubung ke atribut list pada input. -->
                         <datalist id="kfReportSdmOptions"></datalist>
                         <small>Pilih penandatangan dari Master SDM Pendukung. Nama, jabatan dan NIP diambil dari
                             database.</small>

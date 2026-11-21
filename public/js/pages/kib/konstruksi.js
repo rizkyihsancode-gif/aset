@@ -2508,8 +2508,14 @@
         const bangunan = {P:'Permanen',SP:'Semi Permanen',D:'Darurat'}[String(row.bangunan ?? '').toUpperCase()]
             || reportCell(row.bangunan);
         const financing = pembiayaanLabel(row.asal_pembiayaan);
-        const name = [reportCell(row.nama), row.cakupan ? `Cakupan: ${row.cakupan}` : '',
-            row.uraian ? `Uraian Pekerjaan:\n${row.uraian}` : ''].filter(Boolean).join('\n');
+        // Satu baris kosong antara identitas barang/cakupan dan uraian pekerjaan.
+        // Pemisah \n\n dipertahankan pada preview, Print, serta sel Excel (wrap text).
+        const nameHeader = [reportCell(row.nama),
+            row.cakupan ? `Cakupan: ${String(row.cakupan).trim()}` : '']
+            .filter(Boolean).join('\n');
+        const name = String(row.uraian ?? '').trim()
+            ? `${nameHeader}\n\nUraian Pekerjaan:\n${String(row.uraian).trim()}`
+            : nameHeader;
         return [index+1,name,reportCell(row.tahun),bangunan,reportCell(row.bertingkat),
             reportCell(row.beton),reportCell(row.luas),reportLocation(row),
             reportCell(row.status_tanah),financing,reportCell(row.status_aset),
@@ -2592,6 +2598,7 @@
         reportState.response=null;
         reportState.loading=true;
         reportInputs.forEach(input => {if(input)input.value='';});
+        closeSignerMenus();
         // Hapus pilihan laporan sebelumnya sebelum mengambil daftar SDM aktif terbaru.
         $('kfReportSdmOptions')?.replaceChildren();
         $('kfReportCount').textContent=`${kategori} / ${lokasi} / ${divisi}`;
@@ -2634,11 +2641,153 @@
             divisi: String(active.divisi||'Tanpa Divisi')
         });
     });
-    reportInputs.forEach(input => { input?.addEventListener('input',renderReport); input?.addEventListener('change',renderReport); });
-    reportPeriod?.addEventListener('change',renderReport);
+    // Dropdown kustom SDM: tidak memakai popup native <datalist> Chromium.
+    // Sumber data tetap response.sdm dari backend (SDM aktif saja).
+    const signerMenus = reportInputs.map(input =>
+        $(input?.getAttribute('aria-controls') || '')
+    );
+
+    function closeSignerMenus(exceptInput = null) {
+        reportInputs.forEach((input, index) => {
+            if (!input || input === exceptInput) return;
+            const menu = signerMenus[index];
+            if (menu) {
+                menu.hidden = true;
+                menu.replaceChildren();
+                menu.dataset.activeIndex = '-1';
+            }
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
+        });
+    }
+
+    function chooseSigner(input, sdm) {
+        if (!input || !sdm) return;
+        input.value = reportSdmOption(sdm);
+        closeSignerMenus();
+        renderReport();
+    }
+
+    function openSignerMenu(input) {
+        const idx = reportInputs.indexOf(input);
+        const menu = signerMenus[idx];
+        if (!menu || !reportDialog?.open) return;
+
+        closeSignerMenus(input);
+        menu.replaceChildren();
+        menu.dataset.activeIndex = '-1';
+        input.removeAttribute('aria-activedescendant');
+
+        const term = String(input.value || '').trim().toLocaleLowerCase('id-ID');
+        const matches = asArray(reportState.response?.sdm).filter(sdm =>
+            [sdm.nama, sdm.jabatan, sdm.nip, reportSdmOption(sdm)].some(value =>
+                String(value ?? '').toLocaleLowerCase('id-ID').includes(term)
+            )
+        ).slice(0, 20);
+
+        if (!reportState.response || reportState.loading) {
+            menu.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            return;
+        }
+
+        if (!matches.length) {
+            const empty = document.createElement('div');
+            empty.className = 'kf-report-suggestion-empty';
+            empty.textContent = asArray(reportState.response?.sdm).length
+                ? 'Tidak ada SDM aktif yang cocok.'
+                : 'Belum ada SDM Pendukung aktif.';
+            menu.appendChild(empty);
+        }
+
+        matches.forEach((sdm, optionIndex) => {
+            const option = document.createElement('div');
+            option.id = `${menu.id}-option-${optionIndex}`;
+            option.className = 'kf-report-suggestion';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', 'false');
+            option.dataset.value = reportSdmOption(sdm);
+
+            const name = document.createElement('strong');
+            name.textContent = String(sdm.nama || 'Tanpa nama');
+            const detail = document.createElement('small');
+            detail.textContent = `${sdm.jabatan || 'Tanpa Jabatan'} · NIP ${sdm.nip || '-'}`;
+            option.append(name, detail);
+
+            // Pilih saat pointerdown agar tidak kalah oleh blur input.
+            option.addEventListener('pointerdown', event => {
+                event.preventDefault();
+                chooseSigner(input, sdm);
+            });
+            option.addEventListener('click', () => {
+                if (!menu.hidden) chooseSigner(input, sdm);
+            });
+            menu.appendChild(option);
+        });
+
+        menu.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    function setSignerActive(input, nextIndex) {
+        const menu = signerMenus[reportInputs.indexOf(input)];
+        if (!menu || menu.hidden) return;
+        const options = [...menu.querySelectorAll('[role="option"]')];
+        if (!options.length) return;
+        const idx = Math.max(0, Math.min(options.length - 1, nextIndex));
+        options.forEach((option, n) => {
+            option.classList.toggle('is-active', n === idx);
+            option.setAttribute('aria-selected', n === idx ? 'true' : 'false');
+        });
+        menu.dataset.activeIndex = String(idx);
+        input.setAttribute('aria-activedescendant', options[idx].id);
+        options[idx].scrollIntoView({block:'nearest'});
+    }
+
+    reportInputs.forEach(input => {
+        if (!input) return;
+        input.addEventListener('focus', () => openSignerMenu(input));
+        input.addEventListener('click', () => {
+            const menu = signerMenus[reportInputs.indexOf(input)];
+            if (menu?.hidden) openSignerMenu(input);
+        });
+        input.addEventListener('input', () => {
+            renderReport();
+            openSignerMenu(input);
+        });
+        input.addEventListener('change', renderReport);
+        input.addEventListener('keydown', event => {
+            const menu = signerMenus[reportInputs.indexOf(input)];
+            if (event.key === 'Escape' && menu && !menu.hidden) {
+                event.preventDefault();
+                closeSignerMenus();
+                return;
+            }
+            if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+            if (menu?.hidden && event.key !== 'Enter') openSignerMenu(input);
+            const choices = menu?.querySelectorAll('[role="option"]') || [];
+            if (!choices.length || menu?.hidden) return;
+            const current = Number(menu.dataset.activeIndex || -1);
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                setSignerActive(input, current + (event.key === 'ArrowDown' ? 1 : -1));
+            } else if (event.key === 'Enter' && current >= 0) {
+                event.preventDefault();
+                const item = asArray(reportState.response?.sdm).find(s =>
+                    reportSdmOption(s) === choices[current]?.dataset.value
+                );
+                if (item) chooseSigner(input, item);
+            }
+        });
+    });
+
+    reportDialog?.addEventListener('pointerdown', event => {
+        if (!event.target.closest('.kf-report-signer-field')) closeSignerMenus();
+    });
+    reportPeriod?.addEventListener('change', renderReport);
     reportDialog?.querySelectorAll('[data-kf-report-close]').forEach(btn =>
         btn.addEventListener('click',()=>reportDialog.close()));
-    reportDialog?.addEventListener('close',()=>{reportState.request++;reportState.loading=false;});
+    reportDialog?.addEventListener('close',()=>{closeSignerMenus();reportState.request++;reportState.loading=false;});
 
     const reportPrintCss = `@page{size:A3 landscape;margin:10mm}
       body{margin:0;font-family:Arial,sans-serif}
@@ -2725,8 +2874,13 @@
             const r=header+3+i;const values=reportValues(item,i);
             // Kolom B (Nama + Uraian) dan M (Dokumen Pendukung): rata kiri + middle.
             values.forEach((v,c)=>put(r,c+1,v,c===11 ? 7 : (c===1 || c===12 ? 8 : 3)));
-            const longest=Math.max(...values.map(v=>String(v??'').length));
-            heights.set(r,Math.min(190,Math.max(35,Math.ceil(longest/40)*14+15)));
+            // Tinggi baris memperhitungkan newline kosong dan pembungkusan per kolom.
+            const wrapWidths=[5,35,10,14,18,16,13,36,19,21,18,17,43];
+            const maxLines=Math.max(...values.map((value,col) =>
+                String(value??'').split(/\r?\n/).reduce((sum,line) =>
+                    sum+Math.max(1,Math.ceil(line.length/wrapWidths[col])),0)
+            ));
+            heights.set(r,Math.min(390,Math.max(38,maxLines*15+15)));
         });
         const signatureRow=header+data.length+6;
         merged(signatureRow,10,signatureRow,13,
