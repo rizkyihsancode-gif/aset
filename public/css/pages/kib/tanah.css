@@ -4669,33 +4669,24 @@ dl > div:last-child {
 }
 
 .tanah-report-paper-header {
-    display: grid;
-    grid-template-columns: 88px minmax(240px, 0.82fr) minmax(420px, 1.45fr);
-    gap: 10px;
-    align-items: start;
+    position: relative;
+    min-height: 125px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 12px;
 }
 
+/* logo_hr.png adalah satu gambar horizontal yang SUDAH berisi nama perusahaan. */
 .tanah-report-paper-logo {
-    width: 68px;
-    max-height: 86px;
+    position: absolute;
+    left: 7px;
+    top: 15px;
+    width: 260px;
+    height: auto;
+    max-height: 85px;
     object-fit: contain;
-    margin-left: 8px;
-}
-
-.tanah-report-paper-company {
-    align-self: center;
-}
-
-.tanah-report-paper-company strong,
-.tanah-report-paper-company span {
-    display: block;
-    line-height: 1.35;
-    text-align: left;
-}
-
-.tanah-report-paper-company strong {
-    font-size: 13px;
+    margin: 0;
 }
 
 .tanah-report-paper-title {
@@ -5087,16 +5078,4 @@ dl > div:last-child {
     .tanah-page .tanah-table th.tanah-col-nilai {
         min-width: 150px;
     }
-}
-
-.tanah-page .tanah-report-paper-header {
-    grid-template-columns: 68px minmax(240px, 0.82fr) minmax(420px, 1.45fr);
-}
-
-.tanah-page .tanah-report-paper-logo {
-    width: 50px;
-    height: 68px;
-    max-height: 68px;
-    object-fit: contain;
-    margin-left: 8px;
 }
