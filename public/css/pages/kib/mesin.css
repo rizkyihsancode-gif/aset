@@ -5837,3 +5837,99 @@ min-height: 39px;
     #mesinPage .mesin-form-support-section,
     #mesinPage .mesin-form-advanced { padding: 13px; }
 }
+
+
+/* ==========================================================================
+   K.I.B B — Dropdown SDM laporan seperti K.I.B A Tanah
+   Scoped: hanya modal Print Excel Peralatan/Mesin/Kendaraan.
+   ========================================================================== */
+#mesinPage .mesin-report-combobox {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+#mesinPage .mesin-report-person-options {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 240px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
+    border: 1px solid #b7cfe6;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(9, 47, 79, .14);
+}
+
+#mesinPage .mesin-report-person-options[popover] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 2147483000;
+    width: auto;
+    max-height: 240px;
+}
+
+#mesinPage .mesin-report-person-options[hidden],
+#mesinPage .mesin-report-person-options[popover]:not(:popover-open) {
+    display: none !important;
+}
+
+#mesinPage .mesin-report-person-option {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 9px 10px;
+    border: 0;
+    border-bottom: 1px solid #edf1f7;
+    border-radius: 0;
+    background: #ffffff;
+    color: #193957;
+    text-align: left;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+#mesinPage .mesin-report-person-option strong,
+#mesinPage .mesin-report-person-option small {
+    display: block;
+    margin: 0;
+    line-height: 1.5;
+}
+
+#mesinPage .mesin-report-person-option strong {
+    font-size: 12px;
+    font-weight: 750;
+    color: #153f69;
+}
+
+#mesinPage .mesin-report-person-option small {
+    font-size: 10.5px;
+    font-weight: 400;
+    color: #6583a0;
+    overflow-wrap: anywhere;
+}
+
+#mesinPage .mesin-report-person-option:hover,
+#mesinPage .mesin-report-person-option.is-highlighted {
+    background: #e8f3ff;
+}
+
+#mesinPage .mesin-report-person-option:last-child {
+    border-bottom: 0;
+}
+
+#mesinPage .mesin-report-person-empty {
+    padding: 12px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #6d839b;
+}

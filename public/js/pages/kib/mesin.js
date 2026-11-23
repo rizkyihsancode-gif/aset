@@ -4768,7 +4768,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const preview = $('#mesinReportPreview');
     const download = $('#mesinReportDownload');
     const print = $('#mesinReportPrint');
-    const optionList = $('#mesinReportStaff');
+    const reportContent = $('.mesin-report-content');
+    const signerFields = Array.from(form.querySelectorAll('.mesin-report-person'));
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g,
         char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
     const cell = value => {
@@ -4785,12 +4786,182 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateName = () => new Intl.DateTimeFormat('id-ID', {
         timeZone: 'Asia/Makassar', day: 'numeric', month: 'long', year: 'numeric'
     }).format(new Date());
-    const staffLabel = person => `${person.nama} — ${person.jabatan || 'Jabatan belum diisi'} — ${person.nip || 'NIP -'} (#${person.id})`;
+    // Kode laporan hanya menerima ID SDM yang dipilih, bukan input bebas.
     const chosen = role => {
-        const value = $(`[data-report-role="${role}"]`)?.value.trim();
-        return state.sdm.find(person => staffLabel(person) === value) || null;
+        const field = signerFields.find(item => item.dataset.reportPerson === role);
+        const id = field?.querySelector('.mesin-report-person-id')?.value;
+        return id ? state.sdm.find(person => String(person.id) === id) || null : null;
     };
     const ready = () => Boolean(periodName() && state.data.length && roles.every(([r]) => chosen(r)));
+
+
+    // Dropdown Master SDM K.I.B B mengikuti desain dan perilaku K.I.B A Tanah.
+    // Popover manual menjaga daftar tidak terpotong oleh modal yang bisa di-scroll.
+    function closeSignerOptions(except = null) {
+        signerFields.forEach(field => {
+            if (field === except) return;
+            const options = field.querySelector('.mesin-report-person-options');
+            const input = field.querySelector('.mesin-report-person-search');
+            if (options?.matches(':popover-open')) options.hidePopover();
+            if (options) options.hidden = true;
+            if (input) {
+                input.setAttribute('aria-expanded', 'false');
+                input.removeAttribute('aria-activedescendant');
+            }
+        });
+    }
+
+    function positionSignerOptions(field) {
+        const input = field.querySelector('.mesin-report-person-search');
+        const options = field.querySelector('.mesin-report-person-options');
+        if (!input || !options || options.hidden || !options.matches(':popover-open')) return;
+
+        const rect = input.getBoundingClientRect();
+        const contentRect = reportContent.getBoundingClientRect();
+        const dialogRect = dialog.getBoundingClientRect();
+        if (rect.bottom <= contentRect.top || rect.top >= contentRect.bottom) {
+            closeSignerOptions();
+            return;
+        }
+
+        const padding = 8;
+        const top = rect.bottom + 6;
+        const width = Math.min(rect.width, window.innerWidth - padding * 2);
+        const left = Math.max(padding, Math.min(rect.left, window.innerWidth - width - padding));
+        const limit = Math.min(window.innerHeight - padding, dialogRect.bottom - padding);
+        Object.assign(options.style, {
+            top: `${Math.round(top)}px`,
+            left: `${Math.round(left)}px`,
+            bottom: 'auto',
+            width: `${Math.round(width)}px`,
+            maxHeight: `${Math.round(Math.min(240, Math.max(0, limit - top)))}px`,
+        });
+    }
+
+    function selectSigner(field, person) {
+        if (!person) return;
+        const input = field.querySelector('.mesin-report-person-search');
+        const id = field.querySelector('.mesin-report-person-id');
+        const description = field.querySelector('.mesin-report-person-description');
+        input.value = person.nama || '';
+        id.value = String(person.id);
+        description.textContent = [
+            person.jabatan,
+            person.nip ? `NIP. ${person.nip}` : ''
+        ].filter(Boolean).join(' · ') || 'Dipilih dari Master SDM Pendukung.';
+        closeSignerOptions();
+        updatePreview();
+    }
+
+    function showSignerOptions(field) {
+        const input = field.querySelector('.mesin-report-person-search');
+        const options = field.querySelector('.mesin-report-person-options');
+        if (!input || !options || !dialog.open) return;
+        closeSignerOptions(field);
+
+        const keyword = input.value.trim().toLocaleLowerCase('id-ID');
+        const matches = state.sdm.filter(person =>
+            [person.nama, person.nip, person.jabatan].some(value =>
+                String(value || '').toLocaleLowerCase('id-ID').includes(keyword)
+            )
+        ).slice(0, 70);
+        options.replaceChildren();
+
+        matches.forEach((person, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'mesin-report-person-option';
+            button.dataset.personId = String(person.id);
+            button.id = `${options.id}-option-${index}`;
+            button.setAttribute('role', 'option');
+            const name = document.createElement('strong');
+            name.textContent = person.nama || '-';
+            const detail = document.createElement('small');
+            detail.textContent = [
+                person.jabatan,
+                person.nip ? `NIP. ${person.nip}` : ''
+            ].filter(Boolean).join(' · ') || 'Belum ada jabatan/NIP';
+            button.append(name, detail);
+            options.appendChild(button);
+        });
+
+        if (!matches.length) {
+            const empty = document.createElement('div');
+            empty.className = 'mesin-report-person-empty';
+            empty.textContent = state.sdm.length
+                ? 'Nama, NIP, atau jabatan tidak ditemukan.'
+                : 'Master SDM Pendukung belum memiliki SDM aktif.';
+            options.appendChild(empty);
+        }
+
+        options.hidden = false;
+        if (typeof options.showPopover === 'function') {
+            if (!options.matches(':popover-open')) options.showPopover();
+            positionSignerOptions(field);
+        }
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    signerFields.forEach(field => {
+        const input = field.querySelector('.mesin-report-person-search');
+        const options = field.querySelector('.mesin-report-person-options');
+        const id = field.querySelector('.mesin-report-person-id');
+        const description = field.querySelector('.mesin-report-person-description');
+        if (!input || !options || !id) return;
+
+        if (typeof options.showPopover === 'function') {
+            options.setAttribute('popover', 'manual');
+        }
+        input.addEventListener('focus', () => showSignerOptions(field));
+        input.addEventListener('input', () => {
+            id.value = '';
+            description.textContent = 'Pilih nama pada daftar, bukan sekadar mengetik.';
+            showSignerOptions(field);
+            updatePreview();
+        });
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !options.hidden) {
+                event.preventDefault();
+                event.stopPropagation();
+                closeSignerOptions();
+                return;
+            }
+            if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+            if (options.hidden) showSignerOptions(field);
+            const buttons = Array.from(options.querySelectorAll('button[data-person-id]'));
+            if (!buttons.length) return;
+            event.preventDefault();
+
+            const current = buttons.findIndex(button => button.classList.contains('is-highlighted'));
+            if (event.key === 'Enter') {
+                const selected = buttons[current >= 0 ? current : 0];
+                selectSigner(field, state.sdm.find(person => String(person.id) === selected.dataset.personId));
+                return;
+            }
+            const next = event.key === 'ArrowDown'
+                ? (current + 1) % buttons.length
+                : (current - 1 + buttons.length) % buttons.length;
+            buttons.forEach(button => button.classList.remove('is-highlighted'));
+            buttons[next].classList.add('is-highlighted');
+            buttons[next].scrollIntoView({ block: 'nearest' });
+            input.setAttribute('aria-activedescendant', buttons[next].id);
+        });
+        options.addEventListener('click', event => {
+            const button = event.target.closest('button[data-person-id]');
+            if (!button) return;
+            selectSigner(field, state.sdm.find(person => String(person.id) === button.dataset.personId));
+        });
+    });
+
+    reportContent.addEventListener('scroll', () => {
+        signerFields.forEach(positionSignerOptions);
+    }, { passive: true });
+    window.addEventListener('resize', () => signerFields.forEach(positionSignerOptions));
+    dialog.addEventListener('close', () => closeSignerOptions());
+    dialog.addEventListener('cancel', () => closeSignerOptions());
+    document.addEventListener('pointerdown', event => {
+        if (dialog.open && !event.target.closest('.mesin-report-person')) closeSignerOptions();
+    });
 
     function columns() {
         if (state.jenis === 'kendaraan') {
@@ -4835,12 +5006,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // KODE STRUKTUR bukan Kode Aktiva 31.08; jangan menampilkan nilai fiktif.
     function metaEntries() {
         const o = state.organisasi || org;
+        // Khusus Kendaraan; dipakai bersama oleh preview, print, dan XLSX.
+        // Laporan Mesin per lokasi tetap memakai metadata dari server.
+        const departemen = state.jenis === 'kendaraan' ? 'KEUANGAN' : (o.departemen || '-');
+        const divisi = state.jenis === 'kendaraan' ? 'ASET' : (o.divisi || '-');
         const umum = [
             ['PROVINSI', o.provinsi || org.provinsi],
             ['KOTA', o.kota || org.kota],
             ['UNIT', o.unit || org.unit],
-            ['DEPARTEMEN', o.departemen || '-'],
-            ['DIVISI', o.divisi || '-'],
+            ['DEPARTEMEN', departemen],
+            ['DIVISI', divisi],
         ];
         if (state.jenis === 'kendaraan') {
             // Referensi: KIB B Kendaraan.jpeg — enam baris identitas.
@@ -4927,7 +5102,12 @@ document.addEventListener('DOMContentLoaded', () => {
             year: 'numeric', month: '2-digit', timeZone: 'Asia/Makassar'
         }).formatToParts(new Date());
         month.value = `${dateParts.find(p => p.type === 'year').value}-${dateParts.find(p => p.type === 'month').value}`;
-        optionList.replaceChildren();
+        closeSignerOptions();
+        signerFields.forEach(field => {
+            field.querySelector('.mesin-report-person-id').value = '';
+            field.querySelector('.mesin-report-person-description').textContent =
+                'Pilih dari Master SDM Pendukung.';
+        });
         updatePreview();
         if (!dialog.open) dialog.showModal();
         try {
@@ -4949,11 +5129,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? `Seluruh kendaraan Kode Aktiva 31.08 · ${state.data.length} baris dari semua lokasi`
                 : `Seluruh barang di lokasi ${state.lokasi?.nama || 'terpilih'} · ${state.data.length} baris`;
             $('#mesinReportScope').textContent = scope;
-            optionList.replaceChildren(...state.sdm.map(person => {
-                const option = document.createElement('option');
-                option.value = staffLabel(person);
-                return option;
-            }));
             if (!state.sdm.length) info.textContent = 'Master SDM Pendukung belum memiliki SDM aktif.';
             else updatePreview();
         } catch (error) {

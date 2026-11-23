@@ -2170,21 +2170,24 @@
             'periksa_2' => 'Diperiksa oleh (2)',
             'dibuat' => 'Dibuat oleh',
         ] as $role => $label)
-                            <div class="mesin-report-field mesin-report-person">
+                            <div class="mesin-report-field mesin-report-person" data-report-person="{{ $role }}">
                                 <label for="mesinReportSigner-{{ $role }}">
                                     {{ $label }} <span class="mesin-report-required" aria-hidden="true">*</span>
                                 </label>
-                                <input type="search" id="mesinReportSigner-{{ $role }}"
-                                    class="mesin-report-signer" data-report-role="{{ $role }}"
-                                    list="mesinReportStaff" placeholder="Ketik nama, NIP, atau jabatan..."
-                                    autocomplete="off" required>
-                                <small>Pilih dari Master SDM Pendukung.</small>
+                                <div class="mesin-report-combobox">
+                                    <input type="search" id="mesinReportSigner-{{ $role }}"
+                                        class="mesin-report-signer mesin-report-person-search"
+                                        data-report-role="{{ $role }}" role="combobox" aria-autocomplete="list"
+                                        aria-expanded="false" aria-controls="mesinReportOptions-{{ $role }}"
+                                        placeholder="Ketik nama, NIP, atau jabatan..." autocomplete="off" required>
+                                    <input type="hidden" class="mesin-report-person-id">
+                                    <div class="mesin-report-person-options" id="mesinReportOptions-{{ $role }}"
+                                        role="listbox" hidden></div>
+                                </div>
+                                <small class="mesin-report-person-description">Pilih dari Master SDM Pendukung.</small>
                             </div>
                         @endforeach
                     </div>
-
-                    {{-- Sumber dropdown tetap Master SDM Pendukung via mesin.js. --}}
-                    <datalist id="mesinReportStaff"></datalist>
                 </form>
 
                 <p class="mesin-report-info" id="mesinReportInfo" role="status" aria-live="polite">
