@@ -1113,14 +1113,23 @@
                     </label>
                     <div class="aem-report-sign-grid">
                         @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
-                            <label>
-                                <span>{{ $judul }} <b>*</b></span>
-                                <input type="text" data-aem-report-role="{{ $peran }}" list="aemReportStaff"
-                                    placeholder="Ketik nama, NIP, atau jabatan..." required>
-                                <small>Pilih dari Master SDM Pendukung.</small>
-                            </label>
+                            <div class="aem-report-person" data-aem-person="{{ $peran }}">
+                                <label for="aemReportSigner-{{ $peran }}">
+                                    <span>{{ $judul }} <b>*</b></span>
+                                </label>
+                                <div class="aem-report-combobox">
+                                    <input type="search" id="aemReportSigner-{{ $peran }}"
+                                        data-aem-report-role="{{ $peran }}" class="aem-report-person-search"
+                                        role="combobox" aria-autocomplete="list" aria-haspopup="listbox"
+                                        aria-expanded="false" aria-controls="aemReportOptions-{{ $peran }}"
+                                        placeholder="Ketik nama, NIP, atau jabatan..." autocomplete="off" required>
+                                    <input type="hidden" class="aem-report-person-id">
+                                    <div class="aem-report-person-options" id="aemReportOptions-{{ $peran }}"
+                                        role="listbox" popover="manual" hidden></div>
+                                </div>
+                                <small class="aem-report-person-description">Pilih dari Master SDM Pendukung.</small>
+                            </div>
                         @endforeach
-                        <datalist id="aemReportStaff"></datalist>
                     </div>
                 </form>
                 <div id="aemReportInfo" class="aem-report-info" role="status" aria-live="polite">

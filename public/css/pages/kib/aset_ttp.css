@@ -2119,6 +2119,40 @@
 #aemApp .aem-report-form label small { color: #8196ae; font-size: 10px; }
 #aemApp .aem-report-period-field { width: min(310px, 100%); }
 #aemApp .aem-report-sign-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+/* Pencarian SDM sesuai desain K.I.B A/B/C/D: popup tetap di atas modal. */
+#aemApp .aem-report-person { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+#aemApp .aem-report-person > label { display: block; font-size: 12px; color: #173a61; font-weight: 800; }
+#aemApp .aem-report-person > label b { color: #df4054; }
+#aemApp .aem-report-person > small { color: #8196ae; font-size: 10px; line-height: 1.5; min-height: 15px; }
+#aemApp .aem-report-combobox { position: relative; width: 100%; min-width: 0; }
+#aemApp .aem-report-person-options {
+    position: absolute; z-index: 35; left: 0; right: 0; top: calc(100% + 6px);
+    width: 100%; max-height: 248px; overflow-y: auto;
+    overscroll-behavior: contain; box-sizing: border-box;
+    border: 1px solid #b7cfe6; border-radius: 10px;
+    background: #fff; box-shadow: 0 12px 28px rgba(9,47,79,.16);
+}
+#aemApp .aem-report-person-options[popover] {
+    position: fixed; inset: auto; margin: 0; padding: 0;
+    z-index: 2147483000; width: auto; max-height: 248px;
+}
+#aemApp .aem-report-person-options[hidden],
+#aemApp .aem-report-person-options[popover]:not(:popover-open) { display: none !important; }
+#aemApp .aem-report-person-option {
+    display: block; width: 100%; padding: 9px 11px; margin: 0;
+    border: 0; border-bottom: 1px solid #e9f0f8;
+    border-radius: 0; background: #fff; color: #153f69;
+    text-align: left; font: inherit; line-height: 1.4; cursor: pointer;
+}
+#aemApp .aem-report-person-option strong,
+#aemApp .aem-report-person-option small { display: block; margin: 0; line-height: 1.5; }
+#aemApp .aem-report-person-option strong { color: #153f69; font-size: 12px; font-weight: 750; }
+#aemApp .aem-report-person-option small { color: #6583a0; font-size: 10.5px; white-space: normal; overflow-wrap: anywhere; }
+#aemApp .aem-report-person-option:hover,
+#aemApp .aem-report-person-option.is-highlighted { background: #e8f3ff; }
+#aemApp .aem-report-person-option:last-child { border-bottom: 0; }
+#aemApp .aem-report-person-empty { padding: 12px; font-size: 11px; color: #6d839b; }
+
 #aemApp .aem-report-info {
     padding: 13px 16px; margin-top: 14px;
     border: 1px solid #bcd8f3; border-radius: 9px;
@@ -2189,7 +2223,15 @@
 .aem-report-table thead th { background: #dceafa; font-weight: 700; }
 .aem-report-table thead tr:last-child th { background: #fff; }
 .aem-report-table tbody tr { break-inside: avoid; }
-.aem-report-date { margin: 24px 5% 7px 0; text-align: right; font-weight: 700; }
+/* Tanggal sejajar horizontal dengan pusat kolom tanda tangan "Dibuat oleh". */
+.aem-report-date {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 24px 0 7px;
+    font-weight: 700;
+}
+.aem-report-date > span { grid-column: 4; text-align: center; }
 .aem-report-signatures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
 .aem-report-signature { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .aem-report-signature u { margin-top: 53px; font-weight: 700; }
