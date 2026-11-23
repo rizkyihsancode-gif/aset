@@ -4669,35 +4669,38 @@ dl > div:last-child {
 }
 
 .tanah-report-paper-header {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 145px;
-    padding: 6px 12px;
+    display: grid;
+    grid-template-columns: 88px minmax(240px, 0.82fr) minmax(420px, 1.45fr);
+    gap: 10px;
+    align-items: start;
     margin-bottom: 12px;
 }
 
-/* Logo horizontal asli sudah menyertakan nama Perumda dan kota. */
 .tanah-report-paper-logo {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: block;
-    width: 395px;
-    max-width: 33%;
-    height: auto;
-    max-height: 130px;
-    margin: 0;
+    width: 68px;
+    max-height: 86px;
     object-fit: contain;
+    margin-left: 8px;
 }
 
-/* Judul mengikuti pusat seluruh kertas/tabel, bukan kolom kanan. */
-.tanah-report-paper-title {
-    width: 100%;
+.tanah-report-paper-company {
     align-self: center;
+}
+
+.tanah-report-paper-company strong,
+.tanah-report-paper-company span {
+    display: block;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.tanah-report-paper-company strong {
+    font-size: 13px;
+}
+
+.tanah-report-paper-title {
     text-align: center;
+    align-self: center;
 }
 
 .tanah-report-paper-title strong,
@@ -5020,4 +5023,80 @@ dl > div:last-child {
     .tanah-page .tanah-filter-actions button {
         transition: none;
     }
+}
+
+
+/* ============================================================================
+   K.I.B A TANAH — PENYESUAIAN 23 NOVEMBER 2026
+   1. Nilai (Rp) tidak meluber dari kolom di tabel utama.
+   2. Ukuran logo preview diseragamkan dengan tampilan K.I.B B.
+   3. Perubahan scoped, tidak memengaruhi K.I.B lain.
+   ============================================================================ */
+
+.tanah-page .tanah-table .tanah-value-cell {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.tanah-page .tanah-table .tanah-value-cell .tanah-nilai-button {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 14px;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 49px;
+    box-sizing: border-box;
+    padding: 7px 7px;
+}
+
+.tanah-page .tanah-table .tanah-value-cell .tanah-nilai-caption {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.tanah-page .tanah-table .tanah-value-cell .tanah-nilai-caption strong {
+    display: block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.tanah-page .tanah-table .tanah-value-cell .tanah-nilai-caption small {
+    display: block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+}
+
+.tanah-page .tanah-table .tanah-value-cell .tanah-nilai-button svg {
+    width: 14px;
+    height: 14px;
+    min-width: 0;
+}
+
+/* Pada viewport lebih sempit, tabel tetap dapat di-scroll secara horizontal
+   tanpa memampatkan kolom Nilai menjadi beberapa puluh piksel. */
+@media (max-width: 1399px) {
+    .tanah-page .tanah-table th.tanah-col-nilai {
+        min-width: 150px;
+    }
+}
+
+.tanah-page .tanah-report-paper-header {
+    grid-template-columns: 68px minmax(240px, 0.82fr) minmax(420px, 1.45fr);
+}
+
+.tanah-page .tanah-report-paper-logo {
+    width: 50px;
+    height: 68px;
+    max-height: 68px;
+    object-fit: contain;
+    margin-left: 8px;
 }
