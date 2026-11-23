@@ -2567,9 +2567,9 @@
           <section class="kf-report-org">${reportMetadata().map(([k,v])=>
               `<div><b>${reportHtml(k)}</b><span>: ${reportHtml(reportCell(v))}</span></div>`).join('')}</section>
           <table class="kf-report-sheet"><thead><tr>${columns}</tr><tr><th>Bertingkat / Tidak</th><th>Beton / Tidak</th></tr></thead><tbody>${rows}</tbody></table>
-          <p class="kf-report-date">Samarinda, ${reportHtml(new Intl.DateTimeFormat('id-ID', {
+          <p class="kf-report-date"><span>Samarinda, ${reportHtml(new Intl.DateTimeFormat('id-ID', {
               timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'
-          }).format(new Date()))}</p>
+          }).format(new Date()))}</span></p>
           <section class="kf-report-signatures">${signers}</section>
         </article>`;
     }
@@ -2836,7 +2836,8 @@
       .kf-report-sheet td.kf-report-align-left{text-align:left;vertical-align:middle}
       .kf-report-sheet tr{break-inside:avoid}
       .kf-report-sheet thead{display:table-header-group}
-      .kf-report-date{text-align:right;font-weight:bold;margin:20px 15px 8px}
+      .kf-report-date{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;text-align:center;font-weight:bold;margin:20px 0 8px}
+      .kf-report-date>span{grid-column:4;white-space:nowrap}
       .kf-report-signatures{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;text-align:center}
       .kf-report-sign{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:125px}
       .kf-report-sign strong{margin-top:auto;text-decoration:underline}`;
@@ -2918,9 +2919,13 @@
             heights.set(r,Math.min(405,Math.max(42,maxLines*16+18+(hasUraian ? 12 : 0))));
         });
         const signatureRow=header+data.length+6;
-        merged(signatureRow,10,signatureRow,13,
+        // Tanggal menggunakan rentang kolom yang persis sama dengan TTD "Dibuat oleh".
+        // Dengan demikian, pusat tanggal dan pusat penandatangan keempat selalu sejajar.
+        const signatureSlots=[[1,3],[4,6],[7,9],[10,13]];
+        const [createdColStart,createdColEnd]=signatureSlots[3];
+        merged(signatureRow,createdColStart,signatureRow,createdColEnd,
             `Samarinda, ${new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'}).format(new Date())}`,5);
-        [[1,3],[4,6],[7,9],[10,13]].forEach(([a,b],i)=>{
+        signatureSlots.forEach(([a,b],i)=>{
             const s=reportSigner(reportInputs[i]);
             merged(signatureRow+2,a,signatureRow+2,b,`${reportRoles[i]},`,5);
             merged(signatureRow+3,a,signatureRow+3,b,reportCell(s.jabatan),5);

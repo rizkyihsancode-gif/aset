@@ -2333,7 +2333,8 @@
 .kf-report-sheet th,.kf-report-sheet td {border:1px solid #293c51;padding:7px 5px;text-align:center;vertical-align:middle;overflow-wrap:anywhere;line-height:1.4}
 .kf-report-sheet th {background:#c7def2;font-weight:750}
 .kf-report-sheet thead {display:table-header-group}
-.kf-report-date {text-align:right;font-weight:700;padding:15px 0 8px}
+.kf-report-date {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;text-align:center;font-weight:700;padding:15px 0 8px;margin:0}
+.kf-report-date>span {grid-column:4;white-space:nowrap}
 .kf-report-signatures {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;text-align:center}
 .kf-report-sign {display:flex;flex-direction:column;align-items:center;min-height:125px;gap:6px}
 .kf-report-sign strong {margin-top:auto;text-decoration:underline}

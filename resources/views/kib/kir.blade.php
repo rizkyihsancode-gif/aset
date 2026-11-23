@@ -890,7 +890,7 @@
                                 aria-autocomplete="list" aria-expanded="false"
                                 aria-controls="kirReportList{{ $i }}" autocomplete="off" required>
                             <div class="kir-report-suggestions" id="kirReportList{{ $i }}" role="listbox"
-                                hidden></div>
+                                popover="manual" hidden></div>
                             <small>Pilih dari Master SDM Pendukung aktif.</small>
                         </div>
                     @endforeach

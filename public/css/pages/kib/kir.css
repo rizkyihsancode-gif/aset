@@ -2006,7 +2006,33 @@
     background: #ffffff;
     box-shadow: 0 12px 26px rgba(15,54,95,.15);
 }
-.kir-report-suggestions[hidden] { display: none !important; }
+.kir-report-suggestions[hidden],
+.kir-report-suggestions[popover]:not(:popover-open) { display: none !important; }
+/* Popover top-layer menjaga dropdown SDM tidak terpotong area scroll modal. */
+.kir-report-suggestions[popover] {
+    position: fixed;
+    inset: auto;
+    left: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    margin: 0;
+    box-sizing: border-box;
+    width: auto;
+    max-height: 248px;
+    overscroll-behavior: contain;
+    z-index: 2147483000;
+}
+.kir-report-suggestion {
+    font-family: inherit;
+    line-height: 1.4;
+}
+.kir-report-suggestion strong,
+.kir-report-suggestion small {
+    display: block;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 .kir-report-suggestion {
     width: 100%;
     display: flex;
@@ -2051,8 +2077,17 @@
 .kir-report-table th,.kir-report-table td { border: 1px solid #53687f; padding: 7px 6px; text-align: center; vertical-align: middle; font-size: 11px; overflow-wrap: anywhere; }
 .kir-report-table th { background: #d5dfea; font-weight: 800; }
 .kir-report-table td:nth-child(2),.kir-report-table td:nth-child(11) { text-align: left; }
-.kir-report-dateline { text-align: right; margin-top: 20px; }
-.kir-report-sheet-signers { display: grid; grid-template-columns: repeat(4,1fr); gap: 15px; margin-top: 14px; }
+.kir-report-dateline {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+.kir-report-dateline > span {
+    grid-column: 4;
+    text-align: center;
+}
+.kir-report-sheet-signers { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 15px; margin-top: 14px; }
 .kir-report-sheet-signers section { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
 .kir-report-sheet-signers u { margin-top: 40px; font-weight: bold; }
 .kir-report-foot { display: flex; gap: 15px; align-items: center; justify-content: space-between; flex: 0 0 auto; }

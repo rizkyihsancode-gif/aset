@@ -940,8 +940,57 @@
 
     function kirCloseSignerList(index) {
         const list = kirReportLists[index];
-        if (list) list.hidden = true;
+        if (list) {
+            if (list.matches(':popover-open')) list.hidePopover();
+            list.hidden = true;
+        }
         kirReportInputs[index]?.setAttribute('aria-expanded', 'false');
+        kirReportInputs[index]?.removeAttribute('aria-activedescendant');
+    }
+
+    function kirCloseOtherSignerLists(except) {
+        kirReportLists.forEach((_, index) => {
+            if (index !== except) kirCloseSignerList(index);
+        });
+    }
+
+    // Dropdown SDM memakai popover top-layer agar tidak tertutup oleh scroll modal.
+    // Jika bidang berada di dekat bawah modal, daftar tampil ke arah atas.
+    function kirPositionSignerList(index) {
+        const input = kirReportInputs[index];
+        const list = kirReportLists[index];
+        if (!input || !list || list.hidden || !list.matches(':popover-open')) return;
+
+        const rect = input.getBoundingClientRect();
+        const scrollArea = kirReportDialog.querySelector('.kir-report-body');
+        const bodyRect = scrollArea.getBoundingClientRect();
+        const dialogRect = kirReportDialog.getBoundingClientRect();
+        if (rect.bottom <= bodyRect.top || rect.top >= bodyRect.bottom) {
+            kirCloseSignerList(index);
+            return;
+        }
+        const padding = 9;
+        const topLimit = Math.max(padding, dialogRect.top + padding);
+        const bottomLimit = Math.min(window.innerHeight - padding, dialogRect.bottom - padding);
+        const below = Math.max(0, bottomLimit - rect.bottom - 5);
+        const above = Math.max(0, rect.top - topLimit - 5);
+        const showAbove = below < 130 && above > below;
+        const available = showAbove ? above : below;
+        const height = Math.min(248, Math.max(0, available));
+        if (height < 35) {
+            kirCloseSignerList(index);
+            return;
+        }
+        const width = Math.min(rect.width, window.innerWidth - padding * 2);
+        const left = Math.max(padding, Math.min(rect.left, window.innerWidth - width - padding));
+        Object.assign(list.style, {
+            top: `${Math.round(showAbove ? rect.top - height - 5 : rect.bottom + 5)}px`,
+            left: `${Math.round(left)}px`,
+            right: 'auto',
+            bottom: 'auto',
+            width: `${Math.round(width)}px`,
+            maxHeight: `${Math.round(height)}px`
+        });
     }
 
     function kirSelectSigner(index, signer) {
@@ -954,13 +1003,14 @@
     function kirRenderSignerList(index) {
         const list = kirReportLists[index];
         const input = kirReportInputs[index];
-        if (!list || !input) return;
+        if (!list || !input || !kirReportDialog.open) return;
+        kirCloseOtherSignerLists(index);
         const query = input.value.toLocaleLowerCase('id-ID').trim();
         const options = Array.isArray(kirReport.payload?.sdm) ? kirReport.payload.sdm : [];
         const filtered = options.filter(person =>
             [person.nama, person.jabatan, person.nip, kirReportSignerLabel(person)]
                 .some(value => str(value).toLocaleLowerCase('id-ID').includes(query))
-        ).slice(0, 30);
+        ).slice(0, 100);
         list.replaceChildren();
         kirReport.currentChoice[index] = -1;
         if (!filtered.length) {
@@ -976,17 +1026,22 @@
             button.type = 'button';
             button.className = 'kir-report-suggestion';
             button.setAttribute('role', 'option');
+            button.id = `kirReportOption${index}-${optionIndex}`;
             button.dataset.optionIndex = String(optionIndex);
             const name = document.createElement('strong');
             name.textContent = str(person.nama);
             const detail = document.createElement('small');
             detail.textContent = `${str(person.jabatan) || 'Tanpa Jabatan'} · NIP ${str(person.nip) || '—'}`;
             button.append(name, detail);
-            button.addEventListener('mousedown', e => e.preventDefault());
+            button.addEventListener('mousedown', event => event.preventDefault());
             button.addEventListener('click', () => kirSelectSigner(index, person));
             list.appendChild(button);
         });
         list.hidden = false;
+        if (typeof list.showPopover === 'function') {
+            if (!list.matches(':popover-open')) list.showPopover();
+            kirPositionSignerList(index);
+        }
         input.setAttribute('aria-expanded', 'true');
     }
 
@@ -1073,7 +1128,7 @@
             `<th rowspan="2">KETERANGAN</th></tr>` +
             `<tr><th>BAIK</th><th>RUSAK RINGAN</th><th>RUSAK BERAT</th></tr></thead>` +
             `<tbody>${dataRows}</tbody></table></div>` +
-            `<div class="kir-report-dateline">Samarinda, ${esc(dateText)}</div>` +
+            `<div class="kir-report-dateline"><span>Samarinda, ${esc(dateText)}</span></div>` +
             `<div class="kir-report-sheet-signers">${signatures}</div></article>`;
     }
 
@@ -1139,6 +1194,14 @@
     kirReportDialog?.addEventListener('close', () => {
         kirReport.requestId += 1;
         kirReportLists.forEach((list, i) => kirCloseSignerList(i));
+    });
+    kirReportDialog?.querySelector('.kir-report-body')?.addEventListener('scroll', () => {
+        kirReportLists.forEach((_, index) => kirPositionSignerList(index));
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+        if (kirReportDialog?.open) {
+            kirReportLists.forEach((_, index) => kirPositionSignerList(index));
+        }
     });
     $('kirReportPeriod')?.addEventListener('change', kirReportUpdate);
     $('kirExportLokasi')?.addEventListener('click', () => {
@@ -1221,8 +1284,9 @@
         const today=new Intl.DateTimeFormat('id-ID',{
             timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'
         }).format(new Date());
-        rows.push(row(dateRow,[cell(9,dateRow,`Samarinda, ${today}`,3)],23));
-        makeMerge(dateRow,9,dateRow,11);
+        // Tanggal terpusat persis di atas tanda tangan keempat (Dibuat oleh: J-K).
+        rows.push(row(dateRow,[cell(10,dateRow,`Samarinda, ${today}`,9)],23));
+        makeMerge(dateRow,10,dateRow,11);
         const signatureCells = new Map([
             [labelRow, []], [positionRow, []], [nameRow, []], [nipRow, []]
         ]);
@@ -1370,7 +1434,8 @@
             `.kir-report-table th,.kir-report-table td{border:1px solid #444;padding:5px;font-size:10px;vertical-align:middle;text-align:center;overflow-wrap:anywhere}`+
             `.kir-report-table td:nth-child(2),.kir-report-table td:nth-child(11){text-align:left}`+
             `.kir-report-table th{background:#d5dfea}`+
-            `.kir-report-dateline{text-align:right;margin-top:20px}`+
+            `.kir-report-dateline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:20px}`+
+            `.kir-report-dateline>span{grid-column:4;text-align:center}`+
             `.kir-report-sheet-signers{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}`+
             `.kir-report-sheet-signers section{display:grid;text-align:center;gap:5px;min-height:125px}`+
             `.kir-report-sheet-signers u{margin-top:35px;font-weight:bold}`+
