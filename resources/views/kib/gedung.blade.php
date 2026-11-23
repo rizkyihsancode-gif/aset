@@ -1110,14 +1110,24 @@
                     </label>
                     <div class="gedung-report-sign-grid">
                         @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
-                            <label>
-                                <span>{{ $judul }} <b>*</b></span>
-                                <input type="text" data-gedung-report-role="{{ $peran }}"
-                                    list="gedungReportStaff" placeholder="Ketik nama, NIP, atau jabatan..." required>
-                                <small>Pilih dari Master SDM Pendukung.</small>
-                            </label>
+                            <div class="gedung-report-person" data-gedung-person="{{ $peran }}">
+                                <label for="gedungReportSigner-{{ $peran }}">
+                                    <span>{{ $judul }} <b>*</b></span>
+                                </label>
+                                <div class="gedung-report-combobox">
+                                    <input type="search" id="gedungReportSigner-{{ $peran }}"
+                                        data-gedung-report-role="{{ $peran }}" class="gedung-report-person-search"
+                                        role="combobox" aria-autocomplete="list" aria-haspopup="listbox"
+                                        aria-expanded="false" aria-controls="gedungReportOptions-{{ $peran }}"
+                                        placeholder="Ketik nama, NIP, atau jabatan..." autocomplete="off" required>
+                                    <input type="hidden" class="gedung-report-person-id">
+                                    <div class="gedung-report-person-options"
+                                        id="gedungReportOptions-{{ $peran }}" role="listbox" popover="manual"
+                                        hidden></div>
+                                </div>
+                                <small class="gedung-report-person-description">Pilih dari Master SDM Pendukung.</small>
+                            </div>
                         @endforeach
-                        <datalist id="gedungReportStaff"></datalist>
                     </div>
                 </form>
                 <div id="gedungReportInfo" class="gedung-report-info" role="status" aria-live="polite">

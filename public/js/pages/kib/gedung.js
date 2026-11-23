@@ -1672,7 +1672,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const preview = $('#gedungReportPreview');
     const download = $('#gedungReportDownload');
     const print = $('#gedungReportPrint');
-    const datalist = $('#gedungReportStaff');
+    const reportBody = $('.gedung-report-body');
+    const signerFields = Array.from(form.querySelectorAll('.gedung-report-person'));
     const scope = $('#gedungReportScope');
     const roles = [
         ['diketahui', 'Diketahui oleh'],
@@ -1709,12 +1710,172 @@ document.addEventListener('DOMContentLoaded', () => {
         const num = Number(n);
         return Number.isFinite(num) ? new Intl.NumberFormat('id-ID').format(num) : cell(n);
     };
-    const staffLabel = p => `${p.nama} — ${p.jabatan || 'Jabatan -'} — ${p.nip || 'NIP -'} (#${p.id})`;
+    // Penandatangan terikat pada ID Master SDM; teks ketikan saja tidak sah.
     const chosen = key => {
-        const label = $(`[data-gedung-report-role="${key}"]`)?.value.trim();
-        return state.sdm.find(p => staffLabel(p) === label) || null;
+        const field = signerFields.find(item => item.dataset.gedungPerson === key);
+        const id = field?.querySelector('.gedung-report-person-id')?.value;
+        return id ? state.sdm.find(person => String(person.id) === id) || null : null;
     };
     const ready = () => Boolean(periodName() && state.data.length && roles.every(([key]) => chosen(key)));
+    // Dropdown SDM kustom mengikuti K.I.B A/B: nama, jabatan, NIP serta pencarian.
+    // Popover digunakan agar daftar tidak terpotong oleh body modal yang scroll.
+    function closeSignerOptions(except = null) {
+        signerFields.forEach(field => {
+            if (field === except) return;
+            const options = field.querySelector('.gedung-report-person-options');
+            const input = field.querySelector('.gedung-report-person-search');
+            if (options?.matches(':popover-open')) options.hidePopover();
+            if (options) options.hidden = true;
+            if (input) {
+                input.setAttribute('aria-expanded', 'false');
+                input.removeAttribute('aria-activedescendant');
+            }
+        });
+    }
+
+    function positionSignerOptions(field) {
+        const input = field.querySelector('.gedung-report-person-search');
+        const options = field.querySelector('.gedung-report-person-options');
+        if (!input || !options || options.hidden || !options.matches(':popover-open')) return;
+        const rect = input.getBoundingClientRect();
+        const bodyRect = reportBody.getBoundingClientRect();
+        const dialogRect = dialog.getBoundingClientRect();
+        if (rect.bottom <= bodyRect.top || rect.top >= bodyRect.bottom) {
+            closeSignerOptions();
+            return;
+        }
+        const padding = 9;
+        const topLimit = Math.max(padding, dialogRect.top + padding);
+        const bottomLimit = Math.min(window.innerHeight - padding, dialogRect.bottom - padding);
+        const below = Math.max(0, bottomLimit - rect.bottom - 5);
+        const above = Math.max(0, rect.top - topLimit - 5);
+        const desired = 248;
+        const useAbove = below < 130 && above > below;
+        const available = useAbove ? above : below;
+        const height = Math.max(0, Math.min(desired, available));
+        const width = Math.min(rect.width, window.innerWidth - padding * 2);
+        const left = Math.max(padding, Math.min(rect.left, window.innerWidth - width - padding));
+        Object.assign(options.style, {
+            top: `${Math.round(useAbove ? rect.top - height - 5 : rect.bottom + 5)}px`,
+            left: `${Math.round(left)}px`,
+            bottom: 'auto',
+            width: `${Math.round(width)}px`,
+            maxHeight: `${Math.round(height)}px`,
+        });
+    }
+
+    function selectSigner(field, person) {
+        if (!person) return;
+        const input = field.querySelector('.gedung-report-person-search');
+        const id = field.querySelector('.gedung-report-person-id');
+        const description = field.querySelector('.gedung-report-person-description');
+        input.value = String(person.nama || '');
+        id.value = String(person.id);
+        description.textContent = [
+            person.jabatan,
+            person.nip ? `NIP. ${person.nip}` : ''
+        ].filter(Boolean).join(' · ') || 'Dipilih dari Master SDM Pendukung.';
+        closeSignerOptions();
+        updatePreview();
+    }
+
+    function showSignerOptions(field) {
+        const input = field.querySelector('.gedung-report-person-search');
+        const options = field.querySelector('.gedung-report-person-options');
+        if (!input || !options || !dialog.open) return;
+        closeSignerOptions(field);
+        const keyword = input.value.trim().toLocaleLowerCase('id-ID');
+        const matches = state.sdm.filter(person =>
+            [person.nama, person.nip, person.jabatan].some(value =>
+                String(value || '').toLocaleLowerCase('id-ID').includes(keyword)
+            )
+        ).slice(0, 100);
+        options.replaceChildren();
+        matches.forEach((person, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'gedung-report-person-option';
+            button.dataset.personId = String(person.id);
+            button.id = `${options.id}-option-${index}`;
+            button.setAttribute('role', 'option');
+            const name = document.createElement('strong');
+            name.textContent = person.nama || '-';
+            const detail = document.createElement('small');
+            detail.textContent = [
+                person.jabatan,
+                person.nip ? `NIP. ${person.nip}` : ''
+            ].filter(Boolean).join(' · ') || 'Belum ada jabatan/NIP';
+            button.append(name, detail);
+            options.appendChild(button);
+        });
+        if (!matches.length) {
+            const empty = document.createElement('div');
+            empty.className = 'gedung-report-person-empty';
+            empty.textContent = state.sdm.length
+                ? 'Nama, NIP, atau jabatan tidak ditemukan.'
+                : 'Master SDM Pendukung belum memiliki SDM aktif.';
+            options.appendChild(empty);
+        }
+        options.hidden = false;
+        if (typeof options.showPopover === 'function') {
+            if (!options.matches(':popover-open')) options.showPopover();
+            positionSignerOptions(field);
+        }
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    signerFields.forEach(field => {
+        const input = field.querySelector('.gedung-report-person-search');
+        const options = field.querySelector('.gedung-report-person-options');
+        const id = field.querySelector('.gedung-report-person-id');
+        const description = field.querySelector('.gedung-report-person-description');
+        if (!input || !options || !id) return;
+        input.addEventListener('focus', () => showSignerOptions(field));
+        input.addEventListener('input', () => {
+            id.value = '';
+            description.textContent = 'Pilih nama dari daftar, bukan hanya mengetik.';
+            showSignerOptions(field);
+            updatePreview();
+        });
+        input.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !options.hidden) {
+                event.preventDefault();
+                event.stopPropagation();
+                closeSignerOptions();
+                return;
+            }
+            if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+            if (options.hidden) showSignerOptions(field);
+            const buttons = Array.from(options.querySelectorAll('button[data-person-id]'));
+            if (!buttons.length) return;
+            event.preventDefault();
+            const active = buttons.findIndex(button => button.classList.contains('is-highlighted'));
+            if (event.key === 'Enter') {
+                const selected = buttons[active >= 0 ? active : 0];
+                selectSigner(field, state.sdm.find(person => String(person.id) === selected.dataset.personId));
+                return;
+            }
+            const next = event.key === 'ArrowDown'
+                ? (active + 1) % buttons.length
+                : (active - 1 + buttons.length) % buttons.length;
+            buttons.forEach(button => button.classList.remove('is-highlighted'));
+            buttons[next].classList.add('is-highlighted');
+            buttons[next].scrollIntoView({block: 'nearest'});
+            input.setAttribute('aria-activedescendant', buttons[next].id);
+        });
+        options.addEventListener('click', event => {
+            const button = event.target.closest('button[data-person-id]');
+            if (!button) return;
+            selectSigner(field, state.sdm.find(person => String(person.id) === button.dataset.personId));
+        });
+    });
+    reportBody.addEventListener('scroll', () => signerFields.forEach(positionSignerOptions), {passive: true});
+    window.addEventListener('resize', () => signerFields.forEach(positionSignerOptions));
+    dialog.addEventListener('cancel', () => closeSignerOptions());
+    document.addEventListener('pointerdown', event => {
+        if (dialog.open && !event.target.closest('.gedung-report-person')) closeSignerOptions();
+    });
+
     const columns = [
         'No.', 'Nama Barang / Jenis Barang', 'Kode Barang', 'Register',
         'Kondisi Bangunan', 'Bertingkat / Tidak', 'Beton / Tidak',
@@ -1745,7 +1906,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ['DEPARTEMEN', o.departemen || '-'],
             ['DIVISI', o.divisi || '-'],
             ['LOKASI', state.lokasi?.nama || '-'],
-            ['NO KODE STRUKTUR', o.kode_struktur || '-'],
+            ['KODE STRUKTUR', o.kode_struktur || '-'],
         ];
     };
     const title = () => 'C. GEDUNG DAN BANGUNAN';
@@ -1820,7 +1981,13 @@ document.addEventListener('DOMContentLoaded', () => {
         state.lokasi = null;
         state.organisasi = {};
         form.reset();
-        datalist.replaceChildren();
+        closeSignerOptions();
+        signerFields.forEach(field => {
+            const id = field.querySelector('.gedung-report-person-id');
+            const description = field.querySelector('.gedung-report-person-description');
+            if (id) id.value = '';
+            if (description) description.textContent = 'Pilih dari Master SDM Pendukung.';
+        });
         const parts = new Intl.DateTimeFormat('en-CA', {
             year: 'numeric', month: '2-digit', timeZone: 'Asia/Makassar'
         }).formatToParts(new Date());
@@ -1844,11 +2011,8 @@ document.addEventListener('DOMContentLoaded', () => {
             state.lokasi = json.lokasi || null;
             state.organisasi = json.organisasi || {};
             scope.textContent = `Seluruh gedung di lokasi ${state.lokasi?.nama || '-'} · ${state.data.length} data`;
-            datalist.replaceChildren(...state.sdm.map(p => {
-                const option = document.createElement('option');
-                option.value = staffLabel(p);
-                return option;
-            }));
+            // Daftar ditampilkan saat kolom penandatangan mendapat fokus.
+            // ID disimpan terpisah sehingga nama yang sama tidak ambigu.
             if (!state.sdm.length) info.textContent = 'SDM aktif tidak ditemukan di Master SDM Pendukung.';
             else updatePreview();
         } catch (error) {
@@ -1867,7 +2031,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dialog.querySelectorAll('[data-gedung-report-close]').forEach(button => {
         button.addEventListener('click', () => dialog.close());
     });
-    dialog.addEventListener('close', () => { requestVersion++; });
+    dialog.addEventListener('close', () => {
+        requestVersion++;
+        closeSignerOptions();
+    });
     form.addEventListener('input', updatePreview);
     form.addEventListener('change', updatePreview);
 

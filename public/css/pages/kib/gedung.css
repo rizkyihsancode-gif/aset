@@ -1893,10 +1893,20 @@
 .gedung-report-kop-title { text-align: center; font-weight: 700; }
 .gedung-report-kop-title strong { display: block; margin-bottom: 4px; font-size: 12px; }
 .gedung-report-meta {
-    display: grid; grid-template-columns: 320px 320px;
-    gap: 3px 9px; margin: 16px 0 22px;
+    /* Identitas lokasi: tujuh baris vertikal, tidak dibagi dua kolom. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 3px;
+    width: min(480px, 100%);
+    margin: 16px 0 22px;
 }
-.gedung-report-meta > div { display: grid; grid-template-columns: 125px 1fr; gap: 5px; }
+.gedung-report-meta > div {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 5px;
+    align-items: start;
+    break-inside: avoid;
+}
 .gedung-report-table-scroll { width: 100%; overflow: visible; }
 .gedung-report-table {
     width: 100%; border-collapse: collapse; table-layout: fixed;
@@ -2069,4 +2079,104 @@
     #gedungPage .gedung-data-lokasi-btn {
         transition: none;
     }
+}
+
+/* ========================================================================
+   K.I.B C — Master SDM pada popup cetak (gaya K.I.B A / K.I.B B).
+   Terisolasi pada modal laporan Gedung, tidak memengaruhi form CRUD.
+   ======================================================================== */
+#gedungPage .gedung-report-person {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+#gedungPage .gedung-report-person > label {
+    display: block;
+    font-size: 12px;
+    color: #173a61;
+    font-weight: 800;
+}
+#gedungPage .gedung-report-person > label b { color: #df4054; }
+#gedungPage .gedung-report-person > small {
+    color: #8196ae;
+    font-size: 10px;
+    line-height: 1.5;
+    min-height: 15px;
+}
+#gedungPage .gedung-report-combobox {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+#gedungPage .gedung-report-person-options {
+    position: absolute;
+    z-index: 35;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    width: 100%;
+    max-height: 248px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
+    border: 1px solid #b7cfe6;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(9, 47, 79, .16);
+}
+#gedungPage .gedung-report-person-options[popover] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 2147483000;
+    width: auto;
+    max-height: 248px;
+}
+#gedungPage .gedung-report-person-options[hidden],
+#gedungPage .gedung-report-person-options[popover]:not(:popover-open) {
+    display: none !important;
+}
+#gedungPage .gedung-report-person-option {
+    display: block;
+    width: 100%;
+    padding: 9px 11px;
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid #e9f0f8;
+    border-radius: 0;
+    background: #fff;
+    color: #153f69;
+    text-align: left;
+    font: inherit;
+    line-height: 1.4;
+    cursor: pointer;
+}
+#gedungPage .gedung-report-person-option strong,
+#gedungPage .gedung-report-person-option small {
+    display: block;
+    margin: 0;
+    line-height: 1.5;
+}
+#gedungPage .gedung-report-person-option strong {
+    color: #153f69;
+    font-size: 12px;
+    font-weight: 750;
+}
+#gedungPage .gedung-report-person-option small {
+    font-size: 10.5px;
+    color: #6583a0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+#gedungPage .gedung-report-person-option:hover,
+#gedungPage .gedung-report-person-option.is-highlighted {
+    background: #e8f3ff;
+}
+#gedungPage .gedung-report-person-option:last-child { border-bottom: 0; }
+#gedungPage .gedung-report-person-empty {
+    padding: 12px;
+    font-size: 11px;
+    color: #6d839b;
 }
