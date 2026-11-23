@@ -4449,54 +4449,42 @@ async function loadPending()
         reportState.classList.toggle('is-error', error);
     }
 
-    // Dropdown SDM ditampilkan dengan Popover API (top layer) agar tidak terpotong
-    // oleh overflow:auto pada body modal. Posisi dijaga di area form yang terlihat.
-    function reportPositionSuggestions(field, allowScroll = false) {
+    // Dropdown SDM selalu terbuka KE BAWAH input seperti pola form K.I.B lain.
+    // Popover API tetap dipakai agar daftar tidak dipotong overflow modal.
+    // Tinggi daftar mengikuti ruang yang tersedia di bawah input, tanpa flip ke atas.
+    function reportPositionSuggestions(field) {
         const input = $('.tanah-report-person-search', field);
         const options = $('.tanah-report-person-options', field);
         if (!input || !options || !reportBody || options.hidden) return;
         if (!options.matches(':popover-open')) return;
 
-        const area = reportBody.getBoundingClientRect();
-        let rect = input.getBoundingClientRect();
-        const gap = 6;
-        const desiredHeight = 240;
-        const topLimit = Math.max(8, area.top + 8);
-        const bottomLimit = Math.min(window.innerHeight - 8, area.bottom - 8);
+        const rect = input.getBoundingClientRect();
+        const bodyRect = reportBody.getBoundingClientRect();
+        const dialogRect = reportDialog.getBoundingClientRect();
 
-        // Saat pertama kali dibuka, geser scroll modal secukupnya agar daftar
-        // bisa turun dengan tinggi nyaman tanpa menutupi footer.
-        if (allowScroll) {
-            const missing = rect.bottom + gap + desiredHeight - bottomLimit;
-            if (missing > 0) {
-                const safeUpwardShift = Math.max(0, rect.top - topLimit - 14);
-                const remainingScroll = Math.max(0, reportBody.scrollHeight - reportBody.clientHeight - reportBody.scrollTop);
-                const shift = Math.min(missing, safeUpwardShift, remainingScroll);
-                if (shift > 0) {
-                    reportBody.scrollTop += shift;
-                    rect = input.getBoundingClientRect();
-                }
-            }
-        }
-
-        if (rect.bottom < topLimit || rect.top > bottomLimit) {
+        // Tutup daftar jika input sudah benar-benar keluar dari area modal yang tampak.
+        if (rect.bottom <= bodyRect.top || rect.top >= bodyRect.bottom) {
             reportCloseSuggestions();
             return;
         }
 
-        const below = Math.max(0, bottomLimit - rect.bottom - gap);
-        const above = Math.max(0, rect.top - topLimit - gap);
-        const placeAbove = below < 180 && above > below;
-        const usable = Math.max(65, Math.min(desiredHeight, placeAbove ? above : below));
-        const top = placeAbove ? rect.top - gap - usable : rect.bottom + gap;
-        const width = Math.min(rect.width, window.innerWidth - 16);
-        const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+        const gap = 6;
+        const padding = 8;
+        const top = rect.bottom + gap;
+        const bottomLimit = Math.min(window.innerHeight - padding, dialogRect.bottom - padding);
+        const availableBelow = Math.max(0, bottomLimit - top);
+        const width = Math.min(rect.width, window.innerWidth - padding * 2);
+        const left = Math.max(padding, Math.min(rect.left, window.innerWidth - width - padding));
 
+        // Tidak pernah memindahkan dropdown ke atas. Bila ruang sempit,
+        // daftar menjadi lebih pendek dan isinya tetap bisa di-scroll.
+        // Tidak menggeser scroll form ketika input baru difokuskan.
         Object.assign(options.style, {
             left: `${Math.round(left)}px`,
             top: `${Math.round(top)}px`,
+            bottom: 'auto',
             width: `${Math.round(width)}px`,
-            maxHeight: `${Math.round(usable)}px`,
+            maxHeight: `${Math.round(Math.min(240, availableBelow))}px`,
         });
     }
 
@@ -4569,7 +4557,7 @@ async function loadPending()
         options.hidden = false;
         if (typeof options.showPopover === 'function') {
             if (!options.matches(':popover-open')) options.showPopover();
-            reportPositionSuggestions(field, true);
+            reportPositionSuggestions(field);
         }
         input.setAttribute('aria-expanded', 'true');
     }
