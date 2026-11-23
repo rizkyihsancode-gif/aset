@@ -4589,6 +4589,25 @@ dl > div:last-child {
     box-shadow: 0 12px 28px #092f4f23;
 }
 
+
+/* K.I.B A: dropdown SDM berada di top layer di atas modal yang scroll. */
+.tanah-report-person-options[popover] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 2147483000;
+    box-sizing: border-box;
+    min-width: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.tanah-report-person-options[popover]:not(:popover-open) {
+    display: none;
+}
+
 .tanah-report-person-option {
     display: block;
     width: 100%;

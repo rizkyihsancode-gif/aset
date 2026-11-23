@@ -4374,6 +4374,8 @@ async function loadPending()
     const tanahReportSelections = Object.create(null);
 
     const reportForm = $('#tanahReportForm');
+    const reportDialog = $('#tanahReportModal');
+    const reportBody = reportDialog?.querySelector('.tanah-report-modal-body');
     const reportPeriod = $('#tanahReportPeriod');
     const reportPreview = $('#tanahReportPreview');
     const reportPreviewSection = $('#tanahReportPreviewSection');
@@ -4447,15 +4449,86 @@ async function loadPending()
         reportState.classList.toggle('is-error', error);
     }
 
+    // Dropdown SDM ditampilkan dengan Popover API (top layer) agar tidak terpotong
+    // oleh overflow:auto pada body modal. Posisi dijaga di area form yang terlihat.
+    function reportPositionSuggestions(field, allowScroll = false) {
+        const input = $('.tanah-report-person-search', field);
+        const options = $('.tanah-report-person-options', field);
+        if (!input || !options || !reportBody || options.hidden) return;
+        if (!options.matches(':popover-open')) return;
+
+        const area = reportBody.getBoundingClientRect();
+        let rect = input.getBoundingClientRect();
+        const gap = 6;
+        const desiredHeight = 240;
+        const topLimit = Math.max(8, area.top + 8);
+        const bottomLimit = Math.min(window.innerHeight - 8, area.bottom - 8);
+
+        // Saat pertama kali dibuka, geser scroll modal secukupnya agar daftar
+        // bisa turun dengan tinggi nyaman tanpa menutupi footer.
+        if (allowScroll) {
+            const missing = rect.bottom + gap + desiredHeight - bottomLimit;
+            if (missing > 0) {
+                const safeUpwardShift = Math.max(0, rect.top - topLimit - 14);
+                const remainingScroll = Math.max(0, reportBody.scrollHeight - reportBody.clientHeight - reportBody.scrollTop);
+                const shift = Math.min(missing, safeUpwardShift, remainingScroll);
+                if (shift > 0) {
+                    reportBody.scrollTop += shift;
+                    rect = input.getBoundingClientRect();
+                }
+            }
+        }
+
+        if (rect.bottom < topLimit || rect.top > bottomLimit) {
+            reportCloseSuggestions();
+            return;
+        }
+
+        const below = Math.max(0, bottomLimit - rect.bottom - gap);
+        const above = Math.max(0, rect.top - topLimit - gap);
+        const placeAbove = below < 180 && above > below;
+        const usable = Math.max(65, Math.min(desiredHeight, placeAbove ? above : below));
+        const top = placeAbove ? rect.top - gap - usable : rect.bottom + gap;
+        const width = Math.min(rect.width, window.innerWidth - 16);
+        const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+
+        Object.assign(options.style, {
+            left: `${Math.round(left)}px`,
+            top: `${Math.round(top)}px`,
+            width: `${Math.round(width)}px`,
+            maxHeight: `${Math.round(usable)}px`,
+        });
+    }
+
     function reportCloseSuggestions(except = null) {
         $$('.tanah-report-person', reportForm).forEach(field => {
             if (field === except) return;
             const container = $('.tanah-report-person-options', field);
             const input = $('.tanah-report-person-search', field);
-            if (container) container.hidden = true;
-            if (input) input.setAttribute('aria-expanded', 'false');
+            if (container) {
+                if (container.matches(':popover-open')) container.hidePopover();
+                container.hidden = true;
+            }
+            if (input) {
+                input.setAttribute('aria-expanded', 'false');
+                input.removeAttribute('aria-activedescendant');
+            }
         });
     }
+
+    // Scroll/resize modal tidak boleh meninggalkan dropdown di posisi lama.
+    reportBody?.addEventListener('scroll', () => {
+        $$('.tanah-report-person', reportForm).forEach(field =>
+            reportPositionSuggestions(field)
+        );
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+        $$('.tanah-report-person', reportForm).forEach(field =>
+            reportPositionSuggestions(field)
+        );
+    });
+    reportDialog?.addEventListener('close', () => reportCloseSuggestions());
+    reportDialog?.addEventListener('cancel', () => reportCloseSuggestions());
 
     function reportSearchOptions(field) {
         const input = $('.tanah-report-person-search', field);
@@ -4494,6 +4567,10 @@ async function loadPending()
         }
 
         options.hidden = false;
+        if (typeof options.showPopover === 'function') {
+            if (!options.matches(':popover-open')) options.showPopover();
+            reportPositionSuggestions(field, true);
+        }
         input.setAttribute('aria-expanded', 'true');
     }
 
@@ -4518,6 +4595,12 @@ async function loadPending()
         const hidden = $('.tanah-report-person-id', field);
         if (!input || !options || !hidden) return;
 
+        // Native Popover API menempatkan daftar pada lapisan teratas dialog.
+        // Fallback untuk browser lama mempertahankan dropdown CSS sebelumnya.
+        if (typeof options.showPopover === 'function') {
+            options.setAttribute('popover', 'manual');
+        }
+
         input.addEventListener('focus', () => reportSearchOptions(field));
         input.addEventListener('input', () => {
             tanahReportSelections[field.dataset.role] = null;
@@ -4530,8 +4613,7 @@ async function loadPending()
         input.addEventListener('keydown', event => {
             const enabled = $$('button[role="option"]', options);
             if (event.key === 'Escape') {
-                options.hidden = true;
-                input.setAttribute('aria-expanded', 'false');
+                reportCloseSuggestions();
                 return;
             }
             if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
@@ -4562,7 +4644,9 @@ async function loadPending()
     reportForm?.addEventListener('submit', event => event.preventDefault());
     reportPeriod?.addEventListener('change', reportUpdatePreview);
     document.addEventListener('click', event => {
-        if (reportForm && !reportForm.contains(event.target)) reportCloseSuggestions();
+        if (reportForm && !event.target.closest('.tanah-report-person')) {
+            reportCloseSuggestions();
+        }
     });
 
     // HTML yang dipakai bersama untuk preview dan jendela Print.
