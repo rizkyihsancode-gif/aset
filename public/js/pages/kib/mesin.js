@@ -5079,7 +5079,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <thead><tr>${top}</tr><tr>${second}</tr><tr>${labels.map((_, i) => `<th>${i+1}</th>`).join('')}</tr></thead>
                 <tbody>${data}</tbody>
             </table></div>
-            <div class="mesin-report-date">Samarinda, ${escapeHtml(dateName())}</div>
+            <div class="mesin-report-date"><span>Samarinda, ${escapeHtml(dateName())}</span></div>
             <div class="mesin-report-signatures">${signers}</div>
         </article>`;
     }
@@ -5292,13 +5292,16 @@ document.addEventListener('DOMContentLoaded', () => {
             heights.set(row, Math.min(130, Math.max(29, Math.ceil(longest / 42) * 16 + 12)));
         });
         const dateRow = header + 3 + state.data.length + 2;
-        merged(dateRow, Math.floor(count * .67), dateRow, count, `Samarinda, ${dateName()}`, 5);
         const slots = [
             [1, Math.floor(count/4)],
             [Math.floor(count/4)+1, Math.floor(count/2)],
             [Math.floor(count/2)+1, Math.floor(count*3/4)],
             [Math.floor(count*3/4)+1, count]
         ];
+        // Tanggal harus berada tepat di tengah blok tanda tangan "Dibuat oleh".
+        // Menggunakan slot yang sama untuk Mesin (17 kolom) dan Kendaraan (15 kolom).
+        const [dateStart, dateEnd] = slots[3];
+        merged(dateRow, dateStart, dateRow, dateEnd, `Samarinda, ${dateName()}`, 5);
         roles.forEach(([role, label], index) => {
             const person = chosen(role);
             const [a, b] = slots[index];
