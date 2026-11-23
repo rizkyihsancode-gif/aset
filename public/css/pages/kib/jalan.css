@@ -486,7 +486,7 @@
 #jalanPage .kd-report-download { border: 1px solid #1377d5; color: #fff; background: #147fe4; }
 #jalanPage .kd-report-footer button:disabled { cursor: not-allowed; opacity: .52; }
 
-/* Kertas preview dan halaman print: sama-sama 18 kolom serta empat tanda tangan. */
+/* Kertas preview/print: 17 kolom serta empat tanda tangan. */
 .kd-report-paper {
     width: 100%; min-width: 1200px; padding: 19px;
     box-sizing: border-box; background: white; color: #111;
@@ -497,10 +497,20 @@
 .kd-report-kop-title { text-align: center; font-weight: 700; }
 .kd-report-kop-title strong { display: block; margin-bottom: 4px; font-size: 12px; }
 .kd-report-meta {
-    display: grid; grid-template-columns: 320px 320px;
-    gap: 3px 9px; margin: 16px 0 22px;
+    /* Identitas lokasi K.I.B D: tepat tujuh baris vertikal. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 3px;
+    width: min(480px, 100%);
+    margin: 16px 0 22px;
 }
-.kd-report-meta > div { display: grid; grid-template-columns: 125px 1fr; gap: 5px; }
+.kd-report-meta > div {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 5px;
+    align-items: start;
+    break-inside: avoid;
+}
 .kd-report-table-scroll { width: 100%; overflow: visible; }
 .kd-report-table {
     width: 100%; border-collapse: collapse; table-layout: fixed;
@@ -556,3 +566,101 @@
 #jalanPage .kd-location-count small { font-size: 10px; color: #7288a2; }
 #jalanPage .kd-location-count:hover { background: #e6f3ff; border-color: #86bff1; }
 #jalanPage .kd-main-table { min-width: 900px; } 
+
+/* ===========================================================================
+   K.I.B D — Pemilih SDM custom untuk laporan Excel (gaya K.I.B A / C).
+   Hanya dalam modal laporan, tidak memengaruhi form CRUD Jembatan.
+   =========================================================================== */
+#jalanPage .kd-report-person {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+#jalanPage .kd-report-person > label {
+    display: block;
+    font-size: 12px;
+    color: #173a61;
+    font-weight: 800;
+}
+#jalanPage .kd-report-person > label b { color: #df4054; }
+#jalanPage .kd-report-person > small {
+    color: #8196ae;
+    font-size: 10px;
+    line-height: 1.5;
+    min-height: 15px;
+}
+#jalanPage .kd-report-combobox {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+#jalanPage .kd-report-person-options {
+    position: absolute;
+    z-index: 35;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    width: 100%;
+    max-height: 248px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
+    border: 1px solid #b7cfe6;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(9, 47, 79, .16);
+}
+#jalanPage .kd-report-person-options[popover] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 2147483000;
+    width: auto;
+    max-height: 248px;
+}
+#jalanPage .kd-report-person-options[hidden],
+#jalanPage .kd-report-person-options[popover]:not(:popover-open) {
+    display: none !important;
+}
+#jalanPage .kd-report-person-option {
+    display: block;
+    width: 100%;
+    padding: 9px 11px;
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid #e9f0f8;
+    border-radius: 0;
+    background: #fff;
+    color: #153f69;
+    text-align: left;
+    font: inherit;
+    line-height: 1.4;
+    cursor: pointer;
+}
+#jalanPage .kd-report-person-option strong,
+#jalanPage .kd-report-person-option small {
+    display: block;
+    margin: 0;
+    line-height: 1.5;
+}
+#jalanPage .kd-report-person-option strong {
+    color: #153f69;
+    font-size: 12px;
+    font-weight: 750;
+}
+#jalanPage .kd-report-person-option small {
+    font-size: 10.5px;
+    color: #6583a0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+#jalanPage .kd-report-person-option:hover,
+#jalanPage .kd-report-person-option.is-highlighted { background: #e8f3ff; }
+#jalanPage .kd-report-person-option:last-child { border-bottom: 0; }
+#jalanPage .kd-report-person-empty {
+    padding: 12px;
+    font-size: 11px;
+    color: #6d839b;
+}

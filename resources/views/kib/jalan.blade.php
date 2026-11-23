@@ -593,14 +593,23 @@
                     </label>
                     <div class="kd-report-sign-grid">
                         @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
-                            <label>
-                                <span>{{ $judul }} <b>*</b></span>
-                                <input type="text" data-kd-report-role="{{ $peran }}" list="kdReportStaff"
-                                    placeholder="Ketik nama, NIP, atau jabatan..." required>
-                                <small>Pilih dari Master SDM Pendukung.</small>
-                            </label>
+                            <div class="kd-report-person" data-kd-person="{{ $peran }}">
+                                <label for="kdReportSigner-{{ $peran }}">
+                                    <span>{{ $judul }} <b>*</b></span>
+                                </label>
+                                <div class="kd-report-combobox">
+                                    <input type="search" id="kdReportSigner-{{ $peran }}"
+                                        data-kd-report-role="{{ $peran }}" class="kd-report-person-search"
+                                        role="combobox" aria-autocomplete="list" aria-haspopup="listbox"
+                                        aria-expanded="false" aria-controls="kdReportOptions-{{ $peran }}"
+                                        placeholder="Ketik nama, NIP, atau jabatan..." autocomplete="off" required>
+                                    <input type="hidden" class="kd-report-person-id">
+                                    <div class="kd-report-person-options" id="kdReportOptions-{{ $peran }}"
+                                        role="listbox" popover="manual" hidden></div>
+                                </div>
+                                <small class="kd-report-person-description">Pilih dari Master SDM Pendukung.</small>
+                            </div>
                         @endforeach
-                        <datalist id="kdReportStaff"></datalist>
                     </div>
                 </form>
                 <div id="kdReportInfo" class="kd-report-info" role="status" aria-live="polite">
