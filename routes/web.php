@@ -530,6 +530,18 @@ Route::prefix('kib')
         )
             ->name('tanah.store');
 
+        // K.I.B A pilot: route tulis baru wajib autentikasi nyata.
+        Route::post(
+            '/tanah/lokasi/{lokasi}/tambah-langsung',
+            [KIBController::class, 'storeTanahLangsung']
+        )
+            ->whereNumber('lokasi')->middleware('auth')->name('tanah.store-langsung');
+        Route::post(
+            '/tanah/lokasi/{lokasi}/hubungkan-voucher',
+            [KIBController::class, 'hubungkanNilaiTanah']
+        )
+            ->whereNumber('lokasi')->middleware('auth')->name('tanah.hubungkan-voucher');
+
 
         /*
 |--------------------------------------------------------------------------

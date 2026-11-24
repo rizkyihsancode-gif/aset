@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use App\Services\KibNotificationService;
+use App\Services\KibVoucherLinkService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -914,6 +915,35 @@ class KIBController extends Controller
             });
         }
 
+        // Status pengaitan dari seluruh kategori K.I.B dan pointer legacy.
+        $linkService = app(KibVoucherLinkService::class);
+        $owners = $linkService->owners($nilaiAktivas->pluck('id')->all());
+        $kategoriTanah = app(KibNotificationService::class)->categoryId('tanah');
+        $pengaitanAktif = $linkService->ready();
+        $tanahTargets = DB::table('tanahs')->where('id_lokasi', $id)
+            ->orderByDesc('id')->get(['id', 'guna', 'sertifikat', 'tahun']);
+        $labels = $tanahTargets->keyBy('id');
+        $nilaiAktivas->each(function ($item) use ($owners, $labels, $kategoriTanah, $pengaitanAktif) {
+            $linked = $owners[(int) $item->id] ?? [];
+            $item->linked_count = count($linked);
+            $item->linked_tanah_id = count($linked) === 1 && $linked[0]['kategori'] === 'tanah'
+                ? $linked[0]['record_id'] : null;
+            $item->link_status = count($linked) > 1 ? 'perlu_verifikasi'
+                : (count($linked) === 1 ? 'terhubung' : 'belum_terhubung');
+            $item->link_target = count($linked) === 1
+                ? ($linked[0]['kategori'] === 'tanah'
+                    ? ('Tanah #' . $linked[0]['record_id'] . ' — ' .
+                        ($labels[$linked[0]['record_id']]->guna ?? 'Lihat data historis'))
+                    : (strtoupper($linked[0]['kategori']) . ' #' . $linked[0]['record_id']))
+                : null;
+            $item->can_link = $pengaitanAktif
+                && $kategoriTanah !== null
+                && (int) $item->cat === (int) $kategoriTanah
+                && $item->link_status === 'belum_terhubung'
+                && (int) $item->stat === 1
+                && in_array((int) $item->jenisn, [1, 2], true);
+        });
+
         $total =
             $nilaiAktivas->sum(
                 function ($item) {
@@ -959,6 +989,12 @@ class KIBController extends Controller
 
             'data' =>
             $nilaiAktivas,
+
+            'pilihan_tanah' => $tanahTargets->map(static fn($row) => [
+                'id' => (int) $row->id,
+                'label' => 'Tanah #' . $row->id . ' — ' . trim((string) ($row->guna ?: $row->sertifikat ?: 'Tanah'))
+                    . ' (' . ($row->tahun ?: '-') . ')',
+            ])->values(),
 
         ]);
     }
@@ -1564,10 +1600,21 @@ class KIBController extends Controller
             ->orderByDesc('t.id')
             ->get();
 
+        // Pilot: agregasi voucher langsung dan pointer historis tanpa join
+        // sehingga jumlah baris sertifikat tidak pernah terduplikasi.
+        $totals = app(KibVoucherLinkService::class)->totalsForTanah($rows->all());
+        $serialized = $rows->map(function ($row) use ($totals) {
+            $item = $this->serialize($row);
+            $item['nilai_terhubung'] = $totals[(int) $row->id]['nilai_terhubung'] ?? 0;
+            $item['jumlah_voucher'] = $totals[(int) $row->id]['jumlah_voucher'] ?? 0;
+            $item['voucher_ids'] = $totals[(int) $row->id]['voucher_ids'] ?? [];
+            return $item;
+        })->values();
+
         return response()->json([
             'success' => true,
             'lokasi' => ['id' => $l->id, 'lokasi' => trim($l->lokasi), 'alamat' => trim($l->alamat)],
-            'data' => $rows->map(fn($row) => $this->serialize($row))->values(),
+            'data' => $serialized,
         ]);
     }
 
@@ -1767,7 +1814,11 @@ class KIBController extends Controller
     {
         $row = $this->sertifikatQuery()->where('t.id', $tanah)->first();
         abort_unless($row, 404);
-        return response()->json(['success' => true, 'data' => $this->serialize($row)]);
+        $data = $this->serialize($row);
+        $summary = app(KibVoucherLinkService::class)->totalsForTanah([$row]);
+        $data['jumlah_voucher'] = $summary[$tanah]['jumlah_voucher'] ?? 0;
+        $data['nilai_terhubung'] = $summary[$tanah]['nilai_terhubung'] ?? 0;
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     private function validateInput(Request $request, bool $editing = false): array
@@ -2031,6 +2082,13 @@ class KIBController extends Controller
                     ]);
                 }
 
+                $owners = app(KibVoucherLinkService::class)->owners([(int) $source->id]);
+                if (!empty($owners[(int) $source->id])) {
+                    throw ValidationException::withMessages([
+                        'id_nilai_aktiva' => 'Voucher sudah terhubung dengan inventaris lain.',
+                    ]);
+                }
+
                 /*
                 |--------------------------------------------------------------------------
                 | 06. DATA FORM TANAH
@@ -2144,6 +2202,92 @@ class KIBController extends Controller
     }
 
 
+    /**
+     * K.I.B A pilot: tambah Tanah tanpa mengonsumsi voucher Pending.
+     * Lokasi selalu diambil dari route yang sudah divalidasi, bukan dari input.
+     */
+    public function storeTanahLangsung(Request $request, int $lokasi)
+    {
+        abort_unless(DB::table('lokasis')->where('id', $lokasi)->exists(), 404);
+        $input = $this->validateInput($request, true);
+        $newFiles = [];
+        try {
+            DB::transaction(function () use ($input, $request, $lokasi, &$newFiles): void {
+                $data = $this->tanahFields($input);
+                $data['id_lokasi'] = $lokasi;
+                $data['nilai_aktiva_id'] = null;
+                $data['nilai'] = null;
+                $data['nilai_now'] = null;
+                $data['user'] = Auth::id();
+                $data['created_at'] = now();
+                $data['updated_at'] = now();
+                $id = DB::table('tanahs')->insertGetId($data);
+                $this->uploadTanahAttachments($request, (int) $id, $newFiles);
+            });
+        } catch (\Throwable $e) {
+            foreach ($newFiles as $path) Storage::disk('local')->delete($path);
+            throw $e;
+        }
+        return redirect()->route('kib.tanah', ['lokasi_detail' => $lokasi])
+            ->with('success', 'Data Tanah langsung berhasil ditambahkan tanpa menggunakan voucher Pending.');
+    }
+
+    /**
+     * Mengaitkan voucher historis yang sudah diproses dengan satu sertifikat.
+     * Tidak menambah voucher, mengubah stat, atau menghitung ulang nilai lokasi.
+     */
+    public function hubungkanNilaiTanah(
+        Request $request,
+        int $lokasi,
+        KibVoucherLinkService $links,
+        KibNotificationService $notifications
+    ) {
+        $input = $request->validate([
+            'nilai_aktiva_id' => ['required', 'integer', 'exists:nilai_aktivas,id'],
+            'tanah_id' => ['required', 'integer', 'exists:tanahs,id'],
+            'konfirmasi' => ['required', 'accepted'],
+        ]);
+        $links->assertReady();
+        $cat = $notifications->categoryId('tanah');
+        abort_if($cat === null, 422, 'Kategori K.I.B A belum tersedia.');
+
+        DB::transaction(function () use ($input, $lokasi, $cat, $links): void {
+            $tanah = DB::table('tanahs')->where('id', $input['tanah_id'])
+                ->where('id_lokasi', $lokasi)->first(['id', 'id_lokasi']);
+            if (!$tanah) {
+                throw ValidationException::withMessages(['tanah_id' => 'Tanah tujuan bukan milik lokasi ini.']);
+            }
+
+            $voucher = DB::table('nilai_aktivas as n')
+                ->join('aktivas as a', 'a.id', '=', 'n.id_aktiva')
+                ->where('n.id', $input['nilai_aktiva_id'])
+                ->select('n.id', 'n.id_lokasi', 'n.cat', 'n.stat', 'n.jenisn', 'a.kib')
+                ->lockForUpdate()->first();
+            if (
+                !$voucher || (int) $voucher->id_lokasi !== $lokasi ||
+                (int) $voucher->cat !== (int) $cat ||
+                !in_array((int) $voucher->jenisn, [1, 2], true) ||
+                (int) $voucher->stat !== 1 ||
+                !in_array(
+                    strtoupper(trim(preg_replace('/[^A-Z0-9]+/i', ' ', (string) $voucher->kib))),
+                    ['TANAH', 'KIB A TANAH'],
+                    true
+                )
+            ) {
+                throw ValidationException::withMessages([
+                    'nilai_aktiva_id' => 'Voucher harus kategori Tanah, di lokasi yang sama, jenis 1/2, dan sudah diproses.',
+                ]);
+            }
+
+            $links->linkTanah((int) $voucher->id, (int) $tanah->id, $lokasi, Auth::id());
+        }, 3);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Voucher berhasil dihubungkan. Nominal lokasi tidak berubah.',
+        ]);
+    }
+
     public function update(Request $request, int $tanah)
     {
         $row = DB::table('tanahs')->where('id', $tanah)->first();
@@ -2213,6 +2357,17 @@ class KIBController extends Controller
                 ->first();
 
             abort_unless($row, 404);
+
+            // Jangan hapus aset yang masih mempunyai pengaitan voucher baru.
+            if (
+                app(KibVoucherLinkService::class)->ready() &&
+                DB::table('kib_voucher_links')->where('kib', 'tanah')
+                ->where('record_id', $tanah)->exists()
+            ) {
+                throw ValidationException::withMessages([
+                    'tanah' => 'Tanah memiliki voucher terhubung. Koreksi hubungan harus diaudit terlebih dahulu.',
+                ]);
+            }
 
             /*
             |--------------------------------------------------------------------------

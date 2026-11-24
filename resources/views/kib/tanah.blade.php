@@ -960,6 +960,7 @@
 
 
                 <input type="hidden" name="id_lokasi" id="tanahLokasiId">
+                <input type="hidden" name="mode_input" id="tanahInputMode" value="pending">
 
 
                 <div class="tanah-modal-header">
@@ -974,12 +975,7 @@
                             Tambah Data Tanah
                         </h3>
 
-                        <p>
-
-                            Pilih transaksi Nilai Aset lalu lengkapi
-                            data inventaris tanah.
-
-                        </p>
+                        <p id="tanahFormIntro">Pilih transaksi Nilai Aset lalu lengkapi data inventaris tanah.</p>
 
                     </div>
 
@@ -1716,6 +1712,10 @@
                         </div>
 
                         <div class="tanah-sheet-toolbar-controls">
+                            <button type="button" class="tanah-button-primary tanah-direct-add"
+                                id="tanahAddDirectButton">
+                                <i data-lucide="plus"></i> Tambah Data Langsung
+                            </button>
                             <label class="tanah-sheet-search">
                                 <i data-lucide="search"></i>
                                 <input type="search" id="tanahExcelSearch"
@@ -1747,6 +1747,7 @@
                                 <col style="width:125px">
                                 <col style="width:170px">
                                 <col style="width:145px">
+                                <col style="width:160px">
                                 <col style="width:95px">
                             </colgroup>
                             <thead>
@@ -1764,6 +1765,7 @@
                                     <th scope="col" rowspan="2">Asal Usul</th>
                                     <th scope="col" rowspan="2">Keterangan</th>
                                     <th scope="col" rowspan="2">Status Kepemilikan</th>
+                                    <th scope="col" rowspan="2">Nilai Terhubung (Rp)</th>
                                     <th scope="col" rowspan="2">Lampiran</th>
                                 </tr>
                                 <tr class="tanah-excel-sub-head">
@@ -1773,7 +1775,7 @@
                             </thead>
                             <tbody id="tanahExcelBody">
                                 <tr>
-                                    <td colspan="15" class="tanah-excel-message">Memuat daftar sertifikat...</td>
+                                    <td colspan="16" class="tanah-excel-message">Memuat daftar sertifikat...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1782,7 +1784,7 @@
                     <div class="tanah-sheet-footnote">
                         <span><i data-lucide="move-horizontal"></i> Geser tabel ke kanan untuk kolom berikutnya</span>
                         <span><i data-lucide="files"></i> Klik <b>Berkas</b> untuk foto, PDF, dan tindakan</span>
-                        <span>Status kosong ditampilkan sebagai <b>Belum Diatur</b></span>
+                        <span><b>Nilai Terhubung</b> berasal dari voucher yang telah dipilih, bukan total lokasi.</span>
                     </div>
                 </section>
 
@@ -1938,12 +1940,14 @@
                                 <th>Aktiva</th>
                                 <th>Uraian</th>
                                 <th>Nilai</th>
+                                <th>Status / Barang Tujuan</th>
                                 <th>PDF</th>
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="tanahNilaiBody">
                             <tr>
-                                <td colspan="8" class="tanah-empty">Memuat riwayat...</td>
+                                <td colspan="10" class="tanah-empty">Memuat riwayat...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1951,6 +1955,36 @@
             </div>
             <div class="tanah-modal-footer"><button type="button" class="tanah-button-secondary"
                     data-close-dialog="tanahNilaiModal">Tutup</button></div>
+        </dialog>
+
+        {{-- Pilot K.I.B A: pilih satu tujuan untuk voucher yang belum terhubung. --}}
+        <dialog class="tanah-modal tanah-link-modal" id="tanahLinkModal" aria-labelledby="tanahLinkTitle">
+            <div class="tanah-modal-header">
+                <div>
+                    <span class="tanah-modal-eyebrow">PENGAITAN VOUCHER • K.I.B A</span>
+                    <h3 id="tanahLinkTitle">Hubungkan Nilai ke Tanah</h3>
+                    <p>Voucher hanya bisa dimiliki oleh satu data inventaris.</p>
+                </div>
+                <button type="button" class="tanah-modal-close" data-close-dialog="tanahLinkModal"
+                    aria-label="Tutup pengaitan"><i data-lucide="x"></i></button>
+            </div>
+            <div class="tanah-modal-body tanah-link-body">
+                <div id="tanahLinkVoucher" class="tanah-link-voucher"></div>
+                <label for="tanahLinkTarget">Pilih tujuan Tanah *</label>
+                <select id="tanahLinkTarget" required>
+                    <option value="">Pilih sertifikat...</option>
+                </select>
+                <p>Nilai transaksi akan ditampilkan pada baris Tanah yang dipilih. Nominal transaksi lokasi dan status
+                    Pending tidak berubah.</p>
+                <label class="tanah-link-confirm">
+                    <input type="checkbox" id="tanahLinkConfirm">
+                    <span>Saya sudah memeriksa kecocokan voucher dengan data Tanah, termasuk jenis transaksinya.</span>
+                </label>
+            </div>
+            <div class="tanah-modal-footer">
+                <button type="button" class="tanah-button-secondary" data-close-dialog="tanahLinkModal">Batal</button>
+                <button type="button" class="tanah-button-primary" id="tanahLinkSubmit">Hubungkan Voucher</button>
+            </div>
         </dialog>
 
         {{-- =========================================================

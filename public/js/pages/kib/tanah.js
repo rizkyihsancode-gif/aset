@@ -1490,6 +1490,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
 
+        setField('tanahInputMode', 'pending');
+        const changeSourceButton = $('#tanahChangeSourceButton');
+        if (changeSourceButton) changeSourceButton.hidden = false;
+        const intro = $('#tanahFormIntro');
+        if (intro) intro.textContent = 'Pilih transaksi Nilai Aset lalu lengkapi data inventaris tanah.';
+
         setField(
             'tanahEditingId',
             ''
@@ -1980,6 +1986,32 @@ async function loadPending()
             'click',
             openCreateForm
         );
+
+    // Tambah langsung memakai form existing, tetapi endpoint berbeda.
+    // id_lokasi dari route server menjadi sumber kebenaran.
+    function prepareDirectForm(lokasiId, lokasiName) {
+        if (!lokasiId) return;
+        resetForm();
+        form.action = `${LOCATION_URL}/${encodeURIComponent(lokasiId)}/tambah-langsung`;
+        setField('tanahInputMode', 'langsung');
+        const changeSourceButton = $('#tanahChangeSourceButton');
+        if (changeSourceButton) changeSourceButton.hidden = true;
+        setField('tanahLokasiId', lokasiId);
+        setField('tanahLokasiName', lokasiName);
+        $('#tanahFormTitle').textContent = 'Tambah Data Tanah Langsung';
+        const intro = $('#tanahFormIntro');
+        if (intro) intro.textContent = 'Tambah inventaris langsung tanpa menggunakan voucher Pending. Nilai dapat dihubungkan setelah disimpan.';
+        $('#tanahSourceSection').hidden = true;
+        $('#tanahSelectedSource').hidden = false;
+        $('#tanahSelectedTitle').textContent = `Lokasi: ${lokasiName || '-'}`;
+        $('#tanahSelectedMeta').textContent = 'Tanpa voucher · Nilai belum terhubung';
+        closeDialog('tanahLocationModal');
+        openDialog('tanahFormModal');
+    }
+
+    $('#tanahAddDirectButton')?.addEventListener('click', () => {
+        prepareDirectForm(activeLocationId, activeLocationName);
+    });
 
 
     /**
@@ -2958,6 +2990,33 @@ async function loadPending()
         badge.textContent = ownershipLabel(status);
         ownerCell.appendChild(badge);
 
+        const valueCell = document.createElement('td');
+        valueCell.className = 'tanah-linked-value';
+        const voucherCount = Number(record.jumlah_voucher) || 0;
+        if (voucherCount > 0) {
+            const valueButton = document.createElement('button');
+            valueButton.type = 'button';
+            valueButton.className = 'tanah-value-link';
+            valueButton.textContent = formatRupiah(record.nilai_terhubung);
+            valueButton.title = 'Lihat voucher yang terhubung dengan Tanah ini';
+            valueButton.addEventListener('click', event => {
+                event.stopPropagation();
+                selectCertificate(record);
+                openNilai(activeLocationId, activeLocationName);
+            });
+            valueCell.appendChild(valueButton);
+            const status = document.createElement('small');
+            status.className = 'tanah-value-note';
+            status.textContent = `Terhubung · ${voucherCount} voucher`;
+            valueCell.appendChild(status);
+        } else {
+            const status = document.createElement('span');
+            status.className = 'tanah-unlinked';
+            status.textContent = 'Belum terhubung';
+            valueCell.appendChild(status);
+        }
+        row.appendChild(valueCell);
+
         const actionCell = document.createElement('td');
         actionCell.className = 'tanah-excel-actions';
         const detailButton = document.createElement('button');
@@ -3122,7 +3181,7 @@ async function loadPending()
         const list = $('#tanahExcelBody');
 
         if (list) {
-            list.innerHTML = '<tr><td colspan="15" class="tanah-excel-message">Memuat daftar sertifikat...</td></tr>';
+            list.innerHTML = '<tr><td colspan="16" class="tanah-excel-message">Memuat daftar sertifikat...</td></tr>';
         }
 
         $('#tanahLegacyEmpty').hidden = false;
@@ -3240,7 +3299,7 @@ async function loadPending()
 
 
             if (list) {
-                list.innerHTML = '<tr><td colspan="15" class="tanah-excel-message">Gagal memuat daftar sertifikat.</td></tr>';
+                list.innerHTML = '<tr><td colspan="16" class="tanah-excel-message">Gagal memuat daftar sertifikat.</td></tr>';
             }
 
 
@@ -3419,11 +3478,89 @@ async function loadPending()
      * ========================================================================
      */
 
+    // Status satu sesi pemilihan, tidak menyimpan voucher di browser.
+    let nilaiLinkState = null;
+    let nilaiLinkTargets = [];
+    let nilaiPopupLocation = null;
+
+    function startNilaiLink(record) {
+        if (!record?.can_link || !nilaiPopupLocation?.id) return;
+        nilaiLinkState = {
+            voucherId: Number(record.id),
+            locationId: String(nilaiPopupLocation.id),
+            locationName: nilaiPopupLocation.name,
+        };
+        $('#tanahLinkVoucher').textContent =
+            `Voucher ${record.no_voucher || '#' + record.id} · ${formatRupiah(record.nilai)} · ` +
+            `${Number(record.jenisn) === 2 ? 'Penambahan Nilai' : 'Penambahan Aset'} · ${record.urai || '-'}`;
+        const select = $('#tanahLinkTarget');
+        select.replaceChildren();
+        const placeholder = new Option('Pilih sertifikat tujuan...', '');
+        select.appendChild(placeholder);
+        nilaiLinkTargets.forEach(target => {
+            select.appendChild(new Option(target.label, String(target.id)));
+        });
+        const match = nilaiLinkTargets.some(target => String(target.id) === String(activeCertificate?.id));
+        if (match) select.value = String(activeCertificate.id);
+        $('#tanahLinkConfirm').checked = false;
+        openDialog('tanahLinkModal');
+    }
+
+    $('#tanahLinkSubmit')?.addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const targetId = $('#tanahLinkTarget').value;
+        if (!nilaiLinkState || !targetId) {
+            notify('Pilih data Tanah tujuan terlebih dahulu.', true);
+            return;
+        }
+        if (!$('#tanahLinkConfirm').checked) {
+            notify('Konfirmasi kecocokan voucher dan data Tanah sebelum menghubungkan.', true);
+            return;
+        }
+        const token = $('#tanahForm input[name="_token"]')?.value;
+        if (!token) {
+            notify('Token keamanan form tidak ditemukan. Muat ulang halaman.', true);
+            return;
+        }
+        button.disabled = true;
+        try {
+            const response = await fetch(
+                `${LOCATION_URL}/${encodeURIComponent(nilaiLinkState.locationId)}/hubungkan-voucher`,
+                { method: 'POST', credentials: 'same-origin', headers: {
+                    'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token,
+                }, body: JSON.stringify({
+                    nilai_aktiva_id: nilaiLinkState.voucherId,
+                    tanah_id: Number(targetId), konfirmasi: true,
+                }) }
+            );
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success === false) {
+                const reason = Object.values(result.errors || {}).flat()[0] ||
+                    result.message || `Gagal menghubungkan voucher (HTTP ${response.status}).`;
+                throw new Error(String(reason));
+            }
+            closeDialog('tanahLinkModal');
+            notify(result.message || 'Voucher berhasil dihubungkan.');
+            const lokasiId = nilaiLinkState.locationId;
+            const lokasiName = nilaiLinkState.locationName;
+            await openNilai(lokasiId, lokasiName);
+            // Segarkan tabel Detail tanpa reload atau mengubah sumber voucher.
+            if (String(activeLocationId) === String(lokasiId) && dialog('tanahLocationModal')?.open) {
+                await openLocation(lokasiId, lokasiName, targetId);
+            }
+        } catch (error) {
+            handleError(error, 'Pengaitan voucher gagal');
+        } finally {
+            button.disabled = false;
+        }
+    });
+
     async function openNilai(
         locationId,
         locationName,
         selectedItem = null
     ) {
+        nilaiPopupLocation = { id: String(locationId), name: locationName };
         $('#tanahNilaiTitle').textContent =
             `Riwayat Nilai • ${
                 locationName
@@ -3437,7 +3574,7 @@ async function loadPending()
         $('#tanahNilaiBody').innerHTML = `
             <tr>
                 <td
-                    colspan="8"
+                    colspan="10"
                     class="tanah-empty"
                 >
                     Memuat transaksi...
@@ -3469,6 +3606,8 @@ async function loadPending()
                 )
                     ? result.data
                     : [];
+            nilaiLinkTargets = Array.isArray(result.pilihan_tanah) ? result.pilihan_tanah : [];
+
 
 
             /**
@@ -3514,7 +3653,7 @@ async function loadPending()
                 body.innerHTML = `
                     <tr>
                         <td
-                            colspan="8"
+                            colspan="10"
                             class="tanah-empty"
                         >
                             Belum ada transaksi Nilai Aset.
@@ -3606,9 +3745,14 @@ async function loadPending()
                         </td>
 
                         <td class="tanah-value-cell">
-                            ${formatRupiah(
-                                record.nilai
-                            )}
+                            ${formatRupiah(record.nilai)}
+                        </td>
+
+                        <td>
+                            <span class="tanah-nilai-status ${record.link_status === 'terhubung' ? 'is-linked' : record.link_status === 'perlu_verifikasi' ? 'is-review' : ''}">
+                                ${record.link_status === 'terhubung' ? 'Terhubung' : record.link_status === 'perlu_verifikasi' ? 'Perlu verifikasi' : Number(record.stat) === 0 ? 'Pending' : 'Belum terhubung'}
+                            </span>
+                            ${record.link_target ? `<small class="tanah-nilai-target">${escapeHtml(record.link_target)}</small>` : ''}
                         </td>
 
                         <td>
@@ -3634,8 +3778,12 @@ async function loadPending()
                             }
 
                         </td>
+                        <td>
+                            ${record.can_link ? '<button type="button" class="tanah-nilai-action js-nilai-link">Hubungkan ke Tanah</button>' : '<span class="tanah-pdf-empty">—</span>'}
+                        </td>
                     `;
 
+                    $('.js-nilai-link', row)?.addEventListener('click', () => startNilaiLink(record));
 
                     if (
                         record.pdf_preview_url
@@ -4290,6 +4438,19 @@ async function loadPending()
             }
 
 
+            if (oldInput.mode_input === 'langsung' && oldInput.id_lokasi &&
+                !(oldInput.tanah_id && oldInput._method === 'PUT')) {
+                form.action = `${LOCATION_URL}/${encodeURIComponent(oldInput.id_lokasi)}/tambah-langsung`;
+                setField('tanahInputMode', 'langsung');
+                const changeSourceButton = $('#tanahChangeSourceButton');
+                if (changeSourceButton) changeSourceButton.hidden = true;
+                $('#tanahSourceSection').hidden = true;
+                $('#tanahSelectedSource').hidden = false;
+                $('#tanahSelectedTitle').textContent = 'Tambah langsung tanpa voucher';
+                $('#tanahSelectedMeta').textContent = 'Lengkapi data lalu simpan kembali.';
+                $('#tanahFormTitle').textContent = 'Tambah Data Tanah Langsung';
+            }
+
             /**
              * Jika sebelumnya memilih Nilai Aset.
              */
@@ -4341,6 +4502,15 @@ async function loadPending()
      */
 
     loadPending();
+
+    // Setelah Tambah Langsung sukses, buka lokasi terkini agar hitungan
+    // dan baris baru langsung terlihat (diambil dari server).
+    const lokasiDetailParam = new URLSearchParams(window.location.search).get('lokasi_detail');
+    if (lokasiDetailParam && /^\d+$/.test(lokasiDetailParam) && root.dataset.hasErrors !== '1') {
+        const row = $(`.tanah-data-row[data-location-id="${lokasiDetailParam}"]`);
+        const name = $('.tanah-location-cell strong', row || root)?.textContent?.trim() || 'Lokasi';
+        openLocation(lokasiDetailParam, name);
+    }
 
     refreshIcons();
 

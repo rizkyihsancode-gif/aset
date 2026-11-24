@@ -5098,3 +5098,39 @@ dl > div:last-child {
         min-width: 150px;
     }
 }
+
+/* ===============================================================
+ * PILOT K.I.B A — Tambah langsung & nilai voucher per sertifikat
+ * Mengikuti palet, radius, dan tipografi komponen Tanah existing.
+ * =============================================================== */
+.tanah-direct-add { min-height: 38px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.tanah-direct-add svg { width: 15px; height: 15px; }
+.tanah-sheet-modal .tanah-excel-table .tanah-linked-value {
+    text-align: right; white-space: nowrap; vertical-align: middle;
+}
+.tanah-linked-value .tanah-value-link { background: transparent; border: 0; color: #0755a4; font-weight: 700;
+    cursor: pointer; padding: 3px 2px; text-decoration: underline; text-underline-offset: 2px; }
+.tanah-linked-value .tanah-value-link:focus-visible { outline: 2px solid #0873d3; outline-offset: 2px; border-radius: 4px; }
+.tanah-linked-value .tanah-value-note { display: block; color: #57718d; font-size: 10px; text-align: right; }
+.tanah-linked-value .tanah-unlinked { display: inline-block; font-size: 11px; color: #64748b; font-weight: 600; }
+.tanah-link-modal { width: min(640px, calc(100vw - 28px)); }
+.tanah-link-body { display: grid; gap: 12px; }
+.tanah-link-body label:not(.tanah-link-confirm) { color: #17416b; font-weight: 700; font-size: 12px; }
+.tanah-link-body select { width: 100%; border: 1px solid #bfcee4; padding: 11px 12px; border-radius: 8px; font: inherit; background: #fff; color: #173c65; }
+.tanah-link-body select:focus-visible { outline: 2px solid #1680e5; outline-offset: 2px; }
+.tanah-link-body p { margin: 0; color: #64748b; font-size: 12px; line-height: 1.5; }
+.tanah-link-voucher { background: #f0f6ff; border: 1px solid #d0e2fb; border-radius: 9px; padding: 12px 14px; font-size: 13px; color: #143d68; line-height: 1.5; }
+.tanah-link-confirm { display: flex; align-items: flex-start; gap: 9px; color: #234a74; font-size: 12px; line-height: 1.5; cursor: pointer; }
+.tanah-link-confirm input { margin-top: 3px; accent-color: #0873d3; }
+.tanah-nilai-status { display: inline-flex; padding: 4px 7px; border-radius: 7px; background: #eef5ff; color: #145093; font-size: 11px; font-weight: 700; }
+.tanah-nilai-status.is-linked { background: #e9f7ee; color: #146b39; }
+.tanah-nilai-status.is-review { background: #fff2db; color: #975608; }
+.tanah-nilai-target { display: block; margin-top: 5px; font-size: 11px; font-weight: 500; line-height: 1.4; white-space: normal; }
+.tanah-nilai-action { white-space: nowrap; border: 1px solid #b8d6fb; background: #edf5ff; color: #0756ac;
+    font-weight: 700; border-radius: 7px; padding: 7px 9px; cursor: pointer; }
+.tanah-nilai-action:focus-visible { outline: 2px solid #0873d3; outline-offset: 2px; }
+.tanah-nilai-table td { vertical-align: middle; }
+@media (max-width: 760px) { .tanah-direct-add { width: 100%; justify-content: center; } }
+
+.tanah-sheet-modal .tanah-sheet-toolbar-controls { width: min(710px, 100%); }
+@media (max-width: 860px) { .tanah-sheet-modal .tanah-sheet-toolbar-controls { flex-wrap: wrap; } }
