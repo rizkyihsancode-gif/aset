@@ -414,10 +414,18 @@ class KIBController extends Controller
                 + (int) ($pdfLampiranLokasi[$row->id_lokasi] ?? 0);
         });
 
+        // Pilihan seluruh Master Lokasi untuk Tambah Langsung global.
+        // Pilihan diambil dari Master Lokasi, bukan voucher Pending.
+        $pilihanLokasiTanah = DB::table('lokasis')
+            ->select('id', 'lokasi', 'alamat')
+            ->orderBy('lokasi')
+            ->get();
+
         return view(
             'kib.tanah',
             compact(
                 'tanahs',
+                'pilihanLokasiTanah',
                 'barangRows',
                 'totalLokasiTanah',
                 'totalDataTanah',
@@ -940,7 +948,7 @@ class KIBController extends Controller
                 && $kategoriTanah !== null
                 && (int) $item->cat === (int) $kategoriTanah
                 && $item->link_status === 'belum_terhubung'
-                && (int) $item->stat === 1
+                && in_array((int) $item->stat, [0, 1], true)
                 && in_array((int) $item->jenisn, [1, 2], true);
         });
 
@@ -2209,6 +2217,12 @@ class KIBController extends Controller
     public function storeTanahLangsung(Request $request, int $lokasi)
     {
         abort_unless(DB::table('lokasis')->where('id', $lokasi)->exists(), 404);
+        // Data Langsung adalah pencatatan fisik saja. Voucher hanya boleh
+        // diberikan melalui endpoint Hubungkan pada modal Data Nilai.
+        $request->validate([
+            'mode_input' => ['required', Rule::in(['langsung'])],
+            'id_nilai_aktiva' => ['prohibited'],
+        ]);
         $input = $this->validateInput($request, true);
         $newFiles = [];
         try {
@@ -2267,7 +2281,7 @@ class KIBController extends Controller
                 !$voucher || (int) $voucher->id_lokasi !== $lokasi ||
                 (int) $voucher->cat !== (int) $cat ||
                 !in_array((int) $voucher->jenisn, [1, 2], true) ||
-                (int) $voucher->stat !== 1 ||
+                !in_array((int) $voucher->stat, [0, 1], true) ||
                 !in_array(
                     strtoupper(trim(preg_replace('/[^A-Z0-9]+/i', ' ', (string) $voucher->kib))),
                     ['TANAH', 'KIB A TANAH'],
@@ -2275,16 +2289,30 @@ class KIBController extends Controller
                 )
             ) {
                 throw ValidationException::withMessages([
-                    'nilai_aktiva_id' => 'Voucher harus kategori Tanah, di lokasi yang sama, jenis 1/2, dan sudah diproses.',
+                    'nilai_aktiva_id' => 'Voucher harus kategori Tanah, pada lokasi yang sama, jenis 1/2, dan berstatus Pending atau Diproses.',
                 ]);
             }
 
+            // Kunci voucher dan relasi ditulis pada transaksi yang sama.
+            // Voucher Pending baru ditandai diproses JIKA pengaitan berhasil.
             $links->linkTanah((int) $voucher->id, (int) $tanah->id, $lokasi, Auth::id());
+            if ((int) $voucher->stat === 0) {
+                $updated = DB::table('nilai_aktivas')
+                    ->where('id', $voucher->id)
+                    ->where('stat', 0)
+                    ->update(['stat' => 1, 'updated_at' => now()]);
+                if ($updated !== 1) {
+                    throw ValidationException::withMessages([
+                        'nilai_aktiva_id' => 'Voucher sudah berubah status. Pengaitan dibatalkan.',
+                    ]);
+                }
+            }
         }, 3);
 
+        $notifications->clearCache();
         return response()->json([
             'success' => true,
-            'message' => 'Voucher berhasil dihubungkan. Nominal lokasi tidak berubah.',
+            'message' => 'Voucher berhasil dihubungkan ke data Tanah. Status Pending, jika ada, telah diproses.',
         ]);
     }
 

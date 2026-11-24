@@ -1491,6 +1491,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         setField('tanahInputMode', 'pending');
+        const voucherInput = $('#tanahNilaiAktivaId');
+        if (voucherInput) voucherInput.disabled = false;
+        const selectedLabel = $('#tanahSelectedLabel');
+        if (selectedLabel) selectedLabel.textContent = 'Informasi Lokasi';
         const changeSourceButton = $('#tanahChangeSourceButton');
         if (changeSourceButton) changeSourceButton.hidden = false;
         const intro = $('#tanahFormIntro');
@@ -1967,25 +1971,45 @@ async function loadPending()
     }
 
 
-    $('#btnTambah')
-        ?.addEventListener(
-            'click',
-            openCreateForm
-        );
+    // Alur baku K.I.B A: Tambah = data fisik tanpa voucher.
+    // Memilih voucher hanya dilakukan lewat tombol Nilai per lokasi.
+    let lokasiPickerMode = 'tambah';
+    function openPilihLokasi(mode = 'tambah') {
+        lokasiPickerMode = mode;
+        const title = $('#tanahPilihLokasiTitle');
+        const info = $('#tanahPilihLokasiInfo');
+        const note = $('#tanahPilihLokasiNote');
+        if (title) title.textContent = mode === 'nilai' ? 'Pilih Lokasi Data Nilai' : 'Pilih Lokasi Tanah';
+        if (info) info.textContent = mode === 'nilai'
+            ? 'Buka transaksi Nilai Aset berdasarkan lokasi, lalu pilih data Tanah yang menjadi tujuan.'
+            : 'Tambah data inventaris langsung, tanpa memilih transaksi Nilai Aset.';
+        if (note) note.textContent = mode === 'nilai'
+            ? 'Pengaitan voucher dilakukan di popup Nilai. Satu voucher tidak bisa dipakai dua barang.'
+            : 'Data baru langsung masuk tabel Detail lokasi dan berstatus Nilai Belum Terhubung.';
+        const select = $('#tanahPilihLokasiSelect');
+        if (select) select.value = '';
+        openDialog('tanahPilihLokasiModal');
+    }
 
+    $('#btnTambah')?.addEventListener('click', () => openPilihLokasi('tambah'));
+    $('#tanahAddButton')?.addEventListener('click', () => openPilihLokasi('tambah'));
+    $('#tanahIncomingButton')?.addEventListener('click', () => openPilihLokasi('nilai'));
 
-    $('#tanahAddButton')
-        ?.addEventListener(
-            'click',
-            openCreateForm
-        );
-
-
-    $('#tanahIncomingButton')
-        ?.addEventListener(
-            'click',
-            openCreateForm
-        );
+    $('#tanahPilihLokasiLanjut')?.addEventListener('click', () => {
+        const select = $('#tanahPilihLokasiSelect');
+        const lokasiId = select?.value;
+        if (!lokasiId) {
+            notify('Pilih lokasi terlebih dahulu.', true);
+            return;
+        }
+        const lokasiName = select.selectedOptions[0]?.textContent?.trim() || 'Lokasi';
+        closeDialog('tanahPilihLokasiModal');
+        if (lokasiPickerMode === 'nilai') {
+            openNilai(lokasiId, lokasiName);
+        } else {
+            prepareDirectForm(lokasiId, lokasiName);
+        }
+    });
 
     // Tambah langsung memakai form existing, tetapi endpoint berbeda.
     // id_lokasi dari route server menjadi sumber kebenaran.
@@ -1994,6 +2018,12 @@ async function loadPending()
         resetForm();
         form.action = `${LOCATION_URL}/${encodeURIComponent(lokasiId)}/tambah-langsung`;
         setField('tanahInputMode', 'langsung');
+        // Voucher tidak ikut dikirim, sekalipun pengguna sebelumnya membuka form Pending.
+        setField('tanahNilaiAktivaId', '');
+        const voucherInput = $('#tanahNilaiAktivaId');
+        if (voucherInput) voucherInput.disabled = true;
+        const selectedLabel = $('#tanahSelectedLabel');
+        if (selectedLabel) selectedLabel.textContent = 'Lokasi Inventaris';
         const changeSourceButton = $('#tanahChangeSourceButton');
         if (changeSourceButton) changeSourceButton.hidden = true;
         setField('tanahLokasiId', lokasiId);
@@ -2053,17 +2083,14 @@ async function loadPending()
             }
 
 
-            resetForm();
-
-
-            openDialog(
-                'tanahFormModal'
-            );
-
-
-            chooseSource(
-                event.detail
-            );
+            // Notifikasi lama mengarahkan ke popup Nilai, bukan lagi
+            // memaksa memilih voucher saat Tambah Data Tanah.
+            const lokasiId = event.detail.id_lokasi || event.detail.idLok;
+            if (lokasiId) {
+                openNilai(lokasiId, event.detail.lokasi || event.detail.lok || 'Lokasi');
+            } else {
+                openPilihLokasi('nilai');
+            }
 
         }
     );
@@ -2254,11 +2281,13 @@ async function loadPending()
                 !== false;
 
 
+            // Tambah Langsung tidak memerlukan voucher. Pemilihan voucher
+            // hanya lewat popup Data Nilai setelah record Tanah tersimpan.
+            const isDirect = $('#tanahInputMode')?.value === 'langsung';
             if (
                 isCreateMode
-                &&
-                !$('#tanahNilaiAktivaId')
-                    ?.value
+                && !isDirect
+                && !$('#tanahNilaiAktivaId')?.value
             ) {
                 event.preventDefault();
 
@@ -3492,7 +3521,8 @@ async function loadPending()
         };
         $('#tanahLinkVoucher').textContent =
             `Voucher ${record.no_voucher || '#' + record.id} · ${formatRupiah(record.nilai)} · ` +
-            `${Number(record.jenisn) === 2 ? 'Penambahan Nilai' : 'Penambahan Aset'} · ${record.urai || '-'}`;
+            `${Number(record.jenisn) === 2 ? 'Penambahan Nilai' : 'Penambahan Aset'} · ` +
+            `${Number(record.stat) === 0 ? 'Pending (akan diproses)' : 'Sudah diproses'} · ${record.urai || '-'}`;
         const select = $('#tanahLinkTarget');
         select.replaceChildren();
         const placeholder = new Option('Pilih sertifikat tujuan...', '');
@@ -4442,6 +4472,11 @@ async function loadPending()
                 !(oldInput.tanah_id && oldInput._method === 'PUT')) {
                 form.action = `${LOCATION_URL}/${encodeURIComponent(oldInput.id_lokasi)}/tambah-langsung`;
                 setField('tanahInputMode', 'langsung');
+                setField('tanahNilaiAktivaId', '');
+                const voucherInput = $('#tanahNilaiAktivaId');
+                if (voucherInput) voucherInput.disabled = true;
+                const selectedLabel = $('#tanahSelectedLabel');
+                if (selectedLabel) selectedLabel.textContent = 'Lokasi Inventaris';
                 const changeSourceButton = $('#tanahChangeSourceButton');
                 if (changeSourceButton) changeSourceButton.hidden = true;
                 $('#tanahSourceSection').hidden = true;

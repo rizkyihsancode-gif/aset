@@ -5134,3 +5134,41 @@ dl > div:last-child {
 
 .tanah-sheet-modal .tanah-sheet-toolbar-controls { width: min(710px, 100%); }
 @media (max-width: 860px) { .tanah-sheet-modal .tanah-sheet-toolbar-controls { flex-wrap: wrap; } }
+
+/* ========================================================================
+   K.I.B A — PILIH LOKASI UNTUK TAMBAH LANGSUNG / BUKA DATA NILAI
+   Mengikuti gaya popup form dan dropdown yang sudah digunakan K.I.B A.
+   ======================================================================== */
+.tanah-page .tanah-pilih-lokasi-modal {
+    width: min(620px, calc(100vw - 28px));
+}
+.tanah-page .tanah-pilih-lokasi-modal .tanah-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.tanah-page .tanah-pilih-lokasi-modal label {
+    color: #17416b;
+    font-size: 12px;
+    font-weight: 700;
+}
+.tanah-page .tanah-pilih-lokasi-select {
+    width: 100%;
+    min-height: 44px;
+    padding: 11px 12px;
+    border: 1px solid #bfcee4;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #173c65;
+    font: inherit;
+}
+.tanah-page .tanah-pilih-lokasi-select:focus-visible {
+    outline: 2px solid #1680e5;
+    outline-offset: 2px;
+}
+.tanah-page .tanah-pilih-lokasi-note {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+}

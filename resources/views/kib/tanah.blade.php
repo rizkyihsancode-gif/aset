@@ -945,6 +945,40 @@
          CREATE / EDIT MODAL
     ========================================================== --}}
 
+        {{-- Pilihan lokasi hanya dipakai tombol Tambah global / Data Masuk.
+             Tombol Tambah Langsung pada Detail langsung memakai lokasi aktif. --}}
+        <dialog class="tanah-modal tanah-pilih-lokasi-modal" id="tanahPilihLokasiModal"
+            aria-labelledby="tanahPilihLokasiTitle">
+            <div class="tanah-modal-header">
+                <div>
+                    <span class="tanah-modal-eyebrow">K.I.B A / LOKASI</span>
+                    <h3 id="tanahPilihLokasiTitle">Pilih Lokasi Tanah</h3>
+                    <p id="tanahPilihLokasiInfo">Pilih lokasi untuk menambah inventaris tanpa voucher.</p>
+                </div>
+                <button type="button" class="tanah-modal-close" data-close-dialog="tanahPilihLokasiModal"
+                    aria-label="Tutup pilihan lokasi"><i data-lucide="x"></i></button>
+            </div>
+            <div class="tanah-modal-body">
+                <label for="tanahPilihLokasiSelect">Lokasi *</label>
+                <select id="tanahPilihLokasiSelect" class="tanah-pilih-lokasi-select">
+                    <option value="">— Pilih lokasi dari Master Lokasi —</option>
+                    @foreach ($pilihanLokasiTanah ?? collect() as $lokasiPilihan)
+                        <option value="{{ $lokasiPilihan->id }}">
+                            {{ $lokasiPilihan->lokasi }}{{ $lokasiPilihan->alamat ? ' — ' . $lokasiPilihan->alamat : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="tanah-pilih-lokasi-note" id="tanahPilihLokasiNote">
+                    Barang baru otomatis masuk ke tabel Detail lokasi ini. Nilainya belum terhubung.
+                </p>
+            </div>
+            <div class="tanah-modal-footer">
+                <button type="button" class="tanah-button-secondary"
+                    data-close-dialog="tanahPilihLokasiModal">Batal</button>
+                <button type="button" class="tanah-button-primary" id="tanahPilihLokasiLanjut">Lanjut</button>
+            </div>
+        </dialog>
+
         <dialog class="tanah-modal tanah-form-modal" id="tanahFormModal">
 
             <form id="tanahForm" action="{{ url('/kib/tanah') }}" method="POST" enctype="multipart/form-data">
@@ -1104,8 +1138,8 @@
 
                         <div>
 
-                            <span>
-                                Data Nilai Aset Terpilih
+                            <span id="tanahSelectedLabel">
+                                Informasi Lokasi
                             </span>
 
                             <strong id="tanahSelectedTitle">
@@ -1163,7 +1197,8 @@
                                     <b>*</b>
                                 </label>
 
-                                <input type="text" id="tanahLokasiName" readonly placeholder="Pilih data Nilai Aset">
+                                <input type="text" id="tanahLokasiName" readonly
+                                    placeholder="Lokasi inventaris akan otomatis terisi">
 
                             </div>
 
@@ -1974,8 +2009,8 @@
                 <select id="tanahLinkTarget" required>
                     <option value="">Pilih sertifikat...</option>
                 </select>
-                <p>Nilai transaksi akan ditampilkan pada baris Tanah yang dipilih. Nominal transaksi lokasi dan status
-                    Pending tidak berubah.</p>
+                <p>Nilai voucher dicatat pada baris Tanah tujuan, tanpa menambah data fisik baru.
+                    Jika voucher masih Pending, statusnya otomatis Diproses setelah pengaitan berhasil.</p>
                 <label class="tanah-link-confirm">
                     <input type="checkbox" id="tanahLinkConfirm">
                     <span>Saya sudah memeriksa kecocokan voucher dengan data Tanah, termasuk jenis transaksinya.</span>
