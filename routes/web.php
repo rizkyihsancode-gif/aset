@@ -7,17 +7,32 @@ use App\Http\Controllers\KIBController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NilaiAsetController;
 use App\Http\Controllers\KibNotificationController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+/*
+|--------------------------------------------------------------------------
+| AUTENTIKASI SESI LARAVEL
+|--------------------------------------------------------------------------
+*/
 
+Route::get('/login', [
+    AuthenticatedSessionController::class,
+    'create'
+])->name('login');
 
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+Route::post('/login', [
+    AuthenticatedSessionController::class,
+    'store'
+])
+    ->middleware('throttle:5,1')
+    ->name('login.submit');
+
+Route::post('/logout', [
+    AuthenticatedSessionController::class,
+    'destroy'
+])->name('logout');
 
 
 /*
