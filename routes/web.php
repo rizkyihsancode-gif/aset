@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Models\Barang;
 use App\Http\Controllers\MasterController;
 use App\Http\Controllers\KIBController;
@@ -9,6 +10,21 @@ use App\Http\Controllers\NilaiAsetController;
 use App\Http\Controllers\KibNotificationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
+
+
+/*
+|--------------------------------------------------------------------------
+| HALAMAN AWAL
+|--------------------------------------------------------------------------
+| Pengunjung diarahkan ke Login, pengguna yang sudah terautentikasi
+| diarahkan ke Dashboard. Tidak ada autentikasi palsu atau bypass.
+*/
+
+Route::get('/', function (Request $request) {
+    return redirect()->route(
+        $request->user() !== null ? 'dashboard' : 'login'
+    );
+});
 
 
 /*
@@ -33,49 +49,6 @@ Route::post('/logout', [
     AuthenticatedSessionController::class,
     'destroy'
 ])->name('logout');
-
-
-/*
-|--------------------------------------------------------------------------
-| TEMPORARY LOGIN
-|--------------------------------------------------------------------------
-|
-| Ini hanya sementara.
-| Nanti akan kita ganti menggunakan autentikasi database.
-|
-*/
-
-Route::post('/login', [
-    \App\Http\Controllers\Auth\AuthenticatedSessionController::class,
-    'store'
-])
-    ->middleware('throttle:5,1')
-    ->name('login.submit');
-
-/*
-|--------------------------------------------------------------------------
-| LOGOUT SISTEM ASET
-|--------------------------------------------------------------------------
-|
-| Mengakhiri autentikasi dan menghapus session pengguna.
-| Logout menggunakan POST untuk perlindungan CSRF.
-|
-*/
-
-Route::post('/logout', function (
-    \Illuminate\Http\Request $request
-) {
-    \Illuminate\Support\Facades\Auth::logout();
-
-    $request->session()->invalidate();
-
-    $request->session()->regenerateToken();
-
-    return redirect()->route('login');
-})->name('logout');
-
-
-
 
 // ------------------------------------------------
 // DASHBOARD ROUTES
