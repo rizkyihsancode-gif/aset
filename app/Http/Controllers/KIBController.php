@@ -4952,7 +4952,7 @@ class KIBController extends Controller
                 'kode_struktur' => $kodeStruktur,
             ],
             'sdm' => $this->sdmAktifKibB(),
-            'data' => $items->values()->all(),
+            'data' => $this->nilaiLaporanKib($items->values()->all(), 'gedung', 'id', 'nilai'),
         ]);
     }
 
@@ -5869,7 +5869,7 @@ class KIBController extends Controller
                 'kode_struktur' => $identitas('kode_struktur'),
             ],
             'sdm' => $this->sdmAktifKibB(),
-            'data' => $items->values()->all(),
+            'data' => $this->nilaiLaporanKib($items->values()->all(), 'aset_ttp'),
         ]);
     }
 
@@ -7241,7 +7241,7 @@ class KIBController extends Controller
                 'kode_struktur' => $kodeStruktur,
             ],
             'sdm' => $sdm->values()->all(),
-            'items' => $rows,
+            'items' => $this->nilaiLaporanKib($rows, 'konstruksi', 'id', 'nilai'),
             'keterangan_luas' => $hasLuas
                 ? null : 'Kolom Luas belum tersedia pada tabel konstruksi; laporan menampilkan tanda —.',
         ]);
@@ -10860,7 +10860,7 @@ class KIBController extends Controller
                 'kode_struktur' => $kodeStruktur,
             ],
             'sdm' => $this->sdmAktifKibB(),
-            'data' => $items->values()->all(),
+            'data' => $this->nilaiLaporanKib($items->values()->all(), $jenis, 'id', 'harga'),
         ]);
     }
 
@@ -11622,6 +11622,34 @@ class KIBController extends Controller
         return count($nama) === 1 ? reset($nama) : 'BERAGAM';
     }
 
+    /** Nilai laporan per record, bukan total lokasi. Harga historis/manual tetap
+     * dipakai bila belum ada voucher, tanpa menjumlahkan kedua sumber. */
+    private function nilaiLaporanKib(array $rows, string $kategori, string $idKey = 'id', ?string $fallback = null): array
+    {
+        $ids = array_map(static fn($r) => (int) (((array) $r)[$idKey] ?? 0), $rows);
+        $totals = app(KibVoucherLinkService::class)->totalsForRecords($kategori, $ids);
+        return array_map(static function ($item) use ($idKey, $totals, $fallback): array {
+            $row = (array) $item;
+            $id = (int) ($row[$idKey] ?? 0);
+            $total = $totals[$id] ?? ['jumlah_voucher' => 0, 'nilai_terhubung' => 0, 'nilai_konflik' => false];
+            $row = array_merge($row, $total);
+            if ($total['nilai_konflik']) {
+                $row['nilai_laporan'] = null;
+                $row['nilai_sumber'] = 'konflik';
+            } elseif ($total['jumlah_voucher'] > 0) {
+                $row['nilai_laporan'] = $total['nilai_terhubung'];
+                $row['nilai_sumber'] = 'voucher';
+            } elseif ($id > 0 && $fallback !== null && isset($row[$fallback]) && is_numeric($row[$fallback])) {
+                $row['nilai_laporan'] = $row[$fallback];
+                $row['nilai_sumber'] = 'manual';
+            } else {
+                $row['nilai_laporan'] = 0;
+                $row['nilai_sumber'] = 'belum_terhubung';
+            }
+            return $row;
+        }, $rows);
+    }
+
     /**
      * Excel 17 kolom untuk SELURUH barang dalam satu lokasi K.I.B B.
      * Cocok untuk tombol Print Excel pada Detail lokasi (misal AWS: 5 barang).
@@ -11702,7 +11730,7 @@ class KIBController extends Controller
                 'kode_struktur' => $this->kodeStrukturLokasiKibB([$lokasiId]),
             ],
             'jumlah' => count($data),
-            'data' => $data,
+            'data' => $this->nilaiLaporanKib($data, 'mesin', 'mesin_id', 'harga'),
             'sdm' => $this->sdmAktifKibB(),
             'organisasi' => [
                 'provinsi' => 'KALIMANTAN TIMUR',
@@ -11788,7 +11816,7 @@ class KIBController extends Controller
             'success' => true,
             'jenis' => $jenis,
             'jumlah' => count($rows),
-            'data' => $rows,
+            'data' => $this->nilaiLaporanKib($rows, 'mesin', 'mesin_id', $jenis === 'mesin' ? 'harga' : null),
             'sdm' => $this->sdmAktifKibB(),
             'organisasi' => [
                 'provinsi' => 'KALIMANTAN TIMUR',

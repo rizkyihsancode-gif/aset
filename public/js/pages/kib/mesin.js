@@ -4751,11 +4751,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const $ = selector => dialog.querySelector(selector);
     // Urutan peran selalu mengacu pada popup K.I.B A Tanah (PRD v2.1).
+    const reportNilai = row => {
+        if (row.nilai_konflik) return 'PERIKSA RELASI';
+        if (row.nilai_laporan === undefined || row.nilai_laporan === null) return 'NILAI BELUM DIMUAT';
+        const value = Number(row.nilai_laporan);
+        // Excel hanya menjamin 15 digit signifikan. Jangan membulatkan nominal besar diam-diam.
+        if (!Number.isFinite(value) || Math.abs(value) >= 1e15) return `CEK NOMINAL: ${String(row.nilai_laporan)}`;
+        return value;
+    };
+    const reportNilaiText = value => typeof value === 'number' ? new Intl.NumberFormat('id-ID', {maximumFractionDigits: 2}).format(value) : value;
     const roles = [
-        ['diketahui', 'Diketahui oleh'],
-        ['periksa_1', 'Diperiksa oleh (1)'],
-        ['periksa_2', 'Diperiksa oleh (2)'],
-        ['dibuat', 'Dibuat oleh'],
+        ['disetujui', 'Disetujui Oleh'],
+        ['diketahui', 'Diketahui Oleh'],
+        ['diperiksa', 'Diperiksa Oleh'],
+        ['dibuat', 'Dibuat Oleh'],
     ];
     const org = { provinsi: 'KALIMANTAN TIMUR', kota: 'SAMARINDA', unit: 'PERUMDA TIRTA KENCANA' };
     const state = { jenis: 'kendaraan', data: [], sdm: [], organisasi: org, lokasi: null };
@@ -4969,14 +4978,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 'No.', 'Kode Barang', 'Nama Barang / Jenis Barang', 'Nomor Register',
                 'Merk / Type', 'Ukuran / CC', 'Bahan', 'Tahun Pembelian',
                 'Pabrik', 'Rangka', 'Mesin', 'Polisi', 'BPKB',
-                'Asal Usul Cara Perolehan', 'Keterangan'
+                'Asal Usul Cara Perolehan', 'Nilai Rp', 'Keterangan'
             ];
         }
         return [
             'No.', 'Nama Barang', 'Kode Inventaris', 'No. Register',
             'Merk / Type', 'Ukuran', 'Fungsi', 'Penggunaan', 'Bahan',
             'Baik', 'Rusak Ringan', 'Rusak Berat',
-            'Tahun Pengadaan', 'Asal Usul', 'No. Dokumen', 'Harga (Rp)', 'Keterangan'
+            'Tahun Pengadaan', 'Asal Usul', 'No. Dokumen', 'Nilai Rp', 'Keterangan'
         ];
     }
 
@@ -4985,7 +4994,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return [index + 1, row.kode_barang || '-', row.nama_kendaraan || row.jenis || '-',
                 row.register || '-', row.merk || '-', row.ukuran || '-', row.bahan || '-',
                 row.tahun || '-', row.pabrik || '-', row.rangka || '-', row.nomor_mesin || '-',
-                row.nomor_polisi || '-', row.bpkb || '-', row.asal || '-',
+                row.nomor_polisi || '-', row.bpkb || '-', row.asal || '-', reportNilai(row),
                 [row.ket, !row.terinventaris ? `Belum Inventaris (Nilai Aset #${row.nilai_id})` : '']
                     .filter(Boolean).join(' · ') || '-'];
         }
@@ -4998,7 +5007,7 @@ document.addEventListener('DOMContentLoaded', () => {
             row.merk || '-', row.ukuran || '-', row.fungsi || '-', row.penggunaan || '-',
             row.bahan || '-', baik ? '√' : '-', ringan ? '√' : '-', berat ? '√' : '-',
             row.tahun || '-', row.asal || '-', row.no_dokumen || '-',
-            row.harga === null || row.harga === undefined ? '-' : String(row.harga),
+            reportNilai(row),
             row.keterangan || '-'];
     }
 
@@ -5059,7 +5068,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const second = labels.slice(group.index, group.index + group.length)
             .map(name => `<th>${escapeHtml(name)}</th>`).join('');
         const data = state.data.map((row, i) => `<tr>${rowValues(row, i)
-            .map(v => `<td>${escapeHtml(cell(v))}</td>`).join('')}</tr>`).join('');
+            .map((v, c) => `<td>${escapeHtml(cell(c === labels.length - 2 ? reportNilaiText(v) : v))}</td>`).join('')}</tr>`).join('');
         const meta = metaEntries().map(([k, v]) => `<div><b>${escapeHtml(k)}</b><span>: ${escapeHtml(cell(v))}</span></div>`).join('');
         const signers = roles.map(([role, label]) => {
             const person = chosen(role);
@@ -5287,7 +5296,10 @@ document.addEventListener('DOMContentLoaded', () => {
         state.data.forEach((r, index) => {
             const row = header + 3 + index;
             const values = rowValues(r, index);
-            values.forEach((value, c) => put(row, c + 1, cell(value), 3));
+            values.forEach((value, c) => {
+                const numeric = c === count - 2 && typeof value === 'number' && Number.isFinite(value);
+                put(row, c + 1, numeric ? value : cell(value), numeric ? 7 : 3);
+            });
             const longest = Math.max(...values.map(v => String(v ?? '').length));
             heights.set(row, Math.min(130, Math.max(29, Math.ceil(longest / 42) * 16 + 12)));
         });
@@ -5299,7 +5311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             [Math.floor(count*3/4)+1, count]
         ];
         // Tanggal harus berada tepat di tengah blok tanda tangan "Dibuat oleh".
-        // Menggunakan slot yang sama untuk Mesin (17 kolom) dan Kendaraan (15 kolom).
+        // Menggunakan slot yang sama untuk Mesin (17 kolom) dan Kendaraan (16 kolom).
         const [dateStart, dateEnd] = slots[3];
         merged(dateRow, dateStart, dateRow, dateEnd, `Samarinda, ${dateName()}`, 5);
         roles.forEach(([role, label], index) => {
@@ -5317,7 +5329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
         const rowXml = [...entries].sort(([a],[b]) => a-b).map(([r, row]) => {
             const cells = [...row].sort(([a],[b]) => a-b).map(([c, data]) =>
-                `<c r="${colName(c)}${r}" s="${data.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(data.value)}</t></is></c>`).join('');
+                data.style === 7 ? `<c r="${colName(c)}${r}" s="7"><v>${data.value}</v></c>` : `<c r="${colName(c)}${r}" s="${data.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(data.value)}</t></is></c>`).join('');
             return `<row r="${r}"${heights.has(r)?` ht="${heights.get(r)}" customHeight="1"`:''}>${cells}</row>`;
         }).join('');
         const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -5345,13 +5357,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const xfs = [
             [0, 0, 0, 'left'], [1, 0, 0, 'center'], [2, 2, 1, 'center'],
             [0, 0, 1, 'center'], [2, 0, 0, 'left'],
-            [0, 0, 0, 'center'], [3, 0, 0, 'center']
-        ].map(([fontId, fillId, borderId, align]) =>
-            `<xf numFmtId="0" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
+            [0, 0, 0, 'center'], [3,0,0,'center'], [0,0,1,'right']
+        ].map(([fontId, fillId, borderId, align], i) =>
+            `<xf numFmtId="${i === 7 ? 4 : 0}" applyNumberFormat="1" fontId="${fontId}" fillId="${fillId}" borderId="${borderId}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
         const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <styleSheet xmlns="${main}"><fonts count="4">${fonts}</fonts>${fills}${borders}
             <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-            <cellXfs count="7">${xfs}</cellXfs>
+            <cellXfs count="8">${xfs}</cellXfs>
             <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
         const sheetName = `KIB B - ${state.jenis === 'kendaraan' ? 'Kendaraan' : 'Mesin'}`;
         const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

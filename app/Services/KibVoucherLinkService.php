@@ -52,6 +52,7 @@ class KibVoucherLinkService
                 ['tanahs', 'nilai_aktiva_id', 'tanah'],
                 ['mesins', 'id_voucher2', 'mesin'],
                 ['gedungs', 'nilai_aktiva_id', 'gedung'],
+                ['kib_d_s', 'nilai_v', 'jembatan'],
             ] as [$table, $column, $kategori]
         ) {
             if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) continue;
@@ -116,6 +117,68 @@ class KibVoucherLinkService
                 'jumlah_voucher' => count($distinct),
                 'nilai_terhubung' => $total,
                 'voucher_ids' => $distinct,
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Nilai per ID inventaris B–F. Alias laporan D Gedung menggunakan
+     * kategori fisik gedung, bukan pemilik voucher baru. Tanpa mutasi data.
+     * Nilai NULL adalah konflik kepemilikan/nominal yang harus direkonsiliasi.
+     */
+    public function totalsForRecords(string $kategori, array $recordIds): array
+    {
+        $map = [
+            'mesin' => ['mesins', 'id_voucher2'],
+            'gedung' => ['gedungs', 'nilai_aktiva_id'],
+            'jembatan' => ['kib_d_s', 'nilai_v'],
+            'aset_ttp' => ['kib_aset_tetap_manual', null],
+            'konstruksi' => ['kib_konstruksi_manual', null],
+        ];
+        if (!isset($map[$kategori])) {
+            throw new \InvalidArgumentException('Kategori inventaris tidak valid.');
+        }
+        [$table, $legacy] = $map[$kategori];
+        $ids = array_values(array_unique(array_filter(array_map('intval', $recordIds), static fn($id) => $id > 0)));
+        if (!$ids) return [];
+        $targets = array_fill_keys($ids, []);
+        if ($legacy && Schema::hasTable($table) && Schema::hasColumn($table, $legacy)) {
+            foreach (DB::table($table)->whereIn('id', $ids)->get(['id', $legacy]) as $record) {
+                if ((int) $record->{$legacy} > 0) $targets[(int) $record->id][] = (int) $record->{$legacy};
+            }
+        }
+        if ($this->ready()) {
+            foreach (
+                DB::table('kib_voucher_links')->where('kib', $kategori)
+                    ->whereIn('record_id', $ids)->get(['record_id', 'nilai_aktiva_id']) as $link
+            ) {
+                $targets[(int) $link->record_id][] = (int) $link->nilai_aktiva_id;
+            }
+        }
+        $voucherIds = array_values(array_unique(array_merge(...array_values($targets))));
+        $owners = $this->owners($voucherIds);
+        $values = $voucherIds ? DB::table('nilai_aktivas')->whereIn('id', $voucherIds)->pluck('nilai', 'id')->all() : [];
+        $result = [];
+        foreach ($targets as $id => $links) {
+            $links = array_values(array_unique($links));
+            $total = 0;
+            $conflict = false;
+            foreach ($links as $voucher) {
+                $owner = $owners[$voucher] ?? [];
+                if (
+                    count($owner) !== 1 || $owner[0]['kategori'] !== $kategori
+                    || $owner[0]['record_id'] !== $id || !isset($values[$voucher])
+                ) {
+                    $conflict = true;
+                    continue;
+                }
+                $total += (int) $values[$voucher];
+            }
+            $result[$id] = [
+                'jumlah_voucher' => count($links),
+                'nilai_terhubung' => $conflict ? null : $total,
+                'nilai_konflik' => $conflict,
             ];
         }
         return $result;

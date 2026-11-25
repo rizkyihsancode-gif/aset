@@ -2165,10 +2165,10 @@
 
                     <div class="mesin-report-signers">
                         @foreach ([
-            'diketahui' => 'Diketahui oleh',
-            'periksa_1' => 'Diperiksa oleh (1)',
-            'periksa_2' => 'Diperiksa oleh (2)',
-            'dibuat' => 'Dibuat oleh',
+            'dibuat' => 'Dibuat Oleh',
+            'diperiksa' => 'Diperiksa Oleh',
+            'diketahui' => 'Diketahui Oleh',
+            'disetujui' => 'Disetujui Oleh',
         ] as $role => $label)
                             <div class="mesin-report-field mesin-report-person" data-report-person="{{ $role }}">
                                 <label for="mesinReportSigner-{{ $role }}">
@@ -2190,6 +2190,8 @@
                     </div>
                 </form>
 
+                <small>Nilai Rp mengikuti voucher terhubung per inventaris. Harga/nilai historis atau manual tetap dipakai
+                    jika belum ada voucher. PERIKSA RELASI menandai konflik, bukan nilai nol.</small>
                 <p class="mesin-report-info" id="mesinReportInfo" role="status" aria-live="polite">
                     Pilih periode dan keempat penandatangan untuk menampilkan preview.
                 </p>
