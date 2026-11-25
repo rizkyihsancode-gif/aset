@@ -37,6 +37,9 @@ class KibVoucherLinkService
         $append = static function ($id, string $kategori, $recordId, string $sumber) use (&$found): void {
             // Pointer lama dan relasi baru ke aset yang sama dihitung satu pemilik.
             $key = $kategori . ':' . (int) $recordId;
+            // Bila ada pointer historis dan relasi baru ke pemilik yang sama,
+            // pertahankan sumber legacy agar tidak ditawarkan untuk dilepas.
+            if (($found[(int) $id][$key]['sumber'] ?? null) === 'legacy') return;
             $found[(int) $id][$key] = [
                 'kategori' => $kategori,
                 'record_id' => (int) $recordId,

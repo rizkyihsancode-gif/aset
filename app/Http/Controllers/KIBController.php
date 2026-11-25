@@ -931,7 +931,12 @@ class KIBController extends Controller
         $tanahTargets = DB::table('tanahs')->where('id_lokasi', $id)
             ->orderByDesc('id')->get(['id', 'guna', 'sertifikat', 'tahun']);
         $labels = $tanahTargets->keyBy('id');
-        $nilaiAktivas->each(function ($item) use ($owners, $labels, $kategoriTanah, $pengaitanAktif) {
+        $relasiTanah = $pengaitanAktif
+            ? DB::table('kib_voucher_links')->where('kib', 'tanah')->where('id_lokasi', $id)
+            ->whereIn('nilai_aktiva_id', $nilaiAktivas->pluck('id')->all())
+            ->get(['id', 'nilai_aktiva_id', 'record_id'])->keyBy('nilai_aktiva_id')
+            : collect();
+        $nilaiAktivas->each(function ($item) use ($owners, $labels, $kategoriTanah, $pengaitanAktif, $relasiTanah) {
             $linked = $owners[(int) $item->id] ?? [];
             $item->linked_count = count($linked);
             $item->linked_tanah_id = count($linked) === 1 && $linked[0]['kategori'] === 'tanah'
@@ -944,6 +949,14 @@ class KIBController extends Controller
                         ($labels[$linked[0]['record_id']]->guna ?? 'Lihat data historis'))
                     : (strtoupper($linked[0]['kategori']) . ' #' . $linked[0]['record_id']))
                 : null;
+            $relasi = $relasiTanah->get($item->id);
+            $item->can_unlink = $pengaitanAktif && $relasi !== null
+                && $item->link_status === 'terhubung'
+                && $linked[0]['kategori'] === 'tanah'
+                && $linked[0]['sumber'] === 'pengaitan'
+                && (int) $relasi->record_id === $linked[0]['record_id'];
+            $item->link_id = $item->can_unlink ? (int) $relasi->id : null;
+            $item->link_is_legacy = count($linked) === 1 && $linked[0]['sumber'] === 'legacy';
             $item->can_link = $pengaitanAktif
                 && $kategoriTanah !== null
                 && (int) $item->cat === (int) $kategoriTanah
@@ -2313,6 +2326,57 @@ class KIBController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Voucher berhasil dihubungkan ke data Tanah. Status Pending, jika ada, telah diproses.',
+        ]);
+    }
+
+    /** Lepas relasi manual saja. Voucher dan inventaris tetap ada. */
+    public function lepaskanNilaiTanah(
+        Request $request,
+        int $lokasi,
+        KibVoucherLinkService $links
+    ) {
+        $input = $request->validate([
+            'nilai_aktiva_id' => ['required', 'integer'],
+            'tanah_id' => ['required', 'integer'],
+            'link_id' => ['required', 'integer'],
+            'konfirmasi' => ['required', 'accepted'],
+        ]);
+        $links->assertReady();
+        $audit = DB::transaction(function () use ($input, $lokasi, $links): array {
+            // Urutan kunci sama dengan pengaitan: voucher, lalu relasi.
+            $voucher = DB::table('nilai_aktivas')->where('id', $input['nilai_aktiva_id'])
+                ->where('id_lokasi', $lokasi)->lockForUpdate()->first(['id', 'no_voucher', 'nilai']);
+            if (!$voucher) {
+                throw ValidationException::withMessages(['nilai_aktiva_id' => 'Voucher bukan milik lokasi ini.']);
+            }
+            $query = DB::table('kib_voucher_links')->where('id', $input['link_id'])
+                ->where('nilai_aktiva_id', $voucher->id)->where('kib', 'tanah')
+                ->where('record_id', $input['tanah_id'])->where('id_lokasi', $lokasi);
+            $relasi = (clone $query)->lockForUpdate()->first();
+            $owners = $links->owners([(int) $voucher->id])[(int) $voucher->id] ?? [];
+            if (
+                !$relasi || count($owners) !== 1 || $owners[0]['kategori'] !== 'tanah'
+                || $owners[0]['sumber'] !== 'pengaitan'
+                || $owners[0]['record_id'] !== (int) $input['tanah_id']
+            ) {
+                throw ValidationException::withMessages(['voucher' => 'Hubungan sudah berubah atau merupakan relasi historis. Muat ulang riwayat.']);
+            }
+            if ($query->delete() !== 1) {
+                throw ValidationException::withMessages(['voucher' => 'Hubungan tidak ditemukan atau sudah dilepas.']);
+            }
+            // Jangan mengubah stat, jenisn, nominal, atau pointer sumber historis.
+            return [
+                'link_id' => (int) $relasi->id,
+                'nilai_aktiva_id' => (int) $voucher->id,
+                'tanah_id' => (int) $input['tanah_id'],
+                'id_lokasi' => $lokasi,
+                'user_id' => Auth::id()
+            ];
+        }, 3);
+        Log::info('KIB A: hubungan voucher manual dilepas', $audit);
+        return response()->json([
+            'success' => true,
+            'message' => 'Hubungan voucher berhasil dilepas. Voucher dapat dihubungkan kembali ke Tanah lain yang memenuhi syarat.',
         ]);
     }
 

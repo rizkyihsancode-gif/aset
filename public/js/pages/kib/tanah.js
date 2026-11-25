@@ -3473,6 +3473,56 @@ async function loadPending()
     let nilaiLinkState = null;
     let nilaiLinkTargets = [];
     let nilaiPopupLocation = null;
+    let nilaiUnlinkState = null;
+
+    function startNilaiUnlink(record) {
+        if (!record?.can_unlink || !record.link_id || !record.linked_tanah_id || !nilaiPopupLocation?.id) return;
+        nilaiUnlinkState = {
+            voucherId: Number(record.id), linkId: Number(record.link_id),
+            tanahId: Number(record.linked_tanah_id),
+            locationId: String(nilaiPopupLocation.id), locationName: nilaiPopupLocation.name,
+        };
+        $('#tanahUnlinkVoucher').textContent = `Voucher ${record.no_voucher || '#' + record.id} · ${formatRupiah(record.nilai)} · ${record.link_target || '-'}`;
+        $('#tanahUnlinkError').hidden = true;
+        $('#tanahUnlinkError').textContent = '';
+        openDialog('tanahUnlinkModal');
+    }
+
+    $('#tanahUnlinkSubmit')?.addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const state = nilaiUnlinkState;
+        const token = $('#tanahForm input[name="_token"]')?.value;
+        if (!state || button.disabled) return;
+        if (!token) { notify('Token keamanan tidak ditemukan. Muat ulang halaman.', true); return; }
+        button.disabled = true;
+        $('#tanahUnlinkError').hidden = true;
+        try {
+            const response = await fetch(`${LOCATION_URL}/${encodeURIComponent(state.locationId)}/lepaskan-voucher`, {
+                method: 'POST', credentials: 'same-origin', headers: {
+                    'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token,
+                }, body: JSON.stringify({ nilai_aktiva_id: state.voucherId, link_id: state.linkId,
+                    tanah_id: state.tanahId, konfirmasi: true }),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success !== true) {
+                throw new Error(String(Object.values(result.errors || {}).flat()[0] || result.message || `HTTP ${response.status}`));
+            }
+            closeDialog('tanahUnlinkModal');
+            nilaiUnlinkState = null;
+            await openNilai(state.locationId, state.locationName);
+            if (String(activeLocationId) === state.locationId && dialog('tanahLocationModal')?.open) {
+                await openLocation(state.locationId, state.locationName, state.tanahId);
+            }
+            notify(result.message || 'Hubungan voucher berhasil dilepas.');
+        } catch (error) {
+            handleError(error, 'Pelepasan hubungan gagal');
+            const errorBox = $('#tanahUnlinkError');
+            errorBox.textContent = error.message || 'Pelepasan hubungan gagal. Muat ulang riwayat.';
+            errorBox.hidden = false;
+        } finally {
+            button.disabled = false;
+        }
+    });
 
     function startNilaiLink(record) {
         if (!record?.can_link || !nilaiPopupLocation?.id) return;
@@ -3487,13 +3537,13 @@ async function loadPending()
             `${Number(record.stat) === 0 ? 'Pending (akan diproses)' : 'Sudah diproses'} · ${record.urai || '-'}`;
         const select = $('#tanahLinkTarget');
         select.replaceChildren();
-        const placeholder = new Option('Pilih sertifikat tujuan...', '');
+        const placeholder = new Option('Pilih data Tanah tujuan...', '');
         select.appendChild(placeholder);
         nilaiLinkTargets.forEach(target => {
             select.appendChild(new Option(target.label, String(target.id)));
         });
-        const match = nilaiLinkTargets.some(target => String(target.id) === String(activeCertificate?.id));
-        if (match) select.value = String(activeCertificate.id);
+        // Pilih tujuan secara eksplisit, termasuk saat mengaitkan ulang voucher.
+        select.value = '';
         $('#tanahLinkConfirm').checked = false;
         openDialog('tanahLinkModal');
     }
@@ -3771,11 +3821,17 @@ async function loadPending()
 
                         </td>
                         <td>
-                            ${record.can_link ? '<button type="button" class="tanah-nilai-action js-nilai-link">Hubungkan ke Tanah</button>' : '<span class="tanah-pdf-empty">—</span>'}
+                            ${record.can_unlink
+                                ? '<button type="button" class="tanah-nilai-action is-unlink js-nilai-unlink"><i data-lucide="unlink"></i>Lepaskan</button>'
+                                : record.can_link
+                                    ? '<button type="button" class="tanah-nilai-action js-nilai-link"><i data-lucide="link"></i>Hubungkan ke Tanah</button>'
+                                    : record.link_is_legacy ? '<span class="tanah-nilai-locked">Relasi historis</span>'
+                                    : '<span class="tanah-pdf-empty">—</span>'}
                         </td>
                     `;
 
                     $('.js-nilai-link', row)?.addEventListener('click', () => startNilaiLink(record));
+                    $('.js-nilai-unlink', row)?.addEventListener('click', () => startNilaiUnlink(record));
 
                     if (
                         record.pdf_preview_url
@@ -3830,7 +3886,7 @@ async function loadPending()
             $('#tanahNilaiBody').innerHTML = `
                 <tr>
                     <td
-                        colspan="8"
+                        colspan="10"
                         class="tanah-empty"
                     >
                         Gagal memuat nilai.
