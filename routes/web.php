@@ -46,7 +46,7 @@ Route::post('/logout', [
 */
 
 Route::post('/login', [
-    AuthenticatedSessionController::class,
+    \App\Http\Controllers\Auth\AuthenticatedSessionController::class,
     'store'
 ])
     ->middleware('throttle:5,1')
