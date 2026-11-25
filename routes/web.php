@@ -836,6 +836,18 @@ Route::middleware(['auth:web', \App\Http\Middleware\EnsureAsetAdmin::class])->gr
         ->whereIn('source', ['jembatan', 'arsip'])->whereIn('jenis', ['foto', 'dokumen'])
         ->whereNumber('item')->name('kib.jalan.file');
 
+    // Pengaitan manual C–F dan KIR; kategori fisik tervalidasi controller.
+    Route::get('/kib/voucher/{kategori}', [KIBController::class, 'riwayatVoucherKib'])
+        ->whereIn('kategori', ['gedung', 'jembatan', 'aset_ttp', 'konstruksi', 'kir'])->name('kib.voucher.riwayat');
+    Route::post('/kib/voucher/{kategori}/hubungkan', [KIBController::class, 'hubungkanVoucherKib'])
+        ->whereIn('kategori', ['gedung', 'jembatan', 'aset_ttp', 'konstruksi', 'kir'])->name('kib.voucher.hubungkan');
+    Route::post('/kib/voucher/{kategori}/lepaskan', [KIBController::class, 'lepaskanVoucherKib'])
+        ->whereIn('kategori', ['gedung', 'jembatan', 'aset_ttp', 'konstruksi', 'kir'])->name('kib.voucher.lepaskan');
+    Route::get('/kib/gedung/lokasi/{lokasi}/referensi-langsung', [KIBController::class, 'referensiGedungLangsung'])
+        ->whereNumber('lokasi')->name('kib.gedung.referensi-langsung');
+    Route::post('/kib/gedung/lokasi/{lokasi}/tambah-langsung', [KIBController::class, 'storeGedungLangsung'])
+        ->whereNumber('lokasi')->name('kib.gedung.store-langsung');
+
 
     // ========================================================
     // K.I.B E — ASET TETAP LAINNYA MANUAL

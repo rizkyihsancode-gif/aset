@@ -19,9 +19,9 @@
             'belum_diatur' => 'Belum Diatur',
         ];
     @endphp
-    <main id="jalanPage" class="content jalan-page kd-page" data-base="{{ url('/kib/jalan') }}"
-        data-pending="{{ route('kib.jalan.pending') }}" data-gedung="{{ route('kib.gedung') }}"
-        data-token="{{ csrf_token() }}" data-report-base-url="{{ url('/kib/jalan') }}"
+    <main id="jalanPage" data-voucher-base="{{ url('/kib/voucher') }}" class="content jalan-page kd-page"
+        data-base="{{ url('/kib/jalan') }}" data-pending="{{ route('kib.jalan.pending') }}"
+        data-gedung="{{ route('kib.gedung') }}" data-token="{{ csrf_token() }}" data-report-base-url="{{ url('/kib/jalan') }}"
         data-report-logo="{{ asset('images/logo_hr.png') }}" data-report-css="{{ asset('css/pages/kib/jalan.css') }}">
 
         <header class="kd-hero">
@@ -257,6 +257,9 @@
                             <input id="kdDetailSearch" type="search" placeholder="Cari barang, kode, register..."
                                 aria-label="Cari barang dalam detail">
                             <span class="kd-count" id="kdDetailCount">0 data</span>
+                            <button type="button" class="kd-button primary" id="kdDirectAdd">Tambah Data
+                                Langsung</button>
+                            <button type="button" class="kd-button outline" id="kdValueLink">Nilai Lokasi</button>
                             <button type="button" class="kd-button kd-report-open" id="kdExportDetail" disabled>
                                 <i data-lucide="file-spreadsheet"></i> Print Excel Lokasi
                             </button>
@@ -592,7 +595,7 @@
                         <small>Contoh: November 2026</small>
                     </label>
                     <div class="kd-report-sign-grid">
-                        @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
+                        @foreach ([['dibuat', 'Dibuat Oleh'], ['diperiksa', 'Diperiksa Oleh'], ['diketahui', 'Diketahui Oleh'], ['disetujui', 'Disetujui Oleh']] as [$peran, $judul])
                             <div class="kd-report-person" data-kd-person="{{ $peran }}">
                                 <label for="kdReportSigner-{{ $peran }}">
                                     <span>{{ $judul }} <b>*</b></span>
@@ -612,6 +615,8 @@
                         @endforeach
                     </div>
                 </form>
+                <small>Nilai Rp mengikuti voucher terhubung per inventaris. Harga/nilai historis atau manual tetap dipakai
+                    jika belum ada voucher. PERIKSA RELASI menandai konflik, bukan nilai nol.</small>
                 <div id="kdReportInfo" class="kd-report-info" role="status" aria-live="polite">
                     Pilih periode dan penandatangan untuk menampilkan preview.
                 </div>

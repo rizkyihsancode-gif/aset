@@ -1919,7 +1919,8 @@
 .gedung-report-table thead th { background: #fff700; font-weight: 700; }
 .gedung-report-table thead tr:last-child th { background: #fff; }
 .gedung-report-table tbody tr { break-inside: avoid; }
-.gedung-report-date { margin: 24px 5% 7px 0; text-align: right; font-weight: 700; }
+.gedung-report-date { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 24px 0 7px; font-weight: 700; }
+.gedung-report-date > span { grid-column: 4; text-align: center; }
 .gedung-report-signatures { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
 .gedung-report-signature { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .gedung-report-signature u { margin-top: 53px; font-weight: 700; }
@@ -2180,3 +2181,36 @@
     font-size: 11px;
     color: #6d839b;
 }
+
+/* Riwayat Nilai — dialog lokal modul, bukan CSS global. */
+.gedung-voucher-dialog {width:min(1480px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);padding:0;border:1px solid #c6d8ea;border-radius:16px;background:#fff;color:#17395e;box-shadow:0 24px 80px #17395e40;overflow:auto;margin:auto;font-family:inherit;font-size:14px;line-height:1.45;}
+.gedung-voucher-dialog::backdrop{background:#102b5080;}
+.gedung-voucher-dialog header,.gedung-voucher-dialog footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 24px;background:#f4f8fd;}
+.gedung-voucher-dialog header{border-bottom:1px solid #dbe7f4;}
+.gedung-voucher-dialog header h2{font-size:21px;margin:3px 0;color:#17395e;}
+.gedung-voucher-dialog header small{font-weight:700;color:#1263bc;}
+.gedung-voucher-dialog header p,.gedung-voucher-dialog .av-help{margin:4px 0;color:#536d88;}
+.gedung-voucher-dialog main{padding:20px 24px;min-width:0;}
+.gedung-voucher-dialog .av-summary{display:grid;gap:3px;padding:14px 18px;border:1px solid #cde1f7;background:#eef6ff;border-radius:10px;}
+.gedung-voucher-dialog .av-summary strong{font-size:23px;color:#0865c5;}
+.gedung-voucher-dialog .av-tools{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+.gedung-voucher-dialog input,.gedung-voucher-dialog select{color:#17395e;background:#fff;border:1px solid #c3d5e9;border-radius:7px;padding:9px 10px;font:inherit;min-width:0;}
+.gedung-voucher-dialog input{flex:1 1 220px;}
+.gedung-voucher-dialog button{color:#075bb7;background:#eef6ff;border:1px solid #bcd7f6;border-radius:7px;padding:9px 12px;cursor:pointer;font:inherit;font-weight:600;white-space:nowrap;}
+.gedung-voucher-dialog button:disabled{opacity:.5;cursor:wait;}
+.gedung-voucher-dialog button.av-danger{color:#ae303a;background:#fff2f2;border-color:#efc1c6;}
+.gedung-voucher-dialog .av-scroll{overflow:auto;max-height:55vh;border:1px solid #d5e2ef;border-radius:9px;}
+.gedung-voucher-dialog table{width:100%;min-width:1390px;table-layout:auto;border-collapse:separate;border-spacing:0;}
+.gedung-voucher-dialog th,.gedung-voucher-dialog td{position:static;padding:10px 12px;border-bottom:1px solid #e1e9f3;text-align:left;vertical-align:top;white-space:normal;overflow-wrap:break-word;}
+.gedung-voucher-dialog th{position:sticky;top:0;z-index:1;background:#e7f1fd;color:#193e65;font-weight:700;white-space:nowrap;}
+.gedung-voucher-dialog td:nth-child(2){min-width:120px;}.gedung-voucher-dialog td:nth-child(3){min-width:160px;}.gedung-voucher-dialog td:nth-child(7){min-width:180px;max-width:280px;}.gedung-voucher-dialog td:nth-child(8){min-width:150px;}.gedung-voucher-dialog td:nth-child(10){min-width:205px;}
+.gedung-voucher-dialog td small{display:block;color:#60778e;margin-top:4px;}.gedung-voucher-dialog td.av-money{white-space:nowrap;font-weight:700;color:#075bb7;}
+.gedung-voucher-dialog .av-action select{display:block;width:100%;max-width:250px;margin-bottom:6px;}
+.gedung-voucher-dialog .av-state{display:inline-block;padding:3px 7px;background:#eef3fa;border-radius:5px;color:#345a83;font-weight:600;}.gedung-voucher-dialog .av-linked{background:#e7f6ee;color:#176b42;}
+.gedung-voucher-dialog .av-error{color:#b42335;}.gedung-voucher-dialog footer{justify-content:flex-end;border-top:1px solid #dbe7f4;}
+@media(max-width:600px){.gedung-voucher-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);}.gedung-voucher-dialog header,.gedung-voucher-dialog main,.gedung-voucher-dialog footer{padding:12px;}.gedung-voucher-dialog .av-scroll{max-height:45vh;}}
+
+
+/* Sembunyikan field mode Pending atau Langsung yang tidak aktif. */
+#gedungDirectOrg[hidden], #gedungPendingSection[hidden], #gedungForm label[hidden] { display:none !important; }
+#gedungDirectOrg select { width:100%; min-height:40px; border:1px solid #c5d7e9; border-radius:8px; padding:8px 10px; background:#fff; color:#173b60; }

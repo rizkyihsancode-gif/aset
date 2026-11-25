@@ -20,6 +20,84 @@
 
     window.__kirModernReady = true;
 
+    /* Riwayat Nilai — implementasi lokal modul. */
+    const voucherDialog = (() => {
+        'use strict';
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const money = v => v === null ? '—' : 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(v) || 0);
+        let active = null;
+        async function open({base, token, kategori, scope, title, refresh}) {
+            if (active) return;
+            const dialog = document.createElement('dialog');
+            dialog.className = 'kir-voucher-dialog';
+            dialog.setAttribute('aria-label','Riwayat Nilai Aset');
+            dialog.innerHTML = `<header><div><small>RIWAYAT NILAI ASET</small><h2>Riwayat Nilai · ${esc(title)}</h2><p>Hubungkan voucher ke inventaris pada lokasi yang sama.</p></div><button type="button" data-close aria-label="Tutup">×</button></header>
+                <main><div class="av-summary"><span>Total Nilai Lokasi</span><strong data-total>—</strong><small>Termasuk transaksi belum terhubung</small></div>
+                <p class="av-help">Pelepasan hanya menghapus relasi manual, bukan data inventaris, voucher, atau PDF. Sumber historis dilindungi.</p>
+                <div class="av-tools"><input type="search" placeholder="Cari nomor voucher, kode, uraian, tujuan…" aria-label="Cari voucher"><button type="button" data-reload>Muat ulang</button></div>
+                <p data-status role="status" aria-live="polite"></p><div class="av-scroll" tabindex="0" role="region" aria-label="Tabel riwayat nilai"><table><thead><tr><th>No.</th><th>Kode Aktiva</th><th>Nama Aktiva</th><th>Voucher / Tanggal</th><th>Tahun</th><th>Nilai Rp</th><th>Uraian</th><th>Status / Tujuan</th><th>PDF</th><th>Aksi</th></tr></thead><tbody></tbody></table></div></main><footer><button type="button" data-close>Tutup</button></footer>`;
+            document.body.append(dialog);
+            active = dialog;
+            const $ = q => dialog.querySelector(q);
+            const url = `${base.replace(/\/$/,'')}/${encodeURIComponent(kategori)}`;
+            const query = new URLSearchParams(scope);
+            let rows = [], targets = [], busy = false, loaded = false, closed = false;
+            const setStatus = (value, error = false) => { $('[data-status]').textContent = value; $('[data-status]').classList.toggle('av-error',error); };
+            const api = async (path, options = {}) => {
+                const res = await fetch(path,{credentials:'same-origin',...options,headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':token,...(options.headers||{})}});
+                const data = await res.json().catch(()=>null);
+                if (!data || typeof data !== 'object') throw new Error('Respons bukan JSON. Periksa sesi Login dan route pengaitan.');
+                if (!res.ok || data.success === false) throw new Error(data.errors ? Object.values(data.errors).flat().join(' · ') : data.message || `HTTP ${res.status}`);
+                return data;
+            };
+            function render() {
+                const key = $('input').value.trim().toLocaleLowerCase('id-ID');
+                const filtered = rows.filter(r=>[r.no_voucher,r.kode_aktiva,r.nama_aktiva,r.urai,r.tujuan].join(' ').toLocaleLowerCase('id-ID').includes(key));
+                $('tbody').innerHTML = filtered.length ? filtered.map((r,i)=>{
+                    const label = ({terhubung:'Terhubung',belum:'Belum terhubung',konflik:'PERIKSA RELASI',periksa:'Periksa status/historis'})[r.status_hubungan] || '—';
+                    const id = Number(r.id);
+                    const action = r.boleh_lepaskan ? `<button type="button" class="av-danger" data-action="lepaskan" data-id="${id}">Lepaskan</button>` : r.boleh_hubungkan && targets.length ? `<select aria-label="Inventaris tujuan voucher ${esc(r.no_voucher)}" data-target="${id}"><option value="">Pilih inventaris</option>${targets.map(t=>`<option value="${Number(t.id)}">${esc(`#${t.id} · ${t.nama} · ${t.kode||'—'} ${t.detail||''}`)}</option>`).join('')}</select><button type="button" data-action="hubungkan" data-id="${id}">Hubungkan</button>` : r.boleh_hubungkan ? 'Tambah inventaris dulu' : 'Dilindungi / tidak tersedia';
+                    return `<tr><td>${i+1}</td><td>${esc(r.kode_aktiva||'—')}</td><td>${esc(r.nama_aktiva||'—')}</td><td><strong>${esc(r.no_voucher||'—')}</strong><small>${esc(r.tgl_voucher||'—')}</small></td><td>${esc(r.tahun||'—')}</td><td class="av-money">${esc(money(r.nilai))}</td><td>${esc(r.urai||'—')}</td><td><span class="av-state ${r.status_hubungan==='terhubung'?'av-linked':''}">${esc(label)}</span><small>${esc(r.tujuan||'')}</small></td><td>${r.pdf_url ? `<a href="${esc(r.pdf_url)}" target="_blank" rel="noopener noreferrer">PDF</a>` : '—'}</td><td class="av-action">${action}</td></tr>`;
+                }).join('') : `<tr><td colspan="10">${loaded?'Tidak ada transaksi yang cocok.':'Memuat…'}</td></tr>`;
+                dialog.querySelectorAll('[data-action],[data-target]').forEach(e=>e.disabled=busy);
+            }
+            async function load() {
+                loaded=false; rows=[];targets=[];render();
+                const data = await api(`${url}?${query}`);
+                if (closed) return;
+                rows = Array.isArray(data.data)?data.data:[]; targets=Array.isArray(data.targets)?data.targets:[]; loaded=true;
+                $('[data-total]').textContent=money(data.total);
+                setStatus(data.pengaitan_siap ? `${rows.length} transaksi · ${targets.length} inventaris tujuan` : 'Migration pengaitan belum tersedia; hanya baca.');
+                render();
+            }
+            function setBusy(v) {busy=v;dialog.querySelectorAll('button,select,input').forEach(e=>e.disabled=v);}
+            dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+            dialog.addEventListener('close',()=>{closed=true;active=null;dialog.remove();},{once:true});
+            $('input').addEventListener('input',render);
+            dialog.addEventListener('click',async e=>{
+                const button=e.target.closest('button'); if(!button||busy)return;
+                if(button.hasAttribute('data-close')){dialog.close();return;}
+                if(button.hasAttribute('data-reload')){setBusy(true);try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}return;}
+                const action=button.dataset.action; if(!action)return;
+                const row=rows.find(r=>String(r.id)===button.dataset.id);if(!row)return;
+                const target=action==='hubungkan'?Number($(`[data-target="${Number(row.id)}"]`)?.value):Number(row.record_id);
+                if(!target){setStatus('Pilih inventaris tujuan terlebih dahulu.',true);return;}
+                if(!confirm(action==='hubungkan'?'Hubungkan voucher ke inventaris yang dipilih?':'Lepaskan hubungan voucher ini? Data aset dan transaksi tetap tersimpan.'))return;
+                setBusy(true);
+                try {
+                    const data=await api(`${url}/${action}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...scope,nilai_aktiva_id:Number(row.id),record_id:target,link_id:row.link_id,konfirmasi:true})});
+                    await load();
+                    try { await refresh?.(); setStatus(data.message||'Berhasil disimpan.'); }
+                    catch(err){setStatus('Relasi berhasil disimpan. Muat ulang Detail untuk melihat nilai terbaru.',true);}
+                } catch(err){setStatus(err.message,true);}
+                finally{setBusy(false);}
+            });
+            dialog.showModal();setBusy(true);
+            try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}
+        }
+        return {open, money};
+    })();
+
     const $ = id => document.getElementById(id);
 
     const base = app.dataset.base;
@@ -370,100 +448,11 @@
     */
 
     async function valueLocation(id, name) {
-        $('kirNilaiJudul').textContent =
-            `Nilai KIR — ${name}`;
-
-        $('kirNilaiBody').innerHTML = `
-            <tr>
-                <td colspan="7" class="kir-empty">
-                    Memuat transaksi...
-                </td>
-            </tr>
-        `;
-
-        $('kirNilaiTotal').textContent =
-            'Memuat...';
-
-        openModal('kirModalNilai');
-
-        try {
-            const response = await api(
-                `${base}/lokasi/${id}/nilai`
-            );
-
-            const data = response.data || [];
-
-            $('kirNilaiTotal').textContent =
-                rp(response.total);
-
-            $('kirNilaiBody').innerHTML = data.length
-                ? data.map((row, index) => `
-                    <tr>
-                        <td>${index + 1}</td>
-
-                        <td>
-                            <strong>
-                                ${esc(row.kode || '—')}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${esc(row.aktiva || '—')}
-                        </td>
-
-                        <td>
-                            <strong>
-                                ${esc(row.no_voucher || '—')}
-                            </strong>
-
-                            <small>
-                                ${esc(row.tgl_voucher || '—')}
-                            </small>
-                        </td>
-
-                        <td>
-                            ${esc(row.tahun || '—')}
-                        </td>
-
-                        <td>
-                            <strong class="kir-price">
-                                ${rp(row.nilai)}
-                            </strong>
-                        </td>
-
-                        <td class="kir-wrap">
-                            ${esc(row.urai || '—')}
-                        </td>
-                    </tr>
-                `).join('')
-
-                : `
-                    <tr>
-                        <td colspan="7" class="kir-empty">
-                            Tidak ada transaksi Nilai KIR
-                            pada lokasi ini.
-                        </td>
-                    </tr>
-                `;
-
-        } catch (exception) {
-            $('kirNilaiTotal').textContent = '—';
-
-            $('kirNilaiBody').innerHTML = `
-                <tr>
-                    <td colspan="7" class="kir-empty">
-                        ${esc(exception.message)}
-                    </td>
-                </tr>
-            `;
-        }
+        await voucherDialog.open({base:app.dataset.voucherBase,token:app.dataset.token,kategori:'kir',scope:{id_lokasi:Number(id)},title:name,
+            refresh:async()=>{if($('kirModalLokasi').open && Number(state.locationId)===Number(id) && state.activeUnit){const index=state.units.indexOf(state.activeUnit);if(index>=0)await selectUnit(index);}}});
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | STRUKTUR UNIT
-    |--------------------------------------------------------------------------
-    */
+    $('kirValueFromDetail')?.addEventListener('click',()=>{if(state.locationId)valueLocation(state.locationId,state.locationName);});
 
     const unitKey = item =>
         [
@@ -642,6 +631,7 @@
                             <th rowspan="2">Jumlah</th>
                             <th rowspan="2">Satuan</th>
                             <th colspan="3" class="kir-excel-group">Kondisi</th>
+                            <th rowspan="2">Nilai Rp</th>
                             <th rowspan="2">Keterangan</th>
                             <th rowspan="2">Status Kepemilikan</th>
                             <th rowspan="2">Aksi</th>
@@ -667,6 +657,7 @@
                                     <td class="kir-excel-center">${esc(item.baik ?? 0)}</td>
                                     <td class="kir-excel-center">${esc(item.ringan ?? 0)}</td>
                                     <td class="kir-excel-center">${esc(item.berat ?? 0)}</td>
+                                    <td class="kir-price">${esc(item.nilai_konflik?'PERIKSA RELASI':voucherDialog.money(item.nilai_laporan))}<small style="display:block">${Number(item.jumlah_voucher||0)} voucher</small></td>
                                     <td class="kir-wrap">${esc(item.ket || '—')}</td>
                                     <td>${ownershipBadge(item.status_kepemilikan)}</td>
                                     <td>
@@ -689,7 +680,7 @@
                                     </td>
                                 </tr>
                             `).join('')
-                            : `<tr><td colspan="13" class="kir-empty">
+                            : `<tr><td colspan="14" class="kir-empty">
                                 Belum ada barang pada ruangan ini.
                                </td></tr>`}
                     </tbody>
@@ -877,7 +868,7 @@
 
     /* ========================================================================
      * K.I.R — PRINT EXCEL PER LOKASI (standar K.I.B A)
-     * - 11 kolom sesuai referensi KIR.jpeg
+     * - 12 kolom termasuk Nilai Rp
      * - seluruh inventaris satu lokasi lintas ruangan; tanpa pagination
      * - periode & empat penandatangan Master SDM aktif
      * - satu kir.js, tanpa library eksternal
@@ -891,8 +882,13 @@
         selected: [null, null, null, null],
         currentChoice: [-1, -1, -1, -1]
     };
-    const kirSignerLabels = ['Diketahui oleh', 'Diperiksa oleh (1)',
-        'Diperiksa oleh (2)', 'Dibuat oleh'];
+    const kirSignerLabels = ['Disetujui Oleh','Diketahui Oleh','Diperiksa Oleh','Dibuat Oleh'];
+    const kirReportValue = item => {
+        if (item.nilai_konflik) return 'PERIKSA RELASI';
+        if (item.nilai_laporan === undefined || item.nilai_laporan === null) return 'NILAI BELUM DIMUAT';
+        const value = Number(item.nilai_laporan);
+        return Number.isFinite(value) && Math.abs(value) < 1e15 ? value : `CEK NOMINAL: ${String(item.nilai_laporan)}`;
+    };
     const kirReportInputs = [0, 1, 2, 3].map(i => $(`kirReportSigner${i}`));
     const kirReportLists = [0, 1, 2, 3].map(i => $(`kirReportList${i}`));
     const kirReportDialog = $('kirReportDialog');
@@ -1104,9 +1100,9 @@
                 `<td>${c(item.nama_bahan)}</td><td>${Number(item.jumlah) || 0}</td>` +
                 `<td>${c(item.satuan)}</td><td>${cond(item.baik)}</td>` +
                 `<td>${cond(item.ringan)}</td><td>${cond(item.berat)}</td>` +
-                `<td>${c(item.ket)}</td></tr>`;
+                `<td>${esc(typeof kirReportValue(item)==='number'?new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(kirReportValue(item)):kirReportValue(item))}</td><td>${c(item.ket)}</td></tr>`;
         }).join('');
-        const signatures = signers.map((signer, i) =>
+        const signatures = [...signers].reverse().map((signer, i) =>
             `<section><strong>${esc(kirSignerLabels[i])},</strong>` +
             `<span>${esc(str(signer.jabatan) || '—')}</span>` +
             `<u>${esc(str(signer.nama))}</u>` +
@@ -1125,7 +1121,7 @@
             `<th rowspan="2">KODE BARANG</th><th rowspan="2">MERK/TYPE</th>` +
             `<th rowspan="2">BAHAN</th><th rowspan="2">JUMLAH</th>` +
             `<th rowspan="2">SATUAN</th><th colspan="3">KONDISI</th>` +
-            `<th rowspan="2">KETERANGAN</th></tr>` +
+            `<th rowspan="2">NILAI RP</th><th rowspan="2">KETERANGAN</th></tr>` +
             `<tr><th>BAIK</th><th>RUSAK RINGAN</th><th>RUSAK BERAT</th></tr></thead>` +
             `<tbody>${dataRows}</tbody></table></div>` +
             `<div class="kir-report-dateline"><span>Samarinda, ${esc(dateText)}</span></div>` +
@@ -1148,7 +1144,7 @@
         } else if (!valid) {
             info.textContent = 'Pilih periode dan keempat penandatangan dari daftar SDM aktif untuk melihat preview.';
         } else {
-            info.textContent = `Preview siap: ${kirReport.payload.data.length} barang dari lokasi ${kirReport.payload.lokasi.nama}; 11 kolom K.I.R, tanpa Status Kepemilikan.`;
+            info.textContent = `Preview siap: ${kirReport.payload.data.length} barang dari lokasi ${kirReport.payload.lokasi.nama}; 12 kolom K.I.R, tanpa Status Kepemilikan.`;
             $('kirReportPreviewCount').textContent = `${kirReport.payload.data.length} barang`;
             $('kirReportPreview').innerHTML = kirReportPreviewHtml(
                 kirReport.payload, kirReportPeriodLabel(), kirReport.selected);
@@ -1208,7 +1204,7 @@
         if (state.locationId) exportLocation(state.locationId, state.locationName);
     });
 
-    /* XLSX OpenXML 11 kolom, kop, logo, 4 tanda tangan, border utuh. */
+    /* XLSX OpenXML 12 kolom, kop, logo, 4 tanda tangan, border utuh. */
     function buildKirLocationXlsx(payload, period, signers, logoBytes) {
         const items = payload?.data;
         if (!Array.isArray(items) || !items.length || !payload?.lokasi?.id) {
@@ -1234,21 +1230,21 @@
         const makeMerge = (r1,c1,r2,c2) => {
             merges.push(`${ref(c1,r1)}:${ref(c2,r2)}`);
         };
-        const widths = [7, 36, 22, 26, 17, 11, 13, 11, 16, 16, 39];
+        const widths = [7, 36, 22, 26, 17, 11, 13, 11, 16, 16, 20, 39];
         const rows = [];
         for (let r = 1; r <= 7; r++) {
             const cells = [];
-            for (let c = 1; c <= 11; c++) {
+            for (let c = 1; c <= 12; c++) {
                 cells.push(cell(c,r, (c === 1 && r === 2) ? 'KARTU INVENTARIS RUANGAN' :
                     (c === 1 && r === 3) ? `PERIODE ${period}` : '', r === 2 ? 1 : r === 3 ? 2 : 0));
             }
             rows.push(row(r,cells,r === 1 ? 16 : 21));
         }
-        makeMerge(2,1,2,11); makeMerge(3,1,3,11);
+        makeMerge(2,1,2,12); makeMerge(3,1,3,12);
         kirReportMetadata(payload).forEach(([label, value], i) => {
             const r = i + 8;
             const entries = [];
-            for (let c = 1; c <= 11; c++) {
+            for (let c = 1; c <= 12; c++) {
                 entries.push(cell(c,r,c===1 ? label : c===3 ? `: ${value}` : '', c===1 ? 3 : 4));
             }
             rows.push(row(r, entries, 19));
@@ -1256,24 +1252,24 @@
         });
         rows.push(row(16, [], 15)); rows.push(row(17, [], 15));
         const h1 = ['NO.', 'NAMA BARANG', 'KODE BARANG', 'MERK / TYPE', 'BAHAN',
-            'JUMLAH', 'SATUAN', 'KONDISI', '', '', 'KETERANGAN'];
-        const h2 = ['', '', '', '', '', '', '', 'BAIK', 'RUSAK RINGAN', 'RUSAK BERAT', ''];
+            'JUMLAH', 'SATUAN', 'KONDISI', '', '', 'NILAI RP', 'KETERANGAN'];
+        const h2 = ['', '', '', '', '', '', '', 'BAIK', 'RUSAK RINGAN', 'RUSAK BERAT', '', ''];
         rows.push(row(18,h1.map((v,i)=>cell(i+1,18,v,5)),30));
         rows.push(row(19,h2.map((v,i)=>cell(i+1,19,v,5)),27));
-        for(let c=1;c<=11;c++) if(c<8 || c===11) makeMerge(18,c,19,c);
+        for(let c=1;c<=12;c++) if(c<8 || c>=11) makeMerge(18,c,19,c);
         makeMerge(18,8,18,10);
-        rows.push(row(20,Array.from({length:11},(_,i)=>number(i+1,20,i+1,5)),21));
+        rows.push(row(20,Array.from({length:12},(_,i)=>number(i+1,20,i+1,5)),21));
         items.forEach((item, i)=> {
             const r=21+i;
             const fields=[i+1, str(item.nama_barang)||'—', str(item.kode_barang)||'—',
                 str(item.merk)||'—', str(item.nama_bahan)||'—', Number(item.jumlah)||0,
                 str(item.satuan)||'—', Number(item.baik)>0?Number(item.baik):'—',
                 Number(item.ringan)>0?Number(item.ringan):'—',
-                Number(item.berat)>0?Number(item.berat):'—', str(item.ket)||'—'];
-            const maxLines=Math.max(1,Math.ceil(fields[1].length/38),Math.ceil(fields[10].length/43));
+                Number(item.berat)>0?Number(item.berat):'—', kirReportValue(item), str(item.ket)||'—'];
+            const maxLines=Math.max(1,Math.ceil(fields[1].length/38),Math.ceil(fields[11].length/43));
             rows.push(row(r,fields.map((value,c)=>
-                typeof value==='number'?number(c+1,r,value,c===1||c===10?7:6)
-                    :cell(c+1,r,value,c===1||c===10?7:6)),Math.min(110,Math.max(26,maxLines*16+8))));
+                typeof value==='number'?number(c+1,r,value,c===10?11:c===1||c===11?7:6)
+                    :cell(c+1,r,value,c===1||c===11?7:6)),Math.min(110,Math.max(26,maxLines*16+8))));
         });
         const lastData=20+items.length;
         const dateRow=lastData+2;
@@ -1284,14 +1280,14 @@
         const today=new Intl.DateTimeFormat('id-ID',{
             timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'
         }).format(new Date());
-        // Tanggal terpusat persis di atas tanda tangan keempat (Dibuat oleh: J-K).
+        // Tanggal terpusat persis di atas tanda tangan keempat (Dibuat oleh: J-L).
         rows.push(row(dateRow,[cell(10,dateRow,`Samarinda, ${today}`,9)],23));
-        makeMerge(dateRow,10,dateRow,11);
+        makeMerge(dateRow,10,dateRow,12);
         const signatureCells = new Map([
             [labelRow, []], [positionRow, []], [nameRow, []], [nipRow, []]
         ]);
-        [[1,2],[4,5],[7,8],[10,11]].forEach(([start,end],i)=>{
-            const s=signers[i];
+        [[1,3],[4,6],[7,9],[10,12]].forEach(([start,end],i)=>{
+            const s=signers[3-i];
             for(const [r,textValue,style] of [
                 [labelRow,`${kirSignerLabels[i]},`,9],
                 [positionRow,str(s.jabatan)||'—',9],
@@ -1317,7 +1313,7 @@
             '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'+
             '<border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders>'+
             '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
-            '<cellXfs count="11">'+
+            '<cellXfs count="12">'+
             '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
             '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
             '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
@@ -1329,12 +1325,13 @@
             '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
             '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
             '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'+
+            '<xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>'+
             '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
         const sheet=declaration+`<worksheet xmlns="${ns}" xmlns:r="${rel}">`+
             // SpreadsheetML: sheetPr HARUS sebelum dimension/sheetViews/sheetData.
             // Excel dapat meminta repair jika sheetPr diletakkan setelah pageMargins.
             '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'+
-            `<dimension ref="A1:K${lastRow}"/>`+
+            `<dimension ref="A1:L${lastRow}"/>`+
             '<sheetViews><sheetView workbookViewId="0"><pane ySplit="20" topLeftCell="A21" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'+
             `<cols>${widths.map((width,i)=>`<col min="${i+1}" max="${i+1}" width="${width}" customWidth="1"/>`).join('')}</cols>`+
             `<sheetData>${rows.join('')}</sheetData>`+
@@ -1347,7 +1344,7 @@
         const workbook=declaration+`<workbook xmlns="${ns}" xmlns:r="${rel}">`+
             '<sheets><sheet name="KIR - Inventaris Ruangan" sheetId="1" r:id="rId1"/></sheets>'+
             `<definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'KIR - Inventaris Ruangan'!$18:$20</definedName>`+
-            `<definedName name="_xlnm.Print_Area" localSheetId="0">'KIR - Inventaris Ruangan'!$A$1:$K$${lastRow}</definedName></definedNames></workbook>`;
+            `<definedName name="_xlnm.Print_Area" localSheetId="0">'KIR - Inventaris Ruangan'!$A$1:$L$${lastRow}</definedName></definedNames></workbook>`;
         const rootRels=declaration+`<Relationships xmlns="${pkg}">`+
             `<Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
         const workbookRels=declaration+`<Relationships xmlns="${pkg}">`+
@@ -1432,7 +1429,7 @@
             `.kir-report-meta-line{display:grid;grid-template-columns:160px 1fr}`+
             `.kir-report-table{border-collapse:collapse;width:100%;table-layout:fixed}`+
             `.kir-report-table th,.kir-report-table td{border:1px solid #444;padding:5px;font-size:10px;vertical-align:middle;text-align:center;overflow-wrap:anywhere}`+
-            `.kir-report-table td:nth-child(2),.kir-report-table td:nth-child(11){text-align:left}`+
+            `.kir-report-table td:nth-child(2),.kir-report-table td:nth-child(12){text-align:left}`+
             `.kir-report-table th{background:#d5dfea}`+
             `.kir-report-dateline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:20px}`+
             `.kir-report-dateline>span{grid-column:4;text-align:center}`+
@@ -1922,6 +1919,7 @@
         context = {}
     ) {
         resetForm();
+        state.directFromDetail = !pending;
 
         setContext(context);
         changeMode(!pending);
@@ -1931,8 +1929,7 @@
                 'Input langsung tanpa voucher';
 
             $('kirVoucherDesc').textContent =
-                'Nilai KIR tidak terhubung '
-                + 'ke voucher untuk input manual.';
+                'Voucher dapat dihubungkan setelah inventaris disimpan.';
         }
 
         $('kirChangeVoucher').hidden = true;
@@ -2547,8 +2544,14 @@
                 );
 
                 alert(response.message);
-
-                location.reload();
+                if (state.directFromDetail && !state.editId) {
+                    const unit = {lokasi:form.get($('kirLokasi').name),dep:form.get($('kirDep').name),div:form.get($('kirDiv').name),gedung:$('kirGedung').value,ruangan:$('kirRuang').value};
+                    const name=$('kirLokasi').selectedOptions?.[0]?.textContent?.trim() || state.locationName;
+                    state.saving=false;button.disabled=false;state.directFromDetail=false;
+                    await openLocation(Number(unit.lokasi),name);
+                    const index=state.units.findIndex(item=>unitKey(item)===unitKey(unit));
+                    if(index>=0)await selectUnit(index);
+                } else location.reload();
 
             } catch (exception) {
                 error(exception.message);

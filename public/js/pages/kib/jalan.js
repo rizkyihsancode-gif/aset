@@ -8,6 +8,84 @@
     if (!root || root.dataset.initialized === '1') return;
     root.dataset.initialized = '1';
 
+    /* Riwayat Nilai — implementasi lokal modul. */
+    const voucherDialog = (() => {
+        'use strict';
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const money = v => v === null ? '—' : 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(v) || 0);
+        let active = null;
+        async function open({base, token, kategori, scope, title, refresh}) {
+            if (active) return;
+            const dialog = document.createElement('dialog');
+            dialog.className = 'jalan-voucher-dialog';
+            dialog.setAttribute('aria-label','Riwayat Nilai Aset');
+            dialog.innerHTML = `<header><div><small>RIWAYAT NILAI ASET</small><h2>Riwayat Nilai · ${esc(title)}</h2><p>Hubungkan voucher ke inventaris pada lokasi yang sama.</p></div><button type="button" data-close aria-label="Tutup">×</button></header>
+                <main><div class="av-summary"><span>Total Nilai Lokasi</span><strong data-total>—</strong><small>Termasuk transaksi belum terhubung</small></div>
+                <p class="av-help">Pelepasan hanya menghapus relasi manual, bukan data inventaris, voucher, atau PDF. Sumber historis dilindungi.</p>
+                <div class="av-tools"><input type="search" placeholder="Cari nomor voucher, kode, uraian, tujuan…" aria-label="Cari voucher"><button type="button" data-reload>Muat ulang</button></div>
+                <p data-status role="status" aria-live="polite"></p><div class="av-scroll" tabindex="0" role="region" aria-label="Tabel riwayat nilai"><table><thead><tr><th>No.</th><th>Kode Aktiva</th><th>Nama Aktiva</th><th>Voucher / Tanggal</th><th>Tahun</th><th>Nilai Rp</th><th>Uraian</th><th>Status / Tujuan</th><th>PDF</th><th>Aksi</th></tr></thead><tbody></tbody></table></div></main><footer><button type="button" data-close>Tutup</button></footer>`;
+            document.body.append(dialog);
+            active = dialog;
+            const $ = q => dialog.querySelector(q);
+            const url = `${base.replace(/\/$/,'')}/${encodeURIComponent(kategori)}`;
+            const query = new URLSearchParams(scope);
+            let rows = [], targets = [], busy = false, loaded = false, closed = false;
+            const setStatus = (value, error = false) => { $('[data-status]').textContent = value; $('[data-status]').classList.toggle('av-error',error); };
+            const api = async (path, options = {}) => {
+                const res = await fetch(path,{credentials:'same-origin',...options,headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':token,...(options.headers||{})}});
+                const data = await res.json().catch(()=>null);
+                if (!data || typeof data !== 'object') throw new Error('Respons bukan JSON. Periksa sesi Login dan route pengaitan.');
+                if (!res.ok || data.success === false) throw new Error(data.errors ? Object.values(data.errors).flat().join(' · ') : data.message || `HTTP ${res.status}`);
+                return data;
+            };
+            function render() {
+                const key = $('input').value.trim().toLocaleLowerCase('id-ID');
+                const filtered = rows.filter(r=>[r.no_voucher,r.kode_aktiva,r.nama_aktiva,r.urai,r.tujuan].join(' ').toLocaleLowerCase('id-ID').includes(key));
+                $('tbody').innerHTML = filtered.length ? filtered.map((r,i)=>{
+                    const label = ({terhubung:'Terhubung',belum:'Belum terhubung',konflik:'PERIKSA RELASI',periksa:'Periksa status/historis'})[r.status_hubungan] || '—';
+                    const id = Number(r.id);
+                    const action = r.boleh_lepaskan ? `<button type="button" class="av-danger" data-action="lepaskan" data-id="${id}">Lepaskan</button>` : r.boleh_hubungkan && targets.length ? `<select aria-label="Inventaris tujuan voucher ${esc(r.no_voucher)}" data-target="${id}"><option value="">Pilih inventaris</option>${targets.map(t=>`<option value="${Number(t.id)}">${esc(`#${t.id} · ${t.nama} · ${t.kode||'—'} ${t.detail||''}`)}</option>`).join('')}</select><button type="button" data-action="hubungkan" data-id="${id}">Hubungkan</button>` : r.boleh_hubungkan ? 'Tambah inventaris dulu' : 'Dilindungi / tidak tersedia';
+                    return `<tr><td>${i+1}</td><td>${esc(r.kode_aktiva||'—')}</td><td>${esc(r.nama_aktiva||'—')}</td><td><strong>${esc(r.no_voucher||'—')}</strong><small>${esc(r.tgl_voucher||'—')}</small></td><td>${esc(r.tahun||'—')}</td><td class="av-money">${esc(money(r.nilai))}</td><td>${esc(r.urai||'—')}</td><td><span class="av-state ${r.status_hubungan==='terhubung'?'av-linked':''}">${esc(label)}</span><small>${esc(r.tujuan||'')}</small></td><td>${r.pdf_url ? `<a href="${esc(r.pdf_url)}" target="_blank" rel="noopener noreferrer">PDF</a>` : '—'}</td><td class="av-action">${action}</td></tr>`;
+                }).join('') : `<tr><td colspan="10">${loaded?'Tidak ada transaksi yang cocok.':'Memuat…'}</td></tr>`;
+                dialog.querySelectorAll('[data-action],[data-target]').forEach(e=>e.disabled=busy);
+            }
+            async function load() {
+                loaded=false; rows=[];targets=[];render();
+                const data = await api(`${url}?${query}`);
+                if (closed) return;
+                rows = Array.isArray(data.data)?data.data:[]; targets=Array.isArray(data.targets)?data.targets:[]; loaded=true;
+                $('[data-total]').textContent=money(data.total);
+                setStatus(data.pengaitan_siap ? `${rows.length} transaksi · ${targets.length} inventaris tujuan` : 'Migration pengaitan belum tersedia; hanya baca.');
+                render();
+            }
+            function setBusy(v) {busy=v;dialog.querySelectorAll('button,select,input').forEach(e=>e.disabled=v);}
+            dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+            dialog.addEventListener('close',()=>{closed=true;active=null;dialog.remove();},{once:true});
+            $('input').addEventListener('input',render);
+            dialog.addEventListener('click',async e=>{
+                const button=e.target.closest('button'); if(!button||busy)return;
+                if(button.hasAttribute('data-close')){dialog.close();return;}
+                if(button.hasAttribute('data-reload')){setBusy(true);try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}return;}
+                const action=button.dataset.action; if(!action)return;
+                const row=rows.find(r=>String(r.id)===button.dataset.id);if(!row)return;
+                const target=action==='hubungkan'?Number($(`[data-target="${Number(row.id)}"]`)?.value):Number(row.record_id);
+                if(!target){setStatus('Pilih inventaris tujuan terlebih dahulu.',true);return;}
+                if(!confirm(action==='hubungkan'?'Hubungkan voucher ke inventaris yang dipilih?':'Lepaskan hubungan voucher ini? Data aset dan transaksi tetap tersimpan.'))return;
+                setBusy(true);
+                try {
+                    const data=await api(`${url}/${action}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...scope,nilai_aktiva_id:Number(row.id),record_id:target,link_id:row.link_id,konfirmasi:true})});
+                    await load();
+                    try { await refresh?.(); setStatus(data.message||'Berhasil disimpan.'); }
+                    catch(err){setStatus('Relasi berhasil disimpan. Muat ulang Detail untuk melihat nilai terbaru.',true);}
+                } catch(err){setStatus(err.message,true);}
+                finally{setBusy(false);}
+            });
+            dialog.showModal();setBusy(true);
+            try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}
+        }
+        return {open, money};
+    })();
+
     const $ = id => document.getElementById(id);
     const base = root.dataset.base;
     const token = root.dataset.token;
@@ -237,7 +315,7 @@
                 item.letak || $('kdDetailSubtitle').textContent.split(' · ').slice(1).join(' · '),
                 fmtDate(item.tgl_dok), item.no_dok, item.luas,
                 item.status_tanah, item.kode_tanah, item.asal,
-                money(item.harga), item.ket
+                item.nilai_konflik ? 'PERIKSA RELASI' : `${money(item.nilai_laporan)} · ${Number(item.jumlah_voucher||0)} voucher`, item.ket
             ];
             return `<tr class="${state.selectedIndex === index ? 'selected' : ''}" data-kd-detail-row="${index}">` +
                 cells.map((value,i) => `<td class="${i===15 ? 'kd-money' : ''}">${esc(empty(value))}</td>`).join('') +
@@ -525,21 +603,23 @@
         openForm();
     });
 
-    async function openForm(id = null) {
+    async function openForm(id = null, directLocation = null) {
         const form = $('kdForm');
         form.reset();
         state.editingId = id;
+        state.directLocation = directLocation;
         $('kdEditId').value = id || '';
         $('kdFormTitle').textContent = id ? 'Edit Data Jembatan' : 'Tambah Data Jembatan';
         $('kdFormMessage').textContent = '';
         useVoucher(null);
         $('kdHarga').readOnly = false;
         $('kdPendingPicker').hidden = false;
-        $('kdPendingSection').hidden = Boolean(id);
-        if (!id) loadPending();
+        $('kdPendingSection').hidden = Boolean(id) || directLocation !== null;
+        if (!id && directLocation === null) loadPending();
         ['id_barang','id_lokasi','id_departemen','id_div','kondisi',
          'konstruksi','materi','status_kepemilikan']
             .forEach(name => setCombo(name, ''));
+        if (directLocation !== null) setCombo('id_lokasi', directLocation);
         syncAlamat();
         if (id) {
             try {
@@ -559,6 +639,16 @@
         }
         openDialog('kdFormDialog');
     }
+    $('kdDirectAdd').addEventListener('click',()=>{
+        if(!state.location){alert('Pilih Master Lokasi yang valid.');return;}
+        if(state.tab==='gedung'){const dest=new URL(root.dataset.gedung,window.location.href);dest.searchParams.set('tambah_lokasi',state.location);window.location.assign(dest);return;}
+        openForm(null,state.location);
+    });
+    $('kdValueLink').addEventListener('click',()=>{
+        if(!state.location){alert('Pilih Master Lokasi yang valid.');return;}
+        const kind=state.tab,id=state.location;
+        voucherDialog.open({base:root.dataset.voucherBase,token,kategori:kind,scope:{id_lokasi:id},title:state.locationName,refresh:()=>loadDetail(kind,id)});
+    });
     $('kdNew').addEventListener('click', () => {
         if (state.tab === 'gedung') {
             window.location.assign(root.dataset.gedung);
@@ -585,7 +675,8 @@
                 method:'POST', body:data
             });
             closeDialog('kdFormDialog');
-            window.location.reload();
+            if(state.directLocation !== null && !state.editingId){await loadDetail('jembatan',Number(data.get('id_lokasi')));state.directLocation=null;}
+            else window.location.reload();
         } catch (error) {
             $('kdFormMessage').textContent = error.message;
         } finally { button.disabled = false; }
@@ -641,11 +732,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportBody = $('.kd-report-body');
     const signerFields = Array.from(form.querySelectorAll('.kd-report-person'));
     const scope = $('#kdReportScope');
+    const reportNilai = row => {
+        if (row.nilai_konflik) return 'PERIKSA RELASI';
+        if (row.nilai_laporan === undefined || row.nilai_laporan === null) return 'NILAI BELUM DIMUAT';
+        const value = Number(row.nilai_laporan);
+        // Excel hanya menjamin 15 digit signifikan. Jangan membulatkan nominal besar diam-diam.
+        if (!Number.isFinite(value) || Math.abs(value) >= 1e15) return `CEK NOMINAL: ${String(row.nilai_laporan)}`;
+        return value;
+    };
+    const reportNilaiText = value => typeof value === 'number' ? new Intl.NumberFormat('id-ID', {maximumFractionDigits: 2}).format(value) : value;
     const roles = [
-        ['diketahui', 'Diketahui oleh'],
-        ['periksa_1', 'Diperiksa oleh (1)'],
-        ['periksa_2', 'Diperiksa oleh (2)'],
-        ['dibuat', 'Dibuat oleh'],
+        ['disetujui', 'Disetujui Oleh'],
+        ['diketahui', 'Diketahui Oleh'],
+        ['diperiksa', 'Diperiksa Oleh'],
+        ['dibuat', 'Dibuat Oleh'],
     ];
     const state = { lokasi: null, organisasi: {}, data: [], sdm: [], jenis: 'jembatan' };
     let requestVersion = 0;
@@ -694,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Luas Lantai (M2)', 'Letak / Lokasi Alamat',
         'Tanggal Dokumen', 'Nomor Dokumen', 'Luas (M2)',
         'Status Tanah', 'Nomor Kode Tanah', 'Asal Usul',
-        'Harga (Rp)', 'Keterangan'
+        'Nilai Rp', 'Keterangan'
     ];
     const groups = [
         { first: 3, last: 4, title: 'NOMOR' },
@@ -707,8 +807,8 @@ document.addEventListener('DOMContentLoaded', () => {
         g.letak || state.lokasi?.alamat || state.lokasi?.nama,
         fmtDate(g.tgl_dok), g.no_dok, g.luas,
         g.status_tanah, g.kode_tanah, g.asal,
-        money(g.harga), g.ket
-    ].map(cell));
+        reportNilai(g), g.ket
+    ].map((value, column) => column === 15 ? value : cell(value)));
     const meta = () => {
         const o = state.organisasi || {};
         return [
@@ -905,8 +1005,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function paperHtml() {
-        const body = rows().map(row => `<tr>${row.map(value =>
-            `<td>${escapeHtml(cell(value))}</td>`).join('')}</tr>`).join('');
+        const body = rows().map(row => `<tr>${row.map((value, column) =>
+            `<td>${escapeHtml(cell(column === 15 ? reportNilaiText(value) : value))}</td>`).join('')}</tr>`).join('');
         const metadata = meta().map(([key, value]) => `<div><b>${escapeHtml(key)}</b><span>: ${escapeHtml(cell(value))}</span></div>`).join('');
         const signatures = roles.map(([key, label]) => {
             const person = chosen(key);
@@ -929,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="kd-report-table-scroll"><table class="kd-report-table">
                 <thead>${tableHead()}</thead><tbody>${body}</tbody>
             </table></div>
-            <div class="kd-report-date">Samarinda, ${escapeHtml(dateName())}</div>
+            <div class="kd-report-date"><span>Samarinda, ${escapeHtml(dateName())}</span></div>
             <div class="kd-report-signatures">${signatures}</div>
         </article>`;
     }
@@ -1149,7 +1249,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = rows();
         data.forEach((values, i) => {
             const row = header + 3 + i;
-            values.forEach((value, column) => put(row, column + 1, cell(value), 3));
+            values.forEach((value, column) => {
+                const numeric = column === 15 && typeof value === 'number' && Number.isFinite(value);
+                put(row, column + 1, numeric ? value : cell(value), numeric ? 7 : 3);
+            });
             // Tinggi disesuaikan dengan konten panjang, tetap wrap dan middle.
             const longest = Math.max(...values.map(v => String(v ?? '').length));
             heights.set(row, Math.min(145, Math.max(29, Math.ceil(longest / 34) * 15 + 9)));
@@ -1171,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
         const rowsXml = [...entries].sort(([a], [b]) => a - b).map(([r, row]) => {
             const cellsXml = [...row].sort(([a], [b]) => a - b).map(([c, item]) =>
-                `<c r="${colName(c)}${r}" s="${item.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(item.value)}</t></is></c>`).join('');
+                item.style === 7 ? `<c r="${colName(c)}${r}" s="7"><v>${item.value}</v></c>` : `<c r="${colName(c)}${r}" s="${item.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(item.value)}</t></is></c>`).join('');
             return `<row r="${r}"${heights.has(r)?` ht="${heights.get(r)}" customHeight="1"`:''}>${cellsXml}</row>`;
         }).join('');
         const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -1200,13 +1303,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const xfs = [
             [0,0,0,'left'], [1,0,0,'center'], [2,2,1,'center'],
             [0,0,1,'center'], [2,0,0,'left'],
-            [0,0,0,'center'], [3,0,0,'center'],
-        ].map(([font, fill, border, align]) =>
-            `<xf numFmtId="0" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
+            [0,0,0,'center'], [3,0,0,'center'], [0,0,1,'right'],
+        ].map(([font, fill, border, align], i) =>
+            `<xf numFmtId="${i === 7 ? 4 : 0}" applyNumberFormat="1" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
         const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <styleSheet xmlns="${main}"><fonts count="4">${fonts}</fonts>${fills}${borders}
             <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-            <cellXfs count="7">${xfs}</cellXfs>
+            <cellXfs count="8">${xfs}</cellXfs>
             <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
         const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <workbook xmlns="${main}" xmlns:r="${rel}"><sheets><sheet name="KIB D - Inventaris" sheetId="1" r:id="rId1"/></sheets>

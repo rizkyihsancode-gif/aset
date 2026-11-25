@@ -53,6 +53,7 @@ class KibVoucherLinkService
                 ['mesins', 'id_voucher2', 'mesin'],
                 ['gedungs', 'nilai_aktiva_id', 'gedung'],
                 ['kib_d_s', 'nilai_v', 'jembatan'],
+                ['kirs', 'nilai_v', 'kir'],
             ] as [$table, $column, $kategori]
         ) {
             if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) continue;
@@ -135,6 +136,7 @@ class KibVoucherLinkService
             'jembatan' => ['kib_d_s', 'nilai_v'],
             'aset_ttp' => ['kib_aset_tetap_manual', null],
             'konstruksi' => ['kib_konstruksi_manual', null],
+            'kir' => ['kirs', 'nilai_v'],
         ];
         if (!isset($map[$kategori])) {
             throw new \InvalidArgumentException('Kategori inventaris tidak valid.');
@@ -200,8 +202,11 @@ class KibVoucherLinkService
         $this->linkRecord($voucherId, 'mesin', $mesinId, $lokasiId, $userId);
     }
 
-    private function linkRecord(int $voucherId, string $kategori, int $recordId, int $lokasiId, ?int $userId): void
+    public function linkRecord(int $voucherId, string $kategori, int $recordId, int $lokasiId, ?int $userId): void
     {
+        if (!in_array($kategori, ['tanah', 'mesin', 'gedung', 'jembatan', 'aset_ttp', 'konstruksi', 'kir'], true)) {
+            throw new \InvalidArgumentException('Kategori relasi tidak valid.');
+        }
         $this->assertReady();
         $owners = $this->owners([$voucherId]);
         if (!empty($owners[$voucherId])) {

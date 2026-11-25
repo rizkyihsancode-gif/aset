@@ -32,9 +32,10 @@
     <link rel="stylesheet"
         href="{{ asset('css/pages/kib/konstruksi.css') }}?v={{ file_exists(public_path('css/pages/kib/konstruksi.css')) ? filemtime(public_path('css/pages/kib/konstruksi.css')) : '1' }}">
 
-    <section id="kfApp" class="kf-page" data-base="{{ url('/kib/konstruksi') }}"
-        data-group-url="{{ url('/kib/konstruksi/kelompok') }}" data-report-url="{{ route('kib.konstruksi.laporan') }}"
-        data-report-logo="{{ asset('images/logo_hr.png') }}" data-token="{{ csrf_token() }}">
+    <section id="kfApp" data-voucher-base="{{ url('/kib/voucher') }}" class="kf-page"
+        data-base="{{ url('/kib/konstruksi') }}" data-group-url="{{ url('/kib/konstruksi/kelompok') }}"
+        data-report-url="{{ route('kib.konstruksi.laporan') }}" data-report-logo="{{ asset('images/logo_hr.png') }}"
+        data-token="{{ csrf_token() }}">
 
         {{-- =====================================================
          HEADER HALAMAN
@@ -808,6 +809,9 @@
                             </label>
 
 
+                            <button type="button" id="kfGroupAddDirect" class="kf-btn kf-primary">Tambah Data
+                                Langsung</button>
+                            <button type="button" id="kfGroupValue" class="kf-btn kf-outline">Nilai Lokasi</button>
                             <button type="button" id="kfGroupReset" class="kf-btn kf-outline">
                                 <i data-lucide="refresh-cw"></i>
                                 Reset
@@ -1394,39 +1398,26 @@
                         </label>
                         <div class="kf-report-sign-grid">
                             <div class="kf-report-signer-field">
-                                <label for="kfReportSignerKnown"><strong>Diketahui oleh <span>*</span></strong></label>
+                                <label for="kfReportSignerCreated"><strong>Dibuat Oleh <span>*</span></strong></label>
                                 <div class="kf-report-signer-control">
-                                    <input id="kfReportSignerKnown" type="search"
+                                    <input id="kfReportSignerCreated" type="search"
                                         placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
                                         aria-autocomplete="list" aria-expanded="false"
-                                        aria-controls="kfReportSuggestKnown" aria-label="Diketahui oleh (pilihan)"
+                                        aria-controls="kfReportSuggestCreated" aria-label="Dibuat Oleh (pilihan)"
                                         required>
                                     <span class="kf-report-dropdown-chevron" aria-hidden="true">⌄</span>
                                 </div>
-                                <div id="kfReportSuggestKnown" class="kf-report-suggestions" role="listbox" hidden></div>
-                            </div>
-                            <div class="kf-report-signer-field">
-                                <label for="kfReportSignerChecked1"><strong>Diperiksa oleh (1)
-                                        <span>*</span></strong></label>
-                                <div class="kf-report-signer-control">
-                                    <input id="kfReportSignerChecked1" type="search"
-                                        placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
-                                        aria-autocomplete="list" aria-expanded="false"
-                                        aria-controls="kfReportSuggestChecked1" aria-label="Diperiksa oleh 1 (pilihan)"
-                                        required>
-                                    <span class="kf-report-dropdown-chevron" aria-hidden="true">⌄</span>
-                                </div>
-                                <div id="kfReportSuggestChecked1" class="kf-report-suggestions" role="listbox" hidden>
+                                <div id="kfReportSuggestCreated" class="kf-report-suggestions" role="listbox" hidden>
                                 </div>
                             </div>
                             <div class="kf-report-signer-field">
-                                <label for="kfReportSignerChecked2"><strong>Diperiksa oleh (2)
+                                <label for="kfReportSignerChecked2"><strong>Diperiksa Oleh
                                         <span>*</span></strong></label>
                                 <div class="kf-report-signer-control">
                                     <input id="kfReportSignerChecked2" type="search"
                                         placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
                                         aria-autocomplete="list" aria-expanded="false"
-                                        aria-controls="kfReportSuggestChecked2" aria-label="Diperiksa oleh 2 (pilihan)"
+                                        aria-controls="kfReportSuggestChecked2" aria-label="Diperiksa Oleh (pilihan)"
                                         required>
                                     <span class="kf-report-dropdown-chevron" aria-hidden="true">⌄</span>
                                 </div>
@@ -1434,22 +1425,37 @@
                                 </div>
                             </div>
                             <div class="kf-report-signer-field">
-                                <label for="kfReportSignerCreated"><strong>Dibuat oleh <span>*</span></strong></label>
+                                <label for="kfReportSignerChecked1"><strong>Diketahui Oleh
+                                        <span>*</span></strong></label>
                                 <div class="kf-report-signer-control">
-                                    <input id="kfReportSignerCreated" type="search"
+                                    <input id="kfReportSignerChecked1" type="search"
                                         placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
                                         aria-autocomplete="list" aria-expanded="false"
-                                        aria-controls="kfReportSuggestCreated" aria-label="Dibuat oleh (pilihan)"
+                                        aria-controls="kfReportSuggestChecked1" aria-label="Diketahui Oleh (pilihan)"
                                         required>
                                     <span class="kf-report-dropdown-chevron" aria-hidden="true">⌄</span>
                                 </div>
-                                <div id="kfReportSuggestCreated" class="kf-report-suggestions" role="listbox" hidden>
+                                <div id="kfReportSuggestChecked1" class="kf-report-suggestions" role="listbox" hidden>
                                 </div>
+                            </div>
+                            <div class="kf-report-signer-field">
+                                <label for="kfReportSignerKnown"><strong>Disetujui Oleh <span>*</span></strong></label>
+                                <div class="kf-report-signer-control">
+                                    <input id="kfReportSignerKnown" type="search"
+                                        placeholder="Ketik nama, NIP atau jabatan" autocomplete="off" role="combobox"
+                                        aria-autocomplete="list" aria-expanded="false"
+                                        aria-controls="kfReportSuggestKnown" aria-label="Disetujui Oleh (pilihan)"
+                                        required>
+                                    <span class="kf-report-dropdown-chevron" aria-hidden="true">⌄</span>
+                                </div>
+                                <div id="kfReportSuggestKnown" class="kf-report-suggestions" role="listbox" hidden></div>
                             </div>
                         </div>
                         <small>Pilih penandatangan dari Master SDM Pendukung. Nama, jabatan dan NIP diambil dari
                             database.</small>
                     </form>
+                    <small>Nilai Rp mengikuti voucher terhubung per inventaris. Harga/nilai historis atau manual tetap
+                        dipakai jika belum ada voucher. PERIKSA RELASI menandai konflik, bukan nilai nol.</small>
                     <div id="kfReportInfo" class="kf-report-info" role="status" aria-live="polite">
                         Pilih kelompok Konstruksi untuk memuat laporan.
                     </div>

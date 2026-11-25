@@ -5103,7 +5103,7 @@ class KIBController extends Controller
         return response()->json([
             'success' => true,
             'lokasi' => $location,
-            'data' => $rows,
+            'data' => $this->nilaiLaporanKib($rows->all(), 'gedung', 'id', 'nilai'),
         ]);
     }
 
@@ -5296,7 +5296,8 @@ class KIBController extends Controller
         */
     private function validasiGedung(
         Request $request,
-        bool $creating
+        bool $creating,
+        bool $langsung = false
     ): array {
         $rules = [
             'id_barang' => [
@@ -5413,7 +5414,7 @@ class KIBController extends Controller
             ],
         ];
 
-        if ($creating) {
+        if ($creating && !$langsung) {
             $rules['id_nilai_aktiva'] = [
                 'required',
                 'integer',
@@ -5462,6 +5463,221 @@ class KIBController extends Controller
         | SIMPAN GEDUNG DARI VOUCHER NILAI ASET
         |--------------------------------------------------------------------------
         */
+    /** Kategori fisik: D/Gedung menggunakan identitas gedung (K.I.B C), bukan pemilik baru. */
+    private function voucherScopeKib(string $kategori): array
+    {
+        $map = [
+            'gedung' => ['gedungs', 'gedung', 'id_lokasi', 'id_barang', 'kode'],
+            'jembatan' => ['kib_d_s', 'jalan', 'id_lokasi', 'id_barang', 'kode'],
+            'aset_ttp' => ['kib_aset_tetap_manual', 'aset_tetap', 'lokasi', 'nama_aset', 'kode_inventaris'],
+            'konstruksi' => ['kib_konstruksi_manual', 'konstruksi', 'lokasi', 'nama_pekerjaan', null],
+            'kir' => ['kirs', 'kir', 'id_lokasi', 'id_barang', 'ruangan'],
+        ];
+        abort_unless(isset($map[$kategori]), 404);
+        return $map[$kategori];
+    }
+
+    private function voucherLocationKib(string $kategori, Request $request): object
+    {
+        [,, $column] = $this->voucherScopeKib($kategori);
+        if ($column === 'lokasi') {
+            $input = $request->validate(['nama_lokasi' => ['required', 'string', 'max:500']]);
+            $rows = DB::table('lokasis')->whereRaw('BTRIM(lokasi) = ?', [trim($input['nama_lokasi'])])->limit(2)->get();
+            if ($rows->count() !== 1) {
+                throw ValidationException::withMessages(['lokasi' => 'Nama lokasi manual harus cocok dengan tepat satu Master Lokasi. Periksa data lokasi sebelum menghubungkan voucher.']);
+            }
+            return $rows->first();
+        }
+        $input = $request->validate(['id_lokasi' => ['required', 'integer', 'min:1']]);
+        $location = DB::table('lokasis')->where('id', $input['id_lokasi'])->first();
+        abort_unless($location, 404);
+        return $location;
+    }
+
+    private function voucherTargetsKib(string $kategori, object $location): \Illuminate\Database\Query\Builder
+    {
+        [$table,, $column] = $this->voucherScopeKib($kategori);
+        $query = DB::table($table);
+        return $column === 'lokasi'
+            ? $query->whereRaw('BTRIM(lokasi) = ?', [trim((string) $location->lokasi)])
+            : $query->where($column, $location->id);
+    }
+
+    private function voucherCategoriesKib(string $kategori): array
+    {
+        [, $module] = $this->voucherScopeKib($kategori);
+        $normalize = static fn($name) => strtoupper(trim(preg_replace('/[^A-Za-z0-9]+/', ' ', (string)$name) ?? ''));
+        $aliases = array_map($normalize, config("kib.modules.{$module}.aliases", []));
+        if ($kategori === 'gedung') $aliases[] = 'GEDUNG BANGUNAN';
+        if ($kategori === 'kir') $aliases[] = 'K I R';
+        $matches = DB::table('golongans')->get(['id', 'nama'])->filter(static function ($g) use ($aliases, $normalize, $kategori) {
+            $name = $normalize($g->nama);
+            return in_array($name, $aliases, true) || ($kategori === 'jembatan' && str_starts_with($name, 'KIB D '));
+        })->pluck('id')->map(static fn($id) => (int)$id)->unique()->values()->all();
+        if (!$matches) throw ValidationException::withMessages(['kategori' => 'Golongan voucher belum cocok dengan Master Golongan. Pengaitan dihentikan untuk mencegah salah kategori.']);
+        return $matches;
+    }
+
+    private function voucherEligibleKib(string $kategori, object $voucher): bool
+    {
+        if (
+            $voucher->stat === null || !in_array((int) $voucher->stat, [0, 1], true)
+            || !in_array((int) $voucher->jenisn, [1, 2], true) || $voucher->nilai === null
+        ) return false;
+        // KIR lama pernah memproses voucher tanpa menyimpan nilai_v. Jangan menebak pemiliknya.
+        return !($kategori === 'kir' && (int) $voucher->jenisn === 1 && (int) $voucher->stat === 1);
+    }
+
+    public function riwayatVoucherKib(Request $request, string $kategori, KibVoucherLinkService $links)
+    {
+        $location = $this->voucherLocationKib($kategori, $request);
+        [,,, $name, $code] = $this->voucherScopeKib($kategori);
+        $targets = $this->voucherTargetsKib($kategori, $location)->orderBy('id')->get();
+        $master = $name === 'id_barang' ? DB::table('barangs')->whereIn('id', $targets->pluck('id_barang')->filter()->unique())->pluck('nama_barang', 'id') : collect();
+        $options = $targets->map(fn($r) => [
+            'id' => (int) $r->id,
+            'nama' => trim((string) ($name === 'id_barang' ? ($master[$r->id_barang] ?? 'Inventaris') : $r->{$name})),
+            'kode' => trim((string) ($code ? ($r->{$code} ?? '') : ($r->kategori ?? ''))),
+            'detail' => trim((string) ($r->gedung ?? $r->divisi ?? $r->reg ?? $r->nomor_register ?? '')),
+        ])->keyBy('id');
+        $categories = $this->voucherCategoriesKib($kategori);
+        $query = $kategori === 'gedung' ? $this->gedungNilaiQuery() : DB::table('nilai_aktivas as n')->leftJoin('aktivas as a', 'a.id', '=', 'n.id_aktiva')->whereIn('n.cat', $categories);
+        $columns = ['n.id', 'n.no_voucher', 'n.tgl_voucher', 'n.tahun', 'n.nilai', 'n.urai', 'n.jenisn', 'n.stat', 'n.cat', 'a.kode as kode_aktiva', 'a.aktiva as nama_aktiva'];
+        if (Schema::hasColumn('nilai_aktivas', 'dokumen_pdf')) $columns[] = 'n.dokumen_pdf';
+        $rows = $query->where('n.id_lokasi', $location->id)->orderByDesc('n.tgl_voucher')->orderByDesc('n.id')->get($columns);
+        $ids = $rows->pluck('id')->all();
+        $owners = $links->owners($ids);
+        $manual = $links->ready() ? DB::table('kib_voucher_links')->whereIn('nilai_aktiva_id', $ids)->where('kib', $kategori)
+            ->where('id_lokasi', $location->id)->get()->keyBy('nilai_aktiva_id') : collect();
+        foreach ($rows as $row) {
+            $row->pdf_url = trim((string)($row->dokumen_pdf ?? '')) !== '' ? route('nilai.pdf.preview', $row->id) : null;
+            unset($row->dokumen_pdf);
+            $eligible = in_array((int)$row->cat, $categories, true) && $this->voucherEligibleKib($kategori, $row);
+            $found = $owners[$row->id] ?? [];
+            $one = count($found) === 1 ? $found[0] : null;
+            $target = $one && $one['kategori'] === $kategori ? $options->get($one['record_id']) : null;
+            $row->status_hubungan = count($found) > 1 ? 'konflik' : ($one ? 'terhubung' : ($eligible ? 'belum' : 'periksa'));
+            $row->tujuan = $one ? ($target ? $target['nama'] . ' #' . $target['id'] : $one['kategori'] . ' #' . $one['record_id']) : null;
+            $link = $manual->get($row->id);
+            $row->boleh_hubungkan = $links->ready() && !$found && $eligible;
+            $row->boleh_lepaskan = $links->ready() && $one && $one['kategori'] === $kategori && $one['sumber'] === 'pengaitan'
+                && $link && (int)$link->record_id === $one['record_id'];
+            $row->link_id = $row->boleh_lepaskan ? (int)$link->id : null;
+            $row->record_id = $one['record_id'] ?? null;
+        }
+        return response()->json([
+            'success' => true,
+            'lokasi' => ['id' => (int)$location->id, 'nama' => $location->lokasi, 'alamat' => $location->alamat],
+            'total' => $rows->sum('nilai'),
+            'data' => $rows,
+            'targets' => $options->values(),
+            'pengaitan_siap' => $links->ready()
+        ]);
+    }
+
+    public function hubungkanVoucherKib(Request $request, string $kategori, KibVoucherLinkService $links, KibNotificationService $notifications)
+    {
+        $location = $this->voucherLocationKib($kategori, $request);
+        $input = $request->validate(['nilai_aktiva_id' => ['required', 'integer', 'min:1'], 'record_id' => ['required', 'integer', 'min:1'], 'konfirmasi' => ['required', 'accepted']]);
+        $links->assertReady();
+        $cats = $this->voucherCategoriesKib($kategori);
+        DB::transaction(function () use ($input, $kategori, $location, $links, $cats) {
+            $voucher = DB::table('nilai_aktivas')->where('id', $input['nilai_aktiva_id'])->where('id_lokasi', $location->id)->whereIn('cat', $cats)->lockForUpdate()->first();
+            $target = $this->voucherTargetsKib($kategori, $location)->where('id', $input['record_id'])->lockForUpdate()->first();
+            if (!$voucher || !$target || !$this->voucherEligibleKib($kategori, $voucher)) {
+                throw ValidationException::withMessages(['voucher' => 'Voucher atau inventaris tidak sesuai lokasi, kategori, atau status.']);
+            }
+            $links->linkRecord((int)$voucher->id, $kategori, (int)$target->id, (int)$location->id, Auth::id());
+            if ((int)$voucher->stat === 0) DB::table('nilai_aktivas')->where('id', $voucher->id)->update(['stat' => 1, 'updated_at' => now()]);
+        }, 3);
+        Log::info('KIB: voucher manual dihubungkan', ['kategori' => $kategori, 'voucher' => $input['nilai_aktiva_id'], 'record' => $input['record_id'], 'lokasi' => $location->id, 'user' => Auth::id()]);
+        $notifications->clearCache();
+        return response()->json(['success' => true, 'message' => 'Voucher berhasil dihubungkan.']);
+    }
+
+    public function lepaskanVoucherKib(Request $request, string $kategori, KibVoucherLinkService $links, KibNotificationService $notifications)
+    {
+        $location = $this->voucherLocationKib($kategori, $request);
+        $input = $request->validate(['nilai_aktiva_id' => ['required', 'integer', 'min:1'], 'record_id' => ['required', 'integer', 'min:1'], 'link_id' => ['required', 'integer', 'min:1'], 'konfirmasi' => ['required', 'accepted']]);
+        $links->assertReady();
+        DB::transaction(function () use ($input, $kategori, $location, $links) {
+            $voucher = DB::table('nilai_aktivas')->where('id', $input['nilai_aktiva_id'])->where('id_lokasi', $location->id)->lockForUpdate()->first();
+            $query = DB::table('kib_voucher_links')->where('id', $input['link_id'])->where('kib', $kategori)->where('record_id', $input['record_id'])
+                ->where('nilai_aktiva_id', $input['nilai_aktiva_id'])->where('id_lokasi', $location->id);
+            $link = $voucher ? (clone $query)->lockForUpdate()->first() : null;
+            $owners = $voucher ? ($links->owners([(int)$voucher->id])[$voucher->id] ?? []) : [];
+            if (!$link || count($owners) !== 1 || $owners[0]['kategori'] !== $kategori || $owners[0]['record_id'] !== (int)$input['record_id'] || $owners[0]['sumber'] !== 'pengaitan' || $query->delete() !== 1) {
+                throw ValidationException::withMessages(['voucher' => 'Relasi sudah berubah atau merupakan sumber historis.']);
+            }
+            // KIR penambahan aset manual berasal dari Pending; kembalikan ke Pending agar dapat dipilih ulang tanpa membuka voucher lama tak bertuan.
+            if ($kategori === 'kir' && (int)$voucher->jenisn === 1 && (int)$voucher->stat === 1) {
+                DB::table('nilai_aktivas')->where('id', $voucher->id)->update(['stat' => 0, 'updated_at' => now()]);
+            }
+        }, 3);
+        Log::info('KIB: voucher manual dilepas', ['kategori' => $kategori, 'voucher' => $input['nilai_aktiva_id'], 'record' => $input['record_id'], 'lokasi' => $location->id, 'user' => Auth::id()]);
+        $notifications->clearCache();
+        return response()->json(['success' => true, 'message' => 'Relasi dilepas. Voucher dapat dipilih kembali.']);
+    }
+
+    private function pastikanTanpaRelasiManual(string $kategori, int $id): void
+    {
+        if (app(KibVoucherLinkService::class)->ready() && DB::table('kib_voucher_links')->where('kib', $kategori)->where('record_id', $id)->exists()) {
+            throw ValidationException::withMessages(['voucher' => 'Lepaskan voucher manual terlebih dahulu sebelum menghapus inventaris atau mengganti lokasi.']);
+        }
+    }
+
+    public function referensiGedungLangsung(int $lokasi)
+    {
+        $location = DB::table('lokasis')->where('id', $lokasi)->first(['id', 'lokasi', 'alamat']);
+        abort_unless($location, 404);
+        return response()->json([
+            'success' => true,
+            'lokasi' => $location,
+            'departemen' => DB::table('departemens')->where(fn($q) => $q->whereNull('status')->orWhere('status', '<>', 'nonaktif'))->orderBy('kode_dep')->get(['id', 'kode_dep', 'nama_dep']),
+            'divisi' => DB::table('divisis')->where(fn($q) => $q->whereNull('status')->orWhere('status', '<>', 'nonaktif'))->orderBy('nama_div')->get(['id', 'id_dep', 'nama_div'])
+        ]);
+    }
+
+    public function storeGedungLangsung(Request $request, int $lokasi)
+    {
+        $input = $this->validasiGedung($request, true, true);
+        $org = $request->validate(['id_departemen' => ['required', 'integer', 'exists:departemens,id'], 'id_div' => ['required', 'integer', 'exists:divisis,id'], 'id_nilai_aktiva' => ['prohibited']]);
+        $files = [];
+        try {
+            $id = DB::transaction(function () use ($request, $lokasi, $input, $org, &$files) {
+                abort_unless(DB::table('lokasis')->where('id', $lokasi)->exists(), 404);
+                $dep = DB::table('departemens')->where('id', $org['id_departemen'])->where(fn($q) => $q->whereNull('status')->orWhere('status', '<>', 'nonaktif'))->exists();
+                $div = DB::table('divisis')->where('id', $org['id_div'])->where('id_dep', $org['id_departemen'])->where(fn($q) => $q->whereNull('status')->orWhere('status', '<>', 'nonaktif'))->exists();
+                if (!$dep || !$div || !DB::table('barangs')->where('id', $input['id_barang'])->where('status', 'aktif')->exists()) throw ValidationException::withMessages(['referensi' => 'Pilih barang aktif dan Departemen/Divisi yang sesuai.']);
+                $row = $this->fieldsGedung($input) + [
+                    'id_lokasi' => $lokasi,
+                    'id_departemen' => (int)$org['id_departemen'],
+                    'id_div' => (int)$org['id_div'],
+                    'nilai_aktiva_id' => null,
+                    'nilai' => null,
+                    'susut' => 0,
+                    'input' => 1,
+                    'id_user' => Auth::id(),
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                foreach (['dokumen' => 'dok', 'foto' => 'img'] as $field => $column) {
+                    if ($request->hasFile($field)) {
+                        $path = $request->file($field)->store('kib/gedung/' . $field, 'local');
+                        if (!$path) throw new \RuntimeException('Gagal menyimpan lampiran.');
+                        $files[] = $path;
+                        $row[$column] = $path;
+                    }
+                }
+                return DB::table('gedungs')->insertGetId($row);
+            });
+        } catch (\Throwable $e) {
+            foreach ($files as $path) Storage::disk('local')->delete($path);
+            throw $e;
+        }
+        return response()->json(['success' => true, 'id' => $id, 'message' => 'Data Gedung langsung berhasil ditambahkan.'], 201);
+    }
+
     public function storeGedung(Request $request)
     {
         try {
@@ -5521,7 +5737,7 @@ class KIBController extends Controller
                         )
                         ->exists();
 
-                    if ($exists) {
+                    if ($exists || !empty(app(KibVoucherLinkService::class)->owners([(int)$source->id])[$source->id])) {
                         throw ValidationException::withMessages([
                             'id_nilai_aktiva' =>
                             'Voucher sudah digunakan pada inventaris Gedung.',
@@ -5789,6 +6005,7 @@ class KIBController extends Controller
                     ->first();
 
                 abort_unless($row, 404);
+                $this->pastikanTanpaRelasiManual('gedung', $gedung);
 
                 foreach (
                     [
@@ -5815,12 +6032,7 @@ class KIBController extends Controller
 
                 if (
                     $row->nilai_aktiva_id &&
-                    !DB::table('gedungs')
-                        ->where(
-                            'nilai_aktiva_id',
-                            $row->nilai_aktiva_id
-                        )
-                        ->exists()
+                    empty(app(KibVoucherLinkService::class)->owners([(int)$row->nilai_aktiva_id])[$row->nilai_aktiva_id])
                 ) {
                     DB::table('nilai_aktivas')
                         ->where(
@@ -6823,6 +7035,8 @@ class KIBController extends Controller
                      * Ganti foto jika diunggah.
                      */
 
+                    if (trim((string)($record['lokasi'] ?? '')) !== trim((string)$old->lokasi)) $this->pastikanTanpaRelasiManual('aset_ttp', $aset);
+
                     if ($request->hasFile('foto')) {
 
                         $path = $request
@@ -6940,6 +7154,7 @@ class KIBController extends Controller
                     ->first();
 
                 abort_unless($row, 404);
+                $this->pastikanTanpaRelasiManual('aset_ttp', $aset);
 
                 if ($row->foto_path) {
                     $remove[] = $row->foto_path;
@@ -7231,7 +7446,7 @@ class KIBController extends Controller
                 'divisi' => $selected->divisi,
             ],
 
-            'items' => $items,
+            'items' => $this->nilaiLaporanKib($items, 'aset_ttp'),
 
             'pagination' => [
                 'page' => $page->currentPage(),
@@ -7714,7 +7929,7 @@ class KIBController extends Controller
                 'divisi' => $selected->divisi,
             ],
 
-            'items' => $items,
+            'items' => $this->nilaiLaporanKib($items, 'konstruksi', 'id', 'nilai'),
 
             'pagination' => [
                 'page' => $page->currentPage(),
@@ -8672,6 +8887,8 @@ class KIBController extends Controller
                      * mengunggah foto baru.
                      */
 
+                    if (trim((string)($record['lokasi'] ?? '')) !== trim((string)$old->lokasi)) $this->pastikanTanpaRelasiManual('konstruksi', $konstruksi);
+
                     if ($request->hasFile('foto')) {
 
                         $path = $request
@@ -8805,6 +9022,7 @@ class KIBController extends Controller
                     ->first();
 
                 abort_unless($row, 404);
+                $this->pastikanTanpaRelasiManual('konstruksi', $konstruksi);
 
                 if ($row->foto_path) {
                     $files[] = $row->foto_path;
@@ -9539,9 +9757,7 @@ class KIBController extends Controller
             ),
             // Penandatangan hanya SDM aktif dari master (satu sumber data).
             'sdm' => $this->sdmAktifKibB()->values()->all(),
-            'data' => $rows->map(
-                fn($row) => $this->kirResource($row, $materials)
-            )->values(),
+            'data' => $this->nilaiLaporanKib($rows->map(fn($row) => $this->kirResource($row, $materials))->all(), 'kir', 'id', 'nilai'),
         ]);
     }
 
@@ -9717,16 +9933,7 @@ class KIBController extends Controller
 
             'success' => true,
 
-            'data' => $rows
-
-                ->map(
-                    fn($row) => $this->kirResource(
-                        $row,
-                        $materials
-                    )
-                )
-
-                ->values(),
+            'data' => $this->nilaiLaporanKib($rows->map(fn($row) => $this->kirResource($row, $materials))->all(), 'kir', 'id', 'nilai'),
         ]);
     }
 
@@ -10287,8 +10494,13 @@ class KIBController extends Controller
                     |----------------------------------------------------------
                     */
 
-                    DB::table('kirs')
-                        ->insert($record);
+                    if ($voucher) {
+                        if (!empty(app(KibVoucherLinkService::class)->owners([(int)$voucher->id])[$voucher->id]) || (int)$voucher->id > 2147483647) {
+                            throw ValidationException::withMessages(['id_nilai_aktiva' => 'Voucher sudah dimiliki atau ID melampaui kapasitas kolom arsip KIR.']);
+                        }
+                        $record['nilai_v'] = (int)$voucher->id;
+                    }
+                    DB::table('kirs')->insert($record);
 
                     /*
                     |----------------------------------------------------------
@@ -10523,6 +10735,9 @@ class KIBController extends Controller
                     'Inventaris KIR tidak ditemukan.'
                 );
 
+                $this->pastikanTanpaRelasiManual('kir', $kir);
+                // Pointer historis tetap dilindungi agar asal voucher tidak hilang.
+                if (!empty($row->nilai_v)) throw ValidationException::withMessages(['voucher' => 'KIR memiliki sumber voucher historis; rekonsiliasi dahulu.']);
                 DB::table('kirs')
 
                     ->where(
@@ -10933,7 +11148,7 @@ class KIBController extends Controller
                 'status_tanah' => $r->status,
                 'kode_tanah' => $r->kode_tanah,
                 'asal' => $r->asal,
-                'harga' => $r->nilai_transaksi,
+                'harga' => $r->nilai_transaksi ?? $r->nilai,
                 'ket' => $r->ket,
                 'status_kepemilikan' => $owner ? ($r->status_kepemilikan ?? null) : null,
                 'departemen' => $r->departemen,
@@ -11015,7 +11230,7 @@ class KIBController extends Controller
             'jenis' => $jenis,
             'lokasi' => $location,
             'count' => count($rows),
-            'data' => $rows,
+            'data' => $this->nilaiLaporanKib($rows, $jenis, 'id', 'harga'),
         ]);
     }
 
@@ -11155,7 +11370,7 @@ class KIBController extends Controller
                 'id_nilai_aktiva' => 'Voucher tidak tersedia atau sudah diproses.',
             ]);
         }
-        if (DB::table('kib_d_s')->where('nilai_v', $voucherId)->exists()) {
+        if (!empty(app(KibVoucherLinkService::class)->owners([$voucherId])[$voucherId])) {
             throw ValidationException::withMessages([
                 'id_nilai_aktiva' => 'Voucher sudah terhubung ke inventaris Jembatan.',
             ]);
@@ -11310,7 +11525,15 @@ class KIBController extends Controller
                     $files[] = $data[$column];
                 }
             }
-            DB::table('kib_d_s')->where('id', $item)->update($data);
+            DB::transaction(function () use ($item, $data) {
+                $current = DB::table('kib_d_s')->where('id', $item)->lockForUpdate()->first();
+                abort_unless($current, 404);
+                if ((int)$current->id_lokasi !== (int)$data['id_lokasi']) {
+                    $this->pastikanTanpaRelasiManual('jembatan', $item);
+                    if ($current->nilai_v) throw ValidationException::withMessages(['lokasi' => 'Lokasi sumber historis tidak dapat dipindah.']);
+                }
+                DB::table('kib_d_s')->where('id', $item)->update($data);
+            });
         } catch (\Throwable $error) {
             foreach ($files as $path) Storage::disk('local')->delete($path);
             throw $error;
@@ -11329,8 +11552,9 @@ class KIBController extends Controller
         $files = DB::transaction(function () use ($item) {
             $old = DB::table('kib_d_s')->where('id', $item)->lockForUpdate()->first();
             abort_unless($old, 404);
+            $this->pastikanTanpaRelasiManual('jembatan', $item);
             DB::table('kib_d_s')->where('id', $item)->delete();
-            if ($old->nilai_v && !DB::table('kib_d_s')->where('nilai_v', $old->nilai_v)->exists()) {
+            if ($old->nilai_v && empty(app(KibVoucherLinkService::class)->owners([(int)$old->nilai_v])[$old->nilai_v])) {
                 DB::table('nilai_aktivas')->where('id', $old->nilai_v)
                     ->where('stat', 1)->update(['stat' => 0, 'updated_at' => now()]);
             }

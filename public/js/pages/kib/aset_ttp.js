@@ -19,6 +19,84 @@
 
     root.dataset.loaded = '1';
 
+    /* Riwayat Nilai — implementasi lokal modul. */
+    const voucherDialog = (() => {
+        'use strict';
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const money = v => v === null ? '—' : 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(v) || 0);
+        let active = null;
+        async function open({base, token, kategori, scope, title, refresh}) {
+            if (active) return;
+            const dialog = document.createElement('dialog');
+            dialog.className = 'aset_ttp-voucher-dialog';
+            dialog.setAttribute('aria-label','Riwayat Nilai Aset');
+            dialog.innerHTML = `<header><div><small>RIWAYAT NILAI ASET</small><h2>Riwayat Nilai · ${esc(title)}</h2><p>Hubungkan voucher ke inventaris pada lokasi yang sama.</p></div><button type="button" data-close aria-label="Tutup">×</button></header>
+                <main><div class="av-summary"><span>Total Nilai Lokasi</span><strong data-total>—</strong><small>Termasuk transaksi belum terhubung</small></div>
+                <p class="av-help">Pelepasan hanya menghapus relasi manual, bukan data inventaris, voucher, atau PDF. Sumber historis dilindungi.</p>
+                <div class="av-tools"><input type="search" placeholder="Cari nomor voucher, kode, uraian, tujuan…" aria-label="Cari voucher"><button type="button" data-reload>Muat ulang</button></div>
+                <p data-status role="status" aria-live="polite"></p><div class="av-scroll" tabindex="0" role="region" aria-label="Tabel riwayat nilai"><table><thead><tr><th>No.</th><th>Kode Aktiva</th><th>Nama Aktiva</th><th>Voucher / Tanggal</th><th>Tahun</th><th>Nilai Rp</th><th>Uraian</th><th>Status / Tujuan</th><th>PDF</th><th>Aksi</th></tr></thead><tbody></tbody></table></div></main><footer><button type="button" data-close>Tutup</button></footer>`;
+            document.body.append(dialog);
+            active = dialog;
+            const $ = q => dialog.querySelector(q);
+            const url = `${base.replace(/\/$/,'')}/${encodeURIComponent(kategori)}`;
+            const query = new URLSearchParams(scope);
+            let rows = [], targets = [], busy = false, loaded = false, closed = false;
+            const setStatus = (value, error = false) => { $('[data-status]').textContent = value; $('[data-status]').classList.toggle('av-error',error); };
+            const api = async (path, options = {}) => {
+                const res = await fetch(path,{credentials:'same-origin',...options,headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':token,...(options.headers||{})}});
+                const data = await res.json().catch(()=>null);
+                if (!data || typeof data !== 'object') throw new Error('Respons bukan JSON. Periksa sesi Login dan route pengaitan.');
+                if (!res.ok || data.success === false) throw new Error(data.errors ? Object.values(data.errors).flat().join(' · ') : data.message || `HTTP ${res.status}`);
+                return data;
+            };
+            function render() {
+                const key = $('input').value.trim().toLocaleLowerCase('id-ID');
+                const filtered = rows.filter(r=>[r.no_voucher,r.kode_aktiva,r.nama_aktiva,r.urai,r.tujuan].join(' ').toLocaleLowerCase('id-ID').includes(key));
+                $('tbody').innerHTML = filtered.length ? filtered.map((r,i)=>{
+                    const label = ({terhubung:'Terhubung',belum:'Belum terhubung',konflik:'PERIKSA RELASI',periksa:'Periksa status/historis'})[r.status_hubungan] || '—';
+                    const id = Number(r.id);
+                    const action = r.boleh_lepaskan ? `<button type="button" class="av-danger" data-action="lepaskan" data-id="${id}">Lepaskan</button>` : r.boleh_hubungkan && targets.length ? `<select aria-label="Inventaris tujuan voucher ${esc(r.no_voucher)}" data-target="${id}"><option value="">Pilih inventaris</option>${targets.map(t=>`<option value="${Number(t.id)}">${esc(`#${t.id} · ${t.nama} · ${t.kode||'—'} ${t.detail||''}`)}</option>`).join('')}</select><button type="button" data-action="hubungkan" data-id="${id}">Hubungkan</button>` : r.boleh_hubungkan ? 'Tambah inventaris dulu' : 'Dilindungi / tidak tersedia';
+                    return `<tr><td>${i+1}</td><td>${esc(r.kode_aktiva||'—')}</td><td>${esc(r.nama_aktiva||'—')}</td><td><strong>${esc(r.no_voucher||'—')}</strong><small>${esc(r.tgl_voucher||'—')}</small></td><td>${esc(r.tahun||'—')}</td><td class="av-money">${esc(money(r.nilai))}</td><td>${esc(r.urai||'—')}</td><td><span class="av-state ${r.status_hubungan==='terhubung'?'av-linked':''}">${esc(label)}</span><small>${esc(r.tujuan||'')}</small></td><td>${r.pdf_url ? `<a href="${esc(r.pdf_url)}" target="_blank" rel="noopener noreferrer">PDF</a>` : '—'}</td><td class="av-action">${action}</td></tr>`;
+                }).join('') : `<tr><td colspan="10">${loaded?'Tidak ada transaksi yang cocok.':'Memuat…'}</td></tr>`;
+                dialog.querySelectorAll('[data-action],[data-target]').forEach(e=>e.disabled=busy);
+            }
+            async function load() {
+                loaded=false; rows=[];targets=[];render();
+                const data = await api(`${url}?${query}`);
+                if (closed) return;
+                rows = Array.isArray(data.data)?data.data:[]; targets=Array.isArray(data.targets)?data.targets:[]; loaded=true;
+                $('[data-total]').textContent=money(data.total);
+                setStatus(data.pengaitan_siap ? `${rows.length} transaksi · ${targets.length} inventaris tujuan` : 'Migration pengaitan belum tersedia; hanya baca.');
+                render();
+            }
+            function setBusy(v) {busy=v;dialog.querySelectorAll('button,select,input').forEach(e=>e.disabled=v);}
+            dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+            dialog.addEventListener('close',()=>{closed=true;active=null;dialog.remove();},{once:true});
+            $('input').addEventListener('input',render);
+            dialog.addEventListener('click',async e=>{
+                const button=e.target.closest('button'); if(!button||busy)return;
+                if(button.hasAttribute('data-close')){dialog.close();return;}
+                if(button.hasAttribute('data-reload')){setBusy(true);try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}return;}
+                const action=button.dataset.action; if(!action)return;
+                const row=rows.find(r=>String(r.id)===button.dataset.id);if(!row)return;
+                const target=action==='hubungkan'?Number($(`[data-target="${Number(row.id)}"]`)?.value):Number(row.record_id);
+                if(!target){setStatus('Pilih inventaris tujuan terlebih dahulu.',true);return;}
+                if(!confirm(action==='hubungkan'?'Hubungkan voucher ke inventaris yang dipilih?':'Lepaskan hubungan voucher ini? Data aset dan transaksi tetap tersimpan.'))return;
+                setBusy(true);
+                try {
+                    const data=await api(`${url}/${action}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...scope,nilai_aktiva_id:Number(row.id),record_id:target,link_id:row.link_id,konfirmasi:true})});
+                    await load();
+                    try { await refresh?.(); setStatus(data.message||'Berhasil disimpan.'); }
+                    catch(err){setStatus('Relasi berhasil disimpan. Muat ulang Detail untuk melihat nilai terbaru.',true);}
+                } catch(err){setStatus(err.message,true);}
+                finally{setBusy(false);}
+            });
+            dialog.showModal();setBusy(true);
+            try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}
+        }
+        return {open, money};
+    })();
+
     /* ======================================================
        EXPORT EXCEL XLSX — MENYATU DALAM ASET_TTP.JS
        Sebelumnya file terpisah: aset_ttp_excel.js
@@ -142,6 +220,7 @@
     let deleteId = null;
 
     let saving = false;
+    let directGroup = false;
     let deleting = false;
 
     let newFiles = [];
@@ -945,6 +1024,7 @@
     ====================================================== */
 
     function prepareForm() {
+        directGroup = false;
         if (!form) return;
 
         form.reset();
@@ -1433,6 +1513,15 @@
         node.hidden = !message;
     }
 
+    $('aemGroupAddDirect')?.addEventListener('click',()=>{
+        if(!gs.selected){alert('Pilih kelompok lokasi terlebih dahulu.');return;}
+        directGroup = false; addForm(); directGroup = true; $('aemLokasi').value=gs.selected.lokasi==='Tanpa Lokasi'?'':gs.selected.lokasi;
+        $('aemDiv').value=gs.selected.divisi==='Tanpa Divisi'?'':gs.selected.divisi;
+    });
+    $('aemGroupValue')?.addEventListener('click',()=>{
+        if(!gs.selected){alert('Pilih kelompok lokasi terlebih dahulu.');return;}
+        voucherDialog.open({base:root.dataset.voucherBase,token:root.dataset.token,kategori:'aset_ttp',scope:{nama_lokasi:gs.selected.lokasi},title:gs.selected.lokasi,refresh:loadGroup});
+    });
     function openGroup(lokasi, divisi) {
         if (!groupDialog || !groupUrl) {
             toast(
@@ -1543,7 +1632,7 @@
 
         if (!items.length) {
             const tr = elem('tr');
-            cell(tr, 'Tidak ada barang pada kelompok ini.', 'aem-empty').colSpan = 12;
+            cell(tr, 'Tidak ada barang pada kelompok ini.', 'aem-empty').colSpan = 13;
             tbody.append(tr);
             return;
         }
@@ -1570,13 +1659,14 @@
                 item.jumlah_unit == null ? '—' :
                     `${Number(item.jumlah_unit).toLocaleString('id-ID')} buah`,
                 showValue(item.asal_perolehan),
+                item.nilai_konflik ? 'PERIKSA RELASI' : `${voucherDialog.money(item.nilai_laporan)} · ${Number(item.jumlah_voucher||0)} voucher`,
                 showValue(item.keterangan),
                 labelKepemilikan(item.status_kepemilikan),
             ];
 
             values.forEach((value, i) => {
                 cell(tr, value, [0, 6, 7].includes(i) ? 'aem-center' :
-                    i === 9 ? 'aem-kib-notes' : '');
+                    i === 10 ? 'aem-kib-notes' : '');
             });
 
             const button = elem('button', 'aem-icon view');
@@ -1722,7 +1812,7 @@
             loading,
             'Memuat data barang...',
             'aem-empty'
-        ).colSpan = 12;
+        ).colSpan = 13;
 
         tbody.replaceChildren(loading);
 
@@ -2162,7 +2252,11 @@
                     body: data
                 });
 
-                window.location.assign(base);
+                if (directGroup && editId === null) {
+                    close(formDialog); directGroup = false; saving = false; saveBtn.disabled = false;
+                    openGroup(String(data.get('lokasi')||''),String(data.get('divisi')||''));
+                    toast('Data langsung berhasil ditambahkan.');
+                } else window.location.assign(base);
             } catch (err) {
                 error(err.message);
 
@@ -2182,7 +2276,7 @@
 })();
 
 
-/* K.I.B E - Modal laporan dan XLSX 10 kolom sesuai Detail, standar PRD v2.1. */
+/* K.I.B E - Modal laporan dan XLSX 11 kolom sesuai Detail, standar PRD v2.1. */
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
@@ -2201,11 +2295,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportBody = $('.aem-report-body');
     const signerFields = Array.from(form.querySelectorAll('.aem-report-person'));
     const scope = $('#aemReportScope');
+    const reportNilai = row => {
+        if (row.nilai_konflik) return 'PERIKSA RELASI';
+        if (row.nilai_laporan === undefined || row.nilai_laporan === null) return 'NILAI BELUM DIMUAT';
+        const value = Number(row.nilai_laporan);
+        // Excel hanya menjamin 15 digit signifikan. Jangan membulatkan nominal besar diam-diam.
+        if (!Number.isFinite(value) || Math.abs(value) >= 1e15) return `CEK NOMINAL: ${String(row.nilai_laporan)}`;
+        return value;
+    };
+    const reportNilaiText = value => typeof value === 'number' ? new Intl.NumberFormat('id-ID', {maximumFractionDigits: 2}).format(value) : value;
     const roles = [
-        ['diketahui', 'Diketahui oleh'],
-        ['periksa_1', 'Diperiksa oleh (1)'],
-        ['periksa_2', 'Diperiksa oleh (2)'],
-        ['dibuat', 'Dibuat oleh'],
+        ['disetujui', 'Disetujui Oleh'],
+        ['diketahui', 'Diketahui Oleh'],
+        ['diperiksa', 'Diperiksa Oleh'],
+        ['dibuat', 'Dibuat Oleh'],
     ];
     const state = { lokasi: null, organisasi: {}, data: [], sdm: [], mode: 'detail' };
     let requestVersion = 0;
@@ -2249,7 +2352,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const columns = [
         'No.', 'Nama Barang / Jenis Barang', 'Kode Barang', 'Register',
         'Kondisi Barang (B, KB, RB)', 'Bahan', 'Tahun Pengadaan / Perolehan',
-        'Jumlah', 'Asal Usul / Cara Perolehan', 'Keterangan'
+        'Jumlah', 'Asal Usul / Cara Perolehan', 'Nilai Rp', 'Keterangan'
     ];
     const groups = [{ first: 3, last: 4, title: 'NOMOR' }];
     const conditions = {
@@ -2260,8 +2363,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const rows = () => state.data.map((e, i) => [
         i + 1, e.nama_aset, e.kode_inventaris, e.nomor_register,
         conditions[String(e.kondisi ?? '').trim().toUpperCase()] || e.kondisi,
-        e.bahan, e.tahun, e.jumlah_unit, e.asal_perolehan, e.keterangan
-    ].map(cell));
+        e.bahan, e.tahun, e.jumlah_unit, e.asal_perolehan, reportNilai(e), e.keterangan
+    ].map((value, column) => column === 9 ? value : cell(value)));
     // Standar metadata laporan K.I.B E sesuai referensi Excel perusahaan.
     // Hanya enam atribut resmi, tersusun vertikal dalam urutan yang sama.
     // Identitas lokasi tetap digunakan untuk memilih cakupan laporan,
@@ -2462,8 +2565,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function paperHtml() {
-        const body = rows().map(row => `<tr>${row.map(value =>
-            `<td>${escapeHtml(cell(value))}</td>`).join('')}</tr>`).join('');
+        const body = rows().map(row => `<tr>${row.map((value, column) =>
+            `<td>${escapeHtml(cell(column === 9 ? reportNilaiText(value) : value))}</td>`).join('')}</tr>`).join('');
         const metadata = meta().map(([key, value]) => `<div><b>${escapeHtml(key)}</b><span>: ${escapeHtml(cell(value))}</span></div>`).join('');
         const signatures = roles.map(([key, label]) => {
             const person = chosen(key);
@@ -2658,9 +2761,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return result;
     }
 
-    /** Workbook Office OpenXML 10 kolom mengikuti Detail K.I.B E saat ini. */
+    /** Workbook Office OpenXML 11 kolom, termasuk Nilai Rp. */
     function buildXlsx(logoBytes) {
-        const count = 10;
+        const count = 11;
         const entries = new Map();
         const merges = [];
         const heights = new Map();
@@ -2709,7 +2812,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = rows();
         data.forEach((values, i) => {
             const row = header + 3 + i;
-            values.forEach((value, column) => put(row, column + 1, cell(value), 3));
+            values.forEach((value, column) => {
+                const numeric = column === 9 && typeof value === 'number' && Number.isFinite(value);
+                put(row, column + 1, numeric ? value : cell(value), numeric ? 7 : 3);
+            });
             // Tinggi disesuaikan dengan konten panjang, tetap wrap dan middle.
             const longest = Math.max(...values.map(v => String(v ?? '').length));
             heights.set(row, Math.min(145, Math.max(29, Math.ceil(longest / 34) * 15 + 9)));
@@ -2717,7 +2823,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateRow = header + 3 + data.length + 2;
         // Tanggal harus tepat di atas blok tanda tangan "Dibuat oleh" (slot keempat).
         // Rentang merge yang identik menjamin pusat teks Excel tetap sejajar.
-        const slots = [[1,2], [3,5], [6,8], [9,10]];
+        const slots = [[1,2], [3,5], [6,8], [9,11]];
         const [dibuatAwal, dibuatAkhir] = slots[3];
         merged(dateRow, dibuatAwal, dateRow, dibuatAkhir, `Samarinda, ${dateName()}`, 5);
         roles.forEach(([key, label], i) => {
@@ -2729,12 +2835,12 @@ document.addEventListener('DOMContentLoaded', () => {
             merged(dateRow + 9, a, dateRow + 9, b, `NIP. ${cell(signer?.nip)}`, 5);
         });
         const lastRow = dateRow + 10;
-        const widths = [7,38,24,17,26,22,23,16,36,44];
+        const widths = [7,38,24,17,26,22,23,16,36,22,44];
         const colsXml = widths.map((w, i) =>
             `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
         const rowsXml = [...entries].sort(([a], [b]) => a - b).map(([r, row]) => {
             const cellsXml = [...row].sort(([a], [b]) => a - b).map(([c, item]) =>
-                `<c r="${colName(c)}${r}" s="${item.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(item.value)}</t></is></c>`).join('');
+                item.style === 7 ? `<c r="${colName(c)}${r}" s="7"><v>${item.value}</v></c>` : `<c r="${colName(c)}${r}" s="${item.style}" t="inlineStr"><is><t xml:space="preserve">${xmlText(item.value)}</t></is></c>`).join('');
             return `<row r="${r}"${heights.has(r)?` ht="${heights.get(r)}" customHeight="1"`:''}>${cellsXml}</row>`;
         }).join('');
         const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -2742,7 +2848,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const xmlSheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
           <worksheet xmlns="${main}" xmlns:r="${rel}">
             <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
-            <dimension ref="A1:J${lastRow}"/>
+            <dimension ref="A1:K${lastRow}"/>
             <sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>
             <sheetFormatPr defaultRowHeight="18"/>
             <cols>${colsXml}</cols><sheetData>${rowsXml}</sheetData>
@@ -2763,19 +2869,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const xfs = [
             [0,0,0,'left'], [1,0,0,'center'], [2,2,1,'center'],
             [0,0,1,'center'], [2,0,0,'left'],
-            [0,0,0,'center'], [3,0,0,'center'],
-        ].map(([font, fill, border, align]) =>
-            `<xf numFmtId="0" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
+            [0,0,0,'center'], [3,0,0,'center'], [0,0,1,'right'],
+        ].map(([font, fill, border, align], i) =>
+            `<xf numFmtId="${i === 7 ? 4 : 0}" applyNumberFormat="1" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyAlignment="1"><alignment horizontal="${align}" vertical="center" wrapText="1"/></xf>`).join('');
         const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <styleSheet xmlns="${main}"><fonts count="4">${fonts}</fonts>${fills}${borders}
             <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-            <cellXfs count="7">${xfs}</cellXfs>
+            <cellXfs count="8">${xfs}</cellXfs>
             <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
         const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <workbook xmlns="${main}" xmlns:r="${rel}"><sheets><sheet name="KIB E - Inventaris" sheetId="1" r:id="rId1"/></sheets>
             <definedNames>
                 <definedName name="_xlnm.Print_Titles" localSheetId="0">'KIB E - Inventaris'!$17:$19</definedName>
-                <definedName name="_xlnm.Print_Area" localSheetId="0">'KIB E - Inventaris'!$A$1:$J$${lastRow}</definedName>
+                <definedName name="_xlnm.Print_Area" localSheetId="0">'KIB E - Inventaris'!$A$1:$K$${lastRow}</definedName>
             </definedNames></workbook>`;
         const files = [
             { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/officeDocument" Target="xl/workbook.xml"/></Relationships>` },

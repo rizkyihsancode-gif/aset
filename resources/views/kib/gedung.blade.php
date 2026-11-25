@@ -16,10 +16,10 @@
     <link rel="stylesheet"
         href="{{ asset('css/pages/kib/gedung.css') }}?v={{ file_exists(public_path('css/pages/kib/gedung.css')) ? filemtime(public_path('css/pages/kib/gedung.css')) : time() }}">
 
-    <main id="gedungPage" class="content gedung-page" data-base-url="{{ url('/kib/gedung') }}"
-        data-store-url="{{ route('kib.gedung.store') }}" data-pending-url="{{ route('kib.gedung.pending') }}"
-        data-report-logo="{{ asset('images/logo_hr.png') }}" data-report-css="{{ asset('css/pages/kib/gedung.css') }}"
-        data-report-base-url="{{ url('/kib/gedung/lokasi') }}">
+    <main id="gedungPage" data-voucher-base="{{ url('/kib/voucher') }}" data-token="{{ csrf_token() }}"
+        class="content gedung-page" data-base-url="{{ url('/kib/gedung') }}" data-store-url="{{ route('kib.gedung.store') }}"
+        data-pending-url="{{ route('kib.gedung.pending') }}" data-report-logo="{{ asset('images/logo_hr.png') }}"
+        data-report-css="{{ asset('css/pages/kib/gedung.css') }}" data-report-base-url="{{ url('/kib/gedung/lokasi') }}">
 
         {{-- =====================================================
          HEADER HALAMAN
@@ -671,7 +671,12 @@
 
                             <h3>Lokasi dan Organisasi</h3>
 
-                            <p>Terisi otomatis dari Nilai Aset.</p>
+                            <p id="gedungOrgHint">Terisi otomatis dari Nilai Aset.</p>
+                            <div id="gedungDirectOrg" class="gedung-fields cols2" hidden>
+                                <label>Departemen *<select id="gedungDirectDep" name="id_departemen"
+                                        disabled></select></label>
+                                <label>Divisi *<select id="gedungDirectDiv" name="id_div" disabled></select></label>
+                            </div>
 
                             <div class="gedung-fields cols3">
 
@@ -953,6 +958,8 @@
                 <section id="gedungDetailFocus" class="gedung-detail-focus" hidden></section>
 
                 <div class="gedung-detail-tools">
+                    <button type="button" class="gedung-btn primary" id="gedungDirectAdd"><i data-lucide="plus"></i>
+                        Tambah Data Langsung</button>
                     <button type="button" class="gedung-btn gedung-report-open" id="gedungDetailReport" disabled>
                         <i data-lucide="file-spreadsheet"></i> Print Excel Lokasi
                     </button>
@@ -1109,7 +1116,7 @@
                         <small>Contoh: November 2026</small>
                     </label>
                     <div class="gedung-report-sign-grid">
-                        @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
+                        @foreach ([['dibuat', 'Dibuat Oleh'], ['diperiksa', 'Diperiksa Oleh'], ['diketahui', 'Diketahui Oleh'], ['disetujui', 'Disetujui Oleh']] as [$peran, $judul])
                             <div class="gedung-report-person" data-gedung-person="{{ $peran }}">
                                 <label for="gedungReportSigner-{{ $peran }}">
                                     <span>{{ $judul }} <b>*</b></span>
@@ -1130,6 +1137,8 @@
                         @endforeach
                     </div>
                 </form>
+                <small>Nilai Rp mengikuti voucher terhubung per inventaris. Harga/nilai historis atau manual tetap dipakai
+                    jika belum ada voucher. PERIKSA RELASI menandai konflik, bukan nilai nol.</small>
                 <div id="gedungReportInfo" class="gedung-report-info" role="status" aria-live="polite">
                     Pilih periode dan penandatangan untuk menampilkan preview.
                 </div>

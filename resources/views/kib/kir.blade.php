@@ -20,9 +20,9 @@
         ];
     @endphp
 
-    <section class="content kir-page" id="kirApp" data-base="{{ url('/kib/kir') }}"
-        data-pending="{{ route('kib.pending', ['module' => 'kir']) }}" data-token="{{ csrf_token() }}"
-        data-logo="{{ asset('images/logo_hr.png') }}">
+    <section class="content kir-page" id="kirApp" data-voucher-base="{{ url('/kib/voucher') }}"
+        data-base="{{ url('/kib/kir') }}" data-pending="{{ route('kib.pending', ['module' => 'kir']) }}"
+        data-token="{{ csrf_token() }}" data-logo="{{ asset('images/logo_hr.png') }}">
 
         {{-- HEADER --}}
 
@@ -432,10 +432,13 @@
                         </p>
                     </div>
 
-                    <button id="kirAddFromDetail" type="button" class="kir-btn primary">
-                        <i data-lucide="plus"></i>
-                        Tambah KIR
-                    </button>
+                    <div class="kir-detail-heading-actions"><button id="kirValueFromDetail" type="button"
+                            class="kir-btn outline">Nilai Lokasi</button>
+                        <button id="kirAddFromDetail" type="button" class="kir-btn primary">
+                            <i data-lucide="plus"></i>
+                            Tambah Data Langsung
+                        </button>
+                    </div>
                 </div>
 
                 <div id="kirRoomContent"></div>
@@ -882,7 +885,7 @@
                     <small>Periode akan ditulis pada preview dan Excel.</small>
                 </label>
                 <div class="kir-report-signers">
-                    @foreach (['Diketahui oleh', 'Diperiksa oleh (1)', 'Diperiksa oleh (2)', 'Dibuat oleh'] as $i => $caption)
+                    @foreach (['Dibuat Oleh', 'Diperiksa Oleh', 'Diketahui Oleh', 'Disetujui Oleh'] as $i => $caption)
                         <div class="kir-report-signer" data-kir-signer-field="{{ $i }}">
                             <label for="kirReportSigner{{ $i }}">{{ $caption }} <b>*</b></label>
                             <input id="kirReportSigner{{ $i }}" data-kir-signer="{{ $i }}"

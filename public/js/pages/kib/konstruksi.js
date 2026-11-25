@@ -29,6 +29,84 @@
 
     root.dataset.initialized = '1';
 
+    /* Riwayat Nilai — implementasi lokal modul. */
+    const voucherDialog = (() => {
+        'use strict';
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const money = v => v === null ? '—' : 'Rp ' + new Intl.NumberFormat('id-ID').format(Number(v) || 0);
+        let active = null;
+        async function open({base, token, kategori, scope, title, refresh}) {
+            if (active) return;
+            const dialog = document.createElement('dialog');
+            dialog.className = 'konstruksi-voucher-dialog';
+            dialog.setAttribute('aria-label','Riwayat Nilai Aset');
+            dialog.innerHTML = `<header><div><small>RIWAYAT NILAI ASET</small><h2>Riwayat Nilai · ${esc(title)}</h2><p>Hubungkan voucher ke inventaris pada lokasi yang sama.</p></div><button type="button" data-close aria-label="Tutup">×</button></header>
+                <main><div class="av-summary"><span>Total Nilai Lokasi</span><strong data-total>—</strong><small>Termasuk transaksi belum terhubung</small></div>
+                <p class="av-help">Pelepasan hanya menghapus relasi manual, bukan data inventaris, voucher, atau PDF. Sumber historis dilindungi.</p>
+                <div class="av-tools"><input type="search" placeholder="Cari nomor voucher, kode, uraian, tujuan…" aria-label="Cari voucher"><button type="button" data-reload>Muat ulang</button></div>
+                <p data-status role="status" aria-live="polite"></p><div class="av-scroll" tabindex="0" role="region" aria-label="Tabel riwayat nilai"><table><thead><tr><th>No.</th><th>Kode Aktiva</th><th>Nama Aktiva</th><th>Voucher / Tanggal</th><th>Tahun</th><th>Nilai Rp</th><th>Uraian</th><th>Status / Tujuan</th><th>PDF</th><th>Aksi</th></tr></thead><tbody></tbody></table></div></main><footer><button type="button" data-close>Tutup</button></footer>`;
+            document.body.append(dialog);
+            active = dialog;
+            const $ = q => dialog.querySelector(q);
+            const url = `${base.replace(/\/$/,'')}/${encodeURIComponent(kategori)}`;
+            const query = new URLSearchParams(scope);
+            let rows = [], targets = [], busy = false, loaded = false, closed = false;
+            const setStatus = (value, error = false) => { $('[data-status]').textContent = value; $('[data-status]').classList.toggle('av-error',error); };
+            const api = async (path, options = {}) => {
+                const res = await fetch(path,{credentials:'same-origin',...options,headers:{Accept:'application/json','X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':token,...(options.headers||{})}});
+                const data = await res.json().catch(()=>null);
+                if (!data || typeof data !== 'object') throw new Error('Respons bukan JSON. Periksa sesi Login dan route pengaitan.');
+                if (!res.ok || data.success === false) throw new Error(data.errors ? Object.values(data.errors).flat().join(' · ') : data.message || `HTTP ${res.status}`);
+                return data;
+            };
+            function render() {
+                const key = $('input').value.trim().toLocaleLowerCase('id-ID');
+                const filtered = rows.filter(r=>[r.no_voucher,r.kode_aktiva,r.nama_aktiva,r.urai,r.tujuan].join(' ').toLocaleLowerCase('id-ID').includes(key));
+                $('tbody').innerHTML = filtered.length ? filtered.map((r,i)=>{
+                    const label = ({terhubung:'Terhubung',belum:'Belum terhubung',konflik:'PERIKSA RELASI',periksa:'Periksa status/historis'})[r.status_hubungan] || '—';
+                    const id = Number(r.id);
+                    const action = r.boleh_lepaskan ? `<button type="button" class="av-danger" data-action="lepaskan" data-id="${id}">Lepaskan</button>` : r.boleh_hubungkan && targets.length ? `<select aria-label="Inventaris tujuan voucher ${esc(r.no_voucher)}" data-target="${id}"><option value="">Pilih inventaris</option>${targets.map(t=>`<option value="${Number(t.id)}">${esc(`#${t.id} · ${t.nama} · ${t.kode||'—'} ${t.detail||''}`)}</option>`).join('')}</select><button type="button" data-action="hubungkan" data-id="${id}">Hubungkan</button>` : r.boleh_hubungkan ? 'Tambah inventaris dulu' : 'Dilindungi / tidak tersedia';
+                    return `<tr><td>${i+1}</td><td>${esc(r.kode_aktiva||'—')}</td><td>${esc(r.nama_aktiva||'—')}</td><td><strong>${esc(r.no_voucher||'—')}</strong><small>${esc(r.tgl_voucher||'—')}</small></td><td>${esc(r.tahun||'—')}</td><td class="av-money">${esc(money(r.nilai))}</td><td>${esc(r.urai||'—')}</td><td><span class="av-state ${r.status_hubungan==='terhubung'?'av-linked':''}">${esc(label)}</span><small>${esc(r.tujuan||'')}</small></td><td>${r.pdf_url ? `<a href="${esc(r.pdf_url)}" target="_blank" rel="noopener noreferrer">PDF</a>` : '—'}</td><td class="av-action">${action}</td></tr>`;
+                }).join('') : `<tr><td colspan="10">${loaded?'Tidak ada transaksi yang cocok.':'Memuat…'}</td></tr>`;
+                dialog.querySelectorAll('[data-action],[data-target]').forEach(e=>e.disabled=busy);
+            }
+            async function load() {
+                loaded=false; rows=[];targets=[];render();
+                const data = await api(`${url}?${query}`);
+                if (closed) return;
+                rows = Array.isArray(data.data)?data.data:[]; targets=Array.isArray(data.targets)?data.targets:[]; loaded=true;
+                $('[data-total]').textContent=money(data.total);
+                setStatus(data.pengaitan_siap ? `${rows.length} transaksi · ${targets.length} inventaris tujuan` : 'Migration pengaitan belum tersedia; hanya baca.');
+                render();
+            }
+            function setBusy(v) {busy=v;dialog.querySelectorAll('button,select,input').forEach(e=>e.disabled=v);}
+            dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+            dialog.addEventListener('close',()=>{closed=true;active=null;dialog.remove();},{once:true});
+            $('input').addEventListener('input',render);
+            dialog.addEventListener('click',async e=>{
+                const button=e.target.closest('button'); if(!button||busy)return;
+                if(button.hasAttribute('data-close')){dialog.close();return;}
+                if(button.hasAttribute('data-reload')){setBusy(true);try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}return;}
+                const action=button.dataset.action; if(!action)return;
+                const row=rows.find(r=>String(r.id)===button.dataset.id);if(!row)return;
+                const target=action==='hubungkan'?Number($(`[data-target="${Number(row.id)}"]`)?.value):Number(row.record_id);
+                if(!target){setStatus('Pilih inventaris tujuan terlebih dahulu.',true);return;}
+                if(!confirm(action==='hubungkan'?'Hubungkan voucher ke inventaris yang dipilih?':'Lepaskan hubungan voucher ini? Data aset dan transaksi tetap tersimpan.'))return;
+                setBusy(true);
+                try {
+                    const data=await api(`${url}/${action}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...scope,nilai_aktiva_id:Number(row.id),record_id:target,link_id:row.link_id,konfirmasi:true})});
+                    await load();
+                    try { await refresh?.(); setStatus(data.message||'Berhasil disimpan.'); }
+                    catch(err){setStatus('Relasi berhasil disimpan. Muat ulang Detail untuk melihat nilai terbaru.',true);}
+                } catch(err){setStatus(err.message,true);}
+                finally{setBusy(false);}
+            });
+            dialog.showModal();setBusy(true);
+            try{await load();}catch(err){setStatus(err.message,true);}finally{setBusy(false);}
+        }
+        return {open, money};
+    })();
+
     const $ = id => document.getElementById(id);
 
     const base = String(root.dataset.base || '')
@@ -157,6 +235,7 @@
 
     let newFiles = [];
     let saving = false;
+    let directGroup = false;
     let deleting = false;
     let toastTimer = null;
 
@@ -874,6 +953,7 @@
     ====================================================== */
 
     function prepareForm() {
+        directGroup = false;
         if (!form) return;
 
         form.reset();
@@ -1724,6 +1804,17 @@
         box.hidden = !message;
     }
 
+    $('kfGroupAddDirect')?.addEventListener('click',()=>{
+        const g=groupState.selected;if(!g){alert('Pilih kelompok lokasi terlebih dahulu.');return;}
+        directGroup = false; addForm(); directGroup = true; $('kfKategori').value=g.kategori==='Tanpa Kategori'?'':g.kategori;
+        $('kfLokasi').value=g.lokasi==='Tanpa Lokasi'?'':g.lokasi;
+        $('kfDivisi').value=g.divisi==='Tanpa Divisi'?'':g.divisi;
+        $('kfNilai').value='0';
+    });
+    $('kfGroupValue')?.addEventListener('click',()=>{
+        const g=groupState.selected;if(!g){alert('Pilih kelompok lokasi terlebih dahulu.');return;}
+        voucherDialog.open({base:root.dataset.voucherBase,token:root.dataset.token,kategori:'konstruksi',scope:{nama_lokasi:g.lokasi},title:g.lokasi,refresh:loadGroups});
+    });
     function openGroup(kategori, lokasi, divisi) {
         if (!groupDialog || !groupUrl) {
             toast(
@@ -1930,7 +2021,7 @@
 
             addCell(
                 row,
-                money(item.nilai),
+                item.nilai_konflik ? 'PERIKSA RELASI' : `${money(item.nilai_laporan)} · ${Number(item.jumlah_voucher||0)} voucher`,
                 'kf-money'
             );
 
@@ -2439,7 +2530,11 @@
                 body: data
             });
 
-            window.location.assign(base);
+            if (directGroup && editId === null) {
+                    closeDialog(formDialog); directGroup = false; saving = false; button.disabled = false;
+                    openGroup(String(data.get('kategori')||''),String(data.get('lokasi_manual')||''),String(data.get('divisi_manual')||''));
+                    toast('Data langsung berhasil ditambahkan.');
+                } else window.location.assign(base);
 
         } catch (error) {
             showError(error.message);
@@ -2468,11 +2563,19 @@
     const reportPreviewBox = $('kfReportPreviewBox');
     const reportPrint = $('kfReportPrint');
     const reportDownload = $('kfReportDownload');
-    const reportRoles = ['Diketahui oleh', 'Diperiksa oleh (1)', 'Diperiksa oleh (2)', 'Dibuat oleh'];
+    const reportNilai = row => {
+        if (row.nilai_konflik) return 'PERIKSA RELASI';
+        if (row.nilai_laporan === undefined || row.nilai_laporan === null) return 'NILAI BELUM DIMUAT';
+        const value = Number(row.nilai_laporan);
+        // Excel hanya menjamin 15 digit signifikan. Jangan membulatkan nominal besar diam-diam.
+        if (!Number.isFinite(value) || Math.abs(value) >= 1e15) return `CEK NOMINAL: ${String(row.nilai_laporan)}`;
+        return value;
+    };
+    const reportRoles = ['Disetujui Oleh', 'Diketahui Oleh', 'Diperiksa Oleh', 'Dibuat Oleh'];
     const reportColumns = [
         'No.', 'Nama Barang / Jenis Barang', 'Tahun', 'Bangunan (P, SP, D)',
         'Bertingkat / Tidak', 'Beton / Tidak', 'Luas (M²)', 'Letak / Lokasi Alamat',
-        'Status Tanah', 'Asal Usul Pembiayaan', 'Status Aset', 'Nilai (Rp)', 'Dokumen Pendukung'
+        'Status Tanah', 'Asal Usul Pembiayaan', 'Status Aset', 'Nilai Rp', 'Dokumen Pendukung'
     ];
     const reportHtml = value => String(value ?? '')
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -2523,7 +2626,7 @@
         return [index+1,name,reportCell(row.tahun),bangunan,reportCell(row.bertingkat),
             reportCell(row.beton),reportCell(row.luas),reportLocation(row),
             reportCell(row.status_tanah),financing,reportCell(row.status_aset),
-            Number(row.nilai || 0),reportDocument(row)];
+            reportNilai(row),reportDocument(row)];
     }
     const reportMetadata = () => {
         const m = reportState.response?.organisasi || {};
@@ -2545,7 +2648,7 @@
         if (!state || !reportReady()) return '';
         const rows = asArray(state.items).map((item, i) =>
             `<tr>${reportValues(item,i).map((v, c) =>
-                `<td${c===1 || c===12 ? ' class="kf-report-align-left"' : ''}>${reportHtml(c===11 ? money(v) : v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('');
+                `<td${c===1 || c===12 ? ' class="kf-report-align-left"' : ''}>${reportHtml(c===11 && typeof v === 'number' ? money(v) : v).replace(/\n/g,'<br>')}</td>`).join('')}</tr>`).join('');
         const header = reportColumns.map((c,i) => i===4
             ? '<th colspan="2">Konstruksi Bangunan</th>'
             : (i===5 ? '' : `<th${i===4||i===5?'':' rowspan="2"'}>${reportHtml(c)}</th>`)).join('');
@@ -2906,7 +3009,7 @@
         data.forEach((item,i)=>{
             const r=header+3+i;const values=reportValues(item,i);
             // Kolom B (Nama + Uraian) dan M (Dokumen Pendukung): rata kiri + middle.
-            values.forEach((v,c)=>put(r,c+1,v,c===11 ? 7 : (c===1 || c===12 ? 8 : 3)));
+            values.forEach((v,c)=>put(r,c+1,v,c===11 && typeof v === 'number' && Number.isFinite(v) ? 7 : (c===1 || c===12 ? 8 : 3)));
             // Tinggi baris memperhitungkan newline kosong dan pembungkusan per kolom.
             const wrapWidths=[5,35,10,14,18,16,13,36,19,21,18,17,43];
             const maxLines=Math.max(...values.map((value,col) =>

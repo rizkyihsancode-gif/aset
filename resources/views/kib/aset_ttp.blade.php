@@ -29,10 +29,11 @@
     <link rel="stylesheet"
         href="{{ asset('css/pages/kib/aset_ttp.css') }}?v={{ file_exists(public_path('css/pages/kib/aset_ttp.css')) ? filemtime(public_path('css/pages/kib/aset_ttp.css')) : '1' }}">
 
-    <section id="aemApp" class="aem-page" data-base="{{ url('/kib/aset_ttp') }}"
-        data-group-url="{{ route('kib.aset_ttp.kelompok') }}" data-token="{{ csrf_token() }}"
-        data-logo-url="{{ asset('images/logo.png') }}" data-report-url="{{ route('kib.aset_ttp.laporan') }}"
-        data-report-logo="{{ asset('images/logo_hr.png') }}" data-report-css="{{ asset('css/pages/kib/aset_ttp.css') }}">
+    <section id="aemApp" data-voucher-base="{{ url('/kib/voucher') }}" class="aem-page"
+        data-base="{{ url('/kib/aset_ttp') }}" data-group-url="{{ route('kib.aset_ttp.kelompok') }}"
+        data-token="{{ csrf_token() }}" data-logo-url="{{ asset('images/logo.png') }}"
+        data-report-url="{{ route('kib.aset_ttp.laporan') }}" data-report-logo="{{ asset('images/logo_hr.png') }}"
+        data-report-css="{{ asset('css/pages/kib/aset_ttp.css') }}">
 
         {{-- HEADER --}}
 
@@ -565,6 +566,9 @@
 
                             </label>
 
+                            <button type="button" class="aem-btn primary" id="aemGroupAddDirect">Tambah Data
+                                Langsung</button>
+                            <button type="button" class="aem-btn outline" id="aemGroupValue">Nilai Lokasi</button>
                             <button type="button" class="aem-btn outline" id="aemGroupRefresh">
                                 Reset Cari
                             </button>
@@ -596,6 +600,7 @@
                                     <col class="aem-col-year">
                                     <col class="aem-col-quantity">
                                     <col class="aem-col-origin">
+                                    <col class="aem-col-value">
                                     <col class="aem-col-description">
                                     <col class="aem-col-owner">
                                     <col class="aem-col-view">
@@ -637,6 +642,7 @@
                                             Asal Usul / Cara Perolehan
                                         </th>
 
+                                        <th rowspan="2">Nilai Rp</th>
                                         <th rowspan="2">
                                             Keterangan
                                         </th>
@@ -660,7 +666,7 @@
 
                                     <tr class="aem-group-number-row">
 
-                                        @for ($i = 1; $i <= 11; $i++)
+                                        @for ($i = 1; $i <= 12; $i++)
                                             <th>{{ $i }}</th>
                                         @endfor
 
@@ -673,7 +679,7 @@
                                 <tbody id="aemGroupRows">
 
                                     <tr>
-                                        <td colspan="12" class="aem-empty">
+                                        <td colspan="13" class="aem-empty">
                                             Memuat data inventaris...
                                         </td>
                                     </tr>
@@ -1112,7 +1118,7 @@
                         <small>Contoh: November 2026</small>
                     </label>
                     <div class="aem-report-sign-grid">
-                        @foreach ([['diketahui', 'Diketahui oleh'], ['periksa_1', 'Diperiksa oleh (1)'], ['periksa_2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$peran, $judul])
+                        @foreach ([['dibuat', 'Dibuat Oleh'], ['diperiksa', 'Diperiksa Oleh'], ['diketahui', 'Diketahui Oleh'], ['disetujui', 'Disetujui Oleh']] as [$peran, $judul])
                             <div class="aem-report-person" data-aem-person="{{ $peran }}">
                                 <label for="aemReportSigner-{{ $peran }}">
                                     <span>{{ $judul }} <b>*</b></span>
@@ -1132,6 +1138,8 @@
                         @endforeach
                     </div>
                 </form>
+                <small>Nilai Rp mengikuti voucher terhubung per inventaris. Tanpa voucher, nilai 0. PERIKSA RELASI menandai
+                    konflik, bukan nilai nol.</small>
                 <div id="aemReportInfo" class="aem-report-info" role="status" aria-live="polite">
                     Pilih periode dan penandatangan untuk menampilkan preview.
                 </div>
@@ -1144,7 +1152,7 @@
                 </section>
             </div>
             <div class="aem-report-footer">
-                <span>Detail / Kelompok · 10 kolom K.I.B E · tanpa Status Kepemilikan</span>
+                <span>Detail / Kelompok · 11 kolom K.I.B E · tanpa Status Kepemilikan</span>
                 <div class="aem-report-footer-buttons">
                     <button type="button" class="aem-report-cancel" data-aem-report-close>Batal</button>
                     <button type="button" class="aem-report-print" id="aemReportPrint" disabled>

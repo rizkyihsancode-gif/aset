@@ -2076,7 +2076,7 @@
 .kir-report-table { border-collapse: collapse; width: 100%; min-width: 1050px; }
 .kir-report-table th,.kir-report-table td { border: 1px solid #53687f; padding: 7px 6px; text-align: center; vertical-align: middle; font-size: 11px; overflow-wrap: anywhere; }
 .kir-report-table th { background: #d5dfea; font-weight: 800; }
-.kir-report-table td:nth-child(2),.kir-report-table td:nth-child(11) { text-align: left; }
+.kir-report-table td:nth-child(2),.kir-report-table td:nth-child(12) { text-align: left; }
 .kir-report-dateline {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2286,3 +2286,32 @@
     .kir-inline-files-grid { grid-template-columns: 1fr; }
     .kir-right #kirRoomContent .kir-excel-scroll { max-height: 300px; }
 }
+.kir-report-table td:nth-child(11){text-align:right;white-space:nowrap;}
+
+/* Riwayat Nilai — dialog lokal modul, bukan CSS global. */
+.kir-voucher-dialog {width:min(1480px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);padding:0;border:1px solid #c6d8ea;border-radius:16px;background:#fff;color:#17395e;box-shadow:0 24px 80px #17395e40;overflow:auto;margin:auto;font-family:inherit;font-size:14px;line-height:1.45;}
+.kir-voucher-dialog::backdrop{background:#102b5080;}
+.kir-voucher-dialog header,.kir-voucher-dialog footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 24px;background:#f4f8fd;}
+.kir-voucher-dialog header{border-bottom:1px solid #dbe7f4;}
+.kir-voucher-dialog header h2{font-size:21px;margin:3px 0;color:#17395e;}
+.kir-voucher-dialog header small{font-weight:700;color:#1263bc;}
+.kir-voucher-dialog header p,.kir-voucher-dialog .av-help{margin:4px 0;color:#536d88;}
+.kir-voucher-dialog main{padding:20px 24px;min-width:0;}
+.kir-voucher-dialog .av-summary{display:grid;gap:3px;padding:14px 18px;border:1px solid #cde1f7;background:#eef6ff;border-radius:10px;}
+.kir-voucher-dialog .av-summary strong{font-size:23px;color:#0865c5;}
+.kir-voucher-dialog .av-tools{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+.kir-voucher-dialog input,.kir-voucher-dialog select{color:#17395e;background:#fff;border:1px solid #c3d5e9;border-radius:7px;padding:9px 10px;font:inherit;min-width:0;}
+.kir-voucher-dialog input{flex:1 1 220px;}
+.kir-voucher-dialog button{color:#075bb7;background:#eef6ff;border:1px solid #bcd7f6;border-radius:7px;padding:9px 12px;cursor:pointer;font:inherit;font-weight:600;white-space:nowrap;}
+.kir-voucher-dialog button:disabled{opacity:.5;cursor:wait;}
+.kir-voucher-dialog button.av-danger{color:#ae303a;background:#fff2f2;border-color:#efc1c6;}
+.kir-voucher-dialog .av-scroll{overflow:auto;max-height:55vh;border:1px solid #d5e2ef;border-radius:9px;}
+.kir-voucher-dialog table{width:100%;min-width:1390px;table-layout:auto;border-collapse:separate;border-spacing:0;}
+.kir-voucher-dialog th,.kir-voucher-dialog td{position:static;padding:10px 12px;border-bottom:1px solid #e1e9f3;text-align:left;vertical-align:top;white-space:normal;overflow-wrap:break-word;}
+.kir-voucher-dialog th{position:sticky;top:0;z-index:1;background:#e7f1fd;color:#193e65;font-weight:700;white-space:nowrap;}
+.kir-voucher-dialog td:nth-child(2){min-width:120px;}.kir-voucher-dialog td:nth-child(3){min-width:160px;}.kir-voucher-dialog td:nth-child(7){min-width:180px;max-width:280px;}.kir-voucher-dialog td:nth-child(8){min-width:150px;}.kir-voucher-dialog td:nth-child(10){min-width:205px;}
+.kir-voucher-dialog td small{display:block;color:#60778e;margin-top:4px;}.kir-voucher-dialog td.av-money{white-space:nowrap;font-weight:700;color:#075bb7;}
+.kir-voucher-dialog .av-action select{display:block;width:100%;max-width:250px;margin-bottom:6px;}
+.kir-voucher-dialog .av-state{display:inline-block;padding:3px 7px;background:#eef3fa;border-radius:5px;color:#345a83;font-weight:600;}.kir-voucher-dialog .av-linked{background:#e7f6ee;color:#176b42;}
+.kir-voucher-dialog .av-error{color:#b42335;}.kir-voucher-dialog footer{justify-content:flex-end;border-top:1px solid #dbe7f4;}
+@media(max-width:600px){.kir-voucher-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);}.kir-voucher-dialog header,.kir-voucher-dialog main,.kir-voucher-dialog footer{padding:12px;}.kir-voucher-dialog .av-scroll{max-height:45vh;}}
