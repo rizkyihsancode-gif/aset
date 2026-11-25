@@ -5945,3 +5945,66 @@ min-height: 39px;
     color: #6d839b;
 }
 
+
+/* K.I.B B: Tambah Langsung dan relasi Nilai Aset per inventaris (scope popup). */
+#mesinPage #mesinLangsungFields[hidden],
+#mesinPage #mesinOrganisasiVoucher[hidden],
+#mesinPage #mesinLangsungError[hidden],
+#mesinPage #mesinLinkPanel[hidden],
+#mesinPage #mesinForm label[hidden] { display: none !important; }
+#mesinPage #mesinLangsungFields {
+    min-width: 0; margin: 0 0 18px; padding: 16px;
+    border: 1px solid #d3e4f7; border-radius: 12px; background: #f4f8fd;
+}
+#mesinPage #mesinLangsungFields legend { font-weight: 750; color: #173e68; padding: 0 6px; }
+#mesinPage #mesinLangsungFields p { font-size: 12px; color: #4d6b8c; margin: 0 0 12px; line-height: 1.5; }
+#mesinPage #mesinLangsungFields select { width: 100%; min-width: 0; }
+#mesinPage #mesinDetailDialog .mesin-sheet-toolbar-controls {
+    flex: 1 1 570px; min-width: 0; flex-wrap: wrap;
+}
+#mesinPage #mesinDetailDialog .mesin-sheet-toolbar-controls .mesin-button { white-space: nowrap; min-height: 39px; }
+#mesinPage #mesinDetailDialog .mesin-sheet-search { min-width: min(100%, 200px); }
+#mesinPage #mesinDetailDialog .mesin-linked-value { min-width: 144px; white-space: normal; }
+#mesinPage .mesin-linked-value strong { display: block; color: #1259aa; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#mesinPage .mesin-linked-value small { display: block; font-size: 10px; color: #647e9a; white-space: normal; margin-top: 4px; }
+#mesinPage .mesin-link-conflict { color: #a23e18 !important; white-space: normal !important; }
+#mesinPage #mesinNilaiDialog { width: min(1480px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table-wrap { width: 100%; max-width: 100%; max-height: min(48dvh, 460px); overflow: auto; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table {
+    width: max-content; min-width: 1560px; table-layout: auto; border-collapse: separate; border-spacing: 0;
+}
+#mesinPage #mesinNilaiDialog .mesin-nilai-table th,
+#mesinPage #mesinNilaiDialog .mesin-nilai-table td { padding: 10px 12px; min-width: 85px; white-space: normal; vertical-align: middle; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table th { position: sticky; top: 0; z-index: 2; background: #eaf2fb; white-space: nowrap; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table th:nth-child(1),
+#mesinPage #mesinNilaiDialog .mesin-nilai-table td:nth-child(1) { min-width: 42px; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table th:nth-child(6),
+#mesinPage #mesinNilaiDialog .mesin-nilai-table td:nth-child(6) { min-width: 180px; max-width: 320px; overflow-wrap: anywhere; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table th:nth-child(10),
+#mesinPage #mesinNilaiDialog .mesin-nilai-table td:nth-child(10) { min-width: 130px; white-space: nowrap; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table th:nth-child(11),
+#mesinPage #mesinNilaiDialog .mesin-nilai-table td:nth-child(11) { min-width: 200px; max-width: 270px; overflow-wrap: anywhere; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table th:nth-child(12),
+#mesinPage #mesinNilaiDialog .mesin-nilai-table td:nth-child(12) { min-width: 120px; }
+#mesinPage #mesinNilaiDialog .mesin-nilai-table td small { display: block; margin-top: 4px; color: #54708d; line-height: 1.4; }
+#mesinPage .mesin-link-state { display: inline-block; border-radius: 7px; padding: 5px 8px; font-size: 11px; font-weight: 700; }
+#mesinPage .mesin-link-state.linked { color: #17603a; background: #e7f5eb; }
+#mesinPage .mesin-link-state.waiting { color: #15549a; background: #eaf3ff; }
+#mesinPage .mesin-link-state.conflict { color: #9c3916; background: #fff1e5; }
+#mesinPage .mesin-link-button { border: 1px solid; border-radius: 7px; padding: 8px 11px; background: white; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+#mesinPage .mesin-link-button.attach { border-color: #b8d4f6; color: #1255a4; background: #eef6ff; }
+#mesinPage .mesin-link-button.detach { border-color: #edc0c2; color: #a42d36; background: #fff2f2; }
+#mesinPage .mesin-link-button:disabled { cursor: wait; opacity: .55; }
+#mesinPage .mesin-link-panel { display: grid; gap: 9px; margin: 12px 0; padding: 14px; border: 1px solid #c7def8; border-radius: 10px; background: #f4f8fd; color: #24496e; }
+#mesinPage .mesin-link-panel h3, #mesinPage .mesin-link-panel p { margin: 0; }
+#mesinPage .mesin-link-panel h3 { font-size: 15px; }
+#mesinPage .mesin-link-panel p, #mesinPage .mesin-link-panel label { font-size: 12px; }
+#mesinPage .mesin-link-panel select { width: 100%; min-width: 0; background: white; color: #193b67; border: 1px solid #b9cfe7; border-radius: 8px; min-height: 40px; padding: 8px; }
+#mesinPage .mesin-link-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+#mesinPage .mesin-nilai-feedback { color: #254c79; font-size: 12px; line-height: 1.5; margin: 8px 0; }
+#mesinPage .mesin-nilai-feedback:empty { display: none; }
+@media (max-width: 780px) {
+    #mesinPage #mesinLangsungFields .mesin-form-grid { grid-template-columns: minmax(0, 1fr); }
+    #mesinPage #mesinNilaiDialog { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); }
+    #mesinPage #mesinDetailDialog .mesin-sheet-toolbar-controls { flex-basis: 100%; }
+}

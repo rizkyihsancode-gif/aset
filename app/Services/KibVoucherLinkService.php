@@ -191,6 +191,17 @@ class KibVoucherLinkService
      */
     public function linkTanah(int $voucherId, int $tanahId, int $lokasiId, ?int $userId): void
     {
+        $this->linkRecord($voucherId, 'tanah', $tanahId, $lokasiId, $userId);
+    }
+
+    /** Pemanggil wajib mengunci voucher dan inventaris tujuan di transaksi yang sama. */
+    public function linkMesin(int $voucherId, int $mesinId, int $lokasiId, ?int $userId): void
+    {
+        $this->linkRecord($voucherId, 'mesin', $mesinId, $lokasiId, $userId);
+    }
+
+    private function linkRecord(int $voucherId, string $kategori, int $recordId, int $lokasiId, ?int $userId): void
+    {
         $this->assertReady();
         $owners = $this->owners([$voucherId]);
         if (!empty($owners[$voucherId])) {
@@ -201,8 +212,8 @@ class KibVoucherLinkService
 
         DB::table('kib_voucher_links')->insert([
             'nilai_aktiva_id' => $voucherId,
-            'kib' => 'tanah',
-            'record_id' => $tanahId,
+            'kib' => $kategori,
+            'record_id' => $recordId,
             'id_lokasi' => $lokasiId,
             'created_by' => $userId,
             'created_at' => now(),

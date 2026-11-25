@@ -81,6 +81,11 @@ const pdfDialog = $('#mesinPdfDialog');
 
     // ID voucher yang sedang dipilih.
     let selectedSourceId = null;
+    let directLocationId = null;
+    let directSaving = false;
+    let nilaiContext = null;
+    let nilaiRequestVersion = 0;
+    let nilaiBusy = false;
 
 // ==========================================================
 // MODE FORM K.I.B B SESUAI DUA TABEL EXCEL REFERENSI
@@ -326,6 +331,22 @@ function resetDetachedFieldsMesin() {
         }
 
         return result;
+    }
+
+    // Penulisan JSON/FormData memakai CSRF yang sudah ada dan sesi Laravel.
+    async function postMesin(url, body) {
+        const response = await fetch(url, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': form.querySelector('[name="_token"]').value },
+            body
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.success !== true) {
+            const errors = Object.values(payload.errors || {}).flat().join(' • ');
+            throw new Error(errors || payload.message || `Permintaan gagal (HTTP ${response.status}).`);
+        }
+        return payload;
     }
 
     // ==========================================
@@ -915,6 +936,15 @@ $('#mesinExport').addEventListener('click', () => {
 
     function resetForm() {
         form.reset();
+        directLocationId = null;
+        $('#mesinLangsungFields').hidden = true;
+        $('#mesinLangsungFields').disabled = true;
+        $('#mesinLangsungError').hidden = true;
+        $('#mesinLangsungError').textContent = '';
+        $('#mesinOrganisasiVoucher').hidden = false;
+        sourceId.disabled = false;
+        const harga = allFieldLabels.get('harga');
+        if (harga) { harga.hidden = false; harga.querySelector('[name="harga"]').disabled = false; }
         resetDetachedFieldsMesin();
         kodeInventarisAuto = '';
 
@@ -964,6 +994,43 @@ $('#mesinExport').addEventListener('click', () => {
         await loadPending();
     }
 
+    function filterDivisiLangsung() {
+        const dep = $('#mesinLangsungDep').value;
+        const select = $('#mesinLangsungDiv');
+        for (const option of select.options) {
+            if (!option.value) continue;
+            option.disabled = option.dataset.dep !== dep;
+            option.hidden = option.disabled;
+        }
+        if (select.selectedOptions[0]?.disabled) select.value = '';
+    }
+    $('#mesinLangsungDep').addEventListener('change', filterDivisiLangsung);
+    $('#mesinLangsungAktiva').addEventListener('change', () => {
+        if (directLocationId === null) return;
+        const option = $('#mesinLangsungAktiva').selectedOptions[0];
+        setJenisFormMesin(option?.dataset.kode || '', option?.dataset.nama || '');
+        formTitle.textContent = isVehicleMode ? 'Tambah Data Kendaraan Langsung' : 'Tambah Data Mesin Langsung';
+    });
+
+    function openCreateLangsung(location) {
+        const id = Number(location.id);
+        if (!Number.isSafeInteger(id) || id < 1 || directSaving) return;
+        resetForm();
+        directLocationId = id;
+        form.action = `${locationUrl(id)}/tambah-langsung`;
+        sourceId.disabled = true;
+        $('#mesinPendingSection').hidden = true;
+        $('#mesinOrganisasiVoucher').hidden = true;
+        $('#mesinLangsungFields').hidden = false;
+        $('#mesinLangsungFields').disabled = false;
+        $('#mesinLangsungLokasi').textContent = `${location.lokasi || 'Lokasi'} · ${location.alamat || '—'}`;
+        const harga = allFieldLabels.get('harga');
+        if (harga) { harga.hidden = true; harga.querySelector('[name="harga"]').disabled = true; }
+        formTitle.textContent = 'Tambah Data Mesin Langsung';
+        filterDivisiLangsung();
+        openDialog(formDialog);
+    }
+
     $('#mesinAddButton').addEventListener(
         'click',
         openCreate
@@ -978,8 +1045,37 @@ $('#mesinExport').addEventListener('click', () => {
     // VALIDASI SIMPAN
     // ==========================================
 
-    form.addEventListener('submit', event => {
+    form.addEventListener('submit', async event => {
         const creating = $('#mesinMethod').disabled;
+        if (directLocationId !== null) {
+            event.preventDefault();
+            if (directSaving) return;
+            const id = directLocationId;
+            const tab = isVehicleMode ? 'vehicle' : 'machine';
+            const submit = form.querySelector('[type="submit"]');
+            const errorBox = $('#mesinLangsungError');
+            errorBox.hidden = true;
+            directSaving = true;
+            submit.disabled = true;
+            try {
+                await postMesin(`${locationUrl(id)}/tambah-langsung`, new FormData(form));
+                // Reload agar jumlah lokasi, KPI dan daftar Kendaraan benar-benar mutakhir.
+                const next = new URL(window.location.href);
+                next.searchParams.set('lokasi_detail', String(id));
+                next.searchParams.set('detail_tab', tab);
+                next.searchParams.set('langsung_sukses', '1');
+                next.hash = '';
+                window.location.assign(next.href);
+            } catch (error) {
+                errorBox.textContent = error.message;
+                errorBox.hidden = false;
+                errorBox.scrollIntoView({ block: 'nearest' });
+            } finally {
+                directSaving = false;
+                submit.disabled = false;
+            }
+            return;
+        }
 
         if (creating && !sourceId.value) {
             event.preventDefault();
@@ -1123,6 +1219,11 @@ $('#mesinExport').addEventListener('click', () => {
         lokasiId,
         lokasiName = ''
     ) {
+        const version = ++nilaiRequestVersion;
+        nilaiContext = null;
+        $('#mesinLinkPanel').hidden = true;
+        $('#mesinLinkTarget').replaceChildren();
+        $('#mesinNilaiFeedback').textContent = '';
         openDialog(nilaiDialog);
 
         $('#mesinNilaiTitle').textContent =
@@ -1136,7 +1237,7 @@ $('#mesinExport').addEventListener('click', () => {
 
         $('#mesinNilaiBody').innerHTML = `
             <tr>
-                <td colspan="10" class="mesin-empty">
+                <td colspan="12" class="mesin-empty">
                     Memuat rincian nilai...
                 </td>
             </tr>
@@ -1147,9 +1248,12 @@ $('#mesinExport').addEventListener('click', () => {
                 nilaiUrl(lokasiId)
             );
 
-            const rows = Array.isArray(result.data)
-                ? result.data
-                : [];
+            if (version !== nilaiRequestVersion || !nilaiDialog.open) return;
+            const rows = Array.isArray(result.data) ? result.data : [];
+            nilaiContext = { lokasiId: Number(lokasiId), name: result.lokasi?.nama || lokasiName,
+                rows, targets: Array.isArray(result.targets) ? result.targets : [], selected: null };
+            if (!result.pengaitan_siap) $('#mesinNilaiFeedback').textContent =
+                'Pengaitan belum tersedia. Periksa migration kib_voucher_links yang sudah dipakai Tanah.';
 
             $('#mesinNilaiTitle').textContent =
                 `Rincian Nilai Mesin — ${
@@ -1170,7 +1274,7 @@ $('#mesinExport').addEventListener('click', () => {
             if (!rows.length) {
                 $('#mesinNilaiBody').innerHTML = `
                     <tr>
-                        <td colspan="10" class="mesin-empty">
+                        <td colspan="12" class="mesin-empty">
                             Belum ada transaksi pada lokasi ini.
                         </td>
                     </tr>
@@ -1246,22 +1350,121 @@ $('#mesinExport').addEventListener('click', () => {
                                     ${money(item.nilai)}
                                 </strong>
                             </td>
+                            <td>${renderMesinVoucherStatus(item)}</td>
+                            <td>${renderMesinVoucherAction(item, nilaiContext.targets)}</td>
                         </tr>
                     `;
                 }).join('');
 
         } catch (error) {
+            if (version !== nilaiRequestVersion || !nilaiDialog.open) return;
             console.error(error);
 
             $('#mesinNilaiBody').innerHTML = `
                 <tr>
-                    <td colspan="10" class="mesin-empty">
+                    <td colspan="12" class="mesin-empty">
                         Gagal mengambil rincian nilai Mesin.
                     </td>
                 </tr>
             `;
         }
     }
+
+    function renderMesinVoucherStatus(item) {
+        const target = item.barang_tujuan;
+        if (item.status_hubungan === 'konflik') return '<span class="mesin-link-state conflict">Periksa relasi</span>';
+        if (item.status_hubungan === 'terhubung' && target) {
+            const tujuan = `${target.kategori === 'mesin' ? 'Inventaris' : target.kategori} #${target.id}${target.nama ? ' — ' + target.nama : ''}`;
+            return `<span class="mesin-link-state linked">Terhubung</span><small>${escapeHtml(tujuan)}</small>
+                ${target.sumber === 'legacy' ? '<small>Relasi historis · dilindungi</small>' : ''}`;
+        }
+        return '<span class="mesin-link-state waiting">Belum terhubung</span>';
+    }
+
+    function renderMesinVoucherAction(item, targets) {
+        const id = Number(item.id);
+        if (!Number.isSafeInteger(id) || id < 1) return '—';
+        if (item.boleh_lepaskan) return `<button type="button" class="mesin-link-button detach" data-mesin-unlink="${id}">Lepaskan</button>`;
+        if (item.boleh_hubungkan && targets.some(t => Boolean(t.is_kendaraan) === Boolean(item.is_kendaraan))) {
+            return `<button type="button" class="mesin-link-button attach" data-mesin-link="${id}">Hubungkan</button>`;
+        }
+        if (item.boleh_hubungkan) return '<small>Belum ada tujuan sejenis</small>';
+        return '—';
+    }
+
+    function showMesinLinkPicker(item) {
+        if (!nilaiContext || !item.boleh_hubungkan || nilaiBusy) return;
+        nilaiContext.selected = item;
+        const select = $('#mesinLinkTarget');
+        select.replaceChildren(new Option('Pilih inventaris tujuan', ''));
+        for (const t of nilaiContext.targets.filter(t => Boolean(t.is_kendaraan) === Boolean(item.is_kendaraan))) {
+            const label = `#${t.id} — ${t.nama_barang || 'Inventaris'} · Kode ${t.kode || '—'} · Reg ${t.reg || '—'}`;
+            select.add(new Option(label, String(t.id)));
+        }
+        $('#mesinLinkVoucher').textContent = `Voucher ${item.no_voucher || item.id} · ${money(item.nilai)} · ${item.is_kendaraan ? 'Kendaraan' : 'Peralatan/Mesin'}`;
+        $('#mesinLinkPanel').hidden = false;
+        $('#mesinNilaiFeedback').textContent = '';
+        select.focus();
+    }
+
+    async function mutateMesinVoucher(action, item, targetId) {
+        const ctx = nilaiContext;
+        if (!ctx || nilaiBusy || !Number.isSafeInteger(Number(targetId)) || Number(targetId) < 1) return;
+        const body = new FormData();
+        body.set('nilai_aktiva_id', String(item.id));
+        body.set('mesin_id', String(targetId));
+        body.set('konfirmasi', '1');
+        if (action === 'lepaskan-voucher') body.set('link_id', String(item.link_id));
+        nilaiBusy = true;
+        const controls = [...nilaiDialog.querySelectorAll('[data-mesin-link], [data-mesin-unlink], #mesinLinkConfirm, #mesinLinkCancel, #mesinLinkTarget')];
+        controls.forEach(control => control.disabled = true);
+        $('#mesinNilaiFeedback').textContent = 'Menyimpan perubahan hubungan...';
+        try {
+            const result = await postMesin(`${locationUrl(ctx.lokasiId)}/${action}`, body);
+            // Detail dan popup Nilai membaca ulang server; tidak menghitung nilai dari DOM.
+            if (detailDialog.open && Number(mesinSheetState.location.id) === ctx.lokasiId) {
+                await showDetail(ctx.lokasiId, mesinSheetState.activeTab);
+            }
+            if (nilaiContext === ctx && nilaiDialog.open) {
+                await showNilaiMesin(ctx.lokasiId, ctx.name);
+                $('#mesinNilaiFeedback').textContent = result.message;
+            }
+            loadPending();
+            root.dispatchEvent(new CustomEvent('mesin:inventaris-nilai-changed'));
+        } catch (error) {
+            if (nilaiContext === ctx) $('#mesinNilaiFeedback').textContent = error.message;
+        } finally {
+            nilaiBusy = false;
+            controls.forEach(control => { if (control.isConnected) control.disabled = false; });
+        }
+    }
+
+    $('#mesinNilaiBody').addEventListener('click', event => {
+        if (!nilaiContext || nilaiBusy) return;
+        const link = event.target.closest('[data-mesin-link]');
+        const unlink = event.target.closest('[data-mesin-unlink]');
+        if (!link && !unlink) return;
+        const item = nilaiContext.rows.find(row => String(row.id) === (link?.dataset.mesinLink || unlink?.dataset.mesinUnlink));
+        if (!item) return;
+        if (link) showMesinLinkPicker(item);
+        else if (item.boleh_lepaskan && confirm('Lepaskan hubungan voucher ini? Data inventaris dan transaksi Nilai Aset tetap tersimpan.')) {
+            mutateMesinVoucher('lepaskan-voucher', item, item.barang_tujuan.id);
+        }
+    });
+    $('#mesinLinkCancel').addEventListener('click', () => {
+        $('#mesinLinkPanel').hidden = true;
+        if (nilaiContext) nilaiContext.selected = null;
+    });
+    $('#mesinLinkConfirm').addEventListener('click', () => {
+        const item = nilaiContext?.selected;
+        const target = $('#mesinLinkTarget').value;
+        if (!item || !target) {
+            $('#mesinNilaiFeedback').textContent = 'Pilih inventaris tujuan terlebih dahulu.';
+            return;
+        }
+        if (confirm('Hubungkan voucher ini ke inventaris yang dipilih?')) mutateMesinVoucher('hubungkan-voucher', item, target);
+    });
+    nilaiDialog.addEventListener('close', () => { nilaiRequestVersion++; nilaiContext = null; });
 
     // ==========================================
     // DETAIL INVENTARIS MESIN
@@ -1350,6 +1553,13 @@ $('#mesinExport').addEventListener('click', () => {
         return `<button type="button" class="mesin-sheet-open" data-sheet-open="${id}" aria-label="Lihat berkas dan tindakan inventaris nomor ${id}">Berkas</button>`;
     }
 
+    function renderNilaiInventaris(item) {
+        if (item.nilai_konflik) return '<strong class="mesin-link-conflict">PERIKSA RELASI</strong>';
+        if (Number(item.jumlah_voucher) > 0) return `<strong>${money(item.nilai_terhubung)}</strong><small>${Number(item.jumlah_voucher)} voucher terhubung</small>`;
+        if (item.nilai_sumber === 'manual') return `<strong>${money(item.nilai_laporan)}</strong><small>Nilai historis · belum terhubung</small>`;
+        return '<strong>Rp 0</strong><small>Belum terhubung</small>';
+    }
+
     function renderMachineRow(item, index) {
         const id = mesinSheetId(item);
         return `<tr class="mesin-sheet-row" tabindex="0" aria-selected="false"
@@ -1369,7 +1579,7 @@ $('#mesinExport').addEventListener('click', () => {
             <td class="mesin-sheet-center">${mesinSheetCell(item.tahun)}</td>
             <td>${mesinSheetCell(item.asal)}</td>
             <td>${mesinSheetCell(item.nomor_dokumen)}</td>
-            <td class="mesin-sheet-money">${money(item.harga)}</td>
+            <td class="mesin-sheet-money mesin-linked-value">${renderNilaiInventaris(item)}</td>
             <td>${mesinSheetCell(item.ket)}</td>
             <td class="mesin-sheet-owner">${mesinOwnerBadge(item.status_kepemilikan)}</td>
             <td class="mesin-sheet-actions-cell">${mesinSheetAction(item)}</td>
@@ -1394,6 +1604,7 @@ $('#mesinExport').addEventListener('click', () => {
             <td>${mesinSheetCell(item.polisi)}</td>
             <td>${mesinSheetCell(item.bpkb)}</td>
             <td>${mesinSheetCell(item.asal)}</td>
+            <td class="mesin-sheet-money mesin-linked-value">${renderNilaiInventaris(item)}</td>
             <td>${mesinSheetCell(item.ket)}</td>
             <td class="mesin-sheet-owner">${mesinOwnerBadge(item.status_kepemilikan)}</td>
             <td class="mesin-sheet-actions-cell">${mesinSheetAction(item)}</td>
@@ -1412,7 +1623,7 @@ $('#mesinExport').addEventListener('click', () => {
                         <th rowspan="2">Fungsi</th><th rowspan="2">Penggunaan</th>
                         <th rowspan="2">Bahan</th><th colspan="3">Kondisi</th>
                         <th rowspan="2">Tahun Pengadaan</th><th rowspan="2">Asal Usul</th>
-                        <th rowspan="2">No. Dokumen</th><th rowspan="2">Harga (Rp)</th>
+                        <th rowspan="2">No. Dokumen</th><th rowspan="2">Nilai Rp</th>
                         <th rowspan="2">Keterangan</th><th rowspan="2">Status Kepemilikan</th>
                         <th rowspan="2">Detail</th>
                     </tr>
@@ -1435,6 +1646,7 @@ $('#mesinExport').addEventListener('click', () => {
                         <th rowspan="2">Bahan</th><th rowspan="2">Tahun Pembelian</th>
                         <th colspan="5">Nomor</th>
                         <th rowspan="2">Asal Usul / Cara Perolehan</th>
+                        <th rowspan="2">Nilai Rp</th>
                         <th rowspan="2">Keterangan</th><th rowspan="2">Status Kepemilikan</th>
                         <th rowspan="2">Detail</th>
                     </tr>
@@ -1539,7 +1751,7 @@ $('#mesinExport').addEventListener('click', () => {
         }
     }
 
-    async function showDetail(lokasiId) {
+    async function showDetail(lokasiId, preferredTab = null, flash = false) {
         openDialog(detailDialog);
         const body = $('#mesinDetailBody');
         body.textContent = 'Memuat daftar inventaris...';
@@ -1558,24 +1770,22 @@ $('#mesinExport').addEventListener('click', () => {
             $('#mesinDetailTitle').textContent = `DATA K.I.B B · ${String(location.lokasi || 'PERALATAN DAN MESIN').toUpperCase()}`;
             $('#mesinDetailAddress').textContent = location.alamat || 'Perumda Tirta Kencana Kota Samarinda';
 
-            if (!items.length) {
-                body.textContent = 'Belum ada data Peralatan, Mesin, atau Kendaraan pada lokasi ini.';
-                return;
-            }
-
             const machines = items.filter(item => !isVehicleItem(item));
             const vehicles = items.filter(isVehicleItem);
-            const firstTab = machines.length ? 'machine' : 'vehicle';
+            const firstTab = ['machine', 'vehicle'].includes(preferredTab) ? preferredTab : (machines.length || !vehicles.length ? 'machine' : 'vehicle');
             mesinSheetState.activeTab = firstTab;
 
             body.innerHTML = `
                 <section class="mesin-sheet-section" aria-label="Kartu inventaris K.I.B B">
+                    ${flash ? '<p class="mesin-notice success" role="status">Data langsung berhasil ditambahkan. Silakan hubungkan voucher melalui Nilai Lokasi.</p>' : ''}
                     <div class="mesin-sheet-toolbar">
                         <div class="mesin-sheet-toolbar-heading">
                             <h3>Daftar Peralatan, Mesin &amp; Kendaraan</h3>
                             <p>Tampilan tabel mengikuti format K.I.B B perusahaan. Satu baris mewakili satu inventaris.</p>
                         </div>
                         <div class="mesin-sheet-toolbar-controls">
+                            <button type="button" class="mesin-button primary" data-mesin-tambah-langsung><i data-lucide="plus"></i> Tambah Data Langsung</button>
+                            <button type="button" class="mesin-button outline" data-sheet-nilai="${Number(location.id) || Number(lokasiId)}"><i data-lucide="wallet"></i> Nilai Lokasi</button>
                             <label class="mesin-sheet-search">
                                 <i data-lucide="search"></i>
                                 <input id="mesinSheetSearch" type="search" autocomplete="off"
@@ -1642,6 +1852,7 @@ $('#mesinExport').addEventListener('click', () => {
     // Delegasi tetap pada #mesinDetailBody; tombol CRUD lama
     // (data-edit dan data-delete) tetap ditangani di bawah.
     $('#mesinDetailBody').addEventListener('click', event => {
+        if (event.target.closest('[data-mesin-tambah-langsung]')) { openCreateLangsung(mesinSheetState.location); return; }
         const tab = event.target.closest('[data-sheet-tab]');
         if (tab) {
             mesinSheetState.activeTab = tab.dataset.sheetTab;
@@ -2157,7 +2368,15 @@ $('#mesinTable').addEventListener('click', event => {
     refreshIcons();
     loadPending();
 
-    if ($('.mesin-notice.error')) {
+    const detailParams = new URL(window.location.href);
+    const reopenId = Number(detailParams.searchParams.get('lokasi_detail'));
+    if (Number.isSafeInteger(reopenId) && reopenId > 0) {
+        const tab = detailParams.searchParams.get('detail_tab');
+        const flash = detailParams.searchParams.get('langsung_sukses') === '1';
+        for (const key of ['lokasi_detail', 'detail_tab', 'langsung_sukses']) detailParams.searchParams.delete(key);
+        window.history.replaceState(null, '', detailParams.href);
+        showDetail(reopenId, tab, flash);
+    } else if ($('.mesin-notice.error:not([hidden])')) {
         openCreate();
     }
 });
@@ -2646,6 +2865,10 @@ document.getElementById('mesinPage')
     // ======================================================
     // 08. LOAD KENDARAAN DARI KIBController
     // ======================================================
+
+    halaman.addEventListener('mesin:inventaris-nilai-changed', () => {
+        if (sudahDimuat || !panel.hidden) muatData();
+    });
 
     async function muatData() {
         if (sedangMemuat) {
@@ -3948,6 +4171,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     search.addEventListener('input', render);
     statusFilter.addEventListener('change', render);
+    page.addEventListener('mesin:inventaris-nilai-changed', () => {
+        const wasLoaded = loaded;
+        loaded = false;
+        if (wasLoaded || !panel.hidden) loadReferences();
+    });
     tab.addEventListener('click', loadReferences);
     window.addEventListener('hashchange', () => {
         if (location.hash === '#masa-pajak') loadReferences();

@@ -606,6 +606,14 @@ Route::middleware(['auth:web', \App\Http\Middleware\EnsureAsetAdmin::class])->gr
         'storeMesin'
     ])->name('kib.mesin.store');
 
+    // K.I.B B — tambah langsung dan pengaitan nilai per inventaris.
+    Route::post('/kib/mesin/lokasi/{lokasi}/tambah-langsung', [KIBController::class, 'storeMesinLangsung'])
+        ->whereNumber('lokasi')->name('kib.mesin.store-langsung');
+    Route::post('/kib/mesin/lokasi/{lokasi}/hubungkan-voucher', [KIBController::class, 'hubungkanNilaiMesin'])
+        ->whereNumber('lokasi')->name('kib.mesin.hubungkan-voucher');
+    Route::post('/kib/mesin/lokasi/{lokasi}/lepaskan-voucher', [KIBController::class, 'lepaskanNilaiMesin'])
+        ->whereNumber('lokasi')->name('kib.mesin.lepaskan-voucher');
+
     // K.I.B B: sumber popup/preview Print Excel Kendaraan dan Mesin per lokasi.
     // Penting: route ini harus ada sebelum route dinamis /kib/mesin/{mesin}.
     Route::get('/kib/mesin/laporan', [

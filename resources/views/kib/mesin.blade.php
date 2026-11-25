@@ -1467,11 +1467,49 @@
 
                     <input type="hidden" name="id_nilai_aktiva" id="mesinNilaiId">
 
+                    <fieldset id="mesinLangsungFields" class="mesin-langsung-fields" hidden disabled>
+                        <legend>Informasi Lokasi dan Organisasi · Tambah Langsung</legend>
+                        <p id="mesinLangsungLokasi"></p>
+                        <p>Tidak menggunakan voucher Pending. Pilih referensi master, lalu isi inventaris. Nilai dihubungkan
+                            setelah penyimpanan.</p>
+                        <div class="mesin-form-grid cols-3">
+                            <label>Departemen *
+                                <select name="id_departemen" id="mesinLangsungDep" required>
+                                    <option value="">Pilih Departemen</option>
+                                    @foreach ($departemenLangsung as $dep)
+                                        <option value="{{ $dep->id }}">{{ trim($dep->kode_dep ?: $dep->nama_dep) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Divisi *
+                                <select name="id_div" id="mesinLangsungDiv" required>
+                                    <option value="">Pilih Divisi</option>
+                                    @foreach ($divisiLangsung as $div)
+                                        <option value="{{ $div->id }}" data-dep="{{ $div->id_dep }}">
+                                            {{ trim($div->nama_div) }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Kode Aktiva *
+                                <select name="id_aktiva" id="mesinLangsungAktiva" required>
+                                    <option value="">Pilih Kode Aktiva</option>
+                                    @foreach ($aktivaLangsung as $aktiva)
+                                        <option value="{{ $aktiva->id }}" data-kode="{{ trim($aktiva->kode) }}"
+                                            data-nama="{{ trim($aktiva->aktiva) }}">{{ trim($aktiva->kode) }} —
+                                            {{ trim($aktiva->aktiva) }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                        </div>
+                    </fieldset>
+                    <p id="mesinLangsungError" class="mesin-notice error" role="alert" hidden></p>
+
                     {{-- ============================================
                      STEP 2 — LOKASI DAN ORGANISASI
                 ============================================= --}}
 
-                    <section class="mesin-section">
+                    <section class="mesin-section" id="mesinOrganisasiVoucher">
 
                         <div class="mesin-step">
                             2
@@ -2062,6 +2100,18 @@
 
                 </div>
 
+                <p id="mesinNilaiFeedback" class="mesin-nilai-feedback" role="status" aria-live="polite"></p>
+                <section id="mesinLinkPanel" class="mesin-link-panel" hidden>
+                    <h3>Hubungkan voucher ke inventaris</h3>
+                    <p id="mesinLinkVoucher"></p>
+                    <label for="mesinLinkTarget">Barang tujuan pada lokasi ini *</label>
+                    <select id="mesinLinkTarget"></select>
+                    <div class="mesin-link-actions">
+                        <button type="button" class="mesin-button outline" id="mesinLinkCancel">Batal</button>
+                        <button type="button" class="mesin-button primary" id="mesinLinkConfirm">Hubungkan</button>
+                    </div>
+                </section>
+
                 {{-- TABEL RINCIAN NILAI --}}
 
                 <div class="mesin-table-wrap mesin-nilai-table-wrap">
@@ -2081,6 +2131,8 @@
                                 <th>Departemen</th>
                                 <th>Divisi</th>
                                 <th>Nilai</th>
+                                <th>Status / Barang Tujuan</th>
+                                <th>Aksi</th>
                             </tr>
 
                         </thead>
@@ -2089,7 +2141,7 @@
 
                             <tr>
 
-                                <td colspan="10" class="mesin-empty">
+                                <td colspan="12" class="mesin-empty">
                                     Belum ada rincian yang dibuka.
                                 </td>
 
