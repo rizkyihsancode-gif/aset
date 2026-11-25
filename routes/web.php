@@ -45,11 +45,12 @@ Route::post('/logout', [
 |
 */
 
-Route::post('/login', function () {
-
-    return redirect()->route('dashboard');
-})->name('login.submit');
-
+Route::post('/login', [
+    AuthenticatedSessionController::class,
+    'store'
+])
+    ->middleware('throttle:5,1')
+    ->name('login.submit');
 
 /*
 |--------------------------------------------------------------------------
