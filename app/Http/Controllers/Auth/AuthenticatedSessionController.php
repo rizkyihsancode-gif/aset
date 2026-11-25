@@ -3,54 +3,49 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureAsetAdmin;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
-/**
- * Membuat sesi autentikasi sungguhan menggunakan users (guard web).
- * Tidak membuat akun otomatis dan tidak melewati pemeriksaan password.
- */
 class AuthenticatedSessionController extends Controller
 {
-    public function create(): View|RedirectResponse
+    public function create(Request $request): View|RedirectResponse
     {
-        if (Auth::check()) {
+        $guard = Auth::guard('web');
+
+        if (EnsureAsetAdmin::allows($guard->user()?->email)) {
             return redirect()->route('dashboard');
+        }
+
+        // Sesi pengguna lama yang bukan Admin tidak boleh mengakses Aset.
+        if ($guard->check()) {
+            $guard->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
         }
 
         return view('auth.login');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email', 'max:255'],
-            'password' => ['required', 'string'],
-        ]);
-
-        $credentials['email'] = strtolower(trim($credentials['email']));
-
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'email' => 'Email atau password tidak sesuai.',
-            ]);
-        }
-
-        // Wajib mencegah session fixation setelah verifikasi akun.
+        $request->authenticate();
         $request->session()->regenerate();
+        $request->session()->forget('url.intended');
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->route('dashboard');
     }
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
     }
 }
+    
