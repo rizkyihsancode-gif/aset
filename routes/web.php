@@ -520,6 +520,12 @@ Route::middleware(['auth:web', \App\Http\Middleware\EnsureAsetAdmin::class])->gr
             )
                 ->whereNumber('lokasi')->name('tanah.hubungkan-voucher');
 
+            Route::post(
+                '/tanah/lokasi/{lokasi}/lepaskan-voucher',
+                [KIBController::class, 'lepaskanNilaiTanah']
+            )
+                ->whereNumber('lokasi')->name('tanah.lepaskan-voucher');
+
 
             /*
 |--------------------------------------------------------------------------

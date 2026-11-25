@@ -5172,3 +5172,42 @@ dl > div:last-child {
     font-size: 12px;
     line-height: 1.6;
 }
+
+
+/* K.I.B A — riwayat nilai: override khusus modal, bukan tabel utama. */
+.tanah-page #tanahNilaiModal { width: min(1480px, calc(100vw - 32px)); max-width: calc(100vw - 32px); }
+.tanah-page #tanahNilaiModal .tanah-nilai-summary { margin-bottom: 10px; }
+.tanah-page #tanahNilaiModal .tanah-nilai-summary span { display: block; font-weight: 700; }
+.tanah-page #tanahNilaiModal .tanah-nilai-summary small { display: block; font-size: 12px; color: #526b88; margin-top: 4px; }
+.tanah-page #tanahNilaiModal .tanah-nilai-summary strong { white-space: nowrap; }
+.tanah-page #tanahNilaiModal .tanah-nilai-help { display: flex; align-items: flex-start; gap: 8px; color: #526b88; font-size: 12px; line-height: 1.5; margin: 0 0 12px; }
+.tanah-page #tanahNilaiModal .tanah-nilai-help svg { width: 16px; height: 16px; flex: none; color: #1264bb; }
+.tanah-page #tanahNilaiModal .tanah-nilai-scroll { padding: 0; max-width: 100%; max-height: min(54dvh, 560px); overflow: auto; border: 1px solid #d9e4ee; border-radius: 9px; }
+.tanah-page #tanahNilaiModal .tanah-nilai-scroll:focus-visible { outline: 2px solid #1871cf; outline-offset: 2px; }
+.tanah-page #tanahNilaiModal .tanah-nilai-table { width: 100%; min-width: 1274px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.tanah-page #tanahNilaiModal .tanah-nilai-table th,
+.tanah-page #tanahNilaiModal .tanah-nilai-table td { box-sizing: border-box; padding: 10px 10px; font-size: 12px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; border: 0; border-right: 1px solid #e1e9f1; border-bottom: 1px solid #e1e9f1; }
+.tanah-page #tanahNilaiModal .tanah-nilai-table th { position: sticky; top: 0; z-index: 2; background: #eaf4ff; vertical-align: middle; }
+.tanah-page #tanahNilaiModal .tanah-nilai-table th:last-child,
+.tanah-page #tanahNilaiModal .tanah-nilai-table td:last-child { border-right: 0; }
+.tanah-page #tanahNilaiModal .tanah-nilai-table th:nth-child(1),
+.tanah-page #tanahNilaiModal .tanah-nilai-table td:nth-child(1),
+.tanah-page #tanahNilaiModal .tanah-nilai-table th:nth-child(4),
+.tanah-page #tanahNilaiModal .tanah-nilai-table td:nth-child(4),
+.tanah-page #tanahNilaiModal .tanah-nilai-table th:nth-child(9),
+.tanah-page #tanahNilaiModal .tanah-nilai-table td:nth-child(9) { text-align: center; }
+.tanah-page #tanahNilaiModal .tanah-nilai-table .tanah-text-wrap { min-width: 0; }
+.tanah-page #tanahNilaiModal .tanah-nilai-table .tanah-value-cell { max-width: none; overflow: visible; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tanah-page #tanahNilaiModal .tanah-nilai-action { display: inline-flex; gap: 6px; align-items: center; justify-content: center; min-height: 34px; max-width: 100%; font: inherit; font-weight: 700; white-space: normal; text-align: center; }
+.tanah-page #tanahNilaiModal .tanah-nilai-action svg { width: 15px; height: 15px; flex: none; }
+.tanah-page #tanahNilaiModal .tanah-nilai-action:hover { background: #dcecff; }
+.tanah-page #tanahNilaiModal .tanah-nilai-action.is-unlink { border-color: #efbaba; background: #fff2f2; color: #a42a32; }
+.tanah-page #tanahNilaiModal .tanah-nilai-action.is-unlink:hover { background: #ffe3e3; }
+.tanah-page #tanahNilaiModal .tanah-nilai-locked { display: inline-block; color: #64748b; font-size: 11px; }
+.tanah-page #tanahUnlinkModal .tanah-unlink-error { padding: 10px 12px; border: 1px solid #efbaba; background: #fff2f2; border-radius: 7px; color: #a42a32; }
+.tanah-page #tanahUnlinkSubmit:disabled { opacity: .55; cursor: wait; }
+@media (max-width: 600px) {
+    .tanah-page #tanahNilaiModal { width: calc(100vw - 16px); max-width: calc(100vw - 16px); }
+    .tanah-page #tanahNilaiModal .tanah-modal-body { padding: 12px; }
+    .tanah-page #tanahNilaiModal .tanah-nilai-summary { align-items: flex-start; flex-direction: column; }
+}
