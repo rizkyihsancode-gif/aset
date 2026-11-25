@@ -4580,11 +4580,15 @@ async function loadPending()
      */
 
     const TANAH_REPORT_ROLES = [
-        ['diketahui', 'Diketahui'],
-        ['diperiksa1', 'Diperiksa Oleh'],
-        ['diperiksa2', 'Diperiksa Oleh'],
         ['dibuat', 'Dibuat Oleh'],
+        ['diperiksa', 'Diperiksa Oleh'],
+        ['diketahui', 'Diketahui Oleh'],
+        ['disetujui', 'Disetujui Oleh'],
     ];
+    // Form mengikuti urutan proses; lembar resmi mengikuti contoh perusahaan.
+    const TANAH_REPORT_PRINT_ROLES = [...TANAH_REPORT_ROLES].reverse();
+    const TANAH_REPORT_COLUMN_WIDTHS = [7, 26, 33, 17, 24, 12, 14, 17, 29, 17, 26, 19, 23, 31];
+    const TANAH_REPORT_SIGNATURE_SLOTS = [[1, 3], [4, 7], [8, 11], [12, 14]];
 
     // Identitas organisasi untuk laporan K.I.B A Tanah.
     // Hanya untuk Preview / Print / Download Excel; tidak mengubah data master.
@@ -4647,6 +4651,17 @@ async function loadPending()
 
     function reportTableRows() {
         return Array.isArray(tanahReportSource?.data) ? tanahReportSource.data : [];
+    }
+
+    function reportLinkedValue(item) {
+        // Nilai bigint rupiah dari API; tolak payload lama/invalid, bukan diam-diam Rp 0.
+        const raw = item?.nilai_terhubung;
+        const value = Number(raw);
+        if ((typeof raw !== 'number' && !(typeof raw === 'string' && /^-?\d+$/.test(raw)))
+            || !Number.isSafeInteger(value) || Math.abs(value) > 999999999999999) {
+            throw new Error('Nilai Terhubung tidak valid atau melampaui presisi Excel. Periksa data dan deployment laporan.');
+        }
+        return value;
     }
 
     function reportPersonById(id) {
@@ -4877,21 +4892,22 @@ async function loadPending()
         ).join('');
         const header = [
             '<tr>',
-            '<th rowspan="2" style="width:3%">No.</th>',
-            '<th rowspan="2" style="width:14%">Alamat / Letak</th>',
-            '<th rowspan="2" style="width:14%">Nama Barang / Jenis Barang</th>',
-            '<th colspan="2" style="width:20%">Nomor</th>',
-            '<th rowspan="2" style="width:6%">Tahun Pengadaan</th>',
-            '<th rowspan="2" style="width:7%">Luas (m²)</th>',
-            '<th rowspan="2" style="width:8%">Hak</th>',
-            '<th rowspan="2" style="width:11%">Nomor Surat / SPPT / Sertifikat</th>',
-            '<th rowspan="2" style="width:8%">Luas Tanah (m²)</th>',
-            '<th rowspan="2" style="width:11%">Keperluan</th>',
-            '<th rowspan="2" style="width:7%">Asal Usul</th>',
-            '<th rowspan="2" style="width:10%">Keterangan</th>',
+            '<th rowspan="2">No.</th>',
+            '<th rowspan="2">Alamat / Letak</th>',
+            '<th rowspan="2">Nama Barang / Jenis Barang</th>',
+            '<th colspan="2">Nomor</th>',
+            '<th rowspan="2">Tahun Pengadaan</th>',
+            '<th rowspan="2">Luas (m²)</th>',
+            '<th rowspan="2">Hak</th>',
+            '<th rowspan="2">Nomor Surat / SPPT / Sertifikat</th>',
+            '<th rowspan="2">Luas Tanah (m²)</th>',
+            '<th rowspan="2">Keperluan</th>',
+            '<th rowspan="2">Asal Usul</th>',
+            '<th rowspan="2">Nilai Rp</th>',
+            '<th rowspan="2">Keterangan</th>',
             '</tr>',
             '<tr><th>Kode Barang</th><th>Nomor Surat Penunjukan</th></tr>',
-            `<tr>${Array.from({ length: 13 }, (_, i) => `<th>${i + 1}</th>`).join('')}</tr>`,
+            `<tr>${Array.from({ length: TANAH_REPORT_COLUMN_WIDTHS.length }, (_, i) => `<th>${i + 1}</th>`).join('')}</tr>`,
         ].join('');
         const body = rows.map((item, i) => {
             const values = [
@@ -4900,21 +4916,28 @@ async function loadPending()
                 reportNomorDanTanggal(item.no_tunjuk, item.tgl_tunjuk),
                 item.tahun, item.luas_tunjuk, item.hak,
                 reportNomorDanTanggal(item.sertifikat, item.tgl_sertifikat),
-                item.luas_sertifikat, item.guna, item.asal, item.ket,
+                item.luas_sertifikat, item.guna, item.asal, formatRupiah(reportLinkedValue(item)), item.ket,
             ];
             return `<tr>${values.map((value, index) =>
-                `<td${index === 0 ? ' class="tanah-report-number"' : ''}>${escapeHtml(reportCellValue(value)).replace(/\n/g, '<br>')}</td>`
+                `<td${index === 0 ? ' class="tanah-report-number"' : index === 12 ? ' class="tanah-report-currency"' : ''}>${escapeHtml(reportCellValue(value)).replace(/\n/g, '<br>')}</td>`
             ).join('')}</tr>`;
         }).join('');
-        const signatures = TANAH_REPORT_ROLES.map(([role, title]) => {
+        const signatures = TANAH_REPORT_PRINT_ROLES.map(([role, title]) => {
             const signer = reportSigner(role);
             return `<div class="tanah-report-signature">
-                <strong>${escapeHtml(title)},</strong>
+                <strong>${escapeHtml(title)}</strong>
                 <span>${escapeHtml(signer?.jabatan || '-')}</span>
                 <u>${escapeHtml(signer?.nama || '-')}</u>
                 <span>${escapeHtml(signer?.nip ? `NIP. ${signer.nip}` : 'NIP. -')}</span>
             </div>`;
         }).join('');
+        const totalWidth = TANAH_REPORT_COLUMN_WIDTHS.reduce((sum, width) => sum + width, 0);
+        const colgroup = TANAH_REPORT_COLUMN_WIDTHS.map(width =>
+            `<col style="width:${width / totalWidth * 100}%">`
+        ).join('');
+        const signatureWidths = TANAH_REPORT_SIGNATURE_SLOTS.map(([start, end]) =>
+            `${TANAH_REPORT_COLUMN_WIDTHS.slice(start - 1, end).reduce((sum, width) => sum + width, 0)}fr`
+        ).join(' ');
         return `
             <div class="tanah-report-paper-header">
                 <!-- logo_hr.png sudah memuat simbol dan nama perusahaan: jangan gandakan teks -->
@@ -4926,9 +4949,11 @@ async function loadPending()
                 </div>
             </div>
             <div class="tanah-report-meta">${metaHtml}</div>
-            <table class="tanah-report-paper-table"><thead>${header}</thead><tbody>${body}</tbody></table>
-            <div class="tanah-report-sign-date">Samarinda, ${escapeHtml(reportWitaDate())}</div>
-            <div class="tanah-report-signatures">${signatures}</div>`;
+            <table class="tanah-report-paper-table"><colgroup>${colgroup}</colgroup><thead>${header}</thead><tbody>${body}</tbody></table>
+            <div class="tanah-report-signatures" style="grid-template-columns:${signatureWidths}">
+                <div class="tanah-report-sign-date">Samarinda, ${escapeHtml(reportWitaDate())}</div>
+                ${signatures}
+            </div>`;
     }
 
     function reportUpdatePreview() {
@@ -4969,6 +4994,9 @@ async function loadPending()
         const locationText = $('#tanahReportLocation');
         if (locationText) locationText.textContent = 'Cakupan: seluruh data Tanah pada semua lokasi';
         if (reportPreviewSection) reportPreviewSection.hidden = true;
+        if (reportPreview) reportPreview.innerHTML = '';
+        const previewScroll = reportPreview?.parentElement;
+        if (previewScroll) { previewScroll.scrollLeft = 0; previewScroll.scrollTop = 0; }
         reportSetMessage('Memuat seluruh data Tanah (semua lokasi) dan Master SDM Pendukung...');
         if (reportDownloadButton) reportDownloadButton.disabled = true;
         if (reportPrintButton) reportPrintButton.disabled = true;
@@ -4979,6 +5007,8 @@ async function loadPending()
                 `${BASE_URL}/laporan`
             );
             if (mySequence !== tanahReportSequence) return;
+            if (!Array.isArray(data.data)) throw new Error('Payload laporan Tanah tidak valid.');
+            data.data.forEach(reportLinkedValue);
             tanahReportSource = data;
             tanahReportStaff = Array.isArray(data.sdm) ? data.sdm : [];
             if (locationText) locationText.textContent =
@@ -5129,9 +5159,9 @@ async function loadPending()
 
         // Logo horizontal sudah mengandung nama perusahaan; tidak membuat teks ganda.
         // Seperti K.I.B B, gambar menjadi overlay dan judul dipusatkan pada lebar tabel.
-        merged(2, 1, 2, 13, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
-        merged(3, 1, 3, 13, 'A. KARTU INVENTARIS TANAH', 2);
-        merged(4, 1, 4, 13, `PERIODE ${reportPeriodName().toUpperCase()}`, 2);
+        merged(2, 1, 2, 14, 'KARTU INVENTARIS BARANG (K.I.B)', 1);
+        merged(3, 1, 3, 14, 'A. KARTU INVENTARIS TANAH', 2);
+        merged(4, 1, 4, 14, `PERIODE ${reportPeriodName().toUpperCase()}`, 2);
         heights.set(1, 26);
         heights.set(2, 28);
         heights.set(3, 24);
@@ -5162,11 +5192,11 @@ async function loadPending()
         for (const [column, title] of [
             [6, 'TAHUN PENGADAAN'], [7, 'LUAS (M2)'], [8, 'HAK'],
             [9, 'NOMOR SURAT / SPPT / SERTIFIKAT'], [10, 'LUAS TANAH (M2)'],
-            [11, 'KEPERLUAN'], [12, 'ASAL USUL'], [13, 'KETERANGAN'],
+            [11, 'KEPERLUAN'], [12, 'ASAL USUL'], [13, 'NILAI RP'], [14, 'KETERANGAN'],
         ]) header(column, column, title);
         heights.set(h, 34);
         heights.set(h + 1, 34);
-        for (let c = 1; c <= 13; c++) put(h + 2, c, c, 9, true);
+        for (let c = 1; c <= TANAH_REPORT_COLUMN_WIDTHS.length; c++) put(h + 2, c, c, 9, true);
         heights.set(h + 2, 21);
 
         rows.forEach((item, index) => {
@@ -5178,12 +5208,12 @@ async function loadPending()
                 blank(item.tahun), blank(item.luas_tunjuk), blank(item.hak),
                 reportNomorDanTanggal(item.sertifikat, item.tgl_sertifikat),
                 blank(item.luas_sertifikat), blank(item.guna),
-                blank(item.asal), blank(item.ket),
+                blank(item.asal), reportLinkedValue(item), blank(item.ket),
             ];
             data.forEach((value, col) => {
-                const numeric = [0, 5, 6, 9].includes(col) ? reportNumeric(value) : null;
+                const numeric = col === 12 ? value : [0, 5, 6, 9].includes(col) ? reportNumeric(value) : null;
                 put(r, col + 1, numeric !== null ? numeric : value,
-                    col === 0 ? 7 : numeric !== null ? 8 : 6, numeric !== null);
+                    col === 12 ? 14 : col === 0 ? 7 : numeric !== null ? 8 : 6, numeric !== null);
             });
             const maxLength = Math.max(...data.map(value => String(value).length));
             heights.set(r, Math.min(90, Math.max(28, Math.ceil(maxLength / 47) * 15 + 9)));
@@ -5191,20 +5221,21 @@ async function loadPending()
 
         const dateRow = h + 3 + rows.length + 2;
         finalRow = dateRow + 11;
-        merged(dateRow, 10, dateRow, 13, `Samarinda, ${reportWitaDate()}`, 10);
-        const slots = [[1, 3], [4, 6], [7, 9], [10, 13]];
-        TANAH_REPORT_ROLES.forEach(([role, label], i) => {
+        const slots = TANAH_REPORT_SIGNATURE_SLOTS;
+        merged(dateRow, slots[3][0], dateRow, slots[3][1], `Samarinda, ${reportWitaDate()}`, 10);
+        TANAH_REPORT_PRINT_ROLES.forEach(([role, label], i) => {
             const person = reportSigner(role);
             const [start, end] = slots[i];
-            merged(dateRow + 2, start, dateRow + 2, end, `${label},`, 10);
+            merged(dateRow + 2, start, dateRow + 2, end, label, 10);
             merged(dateRow + 3, start, dateRow + 3, end, blank(person?.jabatan), 11);
             merged(dateRow + 8, start, dateRow + 8, end, blank(person?.nama), 12);
             merged(dateRow + 9, start, dateRow + 9, end,
                 person?.nip ? `NIP. ${person.nip}` : 'NIP. -', 11);
         });
-        heights.set(dateRow + 8, 24);
+        heights.set(dateRow + 3, 34);
+        heights.set(dateRow + 8, 30);
 
-        const columnWidths = [7, 26, 33, 17, 24, 12, 14, 17, 29, 17, 26, 19, 31];
+        const columnWidths = TANAH_REPORT_COLUMN_WIDTHS;
         const colsXml = columnWidths.map((width, index) =>
             `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`
         ).join('');
@@ -5222,7 +5253,7 @@ async function loadPending()
         const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <worksheet xmlns="${main}" xmlns:r="${rel}">
               <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
-              <dimension ref="A1:M${finalRow}"/>
+              <dimension ref="A1:N${finalRow}"/>
               <sheetViews><sheetView workbookViewId="0" showGridLines="0">
                 <pane ySplit="17" topLeftCell="A18" activePane="bottomLeft" state="frozen"/>
               </sheetView></sheetViews>
@@ -5267,18 +5298,19 @@ async function loadPending()
             [0, 0, 0, 'center', 'center', 1],
             [4, 0, 0, 'center', 'center', 1],
             [2, 0, 0, 'left', 'center', 1],
-        ].map(([font, fillId, borderId, horizontal, vertical, wrap]) =>
-            `<xf numFmtId="0" fontId="${font}" fillId="${fillId}" borderId="${borderId}" xfId="0" applyAlignment="1"><alignment horizontal="${horizontal}" vertical="${vertical}" wrapText="${wrap}"/></xf>`
+            [0, 0, 1, 'right', 'center', 1, 3], // Nilai Rp numerik, pemisah ribuan Excel.
+        ].map(([font, fillId, borderId, horizontal, vertical, wrap, numFmtId = 0]) =>
+            `<xf numFmtId="${numFmtId}" ${numFmtId ? 'applyNumberFormat="1"' : ''} fontId="${font}" fillId="${fillId}" borderId="${borderId}" xfId="0" applyAlignment="1"><alignment horizontal="${horizontal}" vertical="${vertical}" wrapText="${wrap}"/></xf>`
         ).join('');
         const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="${main}">
             <fonts count="5">${fonts}</fonts>${fill}${border}
             <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-            <cellXfs count="14">${xfs}</cellXfs>
+            <cellXfs count="15">${xfs}</cellXfs>
             <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
         </styleSheet>`;
         const packageFiles = [
             { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
-            { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${main}" xmlns:r="${rel}"><bookViews><workbookView/></bookViews><sheets><sheet name="KIB A - Tanah" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'KIB A - Tanah'!$15:$17</definedName><definedName name="_xlnm.Print_Area" localSheetId="0">'KIB A - Tanah'!$A$1:$M${finalRow}</definedName></definedNames></workbook>` },
+            { name: 'xl/workbook.xml', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="${main}" xmlns:r="${rel}"><bookViews><workbookView/></bookViews><sheets><sheet name="KIB A - Tanah" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'KIB A - Tanah'!$15:$17</definedName><definedName name="_xlnm.Print_Area" localSheetId="0">'KIB A - Tanah'!$A$1:$N${finalRow}</definedName></definedNames></workbook>` },
             { name: 'xl/_rels/workbook.xml.rels', data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${rel}/styles" Target="styles.xml"/></Relationships>` },
             { name: 'xl/styles.xml', data: styles },
             { name: 'xl/worksheets/sheet1.xml', data: sheet },
@@ -5366,6 +5398,7 @@ async function loadPending()
                     vertical-align:middle;
                 }
                 .tanah-report-paper-table td { overflow-wrap:anywhere; }
+                .tanah-report-paper-table td.tanah-report-currency { text-align:right; }
                 @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
             </style></head><body><main class="tanah-report-paper">${reportRenderPaper()}</main></body></html>`);
         printWindow.addEventListener('load', () => {

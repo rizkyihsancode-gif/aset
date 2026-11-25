@@ -1687,6 +1687,14 @@ class KIBController extends Controller
                 ->first(['d.kode_dep as nama_dep', 'v.nama_div']);
         }
 
+        // Nilai laporan mengikuti Nilai Terhubung pada Detail Tanah per ID aset.
+        // Voucher yang belum terhubung tidak dihitung; tidak ada join pengganda baris.
+        $totals = app(KibVoucherLinkService::class)->totalsForTanah($items->all());
+        foreach ($items as $item) {
+            $item->nilai_terhubung = $totals[(int) $item->id]['nilai_terhubung'] ?? 0;
+            $item->jumlah_voucher = $totals[(int) $item->id]['jumlah_voucher'] ?? 0;
+        }
+
         $sdm = collect();
         if (Schema::hasTable('sdms') && Schema::hasTable('jabatans')) {
             $sdm = DB::table('sdms as s')
@@ -1744,6 +1752,14 @@ class KIBController extends Controller
             ->orderBy('l.lokasi', 'asc')
             ->orderBy('t.id', 'asc')
             ->get();
+
+        // Nilai laporan mengikuti Nilai Terhubung pada Detail Tanah per ID aset.
+        // Voucher yang belum terhubung tidak dihitung; tidak ada join pengganda baris.
+        $totals = app(KibVoucherLinkService::class)->totalsForTanah($items->all());
+        foreach ($items as $item) {
+            $item->nilai_terhubung = $totals[(int) $item->id]['nilai_terhubung'] ?? 0;
+            $item->jumlah_voucher = $totals[(int) $item->id]['jumlah_voucher'] ?? 0;
+        }
 
         // Dropdown penandatangan memakai data yang sudah ada di Master SDM.
         $sdm = collect();

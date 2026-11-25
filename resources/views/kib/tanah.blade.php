@@ -1901,7 +1901,7 @@
                         <small>Contoh: November 2026</small>
                     </div>
 
-                    @foreach ([['diketahui', 'Diketahui oleh'], ['diperiksa1', 'Diperiksa oleh (1)'], ['diperiksa2', 'Diperiksa oleh (2)'], ['dibuat', 'Dibuat oleh']] as [$kode, $label])
+                    @foreach ([['dibuat', 'Dibuat Oleh'], ['diperiksa', 'Diperiksa Oleh'], ['diketahui', 'Diketahui Oleh'], ['disetujui', 'Disetujui Oleh']] as [$kode, $label])
                         <div class="tanah-report-field tanah-report-person" data-role="{{ $kode }}">
                             <label for="tanahReportSearch-{{ $kode }}">{{ $label }} <span
                                     aria-hidden="true">*</span></label>
@@ -1936,7 +1936,8 @@
             </div>
 
             <footer class="tanah-report-footer">
-                <span>Seluruh lokasi · 13 kolom K.I.B A · tanpa Status Kepemilikan dan Lampiran.</span>
+                <span>Seluruh lokasi · 14 kolom K.I.B A · Nilai Rp dari voucher terhubung (0 jika belum terhubung) · tanpa
+                    Status Kepemilikan dan Lampiran.</span>
                 <div class="tanah-report-footer-actions">
                     <button type="button" class="tanah-button-secondary"
                         data-close-dialog="tanahReportModal">Batal</button>
@@ -1964,16 +1965,26 @@
             </div>
             <div class="tanah-modal-body">
                 <div class="tanah-nilai-summary">
-                    <div><span>Total Nilai Tanah</span><small>Total transaksi lokasi, termasuk voucher belum terhubung.</small></div>
+                    <div><span>Total Nilai Tanah</span><small>Total transaksi lokasi, termasuk voucher belum
+                            terhubung.</small></div>
                     <strong id="tanahNilaiTotal">Rp 0</strong>
                 </div>
-                <div class="tanah-nilai-help"><i data-lucide="info"></i><span>Lepaskan hubungan manual untuk memilih kembali tujuan Tanah. Data voucher dan inventaris tidak dihapus.</span></div>
-                <div class="tanah-table-scroll tanah-nilai-scroll" tabindex="0" role="region" aria-label="Tabel riwayat nilai aset">
+                <div class="tanah-nilai-help"><i data-lucide="info"></i><span>Lepaskan hubungan manual untuk memilih
+                        kembali tujuan Tanah. Data voucher dan inventaris tidak dihapus.</span></div>
+                <div class="tanah-table-scroll tanah-nilai-scroll" tabindex="0" role="region"
+                    aria-label="Tabel riwayat nilai aset">
                     <table class="tanah-table tanah-nilai-table">
                         <colgroup>
-                            <col style="width:48px"><col style="width:110px"><col style="width:112px">
-                            <col style="width:72px"><col style="width:150px"><col style="width:190px">
-                            <col style="width:130px"><col style="width:218px"><col style="width:80px"><col style="width:164px">
+                            <col style="width:48px">
+                            <col style="width:110px">
+                            <col style="width:112px">
+                            <col style="width:72px">
+                            <col style="width:150px">
+                            <col style="width:190px">
+                            <col style="width:130px">
+                            <col style="width:218px">
+                            <col style="width:80px">
+                            <col style="width:164px">
                         </colgroup>
                         <thead>
                             <tr>
@@ -2005,12 +2016,15 @@
             <div class="tanah-modal-header">
                 <div><span class="tanah-modal-eyebrow">KOREKSI PENGAITAN • K.I.B A</span>
                     <h3 id="tanahUnlinkTitle">Lepaskan Hubungan Voucher</h3>
-                    <p>Pastikan voucher dan tujuan yang dipilih sudah benar.</p></div>
-                <button type="button" class="tanah-modal-close" data-close-dialog="tanahUnlinkModal" aria-label="Tutup"><i data-lucide="x"></i></button>
+                    <p>Pastikan voucher dan tujuan yang dipilih sudah benar.</p>
+                </div>
+                <button type="button" class="tanah-modal-close" data-close-dialog="tanahUnlinkModal"
+                    aria-label="Tutup"><i data-lucide="x"></i></button>
             </div>
             <div class="tanah-modal-body tanah-link-body">
                 <div id="tanahUnlinkVoucher" class="tanah-link-voucher"></div>
-                <p>Nilai Terhubung pada Tanah tujuan akan berkurang. Data fisik Tanah, voucher, PDF sumber, dan total nilai lokasi tetap ada. Status transaksi tidak dikembalikan ke Pending.</p>
+                <p>Nilai Terhubung pada Tanah tujuan akan berkurang. Data fisik Tanah, voucher, PDF sumber, dan total nilai
+                    lokasi tetap ada. Status transaksi tidak dikembalikan ke Pending.</p>
                 <p>Setelah dilepas, gunakan tombol Hubungkan ke Tanah untuk memilih tujuan yang memenuhi syarat.</p>
                 <p id="tanahUnlinkError" class="tanah-unlink-error" role="alert" hidden></p>
             </div>
