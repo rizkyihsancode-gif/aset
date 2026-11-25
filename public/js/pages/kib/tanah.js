@@ -1971,45 +1971,16 @@ async function loadPending()
     }
 
 
-    // Alur baku K.I.B A: Tambah = data fisik tanpa voucher.
-    // Memilih voucher hanya dilakukan lewat tombol Nilai per lokasi.
-    let lokasiPickerMode = 'tambah';
-    function openPilihLokasi(mode = 'tambah') {
-        lokasiPickerMode = mode;
-        const title = $('#tanahPilihLokasiTitle');
-        const info = $('#tanahPilihLokasiInfo');
-        const note = $('#tanahPilihLokasiNote');
-        if (title) title.textContent = mode === 'nilai' ? 'Pilih Lokasi Data Nilai' : 'Pilih Lokasi Tanah';
-        if (info) info.textContent = mode === 'nilai'
-            ? 'Buka transaksi Nilai Aset berdasarkan lokasi, lalu pilih data Tanah yang menjadi tujuan.'
-            : 'Tambah data inventaris langsung, tanpa memilih transaksi Nilai Aset.';
-        if (note) note.textContent = mode === 'nilai'
-            ? 'Pengaitan voucher dilakukan di popup Nilai. Satu voucher tidak bisa dipakai dua barang.'
-            : 'Data baru langsung masuk tabel Detail lokasi dan berstatus Nilai Belum Terhubung.';
-        const select = $('#tanahPilihLokasiSelect');
-        if (select) select.value = '';
-        openDialog('tanahPilihLokasiModal');
-    }
-
-    $('#btnTambah')?.addEventListener('click', () => openPilihLokasi('tambah'));
-    $('#tanahAddButton')?.addEventListener('click', () => openPilihLokasi('tambah'));
-    $('#tanahIncomingButton')?.addEventListener('click', () => openPilihLokasi('nilai'));
-
-    $('#tanahPilihLokasiLanjut')?.addEventListener('click', () => {
-        const select = $('#tanahPilihLokasiSelect');
-        const lokasiId = select?.value;
-        if (!lokasiId) {
-            notify('Pilih lokasi terlebih dahulu.', true);
-            return;
-        }
-        const lokasiName = select.selectedOptions[0]?.textContent?.trim() || 'Lokasi';
-        closeDialog('tanahPilihLokasiModal');
-        if (lokasiPickerMode === 'nilai') {
-            openNilai(lokasiId, lokasiName);
-        } else {
-            prepareDirectForm(lokasiId, lokasiName);
-        }
-    });
+    /**
+     * Alur lama tetap dipertahankan:
+     * - Tambah Data Tanah membuka form dengan sumber transaksi Pending;
+     * - Lihat Data Masuk membuka daftar Pending Tanah;
+     * - Tambah Data Langsung HANYA dari Detail lokasi (lihat event khusus di bawah).
+     * Tombol lama tidak diarahkan ke modal pemilihan lokasi atau popup Nilai.
+     */
+    $('#btnTambah')?.addEventListener('click', openCreateForm);
+    $('#tanahAddButton')?.addEventListener('click', openCreateForm);
+    $('#tanahIncomingButton')?.addEventListener('click', openCreateForm);
 
     // Tambah langsung memakai form existing, tetapi endpoint berbeda.
     // id_lokasi dari route server menjadi sumber kebenaran.
@@ -2077,21 +2048,12 @@ async function loadPending()
     window.addEventListener(
         'kib:source-selected',
         function (event) {
-
-            if (!event.detail) {
-                return;
-            }
-
-
-            // Notifikasi lama mengarahkan ke popup Nilai, bukan lagi
-            // memaksa memilih voucher saat Tambah Data Tanah.
-            const lokasiId = event.detail.id_lokasi || event.detail.idLok;
-            if (lokasiId) {
-                openNilai(lokasiId, event.detail.lokasi || event.detail.lok || 'Lokasi');
-            } else {
-                openPilihLokasi('nilai');
-            }
-
+            if (!event.detail) return;
+            // Kompatibilitas notifikasi Pending: pilih sumber transaksi
+            // melalui form lama, bukan modal Nilai atau Tambah Langsung.
+            resetForm();
+            openDialog('tanahFormModal');
+            chooseSource(event.detail);
         }
     );
 
