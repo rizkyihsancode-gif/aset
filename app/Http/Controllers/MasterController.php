@@ -778,6 +778,11 @@ class MasterController extends Controller
         */
 
 
+        // Kode duplikat legacy boleh dipertahankan, tetapi kode baru wajib unik.
+        $kodeInput = $request->input('kode_barang');
+        $kodeBerubah = !is_string($kodeInput)
+            || trim($kodeInput) !== trim((string) $barang->kode_barang);
+
         $validated = $request->validate([
 
             'nama_barang' => [
@@ -791,10 +796,7 @@ class MasterController extends Controller
                 'string',
                 'max:255',
 
-                Rule::unique(
-                    'barangs',
-                    'kode_barang'
-                )->ignore($id),
+                ...($kodeBerubah ? [Rule::unique('barangs', 'kode_barang')->ignore($id)] : []),
             ],
 
             'golongan' => [
@@ -836,6 +838,11 @@ class MasterController extends Controller
             'status' => $validated['status'],
 
         ];
+
+        // Jangan menulis ulang kode lama yang tidak berubah.
+        if (!$kodeBerubah) {
+            unset($updateData['kode_barang']);
+        }
 
 
 
@@ -2001,6 +2008,11 @@ class MasterController extends Controller
     |--------------------------------------------------------------------------
     */
 
+        // Kode duplikat legacy boleh dipertahankan, tetapi kode baru wajib unik.
+        $kodeInput = $request->input('nama_dep');
+        $kodeBerubah = !is_string($kodeInput)
+            || trim($kodeInput) !== trim((string) $departemen->nama_dep);
+
         $validated =
             $request->validate(
                 [
@@ -2012,13 +2024,7 @@ class MasterController extends Controller
                         'string',
                         'max:255',
 
-                        Rule::unique(
-                            'departemens',
-                            'nama_dep'
-                        )
-                            ->ignore(
-                                $id
-                            ),
+                        ...($kodeBerubah ? [Rule::unique('departemens', 'nama_dep')->ignore($id)] : []),
                     ],
 
 
@@ -2118,6 +2124,11 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Jangan menulis ulang kode lama yang tidak berubah.
+        if (!$kodeBerubah) {
+            unset($data['nama_dep']);
+        }
 
         // Status opsional sementara form Blade/JS belum diperbarui.
         // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
@@ -3716,6 +3727,11 @@ class MasterController extends Controller
     |--------------------------------------------------------------------------
     */
 
+        // Kode duplikat legacy boleh dipertahankan, tetapi kode baru wajib unik.
+        $kodeInput = $request->input('kode_div');
+        $kodeBerubah = !is_string($kodeInput)
+            || trim($kodeInput) !== trim((string) $divisi->kode_div);
+
         $validated =
             $request->validate(
                 [
@@ -3734,13 +3750,7 @@ class MasterController extends Controller
                         'string',
                         'max:255',
 
-                        Rule::unique(
-                            'divisis',
-                            'kode_div'
-                        )
-                            ->ignore(
-                                $id
-                            ),
+                        ...($kodeBerubah ? [Rule::unique('divisis', 'kode_div')->ignore($id)] : []),
                     ],
 
 
@@ -3779,6 +3789,11 @@ class MasterController extends Controller
             ),
 
         ];
+
+        // Jangan menulis ulang kode lama yang tidak berubah.
+        if (!$kodeBerubah) {
+            unset($data['kode_div']);
+        }
 
         // Status opsional sementara form Blade/JS belum diperbarui.
         // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
@@ -8792,6 +8807,11 @@ class MasterController extends Controller
 
 
 
+        // Kode duplikat legacy boleh dipertahankan, tetapi kode baru wajib unik.
+        $kodeInput = $request->input('kode');
+        $kodeBerubah = !is_string($kodeInput)
+            || trim($kodeInput) !== trim((string) $aktiva->kode);
+
         $validated =
             $request->validate([
                 'status' => ['sometimes', 'required', Rule::in(['aktif', 'nonaktif'])],
@@ -8805,13 +8825,7 @@ class MasterController extends Controller
 
                     'max:255',
 
-                    Rule::unique(
-                        'aktivas',
-                        'kode'
-                    )
-                        ->ignore(
-                            $id
-                        )
+                    ...($kodeBerubah ? [Rule::unique('aktivas', 'kode')->ignore($id)] : [])
 
                 ],
 
@@ -8887,6 +8901,11 @@ class MasterController extends Controller
                 : null,
 
         ];
+
+        // Jangan menulis ulang kode lama yang tidak berubah.
+        if (!$kodeBerubah) {
+            unset($data['kode']);
+        }
 
         // Status opsional sementara form Blade/JS belum diperbarui.
         // Jika dikirim, status harus disimpan; jangan mengubah status lama saat field absen.
