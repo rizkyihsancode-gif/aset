@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NilaiAsetController;
 use App\Http\Controllers\KibNotificationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\ArsipController;
 use Illuminate\Http\Request;
 
 
@@ -152,10 +153,34 @@ Route::middleware(['auth:web', \App\Http\Middleware\EnsureAsetAdmin::class])->gr
             'kib.pending'
         );
 
-    Route::get('/arsip', function () {
-
-        return view('main.arsip');
-    })->name('main.arsip');
+    // Arsip Aset — tetap di grup middleware autentikasi Admin yang sudah ada.
+    Route::get(
+        '/arsip',
+        [\App\Http\Controllers\ArsipController::class, 'index']
+    )
+        ->name('main.arsip');
+    Route::get(
+        '/arsip/export',
+        [\App\Http\Controllers\ArsipController::class, 'export']
+    )
+        ->name('arsip.export');
+    Route::post(
+        '/arsip',
+        [\App\Http\Controllers\ArsipController::class, 'store']
+    )
+        ->name('arsip.store');
+    Route::put(
+        '/arsip/{arsip}',
+        [\App\Http\Controllers\ArsipController::class, 'update']
+    )
+        ->whereNumber('arsip')
+        ->name('arsip.update');
+    Route::get(
+        '/arsip/{arsip}/file',
+        [\App\Http\Controllers\ArsipController::class, 'file']
+    )
+        ->whereNumber('arsip')
+        ->name('arsip.file');
 
 
     // ------------------------------------------------

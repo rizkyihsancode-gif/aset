@@ -1,2144 +1,1069 @@
-/* =========================================================
-   ARSIP ASET
-   SISTEM ASET - PERUMDAM TIRTA KENCANA
-========================================================= */
+/* Arsip Aset — scoped to this page; no global styles are changed. */
 
-
-/* =========================================================
-   PAGE
-========================================================= */
-
+/* === 01. Variabel warna dan dasar halaman === */
 .arsip-page {
+    --ar-blue: #0866d6;
+    --ar-navy: #102b56;
+    --ar-text: #314c70;
+    --ar-muted: #647d9d;
+    --ar-border: #dbe6f3;
+    --ar-bg: #f1f6fc;
+    --ar-radius: 12px;
+    background: linear-gradient(180deg,#eaf3ff 0,#f4f8fd 40%,#f6f9fc 100%);
     min-height: calc(100vh - 60px);
-
-    background:
-        linear-gradient(
-            180deg,
-            #f2f8ff 0%,
-            #f6f9fc 100%
-        );
-}
-
-
-/* =========================================================
-   PAGE HEADER
-========================================================= */
-
-.arsip-page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 25px;
-
-    margin-bottom: 20px;
-}
-
-
-.arsip-heading {
-    min-width: 0;
-}
-
-
-.arsip-eyebrow {
-    display: block;
-
-    margin-bottom: 5px;
-
-    color: #0868d0;
-
-    font-size: 12px;
-    font-weight: 750;
-
-    letter-spacing: 1.2px;
-
-    text-transform: uppercase;
-}
-
-
-.arsip-heading h1 {
-    margin: 0;
-
-    color: #081d4d;
-
-    font-size: 34px;
-    font-weight: 780;
-
-    line-height: 1.05;
-
-    letter-spacing: -.7px;
-}
-
-
-.arsip-heading p {
-    max-width: 790px;
-
-    margin: 8px 0 0;
-
-    color: #587197;
-
+    color: var(--ar-navy);
     font-size: 13px;
-
-    line-height: 1.5;
-}
-
-
-/* =========================================================
-   HEADER ACTIONS
-========================================================= */
-
-.arsip-header-actions {
-    display: flex;
-    align-items: center;
-
-    gap: 13px;
-
-    flex-shrink: 0;
-}
-
-
-/* =========================================================
-   DATE
-========================================================= */
-
-.arsip-date-card {
-    min-width: 215px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-
-    padding: 12px 14px;
-
-    border: 1px solid #dae5f1;
-
-    border-radius: 10px;
-
-    background:
-        rgba(255,255,255,.94);
-
-    box-shadow:
-        0 5px 17px
-        rgba(24,72,117,.05);
-}
-
-
-.arsip-date-icon {
-    width: 40px;
-    height: 40px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 8px;
-
-    background: #eaf3ff;
-
-    color: #086ad3;
-}
-
-
-.arsip-date-icon svg {
-    width: 19px;
-    height: 19px;
-}
-
-
-.arsip-date-card strong {
-    display: block;
-
-    color: #1d3357;
-
-    font-size: 11.5px;
-
-    font-weight: 650;
-}
-
-
-.arsip-date-card span {
-    display: block;
-
-    margin-top: 3px;
-
-    color: #778aa6;
-
-    font-size: 10.5px;
-}
-
-
-/* =========================================================
-   ADD BUTTON
-========================================================= */
-
-.arsip-add-button {
-    height: 50px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 9px;
-
-    padding: 0 22px;
-
-    border: 0;
-
-    border-radius: 8px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #1676df,
-            #0966ce
-        );
-
-    color: white;
-
-    font-size: 12px;
-
-    font-weight: 650;
-
-    box-shadow:
-        0 8px 18px
-        rgba(8,99,203,.15);
-
-    cursor: pointer;
-
-    transition:
-        transform .18s ease,
-        box-shadow .18s ease,
-        background .18s ease;
-}
-
-
-.arsip-add-button:hover {
-    transform: translateY(-1px);
-
-    background:
-        linear-gradient(
-            90deg,
-            #106fd6,
-            #075fbf
-        );
-
-    box-shadow:
-        0 11px 22px
-        rgba(8,99,203,.22);
-}
-
-
-.arsip-add-button svg {
-    width: 19px;
-    height: 19px;
-}
-
-
-/* =========================================================
-   KPI
-========================================================= */
-
-.arsip-kpi-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0,1fr));
-
-    gap: 15px;
-
-    margin-bottom: 16px;
-}
-
-
-.arsip-kpi-card {
-    min-height: 116px;
-
-    position: relative;
-
-    display: flex;
-    align-items: center;
-
-    gap: 15px;
-
-    overflow: hidden;
-
-    padding: 17px;
-
-    border: 1px solid #dce6f1;
-
-    border-radius: 12px;
-
-    background:
-        rgba(255,255,255,.97);
-
-    box-shadow:
-        0 5px 18px
-        rgba(30,70,110,.035);
-
-    transition:
-        transform .18s ease,
-        box-shadow .18s ease;
-}
-
-
-.arsip-kpi-card:hover {
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 10px 24px
-        rgba(30,70,110,.07);
-}
-
-
-/* =========================================================
-   KPI ICON
-========================================================= */
-
-.arsip-kpi-icon {
-    width: 56px;
-    height: 56px;
-
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 11px;
-
-    color: white;
-}
-
-
-.arsip-kpi-icon svg {
-    width: 27px;
-    height: 27px;
-}
-
-
-.arsip-kpi-icon.blue {
-    background:
-        linear-gradient(
-            145deg,
-            #1981ef,
-            #0768d7
-        );
-}
-
-
-.arsip-kpi-icon.purple {
-    background:
-        linear-gradient(
-            145deg,
-            #9455ef,
-            #7835dd
-        );
-}
-
-
-.arsip-kpi-icon.orange {
-    background:
-        linear-gradient(
-            145deg,
-            #ffa526,
-            #f57c00
-        );
-}
-
-
-/* =========================================================
-   KPI CONTENT
-========================================================= */
-
-.arsip-kpi-content {
     min-width: 0;
-
-    flex: 1;
+    box-sizing: border-box;
 }
 
-
-.arsip-kpi-content > span {
-    display: block;
-
-    color: #17315a;
-
-    font-size: 12px;
-
-    font-weight: 650;
+.arsip-page *, .arsip-page *::before,.arsip-page *::after {
+    box-sizing: border-box;
 }
 
-
-.arsip-kpi-content > strong {
-    display: block;
-
-    margin-top: 5px;
-
-    color: #071b4c;
-
-    font-size: 28px;
-
-    line-height: 1;
-
-    font-weight: 780;
-
-    white-space: nowrap;
+.arsip-page [hidden] {
+    display: none !important;
 }
 
-
-.arsip-kpi-content > small {
-    display: flex;
-    align-items: center;
-
-    gap: 4px;
-
-    margin-top: 9px;
-
-    font-size: 10.5px;
-
-    white-space: nowrap;
-}
-
-
-.arsip-kpi-content small.positive {
-    color: #21a65a;
-}
-
-
-.arsip-kpi-content small.danger {
-    color: #ef4444;
-}
-
-
-.arsip-kpi-content small svg {
-    width: 12px;
-    height: 12px;
-}
-
-
-/* =========================================================
-   KPI DECORATION
-========================================================= */
-
-.arsip-kpi-decoration {
-    width: 72px;
-
-    align-self: stretch;
-
-    display: flex;
-    align-items: center;
-}
-
-
-.arsip-kpi-decoration svg {
-    width: 100%;
-    height: 55px;
-}
-
-
-.arsip-kpi-decoration polyline {
-    fill: none;
-
-    stroke: #3b96fb;
-
-    stroke-width: 2.7;
-
-    stroke-linecap: round;
-
-    stroke-linejoin: round;
-}
-
-
-.arsip-kpi-watermark {
-    color:
-        rgba(44,128,227,.18);
-}
-
-
-.arsip-kpi-watermark.purple {
-    color:
-        rgba(122,65,225,.18);
-}
-
-
-.arsip-kpi-watermark svg {
-    width: 52px;
-    height: 52px;
-
-    stroke-width: 2.5;
-}
-
-
-.arsip-retention-bars {
-    height: 58px;
-
-    display: flex;
-    align-items: flex-end;
-
-    gap: 5px;
-
-    padding-right: 3px;
-}
-
-
-.arsip-retention-bars span {
-    width: 7px;
-
-    border-radius: 4px 4px 0 0;
-
-    background: #ffc47a;
-}
-
-
-.arsip-retention-bars span:nth-child(1) {
-    height: 21px;
-}
-
-
-.arsip-retention-bars span:nth-child(2) {
-    height: 36px;
-}
-
-
-.arsip-retention-bars span:nth-child(3) {
-    height: 48px;
-}
-
-
-/* =========================================================
-   COMMON CARD
-========================================================= */
-
-.arsip-card {
-    overflow: hidden;
-
-    border: 1px solid #dfe8f1;
-
-    border-radius: 12px;
-
-    background:
-        rgba(255,255,255,.97);
-
-    box-shadow:
-        0 5px 18px
-        rgba(30,70,110,.03);
-}
-
-
-/* =========================================================
-   WORKSPACE
-========================================================= */
-
-.arsip-workspace {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0,1fr)
-        355px;
-
-    align-items: start;
-
-    gap: 15px;
-}
-
-
-.arsip-main-column {
-    min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 15px;
-}
-
-
-/* =========================================================
-   SECTION HEADER
-========================================================= */
-
-.arsip-section-header {
-    padding:
-        17px
-        18px
-        9px;
-}
-
-
-.arsip-section-header h3,
-.arsip-filter-title h3,
-.arsip-table-header h3 {
+.arsip-page h1,.arsip-page h2,.arsip-page h3,.arsip-page h4,.arsip-page p,.arsip-page dl {
     margin: 0;
-
-    color: #10264d;
-
-    font-size: 14px;
-
-    font-weight: 700;
 }
 
+.arsip-page h2 {
+    font-size: 15px;
+    font-weight: 750;
+    line-height: 1.3;
+    color: var(--ar-navy);
+}
 
-.arsip-section-header p {
-    margin: 5px 0 0;
+/* === 02. Header dan waktu === */
+.arsip-page .ar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 17px;
+}
 
-    color: #6e829f;
+.arsip-page .ar-eyebrow {
+    display: block;
+    color: var(--ar-blue);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.25px;
+    margin-bottom: 4px;
+}
 
-    font-size: 11.5px;
+.arsip-page .ar-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -.6px;
+    line-height: 1.1;
+}
 
+.arsip-page .ar-header p {
+    margin-top: 5px;
+    color: var(--ar-muted);
     line-height: 1.5;
 }
 
-
-/* =========================================================
-   STORAGE
-========================================================= */
-
-.arsip-storage-content {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0,1.65fr)
-        minmax(290px,.85fr);
-
-    align-items: center;
-
-    gap: 20px;
-
-    padding:
-        8px
-        18px
-        18px;
-}
-
-
-.storage-flow {
-    min-width: 0;
-
+.arsip-page .ar-header-actions {
     display: flex;
     align-items: center;
-
-    gap: 9px;
-}
-
-
-.storage-node {
-    min-width: 150px;
-    min-height: 72px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 11px;
-
-    padding:
-        11px
-        12px;
-
-    border: 1px solid #dce7f3;
-
-    border-radius: 10px;
-
-    background: #ffffff;
-
-    text-align: left;
-
-    cursor: pointer;
-
-    transition:
-        border-color .16s ease,
-        background .16s ease,
-        transform .16s ease;
-}
-
-
-.storage-node:hover,
-.storage-node.active {
-    border-color: #bad6f6;
-
-    background: #f7fbff;
-
-    transform:
-        translateY(-1px);
-}
-
-
-.storage-node-icon {
-    width: 44px;
-    height: 44px;
-
+    gap: 12px;
     flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 9px;
-
-    background: #eaf3ff;
-
-    color: #1475df;
 }
 
+.arsip-page .ar-clock {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--ar-border);
+    border-radius: 9px;
+    background: #fff;
+    min-width: 185px;
+}
 
-.storage-node-icon svg {
+.arsip-page .ar-clock svg {
     width: 23px;
     height: 23px;
+    color: var(--ar-blue);
 }
 
-
-.storage-node strong {
+.arsip-page .ar-clock strong,.arsip-page .ar-clock small {
     display: block;
-
-    color: #17305a;
-
-    font-size: 12px;
-
-    font-weight: 650;
+    font-size: 11px;
 }
 
-
-.storage-node span {
-    display: block;
-
-    margin-top: 3px;
-
-    color: #7587a0;
-
-    font-size: 10.5px;
+.arsip-page .ar-clock small {
+    color: var(--ar-muted);
+    margin-top: 2px;
 }
 
-
-.storage-chevron {
-    width: 18px;
-    height: 18px;
-
-    flex-shrink: 0;
-
-    color: #50749f;
-}
-
-
-/* =========================================================
-   OTHER LOCATION
-========================================================= */
-
-.storage-other {
-    padding-left: 20px;
-
-    border-left:
-        1px solid #e3ebf3;
-}
-
-
-.storage-other h4 {
-    margin:
-        0
-        0
-        10px;
-
-    color: #17305a;
-
-    font-size: 12px;
-
-    font-weight: 700;
-}
-
-
-.storage-location-chips {
-    display: grid;
-
-    grid-template-columns:
-        repeat(3,minmax(0,1fr));
-
-    gap: 8px;
-}
-
-
-.storage-location-chips button {
-    min-height: 38px;
-
-    display: flex;
+/* === 03. Tombol dan keadaan interaksi === */
+.arsip-page .ar-btn,.arsip-page .ar-icon-btn {
+    display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
-
+    justify-content: center;
     gap: 7px;
-
-    padding:
-        0
-        10px;
-
-    border: 1px solid #dbe6f1;
-
-    border-radius: 8px;
-
-    background: #ffffff;
-
-    color: #3c5576;
-
-    font-size: 10.5px;
-
-    font-weight: 500;
-
-    cursor: pointer;
-
-    transition:
-        background .16s ease,
-        border-color .16s ease;
-}
-
-
-.storage-location-chips button:hover {
-    border-color: #b9d5f4;
-
-    background: #f5faff;
-}
-
-
-.storage-location-chips svg {
-    width: 14px;
-    height: 14px;
-
-    color: #176fd3;
-}
-
-
-/* =========================================================
-   FILTER
-========================================================= */
-
-.arsip-filter-card {
-    padding:
-        15px
-        16px
-        16px;
-}
-
-
-.arsip-filter-title h3 {
-    margin-bottom: 12px;
-}
-
-
-.arsip-filter-grid {
-    display: grid;
-
-    grid-template-columns:
-        minmax(280px,1.35fr)
-        repeat(3,minmax(150px,.8fr));
-
-    gap: 12px;
-}
-
-
-.arsip-filter-group label {
-    display: block;
-
-    margin-bottom: 7px;
-
-    color: #344d70;
-
-    font-size: 11px;
-
-    font-weight: 600;
-}
-
-
-.arsip-filter-group select,
-.arsip-search-input input {
-    width: 100%;
-    height: 42px;
-
-    border: 1px solid #d7e2ed;
-
+    border: 1px solid transparent;
     border-radius: 7px;
-
-    outline: none;
-
-    background: #ffffff;
-
-    color: #334f74;
-
-    font-size: 11px;
-
-    transition:
-        border-color .16s ease,
-        box-shadow .16s ease;
-}
-
-
-.arsip-filter-group select {
-    padding:
-        0
-        11px;
-
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 650;
     cursor: pointer;
+    white-space: nowrap;
+    min-height: 36px;
+    padding: 8px 13px;
+    transition: background .15s,border-color .15s;
+    line-height: 1.25;
 }
 
-
-.arsip-filter-group select:focus,
-.arsip-search-input input:focus {
-    border-color: #3389ee;
-
-    box-shadow:
-        0 0 0 2px
-        rgba(51,137,238,.08);
+.arsip-page .ar-btn svg,.arsip-page .ar-icon-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
 }
 
-
-.arsip-search-input {
-    position: relative;
+.arsip-page .ar-primary {
+    background: var(--ar-blue);
+    border-color: var(--ar-blue);
+    color: #fff;
 }
 
+.arsip-page .ar-primary:hover {
+    background: #0757b8;
+    color: #fff;
+}
 
-.arsip-search-input svg {
-    width: 16px;
-    height: 16px;
+.arsip-page .ar-light {
+    background: #eaf2fc;
+    color: #204c81;
+}
 
-    position: absolute;
+.arsip-page .ar-light:hover {
+    background: #dceafb;
+}
 
-    top: 50%;
-    left: 13px;
+.arsip-page .ar-outline {
+    background: #fff;
+    color: #185da9;
+    border-color: #c9dcf2;
+}
 
-    transform:
-        translateY(-50%);
+.arsip-page .ar-outline:hover {
+    background: #edf5ff;
+}
 
-    color: #547091;
+.arsip-page .ar-header .ar-btn {
+    min-height: 47px;
+    padding: 10px 20px;
+    font-size: 13px;
+}
 
+.arsip-page .ar-btn:focus-visible,.arsip-page button:focus-visible,.arsip-page a:focus-visible {
+    outline: 2px solid #4a9cfc;
+    outline-offset: 2px;
+}
+
+.arsip-page .ar-btn:disabled,.arsip-page .ar-icon-btn:disabled,.arsip-page [aria-disabled="true"] {
+    opacity: .45;
+    cursor: not-allowed;
     pointer-events: none;
 }
 
-
-.arsip-search-input input {
-    padding:
-        0
-        12px
-        0
-        39px;
+/* === 04. Kartu statistik === */
+.arsip-page .ar-kpis {
+    display: grid;
+    grid-template-columns: repeat(4,minmax(0,1fr));
+    gap: 13px;
+    margin-bottom: 15px;
 }
 
-
-.arsip-search-input input::placeholder {
-    color: #91a2b8;
-}
-
-
-/* =========================================================
-   FILTER ACTION
-========================================================= */
-
-.arsip-filter-actions {
-    grid-column:
-        3 / 5;
-
-    display: flex;
-    justify-content: flex-end;
-
-    gap: 9px;
-}
-
-
-.arsip-filter-button,
-.arsip-reset-button {
-    min-width: 108px;
-    height: 42px;
-
+.arsip-page .ar-kpi {
+    position: relative;
+    min-width: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 13px;
+    padding: 15px 13px;
+    background: #fff;
+    border: 1px solid var(--ar-border);
+    border-radius: var(--ar-radius);
+    box-shadow: 0 3px 12px #2a5d8f09;
+    overflow: hidden;
+    min-height: 95px;
+}
 
-    gap: 7px;
+.arsip-page .ar-kpi>div:nth-child(2) {
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
 
-    border-radius: 7px;
+.arsip-page .ar-kpi span,.arsip-page .ar-kpi small,.arsip-page .ar-kpi strong {
+    display: block;
+}
 
+.arsip-page .ar-kpi span {
     font-size: 11px;
-
-    font-weight: 600;
-
-    cursor: pointer;
-
-    transition:
-        transform .16s ease,
-        background .16s ease;
+    font-weight: 700;
+    line-height: 1.3;
 }
 
+.arsip-page .ar-kpi strong {
+    font-size: 25px;
+    line-height: 1.25;
+    font-weight: 800;
+    margin: 4px 0;
+}
 
-.arsip-filter-button {
-    border: 0;
+.arsip-page .ar-kpi small {
+    font-size: 10px;
+    color: var(--ar-muted);
+    line-height: 1.3;
+}
 
-    background:
-        linear-gradient(
-            90deg,
-            #2583ed,
-            #106bd2
-        );
-
+.arsip-page .ar-kpi-icon {
+    flex: 0 0 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
     color: white;
+    background: linear-gradient(145deg,#278eff,#0666dd);
 }
 
-
-.arsip-filter-button:hover {
-    transform:
-        translateY(-1px);
+.arsip-page .ar-kpi-icon svg {
+    width: 24px;
+    height: 24px;
 }
 
-
-.arsip-reset-button {
-    border: 0;
-
-    background: #e7f0fb;
-
-    color: #34567e;
+.arsip-page .ar-kpi-icon.ar-purple {
+    background: linear-gradient(145deg,#9862ff,#6334db);
 }
 
-
-.arsip-reset-button:hover {
-    background: #dceaf8;
+.arsip-page .ar-kpi-icon.ar-orange {
+    background: linear-gradient(145deg,#ffb53f,#f2850b);
 }
 
-
-.arsip-filter-button svg,
-.arsip-reset-button svg {
-    width: 14px;
-    height: 14px;
+.arsip-page .ar-kpi-deco {
+    position: absolute;
+    right: 11px;
+    bottom: 13px;
+    width: 33px;
+    height: 33px;
+    color: #c7defa;
+    opacity: .55;
+    pointer-events: none;
 }
 
+/* === 05. Layout dan kartu konten === */
+.arsip-page .ar-workspace {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(265px,300px);
+    gap: 13px;
+    align-items: start;
+}
 
-/* =========================================================
-   TABLE HEADER
-========================================================= */
+.arsip-page .ar-workspace.ar-detail-closed {
+    grid-template-columns: minmax(0,1fr);
+}
 
-.arsip-table-header {
-    min-height: 54px;
+.arsip-page .ar-main {
+    display: grid;
+    gap: 13px;
+    min-width: 0;
+}
 
+.arsip-page .ar-card {
+    background: #fff;
+    border: 1px solid var(--ar-border);
+    border-radius: var(--ar-radius);
+    padding: 14px;
+    min-width: 0;
+    box-shadow: 0 4px 14px #1f4d7808;
+}
+
+.arsip-page .ar-muted {
+    color: var(--ar-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* === 06. Lokasi penyimpanan === */
+.arsip-page .ar-location>.ar-muted {
+    margin: 4px 0 12px;
+}
+
+.arsip-page .ar-location-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) 15px minmax(0,1fr) 15px minmax(0,1fr) 15px minmax(0,1fr);
+    align-items: center;
+    gap: 5px;
+}
+
+.arsip-page .ar-location-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    padding: 8px;
+    border: 1px solid #d6e4f4;
+    border-radius: 9px;
+    background: #f9fbff;
+    color: var(--ar-navy);
+    min-width: 0;
+    min-height: 56px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.arsip-page .ar-location-item:hover {
+    border-color: #86b9f4;
+    background: #eef6ff;
+}
+
+.arsip-page .ar-location-item>svg {
+    width: 29px;
+    height: 29px;
+    flex-shrink: 0;
+    padding: 4px;
+    background: #e5f0ff;
+    color: var(--ar-blue);
+    border-radius: 6px;
+}
+
+.arsip-page .ar-location-item span {
+    min-width: 0;
+}
+
+.arsip-page .ar-location-item strong,.arsip-page .ar-location-item small {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.arsip-page .ar-location-item strong {
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.arsip-page .ar-location-item small {
+    font-size: 10px;
+    color: var(--ar-muted);
+    margin-top: 2px;
+}
+
+.arsip-page .ar-arrow {
+    width: 15px;
+    height: 15px;
+    color: #7b9fc8;
+}
+
+.arsip-page .ar-quick {
+    margin-top: 11px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.arsip-page .ar-quick>strong {
+    font-size: 11px;
+}
+
+.arsip-page .ar-quick-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: 76px;
+    overflow: auto;
+}
+
+.arsip-page .ar-quick-btn {
+    border: 1px solid var(--ar-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ar-text);
+    font: inherit;
+    font-size: 10px;
+    padding: 5px 9px;
+    cursor: pointer;
+}
+
+.arsip-page .ar-quick-btn:hover {
+    background: #eaf3ff;
+    color: var(--ar-blue);
+}
+
+/* === 07. Filter dan input === */
+.arsip-page .ar-filter h2 {
+    margin-bottom: 11px;
+}
+
+.arsip-page .ar-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(5,minmax(0,1fr));
+    gap: 10px;
+}
+
+.arsip-page label {
+    display: block;
+    color: var(--ar-navy);
+    font-size: 11px;
+    font-weight: 650;
+    min-width: 0;
+}
+
+.arsip-page .ar-span2 {
+    grid-column: span 2;
+}
+
+.arsip-page input:not([type=radio]):not([type=hidden]),.arsip-page select,.arsip-page textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #cdddf0;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ar-text);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 9px;
+    min-height: 35px;
+    margin-top: 5px;
+    outline: none;
+}
+
+.arsip-page input:focus,.arsip-page select:focus,.arsip-page textarea:focus {
+    border-color: #579df1;
+    box-shadow: 0 0 0 2px #dcecff;
+}
+
+.arsip-page input::placeholder {
+    color: #8a9db6;
+}
+
+.arsip-page textarea {
+    resize: vertical;
+}
+
+.arsip-page label small {
+    display: block;
+    color: var(--ar-muted);
+    font-weight: 400;
+    margin-top: 4px;
+}
+
+.arsip-page .ar-search {
+    position: relative;
+}
+
+.arsip-page .ar-search>svg {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    width: 15px;
+    height: 15px;
+    transform: translateY(-50%);
+    color: #6989af;
+    pointer-events: none;
+}
+
+.arsip-page .ar-search input {
+    padding-left: 31px;
+}
+
+.arsip-page .ar-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    margin-top: 11px;
+    flex-wrap: wrap;
+}
+
+.arsip-page .ar-filter-actions>label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-right: auto;
+}
+
+.arsip-page .ar-filter-actions select {
+    width: auto;
+    margin: 0;
+    min-height: 33px;
+}
+
+/* === 08. Tabel dokumen dan aksi === */
+.arsip-page .ar-card-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    gap: 15px;
-
-    padding:
-        10px
-        16px;
+    gap: 9px;
+    margin-bottom: 11px;
 }
 
-
-.arsip-export-button {
-    height: 35px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 6px;
-
-    padding:
-        0
-        11px;
-
-    border: 1px solid #d9e3ee;
-
-    border-radius: 6px;
-
-    background: white;
-
-    color: #334f72;
-
-    font-size: 10.5px;
-
-    font-weight: 500;
-
-    cursor: pointer;
+.arsip-page .ar-card-heading .ar-btn {
+    min-height: 31px;
+    padding: 6px 10px;
+    font-size: 11px;
 }
 
+.arsip-page .ar-table-wrap {
+    overflow: auto;
+    border: 1px solid var(--ar-border);
+    border-radius: 7px;
+    max-width: 100%;
+}
 
-.arsip-export-button:hover {
-    border-color: #c0d1e3;
+.arsip-page .ar-table {
+    width: 100%;
+    min-width: 830px;
+    border-collapse: collapse;
+    font-size: 11px;
+    line-height: 1.4;
+    table-layout: auto;
+}
 
+.arsip-page .ar-table th {
+    background: #e9f2fd;
+    color: #17385e;
+    font-weight: 750;
+    text-align: left;
+    white-space: nowrap;
+    padding: 9px 8px;
+    border: 1px solid #dce7f4;
+    border-top: 0;
+}
+
+.arsip-page .ar-table td {
+    padding: 8px;
+    border: 1px solid #e1eaf5;
+    color: var(--ar-text);
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+.arsip-page .ar-table th:first-child,.arsip-page .ar-table td:first-child {
+    text-align: center;
+    border-left: 0;
+}
+
+.arsip-page .ar-table th:last-child,.arsip-page .ar-table td:last-child {
+    border-right: 0;
+}
+
+.arsip-page .ar-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.arsip-page .ar-table tbody tr:nth-child(even) {
     background: #f8fbff;
 }
 
-
-.arsip-export-button svg {
-    width: 13px;
-    height: 13px;
+.arsip-page .ar-table tbody tr:hover,.arsip-page .ar-table tbody tr.ar-selected {
+    background: #e4efff;
 }
 
+.arsip-page .ar-table td:nth-child(2) {
+    min-width: 150px;
+    max-width: 220px;
+}
 
-/* =========================================================
-   TABLE
-========================================================= */
+.arsip-page .ar-table td:nth-child(4) {
+    min-width: 145px;
+    max-width: 200px;
+}
 
-.arsip-table {
-    width: 100%;
+.arsip-page .ar-table td small {
+    display: block;
+    font-size: 10px;
+    margin-top: 3px;
+    color: var(--ar-muted);
+}
 
-    border-collapse: collapse;
+.arsip-page .ar-title-link {
+    font: inherit;
+    font-weight: 700;
+    color: #173a66;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 
+.arsip-page .ar-title-link:hover {
+    color: var(--ar-blue);
+    text-decoration: underline;
+}
+
+.arsip-page .ar-pill {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #edf3fa;
+    color: #2b527d;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+}
+
+.arsip-page .ar-retention {
+    font-size: 10px !important;
+    font-weight: 650;
+}
+
+.arsip-page .ar-active {
+    color: #14834b !important;
+}
+
+.arsip-page .ar-near {
+    color: #a56a00 !important;
+}
+
+.arsip-page .ar-expired {
+    color: #c0393e !important;
+}
+
+.arsip-page .ar-unknown {
+    color: #6b7f99 !important;
+}
+
+.arsip-page .ar-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     white-space: nowrap;
 }
 
-
-.arsip-table thead th {
-    height: 42px;
-
-    padding:
-        9px
-        11px;
-
-    border:
-        1px solid #dce6ef;
-
-    background:
-        linear-gradient(
-            180deg,
-            #e9f4ff,
-            #dfeefa
-        );
-
-    color: #17325a;
-
-    font-size: 10.5px;
-
-    font-weight: 700;
-
-    text-align: left;
-
-    vertical-align: middle;
-}
-
-
-.arsip-table tbody td {
-    height: 42px;
-
-    padding:
-        9px
-        11px;
-
-    border:
-        1px solid #e4ebf2;
-
-    color: #354f73;
-
-    font-size: 11px;
-
-    vertical-align: middle;
-}
-
-
-.arsip-table tbody tr {
-    background: #ffffff;
-
-    cursor: pointer;
-
-    transition:
-        background .14s ease;
-}
-
-
-.arsip-table tbody tr:nth-child(even) {
-    background: #fbfdff;
-}
-
-
-.arsip-table tbody tr:hover {
-    background: #f3f8fe;
-}
-
-
-.arsip-table tbody tr.selected {
-    background: #eaf4ff;
-}
-
-
-.arsip-doc-title {
-    color: #17305a;
-
-    font-size: 11px;
-
-    font-weight: 650;
-}
-
-
-.table-sub {
-    display: block;
-
-    margin-top: 3px;
-
-    color: #7d8ea5;
-
-    font-size: 10px;
-}
-
-
-.action-column {
-    text-align: center !important;
-}
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-.arsip-status {
-    display: inline-flex;
-    align-items: center;
-
-    gap: 6px;
-
-    padding:
-        5px
-        10px;
-
-    border-radius: 20px;
-
-    font-size: 10px;
-
-    font-weight: 650;
-}
-
-
-.arsip-status > span {
-    width: 7px;
-    height: 7px;
-
-    border-radius: 50%;
-}
-
-
-.arsip-status.good {
-    background: #ddf6e8;
-
-    color: #17834e;
-}
-
-
-.arsip-status.good > span {
-    background: #21aa61;
-}
-
-
-.arsip-status.warning {
-    background: #fff0ce;
-
-    color: #bc7600;
-}
-
-
-.arsip-status.warning > span {
-    background: #f3a412;
-}
-
-
-/* =========================================================
-   ROW ACTION
-========================================================= */
-
-.arsip-row-actions {
-    display: flex;
-    justify-content: center;
-
-    gap: 6px;
-}
-
-
-.arsip-row-actions button {
+.arsip-page .ar-icon-btn {
+    min-height: 29px;
     width: 30px;
-    height: 30px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 0;
-
-    border-radius: 6px;
-
-    cursor: pointer;
-
-    transition:
-        transform .14s ease,
-        opacity .14s ease;
+    padding: 5px;
+    border-color: #d6e5f5;
+    background: #f2f7ff;
+    color: #1767c6;
+    flex-shrink: 0;
 }
 
-
-.arsip-row-actions button:hover {
-    transform:
-        translateY(-1px);
-
-    opacity: .9;
+.arsip-page .ar-icon-btn:hover {
+    background: #e0eeff;
 }
 
-
-.arsip-row-actions svg {
-    width: 14px;
-    height: 14px;
+.arsip-page .ar-icon-btn.ar-edit {
+    background: #fff5df;
+    color: #a5680c;
+    border-color: #fae7bd;
 }
 
-
-.arsip-row-actions .view {
-    border: 1px solid #bdd9fa;
-
-    background: #ffffff;
-
-    color: #1476df;
+.arsip-page .ar-icon-btn.ar-download {
+    background: var(--ar-blue);
+    color: #fff;
+    border-color: var(--ar-blue);
 }
 
-
-.arsip-row-actions .edit {
-    border: 1px solid #c0daf7;
-
-    background: #ffffff;
-
-    color: #1476df;
+.arsip-page .ar-empty {
+    text-align: center !important;
+    padding: 34px 12px !important;
+    color: var(--ar-muted) !important;
 }
 
-
-.arsip-row-actions .download {
-    background: #1374de;
-
-    color: white;
-}
-
-
-/* =========================================================
-   TABLE FOOTER
-========================================================= */
-
-.arsip-table-footer {
-    min-height: 58px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 15px;
-
-    padding:
-        10px
-        15px;
-
-    border-top:
-        1px solid #eef2f6;
-}
-
-
-.arsip-table-info {
-    color: #5f7390;
-
-    font-size: 10.5px;
-}
-
-
-.arsip-table-info strong {
-    color: #1e385f;
-}
-
-
-.arsip-pagination-area {
-    display: flex;
-    align-items: center;
-
-    gap: 12px;
-}
-
-
-.arsip-pagination-area > select {
-    height: 36px;
-
-    padding:
-        0
-        25px
-        0
-        10px;
-
-    border: 1px solid #d9e3ed;
-
-    border-radius: 6px;
-
-    background: white;
-
-    color: #3b5577;
-
-    font-size: 10.5px;
-}
-
-
-.arsip-pagination {
-    display: flex;
-    align-items: center;
-
-    gap: 5px;
-}
-
-
-.arsip-pagination button {
-    min-width: 34px;
-    height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 1px solid #dce5ee;
-
-    border-radius: 6px;
-
-    background: white;
-
-    color: #496481;
-
-    font-size: 10.5px;
-
-    cursor: pointer;
-
-    transition:
-        background .15s ease,
-        border-color .15s ease,
-        color .15s ease;
-}
-
-
-.arsip-pagination button:hover:not(:disabled):not(.active) {
-    border-color: #bdd2e8;
-
-    background: #f4f9ff;
-}
-
-
-.arsip-pagination button.active {
-    border-color: #1471db;
-
-    background: #1471db;
-
-    color: white;
-}
-
-
-.arsip-pagination button:disabled {
-    opacity: .45;
-
-    cursor: not-allowed;
-}
-
-
-.arsip-pagination button svg {
-    width: 13px;
-    height: 13px;
-}
-
-
-.arsip-pagination span {
-    color: #667b96;
-
-    font-size: 10.5px;
-}
-
-
-/* =========================================================
-   DETAIL PANEL
-========================================================= */
-
-.arsip-detail-card {
-    position: sticky;
-
-    top: 76px;
-
-    padding-bottom: 15px;
-}
-
-
-.arsip-detail-header {
-    min-height: 56px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding:
-        0
-        16px;
-
-    border-bottom:
-        1px solid #edf1f5;
-}
-
-
-.arsip-detail-header h3 {
-    margin: 0;
-
-    color: #10264d;
-
-    font-size: 15px;
-
-    font-weight: 700;
-}
-
-
-.arsip-detail-close {
-    width: 31px;
-    height: 31px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 0;
-
-    border-radius: 7px;
-
-    background: transparent;
-
-    color: #41618a;
-
-    cursor: pointer;
-}
-
-
-.arsip-detail-close:hover {
-    background: #eff5fb;
-}
-
-
-.arsip-detail-close svg {
-    width: 17px;
-    height: 17px;
-}
-
-
-/* =========================================================
-   DETAIL DOCUMENT
-========================================================= */
-
-.arsip-detail-document {
-    display: grid;
-
-    grid-template-columns:
-        50px
-        minmax(0,1fr)
-        auto;
-
-    align-items: center;
-
-    gap: 10px;
-
-    padding:
-        15px
-        16px;
-}
-
-
-.arsip-detail-file-icon {
-    width: 50px;
-    height: 50px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 10px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #edf5ff,
-            #e3effc
-        );
-
-    color: #1473dd;
-}
-
-
-.arsip-detail-file-icon svg {
+.arsip-page .ar-empty svg {
+    display: block;
     width: 26px;
     height: 26px;
+    margin: 0 auto 8px;
+    color: #8bb5e3;
 }
 
-
-.arsip-detail-file-title strong {
+.arsip-page .ar-empty strong,.arsip-page .ar-empty span {
     display: block;
-
-    color: #142b53;
-
-    font-size: 12px;
-
-    line-height: 1.4;
+    margin-top: 4px;
 }
 
-
-.arsip-detail-status {
-    display: inline-flex;
-    align-items: center;
-
-    gap: 5px;
-
-    padding:
-        5px
-        9px;
-
-    border-radius: 20px;
-
-    font-size: 10px;
-
-    font-weight: 650;
-}
-
-
-.arsip-detail-status span {
-    width: 7px;
-    height: 7px;
-
-    border-radius: 50%;
-}
-
-
-.arsip-detail-status.good {
-    background: #ddf6e8;
-
-    color: #16804c;
-}
-
-
-.arsip-detail-status.good span {
-    background: #20aa61;
-}
-
-
-.arsip-detail-status.warning {
-    background: #fff0ce;
-
-    color: #bb7400;
-}
-
-
-.arsip-detail-status.warning span {
-    background: #efa215;
-}
-
-
-/* =========================================================
-   DETAIL SECTION
-========================================================= */
-
-.detail-section {
-    padding:
-        0
-        13px
-        14px;
-}
-
-
-.detail-section-heading {
-    min-height: 34px;
-
+.arsip-page .ar-footer {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-
-    gap: 7px;
-
-    padding:
-        0
-        10px;
-
-    border-radius: 7px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #edf5fd,
-            #f4f8fc
-        );
-
-    color: #17345e;
-
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
     font-size: 11px;
-
-    font-weight: 700;
+    color: var(--ar-muted);
 }
 
-
-.detail-section-heading svg {
-    width: 15px;
-    height: 15px;
-
-    color: #1974d8;
+.arsip-page .ar-pager {
+    display: flex;
+    gap: 4px;
 }
 
-
-/* =========================================================
-   DETAIL DATA
-========================================================= */
-
-.detail-data-list {
-    padding:
-        10px
-        8px
-        0;
-}
-
-
-.detail-data-list > div {
+.arsip-page .ar-pager a,.arsip-page .ar-pager span {
     display: grid;
-
-    grid-template-columns:
-        118px 1fr;
-
-    gap: 9px;
-
-    padding:
-        5px
-        0;
+    place-items: center;
+    min-width: 28px;
+    height: 29px;
+    border: 1px solid var(--ar-border);
+    border-radius: 5px;
+    background: #f7faff;
+    color: #285b96;
+    text-decoration: none;
+    padding: 0 5px;
 }
 
-
-.detail-data-list span,
-.detail-location-list span,
-.detail-retention-list span {
-    color: #637895;
-
-    font-size: 10.5px;
+.arsip-page .ar-pager a.ar-current {
+    background: var(--ar-blue);
+    color: #fff;
+    border-color: var(--ar-blue);
 }
 
+/* === 09. Panel detail === */
+.arsip-page .ar-detail {
+    position: sticky;
+    top: 12px;
+    align-self: start;
+}
 
-.detail-data-list strong {
-    color: #1b365f;
+.arsip-page .ar-detail-title {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 13px 0;
+}
 
-    font-size: 11px;
+.arsip-page .ar-detail-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 9px;
+    background: #e8f2ff;
+    color: var(--ar-blue);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
 
-    font-weight: 600;
+.arsip-page .ar-detail-icon svg {
+    width: 24px;
+    height: 24px;
+}
 
+.arsip-page .ar-detail-title>div:last-child {
+    min-width: 0;
+}
+
+.arsip-page .ar-detail-title h3 {
+    font-size: 14px;
+    font-weight: 750;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+    margin-bottom: 5px;
 }
 
-
-.detail-inline-status {
-    width: fit-content;
-
-    padding:
-        4px
-        9px;
-
-    border-radius: 20px;
-
-    font-size: 10px;
-}
-
-
-.detail-inline-status.good {
-    background: #ddf6e8;
-
-    color: #18824e;
-}
-
-
-.detail-inline-status.warning {
-    background: #fff0ce;
-
-    color: #bd7800;
-}
-
-
-/* =========================================================
-   LOCATION DETAIL
-========================================================= */
-
-.detail-location-list,
-.detail-retention-list {
-    padding:
-        10px
-        8px
-        0;
-}
-
-
-.detail-location-list > div,
-.detail-retention-list > div {
-    display: grid;
-
-    grid-template-columns:
-        20px
-        105px
-        1fr;
-
-    align-items: center;
-
-    gap: 6px;
-
-    padding:
-        6px
-        0;
-}
-
-
-.detail-location-list svg,
-.detail-retention-list svg {
-    width: 15px;
-    height: 15px;
-
-    color: #1474db;
-}
-
-
-.detail-location-list strong,
-.detail-retention-list strong {
-    color: #1c375e;
-
+.arsip-page .ar-detail h4 {
     font-size: 11px;
-
-    font-weight: 600;
-}
-
-
-.detail-retention-list strong.remaining {
-    color: #1b9d58;
-}
-
-
-/* =========================================================
-   DETAIL ACTION
-========================================================= */
-
-.arsip-detail-actions {
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 9px;
-
-    padding:
-        3px
-        13px
-        0;
-}
-
-
-.detail-view-button,
-.detail-download-button {
-    min-height: 44px;
-
+    font-weight: 750;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    background: #edf4fc;
+    padding: 7px 8px;
+    border-radius: 6px;
+    margin: 10px 0 7px;
+}
 
-    gap: 7px;
+.arsip-page .ar-detail h4 svg {
+    width: 14px;
+    height: 14px;
+    color: var(--ar-blue);
+}
 
-    border-radius: 8px;
-
+.arsip-page .ar-detail dl {
+    display: grid;
+    grid-template-columns: minmax(0,42%) minmax(0,1fr);
+    gap: 5px 9px;
     font-size: 11px;
-
-    font-weight: 650;
-
-    cursor: pointer;
+    line-height: 1.4;
+    padding: 0 3px;
 }
 
-
-.detail-view-button {
-    border: 1px solid #1371db;
-
-    background: #ffffff;
-
-    color: #126cd0;
+.arsip-page .ar-detail dt {
+    font-weight: 500;
+    color: var(--ar-muted);
 }
 
-
-.detail-download-button {
-    border: 1px solid #1371db;
-
-    background:
-        linear-gradient(
-            90deg,
-            #1678e1,
-            #0a67cf
-        );
-
-    color: white;
+.arsip-page .ar-detail dd {
+    margin: 0;
+    color: var(--ar-navy);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }
 
-
-.detail-view-button:hover {
-    background: #f4f9ff;
+.arsip-page .ar-detail-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 12px;
 }
 
-
-.detail-download-button:hover {
-    background:
-        linear-gradient(
-            90deg,
-            #126ed4,
-            #075ebe
-        );
+.arsip-page .ar-detail-actions .ar-btn {
+    font-size: 10px;
+    padding: 8px 5px;
+    white-space: normal;
 }
 
-
-.detail-view-button svg,
-.detail-download-button svg {
-    width: 15px;
-    height: 15px;
+.arsip-page #arDetailEdit {
+    grid-column: 1/-1;
 }
 
-
-/* =========================================================
-   DETAIL CLOSED
-========================================================= */
-
-.arsip-detail-card.detail-hidden {
-    display: none;
+.arsip-page .ar-alert {
+    padding: 11px 14px;
+    margin-bottom: 13px;
+    border: 1px solid;
+    border-radius: 8px;
+    line-height: 1.5;
 }
 
-
-.arsip-workspace.detail-closed {
-    grid-template-columns: 1fr;
+.arsip-page .ar-alert ul {
+    margin: 5px 0 0;
+    padding-left: 20px;
 }
 
-
-/* =========================================================
-   RESPONSIVE 1450
-========================================================= */
-
-@media (max-width: 1450px) {
-
-    .arsip-workspace {
-        grid-template-columns:
-            minmax(0,1fr)
-            330px;
-    }
-
-
-    .storage-node {
-        min-width: 135px;
-    }
-
-
-    .storage-location-chips {
-        grid-template-columns:
-            repeat(2,minmax(0,1fr));
-    }
-
+.arsip-page .ar-ok {
+    background: #eaf8ef;
+    border-color: #b7e0c5;
+    color: #17693a;
 }
 
-
-/* =========================================================
-   RESPONSIVE 1250
-========================================================= */
-
-@media (max-width: 1250px) {
-
-    .arsip-kpi-grid {
-        grid-template-columns:
-            repeat(2,1fr);
-    }
-
-
-    .arsip-storage-content {
-        grid-template-columns: 1fr;
-    }
-
-
-    .storage-other {
-        padding-left: 0;
-        padding-top: 15px;
-
-        border-left: 0;
-
-        border-top:
-            1px solid #e3ebf3;
-    }
-
-
-    .storage-location-chips {
-        grid-template-columns:
-            repeat(3,1fr);
-    }
-
-
-    .arsip-filter-grid {
-        grid-template-columns:
-            repeat(2,1fr);
-    }
-
-
-    .arsip-filter-actions {
-        grid-column:
-            1 / 3;
-    }
-
+.arsip-page .ar-error {
+    background: #fff2f2;
+    border-color: #edc5c5;
+    color: #a1292e;
 }
 
+/* === 10. Dialog dan form arsip === */
+.arsip-page .ar-dialog {
+    border: 1px solid #d5e3f1;
+    border-radius: 13px;
+    width: min(780px,calc(100vw - 26px));
+    max-width: none;
+    max-height: 90vh;
+    max-height: 90dvh;
+    padding: 0;
+    background: #fff;
+    color: var(--ar-navy);
+    box-shadow: 0 22px 80px #0b2c5350;
+    overflow: hidden;
+    margin: auto;
+    z-index: 1100;
+}
 
-/* =========================================================
-   RESPONSIVE 1050
-========================================================= */
+.arsip-page .ar-dialog::backdrop {
+    background: #142a468c;
+    backdrop-filter: blur(2px);
+}
 
-@media (max-width: 1050px) {
+.arsip-page .ar-dialog form {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    max-height: 90dvh;
+    min-height: 0;
+}
 
-    .arsip-page-header {
-        align-items: flex-start;
+.arsip-page .ar-dialog-head,.arsip-page .ar-dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 18px;
+    background: #f7faff;
+    flex-shrink: 0;
+}
+
+.arsip-page .ar-dialog-head {
+    border-bottom: 1px solid var(--ar-border);
+}
+
+.arsip-page .ar-dialog-head h2 {
+    font-size: 19px;
+    margin: 0 0 5px;
+}
+
+.arsip-page .ar-dialog-body {
+    overflow: auto;
+    padding: 16px 18px;
+    min-height: 0;
+}
+
+.arsip-page .ar-dialog-body h3 {
+    font-size: 13px;
+    font-weight: 750;
+    margin: 0 0 9px;
+}
+
+.arsip-page .ar-dialog-body h3:not(:first-child) {
+    margin-top: 17px;
+}
+
+.arsip-page .ar-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 11px;
+}
+
+.arsip-page .ar-dialog-footer {
+    justify-content: flex-end;
+    border-top: 1px solid var(--ar-border);
+}
+
+.arsip-page .ar-index-choice {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 11px;
+}
+
+.arsip-page .ar-index-choice label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.arsip-page .ar-index-choice input {
+    accent-color: var(--ar-blue);
+}
+
+.arsip-page #arExistingIndex {
+    display: grid;
+    gap: 10px;
+}
+
+.arsip-page .ar-note {
+    border: 1px solid #c9def6;
+    background: #edf5ff;
+    border-radius: 7px;
+    color: #375b86;
+    font-size: 11px;
+    padding: 9px;
+}
+
+/* === 11. Responsive === */
+@media(max-width:1400px) {
+    .arsip-page .ar-kpi {
+        gap: 9px;
+        padding: 12px 10px;
     }
-
-
-    .arsip-header-actions {
-        flex-wrap: wrap;
-
-        justify-content: flex-end;
+    .arsip-page .ar-kpi-icon {
+        flex-basis: 42px;
+        height: 42px;
     }
-
-
-    .arsip-workspace {
-        grid-template-columns: 1fr;
+    .arsip-page .ar-kpi strong {
+        font-size: 23px;
     }
+    .arsip-page .ar-kpi-deco {
+        display: none;
+    }
+    .arsip-page .ar-filter-grid {
+        grid-template-columns: repeat(4,minmax(0,1fr));
+    }
+    .arsip-page .ar-location-item {
+        gap: 5px;
+    }
+    .arsip-page .ar-location-item>svg {
+        width: 25px;
+        height: 25px;
+    }
+}
 
-
-    .arsip-detail-card {
+@media(max-width:1150px) {
+    .arsip-page .ar-workspace {
+        grid-template-columns: minmax(0,1fr);
+    }
+    .arsip-page .ar-detail {
         position: static;
     }
-
-
-    .storage-flow {
-        overflow-x: auto;
-
-        padding-bottom: 5px;
+    .arsip-page .ar-detail dl {
+        grid-template-columns: minmax(0,32%) minmax(0,1fr);
     }
-
+    .arsip-page .ar-kpis {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+    }
 }
 
-
-/* =========================================================
-   RESPONSIVE TABLET
-========================================================= */
-
-@media (max-width: 760px) {
-
-    .arsip-page-header {
+@media(max-width:760px) {
+    .arsip-page .ar-header {
+        align-items: flex-start;
         flex-direction: column;
-
-        align-items: stretch;
     }
-
-
-    .arsip-header-actions {
+    .arsip-page .ar-header h1 {
+        font-size: 27px;
+    }
+    .arsip-page .ar-header-actions {
         width: 100%;
-
         justify-content: space-between;
+        flex-wrap: wrap;
     }
-
-
-    .arsip-date-card {
-        flex: 1;
+    .arsip-page .ar-clock {
+        min-width: 0;
     }
-
-
-    .arsip-heading h1 {
-        font-size: 28px;
+    .arsip-page .ar-kpis {
+        gap: 8px;
     }
-
-
-    .arsip-heading p {
-        font-size: 12px;
+    .arsip-page .ar-kpi {
+        min-height: 88px;
+        align-items: flex-start;
     }
-
-
-    .arsip-kpi-grid {
+    .arsip-page .ar-kpi-icon {
+        flex-basis: 34px;
+        height: 34px;
+        border-radius: 7px;
+    }
+    .arsip-page .ar-kpi-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+    .arsip-page .ar-kpi strong {
+        font-size: 20px;
+    }
+    .arsip-page .ar-kpi small {
+        font-size: 9px;
+    }
+    .arsip-page .ar-card {
+        padding: 11px;
+    }
+    .arsip-page .ar-location-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 7px;
+    }
+    .arsip-page .ar-arrow {
+        display: none;
+    }
+    .arsip-page .ar-filter-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+    }
+    .arsip-page .ar-form-grid {
         grid-template-columns: 1fr;
     }
-
-
-    .storage-location-chips {
-        grid-template-columns:
-            repeat(2,1fr);
-    }
-
-
-    .arsip-filter-grid {
-        grid-template-columns: 1fr;
-    }
-
-
-    .arsip-filter-actions {
+    .arsip-page .ar-form-grid .ar-span2 {
         grid-column: auto;
     }
-
-
-    .arsip-table-footer {
-        align-items: flex-start;
-
-        flex-direction: column;
+    .arsip-page .ar-dialog-head,.arsip-page .ar-dialog-body,.arsip-page .ar-dialog-footer {
+        padding: 12px;
     }
-
-
-    .arsip-pagination-area {
-        width: 100%;
-
-        overflow-x: auto;
-
-        padding-bottom: 3px;
+    .arsip-page .ar-detail dl {
+        grid-template-columns: 40% minmax(0,1fr);
     }
-
 }
 
-
-/* =========================================================
-   RESPONSIVE PHONE
-========================================================= */
-
-@media (max-width: 520px) {
-
-    .arsip-header-actions {
-        flex-direction: column;
-
-        align-items: stretch;
-    }
-
-
-    .arsip-add-button,
-    .arsip-date-card {
-        width: 100%;
-    }
-
-
-    .arsip-heading h1 {
-        font-size: 26px;
-    }
-
-
-    .arsip-kpi-content > strong {
-        font-size: 24px;
-    }
-
-
-    .storage-location-chips {
-        grid-template-columns: 1fr;
-    }
-
-
-    .arsip-filter-actions {
-        flex-direction: column;
-    }
-
-
-    .arsip-filter-button,
-    .arsip-reset-button {
-        width: 100%;
-    }
-
-
-    .arsip-detail-actions {
-        grid-template-columns: 1fr;
-    }
-
-
-    .detail-data-list > div {
-        grid-template-columns:
-            105px 1fr;
-    }
-
-
-    .detail-location-list > div,
-    .detail-retention-list > div {
-        grid-template-columns:
-            20px
-            90px
-            1fr;
-    }
-
+.arsip-page .ar-pill.ar-good {
+    background: #dcf6e7;
+    color: #147747;
 }
