@@ -22,9 +22,9 @@ use Illuminate\Http\Request;
 */
 
 Route::get('/', function (Request $request) {
-    return redirect()->route(\App\Http\Middleware\EnsureAsetAdmin::allows(
-        $request->user('web')?->email
-    ) ? 'dashboard' : 'login');
+    $profile = app(\App\Services\AsetAccessService::class)->profile($request->user('web'));
+
+    return redirect()->route($profile['active'] ? 'dashboard' : 'login');
 });
 
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])
@@ -39,6 +39,17 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 
 // Semua menu aplikasi dan endpoint penulisan diproteksi.
 Route::middleware(['auth:web', \App\Http\Middleware\EnsureAsetAdmin::class])->group(function () {
+
+    // Master Data — akun legacy dan hak akses khusus Sistem Aset.
+    Route::get('/master-data/user', [\App\Http\Controllers\AsetUserController::class, 'index'])
+        ->name('master.data_user');
+
+    Route::post('/master-data/user', [\App\Http\Controllers\AsetUserController::class, 'store'])
+        ->name('master.data_user.store');
+
+    Route::put('/master-data/user/{user}', [\App\Http\Controllers\AsetUserController::class, 'update'])
+        ->whereNumber('user')
+        ->name('master.data_user.update');
 
     // ------------------------------------------------
     // DASHBOARD ROUTES

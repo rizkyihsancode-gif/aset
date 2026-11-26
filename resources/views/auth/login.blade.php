@@ -385,10 +385,10 @@
 
                         <label class="remember-me">
 
-                            <input type="checkbox" name="remember" value="1">
+                            <input type="checkbox" disabled aria-label="Ingat saya tidak tersedia untuk akun bersama">
 
                             <span>
-                                Ingat saya
+                                Ingat saya (nonaktif)
                             </span>
 
                         </label>

@@ -9,6 +9,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Jangan mengubah hash password legacy ketika pengguna login.
+        config(['hashing.rehash_on_login' => false]);
+
         /*
         |--------------------------------------------------------------------------
         | K.I.B Notification Service

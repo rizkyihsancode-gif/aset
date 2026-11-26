@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\EnsureAsetAdmin;
+use App\Services\AsetAccessService;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -14,15 +15,16 @@ class AuthenticatedSessionController extends Controller
 {
     public function create(Request $request): View|RedirectResponse
     {
+        /** @var SessionGuard $guard */
         $guard = Auth::guard('web');
 
-        if (EnsureAsetAdmin::allows($guard->user()?->email)) {
+        if (app(AsetAccessService::class)->profile($guard->user())['active']) {
             return redirect()->route('dashboard');
         }
 
-        // Sesi pengguna lama yang bukan Admin tidak boleh mengakses Aset.
+        // Sesi pengguna tanpa akses Aset tidak boleh mengakses Aset.
         if ($guard->check()) {
-            $guard->logout();
+            $guard->logoutCurrentDevice();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
         }
@@ -41,11 +43,13 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        /** @var SessionGuard $guard */
+        $guard = Auth::guard('web');
+
+        $guard->logoutCurrentDevice();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
     }
 }
-    

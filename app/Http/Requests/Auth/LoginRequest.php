@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Http\Middleware\EnsureAsetAdmin;
+use App\Services\AsetAccessService;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -36,13 +38,16 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (
-            ! EnsureAsetAdmin::allows($this->input('email'))
-            || ! Auth::guard('web')->attempt(
-                $this->only('email', 'password'),
-                $this->boolean('remember')
-            )
-        ) {
+        $access = app(AsetAccessService::class);
+
+        /** @var SessionGuard $guard */
+        $guard = Auth::guard('web');
+
+        if (! $guard->attemptWhen(
+            $this->only('email', 'password'),
+            fn(Authenticatable $user): bool => $access->profile($user)['active'],
+            false
+        )) {
             RateLimiter::hit($this->throttleKey(), 60);
 
             throw ValidationException::withMessages([

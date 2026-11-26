@@ -45,18 +45,18 @@
         <div class="header-user">
 
             <div class="header-avatar">
-                A
+                {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr((string) auth('web')->user()?->name, 0, 1)) }}
             </div>
 
 
-            <div class="header-user-info">
+            <div class="header-user-info" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis;">
 
-                <strong>
-                    Administrator
+                <strong class="text-truncate" title="{{ auth('web')->user()?->name }}">
+                    {{ auth('web')->user()?->name }}
                 </strong>
 
                 <span>
-                    Super Admin
+                    {{ app(\App\Services\AsetAccessService::class)->label(request()->attributes->get('aset_access', ['role' => null, 'active' => false, 'modules' => []])) }}
                 </span>
 
             </div>

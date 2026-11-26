@@ -12,12 +12,20 @@
     |--------------------------------------------------------------------------
     */
 
-    $kibNotification = $kibNotificationService->summary();
+    $asetAccess = app(\App\Services\AsetAccessService::class);
+    $asetProfile = request()->attributes->get('aset_access', ['role' => null, 'active' => false, 'modules' => []]);
+    $isMaster = $asetProfile['active'] && $asetProfile['role'] === 'master';
+    $canKib = fn(string $module): bool => $asetAccess->can($asetProfile, $module);
+    $hasKib =
+        $isMaster || ($asetProfile['active'] && $asetProfile['role'] === 'user' && count($asetProfile['modules']) > 0);
+    $kibNotification = $hasKib ? $kibNotificationService->summary() : [];
 
-    $kibTotalNotification = max(
-        0,
-        (int) ($kibNotification['_total'] ?? 0) - (int) ($kibNotification['konstruksi']['total'] ?? 0),
-    );
+    $kibTotalNotification = 0;
+    foreach (['tanah', 'mesin', 'gedung', 'jalan', 'aset_tetap', 'kir'] as $key) {
+        if ($canKib($key === 'aset_tetap' ? 'aset_ttp' : $key)) {
+            $kibTotalNotification += (int) ($kibNotification[$key]['total'] ?? 0);
+        }
+    }
 
     $masterOpen = request()->is('master-data/*');
     $kibOpen = request()->is('kib/*');
@@ -96,405 +104,437 @@
              PENGELOLAAN
         ==================================================== --}}
 
-        <div class="sidebar-section-title">
-            PENGELOLAAN
-        </div>
+        @if ($isMaster || $hasKib)
+            <div class="sidebar-section-title">
+                PENGELOLAAN
+            </div>
+        @endif
 
 
         {{-- ====================================================
              MASTER DATA
         ==================================================== --}}
 
-        <div class="sidebar-menu-group {{ $masterOpen ? 'open' : '' }}" id="masterGroup">
+        @if ($isMaster)
+            <div class="sidebar-menu-group {{ $masterOpen ? 'open' : '' }}" id="masterGroup">
 
-            <button type="button" class="sidebar-menu-item sidebar-parent {{ $masterOpen ? 'parent-active' : '' }}"
-                data-sidebar-toggle="masterGroup" aria-controls="masterSubmenu"
-                aria-expanded="{{ $masterOpen ? 'true' : 'false' }}" aria-label="Buka atau tutup menu Master Data">
+                <button type="button" class="sidebar-menu-item sidebar-parent {{ $masterOpen ? 'parent-active' : '' }}"
+                    data-sidebar-toggle="masterGroup" aria-controls="masterSubmenu"
+                    aria-expanded="{{ $masterOpen ? 'true' : 'false' }}" aria-label="Buka atau tutup menu Master Data">
 
-                <span class="sidebar-menu-icon">
-                    <i data-lucide="database"></i>
-                </span>
-
-                <span class="sidebar-menu-text">
-                    Master Data
-                </span>
-
-                <span class="sidebar-arrow">
-                    <i data-lucide="chevron-down"></i>
-                </span>
-
-            </button>
-
-
-            <div class="sidebar-submenu" id="masterSubmenu">
-
-                {{-- BARANG --}}
-
-                <a href="{{ url('/master-data/barang') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/barang*') ? 'active' : '' }}">
-
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="package"></i>
+                    <span class="sidebar-menu-icon">
+                        <i data-lucide="database"></i>
                     </span>
 
-                    <span class="sidebar-submenu-text">
-                        Barang
+                    <span class="sidebar-menu-text">
+                        Master Data
                     </span>
 
-                </a>
-
-
-                {{-- DEPARTEMEN --}}
-
-                <a href="{{ url('/master-data/departemen') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/departemen*') ? 'active' : '' }}">
-
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="building-2"></i>
+                    <span class="sidebar-arrow">
+                        <i data-lucide="chevron-down"></i>
                     </span>
 
-                    <span class="sidebar-submenu-text">
-                        Departemen
-                    </span>
-
-                </a>
+                </button>
 
 
-                {{-- DIVISI --}}
+                <div class="sidebar-submenu" id="masterSubmenu">
 
-                <a href="{{ url('/master-data/divisi') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/divisi*') ? 'active' : '' }}">
+                    {{-- BARANG --}}
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="network"></i>
-                    </span>
+                    <a href="{{ url('/master-data/barang') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/barang*') ? 'active' : '' }}">
 
-                    <span class="sidebar-submenu-text">
-                        Divisi
-                    </span>
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="package"></i>
+                        </span>
 
-                </a>
+                        <span class="sidebar-submenu-text">
+                            Barang
+                        </span>
 
-
-                {{-- RUANGAN --}}
-
-                <a href="{{ url('/master-data/ruangan') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/ruangan*') ? 'active' : '' }}">
-
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="door-open"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Ruangan
-                    </span>
-
-                </a>
+                    </a>
 
 
-                {{-- SDM PENDUKUNG --}}
+                    {{-- DEPARTEMEN --}}
 
-                <a href="{{ url('/master-data/sdm-pendukung') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/sdm-pendukung*') ? 'active' : '' }}">
+                    <a href="{{ url('/master-data/departemen') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/departemen*') ? 'active' : '' }}">
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="user-round"></i>
-                    </span>
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="building-2"></i>
+                        </span>
 
-                    <span class="sidebar-submenu-text">
-                        SDM Pendukung
-                    </span>
+                        <span class="sidebar-submenu-text">
+                            Departemen
+                        </span>
 
-                </a>
-
-
-                {{-- LOKASI --}}
-
-                <a href="{{ url('/master-data/lokasi') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/lokasi*') ? 'active' : '' }}">
-
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="map-pin"></i>
-                    </span>
-
-                    <span class="sidebar-submenu-text">
-                        Lokasi
-                    </span>
-
-                </a>
+                    </a>
 
 
-                {{-- BAHAN --}}
+                    {{-- DIVISI --}}
 
-                <a href="{{ url('/master-data/bahan') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/bahan*') ? 'active' : '' }}">
+                    <a href="{{ url('/master-data/divisi') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/divisi*') ? 'active' : '' }}">
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="component"></i>
-                    </span>
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="network"></i>
+                        </span>
 
-                    <span class="sidebar-submenu-text">
-                        Bahan
-                    </span>
+                        <span class="sidebar-submenu-text">
+                            Divisi
+                        </span>
 
-                </a>
+                    </a>
 
 
-                {{-- KODE AKTIVA --}}
+                    {{-- RUANGAN --}}
 
-                <a href="{{ url('/master-data/aktiva') }}"
-                    class="sidebar-submenu-item {{ request()->is('master-data/aktiva*') ? 'active' : '' }}">
+                    <a href="{{ url('/master-data/ruangan') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/ruangan*') ? 'active' : '' }}">
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="badge-check"></i>
-                    </span>
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="door-open"></i>
+                        </span>
 
-                    <span class="sidebar-submenu-text">
-                        Kode Aktiva
-                    </span>
+                        <span class="sidebar-submenu-text">
+                            Ruangan
+                        </span>
 
-                </a>
+                    </a>
+
+
+                    {{-- SDM PENDUKUNG --}}
+
+                    <a href="{{ url('/master-data/sdm-pendukung') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/sdm-pendukung*') ? 'active' : '' }}">
+
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="user-round"></i>
+                        </span>
+
+                        <span class="sidebar-submenu-text">
+                            SDM Pendukung
+                        </span>
+
+                    </a>
+
+
+                    {{-- LOKASI --}}
+
+                    <a href="{{ url('/master-data/lokasi') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/lokasi*') ? 'active' : '' }}">
+
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="map-pin"></i>
+                        </span>
+
+                        <span class="sidebar-submenu-text">
+                            Lokasi
+                        </span>
+
+                    </a>
+
+
+                    {{-- BAHAN --}}
+
+                    <a href="{{ url('/master-data/bahan') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/bahan*') ? 'active' : '' }}">
+
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="component"></i>
+                        </span>
+
+                        <span class="sidebar-submenu-text">
+                            Bahan
+                        </span>
+
+                    </a>
+
+
+                    {{-- KODE AKTIVA --}}
+
+                    <a href="{{ url('/master-data/aktiva') }}"
+                        class="sidebar-submenu-item {{ request()->is('master-data/aktiva*') ? 'active' : '' }}">
+
+                        <span class="sidebar-submenu-icon">
+                            <i data-lucide="badge-check"></i>
+                        </span>
+
+                        <span class="sidebar-submenu-text">
+                            Kode Aktiva
+                        </span>
+
+                    </a>
+
+                    @if ($asetAccess->enabled())
+                        <a href="{{ route('master.data_user') }}"
+                            class="sidebar-submenu-item {{ request()->is('master-data/user*') ? 'active' : '' }}">
+                            <span class="sidebar-submenu-icon"><i data-lucide="users"></i></span>
+                            <span class="sidebar-submenu-text">Data User</span>
+                        </a>
+                    @endif
+
+                </div>
 
             </div>
 
-        </div>
 
+        @endif
 
         {{-- ====================================================
              K.I.B — KARTU INVENTARIS BARANG
         ==================================================== --}}
 
-        <div class="sidebar-menu-group {{ $kibOpen ? 'open' : '' }}" id="kibGroup">
+        @if ($hasKib)
+            <div class="sidebar-menu-group {{ $kibOpen ? 'open' : '' }}" id="kibGroup">
 
-            <button type="button" class="sidebar-menu-item sidebar-parent {{ $kibOpen ? 'parent-active' : '' }}"
-                data-sidebar-toggle="kibGroup" aria-controls="kibSubmenu"
-                aria-expanded="{{ $kibOpen ? 'true' : 'false' }}" aria-label="Buka atau tutup menu K.I.B">
+                <button type="button" class="sidebar-menu-item sidebar-parent {{ $kibOpen ? 'parent-active' : '' }}"
+                    data-sidebar-toggle="kibGroup" aria-controls="kibSubmenu"
+                    aria-expanded="{{ $kibOpen ? 'true' : 'false' }}" aria-label="Buka atau tutup menu K.I.B">
 
-                <span class="sidebar-menu-icon">
-                    <i data-lucide="library"></i>
-                </span>
-
-                <span class="sidebar-menu-text">
-                    K.I.B
-                </span>
-
-
-                {{-- NOTIFIKASI TOTAL K.I.B --}}
-
-                @if ($kibTotalNotification > 0)
-                    <span class="sidebar-kib-parent-count"
-                        title="{{ number_format($kibTotalNotification, 0, ',', '.') }} data menunggu diproses">
-                        {{ $badgeValue($kibTotalNotification) }}
-                    </span>
-                @endif
-
-
-                <span class="sidebar-arrow">
-                    <i data-lucide="chevron-down"></i>
-                </span>
-
-            </button>
-
-
-            <div class="sidebar-submenu" id="kibSubmenu">
-
-                {{-- K.I.B A — TANAH --}}
-
-                <a href="{{ url('/kib/tanah') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/tanah*') ? 'active' : '' }}">
-
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="map"></i>
+                    <span class="sidebar-menu-icon">
+                        <i data-lucide="library"></i>
                     </span>
 
-                    <span class="sidebar-submenu-text">
-                        Tanah
+                    <span class="sidebar-menu-text">
+                        K.I.B
                     </span>
 
-                    @if ($notifTanah > 0)
-                        <span class="sidebar-kib-count"
-                            title="{{ number_format($notifTanah, 0, ',', '.') }} data Tanah belum diproses">
-                            {{ $badgeValue($notifTanah) }}
+
+                    {{-- NOTIFIKASI TOTAL K.I.B --}}
+
+                    @if ($kibTotalNotification > 0)
+                        <span class="sidebar-kib-parent-count"
+                            title="{{ number_format($kibTotalNotification, 0, ',', '.') }} data menunggu diproses">
+                            {{ $badgeValue($kibTotalNotification) }}
                         </span>
                     @endif
 
-                </a>
 
-
-                {{-- K.I.B B — PERALATAN DAN MESIN --}}
-
-                <a href="{{ url('/kib/mesin') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/mesin*') ? 'active' : '' }}">
-
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="settings"></i>
+                    <span class="sidebar-arrow">
+                        <i data-lucide="chevron-down"></i>
                     </span>
 
-                    <span class="sidebar-submenu-text">
-                        Peralatan & Mesin
-                    </span>
+                </button>
 
-                    @if ($notifMesin > 0)
-                        <span class="sidebar-kib-count"
-                            title="{{ number_format($notifMesin, 0, ',', '.') }} data Mesin belum diproses">
-                            {{ $badgeValue($notifMesin) }}
-                        </span>
+
+                <div class="sidebar-submenu" id="kibSubmenu">
+
+                    {{-- K.I.B A — TANAH --}}
+
+                    @if ($canKib('tanah'))
+                        <a href="{{ url('/kib/tanah') }}"
+                            class="sidebar-submenu-item {{ request()->is('kib/tanah*') ? 'active' : '' }}">
+
+                            <span class="sidebar-submenu-icon">
+                                <i data-lucide="map"></i>
+                            </span>
+
+                            <span class="sidebar-submenu-text">
+                                Tanah
+                            </span>
+
+                            @if ($notifTanah > 0)
+                                <span class="sidebar-kib-count"
+                                    title="{{ number_format($notifTanah, 0, ',', '.') }} data Tanah belum diproses">
+                                    {{ $badgeValue($notifTanah) }}
+                                </span>
+                            @endif
+
+                        </a>
                     @endif
 
-                </a>
 
+                    {{-- K.I.B B — PERALATAN DAN MESIN --}}
 
-                {{-- K.I.B C — GEDUNG DAN BANGUNAN --}}
+                    @if ($canKib('mesin'))
+                        <a href="{{ url('/kib/mesin') }}"
+                            class="sidebar-submenu-item {{ request()->is('kib/mesin*') ? 'active' : '' }}">
 
-                <a href="{{ url('/kib/gedung') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/gedung*') ? 'active' : '' }}">
+                            <span class="sidebar-submenu-icon">
+                                <i data-lucide="settings"></i>
+                            </span>
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="building-2"></i>
-                    </span>
+                            <span class="sidebar-submenu-text">
+                                Peralatan & Mesin
+                            </span>
 
-                    <span class="sidebar-submenu-text">
-                        Gedung & Bangunan
-                    </span>
+                            @if ($notifMesin > 0)
+                                <span class="sidebar-kib-count"
+                                    title="{{ number_format($notifMesin, 0, ',', '.') }} data Mesin belum diproses">
+                                    {{ $badgeValue($notifMesin) }}
+                                </span>
+                            @endif
 
-                    @if ($notifGedung > 0)
-                        <span class="sidebar-kib-count"
-                            title="{{ number_format($notifGedung, 0, ',', '.') }} data Gedung belum diproses">
-                            {{ $badgeValue($notifGedung) }}
-                        </span>
+                        </a>
                     @endif
 
-                </a>
 
+                    {{-- K.I.B C — GEDUNG DAN BANGUNAN --}}
 
-                {{-- K.I.B D — JALAN, IRIGASI, JARINGAN --}}
+                    @if ($canKib('gedung'))
+                        <a href="{{ url('/kib/gedung') }}"
+                            class="sidebar-submenu-item {{ request()->is('kib/gedung*') ? 'active' : '' }}">
 
-                <a href="{{ url('/kib/jalan') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/jalan*') ? 'active' : '' }}">
+                            <span class="sidebar-submenu-icon">
+                                <i data-lucide="building-2"></i>
+                            </span>
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="route"></i>
-                    </span>
+                            <span class="sidebar-submenu-text">
+                                Gedung & Bangunan
+                            </span>
 
-                    <span class="sidebar-submenu-text">
-                        Jalan, Irigasi & Jaringan
-                    </span>
+                            @if ($notifGedung > 0)
+                                <span class="sidebar-kib-count"
+                                    title="{{ number_format($notifGedung, 0, ',', '.') }} data Gedung belum diproses">
+                                    {{ $badgeValue($notifGedung) }}
+                                </span>
+                            @endif
 
-                    @if ($notifJalan > 0)
-                        <span class="sidebar-kib-count"
-                            title="{{ number_format($notifJalan, 0, ',', '.') }} data Jalan belum diproses">
-                            {{ $badgeValue($notifJalan) }}
-                        </span>
+                        </a>
                     @endif
 
-                </a>
 
+                    {{-- K.I.B D — JALAN, IRIGASI, JARINGAN --}}
 
-                {{-- K.I.B E — ASET TETAP LAINNYA --}}
+                    @if ($canKib('jalan'))
+                        <a href="{{ url('/kib/jalan') }}"
+                            class="sidebar-submenu-item {{ request()->is('kib/jalan*') ? 'active' : '' }}">
 
-                <a href="{{ url('/kib/aset_ttp') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/aset_ttp*') ? 'active' : '' }}">
+                            <span class="sidebar-submenu-icon">
+                                <i data-lucide="route"></i>
+                            </span>
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="package-open"></i>
-                    </span>
+                            <span class="sidebar-submenu-text">
+                                Jalan, Irigasi & Jaringan
+                            </span>
 
-                    <span class="sidebar-submenu-text">
-                        Aset Tetap Lainnya
-                    </span>
+                            @if ($notifJalan > 0)
+                                <span class="sidebar-kib-count"
+                                    title="{{ number_format($notifJalan, 0, ',', '.') }} data Jalan belum diproses">
+                                    {{ $badgeValue($notifJalan) }}
+                                </span>
+                            @endif
 
-                    @if ($notifAsetTetap > 0)
-                        <span class="sidebar-kib-count"
-                            title="{{ number_format($notifAsetTetap, 0, ',', '.') }} data Aset Tetap belum diproses">
-                            {{ $badgeValue($notifAsetTetap) }}
-                        </span>
+                        </a>
                     @endif
 
-                </a>
 
+                    {{-- K.I.B E — ASET TETAP LAINNYA --}}
 
-                {{-- K.I.B F — KONSTRUKSI --}}
+                    @if ($canKib('aset_ttp'))
+                        <a href="{{ url('/kib/aset_ttp') }}"
+                            class="sidebar-submenu-item {{ request()->is('kib/aset_ttp*') ? 'active' : '' }}">
 
-                <a href="{{ url('/kib/konstruksi') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/konstruksi*') ? 'active' : '' }}">
+                            <span class="sidebar-submenu-icon">
+                                <i data-lucide="package-open"></i>
+                            </span>
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="construction"></i>
-                    </span>
+                            <span class="sidebar-submenu-text">
+                                Aset Tetap Lainnya
+                            </span>
 
-                    <span class="sidebar-submenu-text">
-                        Konstruksi
-                    </span>
+                            @if ($notifAsetTetap > 0)
+                                <span class="sidebar-kib-count"
+                                    title="{{ number_format($notifAsetTetap, 0, ',', '.') }} data Aset Tetap belum diproses">
+                                    {{ $badgeValue($notifAsetTetap) }}
+                                </span>
+                            @endif
 
-                    @if ($notifKonstruksi > 0)
-                        <span class="sidebar-kib-count"
-                            title="{{ number_format($notifKonstruksi, 0, ',', '.') }} data Konstruksi belum diproses">
-                            {{ $badgeValue($notifKonstruksi) }}
-                        </span>
+                        </a>
                     @endif
 
-                </a>
 
+                    {{-- K.I.B F — KONSTRUKSI --}}
 
-                {{-- K.I.R — KARTU INVENTARIS RUANGAN --}}
+                    @if ($canKib('konstruksi'))
+                        <a href="{{ url('/kib/konstruksi') }}"
+                            class="sidebar-submenu-item {{ request()->is('kib/konstruksi*') ? 'active' : '' }}">
 
-                <a href="{{ url('/kib/kir') }}"
-                    class="sidebar-submenu-item {{ request()->is('kib/kir*') ? 'active' : '' }}">
+                            <span class="sidebar-submenu-icon">
+                                <i data-lucide="construction"></i>
+                            </span>
 
-                    <span class="sidebar-submenu-icon">
-                        <i data-lucide="clipboard-list"></i>
-                    </span>
+                            <span class="sidebar-submenu-text">
+                                Konstruksi
+                            </span>
 
-                    <span class="sidebar-submenu-text">
-                        K.I.R
-                    </span>
+                            @if ($notifKonstruksi > 0)
+                                <span class="sidebar-kib-count"
+                                    title="{{ number_format($notifKonstruksi, 0, ',', '.') }} data Konstruksi belum diproses">
+                                    {{ $badgeValue($notifKonstruksi) }}
+                                </span>
+                            @endif
 
-                    @if ($notifKir > 0)
-                        <span class="sidebar-kib-count"
-                            title="{{ number_format($notifKir, 0, ',', '.') }} data K.I.R belum diproses">
-                            {{ $badgeValue($notifKir) }}
-                        </span>
+                        </a>
                     @endif
 
-                </a>
+
+                    {{-- K.I.R — KARTU INVENTARIS RUANGAN --}}
+
+                    @if ($canKib('kir'))
+                        <a href="{{ url('/kib/kir') }}"
+                            class="sidebar-submenu-item {{ request()->is('kib/kir*') ? 'active' : '' }}">
+
+                            <span class="sidebar-submenu-icon">
+                                <i data-lucide="clipboard-list"></i>
+                            </span>
+
+                            <span class="sidebar-submenu-text">
+                                K.I.R
+                            </span>
+
+                            @if ($notifKir > 0)
+                                <span class="sidebar-kib-count"
+                                    title="{{ number_format($notifKir, 0, ',', '.') }} data K.I.R belum diproses">
+                                    {{ $badgeValue($notifKir) }}
+                                </span>
+                            @endif
+
+                        </a>
+                    @endif
+
+                </div>
 
             </div>
 
-        </div>
 
+        @endif
 
         {{-- ====================================================
              NILAI ASET
         ==================================================== --}}
 
-        <a href="{{ url('/nilai') }}" class="sidebar-menu-item {{ request()->is('nilai*') ? 'active' : '' }}">
+        @if ($isMaster)
+            <a href="{{ url('/nilai') }}" class="sidebar-menu-item {{ request()->is('nilai*') ? 'active' : '' }}">
 
-            <span class="sidebar-menu-icon">
-                <i data-lucide="badge-dollar-sign"></i>
-            </span>
+                <span class="sidebar-menu-icon">
+                    <i data-lucide="badge-dollar-sign"></i>
+                </span>
 
-            <span class="sidebar-menu-text">
-                Nilai Aset
-            </span>
+                <span class="sidebar-menu-text">
+                    Nilai Aset
+                </span>
 
-        </a>
+            </a>
 
 
-        {{-- ====================================================
+            {{-- ====================================================
              ARSIP
         ==================================================== --}}
 
-        <a href="{{ url('/arsip') }}" class="sidebar-menu-item {{ request()->is('arsip*') ? 'active' : '' }}">
+            <a href="{{ url('/arsip') }}" class="sidebar-menu-item {{ request()->is('arsip*') ? 'active' : '' }}">
 
-            <span class="sidebar-menu-icon">
-                <i data-lucide="archive"></i>
-            </span>
+                <span class="sidebar-menu-icon">
+                    <i data-lucide="archive"></i>
+                </span>
 
-            <span class="sidebar-menu-text">
-                Arsip
-            </span>
+                <span class="sidebar-menu-text">
+                    Arsip
+                </span>
 
-        </a>
+            </a>
+        @endif
 
     </nav>
 
@@ -514,11 +554,11 @@
             <div class="sidebar-user-info">
 
                 <strong>
-                    Administrator
+                    {{ auth('web')->user()?->name }}
                 </strong>
 
-                <span>
-                    Super Admin
+                <span title="{{ $asetAccess->label($asetProfile) }}" class="text-truncate">
+                    {{ $asetAccess->label($asetProfile) }}
                 </span>
 
             </div>
