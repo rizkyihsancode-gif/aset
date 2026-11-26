@@ -1067,3 +1067,195 @@
     background: #dcf6e7;
     color: #147747;
 }
+
+/* === 12. Penelusuran indeks fisik Arsip === */
+.arsip-page .ar-index-browser .ar-card-heading {
+    margin-bottom: 14px;
+}
+
+.arsip-page .ar-index-browser .ar-muted {
+    margin-top: 5px;
+    line-height: 1.5;
+}
+
+.arsip-page .ar-browser-layout {
+    display: grid;
+    grid-template-columns: minmax(140px, 190px) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.arsip-page .ar-browser-tree {
+    padding: 12px;
+    border: 1px solid var(--ar-border);
+    border-radius: 9px;
+    background: #f5f9ff;
+    min-width: 0;
+}
+
+.arsip-page .ar-browser-tree label,
+.arsip-page .ar-browser-controls label {
+    display: block;
+    font-weight: 650;
+    margin-bottom: 6px;
+}
+
+.arsip-page .ar-browser-tree select {
+    width: 100%;
+}
+
+.arsip-page .ar-tree-groups {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    max-height: 440px;
+    overflow: auto;
+    color: var(--ar-text);
+}
+
+.arsip-page .ar-tree-group {
+    display: grid;
+    gap: 3px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ar-border);
+}
+
+.arsip-page .ar-tree-group strong {
+    padding: 5px 6px;
+    font-size: 12px;
+    color: var(--ar-navy);
+}
+
+.arsip-page .ar-tree-rack {
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ar-text);
+    font: inherit;
+    text-align: left;
+    padding: 7px 8px 7px 17px;
+    border-radius: 6px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.arsip-page .ar-tree-rack:hover,
+.arsip-page .ar-tree-rack[aria-pressed="true"] {
+    background: #e3efff;
+    color: var(--ar-blue);
+    border-color: #b8d5fb;
+}
+
+.arsip-page .ar-tree-rack[aria-pressed="true"] {
+    font-weight: 700;
+}
+
+.arsip-page .ar-browser-content {
+    min-width: 0;
+}
+
+.arsip-page .ar-browser-context,
+.arsip-page .ar-index-context {
+    background: #eff6ff;
+    border: 1px solid var(--ar-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    color: var(--ar-navy);
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+.arsip-page .ar-browser-controls {
+    margin-bottom: 10px;
+}
+
+.arsip-page .ar-browser-controls input {
+    width: 100%;
+}
+
+.arsip-page .ar-index-table {
+    min-width: 600px;
+}
+
+.arsip-page .ar-index-table th,
+.arsip-page .ar-index-table td {
+    padding: 9px 10px;
+}
+
+.arsip-page .ar-index-link {
+    display: inline-block;
+    padding: 5px 3px;
+    color: var(--ar-blue);
+    text-decoration: underline;
+    font-weight: 700;
+}
+
+.arsip-page .ar-add-index {
+    min-height: 30px;
+    min-width: 34px;
+    padding: 4px 8px;
+    font-size: 18px;
+}
+
+.arsip-page .ar-browser-pages {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.arsip-page .ar-browser-pages select {
+    width: auto;
+}
+
+.arsip-page .ar-browser-pages .ar-btn {
+    min-height: 30px;
+    padding: 5px 10px;
+}
+
+.arsip-page .ar-browser-help {
+    font-size: 11px;
+}
+
+.arsip-page .ar-index-context {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.arsip-page .ar-index-context p {
+    font-weight: 400;
+    color: var(--ar-text);
+    margin-top: 5px;
+}
+
+.arsip-page .ar-index-context-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.arsip-page .ar-index-note {
+    min-width: 120px;
+    max-width: 230px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.arsip-page #arIndexBrowser,
+.arsip-page #arDocumentList {
+    scroll-margin-top: 80px;
+}
+
+@media (max-width: 1100px) {
+    .arsip-page .ar-browser-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .arsip-page .ar-tree-groups {
+        grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+        max-height: 250px;
+    }
+}

@@ -120,6 +120,71 @@
                         <div id="arQuickBuildings" class="ar-quick-items"></div>
                     </div>
                 </section>
+                {{-- Penelusuran indeks fisik: Gedung → Filling → Rak → Baris --}}
+                <section class="ar-card ar-index-browser" id="arIndexBrowser" aria-labelledby="arBrowserHeading">
+                    <div class="ar-card-heading">
+                        <div>
+                            <h2 id="arBrowserHeading">Penelusuran Indeks Arsip</h2>
+                            <p class="ar-muted">Pilih rak untuk melihat seluruh baris penyimpanan, termasuk yang belum
+                                memiliki dokumen.</p>
+                        </div>
+                    </div>
+                    <div class="ar-browser-layout">
+                        <nav class="ar-browser-tree" aria-label="Struktur penyimpanan">
+                            <label for="arBrowserBuilding">Gedung</label>
+                            <select id="arBrowserBuilding">
+                                <option value="">Pilih Gedung</option>
+                            </select>
+                            <div id="arBrowserTree" class="ar-tree-groups"></div>
+                        </nav>
+                        <div class="ar-browser-content">
+                            <div class="ar-browser-context" id="arBrowserContext" aria-live="polite">Pilih Gedung dan Rak.
+                            </div>
+                            <div class="ar-browser-controls">
+                                <label for="arBrowserSearch">Cari indeks pada rak</label>
+                                <input id="arBrowserSearch" type="search" maxlength="200"
+                                    placeholder="Baris, dokumen, kode, bulan, tahun..." disabled>
+                            </div>
+                            <div class="ar-table-wrap">
+                                <table class="ar-table ar-index-table">
+                                    <thead>
+                                        <tr>
+                                            <th>No. Baris</th>
+                                            <th>Nama Dokumen</th>
+                                            <th>Bulan</th>
+                                            <th>Kode Dokumen</th>
+                                            <th>Tahun</th>
+                                            <th>Isi</th>
+                                            <th>Tambah Dokumen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="arBrowserRows"></tbody>
+                                </table>
+                            </div>
+                            <div class="ar-footer ar-browser-footer">
+                                <span id="arBrowserCount" aria-live="polite"></span>
+                                <div class="ar-browser-pages">
+                                    <label for="arBrowserSize">Per halaman</label>
+                                    <select id="arBrowserSize">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                    <button type="button" class="ar-btn ar-light" id="arBrowserPrev"
+                                        aria-label="Halaman indeks sebelumnya">‹</button>
+                                    <span id="arBrowserPage">1 / 1</span>
+                                    <button type="button" class="ar-btn ar-light" id="arBrowserNext"
+                                        aria-label="Halaman indeks berikutnya">›</button>
+                                </div>
+                            </div>
+                            <p class="ar-muted ar-browser-help">Klik nomor baris untuk membuka isi dokumen. Tombol +
+                                mengisi indeks secara otomatis.</p>
+                        </div>
+                    </div>
+                    <noscript>
+                        <p>Aktifkan JavaScript untuk menelusuri indeks.</p>
+                    </noscript>
+                </section>
                 <section class="ar-card ar-filter">
                     <h2>Filter Dokumen Arsip</h2>
                     <form id="arFilter" method="GET" action="{{ route('main.arsip') }}">
@@ -199,13 +264,30 @@
                         </div>
                     </form>
                 </section>
-                <section class="ar-card ar-list">
+                <section class="ar-card ar-list" id="arDocumentList">
                     <div class="ar-card-heading">
-                        <h2>Daftar Dokumen Arsip</h2>
+                        <h2>{{ $selectedIndex ? 'Isi Dokumen Arsip' : 'Daftar Dokumen Arsip' }}</h2>
                         <a class="ar-btn ar-outline"
                             href="{{ route('arsip.export', array_filter($filters, fn($v) => $v !== null && $v !== '')) }}"><i
                                 data-lucide="download"></i> Ekspor CSV</a>
                     </div>
+                    @if ($selectedIndex)
+                        <div class="ar-index-context">
+                            <div>
+                                <strong>Gedung {{ $selectedIndex->gedung ?? '—' }} / Filling
+                                    {{ $selectedIndex->fill ?? '—' }} / Rak {{ $selectedIndex->rak ?? '—' }} / Baris
+                                    {{ $selectedIndex->no_file ?? '—' }}</strong>
+                                <p>{{ $selectedIndex->nama_dok ?? 'Indeks tanpa nama' }} · Kode
+                                    {{ $selectedIndex->kode_dok ?? '—' }} · {{ $selectedIndex->jumlah_dokumen }} dokumen ·
+                                    ID indeks #{{ $selectedIndex->id }}</p>
+                            </div>
+                            <div class="ar-index-context-actions">
+                                <button type="button" class="ar-btn ar-primary"
+                                    data-add-index="{{ $selectedIndex->id }}">+ Tambah Dokumen</button>
+                                <a class="ar-btn ar-light" href="#arIndexBrowser">Kembali ke indeks</a>
+                            </div>
+                        </div>
+                    @endif
                     <div class="ar-table-wrap">
                         <table class="ar-table">
                             <thead>
@@ -213,8 +295,14 @@
                                     <th>No.</th>
                                     <th>Dokumen</th>
                                     <th>Register</th>
-                                    <th>Penyimpanan</th>
-                                    <th>Tahun</th>
+                                    @if ($selectedIndex)
+                                        <th>Rekanan</th>
+                                        <th>Nilai Rp</th>
+                                        <th>Keterangan</th>
+                                    @else
+                                        <th>Penyimpanan</th>
+                                        <th>Tahun</th>
+                                    @endif
                                     <th>Retensi</th>
                                     <th>Kondisi</th>
                                     <th>Aksi</th>
@@ -231,15 +319,22 @@
                                             <small>{{ $item['nama_dok'] ?? '—' }} · #{{ $item['id'] }}</small>
                                         </td>
                                         <td>{{ $item['reg'] ?? '—' }}</td>
-                                        <td>
-                                            @if ($item['gedung'] !== null)
-                                                Gedung {{ $item['gedung'] }} / Filling {{ $item['fill'] ?? '—' }} / Rak
-                                                {{ $item['rak'] ?? '—' }} / Baris {{ $item['no_file'] ?? '—' }}
-                                            @else
-                                                <span class="ar-muted">Indeks belum tersedia</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $item['tahun'] ?? '—' }}</td>
+                                        @if ($selectedIndex)
+                                            <td>{{ $item['rekanan'] ?? '—' }}</td>
+                                            <td>{{ $item['nilai'] === null ? '—' : preg_replace('/\B(?=(\d{3})+(?!\d))/', '.', $item['nilai']) }}
+                                            </td>
+                                            <td class="ar-index-note">{{ $item['ket'] ?? '—' }}</td>
+                                        @else
+                                            <td>
+                                                @if ($item['gedung'] !== null)
+                                                    Gedung {{ $item['gedung'] }} / Filling {{ $item['fill'] ?? '—' }} /
+                                                    Rak {{ $item['rak'] ?? '—' }} / Baris {{ $item['no_file'] ?? '—' }}
+                                                @else
+                                                    <span class="ar-muted">Indeks belum tersedia</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $item['tahun'] ?? '—' }}</td>
+                                        @endif
                                         <td>
                                             <span>{{ $item['retensi'] ?? '—' }}</span>
                                             <small
@@ -270,10 +365,10 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="ar-empty">
+                                        <td colspan="{{ $selectedIndex ? 9 : 8 }}" class="ar-empty">
                                             <i data-lucide="folder-open"></i>
                                             <strong>Belum ada dokumen yang sesuai.</strong>
-                                            <span>Ubah filter atau tambahkan arsip baru.</span>
+                                            <span>{{ $selectedIndex ? 'Tambahkan dokumen pada indeks ini atau ubah filter.' : 'Ubah filter atau tambahkan arsip baru.' }}</span>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -547,3 +642,4 @@
 @push('scripts')
     <script src="{{ asset('js/pages/arsip.js') }}?v={{ filemtime(public_path('js/pages/arsip.js')) }}"></script>
 @endpush
+    

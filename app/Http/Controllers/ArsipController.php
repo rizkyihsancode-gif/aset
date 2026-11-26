@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -165,21 +166,55 @@ class ArsipController extends Controller
         $filters = $this->filters($request);
         $rows = $this->filtered($filters)->paginate((int) ($filters['per_page'] ?? 10))->withQueryString();
         $rows->through(fn($row) => $this->row($row));
-        $indices = DB::table('indeks')->select(
-            'id',
-            'gedung',
-            'fill',
-            'rak',
-            'no_file',
-            'nama_dok',
-            'kode_dok',
-            'tahun',
-            'bulan'
-        )->orderBy('gedung')->orderBy('fill')->orderBy('rak')->orderBy('no_file')->orderBy('id')->get()->map(function ($i) {
-            $i->rak = $this->clean($i->rak);
-            $i->nama_dok = $this->clean($i->nama_dok);
-            return $i;
-        });
+        // Indeks tetap ditampilkan meskipun belum memiliki isi dokumen.
+        $documentCounts = DB::table('arsips')
+            ->select('id_indeks')
+            ->selectRaw('COUNT(*) AS jumlah_dokumen')
+            ->groupBy('id_indeks');
+
+        $indices = DB::table('indeks')
+            ->leftJoinSub($documentCounts, 'doc_counts', function (JoinClause $join): void {
+                $join->on('doc_counts.id_indeks', '=', 'indeks.id');
+            })
+            ->select(
+                'indeks.id',
+                'gedung',
+                'fill',
+                'rak',
+                'no_file',
+                'nama_dok',
+                'kode_dok',
+                'tahun',
+                'bulan'
+            )
+            ->selectRaw('COALESCE(doc_counts.jumlah_dokumen, 0) AS jumlah_dokumen')
+            ->orderBy('gedung')
+            ->orderBy('fill')
+            ->orderBy('rak')
+            ->orderBy('no_file')
+            ->orderBy('indeks.id')
+            ->get()
+            ->map(function (\stdClass $i): \stdClass {
+                $i->rak = $this->clean($i->rak);
+                $i->nama_dok = $this->clean($i->nama_dok);
+                $i->jumlah_dokumen = (int) $i->jumlah_dokumen;
+
+                return $i;
+            });
+
+        $selectedIndex = isset($filters['index_id'])
+            ? $indices->firstWhere('id', $filters['index_id'])
+            : null;
+
+        // Isi lokasi filter apabila halaman dibuka hanya dengan ID indeks.
+        if ($selectedIndex !== null) {
+            foreach (['gedung', 'fill', 'rak'] as $key) {
+                if (!isset($filters[$key]) && $selectedIndex->{$key} !== null) {
+                    $filters[$key] = $selectedIndex->{$key};
+                }
+            }
+        }
+
         $today = $this->today();
         $stats = [
             'total' => DB::table('arsips')->count(),
@@ -195,6 +230,7 @@ class ArsipController extends Controller
         return view('main.arsip', compact(
             'rows',
             'indices',
+            'selectedIndex',
             'stats',
             'filters',
             'conditions',
@@ -264,7 +300,7 @@ class ArsipController extends Controller
                     throw new \RuntimeException('Penyimpanan PDF gagal.');
                 }
             }
-            DB::transaction(function () use ($id, $data, $newIndex, $path, $request) {
+            $savedIndexId = DB::transaction(function () use ($id, $data, $newIndex, $path, $request): int {
                 if ($id !== null) {
                     $old = DB::table('arsips')->where('id', $id)->lockForUpdate()->first();
                     abort_unless($old, 404);
@@ -318,6 +354,8 @@ class ArsipController extends Controller
                 } else {
                     DB::table('arsips')->where('id', $id)->update($values);
                 }
+
+                return (int) $indexId;
             }, 3);
         } catch (Throwable $e) {
             // Old file is intentionally retained; only the new uncommitted file is removed.
@@ -326,7 +364,11 @@ class ArsipController extends Controller
             }
             throw $e;
         }
-        return redirect()->route('main.arsip')->with('arsip_success', $id === null ? 'Arsip berhasil ditambahkan.' : 'Arsip berhasil diperbarui.');
+        return redirect()
+            ->route('main.arsip', ['index_id' => $savedIndexId])
+            ->with('arsip_success', $id === null
+                ? 'Arsip berhasil ditambahkan.'
+                : 'Arsip berhasil diperbarui.');
     }
 
     private function validPath(mixed $path): bool
