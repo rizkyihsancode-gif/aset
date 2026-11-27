@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AsetFileService;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -2715,11 +2717,7 @@ class MasterController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $extension =
-            strtolower(
-                $image
-                    ->getClientOriginalExtension()
-            );
+        $extension = app(AsetFileService::class)->publicImageExtension($image);
 
 
         /*
@@ -7706,7 +7704,7 @@ class MasterController extends Controller
                 . '_'
                 . bin2hex(random_bytes(5))
                 . '.'
-                . $file->getClientOriginalExtension();
+                . app(AsetFileService::class)->publicImageExtension($file);
 
             $file->move(
                 $directory,
@@ -7998,7 +7996,7 @@ class MasterController extends Controller
                 . '_'
                 . bin2hex(random_bytes(5))
                 . '.'
-                . $file->getClientOriginalExtension();
+                . app(AsetFileService::class)->publicImageExtension($file);
 
             $file->move(
                 $directory,

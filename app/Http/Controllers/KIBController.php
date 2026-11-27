@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
+use App\Services\AsetFileService;
 use App\Services\KibNotificationService;
 use App\Services\KibVoucherLinkService;
 use Illuminate\Support\Facades\Log;
@@ -796,7 +797,7 @@ class KIBController extends Controller
                 $path,
                 [
                     'Cache-Control' =>
-                    'public, max-age=3600'
+                    'private, no-store'
                 ]
             );
     }
@@ -1032,379 +1033,9 @@ class KIBController extends Controller
         |
         */
 
-    private function resolveLokasiImageAbsolutePath(
-        string $image
-    ): ?string {
-
-        /*
-            |--------------------------------------------------------------------------
-            | NORMALISASI
-            |--------------------------------------------------------------------------
-            */
-
-        $raw =
-            trim(
-                str_replace(
-                    '\\',
-                    '/',
-                    $image
-                )
-            );
-
-
-        if (
-            $raw === ''
-            ||
-            str_contains(
-                $raw,
-                '..'
-            )
-        ) {
-
-            return null;
-        }
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | ABSOLUTE PATH
-            |--------------------------------------------------------------------------
-            |
-            | Jika database lama ternyata menyimpan absolute path dan
-            | file tersebut masih tersedia.
-            |
-            */
-
-        if (
-            File::exists(
-                $raw
-            )
-        ) {
-
-            return $raw;
-        }
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | BERSIHKAN PREFIX
-            |--------------------------------------------------------------------------
-            */
-
-        $normalized =
-            ltrim(
-                $raw,
-                '/'
-            );
-
-
-        $normalized =
-            preg_replace(
-                '#^public/#i',
-                '',
-                $normalized
-            );
-
-
-        $normalized =
-            preg_replace(
-                '#^storage/app/public/#i',
-                '',
-                $normalized
-            );
-
-
-        $normalized =
-            preg_replace(
-                '#^storage/#i',
-                '',
-                $normalized
-            );
-
-
-        $filename =
-            basename(
-                $normalized
-            );
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | PATH PERSIS
-            |--------------------------------------------------------------------------
-            */
-
-        $exactCandidates = [
-
-            public_path(
-                $normalized
-            ),
-
-            storage_path(
-                'app/public/'
-                    .
-                    $normalized
-            ),
-
-        ];
-
-
-        foreach (
-            $exactCandidates
-            as $candidate
-        ) {
-
-            if (
-                File::exists(
-                    $candidate
-                )
-            ) {
-
-                return $candidate;
-            }
-        }
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | FOLDER YANG MUNGKIN DIGUNAKAN WEB LAMA
-            |--------------------------------------------------------------------------
-            */
-
-        $relativeCandidates = [
-
-            /*
-                * LOKASI
-                */
-
-            'uploads/lokasi/' . $filename,
-
-            'upload/lokasi/' . $filename,
-
-            'assets/uploads/lokasi/' . $filename,
-
-            'assets/upload/lokasi/' . $filename,
-
-            'assets/img/lokasi/' . $filename,
-
-            'images/lokasi/' . $filename,
-
-            'image/lokasi/' . $filename,
-
-            'img/lokasi/' . $filename,
-
-            'foto/lokasi/' . $filename,
-
-            'gambar/lokasi/' . $filename,
-
-
-            /*
-                * ASET
-                */
-
-            'uploads/aset/' . $filename,
-
-            'upload/aset/' . $filename,
-
-            'assets/uploads/aset/' . $filename,
-
-            'assets/upload/aset/' . $filename,
-
-            'assets/img/aset/' . $filename,
-
-            'images/aset/' . $filename,
-
-            'img/aset/' . $filename,
-
-
-            /*
-                * GENERAL
-                */
-
-            'uploads/' . $filename,
-
-            'upload/' . $filename,
-
-            'assets/uploads/' . $filename,
-
-            'assets/upload/' . $filename,
-
-            'assets/img/' . $filename,
-
-            'images/' . $filename,
-
-            'image/' . $filename,
-
-            'img/' . $filename,
-
-            'foto/' . $filename,
-
-            'gambar/' . $filename,
-
-            $filename,
-
-        ];
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | CARI DI PUBLIC
-            |--------------------------------------------------------------------------
-            */
-
-        foreach (
-            array_unique(
-                $relativeCandidates
-            )
-            as $relative
-        ) {
-
-            $candidate =
-                public_path(
-                    $relative
-                );
-
-
-            if (
-                File::exists(
-                    $candidate
-                )
-            ) {
-
-                return $candidate;
-            }
-        }
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | CARI DI STORAGE/APP/PUBLIC
-            |--------------------------------------------------------------------------
-            */
-
-        foreach (
-            array_unique(
-                $relativeCandidates
-            )
-            as $relative
-        ) {
-
-            $candidate =
-                storage_path(
-                    'app/public/'
-                        .
-                        $relative
-                );
-
-
-            if (
-                File::exists(
-                    $candidate
-                )
-            ) {
-
-                return $candidate;
-            }
-        }
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | FALLBACK:
-            | CARI BERDASARKAN NAMA FILE DI SELURUH PUBLIC
-            |--------------------------------------------------------------------------
-            |
-            | Misalnya database hanya berisi:
-            |
-            | IPA_SELILI.jpg
-            |
-            | sedangkan file ternyata berada:
-            |
-            | public/dist/img/aset/lokasi/IPA_SELILI.jpg
-            |
-            */
-
-        try {
-
-            if (
-                File::isDirectory(
-                    public_path()
-                )
-            ) {
-
-                foreach (
-                    File::allFiles(
-                        public_path()
-                    )
-                    as $file
-                ) {
-
-                    if (
-                        strcasecmp(
-                            $file->getFilename(),
-                            $filename
-                        )
-                        ===
-                        0
-                    ) {
-
-                        return $file->getPathname();
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-
-            /*
-                * Jangan merusak halaman apabila scan gagal.
-                */
-        }
-
-
-        /*
-            |--------------------------------------------------------------------------
-            | FALLBACK STORAGE
-            |--------------------------------------------------------------------------
-            */
-
-        try {
-
-            $storagePublic =
-                storage_path(
-                    'app/public'
-                );
-
-
-            if (
-                File::isDirectory(
-                    $storagePublic
-                )
-            ) {
-
-                foreach (
-                    File::allFiles(
-                        $storagePublic
-                    )
-                    as $file
-                ) {
-
-                    if (
-                        strcasecmp(
-                            $file->getFilename(),
-                            $filename
-                        )
-                        ===
-                        0
-                    ) {
-
-                        return $file->getPathname();
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-        }
-
-
-        return null;
+    private function resolveLokasiImageAbsolutePath(string $image): ?string
+    {
+        return app(AsetFileService::class)->locationPhoto($image);
     }
 
 
@@ -1977,34 +1608,29 @@ class KIBController extends Controller
         abort_unless(in_array($aksi, ['view', 'download'], true), 404);
 
         $row = DB::table('tanah_lampirans')->where('id', $lampiran)->first();
-        abort_unless($row, 404);
+        abort_unless($row && in_array($row->jenis, ['pdf', 'gambar'], true), 404);
 
-        $path = (string) $row->path;
-        abort_unless(str_starts_with($path, 'tanah/lampiran/')
-            && !str_contains($path, '..')
-            && Storage::disk('local')->exists($path), 404);
-
-        $mime = (string) $row->mime;
+        $files = app(AsetFileService::class);
         $allowed = $row->jenis === 'pdf'
-            ? ['application/pdf']
+            ? AsetFileService::PDF
             : ['image/jpeg', 'image/png', 'image/webp'];
-        abort_unless(in_array($mime, $allowed, true), 404);
+        $absolute = $files->privateFile($row->path, 'tanah/lampiran/' . $row->jenis, $allowed);
+        abort_unless($absolute, 404);
 
-        $absolute = Storage::disk('local')->path($path);
+        $mime = $files->mime($absolute, $allowed);
         $name = preg_replace('/[^a-zA-Z0-9._-]+/', '_', (string) $row->nama_asli) ?: 'lampiran';
-
-        if ($aksi === 'download') {
-            return response()->download($absolute, $name, [
-                'X-Content-Type-Options' => 'nosniff',
-                'Cache-Control' => 'private, no-store',
-            ]);
-        }
-
-        return response()->file($absolute, [
+        $headers = [
             'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' . $name . '"',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
+        ];
+
+        if ($aksi === 'download') {
+            return response()->download($absolute, $name, $headers);
+        }
+
+        return response()->file($absolute, $headers + [
+            'Content-Disposition' => 'inline; filename="' . $name . '"',
         ]);
     }
 
@@ -2577,26 +2203,7 @@ class KIBController extends Controller
     /** Resolve only files under approved roots; prevent path traversal. */
     private function pdfFile(string $file): ?string
     {
-        $file = trim(str_replace('\\', '/', $file));
-        if ($file === '' || preg_match('~(^/|^[a-zA-Z]:/|(^|/)\.\.(/|$)|[\x00-\x1f])~', $file)) return null;
-        $candidates = [
-            storage_path('app/private/' . $file),
-            storage_path('app/public/' . $file),
-            storage_path('app/' . $file),
-            public_path($file),
-            // Arsip PDF legacy: pdfs.dok hanya nama file; old app menyimpan
-            // di public/assets/img/lokasi/{nama_file.pdf}.
-            public_path('assets/img/lokasi/' . $file),
-        ];
-        foreach ($candidates as $candidate) {
-            $real = realpath($candidate);
-            if (!$real || !is_file($real) || strtolower(pathinfo($real, PATHINFO_EXTENSION)) !== 'pdf') continue;
-            foreach ([storage_path('app/private'), storage_path('app/public'), storage_path('app'), public_path()] as $root) {
-                $allowed = realpath($root);
-                if ($allowed && str_starts_with($real, rtrim($allowed, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) return $real;
-            }
-        }
-        return null;
+        return app(AsetFileService::class)->tanahPdf($file);
     }
 
     private function deliverPdf(int $pdf, bool $download)
@@ -3376,6 +2983,7 @@ class KIBController extends Controller
             'foto' => [
                 'nullable',
                 'image',
+                'mimes:jpg,jpeg,png,webp,gif',
                 'max:5120'
             ],
 
@@ -3970,48 +3578,28 @@ class KIBController extends Controller
         |
         */
 
-    public function fileMesin(
-        int $mesin,
-        string $jenis
-    ) {
-        abort_unless(
-            Auth::check(),
-            403,
-            'Login diperlukan untuk mengakses dokumen.'
-        );
+    public function fileMesin(int $mesin, string $jenis)
+    {
+        abort_unless(Auth::check(), 403, 'Login diperlukan untuk mengakses dokumen.');
+        abort_unless(in_array($jenis, ['dokumen', 'foto'], true), 404);
 
-        abort_unless(
-            in_array($jenis, ['dokumen', 'foto'], true),
-            404
-        );
-
-        $row = DB::table('mesins')
-            ->where('id', $mesin)
-            ->first(['dok', 'img']);
-
+        $row = DB::table('mesins')->where('id', $mesin)->first(['dok', 'img']);
         abort_unless($row, 404);
 
-        $prefix = $jenis === 'dokumen'
-            ? 'kib/mesin/dokumen/'
-            : 'kib/mesin/foto/';
-
-        $path = $jenis === 'dokumen'
-            ? $row->dok
-            : $row->img;
-
-        abort_unless(
-            $path && str_starts_with($path, $prefix),
-            404
+        $files = app(AsetFileService::class);
+        $allowed = $jenis === 'dokumen' ? AsetFileService::PDF : AsetFileService::IMAGE;
+        $path = $files->privateFile(
+            $jenis === 'dokumen' ? $row->dok : $row->img,
+            'kib/mesin/' . $jenis,
+            $allowed
         );
+        abort_unless($path, 404);
 
-        abort_unless(
-            Storage::disk('local')->exists($path),
-            404
-        );
-
-        return response()->file(
-            Storage::disk('local')->path($path)
-        );
+        return response()->file($path, [
+            'Content-Type' => $files->mime($path, $allowed),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
 
@@ -4556,52 +4144,23 @@ class KIBController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function filePajakMesin(
-        int $pajak
-    ) {
-        $row = DB::table('mesin_pajaks')
-            ->where('id', $pajak)
-            ->first();
+    public function filePajakMesin(int $pajak)
+    {
+        $row = DB::table('mesin_pajaks')->where('id', $pajak)->first();
+        abort_unless($row, 404);
 
-        abort_unless(
-            $row && !empty($row->dokumen_pdf),
-            404
+        $path = app(AsetFileService::class)->privateFile(
+            $row->dokumen_pdf,
+            'kib/mesin/pajak',
+            AsetFileService::PDF
         );
+        abort_unless($path, 404);
 
-        $path = (string) $row->dokumen_pdf;
-
-        abort_unless(
-            str_starts_with(
-                $path,
-                'kib/mesin/pajak/'
-            ) &&
-                Storage::disk('local')->exists($path),
-            404
-        );
-
-        $file = Storage::disk('local')
-            ->path($path);
-
-        abort_unless(
-            strtolower(
-                pathinfo(
-                    $file,
-                    PATHINFO_EXTENSION
-                )
-            ) === 'pdf',
-            415
-        );
-
-        return response()->file(
-            $file,
-            [
-                'Content-Type' =>
-                'application/pdf',
-
-                'X-Content-Type-Options' =>
-                'nosniff',
-            ]
-        );
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
 
@@ -5410,6 +4969,7 @@ class KIBController extends Controller
             'foto' => [
                 'nullable',
                 'image',
+                'mimes:jpg,jpeg,png,webp,gif',
                 'max:5120',
             ],
         ];
@@ -6092,117 +5652,28 @@ class KIBController extends Controller
         | PREVIEW FILE PDF / FOTO GEDUNG
         |--------------------------------------------------------------------------
         */
-    public function fileGedung(
-        int $gedung,
-        string $jenis
-    ) {
-        abort_unless(
-            in_array(
-                $jenis,
-                ['dokumen', 'foto'],
-                true
-            ),
-            404
-        );
+    public function fileGedung(int $gedung, string $jenis)
+    {
+        abort_unless(in_array($jenis, ['dokumen', 'foto'], true), 404);
 
-        $row = DB::table('gedungs')
-            ->where('id', $gedung)
-            ->first([
-                'dok',
-                'img'
-            ]);
-
+        $row = DB::table('gedungs')->where('id', $gedung)->first(['dok', 'img']);
         abort_unless($row, 404);
 
-        $path = $jenis === 'dokumen'
-            ? $row->dok
-            : $row->img;
-
+        $value = $jenis === 'dokumen' ? $row->dok : $row->img;
+        $allowed = $jenis === 'dokumen'
+            ? AsetFileService::PDF
+            : ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $files = app(AsetFileService::class);
+        $legacy = 'assets/img/gedung/' . ($jenis === 'dokumen' ? 'dok' : 'img');
+        $path = $files->privateFile($value, 'kib/gedung/' . $jenis, $allowed)
+            ?? $files->legacyFile($value, $legacy, $allowed);
         abort_unless($path, 404);
 
-        $prefix = $jenis === 'dokumen'
-            ? 'kib/gedung/dokumen/'
-            : 'kib/gedung/foto/';
-
-        if (str_starts_with($path, $prefix)) {
-
-            abort_unless(
-                Storage::disk('local')
-                    ->exists($path),
-                404
-            );
-
-            $full = Storage::disk('local')
-                ->path($path);
-        } else {
-
-            // Kompatibilitas dokumen web lama.
-            $legacy = $jenis === 'dokumen'
-                ? 'dok'
-                : 'img';
-
-            $full = public_path(
-                'assets/img/gedung/'
-                    . $legacy
-                    . '/'
-                    . basename($path)
-            );
-
-            abort_unless(
-                is_file($full),
-                404
-            );
-        }
-
-        $ext = strtolower(
-            pathinfo(
-                $full,
-                PATHINFO_EXTENSION
-            )
-        );
-
-        if ($jenis === 'dokumen') {
-
-            abort_unless(
-                $ext === 'pdf',
-                415,
-                'Dokumen bukan PDF.'
-            );
-
-            return response()->file(
-                $full,
-                [
-                    'Content-Type' =>
-                    'application/pdf',
-
-                    'X-Content-Type-Options' =>
-                    'nosniff',
-                ]
-            );
-        }
-
-        abort_unless(
-            in_array(
-                $ext,
-                [
-                    'png',
-                    'jpg',
-                    'jpeg',
-                    'webp',
-                    'gif',
-                ],
-                true
-            ),
-            415
-        );
-
-        return response()->file(
-            $full,
-            [
-                'X-Content-Type-Options' =>
-                'nosniff',
-            ]
-        );
+        return response()->file($path, [
+            'Content-Type' => $files->mime($path, $allowed),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
 
@@ -7201,38 +6672,19 @@ class KIBController extends Controller
 
     public function fotoAsetTetapManual(int $aset)
     {
-        $row = DB::table(self::AEM_TABLE)
-            ->where('id', $aset)
-            ->first();
+        $row = DB::table(self::AEM_TABLE)->where('id', $aset)->first();
+        abort_unless($row, 404);
 
-        abort_unless(
-            $row && $row->foto_path,
-            404
-        );
+        $files = app(AsetFileService::class);
+        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        $path = $files->privateFile($row->foto_path, self::AEM_PATH . $aset . '/foto', $allowed);
+        abort_unless($path, 404);
 
-        abort_unless(
-            str_starts_with(
-                $row->foto_path,
-                self::AEM_PATH . $aset . '/foto/'
-            ),
-            404
-        );
-
-        abort_unless(
-            Storage::disk('local')->exists(
-                $row->foto_path
-            ),
-            404
-        );
-
-        return response()->file(
-            Storage::disk('local')->path(
-                $row->foto_path
-            ),
-            [
-                'X-Content-Type-Options' => 'nosniff',
-            ]
-        );
+        return response()->file($path, [
+            'Content-Type' => $files->mime($path, $allowed),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
 
@@ -7467,65 +6919,33 @@ class KIBController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function dokumenAsetTetapManual(
-        int $aset,
-        int $dokumen
-    ) {
-
+    public function dokumenAsetTetapManual(int $aset, int $dokumen)
+    {
         $doc = DB::table(self::AEM_DOCS)
             ->where('aset_tetap_id', $aset)
             ->where('id', $dokumen)
             ->first();
-
         abort_unless($doc, 404);
 
-        abort_unless(
-            str_starts_with(
-                $doc->path,
-                self::AEM_PATH . $aset . '/dokumen/'
-            ),
-            404
+        $files = app(AsetFileService::class);
+        $path = $files->privateFile(
+            $doc->path,
+            self::AEM_PATH . $aset . '/dokumen',
+            AsetFileService::ATTACHMENT
         );
+        abort_unless($path, 404);
 
-        abort_unless(
-            Storage::disk('local')->exists(
-                $doc->path
-            ),
-            404
-        );
-
-        $path = Storage::disk('local')->path(
-            $doc->path
-        );
-
-        $mime = (string) ($doc->mime ?? '');
-
-        abort_unless(
-            in_array($mime, [
-                'application/pdf',
-                'image/jpeg',
-                'image/png',
-                'image/webp',
-            ], true),
-            415
-        );
+        $headers = [
+            'Content-Type' => $files->mime($path, AsetFileService::ATTACHMENT),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ];
 
         if (request()->boolean('download')) {
-
-            return response()->download(
-                $path,
-                basename($doc->nama_asli)
-            );
+            return response()->download($path, basename($doc->nama_asli), $headers);
         }
 
-        return response()->file(
-            $path,
-            [
-                'Content-Type' => $mime,
-
-                'X-Content-Type-Options' => 'nosniff',
-            ]
-        );
+        return response()->file($path, $headers);
     }
 
 
@@ -9072,48 +8492,21 @@ class KIBController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function fotoKonstruksiManual(
-        int $konstruksi
-    ) {
+    public function fotoKonstruksiManual(int $konstruksi)
+    {
+        $row = DB::table(self::KONSTRUKSI_MANUAL_TABLE)->where('id', $konstruksi)->first();
+        abort_unless($row, 404);
 
-        $row = DB::table(
-            self::KONSTRUKSI_MANUAL_TABLE
-        )
-            ->where('id', $konstruksi)
-            ->first();
+        $files = app(AsetFileService::class);
+        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        $path = $files->privateFile($row->foto_path, self::KONSTRUKSI_MANUAL_PATH . $konstruksi . '/foto', $allowed);
+        abort_unless($path, 404);
 
-        abort_unless(
-            $row && $row->foto_path,
-            404
-        );
-
-        $prefix = self::KONSTRUKSI_MANUAL_PATH .
-            $konstruksi .
-            '/foto/';
-
-        abort_unless(
-            str_starts_with(
-                $row->foto_path,
-                $prefix
-            ),
-            404
-        );
-
-        abort_unless(
-            Storage::disk('local')->exists(
-                $row->foto_path
-            ),
-            404
-        );
-
-        return response()->file(
-            Storage::disk('local')->path(
-                $row->foto_path
-            ),
-            [
-                'X-Content-Type-Options' => 'nosniff',
-            ]
-        );
+        return response()->file($path, [
+            'Content-Type' => $files->mime($path, $allowed),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
 
@@ -9123,65 +8516,33 @@ class KIBController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function dokumenKonstruksiManual(
-        int $konstruksi,
-        int $dokumen
-    ) {
-
-        $doc = DB::table(
-            self::KONSTRUKSI_MANUAL_DOCS
-        )
-            ->where(
-                'konstruksi_id',
-                $konstruksi
-            )
+    public function dokumenKonstruksiManual(int $konstruksi, int $dokumen)
+    {
+        $doc = DB::table(self::KONSTRUKSI_MANUAL_DOCS)
+            ->where('konstruksi_id', $konstruksi)
             ->where('id', $dokumen)
             ->first();
-
         abort_unless($doc, 404);
 
-        $prefix = self::KONSTRUKSI_MANUAL_PATH .
-            $konstruksi .
-            '/dokumen/';
-
-        abort_unless(
-            str_starts_with(
-                $doc->path,
-                $prefix
-            ),
-            404
+        $files = app(AsetFileService::class);
+        $path = $files->privateFile(
+            $doc->path,
+            self::KONSTRUKSI_MANUAL_PATH . $konstruksi . '/dokumen',
+            AsetFileService::ATTACHMENT
         );
+        abort_unless($path, 404);
 
-        abort_unless(
-            Storage::disk('local')->exists(
-                $doc->path
-            ),
-            404
-        );
-
-        $path = Storage::disk('local')->path(
-            $doc->path
-        );
+        $headers = [
+            'Content-Type' => $files->mime($path, AsetFileService::ATTACHMENT),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ];
 
         if (request()->boolean('download')) {
-
-            return response()->download(
-                $path,
-                basename($doc->nama_asli)
-            );
+            return response()->download($path, basename($doc->nama_asli), $headers);
         }
 
-        return response()->file(
-            $path,
-            [
-                'Content-Type' =>
-                $doc->mime
-                    ?: 'application/octet-stream',
-
-                'X-Content-Type-Options' =>
-                'nosniff',
-            ]
-        );
+        return response()->file($path, $headers);
     }
 
 
@@ -9294,40 +8655,13 @@ class KIBController extends Controller
     |
     */
 
-    private function kirPhotoPath(
-        ?string $name
-    ): ?string {
-        $name = trim((string) $name);
+    private function kirPhotoPath(?string $name): ?string
+    {
+        $files = app(AsetFileService::class);
+        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
 
-        if ($name === '') {
-            return null;
-        }
-
-        // File baru.
-        if (
-            str_starts_with(
-                $name,
-                'kir/foto/'
-            )
-        ) {
-            return Storage::disk('local')
-                ->exists($name)
-
-                ? Storage::disk('local')
-                ->path($name)
-
-                : null;
-        }
-
-        // File historis.
-        // basename() mencegah traversal direktori.
-        $legacy = public_path(
-            'assets/img/kir/' . basename($name)
-        );
-
-        return is_file($legacy)
-            ? $legacy
-            : null;
+        return $files->privateFile($name, 'kir/foto', $allowed)
+            ?? $files->legacyFile($name, 'assets/img/kir', $allowed);
     }
 
     /*
@@ -11315,7 +10649,7 @@ class KIBController extends Controller
             'harga' => ['nullable', 'integer', 'min:0'],
             'ket' => ['nullable', 'string', 'max:10000'],
             'status_kepemilikan' => ['required', Rule::in(self::JALAN_PEMILIK)],
-            'foto' => ['nullable', 'image', 'max:5120'],
+            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'dokumen' => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
         ]);
     }
@@ -11588,33 +10922,26 @@ class KIBController extends Controller
     {
         abort_unless(in_array($source, ['jembatan', 'arsip'], true)
             && in_array($jenis, ['foto', 'dokumen'], true), 404);
+
         $row = DB::table('kib_d_s')->where('id', $item)->first();
         abort_unless($row, 404);
+
         $value = trim((string) ($jenis === 'foto' ? $row->img : $row->dok));
-        abort_unless($value !== '', 404);
-        $path = null;
-        if (str_starts_with($value, 'kib/jalan/') && Storage::disk('local')->exists($value)) {
-            $path = Storage::disk('local')->path($value);
-        } else {
-            $name = basename(str_replace('\\', '/', $value));
-            $roots = [
-                public_path('assets/img/jalan/' . ($jenis === 'foto' ? 'img' : 'dok')),
-                public_path('assets/img/jalan'),
-            ];
-            foreach ($roots as $root) {
-                $rootReal = realpath($root);
-                $candidate = $rootReal ? realpath($rootReal . DIRECTORY_SEPARATOR . $name) : false;
-                if ($candidate && str_starts_with($candidate, $rootReal . DIRECTORY_SEPARATOR)) {
-                    $path = $candidate;
-                    break;
-                }
-            }
-        }
-        abort_unless($path && is_file($path), 404);
-        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        abort_unless(in_array($ext, $jenis === 'foto'
-            ? ['jpg', 'jpeg', 'png', 'webp'] : ['pdf'], true), 415);
-        return response()->file($path, ['X-Content-Type-Options' => 'nosniff']);
+        $allowed = $jenis === 'foto'
+            ? ['image/jpeg', 'image/png', 'image/webp']
+            : AsetFileService::PDF;
+        $files = app(AsetFileService::class);
+        $legacy = 'assets/img/jalan/' . ($jenis === 'foto' ? 'img' : 'dok');
+        $path = $files->privateFile($value, 'kib/jalan/' . $jenis, $allowed)
+            ?? $files->legacyFile($value, $legacy, $allowed)
+            ?? $files->legacyFile($value, 'assets/img/jalan', $allowed);
+        abort_unless($path, 404);
+
+        return response()->file($path, [
+            'Content-Type' => $files->mime($path, $allowed),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /*

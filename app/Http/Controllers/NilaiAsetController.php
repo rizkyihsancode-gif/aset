@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NilaiAktiva;
+use App\Services\AsetFileService;
 use App\Services\KibNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -1136,43 +1137,22 @@ class NilaiAsetController extends Controller
     public function previewPdf(int $nilai)
     {
         $record = NilaiAktiva::findOrFail($nilai);
-
-        if (
-            !$record->dokumen_pdf
-            || !Storage::disk('local')
-                ->exists($record->dokumen_pdf)
-        ) {
-            abort(
-                404,
-                'Dokumen PDF tidak ditemukan.'
-            );
-        }
-
-        $path = Storage::disk('local')
-            ->path($record->dokumen_pdf);
-
-        $filename =
-            $record->dokumen_pdf_nama_asli
-            ?: basename($record->dokumen_pdf);
-
-        $filename = str_replace(
-            ['"', "\r", "\n"],
-            '',
-            $filename
+        $path = app(AsetFileService::class)->privateFile(
+            $record->dokumen_pdf,
+            'nilai-aset',
+            AsetFileService::PDF
         );
+        abort_unless($path, 404, 'Dokumen PDF tidak ditemukan.');
 
-        return response()->file(
-            $path,
-            [
-                'Content-Type' =>
-                'application/pdf',
+        $filename = $record->dokumen_pdf_nama_asli ?: basename($path);
+        $filename = str_replace(['"', "\r", "\n"], '', $filename);
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ];
 
-                'Content-Disposition' =>
-                'inline; filename="'
-                    . $filename
-                    . '"',
-            ]
-        );
+        return response()->file($path, $headers + ['Content-Disposition' => 'inline; filename="' . $filename . '"']);
     }
 
     /**
@@ -1183,39 +1163,22 @@ class NilaiAsetController extends Controller
     public function downloadPdf(int $nilai)
     {
         $record = NilaiAktiva::findOrFail($nilai);
-
-        if (
-            !$record->dokumen_pdf
-            || !Storage::disk('local')
-                ->exists($record->dokumen_pdf)
-        ) {
-            abort(
-                404,
-                'Dokumen PDF tidak ditemukan.'
-            );
-        }
-
-        $path = Storage::disk('local')
-            ->path($record->dokumen_pdf);
-
-        $filename =
-            $record->dokumen_pdf_nama_asli
-            ?: basename($record->dokumen_pdf);
-
-        $filename = str_replace(
-            ['"', "\r", "\n"],
-            '',
-            $filename
+        $path = app(AsetFileService::class)->privateFile(
+            $record->dokumen_pdf,
+            'nilai-aset',
+            AsetFileService::PDF
         );
+        abort_unless($path, 404, 'Dokumen PDF tidak ditemukan.');
 
-        return response()->download(
-            $path,
-            $filename,
-            [
-                'Content-Type' =>
-                'application/pdf',
-            ]
-        );
+        $filename = $record->dokumen_pdf_nama_asli ?: basename($path);
+        $filename = str_replace(['"', "\r", "\n"], '', $filename);
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ];
+
+        return response()->download($path, $filename, $headers);
     }
 
     /**
@@ -1309,16 +1272,22 @@ class NilaiAsetController extends Controller
             ->where('nilai_aktiva_id', $nilai)
             ->where('id', $dokumen)
             ->first();
+        abort_unless($doc, 404);
 
-        abort_if(!$doc || !Storage::disk('local')->exists($doc->path), 404);
-
-        return response()->file(
-            Storage::disk('local')->path($doc->path),
-            [
-                'Content-Type' => 'application/pdf',
-                'X-Content-Type-Options' => 'nosniff',
-            ]
+        $path = app(AsetFileService::class)->privateFile(
+            $doc->path,
+            'nilai-aset',
+            AsetFileService::PDF
         );
+        abort_unless($path, 404);
+
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ];
+
+        return response()->file($path, $headers);
     }
 
     /**
@@ -1330,14 +1299,22 @@ class NilaiAsetController extends Controller
             ->where('nilai_aktiva_id', $nilai)
             ->where('id', $dokumen)
             ->first();
+        abort_unless($doc, 404);
 
-        abort_if(!$doc || !Storage::disk('local')->exists($doc->path), 404);
-
-        return response()->download(
-            Storage::disk('local')->path($doc->path),
-            basename(str_replace('\\\\', '/', $doc->original_name)),
-            ['Content-Type' => 'application/pdf']
+        $path = app(AsetFileService::class)->privateFile(
+            $doc->path,
+            'nilai-aset',
+            AsetFileService::PDF
         );
+        abort_unless($path, 404);
+
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ];
+
+        return response()->download($path, basename(str_replace('\\', '/', $doc->original_name)), $headers);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AsetFileService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Database\Query\JoinClause;
@@ -380,14 +381,18 @@ class ArsipController extends Controller
     {
         $row = DB::table('arsips')->where('id', $arsip)->first(['file_path']);
         abort_unless($row && $this->validPath($row->file_path), 404);
-        $disk = Storage::disk('local');
-        abort_unless($disk->exists($row->file_path), 404);
+        $path = app(AsetFileService::class)->privateFile(
+            $row->file_path,
+            'arsip/dokumen',
+            AsetFileService::PDF
+        );
+        abort_unless($path, 404);
         $headers = ['Content-Type' => 'application/pdf', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store'];
         $name = 'arsip-' . $arsip . '.pdf';
         if ($request->boolean('download')) {
-            return response()->download($disk->path($row->file_path), $name, $headers);
+            return response()->download($path, $name, $headers);
         }
-        return response()->file($disk->path($row->file_path), $headers + ['Content-Disposition' => 'inline; filename="' . $name . '"']);
+        return response()->file($path, $headers + ['Content-Disposition' => 'inline; filename="' . $name . '"']);
     }
 
     private function csvText(mixed $v): string

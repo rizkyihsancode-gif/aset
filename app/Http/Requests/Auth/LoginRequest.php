@@ -48,7 +48,9 @@ class LoginRequest extends FormRequest
             fn(Authenticatable $user): bool => $access->profile($user)['active'],
             false
         )) {
-            RateLimiter::hit($this->throttleKey(), 60);
+            foreach ($this->loginLimits() as $key => $limit) {
+                RateLimiter::hit($key, 60);
+            }
 
             throw ValidationException::withMessages([
                 'email' => 'Email atau password tidak sesuai.',
@@ -60,16 +62,41 @@ class LoginRequest extends FormRequest
 
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        $seconds = 0;
+
+        foreach ($this->loginLimits() as $key => $limit) {
+            if (RateLimiter::tooManyAttempts($key, $limit)) {
+                $seconds = max($seconds, 1, RateLimiter::availableIn($key));
+            }
+        }
+
+        if ($seconds === 0) {
             return;
         }
 
         event(new Lockout($this));
-        $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
             'email' => "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.",
         ]);
+    }
+
+    /**
+     * Pertahankan batas email + IP; tambahkan batas agregat kegagalan.
+     * Counter agregat tidak dihapus oleh login sukses akun lain.
+     *
+     * @return array<string, int>
+     */
+    protected function loginLimits(): array
+    {
+        $email = Str::lower(trim((string) $this->input('email')));
+        $ip = (string) $this->ip();
+
+        return [
+            $this->throttleKey() => 5,
+            'aset-login-account:' . hash('sha256', $email) => 15,
+            'aset-login-ip:' . hash('sha256', $ip) => 20,
+        ];
     }
 
     public function throttleKey(): string

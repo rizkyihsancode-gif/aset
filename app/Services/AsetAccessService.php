@@ -102,7 +102,20 @@ class AsetAccessService
             return false;
         }
 
-        if ($name === 'kib.pending' && $uri === 'kib/pending/{module}') {
+        // KIB D displays the same physical Gedung records as KIB C.
+        // Permit only this existing read endpoint; do not permit C CRUD.
+        if (
+            $name === 'kib.gedung.file'
+            && $uri === 'kib/gedung/{gedung}/file/{jenis}'
+            && in_array($request->method(), ['GET', 'HEAD'], true)
+        ) {
+            return $this->can($profile, 'gedung') || $this->can($profile, 'jalan');
+        }
+
+        if (
+            $name === 'kib.pending' && $uri === 'kib/pending/{module}'
+            && in_array($request->method(), ['GET', 'HEAD'], true)
+        ) {
             $module = (string) $route->parameter('module');
 
             $module = $module === 'aset_tetap' ? 'aset_ttp' : $module;
@@ -110,9 +123,16 @@ class AsetAccessService
             return array_key_exists($module, config('aset_access.modules', [])) && $this->can($profile, $module);
         }
 
+        $voucherRoutes = [
+            'kib.voucher.riwayat' => ['kib/voucher/{kategori}', ['GET', 'HEAD']],
+            'kib.voucher.hubungkan' => ['kib/voucher/{kategori}/hubungkan', ['POST']],
+            'kib.voucher.lepaskan' => ['kib/voucher/{kategori}/lepaskan', ['POST']],
+        ];
+
         if (
-            in_array($name, ['kib.voucher.riwayat', 'kib.voucher.hubungkan', 'kib.voucher.lepaskan'], true)
-            && str_starts_with($uri, 'kib/voucher/{kategori}')
+            isset($voucherRoutes[$name])
+            && $uri === $voucherRoutes[$name][0]
+            && in_array($request->method(), $voucherRoutes[$name][1], true)
         ) {
             return match ($route->parameter('kategori')) {
                 'gedung' => $this->can($profile, 'gedung') || $this->can($profile, 'jalan'),
@@ -124,9 +144,17 @@ class AsetAccessService
             };
         }
 
+        $voucherFileRoutes = [
+            'nilai.pdf.preview' => 'nilai/{nilai}/pdf',
+            'nilai.pdf.download' => 'nilai/{nilai}/pdf/download',
+            'nilai.dokumen.preview' => 'nilai/{nilai}/dokumen/{dokumen}/preview',
+            'nilai.dokumen.download' => 'nilai/{nilai}/dokumen/{dokumen}/download',
+        ];
+
         if (
-            in_array($name, ['nilai.pdf.preview', 'nilai.pdf.download', 'nilai.dokumen.preview', 'nilai.dokumen.download'], true)
-            && str_starts_with($uri, 'nilai/{nilai}/') && $request->isMethodSafe() && in_array($request->method(), ['GET', 'HEAD'], true)
+            isset($voucherFileRoutes[$name])
+            && $uri === $voucherFileRoutes[$name]
+            && in_array($request->method(), ['GET', 'HEAD'], true)
         ) {
             return $this->allowsVoucherFile($profile, (int) $route->parameter('nilai'));
         }
